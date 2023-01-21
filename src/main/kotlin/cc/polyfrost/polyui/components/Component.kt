@@ -24,8 +24,8 @@ abstract class Component(
         EnumMap(ComponentEvent.Type::class.java)
 
     // TODO perhaps optimize this to use an array
-    private val animations: MutableList<Animation> = mutableListOf()
-    private val transforms: MutableList<TransformOp> = mutableListOf()
+    private val animations: ArrayList<Animation> = ArrayList()
+    private val transforms: ArrayList<TransformOp> = ArrayList()
     private val color: Color.Mutable = properties.color.toMutable()
     private val clock = Clock()
     override lateinit var layout: Layout

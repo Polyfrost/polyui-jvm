@@ -68,10 +68,11 @@ class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg val
     }
 
     fun render() {
+        if (layouts.size == 0) return // nothing to do
         renderer.beginFrame(width, height)
-        forEachLayout {
-            reRenderIfNecessary(renderer)
-            renderer.drawFramebuffer(fbo, box.x.v, box.y.v)
+        for (layout in layouts) {
+            layout.reRenderIfNecessary(renderer)
+            renderer.drawFramebuffer(layout.fbo, layout.box.x.v, layout.box.y.v)
         }
         //renderHooks.forEach { it(renderer) }
         renderer.endFrame()
@@ -91,10 +92,5 @@ class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg val
 
     fun cleanup() {
         // todo
-    }
-
-
-    inline fun forEachLayout(crossinline action: Layout.() -> Unit) {
-        layouts.forEach { layout -> layout.forEachLayout { action() } }
     }
 }

@@ -17,21 +17,18 @@ abstract class Layout(vararg items: Drawable) : Drawable {
     var needsRedraw = true
     var needsRecalculation = true
 
-    fun forEachLayout(action: Layout.() -> Unit) {
-        action(this)
-        children.forEach { it.forEachLayout(action) }
-    }
-
-    fun reRenderIfNecessary(renderer: Renderer): Boolean {
-        return if (needsRedraw) {
+    fun reRenderIfNecessary(renderer: Renderer) {
+        for (it in children) {
+            it.reRenderIfNecessary(renderer)
+        }
+        if (needsRedraw) {
             renderer.bindFramebuffer(fbo)
             preRender(renderer)
             render(renderer)
             postRender(renderer)
             renderer.unbindFramebuffer(fbo)
             needsRedraw = false
-            true
-        } else false
+        }
     }
 
     override fun calculateBounds(layout: Layout) {
