@@ -3,17 +3,17 @@ package cc.polyfrost.polyui.utils
 import cc.polyfrost.polyui.units.Unit
 
 operator fun Float.compareTo(x: Unit): Int {
-    return this.compareTo(x.pixels)
+    return this.compareTo(x.v)
 }
 
-fun Float.pixels(): Unit.Pixel {
+fun Float.px(): Unit.Pixel {
     return Unit.Pixel(this)
 }
 
-fun Int.pixels(): Unit.Pixel {
+fun Int.px(): Unit.Pixel {
     return Unit.Pixel(this.toFloat())
 }
 
-fun Double.pixels(): Unit.Pixel {
+fun Double.px(): Unit.Pixel {
     return Unit.Pixel(this.toFloat())
 }

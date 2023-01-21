@@ -18,7 +18,7 @@ open class ComponentEvent(val type: Type) : Event {
         MouseScrolled;
     }
 
-    fun on(action: (Component) -> Unit): Handler {
+    fun on(action: Component.() -> Unit): Handler {
         return Handler(this.type, action)
     }
 
@@ -29,6 +29,6 @@ open class ComponentEvent(val type: Type) : Event {
             return events
         }
     }
-    data class Handler(val type: Type, val handler: (Component) -> Unit)
+    data class Handler(val type: Type, val handler: Component.() -> Unit)
 }
 

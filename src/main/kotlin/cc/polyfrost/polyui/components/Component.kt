@@ -3,6 +3,7 @@ package cc.polyfrost.polyui.components
 import cc.polyfrost.polyui.animate.Animation
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.events.ComponentEvent
+import cc.polyfrost.polyui.layouts.Layout
 import cc.polyfrost.polyui.properties.Properties
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.units.Box
@@ -14,17 +15,20 @@ import java.util.*
 /** A component is a drawable object that can be interacted with. <br>
  * It has a [properties] attached to it, which contains various pieces of information about how this component should look, and its default responses to events. <br>*/
 abstract class Component(
-    private val properties: Properties,
+    val properties: Properties,
     at: Vec2<Unit>,
     size: Vec2<Unit>? = null,
     vararg events: ComponentEvent.Handler
 ) : Drawable {
-    private val eventHandlers: EnumMap<ComponentEvent.Type, (Component) -> kotlin.Unit> =
+    private val eventHandlers: EnumMap<ComponentEvent.Type, Component.() -> kotlin.Unit> =
         EnumMap(ComponentEvent.Type::class.java)
+
+    // TODO perhaps optimize this to use an array
     private val animations: MutableList<Animation> = mutableListOf()
     private val transforms: MutableList<TransformOp> = mutableListOf()
     private val color: Color.Mutable = properties.color.toMutable()
     private val clock = Clock()
+    override lateinit var layout: Layout
     final override val box = run {
         if (size == null) {
             Box(at, getSize())
@@ -37,8 +41,8 @@ abstract class Component(
     final override val boundingBox = box.expand(properties.margins)
 
     init {
-        events.forEach { eventHandler ->
-            this.eventHandlers[eventHandler.type] = eventHandler.handler
+        events.forEach {
+            this.eventHandlers[it.type] = it.handler
         }
     }
 
@@ -53,7 +57,7 @@ abstract class Component(
         eventHandlers[event.type]?.let { it(this) }
     }
 
-    fun addEventHandler(type: ComponentEvent.Type, handler: (Component) -> kotlin.Unit) {
+    fun addEventHandler(type: ComponentEvent.Type, handler: Component.() -> kotlin.Unit) {
         eventHandlers[type] = handler
     }
 
@@ -71,8 +75,8 @@ abstract class Component(
         color.recolor(toColor, animation)
     }
 
-    override fun needsRedraw(): Boolean {
-        return color.isRecoloring() or transforms.any { !it.finished } or animations.any { !it.finished }
+    override fun calculateBounds(layout: Layout) {
+
     }
 
     /**
@@ -83,10 +87,13 @@ abstract class Component(
     override fun preRender(renderer: Renderer) {
         animations.removeIf { it.finished }
         transforms.removeIf { it.finished }
+
         val delta = clock.getDelta()
         animations.forEach { it.update(delta) }
         transforms.forEach { it.update(delta) }
         color.update(delta)
+        animations.forEach { if (it.finished) layout.needsRedraw = true }
+        transforms.forEach { if (it.finished) layout.needsRedraw = true }
 
         transforms.forEach { it.apply(renderer) }
     }

@@ -9,8 +9,5 @@ interface Focusable {
         /** called when this component is unfocused */
         fun onUnfocus()
 
-        /** accept an event. <br>
-         * use the <pre>{@code when(event)  }</pre>
-         * */
         fun accept(event: FocusedEvent)
 }

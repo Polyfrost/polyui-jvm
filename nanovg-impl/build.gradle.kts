@@ -9,7 +9,7 @@ dependencies {
     implementation("org.lwjgl:lwjgl-stb:3.3.1")
 
     // Use glfw for test window runner
-    testImplementation("org.lwjgl:lwjgl-glfw:3.3.1")
+    implementation("org.lwjgl:lwjgl-glfw:3.3.1")
 
     // Add LWJGL modules' native bindings to the test runtime
     val nativePlatforms = listOf("windows", "linux", "macos", "macos-arm64")

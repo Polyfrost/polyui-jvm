@@ -11,6 +11,12 @@ data class Color(val r: Float, val g: Float, val b: Float, val a: Float) {
         return Mutable(r, g, b, a)
     }
 
+    companion object {
+        val NONE = Color(0f, 0f, 0f, 0f)
+        val WHITE = Color(1f, 1f, 1f, 1f)
+        val BLACK = Color(0f, 0f, 0f, 1f)
+    }
+
     data class Mutable(var r: Float, var g: Float, var b: Float, var a: Float) {
         private var animation: Animation? = null
         var targetColor: Color? = null

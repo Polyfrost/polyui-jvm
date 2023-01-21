@@ -41,7 +41,8 @@ abstract class TransformOp(val component: Component, val animation: Animation? =
         }
     }
 
-    class Rotate(private val angle: Float, component: Component, animation: Animation?) : TransformOp(component, animation) {
+    class Rotate(private val angle: Double, component: Component, animation: Animation?) :
+        TransformOp(component, animation) {
         override fun apply(renderer: Renderer) {
             renderer.rotate(angle)
         }

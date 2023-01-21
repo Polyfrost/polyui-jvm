@@ -1,43 +1,70 @@
 package cc.polyfrost.polyui.events
 
 import cc.polyfrost.polyui.PolyUI
+import cc.polyfrost.polyui.components.Component
+import cc.polyfrost.polyui.layouts.Layout
 
 class EventManager(private val polyUI: PolyUI) {
+    var mouseX: Float = 0F
+    var mouseY: Float = 0F
     fun onKeyPressed(key: Int) {
         polyUI.focused?.accept(FocusedEvent.KeyPressed(key))
     }
+
     fun onKeyReleased(key: Int) {
         polyUI.focused?.accept(FocusedEvent.KeyReleased(key))
     }
-    fun onMouseMove(x: Float, y: Float) {
-        polyUI.forEachComponent { if (it.isInside(x, y)) {
-            if(it.mouseOver) {
-                //it.accept(ComponentEvent.MouseMoved(x, y))
-            } else {
-                it.mouseOver = true
-                it.accept(ComponentEvent.MouseEntered(x, y))
+
+    fun setMousePosAndUpdate(x: Float, y: Float) {
+        mouseX = x
+        mouseY = y
+        onApplicableLayouts(x, y) {
+            layout.components.forEach {
+                if (it.isInside(x, y)) {
+                    if (it.mouseOver) {
+                        //it.accept(ComponentEvent.MouseMoved(x, y))
+                    } else {
+                        it.mouseOver = true
+                        it.accept(ComponentEvent.MouseEntered(x, y))
+                    }
+                } else if (it.mouseOver) {
+                    it.accept(ComponentEvent.MouseExited(x, y))
+                }
             }
-        } else if (it.mouseOver) {
-            it.accept(ComponentEvent.MouseExited(x, y))
-        }}
+        }
+    }
+
+    // memory efficiency is key kids. those 27 million bytes add up.
+    private inline fun onApplicableLayouts(x: Float, y: Float, func: Layout.() -> Unit) {
+        return polyUI.layouts.forEach { if (it.isInside(x, y)) func(it) }
+    }
+
+    private inline fun onApplicableComponents(x: Float, y: Float, func: Component.() -> Unit) {
+        return onApplicableLayouts(x, y) { components.forEach { if (it.isInside(x, y)) func(it) } }
     }
 
     fun onMousePressed(button: Int) {
-        polyUI.forEachComponent { if (it.mouseOver) {
-            it.accept(ComponentEvent.MousePressed(button))
-        }}
+        onApplicableComponents(mouseX, mouseY) {
+            if (mouseOver) {
+                accept(ComponentEvent.MousePressed(button))
+            }
+        }
     }
 
     fun onMouseReleased(button: Int) {
-        polyUI.forEachComponent { if (it.mouseOver) {
-            it.accept(ComponentEvent.MouseReleased(button))
-        }}
+        onApplicableComponents(mouseX, mouseY) {
+            if (mouseOver) {
+                accept(ComponentEvent.MouseReleased(button))
+            }
+        }
     }
 
     fun onMouseScrolled(amount: Int) {
-        polyUI.forEachComponent { if (it.mouseOver) {
-            it.accept(ComponentEvent.MouseScrolled(amount))
-        }}
+        onApplicableComponents(mouseX, mouseY) {
+            if (mouseOver) {
+                accept(ComponentEvent.MouseScrolled(amount))
+            }
+        }
     }
 
 

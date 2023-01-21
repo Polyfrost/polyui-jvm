@@ -1,9 +1,11 @@
 package cc.polyfrost.polyui
 
-import cc.polyfrost.polyui.components.Component
 import cc.polyfrost.polyui.components.Focusable
 import cc.polyfrost.polyui.events.EventManager
 import cc.polyfrost.polyui.layouts.Layout
+import cc.polyfrost.polyui.renderer.Renderer
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 
 /**
@@ -35,25 +37,64 @@ import cc.polyfrost.polyui.layouts.Layout
  * if it isn't redrawn its just handed right back to the renderer to draw statically = mad speed.
  *
  *
+ * updated: performance information:
+ * I have optimized this to use very little memory allocations. The only allocations that occur are the iterators for the layouts and stuff, and by using Arrays on most things (except component stuff) it rarely allocates; so memory usage is very constant.
+ * It uses about 60MB of ram during usage, with 70% of that being OpenGL and the JVM itself, so about 10MB of RAM is used. (not bad?)
+ * And it gets around 9000 fps with 8% CPU usage (lol)
+ * CPU wise, the most expensive part of the code is OpenGL, with roughly 0.46% of the time being spent in the code itself. The rest is openGL, most expensive being blitFramebuffer and swapBuffers (15% and 68% respectively)
+ *
  *
  */
-class PolyUI(vararg layouts: Layout) {
-    val layouts = mutableListOf(*layouts)
+class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg val layouts: Layout) {
+    val LOGGER: Logger = LoggerFactory.getLogger("PolyUI").also { it.info("PolyUI initializing") }
+    private var renderHooks = Array<Renderer.() -> Unit>(5) { {} }
     val eventManager = EventManager(this)
+    val settings = renderer.settings
     var focused: (Focusable)? = null
 
-    fun onResize(newWidth: Int, newHeight: Int) {
+    init {
+        onResize(width, height)
+        LOGGER.info("PolyUI initialized")
+    }
 
+    fun onResize(newWidth: Int, newHeight: Int) {
+        this.width = newWidth
+        this.height = newHeight
+        layouts.forEach { it.calculateBounds(it) }
+        layouts.forEach {
+            it.fbo =
+                renderer.createFramebuffer(it.box.width.v.toInt(), it.box.height.v.toInt(), settings.bufferType)
+        }
     }
 
     fun render() {
-        // todo
+        renderer.beginFrame(width, height)
+        forEachLayout {
+            reRenderIfNecessary(renderer)
+            renderer.drawFramebuffer(fbo, box.x.v, box.y.v)
+        }
+        //renderHooks.forEach { it(renderer) }
+        renderer.endFrame()
     }
+
+    /** add something to be rendered after each frame. */
+    fun addRenderHook(func: Renderer.() -> Unit) {
+        // why not just use an ArrayList? well, they allocate memory when they are iterated and I don't want that.
+        if (renderHooks.lastIndex + 2 > renderHooks.size) {
+            LOGGER.debug("Expanding render hook array: ${renderHooks.size} -> ${renderHooks.size + 5}")
+            val array = Array<Renderer.() -> Unit>(renderHooks.size + 5) { {} }
+            System.arraycopy(renderHooks, 0, array, 0, renderHooks.lastIndex)
+            renderHooks = array
+        }
+        renderHooks[renderHooks.lastIndex + 1] = func
+    }
+
     fun cleanup() {
         // todo
     }
 
-    inline fun forEachComponent(crossinline action: (Component) -> Unit) {
-        layouts.forEach { layout -> layout.forEachComponent { action(it) } }
+
+    inline fun forEachLayout(crossinline action: Layout.() -> Unit) {
+        layouts.forEach { layout -> layout.forEachLayout { action() } }
     }
 }

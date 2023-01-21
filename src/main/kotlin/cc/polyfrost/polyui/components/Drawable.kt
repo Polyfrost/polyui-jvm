@@ -14,6 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 interface Drawable {
     val box: Box<Unit>
     val boundingBox: Box<Unit>
+    val layout: Layout
 
     /** pre-render functions, such as applying transforms. */
     fun preRender(renderer: Renderer)
@@ -26,13 +27,15 @@ interface Drawable {
 
     fun calculateBounds(layout: Layout)
 
-    /** boolean that should return true if this drawable needs redrawing (e.g. has an animation and needs updating) */
-    fun needsRedraw(): Boolean
-
-    /** boolean that should return true if this drawable needs its bounds and size recalculating. */
-    fun needsRecalculation(): Boolean
-
     fun isInside(x: Float, y: Float): Boolean {
         return box.isInside(x, y)
+    }
+
+    fun wantRedraw() {
+        layout.needsRedraw = true
+    }
+
+    fun wantRecalculation() {
+        layout.needsRecalculation = true
     }
 }
