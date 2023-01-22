@@ -4,14 +4,26 @@ import cc.polyfrost.polyui.components.Component
 import cc.polyfrost.polyui.components.Drawable
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.data.Framebuffer
+import cc.polyfrost.polyui.units.Point
+import cc.polyfrost.polyui.units.Size
+import cc.polyfrost.polyui.units.Unit
+import cc.polyfrost.polyui.units.Vec2
+import cc.polyfrost.polyui.utils.px
+import kotlin.math.max
 
-abstract class Layout(vararg items: Drawable) : Drawable {
+abstract class Layout(override val at: Point<Unit>, override var sized: Size<Unit>? = null, vararg items: Drawable) :
+    Drawable {
     val components: Array<Component> = items.filterIsInstance<Component>().toTypedArray()
     private val children: Array<Layout> = items.filterIsInstance<Layout>().toTypedArray()
     lateinit var fbo: Framebuffer
+    abstract val unitType: Unit.Type
+
+    /** reference to parent */
+    override var layout: Layout? = null
 
     init {
         components.forEach { it.layout = this }
+        children.forEach { it.layout = this }
     }
 
     var needsRedraw = true
@@ -31,11 +43,17 @@ abstract class Layout(vararg items: Drawable) : Drawable {
         }
     }
 
-    override fun calculateBounds(layout: Layout) {
-        children.forEach { it.calculateBounds(this) }
-        components.forEach { it.calculateBounds(this) }
-        box.width.v = children.maxOfOrNull { it.box.width() } ?: box.width()
-        box.height.v = children.maxOfOrNull { it.box.height() } ?: box.height()
+    override fun calculateBounds() {
+        components.forEach {
+            it.calculateBounds()
+            if (it.unitType() != unitType) {
+                // todo make special exceptions that can tell you more verbosely which component is at fault
+                throw Exception("Unit type mismatch: Component $it does not use the same unit type as it's layout: $unitType")
+            }
+        }
+        children.forEach { it.calculateBounds() }
+        if (this.sized == null) this.sized = getSize()
+        needsRecalculation = false
     }
 
     override fun preRender(renderer: Renderer) {
@@ -48,5 +66,29 @@ abstract class Layout(vararg items: Drawable) : Drawable {
 
     override fun postRender(renderer: Renderer) {
         components.forEach { it.postRender(renderer) }
+    }
+
+    override fun getSize(): Vec2<Unit> {
+        var width = children.maxOfOrNull { it.x() + it.width() } ?: 0f
+        width = max(width, components.maxOfOrNull { it.x() + it.width() } ?: 0f)
+        var height = children.maxOfOrNull { it.y() + it.height() } ?: 0f
+        height = max(height, components.maxOfOrNull { it.y() + it.height() } ?: 0f)
+        if (width == 0f) throw Exception("unable to infer width of $layout: no sized children or components, please specify a size")
+        if (height == 0f) throw Exception("unable to infer height of $layout: no sized children or components, please specify a size")
+        return Vec2(width.px(), height.px())
+    }
+
+    fun debugPrint() {
+        println("Layout: $this")
+        println("Children: ${children.size}")
+        println("Components: ${components.size}")
+        println("At: $at")
+        println("Sized: $sized")
+        println("Needs redraw: $needsRedraw")
+        println("Needs recalculation: $needsRecalculation")
+        println("FBO: $fbo")
+        println("Layout: $layout")
+        println()
+        children.forEach { it.debugPrint() }
     }
 }

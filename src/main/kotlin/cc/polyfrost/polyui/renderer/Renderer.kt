@@ -8,9 +8,8 @@ import cc.polyfrost.polyui.renderer.data.Image
 import cc.polyfrost.polyui.units.Box
 import cc.polyfrost.polyui.units.Unit
 
-abstract class Renderer {
-    /** use `override val settings = Settings(this)` in your implementation */
-    abstract val settings: Settings
+abstract class Renderer() {
+    val settings: Settings = Settings(this)
 
     internal inline fun alsoRender(block: Renderer.() -> kotlin.Unit) {
         block()

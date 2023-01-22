@@ -16,10 +16,10 @@ fun main() {
         window.width, window.height, NVGRenderer(),
         PixelLayout(
             at = Point(0F.px(), 0F.px()),
-            sized = Size(window.width.px(), window.height.px()),
+            sized = null,
             Block(
                 at = Point(0.px(), 0.px()),
-                size = Size(10.px(), 10.px()),
+                size = Size(20.px(), 35.px()),
                 events = events(
                     ComponentEvent.MousePressed(0).on {
                         println("Mouse pressed!")

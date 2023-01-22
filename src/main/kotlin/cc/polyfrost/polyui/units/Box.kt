@@ -1,36 +1,33 @@
 package cc.polyfrost.polyui.units
 
-import cc.polyfrost.polyui.utils.compareTo
-
-data class Box<T : Unit>(val x: T, val y: T, val width: T, val height: T) {
-    constructor(point: Vec2<T>, dimensions: Vec2<T>) : this(point.a, point.b, dimensions.a, dimensions.b)
+data class Box<T : Unit>(val point: Point<T>, val sized: Size<T>) {
 
     fun isInside(x: Float, y: Float): Boolean {
-        return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height
+        return x >= this.x() && x <= this.x() + this.width() && y >= this.y() && y <= this.y() + this.height()
     }
 
     /** add the given amount of pixels to each edge of this box */
     fun expand(amount: Float): Box<T> {
-        this.x.v - amount
-        this.y.v - amount
-        this.width.v + amount
-        this.height.v + amount
+        this.x() - amount
+        this.y() - amount
+        this.width() + amount
+        this.height() + amount
         return this
     }
 
     fun x(): Float {
-        return x.v
+        return point[0].px
     }
 
     fun y(): Float {
-        return y.v
+        return point[1].px
     }
 
     fun width(): Float {
-        return width.v
+        return sized[0].px
     }
 
     fun height(): Float {
-        return height.v
+        return sized[1].px
     }
 }

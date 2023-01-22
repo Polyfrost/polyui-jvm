@@ -49,22 +49,30 @@ class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg val
     val LOGGER: Logger = LoggerFactory.getLogger("PolyUI").also { it.info("PolyUI initializing") }
     private var renderHooks = Array<Renderer.() -> Unit>(5) { {} }
     val eventManager = EventManager(this)
-    val settings = renderer.settings
+    private val settings = renderer.settings
     var focused: (Focusable)? = null
 
     init {
-        onResize(width, height)
+        layouts.forEach { it.calculateBounds() }
+        layouts.forEach {
+            it.fbo = renderer.createFramebuffer(it.width().toInt(), it.height().toInt(), settings.bufferType)
+        }
+        layouts.forEach { it.debugPrint() }
         LOGGER.info("PolyUI initialized")
     }
 
     fun onResize(newWidth: Int, newHeight: Int) {
+        layouts.forEach {
+            it.rescale(
+                this.width.toFloat() / newWidth.toFloat(),
+                this.height.toFloat() / newHeight.toFloat()
+            )
+        }
+        layouts.forEach {
+            it.fbo = renderer.createFramebuffer(it.width().toInt(), it.height().toInt(), settings.bufferType)
+        }
         this.width = newWidth
         this.height = newHeight
-        layouts.forEach { it.calculateBounds(it) }
-        layouts.forEach {
-            it.fbo =
-                renderer.createFramebuffer(it.box.width.v.toInt(), it.box.height.v.toInt(), settings.bufferType)
-        }
     }
 
     fun render() {
@@ -72,7 +80,7 @@ class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg val
         renderer.beginFrame(width, height)
         for (layout in layouts) {
             layout.reRenderIfNecessary(renderer)
-            renderer.drawFramebuffer(layout.fbo, layout.box.x.v, layout.box.y.v)
+            renderer.drawFramebuffer(layout.fbo, layout.width(), layout.height())
         }
         //renderHooks.forEach { it(renderer) }
         renderer.endFrame()

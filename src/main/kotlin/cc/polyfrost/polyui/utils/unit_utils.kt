@@ -3,7 +3,7 @@ package cc.polyfrost.polyui.utils
 import cc.polyfrost.polyui.units.Unit
 
 operator fun Float.compareTo(x: Unit): Int {
-    return this.compareTo(x.v)
+    return this.compareTo(x.px)
 }
 
 fun Float.px(): Unit.Pixel {

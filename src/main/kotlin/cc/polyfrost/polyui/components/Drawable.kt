@@ -2,8 +2,10 @@ package cc.polyfrost.polyui.components
 
 import cc.polyfrost.polyui.layouts.Layout
 import cc.polyfrost.polyui.renderer.Renderer
-import cc.polyfrost.polyui.units.Box
+import cc.polyfrost.polyui.units.Point
+import cc.polyfrost.polyui.units.Size
 import cc.polyfrost.polyui.units.Unit
+import cc.polyfrost.polyui.units.Vec2
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -12,9 +14,13 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface Drawable {
-    val box: Box<Unit>
-    val boundingBox: Box<Unit>
-    val layout: Layout
+    val at: Point<Unit>
+    var sized: Size<Unit>?
+
+    /** reference to the layout encapsulating this drawable.
+     * For components, this is never null, but for layouts, it can be null (meaning its parent is the polyui)
+     */
+    val layout: Layout?
 
     /** pre-render functions, such as applying transforms. */
     fun preRender(renderer: Renderer)
@@ -25,17 +31,46 @@ interface Drawable {
     /** post-render functions, such as removing transforms. */
     fun postRender(renderer: Renderer)
 
-    fun calculateBounds(layout: Layout)
+    /** calculate the position and size of this drawable.
+     *
+     * This method is called once the [layout] is populated for children and components, and when a recalculation is requested.
+     *
+     * The value of [layout]'s bounds will be updated after this method is called, so **do not** use [layout]'s bounds as an updated value in this method.
+     */
+    fun calculateBounds()
+
+    /** method that is called when the physical size of the total window area changes. */
+    fun rescale(scaleX: Float, scaleY: Float) {
+        at.scale(scaleX, scaleY)
+        sized!!.scale(scaleX, scaleY)
+    }
+
+    fun x(): Float = at.x()
+    fun y(): Float = at.y()
+    fun width(): Float = sized!!.width()
+    fun height(): Float = sized!!.height()
 
     fun isInside(x: Float, y: Float): Boolean {
-        return box.isInside(x, y)
+        return x >= at[0].px && x <= at[0].px + sized!![0].px && y >= at[1].px && y <= at[1].px + sized!![1].px
     }
 
-    fun wantRedraw() {
-        layout.needsRedraw = true
+    fun unitType(): Unit.Type {
+        if (at.type() != sized!!.type()) {
+            throw Exception("Unit type mismatch: at and sized of $this do not use the same unit type.")
+        }
+        return at.type()
     }
 
-    fun wantRecalculation() {
-        layout.needsRecalculation = true
+    /** Implement this function to return the size of this drawable, if no size is specified during construction.
+     *
+     * This should be so that if the component can determine its own size (for example, it is an image), then the size parameter in the constructor can be omitted using:
+     *
+     * `sized: Vec2<cc.polyfrost.polyui.units.Unit>? = null;` and this method **needs** to be implemented!
+     *
+     *
+     * Otherwise, the size parameter in the constructor must be specified.
+     * @throws UnsupportedOperationException if this method is not implemented, and the size parameter in the constructor is not specified. */
+    fun getSize(): Vec2<Unit> {
+        throw UnsupportedOperationException("getSize() not implemented for ${this::class.simpleName}!")
     }
 }

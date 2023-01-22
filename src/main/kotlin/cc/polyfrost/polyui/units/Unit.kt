@@ -1,34 +1,39 @@
 package cc.polyfrost.polyui.units
 
 /**
- * class to represent a unit of measurement. the pixels parameter is the value in pixels of the unit.
- * The update function is called
+ * class to represent a unit of measurement.
  */
-abstract class Unit(var v: Float, vararg val dependantOn: Unit) {
-    /** this function should recalculate the value of this.
-     * It may call all its dependant units to ask them for their values.  */
-    protected abstract fun update()
-
-    var invalid = false
+abstract class Unit(var px: Float, val type: Type) : Cloneable {
 
     operator fun plus(other: Unit): Float {
-        return v + other.v
+        return px + other.px
     }
 
     fun get(): Float {
-        if(invalid) update()
-        return v
+        return px
     }
 
     operator fun compareTo(x: Unit): Int {
-        return v.compareTo(x.v)
+        return px.compareTo(x.px)
     }
 
-    class Pixel(pixels: Float, vararg dependantOn: Unit) : Unit(pixels, *dependantOn) {
-        override fun update() {
-            TODO()
+    enum class Type {
+        Pixel,
+    }
+
+    override fun toString(): String {
+        return "Unit(px=$px, type=$type)"
+    }
+
+    // I don't know why Kotlin is wierd like this, and it still has cast warnings?
+    public abstract override fun clone(): Unit
+
+    class Pixel(pixels: Float) : Unit(pixels, Type.Pixel), Cloneable {
+        override fun clone(): Pixel {
+            return Pixel(px)
         }
     }
+
 }
 
 

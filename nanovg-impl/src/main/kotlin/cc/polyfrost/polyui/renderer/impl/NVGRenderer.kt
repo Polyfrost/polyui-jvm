@@ -8,13 +8,14 @@ import cc.polyfrost.polyui.renderer.data.Framebuffer
 import cc.polyfrost.polyui.renderer.data.Image
 import cc.polyfrost.polyui.units.Box
 import cc.polyfrost.polyui.units.Unit
+import org.lwjgl.nanovg.NVGColor
 import org.lwjgl.nanovg.NVGLUFramebuffer
 import org.lwjgl.nanovg.NanoVG.*
 import org.lwjgl.nanovg.NanoVGGL3
 import org.lwjgl.opengl.GL30.*
 
+
 class NVGRenderer : Renderer() {
-    override val settings = Settings(this)
     val fbos: MutableMap<Framebuffer, NVGLUFramebuffer> = mutableMapOf()
     private var vg: Long = -1
 
@@ -53,6 +54,8 @@ class NVGRenderer : Renderer() {
         val framebuffer = fbos[fbo] ?: throw IllegalStateException("unknown framebuffer!")
         glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer.fbo())
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0)
+        // todo doesnt work
+        glEnable(GL_TEXTURE_2D)
         glBlitFramebuffer(
             0,
             0,
@@ -60,11 +63,12 @@ class NVGRenderer : Renderer() {
             fbo.height,
             x.toInt(),
             y.toInt(),
-            x.toInt() + width,
-            y.toInt() + height,
+            fbo.width,
+            fbo.height,
             GL_COLOR_BUFFER_BIT,
             GL_NEAREST
         )
+
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0)
     }
 
@@ -101,13 +105,13 @@ class NVGRenderer : Renderer() {
     }
 
     override fun createFramebuffer(width: Int, height: Int, type: Settings.BufferType): Framebuffer {
-        val f = Framebuffer(width, height, fbos.size, type)
+        val f = Framebuffer(width, height, fbos.size + 69420, type)
         fbos[f] = NanoVGGL3.nvgluCreateFramebuffer(
             vg,
             width,
             height,
             NVG_IMAGE_REPEATX or NVG_IMAGE_REPEATY or NVG_IMAGE_GENERATE_MIPMAPS
-        ) ?: throw ExceptionInInitializerError("Could not create framebuffer: $f")
+        ) ?: throw ExceptionInInitializerError("Could not create: $f")
         return f
     }
 
@@ -126,7 +130,11 @@ class NVGRenderer : Renderer() {
     }
 
     override fun drawRectangle(x: Float, y: Float, width: Float, height: Float, color: Color) {
+        nvgBeginPath(vg)
         nvgRect(vg, x, y, width, height)
+        val nvgColor = color(color)
+        nvgFill(vg)
+        nvgColor.free()
     }
 
     override fun drawRectangleVaried(
@@ -140,7 +148,18 @@ class NVGRenderer : Renderer() {
         bottomLeft: Float,
         bottomRight: Float
     ) {
+        nvgBeginPath(vg)
         nvgRoundedRectVarying(vg, x, y, width, height, topLeft, topRight, bottomLeft, bottomRight)
+        val nvgColor = color(color)
+        nvgFill(vg)
+        nvgColor.free()
+    }
+
+    fun color(color: Color): NVGColor {
+        val nvgColor = NVGColor.calloc()
+        nvgRGBA(color.r, color.g, color.b, color.a, nvgColor)
+        nvgFillColor(vg, nvgColor)
+        return nvgColor
     }
 
 }

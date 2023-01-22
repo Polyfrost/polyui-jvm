@@ -19,7 +19,7 @@ class EventManager(private val polyUI: PolyUI) {
         mouseX = x
         mouseY = y
         onApplicableLayouts(x, y) {
-            layout.components.forEach {
+            components.forEach {
                 if (it.isInside(x, y)) {
                     if (it.mouseOver) {
                         //it.accept(ComponentEvent.MouseMoved(x, y))

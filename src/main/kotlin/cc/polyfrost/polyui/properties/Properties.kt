@@ -8,7 +8,7 @@ import java.util.*
 
 abstract class Properties : Cloneable {
     abstract val color: Color
-    abstract val margins: Float
+    abstract val padding: Float
     val eventHandlers: EnumMap<ComponentEvent.Type, Component.() -> Unit> = EnumMap(ComponentEvent.Type::class.java)
     abstract fun accept(event: ComponentEvent): ComponentEvent
 

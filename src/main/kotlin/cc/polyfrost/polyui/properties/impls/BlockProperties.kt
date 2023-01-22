@@ -6,7 +6,7 @@ import cc.polyfrost.polyui.properties.Properties
 
 class BlockProperties : Properties() {
     override val color: Color = Color.WHITE
-    override val margins: Float = 0F
+    override val padding: Float = 0F
 
     override fun accept(event: ComponentEvent): ComponentEvent {
         TODO("Not yet implemented")

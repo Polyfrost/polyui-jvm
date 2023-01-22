@@ -7,8 +7,9 @@ import cc.polyfrost.polyui.layouts.Layout
 import cc.polyfrost.polyui.properties.Properties
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.units.Box
+import cc.polyfrost.polyui.units.Point
+import cc.polyfrost.polyui.units.Size
 import cc.polyfrost.polyui.units.Unit
-import cc.polyfrost.polyui.units.Vec2
 import cc.polyfrost.polyui.utils.Clock
 import java.util.*
 
@@ -16,8 +17,9 @@ import java.util.*
  * It has a [properties] attached to it, which contains various pieces of information about how this component should look, and its default responses to events. <br>*/
 abstract class Component(
     val properties: Properties,
-    at: Vec2<Unit>,
-    size: Vec2<Unit>? = null,
+    /** position relative to this layout. */
+    override val at: Point<Unit>,
+    override var sized: Size<Unit>? = null,
     vararg events: ComponentEvent.Handler
 ) : Drawable {
     private val eventHandlers: EnumMap<ComponentEvent.Type, Component.() -> kotlin.Unit> =
@@ -28,17 +30,11 @@ abstract class Component(
     private val transforms: ArrayList<TransformOp> = ArrayList()
     private val color: Color.Mutable = properties.color.toMutable()
     private val clock = Clock()
-    override lateinit var layout: Layout
-    final override val box = run {
-        if (size == null) {
-            Box(at, getSize())
-        } else {
-            Box(at, size)
-        }
-    }
+    final override lateinit var layout: Layout
+    private lateinit var boundingBox: Box<Unit>
+
     /** weather or not the mouse is currently over this component. DO NOT modify this value. It is managed automatically by [cc.polyfrost.polyui.events.EventManager]. */
     var mouseOver = false
-    final override val boundingBox = box.expand(properties.margins)
 
     init {
         events.forEach {
@@ -75,8 +71,17 @@ abstract class Component(
         color.recolor(toColor, animation)
     }
 
-    override fun calculateBounds(layout: Layout) {
+    override fun calculateBounds() {
+        if (sized == null) sized = getSize()
+        boundingBox = Box(at, sized!!).expand(properties.padding)
+    }
 
+    fun wantRedraw() {
+        layout.needsRedraw = true
+    }
+
+    fun wantRecalculation() {
+        layout.needsRecalculation = true
     }
 
     /**
@@ -107,18 +112,7 @@ abstract class Component(
         transforms.forEach { it.unapply(renderer) }
     }
 
-    /** Implement this function to return the size of the component, if no size is specified during construction. <br>
-     *
-     * This should be so that if the component can determine its own size, then the size parameter in the constructor can be omitted using:
-     *
-     * `size: Vec2<cc.polyfrost.polyui.units.Unit>? = null;` and this method **needs** to be implemented! <br>
-     *
-     *
-     * Otherwise, the size parameter in the constructor must be specified. <br>
-     * @throws UnsupportedOperationException if this method is not implemented, and the size parameter in the constructor is not specified. */
-    open fun getSize(): Vec2<Unit> {
-        throw UnsupportedOperationException("getSize() not implemented for ${this::class.simpleName}!")
-    }
+
 }
 
 
