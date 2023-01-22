@@ -10,13 +10,16 @@ import cc.polyfrost.polyui.units.Box
 import cc.polyfrost.polyui.units.Unit
 import org.lwjgl.nanovg.NVGColor
 import org.lwjgl.nanovg.NVGLUFramebuffer
+import org.lwjgl.nanovg.NVGPaint
 import org.lwjgl.nanovg.NanoVG.*
 import org.lwjgl.nanovg.NanoVGGL3
 import org.lwjgl.opengl.GL30.*
 
 
 class NVGRenderer : Renderer() {
-    val fbos: MutableMap<Framebuffer, NVGLUFramebuffer> = mutableMapOf()
+    /** permanently allocated paint for a framebuffer. This is because so many are allocated so much that it is better just to permanently allocate one. */
+    private val fboPaint: NVGPaint = NVGPaint.create()
+    private val fbos: MutableMap<Framebuffer, NVGLUFramebuffer> = mutableMapOf()
     private var vg: Long = -1
 
     init {
@@ -52,24 +55,12 @@ class NVGRenderer : Renderer() {
 
     override fun drawFramebuffer(fbo: Framebuffer, x: Float, y: Float, width: Int, height: Int) {
         val framebuffer = fbos[fbo] ?: throw IllegalStateException("unknown framebuffer!")
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer.fbo())
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0)
-        // todo doesnt work
-        glEnable(GL_TEXTURE_2D)
-        glBlitFramebuffer(
-            0,
-            0,
-            fbo.width,
-            fbo.height,
-            x.toInt(),
-            y.toInt(),
-            fbo.width,
-            fbo.height,
-            GL_COLOR_BUFFER_BIT,
-            GL_NEAREST
-        )
-
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, 0)
+        bindFramebuffer(fbo)
+        nvgBeginPath(vg)
+        nvgRect(vg, x, y, width.toFloat(), height.toFloat())
+        nvgImagePattern(vg, x, y, width.toFloat(), height.toFloat(), 0F, framebuffer.image(), 1F, fboPaint)
+        nvgFill(vg)
+        unbindFramebuffer(fbo)
     }
 
     override fun drawText(font: Font, x: Float, y: Float, text: String, color: Color, fontSize: Float) {
@@ -117,13 +108,13 @@ class NVGRenderer : Renderer() {
 
     override fun deleteFramebuffer(fbo: Framebuffer) = NanoVGGL3.nvgluDeleteFramebuffer(
         vg,
-        fbos[fbo] ?: throw IllegalStateException("Framebuffer not found when deleting it")
+        fbos[fbo] ?: throw IllegalStateException("Framebuffer not found when deleting it, already cleaned?")
     )
 
     override fun bindFramebuffer(fbo: Framebuffer, mode: Framebuffer.Mode) =
         NanoVGGL3.nvgluBindFramebuffer(vg, fbos[fbo])
 
-    override fun unbindFramebuffer(fbo: Framebuffer, mode: Framebuffer.Mode) {}
+    override fun unbindFramebuffer(fbo: Framebuffer, mode: Framebuffer.Mode) = NanoVGGL3.nvgluBindFramebuffer(vg, null)
 
     override fun supportsRenderbuffer(): Boolean {
         return false
