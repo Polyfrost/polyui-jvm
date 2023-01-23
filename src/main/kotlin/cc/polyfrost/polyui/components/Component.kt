@@ -16,7 +16,12 @@ import java.util.*
 /** A component is a drawable object that can be interacted with. <br>
  * It has a [properties] attached to it, which contains various pieces of information about how this component should look, and its default responses to events. <br>*/
 abstract class Component(
-    val properties: Properties,
+    /** [Properties] of this component.
+     *
+     * This is left `open` in case you need to do something such as:
+     *
+     * `override val properties: Type = properties as Type` */
+    open val properties: Properties,
     /** position relative to this layout. */
     override val at: Point<Unit>,
     override var sized: Size<Unit>? = null,
@@ -30,6 +35,7 @@ abstract class Component(
     private val transforms: ArrayList<TransformOp> = ArrayList()
     private val color: Color.Mutable = properties.color.toMutable()
     private val clock = Clock()
+    final override lateinit var renderer: Renderer
     final override lateinit var layout: Layout
     private lateinit var boundingBox: Box<Unit>
 
@@ -89,7 +95,7 @@ abstract class Component(
      *
      * **make sure to call super [Component.preRender]!**
      */
-    override fun preRender(renderer: Renderer) {
+    override fun preRender() {
         animations.removeIf { it.finished }
         transforms.removeIf { it.finished }
 
@@ -108,7 +114,7 @@ abstract class Component(
      *
      * **make sure to call super [Component.postRender]!**
      */
-    override fun postRender(renderer: Renderer) {
+    override fun postRender() {
         transforms.forEach { it.unapply(renderer) }
     }
 

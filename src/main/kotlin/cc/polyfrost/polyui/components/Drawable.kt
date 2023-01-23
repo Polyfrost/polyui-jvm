@@ -16,6 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 interface Drawable {
     val at: Point<Unit>
     var sized: Size<Unit>?
+    val renderer: Renderer
 
     /** reference to the layout encapsulating this drawable.
      * For components, this is never null, but for layouts, it can be null (meaning its parent is the polyui)
@@ -23,13 +24,13 @@ interface Drawable {
     val layout: Layout?
 
     /** pre-render functions, such as applying transforms. */
-    fun preRender(renderer: Renderer)
+    fun preRender()
 
     /** draw script for this drawable. */
-    fun render(renderer: Renderer)
+    fun render()
 
     /** post-render functions, such as removing transforms. */
-    fun postRender(renderer: Renderer)
+    fun postRender()
 
     /** calculate the position and size of this drawable.
      *
@@ -45,13 +46,18 @@ interface Drawable {
         sized!!.scale(scaleX, scaleY)
     }
 
+
+    fun debugRender() {
+        TODO("Not yet implemented")
+    }
+
     fun x(): Float = at.x()
     fun y(): Float = at.y()
     fun width(): Float = sized!!.width()
     fun height(): Float = sized!!.height()
 
     fun isInside(x: Float, y: Float): Boolean {
-        return x >= at[0].px && x <= at[0].px + sized!![0].px && y >= at[1].px && y <= at[1].px + sized!![1].px
+        return x >= this.x() && x <= this.x() + this.width() && y >= this.y() && y <= this.y() + this.height()
     }
 
     fun unitType(): Unit.Type {

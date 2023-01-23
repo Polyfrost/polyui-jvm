@@ -6,20 +6,26 @@ import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.data.Font
 import cc.polyfrost.polyui.renderer.data.Framebuffer
 import cc.polyfrost.polyui.renderer.data.Image
-import cc.polyfrost.polyui.units.Box
 import cc.polyfrost.polyui.units.Unit
+import cc.polyfrost.polyui.units.Vec2
+import cc.polyfrost.polyui.utils.IOUtils
+import cc.polyfrost.polyui.utils.IOUtils.toByteBuffer
+import cc.polyfrost.polyui.utils.px
 import org.lwjgl.nanovg.NVGColor
 import org.lwjgl.nanovg.NVGLUFramebuffer
 import org.lwjgl.nanovg.NVGPaint
 import org.lwjgl.nanovg.NanoVG.*
 import org.lwjgl.nanovg.NanoVGGL3
 import org.lwjgl.opengl.GL30.*
+import java.nio.ByteBuffer
 
 
 class NVGRenderer : Renderer() {
     /** permanently allocated paint for a framebuffer. This is because so many are allocated so much that it is better just to permanently allocate one. */
     private val fboPaint: NVGPaint = NVGPaint.create()
     private val fbos: MutableMap<Framebuffer, NVGLUFramebuffer> = mutableMapOf()
+    private val images: MutableMap<Image, NVGImage> = mutableMapOf()
+    private val fonts: MutableMap<Font, NVGFont> = mutableMapOf()
     private var vg: Long = -1
 
     init {
@@ -63,20 +69,27 @@ class NVGRenderer : Renderer() {
         unbindFramebuffer(fbo)
     }
 
-    override fun drawText(font: Font, x: Float, y: Float, text: String, color: Color, fontSize: Float) {
-
-    }
-
-    override fun drawWrappedText(
+    override fun drawText(
         font: Font,
         x: Float,
         y: Float,
-        width: Float,
+        width: Float?,
         text: String,
         color: Color,
         fontSize: Float
-    ): Box<Unit.Pixel> {
-        TODO("Not yet implemented")
+    ) {
+        nvgBeginPath(vg)
+        nvgFontSize(vg, fontSize)
+        nvgFontFaceId(vg, getFont(font).id)
+        nvgTextAlign(vg, NVG_ALIGN_LEFT or NVG_ALIGN_TOP)
+        val color = color(color)
+        if (width != null) {
+            nvgTextBox(vg, x, y, width, text)
+        } else {
+            nvgText(vg, x, y, text)
+        }
+        nvgFillColor(vg, color)
+        color.free()
     }
 
     override fun getTextWidth(font: Font, text: String, fontSize: Float): Float {
@@ -84,15 +97,15 @@ class NVGRenderer : Renderer() {
     }
 
     override fun drawImage(image: Image, x: Float, y: Float, colorMask: Color) {
-        TODO("Not yet implemented")
-    }
-
-    override fun createImage(fileName: String): Image {
-        TODO("Not yet implemented")
-    }
-
-    override fun createFont(fileName: String): Font {
-        TODO("Not yet implemented")
+        val paint = NVGPaint.calloc()
+        val img = getImage(image)
+        nvgBeginPath(vg)
+        nvgImagePattern(vg, x, y, img.width, img.height, 0F, img.id, 1F, paint)
+        nvgRGBA(colorMask.r, colorMask.g, colorMask.b, colorMask.a, paint.innerColor())
+        nvgRect(vg, x, y, img.width, img.height)
+        nvgFillPaint(vg, paint)
+        nvgFill(vg)
+        paint.free()
     }
 
     override fun createFramebuffer(width: Int, height: Int, type: Settings.BufferType): Framebuffer {
@@ -120,7 +133,7 @@ class NVGRenderer : Renderer() {
         return false
     }
 
-    override fun drawRectangle(x: Float, y: Float, width: Float, height: Float, color: Color) {
+    override fun drawRect(x: Float, y: Float, width: Float, height: Float, color: Color) {
         nvgBeginPath(vg)
         nvgRect(vg, x, y, width, height)
         val nvgColor = color(color)
@@ -146,11 +159,37 @@ class NVGRenderer : Renderer() {
         nvgColor.free()
     }
 
-    fun color(color: Color): NVGColor {
+    override fun textBounds(font: Font, text: String, fontSize: Float, wrapWidth: Float): Vec2<Unit.Pixel> {
+        val out = FloatArray(4)
+        nvgTextBounds(vg, 0F, 0F, text, out)
+        return Vec2(out[2].px(), out[3].px())
+    }
+
+    private fun color(color: Color): NVGColor {
         val nvgColor = NVGColor.calloc()
         nvgRGBA(color.r, color.g, color.b, color.a, nvgColor)
         nvgFillColor(vg, nvgColor)
         return nvgColor
     }
+
+    private fun getFont(font: Font): NVGFont {
+        return fonts[font] ?: run {
+            val data = IOUtils.getResourceAsStream(font.fileName).toByteBuffer()
+            val ft = nvgCreateFontMem(vg, font.name, data, 0)
+            NVGFont(ft, data).also { fonts[font] = it }
+        }
+    }
+
+    private fun getImage(image: Image): NVGImage {
+        return images[image] ?: run {
+            val data = IOUtils.getResourceAsStream(image.fileName).toByteBuffer()
+            val img = nvgCreateImageMem(vg, 0, data)
+            NVGImage(img, image.width.toFloat(), image.height.toFloat(), data).also { images[image] = it }
+        }
+    }
+
+    // used to ensure that the data is not discarded by the GC
+    data class NVGImage(val id: Int, val width: Float, val height: Float, val data: ByteBuffer)
+    data class NVGFont(val id: Int, val data: ByteBuffer)
 
 }

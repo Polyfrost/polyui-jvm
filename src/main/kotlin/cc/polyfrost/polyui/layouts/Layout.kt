@@ -16,6 +16,7 @@ abstract class Layout(override val at: Point<Unit>, override var sized: Size<Uni
     val components: Array<Component> = items.filterIsInstance<Component>().toTypedArray()
     private val children: Array<Layout> = items.filterIsInstance<Layout>().toTypedArray()
     lateinit var fbo: Framebuffer
+    final override lateinit var renderer: Renderer
     abstract val unitType: Unit.Type
 
     /** reference to parent */
@@ -29,15 +30,15 @@ abstract class Layout(override val at: Point<Unit>, override var sized: Size<Uni
     var needsRedraw = true
     var needsRecalculation = true
 
-    fun reRenderIfNecessary(renderer: Renderer) {
+    fun reRenderIfNecessary() {
         for (it in children) {
-            it.reRenderIfNecessary(renderer)
+            it.reRenderIfNecessary()
         }
         if (needsRedraw) {
             renderer.bindFramebuffer(fbo)
-            preRender(renderer)
-            render(renderer)
-            postRender(renderer)
+            preRender()
+            render()
+            postRender()
             renderer.unbindFramebuffer(fbo)
             needsRedraw = false
         }
@@ -51,21 +52,30 @@ abstract class Layout(override val at: Point<Unit>, override var sized: Size<Uni
                 throw Exception("Unit type mismatch: Component $it does not use the same unit type as it's layout: $unitType")
             }
         }
-        children.forEach { it.calculateBounds() }
+        children.forEach {
+            it.calculateBounds()
+            if (it.at.type() != this.unitType) {
+                throw Exception("Unit type mismatch: Layout $it's position does not use the same unit type as it's parent: $unitType")
+            }
+        }
         if (this.sized == null) this.sized = getSize()
         needsRecalculation = false
     }
 
-    override fun preRender(renderer: Renderer) {
-        components.forEach { it.preRender(renderer) }
+    override fun preRender() {
+        components.forEach { it.preRender() }
     }
 
-    override fun render(renderer: Renderer) {
-        components.forEach { it.render(renderer) }
+    override fun render() {
+        components.forEach { it.render() }
     }
 
-    override fun postRender(renderer: Renderer) {
-        components.forEach { it.postRender(renderer) }
+    override fun postRender() {
+        components.forEach { it.postRender() }
+    }
+
+    override fun unitType(): Unit.Type {
+        return unitType
     }
 
     override fun getSize(): Vec2<Unit> {
@@ -90,5 +100,13 @@ abstract class Layout(override val at: Point<Unit>, override var sized: Size<Uni
         println("Layout: $layout")
         println()
         children.forEach { it.debugPrint() }
+    }
+
+    /** give this, and all its children, a renderer. */
+    fun giveRenderer(renderer: Renderer) {
+        if (this::renderer.isInitialized) throw Exception("Renderer already initialized!") // sanity check
+        this.renderer = renderer
+        components.forEach { it.renderer = renderer }
+        children.forEach { it.giveRenderer(renderer) }
     }
 }

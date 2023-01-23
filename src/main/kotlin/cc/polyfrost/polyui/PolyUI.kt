@@ -53,6 +53,7 @@ class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg val
     var focused: (Focusable)? = null
 
     init {
+        layouts.forEach { it.giveRenderer(renderer) }
         layouts.forEach { it.calculateBounds() }
         layouts.forEach {
             it.fbo = renderer.createFramebuffer(it.width().toInt(), it.height().toInt(), settings.bufferType)
@@ -79,7 +80,7 @@ class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg val
         if (layouts.size == 0) return // nothing to do
         renderer.beginFrame(width, height)
         for (layout in layouts) {
-            layout.reRenderIfNecessary(renderer)
+            layout.reRenderIfNecessary()
             renderer.drawFramebuffer(layout.fbo, layout.width(), layout.height())
         }
         //renderHooks.forEach { it(renderer) }
