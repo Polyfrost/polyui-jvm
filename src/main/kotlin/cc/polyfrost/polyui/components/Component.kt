@@ -11,6 +11,7 @@ import cc.polyfrost.polyui.units.Point
 import cc.polyfrost.polyui.units.Size
 import cc.polyfrost.polyui.units.Unit
 import cc.polyfrost.polyui.utils.Clock
+import cc.polyfrost.polyui.utils.forEachNoAlloc
 import java.util.*
 
 /** A component is a drawable object that can be interacted with. <br>
@@ -96,17 +97,21 @@ abstract class Component(
      * **make sure to call super [Component.preRender]!**
      */
     override fun preRender() {
+        // todo memory hog method
         animations.removeIf { it.finished }
         transforms.removeIf { it.finished }
 
         val delta = clock.getDelta()
-        animations.forEach { it.update(delta) }
-        transforms.forEach { it.update(delta) }
+        animations.forEachNoAlloc {
+            it.update(delta)
+            if (!it.finished) wantRedraw()
+        }
+        transforms.forEachNoAlloc {
+            it.update(delta)
+            if (!it.finished) wantRedraw()
+            it.apply(renderer)
+        }
         color.update(delta)
-        animations.forEach { if (it.finished) layout.needsRedraw = true }
-        transforms.forEach { if (it.finished) layout.needsRedraw = true }
-
-        transforms.forEach { it.apply(renderer) }
     }
 
     /**
@@ -115,7 +120,7 @@ abstract class Component(
      * **make sure to call super [Component.postRender]!**
      */
     override fun postRender() {
-        transforms.forEach { it.unapply(renderer) }
+        transforms.forEachNoAlloc { it.unapply(renderer) }
     }
 
 

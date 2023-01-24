@@ -11,18 +11,19 @@ import cc.polyfrost.polyui.units.Vec2
 import cc.polyfrost.polyui.utils.IOUtils
 import cc.polyfrost.polyui.utils.IOUtils.toByteBuffer
 import cc.polyfrost.polyui.utils.px
-import org.lwjgl.nanovg.NVGColor
-import org.lwjgl.nanovg.NVGLUFramebuffer
-import org.lwjgl.nanovg.NVGPaint
+import org.lwjgl.nanovg.*
 import org.lwjgl.nanovg.NanoVG.*
-import org.lwjgl.nanovg.NanoVGGL3
 import org.lwjgl.opengl.GL30.*
+import org.lwjgl.stb.STBImage
+import org.lwjgl.system.MemoryUtil
+import java.io.InputStreamReader
 import java.nio.ByteBuffer
+import kotlin.math.max
 
 
 class NVGRenderer : Renderer() {
-    /** permanently allocated paint for a framebuffer. This is because so many are allocated so much that it is better just to permanently allocate one. */
-    private val fboPaint: NVGPaint = NVGPaint.create()
+    private val nvgPaint: NVGPaint = NVGPaint.create()
+    private val nvgColor: NVGColor = NVGColor.malloc()
     private val fbos: MutableMap<Framebuffer, NVGLUFramebuffer> = mutableMapOf()
     private val images: MutableMap<Image, NVGImage> = mutableMapOf()
     private val fonts: MutableMap<Font, NVGFont> = mutableMapOf()
@@ -59,14 +60,10 @@ class NVGRenderer : Renderer() {
 
     override fun rotate(angleRadians: Double) = nvgRotate(vg, angleRadians.toFloat())
 
-    override fun drawFramebuffer(fbo: Framebuffer, x: Float, y: Float, width: Int, height: Int) {
+    override fun drawFramebuffer(fbo: Framebuffer, x: Float, y: Float, width: Float, height: Float) {
+        // todo framebuffers dont work properly lol
         val framebuffer = fbos[fbo] ?: throw IllegalStateException("unknown framebuffer!")
-        bindFramebuffer(fbo)
-        nvgBeginPath(vg)
-        nvgRect(vg, x, y, width.toFloat(), height.toFloat())
-        nvgImagePattern(vg, x, y, width.toFloat(), height.toFloat(), 0F, framebuffer.image(), 1F, fboPaint)
-        nvgFill(vg)
-        unbindFramebuffer(fbo)
+        drawImage(framebuffer.image(), x, y, width, height, null)
     }
 
     override fun drawText(
@@ -82,34 +79,35 @@ class NVGRenderer : Renderer() {
         nvgFontSize(vg, fontSize)
         nvgFontFaceId(vg, getFont(font).id)
         nvgTextAlign(vg, NVG_ALIGN_LEFT or NVG_ALIGN_TOP)
-        val color = color(color)
+        color(color)
         if (width != null) {
             nvgTextBox(vg, x, y, width, text)
         } else {
             nvgText(vg, x, y, text)
         }
-        nvgFillColor(vg, color)
-        color.free()
+        nvgFillColor(vg, nvgColor)
     }
 
     override fun getTextWidth(font: Font, text: String, fontSize: Float): Float {
         TODO("Not yet implemented")
     }
 
-    override fun drawImage(image: Image, x: Float, y: Float, colorMask: Color) {
-        val paint = NVGPaint.calloc()
+    override fun drawImage(image: Image, x: Float, y: Float, colorMask: Color?) {
         val img = getImage(image)
+        drawImage(img.id, x, y, img.width, img.height, colorMask)
+    }
+
+    fun drawImage(img: Int, x: Float, y: Float, width: Float, height: Float, colorMask: Color?) {
         nvgBeginPath(vg)
-        nvgImagePattern(vg, x, y, img.width, img.height, 0F, img.id, 1F, paint)
-        nvgRGBA(colorMask.r, colorMask.g, colorMask.b, colorMask.a, paint.innerColor())
-        nvgRect(vg, x, y, img.width, img.height)
-        nvgFillPaint(vg, paint)
+        nvgImagePattern(vg, x, y, width, height, 0F, img, 1F, nvgPaint)
+        if (colorMask != null) nvgRGBA(colorMask.r, colorMask.g, colorMask.b, colorMask.a, nvgPaint.innerColor())
+        nvgRect(vg, x, y, width, height)
+        nvgFillPaint(vg, nvgPaint)
         nvgFill(vg)
-        paint.free()
     }
 
     override fun createFramebuffer(width: Int, height: Int, type: Settings.BufferType): Framebuffer {
-        val f = Framebuffer(width, height, fbos.size + 69420, type)
+        val f = Framebuffer(width.toFloat(), height.toFloat(), fbos.size + 69420, type)
         fbos[f] = NanoVGGL3.nvgluCreateFramebuffer(
             vg,
             width,
@@ -136,9 +134,12 @@ class NVGRenderer : Renderer() {
     override fun drawRect(x: Float, y: Float, width: Float, height: Float, color: Color) {
         nvgBeginPath(vg)
         nvgRect(vg, x, y, width, height)
-        val nvgColor = color(color)
+        color(color)
         nvgFill(vg)
-        nvgColor.free()
+    }
+
+    override fun initImage(image: Image) {
+        getImage(image)
     }
 
     override fun drawRectangleVaried(
@@ -154,9 +155,8 @@ class NVGRenderer : Renderer() {
     ) {
         nvgBeginPath(vg)
         nvgRoundedRectVarying(vg, x, y, width, height, topLeft, topRight, bottomLeft, bottomRight)
-        val nvgColor = color(color)
+        color(color)
         nvgFill(vg)
-        nvgColor.free()
     }
 
     override fun textBounds(font: Font, text: String, fontSize: Float, wrapWidth: Float): Vec2<Unit.Pixel> {
@@ -165,11 +165,9 @@ class NVGRenderer : Renderer() {
         return Vec2(out[2].px(), out[3].px())
     }
 
-    private fun color(color: Color): NVGColor {
-        val nvgColor = NVGColor.calloc()
+    private fun color(color: Color) {
         nvgRGBA(color.r, color.g, color.b, color.a, nvgColor)
         nvgFillColor(vg, nvgColor)
-        return nvgColor
     }
 
     private fun getFont(font: Font): NVGFont {
@@ -182,9 +180,50 @@ class NVGRenderer : Renderer() {
 
     private fun getImage(image: Image): NVGImage {
         return images[image] ?: run {
-            val data = IOUtils.getResourceAsStream(image.fileName).toByteBuffer()
-            val img = nvgCreateImageMem(vg, 0, data)
-            NVGImage(img, image.width.toFloat(), image.height.toFloat(), data).also { images[image] = it }
+            val data: ByteBuffer
+            when (image.type) {
+                Image.Type.PNG -> {
+                    val w = IntArray(1)
+                    val h = IntArray(1)
+                    data = STBImage.stbi_load_from_memory(
+                        IOUtils.getResourceAsStream(image.fileName).toByteBuffer(),
+                        w, h, IntArray(1), 4
+                    )
+                        ?: throw Exception("Failed to initialize image: $image")
+                    image.width = w[0]
+                    image.height = h[0]
+                }
+
+                Image.Type.SVG -> {
+                    val d = InputStreamReader(IOUtils.getResourceAsStream(image.fileName)).readText() as CharSequence
+                    val svg =
+                        NanoSVG.nsvgParse(d, "px", 96F) ?: throw Exception("Failed to open SVG: $image (invalid data?)")
+                    val raster = NanoSVG.nsvgCreateRasterizer()
+                    val scale = if (image.width != null) {
+                        max(image.width!! / svg.width(), image.height!! / svg.height())
+                    } else {
+                        1F
+                    }
+                    image.width = (svg.width() * scale).toInt()
+                    image.height = (svg.height() * scale).toInt()
+                    data = MemoryUtil.memAlloc(image.width!! * image.height!! * 4)
+                    NanoSVG.nsvgRasterize(
+                        raster,
+                        svg,
+                        0F,
+                        0F,
+                        scale,
+                        data,
+                        image.width!!,
+                        image.height!!,
+                        image.width!! * 4
+                    )
+                    NanoSVG.nsvgDeleteRasterizer(raster)
+                    NanoSVG.nsvgDelete(svg)
+                }
+            }
+            val img = nvgCreateImageRGBA(vg, image.width!!, image.height!!, 0, data)
+            NVGImage(img, image.width!!.toFloat(), image.height!!.toFloat(), data).also { images[image] = it }
         }
     }
 

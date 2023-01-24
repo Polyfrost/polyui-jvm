@@ -4,6 +4,7 @@ import cc.polyfrost.polyui.components.Focusable
 import cc.polyfrost.polyui.events.EventManager
 import cc.polyfrost.polyui.layouts.Layout
 import cc.polyfrost.polyui.renderer.Renderer
+import cc.polyfrost.polyui.utils.forEachNoAlloc
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -47,7 +48,7 @@ import org.slf4j.LoggerFactory
  */
 class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg val layouts: Layout) {
     val LOGGER: Logger = LoggerFactory.getLogger("PolyUI").also { it.info("PolyUI initializing") }
-    private var renderHooks = Array<Renderer.() -> Unit>(5) { {} }
+    private var renderHooks = ArrayList<Renderer.() -> Unit>(5)
     val eventManager = EventManager(this)
     private val settings = renderer.settings
     var focused: (Focusable)? = null
@@ -63,10 +64,11 @@ class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg val
     }
 
     fun onResize(newWidth: Int, newHeight: Int) {
+        println("resize: $newWidth x $newHeight")
         layouts.forEach {
             it.rescale(
-                this.width.toFloat() / newWidth.toFloat(),
-                this.height.toFloat() / newHeight.toFloat()
+                newWidth.toFloat() / this.width.toFloat(),
+                newHeight.toFloat() / this.height.toFloat()
             )
         }
         layouts.forEach {
@@ -81,22 +83,15 @@ class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg val
         renderer.beginFrame(width, height)
         for (layout in layouts) {
             layout.reRenderIfNecessary()
-            renderer.drawFramebuffer(layout.fbo, layout.width(), layout.height())
+            renderer.drawFramebuffer(layout.fbo, layout.x(), layout.y())
         }
-        //renderHooks.forEach { it(renderer) }
+        renderHooks.forEachNoAlloc { it(renderer) }
         renderer.endFrame()
     }
 
     /** add something to be rendered after each frame. */
     fun addRenderHook(func: Renderer.() -> Unit) {
-        // why not just use an ArrayList? well, they allocate memory when they are iterated and I don't want that.
-        if (renderHooks.lastIndex + 2 > renderHooks.size) {
-            LOGGER.debug("Expanding render hook array: ${renderHooks.size} -> ${renderHooks.size + 5}")
-            val array = Array<Renderer.() -> Unit>(renderHooks.size + 5) { {} }
-            System.arraycopy(renderHooks, 0, array, 0, renderHooks.lastIndex)
-            renderHooks = array
-        }
-        renderHooks[renderHooks.lastIndex + 1] = func
+        renderHooks.add(func)
     }
 
     fun cleanup() {

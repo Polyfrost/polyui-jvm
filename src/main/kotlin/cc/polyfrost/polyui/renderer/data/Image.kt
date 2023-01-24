@@ -1,6 +1,11 @@
 package cc.polyfrost.polyui.renderer.data
 
-data class Image(val fileName: String, val width: Int, val height: Int, val type: Type = Type.from(fileName)) {
+data class Image(
+    val fileName: String,
+    var width: Int? = null,
+    var height: Int? = null,
+    val type: Type = Type.from(fileName)
+) {
     enum class Type {
         PNG, SVG;
 

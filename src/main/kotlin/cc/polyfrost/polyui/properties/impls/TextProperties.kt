@@ -5,7 +5,7 @@ import cc.polyfrost.polyui.events.ComponentEvent
 import cc.polyfrost.polyui.properties.Properties
 import cc.polyfrost.polyui.renderer.data.Font
 
-class TextProperties : Properties() {
+open class TextProperties : Properties() {
     override val color: Color = Color.WHITE
     override val padding: Float = 0F
     val font = Font("/fonts/Inter-Regular.ttf")

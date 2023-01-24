@@ -4,6 +4,7 @@ import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.components.Component
 import cc.polyfrost.polyui.events.ComponentEvent
 import cc.polyfrost.polyui.properties.impls.BlockProperties
+import cc.polyfrost.polyui.properties.impls.ImageBlockProperties
 import cc.polyfrost.polyui.properties.impls.TextProperties
 import java.util.*
 
@@ -16,6 +17,7 @@ abstract class Properties : Cloneable {
     companion object {
         private val properties: MutableMap<String, Properties> = mutableMapOf(
             "cc.polyfrost.polyui.components.impls.Block" to BlockProperties(),
+            "cc.polyfrost.polyui.components.impls.ImageBlock" to ImageBlockProperties(),
             "cc.polyfrost.polyui.components.impls.Text" to TextProperties()
         )
 

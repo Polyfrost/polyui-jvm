@@ -34,7 +34,13 @@ abstract class Renderer {
     abstract fun scale(x: Float, y: Float)
     abstract fun rotate(angleRadians: Double)
 
-    abstract fun drawFramebuffer(fbo: Framebuffer, x: Float, y: Float, width: Int = fbo.width, height: Int = fbo.height)
+    abstract fun drawFramebuffer(
+        fbo: Framebuffer,
+        x: Float,
+        y: Float,
+        width: Float = fbo.width,
+        height: Float = fbo.height
+    )
 
     abstract fun drawText(
         font: Font,
@@ -48,7 +54,7 @@ abstract class Renderer {
 
     abstract fun getTextWidth(font: Font, text: String, fontSize: Float): Float
 
-    abstract fun drawImage(image: Image, x: Float, y: Float, colorMask: Color = Color.NONE)
+    abstract fun drawImage(image: Image, x: Float, y: Float, colorMask: Color? = null)
 
     /** Create a new framebuffer. It is down to you (as a rendering implementation) to cache this, and dispose of it as necessary. */
     abstract fun createFramebuffer(width: Int, height: Int, type: Settings.BufferType): Framebuffer
@@ -61,6 +67,9 @@ abstract class Renderer {
     abstract fun supportsRenderbuffer(): Boolean
 
     abstract fun drawRect(x: Float, y: Float, width: Float, height: Float, color: Color)
+
+    /** Function that can be called to explicitly initialize an image. This is used mainly for getting the size of an image, or to ensure an SVG has been rasterized. */
+    abstract fun initImage(image: Image)
 
     abstract fun drawRectangleVaried(
         x: Float,

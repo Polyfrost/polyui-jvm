@@ -1,9 +1,11 @@
 package cc.polyfrost.polyui
 
 import cc.polyfrost.polyui.components.impls.Block
+import cc.polyfrost.polyui.components.impls.ImageBlock
 import cc.polyfrost.polyui.events.ComponentEvent
 import cc.polyfrost.polyui.events.ComponentEvent.Companion.events
 import cc.polyfrost.polyui.layouts.impls.PixelLayout
+import cc.polyfrost.polyui.renderer.data.Image
 import cc.polyfrost.polyui.renderer.impl.GLWindow
 import cc.polyfrost.polyui.renderer.impl.NVGRenderer
 import cc.polyfrost.polyui.units.Point
@@ -27,6 +29,14 @@ fun main() {
                     ComponentEvent.MouseReleased(0).on {
                         println("Mouse released!")
                     })
+            ),
+            Block(
+                at = Point(100.px(), 0.px()),
+                size = Size(50.px(), 50.px()),
+            ),
+            ImageBlock(
+                Image("/test.png"),
+                at = Point(50.px(), 10.px())
             )
         )
     )

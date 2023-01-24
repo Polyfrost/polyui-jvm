@@ -9,7 +9,7 @@ import cc.polyfrost.polyui.units.Unit
 import cc.polyfrost.polyui.units.Vec2
 import cc.polyfrost.polyui.utils.px
 
-class Text(
+open class Text(
     properties: Properties = Properties.get("cc.polyfrost.polyui.components.impls.Text"),
     var text: String, val fontSize: Unit.Pixel = 12.px(), val wrapWidth: Unit? = null,
     at: Vec2<Unit>, size: Size<Unit>? = null,

@@ -16,8 +16,8 @@ object IOUtils {
     }
 
     fun InputStream.toByteBuffer(): ByteBuffer {
-        this.close()
         val bytes = this.readBytes()
+        this.close()
         return ByteBuffer.allocateDirect(bytes.size).order(ByteOrder.nativeOrder()).put(bytes).flip() as ByteBuffer
     }
 }
