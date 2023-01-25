@@ -1,24 +1,22 @@
 package cc.polyfrost.polyui.animate
 
 abstract class Animation(val durationMillis: Long, val from: Float = 0f, val to: Float = 100f) {
-    private var value: Float = from
+    var passedTime = 0L
+        private set
     var finished: Boolean = false
         private set
 
     fun update(deltaTimeMillis: Long): Float {
         if (finished) return to
-        value += getValue(deltaTimeMillis) / durationMillis * (to - from)
-        if (value >= to) {
-            value = to
-            finished = true
-        }
-        return value
+        passedTime += deltaTimeMillis
+        finished = passedTime + deltaTimeMillis >= durationMillis
+        return getValue(getPercentComplete()) * (to - from) + from
     }
 
-    fun getPercentComplete(): Float {
-        return value / to
+    inline fun getPercentComplete(): Float {
+        return (passedTime / durationMillis).toFloat()
     }
 
-    protected abstract fun getValue(deltaTimeMillis: Long): Float
+    protected abstract fun getValue(percent: Float): Float
 
 }

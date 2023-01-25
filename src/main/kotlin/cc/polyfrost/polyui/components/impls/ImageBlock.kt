@@ -5,7 +5,6 @@ import cc.polyfrost.polyui.events.ComponentEvent
 import cc.polyfrost.polyui.properties.Properties
 import cc.polyfrost.polyui.properties.impls.ImageBlockProperties
 import cc.polyfrost.polyui.renderer.data.Image
-import cc.polyfrost.polyui.units.Size
 import cc.polyfrost.polyui.units.Unit
 import cc.polyfrost.polyui.units.Vec2
 import cc.polyfrost.polyui.utils.px
@@ -13,9 +12,9 @@ import cc.polyfrost.polyui.utils.px
 open class ImageBlock(
     private val image: Image,
     properties: Properties = Properties.get<ImageBlockProperties>("cc.polyfrost.polyui.components.impls.ImageBlock"),
-    at: Vec2<Unit>, size: Size<Unit>? = null,
+    at: Vec2<Unit>,
     vararg events: ComponentEvent.Handler
-) : Component(properties, at, size, *events) {
+) : Component(properties, at, null, *events) {
 
     override fun render() {
         renderer.drawImage(image, x(), y())

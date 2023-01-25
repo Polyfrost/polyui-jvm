@@ -86,25 +86,11 @@ class GLWindow(title: String, width: Int, height: Int) : Window(title, width, he
         //var lastMemory = -1L
         var lastSecond = System.currentTimeMillis()
 
-        // Update the state of the window (possibly not needed, I just copied this from polyui)
-        MemoryStack.stackPush().use {
-            val width = it.mallocInt(1)
-            val height = it.mallocInt(1)
-            val contentScaleX = it.mallocFloat(1)
-            val contentScaleY = it.mallocFloat(1)
-            glfwGetFramebufferSize(handle, width, height)
-            glfwGetWindowContentScale(handle, contentScaleX, contentScaleY)
-
-            this.width = width[0]
-            this.height = height[0]
-            //polyUI.onResize(width[0], height[0])
-        }
-
         createCallbacks()
         while (!glfwWindowShouldClose(handle)) {
 
             glViewport(0, 0, width, height)
-            glClearColor(0f, 0f, 0f, 0f)
+            glClearColor(0.1f, 0.1f, 0.1f, 0f)
             glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
 
             this.polyUI.render()

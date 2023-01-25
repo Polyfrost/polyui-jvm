@@ -8,7 +8,7 @@ import cc.polyfrost.polyui.renderer.data.Font
 open class TextProperties : Properties() {
     override val color: Color = Color.WHITE
     override val padding: Float = 0F
-    val font = Font("/fonts/Inter-Regular.ttf")
+    val font = Font("/Inter-Regular.ttf")
 
     override fun accept(event: ComponentEvent) {
     }

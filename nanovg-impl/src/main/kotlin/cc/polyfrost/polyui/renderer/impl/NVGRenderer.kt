@@ -1,5 +1,6 @@
 package cc.polyfrost.polyui.renderer.impl
 
+import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.properties.Settings
 import cc.polyfrost.polyui.renderer.Renderer
@@ -15,6 +16,7 @@ import org.lwjgl.nanovg.*
 import org.lwjgl.nanovg.NanoVG.*
 import org.lwjgl.opengl.GL30.*
 import org.lwjgl.stb.STBImage
+import org.lwjgl.stb.STBImageResize
 import org.lwjgl.system.MemoryUtil
 import java.io.InputStreamReader
 import java.nio.ByteBuffer
@@ -44,8 +46,6 @@ class NVGRenderer : Renderer() {
 
     override fun beginFrame(width: Int, height: Int) {
         checkInit()
-        glPushAttrib(GL_ALL_ATTRIB_BITS)
-        glDisable(GL_ALPHA_TEST)
         nvgBeginFrame(vg, width.toFloat(), height.toFloat(), 1F)
     }
 
@@ -54,6 +54,8 @@ class NVGRenderer : Renderer() {
 
     override fun cancelFrame() = nvgCancelFrame(vg)
 
+    override fun globalAlpha(alpha: Float) = nvgGlobalAlpha(vg, alpha)
+
     override fun translate(x: Float, y: Float) = nvgTranslate(vg, x, y)
 
     override fun scale(x: Float, y: Float) = nvgScale(vg, x, y)
@@ -61,7 +63,6 @@ class NVGRenderer : Renderer() {
     override fun rotate(angleRadians: Double) = nvgRotate(vg, angleRadians.toFloat())
 
     override fun drawFramebuffer(fbo: Framebuffer, x: Float, y: Float, width: Float, height: Float) {
-        // todo framebuffers dont work properly lol
         val framebuffer = fbos[fbo] ?: throw IllegalStateException("unknown framebuffer!")
         drawImage(framebuffer.image(), x, y, width, height, null)
     }
@@ -70,7 +71,7 @@ class NVGRenderer : Renderer() {
         font: Font,
         x: Float,
         y: Float,
-        width: Float?,
+        width: Float,
         text: String,
         color: Color,
         fontSize: Float
@@ -80,16 +81,12 @@ class NVGRenderer : Renderer() {
         nvgFontFaceId(vg, getFont(font).id)
         nvgTextAlign(vg, NVG_ALIGN_LEFT or NVG_ALIGN_TOP)
         color(color)
-        if (width != null) {
+        if (width != 0f) {
             nvgTextBox(vg, x, y, width, text)
         } else {
             nvgText(vg, x, y, text)
         }
         nvgFillColor(vg, nvgColor)
-    }
-
-    override fun getTextWidth(font: Font, text: String, fontSize: Float): Float {
-        TODO("Not yet implemented")
     }
 
     override fun drawImage(image: Image, x: Float, y: Float, colorMask: Color?) {
@@ -112,7 +109,7 @@ class NVGRenderer : Renderer() {
             vg,
             width,
             height,
-            NVG_IMAGE_REPEATX or NVG_IMAGE_REPEATY or NVG_IMAGE_GENERATE_MIPMAPS
+            NVG_IMAGE_REPEATX or NVG_IMAGE_REPEATY
         ) ?: throw ExceptionInInitializerError("Could not create: $f")
         return f
     }
@@ -122,8 +119,12 @@ class NVGRenderer : Renderer() {
         fbos[fbo] ?: throw IllegalStateException("Framebuffer not found when deleting it, already cleaned?")
     )
 
-    override fun bindFramebuffer(fbo: Framebuffer, mode: Framebuffer.Mode) =
+    override fun bindFramebuffer(fbo: Framebuffer, mode: Framebuffer.Mode) {
         NanoVGGL3.nvgluBindFramebuffer(vg, fbos[fbo])
+        glViewport(0, 0, fbo.width.toInt(), fbo.height.toInt())
+        glClearColor(0F, 0F, 0F, 0F)
+        glClear(GL_COLOR_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
+    }
 
     override fun unbindFramebuffer(fbo: Framebuffer, mode: Framebuffer.Mode) = NanoVGGL3.nvgluBindFramebuffer(vg, null)
 
@@ -161,6 +162,8 @@ class NVGRenderer : Renderer() {
 
     override fun textBounds(font: Font, text: String, fontSize: Float, wrapWidth: Float): Vec2<Unit.Pixel> {
         val out = FloatArray(4)
+        nvgFontFaceId(vg, getFont(font).id)
+        nvgFontSize(vg, fontSize)
         nvgTextBounds(vg, 0F, 0F, text, out)
         return Vec2(out[2].px(), out[3].px())
     }
@@ -180,6 +183,7 @@ class NVGRenderer : Renderer() {
 
     private fun getImage(image: Image): NVGImage {
         return images[image] ?: run {
+            if (image.width != null && image.height == null) throw ExceptionInInitializerError("$image width is set but height is not!")
             val data: ByteBuffer
             when (image.type) {
                 Image.Type.PNG -> {
@@ -188,10 +192,28 @@ class NVGRenderer : Renderer() {
                     data = STBImage.stbi_load_from_memory(
                         IOUtils.getResourceAsStream(image.fileName).toByteBuffer(),
                         w, h, IntArray(1), 4
-                    )
-                        ?: throw Exception("Failed to initialize image: $image")
-                    image.width = w[0]
-                    image.height = h[0]
+                    ).also {
+                        if (it == null) {
+                            throw Exception("Failed to initialize image: $image")
+                        }
+                        if (image.width == null) {
+                            image.width = w[0]
+                            image.height = h[0]
+                        } else {
+                            PolyUI.LOGGER.info("resizing $image: ${w[0]}x${h[0]} -> ${image.width}x${image.height}")
+                            STBImageResize.stbir_resize_uint8(
+                                it,
+                                w[0],
+                                h[0],
+                                0,
+                                it,
+                                image.width!!,
+                                image.height!!,
+                                0,
+                                4
+                            )
+                        }
+                    } ?: throw Exception("Failed to initialize image: $image")
                 }
 
                 Image.Type.SVG -> {
@@ -200,7 +222,7 @@ class NVGRenderer : Renderer() {
                         NanoSVG.nsvgParse(d, "px", 96F) ?: throw Exception("Failed to open SVG: $image (invalid data?)")
                     val raster = NanoSVG.nsvgCreateRasterizer()
                     val scale = if (image.width != null) {
-                        max(image.width!! / svg.width(), image.height!! / svg.height())
+                        max(image.width!! / svg.width(), (image.height ?: 0) / svg.height())
                     } else {
                         1F
                     }

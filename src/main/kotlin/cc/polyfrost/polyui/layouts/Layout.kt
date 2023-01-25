@@ -36,12 +36,12 @@ abstract class Layout(override val at: Point<Unit>, override var sized: Size<Uni
         }
         if (needsRedraw) {
             // todo framebuffer issues
-            //renderer.bindFramebuffer(fbo)
+//            renderer.bindFramebuffer(fbo)
             preRender()
             render()
             postRender()
-            //renderer.unbindFramebuffer(fbo)
-            //needsRedraw = false
+//            renderer.unbindFramebuffer(fbo)
+//            needsRedraw = false
         }
     }
 

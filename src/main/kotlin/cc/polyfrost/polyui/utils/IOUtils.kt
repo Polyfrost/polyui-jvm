@@ -7,7 +7,8 @@ import java.nio.ByteOrder
 object IOUtils {
     @JvmStatic
     fun getResourceAsStream(fileName: String): InputStream {
-        return IOUtils::class.java.getResourceAsStream(fileName) ?: throw Exception("Resource $fileName not found")
+        return IOUtils::class.java.getResourceAsStream(fileName)
+            ?: throw Exception("Resource $fileName not found (check your Properties, and make sure the file is in the resources folder/on classpath)")
     }
 
     @JvmStatic

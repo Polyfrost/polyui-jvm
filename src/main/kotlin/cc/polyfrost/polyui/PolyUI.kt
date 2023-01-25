@@ -47,7 +47,6 @@ import org.slf4j.LoggerFactory
  *
  */
 class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg val layouts: Layout) {
-    val LOGGER: Logger = LoggerFactory.getLogger("PolyUI").also { it.info("PolyUI initializing") }
     private var renderHooks = ArrayList<Renderer.() -> Unit>(5)
     val eventManager = EventManager(this)
     private val settings = renderer.settings
@@ -58,12 +57,16 @@ class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg val
         layouts.forEach { it.calculateBounds() }
         layouts.forEach {
             it.fbo = renderer.createFramebuffer(it.width().toInt(), it.height().toInt(), settings.bufferType)
+            if (it.width() > width || it.height() > height) {
+                LOGGER.warn("Layout $it is larger than the window. This may cause issues.")
+            }
         }
         layouts.forEach { it.debugPrint() }
         LOGGER.info("PolyUI initialized")
     }
 
     fun onResize(newWidth: Int, newHeight: Int) {
+        // todo very amongsus
         println("resize: $newWidth x $newHeight")
         layouts.forEach {
             it.rescale(
@@ -83,7 +86,7 @@ class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg val
         renderer.beginFrame(width, height)
         for (layout in layouts) {
             layout.reRenderIfNecessary()
-            renderer.drawFramebuffer(layout.fbo, layout.x(), layout.y())
+            //renderer.drawFramebuffer(layout.fbo, layout.x(), layout.y())
         }
         renderHooks.forEachNoAlloc { it(renderer) }
         renderer.endFrame()
@@ -96,5 +99,10 @@ class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg val
 
     fun cleanup() {
         // todo
+    }
+
+    companion object {
+        @JvmField
+        val LOGGER: Logger = LoggerFactory.getLogger("PolyUI").also { it.info("PolyUI initializing") }
     }
 }

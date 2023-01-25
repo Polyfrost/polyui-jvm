@@ -12,17 +12,13 @@ import cc.polyfrost.polyui.units.Size
 import cc.polyfrost.polyui.units.Unit
 import cc.polyfrost.polyui.utils.Clock
 import cc.polyfrost.polyui.utils.forEachNoAlloc
+import cc.polyfrost.polyui.utils.removeIfNoAlloc
 import java.util.*
 
 /** A component is a drawable object that can be interacted with. <br>
  * It has a [properties] attached to it, which contains various pieces of information about how this component should look, and its default responses to events. <br>*/
 abstract class Component(
-    /** [Properties] of this component.
-     *
-     * This is left `open` in case you need to do something such as:
-     *
-     * `override val properties: Type = properties as Type` */
-    open val properties: Properties,
+    val properties: Properties,
     /** position relative to this layout. */
     override val at: Point<Unit>,
     override var sized: Size<Unit>? = null,
@@ -70,6 +66,18 @@ abstract class Component(
         transforms.add(transformOp)
     }
 
+    fun scale(byX: Float, byY: Float, animation: Animation? = null) {
+        transform(TransformOp.Scale(byX, byY, this, animation))
+    }
+
+    fun rotate(degrees: Double, animation: Animation? = null) {
+        transform(TransformOp.Rotate(degrees, this, animation))
+    }
+
+    fun translate(byX: Float, byY: Float, animation: Animation? = null) {
+        transform(TransformOp.Translate(byX, byY, this, animation))
+    }
+
     open fun animate(animation: Animation) {
         animations.add(animation)
     }
@@ -97,9 +105,8 @@ abstract class Component(
      * **make sure to call super [Component.preRender]!**
      */
     override fun preRender() {
-        // todo memory hog method
-        animations.removeIf { it.finished }
-        transforms.removeIf { it.finished }
+        animations.removeIfNoAlloc { it.finished }
+        transforms.removeIfNoAlloc { it.finished }
 
         val delta = clock.getDelta()
         animations.forEachNoAlloc {

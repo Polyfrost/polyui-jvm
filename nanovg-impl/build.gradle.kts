@@ -7,6 +7,7 @@ dependencies {
     implementation("org.lwjgl:lwjgl-nanovg:3.3.1")
     implementation("org.lwjgl:lwjgl-opengl:3.3.1")
     implementation("org.lwjgl:lwjgl-stb:3.3.1")
+    implementation("org.slf4j", "slf4j-api", "1.6.1")
 
     // Use glfw for test window runner
     implementation("org.lwjgl:lwjgl-glfw:3.3.1")

@@ -17,3 +17,7 @@ fun Int.px(): Unit.Pixel {
 fun Double.px(): Unit.Pixel {
     return Unit.Pixel(this.toFloat())
 }
+
+fun Int.seconds(): Long {
+    return this * 1000L
+}

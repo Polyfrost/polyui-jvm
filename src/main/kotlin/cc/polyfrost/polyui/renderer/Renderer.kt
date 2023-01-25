@@ -30,6 +30,9 @@ abstract class Renderer {
     abstract fun endFrame()
     abstract fun cancelFrame()
 
+    abstract fun globalAlpha(alpha: Float)
+
+
     abstract fun translate(x: Float, y: Float)
     abstract fun scale(x: Float, y: Float)
     abstract fun rotate(angleRadians: Double)
@@ -46,13 +49,11 @@ abstract class Renderer {
         font: Font,
         x: Float,
         y: Float,
-        width: Float? = null,
+        width: Float = 0f,
         text: String,
         color: Color,
         fontSize: Float
     )
-
-    abstract fun getTextWidth(font: Font, text: String, fontSize: Float): Float
 
     abstract fun drawImage(image: Image, x: Float, y: Float, colorMask: Color? = null)
 

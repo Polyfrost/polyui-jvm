@@ -11,19 +11,19 @@ import cc.polyfrost.polyui.utils.px
 
 open class Text(
     properties: Properties = Properties.get("cc.polyfrost.polyui.components.impls.Text"),
-    var text: String, val fontSize: Unit.Pixel = 12.px(), val wrapWidth: Unit? = null,
+    var text: String, val fontSize: Unit.Pixel = 12.px(), private val wrapWidth: Unit? = 100.px(),
     at: Vec2<Unit>, size: Size<Unit>? = null,
     vararg events: ComponentEvent.Handler
 ) : Component(properties, at, size, *events) {
-    override val properties: TextProperties = properties as TextProperties
+    val props: TextProperties = properties as TextProperties
 
     override fun render() {
-        renderer.drawText(properties.font, x(), y(), width(), text, properties.color, fontSize.get())
+        renderer.drawText(props.font, x(), y(), width(), text, props.color, fontSize.get())
     }
 
     override fun getSize(): Vec2<Unit> {
         if (wrapWidth == null) throw Exception("Auto-sizing for text block failed: You must specify a wrap width")
-        return renderer.textBounds(properties.font, text, fontSize.get(), wrapWidth.get()) as Vec2<Unit>
+        return renderer.textBounds(props.font, text, fontSize.get(), wrapWidth.get()) as Vec2<Unit>
     }
 
 }

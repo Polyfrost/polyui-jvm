@@ -6,7 +6,9 @@ import cc.polyfrost.polyui.layouts.Layout
 
 class EventManager(private val polyUI: PolyUI) {
     var mouseX: Float = 0F
+        private set
     var mouseY: Float = 0F
+        private set
     fun onKeyPressed(key: Int) {
         polyUI.focused?.accept(FocusedEvent.KeyPressed(key))
     }
@@ -29,12 +31,12 @@ class EventManager(private val polyUI: PolyUI) {
                     }
                 } else if (it.mouseOver) {
                     it.accept(ComponentEvent.MouseExited(x, y))
+                    it.mouseOver = false
                 }
             }
         }
     }
 
-    // memory efficiency is key kids. those 27 million bytes add up.
     private inline fun onApplicableLayouts(x: Float, y: Float, func: Layout.() -> Unit) {
         return polyUI.layouts.forEach { if (it.isInside(x, y)) func(it) }
     }

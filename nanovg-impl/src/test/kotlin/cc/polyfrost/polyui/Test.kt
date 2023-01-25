@@ -1,7 +1,10 @@
 package cc.polyfrost.polyui
 
+import cc.polyfrost.polyui.animate.animations.EaseInOutCubic
+import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.components.impls.Block
 import cc.polyfrost.polyui.components.impls.ImageBlock
+import cc.polyfrost.polyui.components.impls.Text
 import cc.polyfrost.polyui.events.ComponentEvent
 import cc.polyfrost.polyui.events.ComponentEvent.Companion.events
 import cc.polyfrost.polyui.layouts.impls.PixelLayout
@@ -11,6 +14,7 @@ import cc.polyfrost.polyui.renderer.impl.NVGRenderer
 import cc.polyfrost.polyui.units.Point
 import cc.polyfrost.polyui.units.Size
 import cc.polyfrost.polyui.utils.px
+import cc.polyfrost.polyui.utils.seconds
 
 fun main() {
     val window = GLWindow("Test", 800, 600)
@@ -25,6 +29,7 @@ fun main() {
                 events = events(
                     ComponentEvent.MousePressed(0).on {
                         println("Mouse pressed!")
+                        recolor(Color(1f, 0f, 1f, 1f), EaseInOutCubic(1.seconds()))
                     },
                     ComponentEvent.MouseReleased(0).on {
                         println("Mouse released!")
@@ -35,8 +40,12 @@ fun main() {
                 size = Size(50.px(), 50.px()),
             ),
             ImageBlock(
-                Image("/test.png"),
-                at = Point(50.px(), 10.px())
+                Image("/test.png", 100, 100),
+                at = Point(50.px(), 10.px()),
+            ),
+            Text(
+                text = "Hello, world!",
+                at = Point(0.px(), 0.px()),
             )
         )
     )
