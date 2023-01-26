@@ -2,8 +2,9 @@ package cc.polyfrost.polyui.color
 
 import cc.polyfrost.polyui.animate.Animation
 
-data class Color(val r: Byte, val g: Byte, val b: Byte, val a: Byte) {
-    constructor(r: Int, g: Int, b: Int, a: Int) : this(r.toByte(), g.toByte(), b.toByte(), a.toByte())
+/** an immutable color used by PolyUI.
+ * @see [Color.Mutable] */
+data class Color(val r: Int, val g: Int, val b: Int, val a: Int) {
     constructor(r: Float, g: Float, b: Float, a: Float) : this(
         (r * 255).toInt(),
         (g * 255).toInt(),
@@ -12,9 +13,10 @@ data class Color(val r: Byte, val g: Byte, val b: Byte, val a: Byte) {
     )
 
     fun getARGB(): Int {
-        return (a.toInt() shl 24) or (r.toInt() shl 16) or (g.toInt() shl 8) or b.toInt()
+        return (a shl 24) or (r shl 16) or (g shl 8) or b
     }
 
+    /** return a new, [mutable][Mutable] version of this color */
     fun toMutable(): Mutable {
         return Mutable(r, g, b, a)
     }
@@ -25,19 +27,26 @@ data class Color(val r: Byte, val g: Byte, val b: Byte, val a: Byte) {
         val BLACK = Color(0f, 0f, 0f, 1f)
     }
 
-    data class Mutable(var r: Byte, var g: Byte, var b: Byte, var a: Byte) {
-        private var animation: Animation? = null
-        var targetColor: Color? = null
-            private set
+    /** A mutable version of [Color], that supports [recoloring][recolor] with animations.*/
+    data class Mutable(var r: Int, var g: Int, var b: Int, var a: Int) {
+        private var animation: Array<Animation>? = null
 
         fun toImmutable(): Color {
             return Color(r, g, b, a)
         }
 
-        fun recolor(target: Color, animation: Animation? = null) {
-            if (animation != null) {
-                this.animation = animation
-                this.targetColor = target
+        fun recolor(target: Color, type: Animation.Type?, durationMillis: Long = 1000) {
+            if (type != null) {
+                this.animation = Array(4) {
+                    when (it) {
+                        0 -> type.create(durationMillis, r.toFloat(), target.r.toFloat())
+                        1 -> type.create(durationMillis, g.toFloat(), target.g.toFloat())
+                        2 -> type.create(durationMillis, b.toFloat(), target.b.toFloat())
+                        3 -> type.create(durationMillis, a.toFloat(), target.a.toFloat())
+                        else -> throw Exception("Invalid index")
+                    }
+                }
+
             } else {
                 this.r = target.r
                 this.g = target.g
@@ -48,27 +57,19 @@ data class Color(val r: Byte, val g: Byte, val b: Byte, val a: Byte) {
 
         fun update(deltaTimeMillis: Long) {
             if (animation != null) {
-                if (animation!!.finished) {
-                    this.r = targetColor!!.r
-                    this.g = targetColor!!.g
-                    this.b = targetColor!!.b
-                    this.a = targetColor!!.a
+                if (animation!![0].finished) {
                     animation = null
-                    targetColor = null
                     return
                 }
-
-                animation!!.update(deltaTimeMillis)
-                val percent = animation!!.getPercentComplete()
-                this.r = ((targetColor!!.r - r) * percent + r).toInt().toByte()
-                this.g = ((targetColor!!.g - g) * percent + g).toInt().toByte()
-                this.b = ((targetColor!!.b - b) * percent + b).toInt().toByte()
-                this.a = ((targetColor!!.a - a) * percent + a).toInt().toByte()
+                this.r = animation!![0].update(deltaTimeMillis).toInt().also { println(it) }
+                this.g = animation!![1].update(deltaTimeMillis).toInt()
+                this.b = animation!![2].update(deltaTimeMillis).toInt()
+                this.a = animation!![3].update(deltaTimeMillis).toInt()
             }
         }
 
         fun getARGB(): Int {
-            return (a * 255) shl 24 or ((r * 255) shl 16) or ((g * 255) shl 8) or (b * 255)
+            return (a shl 24) or (r shl 16) or (g shl 8) or b
         }
 
         fun isRecoloring(): Boolean {

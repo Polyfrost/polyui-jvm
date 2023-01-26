@@ -1,6 +1,5 @@
 package cc.polyfrost.polyui.renderer
 
-import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.properties.Settings
 import cc.polyfrost.polyui.renderer.data.Font
 import cc.polyfrost.polyui.renderer.data.Framebuffer
@@ -51,11 +50,11 @@ abstract class Renderer {
         y: Float,
         width: Float = 0f,
         text: String,
-        color: Color,
+        argb: Int,
         fontSize: Float
     )
 
-    abstract fun drawImage(image: Image, x: Float, y: Float, colorMask: Color? = null)
+    abstract fun drawImage(image: Image, x: Float, y: Float, colorMask: Int = 0)
 
     /** Create a new framebuffer. It is down to you (as a rendering implementation) to cache this, and dispose of it as necessary. */
     abstract fun createFramebuffer(width: Int, height: Int, type: Settings.BufferType): Framebuffer
@@ -67,7 +66,7 @@ abstract class Renderer {
     abstract fun unbindFramebuffer(fbo: Framebuffer, mode: Framebuffer.Mode = Framebuffer.Mode.ReadWrite)
     abstract fun supportsRenderbuffer(): Boolean
 
-    abstract fun drawRect(x: Float, y: Float, width: Float, height: Float, color: Color)
+    abstract fun drawRect(x: Float, y: Float, width: Float, height: Float, argb: Int)
 
     /** Function that can be called to explicitly initialize an image. This is used mainly for getting the size of an image, or to ensure an SVG has been rasterized. */
     abstract fun initImage(image: Image)
@@ -77,15 +76,15 @@ abstract class Renderer {
         y: Float,
         width: Float,
         height: Float,
-        color: Color,
+        argb: Int,
         topLeft: Float,
         topRight: Float,
         bottomLeft: Float,
         bottomRight: Float
     )
 
-    fun drawRoundRectangle(x: Float, y: Float, width: Float, height: Float, color: Color, radius: Float) =
-        drawRectangleVaried(x, y, width, height, color, radius, radius, radius, radius)
+    fun drawRoundRectangle(x: Float, y: Float, width: Float, height: Float, argb: Int, radius: Float) =
+        drawRectangleVaried(x, y, width, height, argb, radius, radius, radius, radius)
 
     abstract fun textBounds(font: Font, text: String, fontSize: Float, wrapWidth: Float): Vec2<Unit.Pixel>
 }

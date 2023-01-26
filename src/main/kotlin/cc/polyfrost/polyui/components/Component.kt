@@ -27,10 +27,9 @@ abstract class Component(
     private val eventHandlers: EnumMap<ComponentEvent.Type, Component.() -> kotlin.Unit> =
         EnumMap(ComponentEvent.Type::class.java)
 
-    // TODO perhaps optimize this to use an array
     private val animations: ArrayList<Animation> = ArrayList()
     private val transforms: ArrayList<TransformOp> = ArrayList()
-    private val color: Color.Mutable = properties.color.toMutable()
+    val color: Color.Mutable = properties.color.toMutable()
     private val clock = Clock()
     final override lateinit var renderer: Renderer
     final override lateinit var layout: Layout
@@ -82,8 +81,8 @@ abstract class Component(
         animations.add(animation)
     }
 
-    open fun recolor(toColor: Color, animation: Animation? = null) {
-        color.recolor(toColor, animation)
+    open fun recolor(toColor: Color, animation: Animation.Type, durationMillis: Long) {
+        color.recolor(toColor, animation, durationMillis)
     }
 
     override fun calculateBounds() {

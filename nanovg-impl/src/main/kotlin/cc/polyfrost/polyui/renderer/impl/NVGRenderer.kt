@@ -1,7 +1,6 @@
 package cc.polyfrost.polyui.renderer.impl
 
 import cc.polyfrost.polyui.PolyUI
-import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.properties.Settings
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.data.Font
@@ -64,7 +63,7 @@ class NVGRenderer : Renderer() {
 
     override fun drawFramebuffer(fbo: Framebuffer, x: Float, y: Float, width: Float, height: Float) {
         val framebuffer = fbos[fbo] ?: throw IllegalStateException("unknown framebuffer!")
-        drawImage(framebuffer.image(), x, y, width, height, null)
+        drawImage(framebuffer.image(), x, y, width, height, 0)
     }
 
     override fun drawText(
@@ -73,14 +72,14 @@ class NVGRenderer : Renderer() {
         y: Float,
         width: Float,
         text: String,
-        color: Color,
+        argb: Int,
         fontSize: Float
     ) {
         nvgBeginPath(vg)
         nvgFontSize(vg, fontSize)
         nvgFontFaceId(vg, getFont(font).id)
         nvgTextAlign(vg, NVG_ALIGN_LEFT or NVG_ALIGN_TOP)
-        color(color)
+        color(argb)
         if (width != 0f) {
             nvgTextBox(vg, x, y, width, text)
         } else {
@@ -89,15 +88,18 @@ class NVGRenderer : Renderer() {
         nvgFillColor(vg, nvgColor)
     }
 
-    override fun drawImage(image: Image, x: Float, y: Float, colorMask: Color?) {
+    override fun drawImage(image: Image, x: Float, y: Float, colorMask: Int) {
         val img = getImage(image)
         drawImage(img.id, x, y, img.width, img.height, colorMask)
     }
 
-    fun drawImage(img: Int, x: Float, y: Float, width: Float, height: Float, colorMask: Color?) {
+    fun drawImage(img: Int, x: Float, y: Float, width: Float, height: Float, colorMask: Int = 0) {
         nvgBeginPath(vg)
         nvgImagePattern(vg, x, y, width, height, 0F, img, 1F, nvgPaint)
-        if (colorMask != null) nvgRGBA(colorMask.r, colorMask.g, colorMask.b, colorMask.a, nvgPaint.innerColor())
+        if (colorMask != 0) nvgRGBA(
+            (colorMask shr 16 and 0xFF).toByte(), (colorMask shr 8 and 0xFF).toByte(),
+            (colorMask and 0xFF).toByte(), (colorMask shr 24 and 0xFF).toByte(), nvgPaint.innerColor()
+        )
         nvgRect(vg, x, y, width, height)
         nvgFillPaint(vg, nvgPaint)
         nvgFill(vg)
@@ -132,10 +134,10 @@ class NVGRenderer : Renderer() {
         return false
     }
 
-    override fun drawRect(x: Float, y: Float, width: Float, height: Float, color: Color) {
+    override fun drawRect(x: Float, y: Float, width: Float, height: Float, argb: Int) {
         nvgBeginPath(vg)
         nvgRect(vg, x, y, width, height)
-        color(color)
+        color(argb)
         nvgFill(vg)
     }
 
@@ -148,7 +150,7 @@ class NVGRenderer : Renderer() {
         y: Float,
         width: Float,
         height: Float,
-        color: Color,
+        argb: Int,
         topLeft: Float,
         topRight: Float,
         bottomLeft: Float,
@@ -156,7 +158,7 @@ class NVGRenderer : Renderer() {
     ) {
         nvgBeginPath(vg)
         nvgRoundedRectVarying(vg, x, y, width, height, topLeft, topRight, bottomLeft, bottomRight)
-        color(color)
+        color(argb)
         nvgFill(vg)
     }
 
@@ -168,8 +170,11 @@ class NVGRenderer : Renderer() {
         return Vec2(out[2].px(), out[3].px())
     }
 
-    private fun color(color: Color) {
-        nvgRGBA(color.r, color.g, color.b, color.a, nvgColor)
+    private fun color(argb: Int) {
+        nvgRGBA(
+            (argb shr 16 and 0xFF).toByte(), (argb shr 8 and 0xFF).toByte(),
+            (argb and 0xFF).toByte(), (argb shr 24 and 0xFF).toByte(), nvgColor
+        )
         nvgFillColor(vg, nvgColor)
     }
 

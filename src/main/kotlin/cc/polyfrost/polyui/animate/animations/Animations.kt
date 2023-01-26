@@ -3,7 +3,7 @@ package cc.polyfrost.polyui.animate.animations
 import cc.polyfrost.polyui.animate.Animation
 import kotlin.math.pow
 
-class EaseInBack(durationMillis: Long, start: Float = 0f, end: Float = 100f) : Animation(durationMillis, start, end) {
+class EaseInBack(durationMillis: Long, start: Float, end: Float) : Animation(durationMillis, start, end) {
     private val overshoot = 1.70158F
     private val overshoot2 = overshoot + 1
     override fun getValue(percent: Float): Float {
@@ -11,7 +11,7 @@ class EaseInBack(durationMillis: Long, start: Float = 0f, end: Float = 100f) : A
     }
 }
 
-class EaseOutBump(durationMillis: Long, start: Float = 0f, end: Float = 100f) :
+class EaseOutBump(durationMillis: Long, start: Float, end: Float) :
     Animation(durationMillis, start, end) {
     private val a: Double = 1.7
     private val b: Double = 2.7
@@ -20,14 +20,14 @@ class EaseOutBump(durationMillis: Long, start: Float = 0f, end: Float = 100f) :
     }
 }
 
-class EaseOutQuad(durationMillis: Long, start: Float = 0f, end: Float = 100f) :
+class EaseOutQuad(durationMillis: Long, start: Float, end: Float) :
     Animation(durationMillis, start, end) {
     override fun getValue(percent: Float): Float {
         return 1 - (1 - percent) * (1 - percent)
     }
 }
 
-class EaseOutExpo(durationMillis: Long, start: Float = 0f, end: Float = 100f) :
+class EaseOutExpo(durationMillis: Long, start: Float, end: Float) :
     Animation(durationMillis, start, end) {
     override fun getValue(percent: Float): Float {
         return if (percent == 1F) 1F
@@ -37,7 +37,7 @@ class EaseOutExpo(durationMillis: Long, start: Float = 0f, end: Float = 100f) :
 
 
 // -- easeInOuts --
-class EaseInOutCubic(durationMillis: Long, start: Float = 0f, end: Float = 100f) :
+class EaseInOutCubic(durationMillis: Long, start: Float, end: Float) :
     Animation(durationMillis, start, end) {
     override fun getValue(percent: Float): Float {
         return if (percent < 0.5) 4 * percent * percent * percent
@@ -45,7 +45,7 @@ class EaseInOutCubic(durationMillis: Long, start: Float = 0f, end: Float = 100f)
     }
 }
 
-class EaseInOutQuad(durationMillis: Long, start: Float = 0f, end: Float = 100f) :
+class EaseInOutQuad(durationMillis: Long, start: Float, end: Float) :
     Animation(durationMillis, start, end) {
     override fun getValue(percent: Float): Float {
         return if (percent < 0.5) 2 * percent * percent
@@ -53,7 +53,7 @@ class EaseInOutQuad(durationMillis: Long, start: Float = 0f, end: Float = 100f) 
     }
 }
 
-class EaseInOutQuart(durationMillis: Long, start: Float = 0f, end: Float = 100f) :
+class EaseInOutQuart(durationMillis: Long, start: Float, end: Float) :
     Animation(durationMillis, start, end) {
     override fun getValue(percent: Float): Float {
         return if (percent < 0.5) 8 * percent * percent * percent * percent

@@ -21,7 +21,7 @@ open class Block(
     private val props: BlockProperties = properties as BlockProperties
 
     override fun render() {
-        renderer.drawRoundRectangle(x(), y(), width(), height(), props.color, props.cornerRadius)
+        renderer.drawRoundRectangle(x(), y(), width(), height(), color.getARGB(), props.cornerRadius)
     }
 
 

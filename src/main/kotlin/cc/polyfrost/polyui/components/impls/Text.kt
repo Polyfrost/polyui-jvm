@@ -18,7 +18,7 @@ open class Text(
     val props: TextProperties = properties as TextProperties
 
     override fun render() {
-        renderer.drawText(props.font, x(), y(), width(), text, props.color, fontSize.get())
+        renderer.drawText(props.font, x(), y(), width(), text, props.color.getARGB(), fontSize.get())
     }
 
     override fun getSize(): Vec2<Unit> {

@@ -17,7 +17,7 @@ abstract class TransformOp(val component: Component, val animation: Animation? =
 
     protected fun byAnimation(value: Float): Float {
         return if (animation != null) {
-            animation.getPercentComplete() * value
+            animation.value * value
         } else {
             value
         }
@@ -69,7 +69,7 @@ abstract class TransformOp(val component: Component, val animation: Animation? =
 
         private fun byAnimationD(value: Double): Double {
             return if (animation != null) {
-                animation.getPercentComplete() * value
+                animation.value * value
             } else {
                 value
             }

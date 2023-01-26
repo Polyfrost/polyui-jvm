@@ -1,6 +1,6 @@
 package cc.polyfrost.polyui
 
-import cc.polyfrost.polyui.animate.animations.EaseInOutCubic
+import cc.polyfrost.polyui.animate.Animations
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.components.impls.Block
 import cc.polyfrost.polyui.components.impls.ImageBlock
@@ -29,7 +29,7 @@ fun main() {
                 events = events(
                     ComponentEvent.MousePressed(0).on {
                         println("Mouse pressed!")
-                        recolor(Color(1f, 0f, 1f, 1f), EaseInOutCubic(1.seconds()))
+                        recolor(Color(0.5f, 0f, 1f, 1f), Animations.EaseInOutCubic, 1.seconds())
                     },
                     ComponentEvent.MouseReleased(0).on {
                         println("Mouse released!")
