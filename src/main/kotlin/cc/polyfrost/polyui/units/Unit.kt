@@ -1,9 +1,12 @@
 package cc.polyfrost.polyui.units
 
+import kotlin.properties.Delegates
+
 /**
  * class to represent a unit of measurement.
  */
-abstract class Unit(var px: Float, val type: Type) : Cloneable {
+abstract class Unit(val type: Type) : Cloneable {
+    abstract var px: Float
 
     operator fun plus(other: Unit): Float {
         return px + other.px
@@ -18,23 +21,39 @@ abstract class Unit(var px: Float, val type: Type) : Cloneable {
     }
 
     enum class Type {
-        Pixel,
+        Pixel, Flex
     }
 
     override fun toString(): String {
         return "Unit(px=$px, type=$type)"
     }
 
-    // I don't know why Kotlin is wierd like this, and it still has cast warnings?
     public abstract override fun clone(): Unit
 
-    class Pixel(pixels: Float) : Unit(pixels, Type.Pixel), Cloneable {
+    class Pixel(pixels: Float) : Unit(Type.Pixel), Cloneable {
+        override var px: Float = pixels
         override fun clone(): Pixel {
             return Pixel(px)
         }
     }
 
+    /** represents the index of a flex component */
+    class Flex(val index: Int) : Unit(Units.Flex) {
+        init {
+            if (index < 0) {
+                throw Exception("Flex index cannot be less than 0")
+            }
+        }
+
+        override var px by Delegates.notNull<Float>()
+        override fun clone(): Flex {
+            return Flex(index)
+        }
+    }
+
 }
+
+typealias Units = Unit.Type
 
 
 

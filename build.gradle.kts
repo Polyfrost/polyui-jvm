@@ -2,12 +2,12 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     `java-library`
-    kotlin("jvm") version "1.7.21" //ktVersion https://github.com/gradle/gradle/issues/22797
+    kotlin("jvm") version "1.8.0" //ktVersion https://github.com/gradle/gradle/issues/22797
     `maven-publish`
 
 }
 
-val ktVersion = "1.7.21"
+val ktVersion = "1.8.0"
 group = "cc.polyfrost"
 version = "1.0.2"
 
@@ -24,7 +24,6 @@ subprojects {
 }
 
 allprojects {
-    val isRoot = this == rootProject
 
     repositories {
         mavenCentral()

@@ -60,11 +60,12 @@ interface Drawable {
         return x >= this.x() && x <= this.x() + this.width() && y >= this.y() && y <= this.y() + this.height()
     }
 
-    fun unitType(): Unit.Type {
-        if (at.type() != sized!!.type()) {
-            throw Exception("Unit type mismatch: at and sized of $this do not use the same unit type.")
-        }
+    fun atUnitType(): Unit.Type {
         return at.type()
+    }
+
+    fun sizedUnitType(): Unit.Type {
+        return sized!!.type()
     }
 
     /** Implement this function to return the size of this drawable, if no size is specified during construction.

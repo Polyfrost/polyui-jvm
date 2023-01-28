@@ -9,6 +9,5 @@ import cc.polyfrost.polyui.units.Unit
 class PixelLayout(
     at: Point<Unit>, sized: Size<Unit>? = null, vararg items: Drawable
 ) : Layout(at, sized, *items) {
-    override val unitType: Unit.Type = Unit.Type.Pixel
-
+    override val atUnitType: Unit.Type = Unit.Type.Pixel
 }

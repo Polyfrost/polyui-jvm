@@ -14,15 +14,21 @@ import kotlin.math.max
 abstract class Layout(override val at: Point<Unit>, override var sized: Size<Unit>? = null, vararg items: Drawable) :
     Drawable {
     val components: Array<Component> = items.filterIsInstance<Component>().toTypedArray()
-    private val children: Array<Layout> = items.filterIsInstance<Layout>().toTypedArray()
+    val children: Array<Layout> = items.filterIsInstance<Layout>().toTypedArray()
     lateinit var fbo: Framebuffer
     final override lateinit var renderer: Renderer
-    abstract val unitType: Unit.Type
+    abstract val atUnitType: Unit.Type
 
     /** reference to parent */
     override var layout: Layout? = null
 
     init {
+        items.forEach {
+            if (it.atUnitType() != atUnitType) {
+                // todo make special exceptions that can tell you more verbosely which component is at fault
+                throw Exception("Unit type mismatch: Drawable $it does not a valid unit type for layout: $atUnitType")
+            }
+        }
         components.forEach { it.layout = this }
         children.forEach { it.layout = this }
     }
@@ -48,16 +54,9 @@ abstract class Layout(override val at: Point<Unit>, override var sized: Size<Uni
     override fun calculateBounds() {
         components.forEach {
             it.calculateBounds()
-            if (it.unitType() != unitType) {
-                // todo make special exceptions that can tell you more verbosely which component is at fault
-                throw Exception("Unit type mismatch: Component $it does not use the same unit type as it's layout: $unitType")
-            }
         }
         children.forEach {
             it.calculateBounds()
-            if (it.at.type() != this.unitType) {
-                throw Exception("Unit type mismatch: Layout $it's position does not use the same unit type as it's parent: $unitType")
-            }
         }
         if (this.sized == null) this.sized = getSize()
         needsRecalculation = false
@@ -73,10 +72,6 @@ abstract class Layout(override val at: Point<Unit>, override var sized: Size<Uni
 
     override fun postRender() {
         components.forEach { it.postRender() }
-    }
-
-    override fun unitType(): Unit.Type {
-        return unitType
     }
 
     override fun getSize(): Vec2<Unit> {

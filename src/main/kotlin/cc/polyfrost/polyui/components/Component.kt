@@ -29,6 +29,11 @@ abstract class Component(
 
     private val animations: ArrayList<Animation> = ArrayList()
     private val transforms: ArrayList<TransformOp> = ArrayList()
+    var scaleX: Float = 1F
+    var scaleY: Float = 1F
+
+    /** current rotation of this component (radians). */
+    var rotation: Double = 0.0
     val color: Color.Mutable = properties.color.toMutable()
     private val clock = Clock()
     final override lateinit var renderer: Renderer
@@ -37,6 +42,7 @@ abstract class Component(
 
     /** weather or not the mouse is currently over this component. DO NOT modify this value. It is managed automatically by [cc.polyfrost.polyui.events.EventManager]. */
     var mouseOver = false
+        internal set
 
     init {
         events.forEach {
@@ -65,16 +71,32 @@ abstract class Component(
         transforms.add(transformOp)
     }
 
-    fun scale(byX: Float, byY: Float, animation: Animation? = null) {
-        transform(TransformOp.Scale(byX, byY, this, animation))
+    /**
+     * Scale this component by the given amount, in the X and Y dimensions.
+     *
+     * Please note that this ignores all bounds, and will simply scale this component, meaning that it can be clipped by its layout, and overlap nearby components.
+     */
+    fun scale(byX: Float, byY: Float, animation: Animation.Type? = null, durationMillis: Long = 0L) {
+        transform(TransformOp.Scale(byX, byY, this, animation, durationMillis))
     }
 
-    fun rotate(degrees: Double, animation: Animation? = null) {
-        transform(TransformOp.Rotate(degrees, this, animation))
+    /**
+     * Rotate this component by the given amount, in degrees.
+     *
+     * Please note that this ignores all bounds, and will simply scale this component, meaning that it can be clipped by its layout, and overlap nearby components.
+     */
+    fun rotate(degrees: Double, animation: Animation.Type? = null, durationMillis: Long = 0L) {
+        transform(TransformOp.Rotate(Math.toRadians(degrees), this, animation, durationMillis))
     }
 
-    fun translate(byX: Float, byY: Float, animation: Animation? = null) {
-        transform(TransformOp.Translate(byX, byY, this, animation))
+    /**
+     * move this component by the given amount, in the X and Y dimensions.
+     *
+     * Please note that this ignores all bounds, and will simply scale this component, meaning that it can be clipped by its layout, and overlap nearby components.
+     */
+    // todo this might change ^
+    fun move(byX: Float, byY: Float, animation: Animation.Type? = null, durationMillis: Long = 0L) {
+        transform(TransformOp.Translate(byX, byY, this, animation, durationMillis))
     }
 
     open fun animate(animation: Animation) {
@@ -117,6 +139,8 @@ abstract class Component(
             if (!it.finished) wantRedraw()
             it.apply(renderer)
         }
+        if (scaleX != 1f && scaleY != 1f) renderer.scale(scaleX, scaleY)
+        if (rotation != 0.0) renderer.rotate(rotation)
         color.update(delta)
     }
 
@@ -126,7 +150,8 @@ abstract class Component(
      * **make sure to call super [Component.postRender]!**
      */
     override fun postRender() {
-        transforms.forEachNoAlloc { it.unapply(renderer) }
+        if (scaleX != 1f && scaleY != 1f) renderer.scale(-scaleX, -scaleY)
+        if (rotation != 0.0) renderer.rotate(-rotation)
     }
 
 
