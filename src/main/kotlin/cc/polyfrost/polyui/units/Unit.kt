@@ -30,7 +30,7 @@ abstract class Unit(val type: Type) : Cloneable {
 
     public abstract override fun clone(): Unit
 
-    class Pixel(pixels: Float) : Unit(Type.Pixel), Cloneable {
+    class Pixel(pixels: Float) : Unit(Type.Pixel), Concrete {
         override var px: Float = pixels
         override fun clone(): Pixel {
             return Pixel(px)
@@ -38,19 +38,30 @@ abstract class Unit(val type: Type) : Cloneable {
     }
 
     /** represents the index of a flex component */
-    class Flex(val index: Int) : Unit(Units.Flex) {
+    class Flex(val index: Int = -1, val flexGrow: Int = 0, val flexBasis: Concrete? = null) : Unit(Units.Flex) {
+        override var px by Delegates.notNull<Float>()
+
         init {
-            if (index < 0) {
-                throw Exception("Flex index cannot be less than 0")
+            if (flexGrow < 0) {
+                throw IllegalArgumentException("flexGrow cannot be negative.")
             }
         }
 
-        override var px by Delegates.notNull<Float>()
         override fun clone(): Flex {
-            return Flex(index)
+            return Flex(index, flexGrow, flexBasis?.clone())
         }
     }
 
+
+    /** specify a unit as an always present value that does not change. */
+    interface Concrete {
+        fun clone(): Concrete
+    }
+
+    /** specify a unit as something that is dependent on another value. */
+    interface Dynamic {
+        fun clone(): Dynamic
+    }
 }
 
 typealias Units = Unit.Type

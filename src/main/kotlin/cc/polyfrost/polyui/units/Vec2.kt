@@ -1,6 +1,6 @@
 package cc.polyfrost.polyui.units
 
-data class Vec2<T : Unit>(var a: T, var b: T) : Cloneable {
+data class Vec2<T : Unit>(val a: T, val b: T) : Cloneable {
     operator fun minus(value: Float): Vec2<T> {
         this.a.px - value
         this.b.px - value

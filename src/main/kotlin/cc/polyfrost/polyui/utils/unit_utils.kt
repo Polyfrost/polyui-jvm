@@ -1,4 +1,3 @@
-@file:JvmName("UnitUtils")
 package cc.polyfrost.polyui.utils
 
 import cc.polyfrost.polyui.units.Unit
@@ -30,10 +29,10 @@ object UnitUtils {
         return Unit.Flex(index)
     }
 
+    /** create a new flex unit, in vec2 form for at properties. */
     @JvmStatic
-    fun auto() = FlexAuto
-
-    @JvmField
-            /** represents the automatic flex index. */
-    val FlexAuto = Vec2(Unit.Flex(-1), Unit.Flex(-1))
+    fun flex(index: Int = -1, flexGrow: Int = 1, flexBasis: Unit.Concrete? = null): Vec2<Unit> {
+        val u = Unit.Flex(index, flexGrow, flexBasis)
+        return Vec2(u, u)
+    }
 }

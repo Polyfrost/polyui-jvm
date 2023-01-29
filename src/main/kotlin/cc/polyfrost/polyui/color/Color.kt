@@ -21,6 +21,18 @@ data class Color(val r: Int, val g: Int, val b: Int, val a: Int) {
         return Mutable(r, g, b, a)
     }
 
+    override operator fun equals(other: Any?): Boolean {
+        if (other == null) return false
+        if (other === this) return true
+        if (other is Color) {
+            return this.r == other.r && this.g == other.g && this.b == other.b && this.a == other.a
+        }
+        if (other is Mutable) {
+            return this.r == other.r && this.g == other.g && this.b == other.b && this.a == other.a
+        }
+        return false
+    }
+
     companion object {
         val NONE = Color(0f, 0f, 0f, 0f)
         val WHITE = Color(1f, 1f, 1f, 1f)
@@ -61,7 +73,7 @@ data class Color(val r: Int, val g: Int, val b: Int, val a: Int) {
                     animation = null
                     return
                 }
-                this.r = animation!![0].update(deltaTimeMillis).toInt().also { println(it) }
+                this.r = animation!![0].update(deltaTimeMillis).toInt()
                 this.g = animation!![1].update(deltaTimeMillis).toInt()
                 this.b = animation!![2].update(deltaTimeMillis).toInt()
                 this.a = animation!![3].update(deltaTimeMillis).toInt()

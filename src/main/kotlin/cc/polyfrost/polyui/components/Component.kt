@@ -104,11 +104,13 @@ abstract class Component(
     }
 
     open fun recolor(toColor: Color, animation: Animation.Type, durationMillis: Long) {
+        if (color.equals(toColor)) return
         color.recolor(toColor, animation, durationMillis)
     }
 
     override fun calculateBounds() {
-        if (sized == null) sized = getSize()
+        if (sized == null) sized =
+            getSize() ?: throw UnsupportedOperationException("getSize() not implemented for ${this::class.simpleName}!")
         boundingBox = Box(at, sized!!).expand(properties.padding)
     }
 

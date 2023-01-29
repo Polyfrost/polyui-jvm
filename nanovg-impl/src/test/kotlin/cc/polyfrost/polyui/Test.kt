@@ -7,12 +7,15 @@ import cc.polyfrost.polyui.components.impls.ImageBlock
 import cc.polyfrost.polyui.components.impls.Text
 import cc.polyfrost.polyui.events.ComponentEvent
 import cc.polyfrost.polyui.events.ComponentEvent.Companion.events
+import cc.polyfrost.polyui.layouts.Layout.Companion.items
+import cc.polyfrost.polyui.layouts.impls.FlexLayout
 import cc.polyfrost.polyui.layouts.impls.PixelLayout
 import cc.polyfrost.polyui.renderer.data.Image
 import cc.polyfrost.polyui.renderer.impl.GLWindow
 import cc.polyfrost.polyui.renderer.impl.NVGRenderer
 import cc.polyfrost.polyui.units.Point
 import cc.polyfrost.polyui.units.Size
+import cc.polyfrost.polyui.utils.UnitUtils.flex
 import cc.polyfrost.polyui.utils.px
 import cc.polyfrost.polyui.utils.seconds
 
@@ -46,6 +49,20 @@ fun main() {
             Text(
                 text = "Hello, world!",
                 at = Point(0.px(), 0.px()),
+            )
+        ),
+        FlexLayout(
+            at = Point(0.px(), 0.px()),
+            wrap = 100.px(),
+            items = items(
+                Block(
+                    at = flex(),
+                    size = Size(50.px(), 50.px()),
+                ),
+                Block(
+                    at = flex(),
+                    size = Size(50.px(), 50.px()),
+                )
             )
         )
     )

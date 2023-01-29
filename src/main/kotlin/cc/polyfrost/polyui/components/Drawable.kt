@@ -77,7 +77,7 @@ interface Drawable {
      *
      * Otherwise, the size parameter in the constructor must be specified.
      * @throws UnsupportedOperationException if this method is not implemented, and the size parameter in the constructor is not specified. */
-    fun getSize(): Vec2<Unit> {
-        throw UnsupportedOperationException("getSize() not implemented for ${this::class.simpleName}!")
+    fun getSize(): Vec2<Unit>? {
+        return null
     }
 }

@@ -2,9 +2,15 @@ package cc.polyfrost.polyui.utils
 
 /** [java.util.ArrayList.forEach] loop, that doesn't allocate any memory. Utilizes the [java.util.RandomAccess] trait.
  * @see [removeIfNoAlloc] */
-inline fun <E> ArrayList<E>.forEachNoAlloc(f: (E) -> Unit) {
+inline fun <E> ArrayList<out E>.forEachNoAlloc(f: (E) -> Unit) {
     for (i in 0 until this.size) {
         f(this[i])
+    }
+}
+
+inline fun <E> ArrayList<out E>.forEachIndexedNoAlloc(f: (Int, E) -> Unit) {
+    for (i in 0 until this.size) {
+        f(i, this[i])
     }
 }
 
@@ -19,6 +25,20 @@ inline fun <E> ArrayList<E>.removeIfNoAlloc(f: (E) -> Boolean) {
         }
         i++
     }
+}
+
+
+/**
+ * Returns the sum of all values produced by [selector] function applied to each element in the collection, for floats.
+ *
+ * Also utilizes [forEachNoAlloc] to avoid memory allocation.
+ */
+inline fun <E> ArrayList<E>.sumOf(selector: (E) -> Float): Float {
+    var sum = 0F
+    this.forEachNoAlloc {
+        sum += selector(it)
+    }
+    return sum
 }
 
 /** moves the given element from the [from] index to the [to] index.
