@@ -128,11 +128,11 @@ class GLWindow(title: String, width: Int, height: Int) : Window(title, width, he
     }
 
     override fun renameWindow(title: String) {
-        TODO("Not yet implemented")
+        glfwSetWindowTitle(handle, title)
     }
 
     override fun fullscreen() {
-        TODO("Not yet implemented")
+        TODO()
     }
 
 }

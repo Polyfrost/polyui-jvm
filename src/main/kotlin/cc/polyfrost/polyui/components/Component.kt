@@ -3,6 +3,7 @@ package cc.polyfrost.polyui.components
 import cc.polyfrost.polyui.animate.Animation
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.events.ComponentEvent
+import cc.polyfrost.polyui.events.ComponentEvents
 import cc.polyfrost.polyui.layouts.Layout
 import cc.polyfrost.polyui.properties.Properties
 import cc.polyfrost.polyui.renderer.Renderer
@@ -24,6 +25,8 @@ abstract class Component(
     override var sized: Size<Unit>? = null,
     vararg events: ComponentEvent.Handler
 ) : Drawable {
+    override var onAdded: (Drawable.() -> kotlin.Unit)? = null
+    override var onRemoved: (Drawable.() -> kotlin.Unit)? = null
     private val eventHandlers: EnumMap<ComponentEvent.Type, Component.() -> kotlin.Unit> =
         EnumMap(ComponentEvent.Type::class.java)
 
@@ -46,7 +49,7 @@ abstract class Component(
 
     init {
         events.forEach {
-            this.eventHandlers[it.type] = it.handler
+            addEventHandler(it.type, it.handler)
         }
     }
 
@@ -58,11 +61,31 @@ abstract class Component(
      */
     open fun accept(event: ComponentEvent) {
         properties.eventHandlers[event.type]?.let { it(this) }
-        eventHandlers[event.type]?.let { it(this) }
+        when (event.type) {
+            ComponentEvents.Added -> {
+                onAdded?.invoke(this)
+            }
+
+            ComponentEvents.Removed -> {
+                onRemoved?.invoke(this)
+            }
+
+            else -> eventHandlers[event.type]?.let { it(this) }
+        }
     }
 
     fun addEventHandler(type: ComponentEvent.Type, handler: Component.() -> kotlin.Unit) {
-        eventHandlers[type] = handler
+        when (type) {
+            ComponentEvents.Added -> {
+                onAdded = handler as Drawable.() -> kotlin.Unit
+            }
+
+            ComponentEvents.Removed -> {
+                onRemoved = handler as Drawable.() -> kotlin.Unit
+            }
+
+            else -> this.eventHandlers[type] = handler
+        }
     }
 
 
@@ -154,6 +177,10 @@ abstract class Component(
     override fun postRender() {
         if (scaleX != 1f && scaleY != 1f) renderer.scale(-scaleX, -scaleY)
         if (rotation != 0.0) renderer.rotate(-rotation)
+    }
+
+    override fun canBeRemoved(): Boolean {
+        return animations.size == 0 && transforms.size == 0 && !color.isRecoloring()
     }
 
 

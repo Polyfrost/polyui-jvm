@@ -68,10 +68,8 @@ class NVGRenderer : Renderer() {
 
     override fun drawText(
         font: Font,
-        x: Float,
-        y: Float,
-        width: Float,
-        text: String,
+        x: Float, y: Float,
+        width: Float, text: String,
         argb: Int,
         fontSize: Float
     ) {
@@ -117,8 +115,7 @@ class NVGRenderer : Renderer() {
     }
 
     override fun deleteFramebuffer(fbo: Framebuffer) = NanoVGGL3.nvgluDeleteFramebuffer(
-        vg,
-        fbos[fbo] ?: throw IllegalStateException("Framebuffer not found when deleting it, already cleaned?")
+        vg, fbos[fbo] ?: throw IllegalStateException("Framebuffer not found when deleting it, already cleaned?")
     )
 
     override fun bindFramebuffer(fbo: Framebuffer, mode: Framebuffer.Mode) {
@@ -146,15 +143,11 @@ class NVGRenderer : Renderer() {
     }
 
     override fun drawRectangleVaried(
-        x: Float,
-        y: Float,
-        width: Float,
-        height: Float,
+        x: Float, y: Float,
+        width: Float, height: Float,
         argb: Int,
-        topLeft: Float,
-        topRight: Float,
-        bottomLeft: Float,
-        bottomRight: Float
+        topLeft: Float, topRight: Float,
+        bottomLeft: Float, bottomRight: Float
     ) {
         nvgBeginPath(vg)
         nvgRoundedRectVarying(vg, x, y, width, height, topLeft, topRight, bottomLeft, bottomRight)
@@ -207,15 +200,10 @@ class NVGRenderer : Renderer() {
                         } else {
                             PolyUI.LOGGER.info("resizing $image: ${w[0]}x${h[0]} -> ${image.width}x${image.height}")
                             STBImageResize.stbir_resize_uint8(
-                                it,
-                                w[0],
-                                h[0],
-                                0,
-                                it,
-                                image.width!!,
-                                image.height!!,
-                                0,
-                                4
+                                it, w[0], h[0],
+                                0, it,
+                                image.width!!, image.height!!,
+                                0, 4
                             )
                         }
                     } ?: throw Exception("Failed to initialize image: $image")
@@ -235,14 +223,10 @@ class NVGRenderer : Renderer() {
                     image.height = (svg.height() * scale).toInt()
                     data = MemoryUtil.memAlloc(image.width!! * image.height!! * 4)
                     NanoSVG.nsvgRasterize(
-                        raster,
-                        svg,
-                        0F,
-                        0F,
-                        scale,
-                        data,
-                        image.width!!,
-                        image.height!!,
+                        raster, svg,
+                        0F, 0F,
+                        scale, data,
+                        image.width!!, image.height!!,
                         image.width!! * 4
                     )
                     NanoSVG.nsvgDeleteRasterizer(raster)

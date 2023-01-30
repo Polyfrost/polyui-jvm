@@ -10,8 +10,11 @@ import cc.polyfrost.polyui.utils.px
 import kotlin.math.max
 
 class PixelLayout(
-    at: Point<Unit>, sized: Size<Unit>? = null, vararg items: Drawable
-) : Layout(at, sized, *items) {
+    at: Point<Unit>, sized: Size<Unit>? = null,
+    onAdded: (Drawable.() -> kotlin.Unit)? = null,
+    onRemoved: (Drawable.() -> kotlin.Unit)? = null,
+    vararg items: Drawable
+) : Layout(at, sized, onAdded, onRemoved, *items) {
     init {
         items.forEach {
             if (it.atUnitType() != Unit.Type.Pixel) {

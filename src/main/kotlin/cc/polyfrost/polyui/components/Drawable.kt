@@ -17,6 +17,8 @@ interface Drawable {
     val at: Point<Unit>
     var sized: Size<Unit>?
     val renderer: Renderer
+    var onAdded: (Drawable.() -> kotlin.Unit)?
+    var onRemoved: (Drawable.() -> kotlin.Unit)?
 
     /** reference to the layout encapsulating this drawable.
      * For components, this is never null, but for layouts, it can be null (meaning its parent is the polyui)
@@ -45,6 +47,12 @@ interface Drawable {
         at.scale(scaleX, scaleY)
         sized!!.scale(scaleX, scaleY)
     }
+
+    /** function that should return true if it is ready to be removed from its parent.
+     *
+     * This is used for components that need to wait for an animation to finish before being removed.
+     */
+    fun canBeRemoved(): Boolean
 
 
     fun debugRender() {

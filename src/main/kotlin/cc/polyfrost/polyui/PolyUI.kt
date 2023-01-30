@@ -1,10 +1,14 @@
 package cc.polyfrost.polyui
 
+import cc.polyfrost.polyui.components.Drawable
 import cc.polyfrost.polyui.components.Focusable
 import cc.polyfrost.polyui.events.EventManager
-import cc.polyfrost.polyui.layouts.Layout
+import cc.polyfrost.polyui.layouts.impls.PixelLayout
 import cc.polyfrost.polyui.renderer.Renderer
+import cc.polyfrost.polyui.units.Point
+import cc.polyfrost.polyui.units.Size
 import cc.polyfrost.polyui.utils.forEachNoAlloc
+import cc.polyfrost.polyui.utils.px
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -46,35 +50,43 @@ import org.slf4j.LoggerFactory
  *
  *
  */
-class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg val layouts: Layout) {
+class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg items: Drawable) {
+    val master = PixelLayout(Point(0.px(), 0.px()), Size(width.px(), height.px()), items = items)
     private var renderHooks = ArrayList<Renderer.() -> Unit>(5)
     val eventManager = EventManager(this)
     private val settings = renderer.settings
     var focused: (Focusable)? = null
 
     init {
-        layouts.forEach { it.giveRenderer(renderer) }
-        layouts.forEach { it.calculateBounds() }
-        layouts.forEach {
+        master.children.forEachNoAlloc {
+            it.giveRenderer(renderer)
+            it.calculateBounds()
             it.fbo = renderer.createFramebuffer(it.width().toInt(), it.height().toInt(), settings.bufferType)
             if (it.width() > width || it.height() > height) {
                 LOGGER.warn("Layout $it is larger than the window. This may cause issues.")
             }
         }
-        layouts.forEach { it.debugPrint() }
+        master.fbo = renderer.createFramebuffer(width, height, settings.bufferType)
+        if (this.settings.debug) this.master.debugPrint()
         LOGGER.info("PolyUI initialized")
     }
 
     fun onResize(newWidth: Int, newHeight: Int) {
         // todo very amongsus
         println("resize: $newWidth x $newHeight")
-        layouts.forEach {
+
+        master.sized!!.a.px = newWidth.toFloat()
+        master.sized!!.b.px = newHeight.toFloat()
+        master.calculateBounds()
+        renderer.deleteFramebuffer(master.fbo)
+        master.fbo = renderer.createFramebuffer(newWidth, newHeight, settings.bufferType)
+
+        master.children.forEachNoAlloc {
             it.rescale(
                 newWidth.toFloat() / this.width.toFloat(),
                 newHeight.toFloat() / this.height.toFloat()
             )
-        }
-        layouts.forEach {
+            renderer.deleteFramebuffer(it.fbo)
             it.fbo = renderer.createFramebuffer(it.width().toInt(), it.height().toInt(), settings.bufferType)
         }
         this.width = newWidth
@@ -82,12 +94,11 @@ class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg val
     }
 
     fun render() {
-        if (layouts.size == 0) return // nothing to do
+        if (master.children.size == 0) return // nothing to do
         renderer.beginFrame(width, height)
-        for (layout in layouts) {
-            layout.reRenderIfNecessary()
-            //renderer.drawFramebuffer(layout.fbo, layout.x(), layout.y())
-        }
+        master.reRenderIfNecessary()
+        // todo make framebuffer drawing work as i swapped to polyui having a default layout
+        //renderer.drawFramebuffer(master.fbo, 0F, 0F, master.width(), master.height())
         renderHooks.forEachNoAlloc { it(renderer) }
         renderer.endFrame()
     }
@@ -95,6 +106,14 @@ class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg val
     /** add something to be rendered after each frame. */
     fun addRenderHook(func: Renderer.() -> Unit) {
         renderHooks.add(func)
+    }
+
+    fun removeComponent(drawable: Drawable) {
+        master.removeComponent(drawable)
+    }
+
+    fun addComponent(drawable: Drawable) {
+        master.addComponent(drawable)
     }
 
     fun cleanup() {

@@ -22,6 +22,8 @@ import kotlin.Suppress
 class FlexLayout(
     at: Point<Unit>, sized: Size<Unit>? = null,
     private val wrap: Unit.Concrete? = null,
+    onAdded: (Drawable.() -> kotlin.Unit)? = null,
+    onRemoved: (Drawable.() -> kotlin.Unit)? = null,
     val flexDirection: Direction = Direction.Row,
     val wrapDirection: Wrap = Wrap.NoWrap,
     val contentJustify: JustifyContent = JustifyContent.Start,
@@ -29,7 +31,7 @@ class FlexLayout(
     val contentAlign: AlignContent = AlignContent.Start,
     val gap: Gap = Gap.Auto,
     vararg items: Drawable,
-) : Layout(at, sized, *items) {
+) : Layout(at, sized, onAdded, onRemoved, *items) {
     private val drawables: ArrayList<FlexDrawable>
 
     init {

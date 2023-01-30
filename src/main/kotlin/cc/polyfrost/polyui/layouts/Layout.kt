@@ -1,17 +1,29 @@
 package cc.polyfrost.polyui.layouts
 
+import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.components.Component
 import cc.polyfrost.polyui.components.Drawable
+import cc.polyfrost.polyui.events.ComponentEvent
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.data.Framebuffer
 import cc.polyfrost.polyui.units.Point
 import cc.polyfrost.polyui.units.Size
 import cc.polyfrost.polyui.units.Unit
+import cc.polyfrost.polyui.utils.forEachNoAlloc
+import org.jetbrains.annotations.ApiStatus
 
-abstract class Layout(override val at: Point<Unit>, override var sized: Size<Unit>? = null, vararg items: Drawable) :
-    Drawable {
-    val components: Array<Component> = items.filterIsInstance<Component>().toTypedArray()
-    val children: Array<Layout> = items.filterIsInstance<Layout>().toTypedArray()
+abstract class Layout(
+    override val at: Point<Unit>,
+    override var sized: Size<Unit>? = null,
+    override var onAdded: (Drawable.() -> kotlin.Unit)? = null,
+    override var onRemoved: (Drawable.() -> kotlin.Unit)? = null,
+    vararg items: Drawable
+) : Drawable {
+    val components: ArrayList<Component> = items.filterIsInstance<Component>() as ArrayList<Component>
+    val children: ArrayList<Layout> = items.filterIsInstance<Layout>() as ArrayList<Layout>
+
+    // small arraylist because it's only used for removal
+    val removeQueue: ArrayList<Drawable> = ArrayList(5)
     lateinit var fbo: Framebuffer
     final override lateinit var renderer: Renderer
 
@@ -19,17 +31,15 @@ abstract class Layout(override val at: Point<Unit>, override var sized: Size<Uni
     override var layout: Layout? = null
 
     init {
-        components.forEach { it.layout = this }
-        children.forEach { it.layout = this }
+        components.forEachNoAlloc { it.layout = this }
+        children.forEachNoAlloc { it.layout = this }
     }
 
     var needsRedraw = true
     var needsRecalculation = true
 
     fun reRenderIfNecessary() {
-        for (it in children) {
-            it.reRenderIfNecessary()
-        }
+        children.forEachNoAlloc { it.reRenderIfNecessary() }
         if (needsRedraw) {
             // todo framebuffer issues
 //            renderer.bindFramebuffer(fbo)
@@ -41,11 +51,93 @@ abstract class Layout(override val at: Point<Unit>, override var sized: Size<Uni
         }
     }
 
+    /**
+     * adds a component to this layout.
+     *
+     * this will add the component to the [components] list, and invoke its [onAdded] function.
+     */
+    open fun addComponent(drawable: Drawable) {
+        when (drawable) {
+            is Component -> {
+                components.add(drawable)
+                drawable.layout = this
+                // allows properties' onAdded to be called
+                drawable.accept(ComponentEvent.Added())
+            }
+
+            is Layout -> {
+                children.add(drawable)
+                drawable.layout = this
+                drawable.onAdded?.invoke(drawable)
+            }
+
+            else -> {
+                throw Exception("Drawable $drawable is not a component or layout!")
+            }
+        }
+        drawable.calculateBounds()
+        needsRedraw = true
+    }
+
+    /**
+     * removes a component from this layout.
+     *
+     * this will add the component to the removal queue, and invoke its [onRemoved] function.
+     *
+     * This removal queue is used so that components can finish up any animations they're doing before being removed.
+     */
+    open fun removeComponent(drawable: Drawable) {
+        when (drawable) {
+            is Component -> {
+                removeQueue.add(components[components.indexOf(drawable)])
+                drawable.accept(ComponentEvent.Removed())
+            }
+
+            is Layout -> {
+                removeQueue.add(children[children.indexOf(drawable)])
+                drawable.onRemoved?.invoke(drawable)
+            }
+
+            else -> {
+                throw Exception("Drawable $drawable is not a component or layout!")
+            }
+        }
+    }
+
+    /** removes a component immediately, without waiting for it to finish up.
+     *
+     * This is marked as internal because you should be using [removeComponent] for most cases to remove a component, as it waits for it to finish and play any removal animations. */
+    @ApiStatus.Internal
+    fun removeComponentNow(drawable: Drawable) {
+        when (drawable) {
+            is Component -> {
+                if (!components.remove(drawable)) PolyUI.LOGGER.warn("Tried to remove component $drawable from $this, but it wasn't found!")
+            }
+
+            is Layout -> {
+                if (!children.remove(drawable)) PolyUI.LOGGER.warn("Tried to remove layout $drawable from $this, but it wasn't found!")
+            }
+
+            else -> {
+                throw Exception("Drawable $drawable is not a component or layout!")
+            }
+        }
+        needsRedraw = true
+    }
+
+    fun getComponents(): List<Component> {
+        return components
+    }
+
+    fun getChildren(): List<Layout> {
+        return children
+    }
+
     override fun calculateBounds() {
-        components.forEach {
+        components.forEachNoAlloc {
             it.calculateBounds()
         }
-        children.forEach {
+        children.forEachNoAlloc {
             it.calculateBounds()
         }
         if (this.sized == null) this.sized =
@@ -54,15 +146,16 @@ abstract class Layout(override val at: Point<Unit>, override var sized: Size<Uni
     }
 
     override fun preRender() {
-        components.forEach { it.preRender() }
+        removeQueue.forEachNoAlloc { if (it.canBeRemoved()) removeComponentNow(it) }
+        components.forEachNoAlloc { it.preRender() }
     }
 
     override fun render() {
-        components.forEach { it.render() }
+        components.forEachNoAlloc { it.render() }
     }
 
     override fun postRender() {
-        components.forEach { it.postRender() }
+        components.forEachNoAlloc { it.postRender() }
     }
 
     fun debugPrint() {
@@ -76,19 +169,24 @@ abstract class Layout(override val at: Point<Unit>, override var sized: Size<Uni
         println("FBO: $fbo")
         println("Layout: $layout")
         println()
-        children.forEach { it.debugPrint() }
+        children.forEachNoAlloc { it.debugPrint() }
     }
 
     /** give this, and all its children, a renderer. */
     fun giveRenderer(renderer: Renderer) {
         if (this::renderer.isInitialized) throw Exception("Renderer already initialized!") // sanity check
         this.renderer = renderer
-        components.forEach { it.renderer = renderer }
-        children.forEach { it.giveRenderer(renderer) }
+        components.forEachNoAlloc { it.renderer = renderer }
+        children.forEachNoAlloc { it.giveRenderer(renderer) }
+    }
+
+    override fun canBeRemoved(): Boolean {
+        return !needsRedraw
     }
 
 
     companion object {
+        /** wrapper for varargs, when arguments are in the wrong order */
         @JvmStatic
         fun items(vararg items: Drawable): Array<out Drawable> {
             return items

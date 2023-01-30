@@ -1,14 +1,17 @@
+/** This file contains various utilities for arrays and arraylists. */
 package cc.polyfrost.polyui.utils
 
 /** [java.util.ArrayList.forEach] loop, that doesn't allocate any memory. Utilizes the [java.util.RandomAccess] trait.
  * @see [removeIfNoAlloc] */
 inline fun <E> ArrayList<out E>.forEachNoAlloc(f: (E) -> Unit) {
+    if (this.size == 0) return
     for (i in 0 until this.size) {
         f(this[i])
     }
 }
 
 inline fun <E> ArrayList<out E>.forEachIndexedNoAlloc(f: (Int, E) -> Unit) {
+    if (this.size == 0) return
     for (i in 0 until this.size) {
         f(i, this[i])
     }

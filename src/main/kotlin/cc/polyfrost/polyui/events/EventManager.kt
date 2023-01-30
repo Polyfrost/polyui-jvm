@@ -38,7 +38,7 @@ class EventManager(private val polyUI: PolyUI) {
     }
 
     private inline fun onApplicableLayouts(x: Float, y: Float, func: Layout.() -> Unit) {
-        return polyUI.layouts.forEach { if (it.isInside(x, y)) func(it) }
+        return polyUI.master.children.forEach { if (it.isInside(x, y)) func(it) }
     }
 
     private inline fun onApplicableComponents(x: Float, y: Float, func: Component.() -> Unit) {
