@@ -7,6 +7,7 @@ import cc.polyfrost.polyui.layouts.impls.PixelLayout
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.units.Point
 import cc.polyfrost.polyui.units.Size
+import cc.polyfrost.polyui.units.Unit
 import cc.polyfrost.polyui.utils.forEachNoAlloc
 import cc.polyfrost.polyui.utils.px
 import org.slf4j.Logger
@@ -52,23 +53,26 @@ import org.slf4j.LoggerFactory
  */
 class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg items: Drawable) {
     val master = PixelLayout(Point(0.px(), 0.px()), Size(width.px(), height.px()), items = items)
-    private var renderHooks = ArrayList<Renderer.() -> Unit>(5)
+    private var renderHooks = ArrayList<Renderer.() -> kotlin.Unit>(5)
     val eventManager = EventManager(this)
     private val settings = renderer.settings
-    var focused: (Focusable)? = null
+    internal var focused: (Focusable)? = null
 
     init {
+        master.giveRenderer(renderer)
+        master.calculateBounds()
         master.children.forEachNoAlloc {
-            it.giveRenderer(renderer)
-            it.calculateBounds()
-            it.fbo = renderer.createFramebuffer(it.width().toInt(), it.height().toInt(), settings.bufferType)
+            if (settings.minItemsForFramebuffer > it.children.size + it.components.size) it.fbo =
+                renderer.createFramebuffer(it.width().toInt(), it.height().toInt(), settings.bufferType)
             if (it.width() > width || it.height() > height) {
                 LOGGER.warn("Layout $it is larger than the window. This may cause issues.")
             }
         }
-        master.fbo = renderer.createFramebuffer(width, height, settings.bufferType)
+        if (settings.masterIsFramebuffer) master.fbo = renderer.createFramebuffer(width, height, settings.bufferType)
         if (this.settings.debug) this.master.debugPrint()
         LOGGER.info("PolyUI initialized")
+        Unit.VUnits.vHeight = height.toFloat()
+        Unit.VUnits.vWidth = width.toFloat()
     }
 
     fun onResize(newWidth: Int, newHeight: Int) {
@@ -77,34 +81,37 @@ class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg ite
 
         master.sized!!.a.px = newWidth.toFloat()
         master.sized!!.b.px = newHeight.toFloat()
+        Unit.VUnits.vHeight = newHeight.toFloat()
+        Unit.VUnits.vWidth = newWidth.toFloat()
         master.calculateBounds()
-        renderer.deleteFramebuffer(master.fbo)
-        master.fbo = renderer.createFramebuffer(newWidth, newHeight, settings.bufferType)
+        if (settings.masterIsFramebuffer) {
+            renderer.deleteFramebuffer(master.fbo!!)
+            master.fbo = renderer.createFramebuffer(newWidth, newHeight, settings.bufferType)
+        }
 
         master.children.forEachNoAlloc {
             it.rescale(
                 newWidth.toFloat() / this.width.toFloat(),
                 newHeight.toFloat() / this.height.toFloat()
             )
-            renderer.deleteFramebuffer(it.fbo)
-            it.fbo = renderer.createFramebuffer(it.width().toInt(), it.height().toInt(), settings.bufferType)
+            if (it.fbo != null) {
+                renderer.deleteFramebuffer(it.fbo!!)
+                it.fbo = renderer.createFramebuffer(it.width().toInt(), it.height().toInt(), settings.bufferType)
+            }
         }
         this.width = newWidth
         this.height = newHeight
     }
 
     fun render() {
-        if (master.children.size == 0) return // nothing to do
         renderer.beginFrame(width, height)
         master.reRenderIfNecessary()
-        // todo make framebuffer drawing work as i swapped to polyui having a default layout
-        //renderer.drawFramebuffer(master.fbo, 0F, 0F, master.width(), master.height())
         renderHooks.forEachNoAlloc { it(renderer) }
         renderer.endFrame()
     }
 
     /** add something to be rendered after each frame. */
-    fun addRenderHook(func: Renderer.() -> Unit) {
+    fun addRenderHook(func: Renderer.() -> kotlin.Unit) {
         renderHooks.add(func)
     }
 
@@ -114,6 +121,12 @@ class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg ite
 
     fun addComponent(drawable: Drawable) {
         master.addComponent(drawable)
+    }
+
+    fun focus(drawable: Focusable) {
+        focused?.unfocus()
+        focused = drawable
+        focused?.focus()
     }
 
     fun cleanup() {

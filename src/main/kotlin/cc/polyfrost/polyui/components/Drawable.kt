@@ -76,6 +76,21 @@ interface Drawable {
         return sized!!.type()
     }
 
+    fun doDynamicSize() {
+        if (sized!!.a is Unit.Dynamic) (sized!!.a as Unit.Dynamic).set(
+            layout?.sized?.a ?: throw IllegalStateException("Dynamic units only work on parents with a set size!")
+        )
+        if (sized!!.b is Unit.Dynamic) (sized!!.b as Unit.Dynamic).set(
+            layout?.sized?.b ?: throw IllegalStateException("Dynamic units only work on parents with a set size!")
+        )
+        if (at.a is Unit.Dynamic) (at.a as Unit.Dynamic).set(
+            layout?.sized?.a ?: throw IllegalStateException("Dynamic units only work on parents with a set size!")
+        )
+        if (at.b is Unit.Dynamic) (at.b as Unit.Dynamic).set(
+            layout?.sized?.b ?: throw IllegalStateException("Dynamic units only work on parents with a set size!")
+        )
+    }
+
     /** Implement this function to return the size of this drawable, if no size is specified during construction.
      *
      * This should be so that if the component can determine its own size (for example, it is an image), then the size parameter in the constructor can be omitted using:

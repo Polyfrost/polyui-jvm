@@ -3,6 +3,7 @@ package cc.polyfrost.polyui.events
 import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.components.Component
 import cc.polyfrost.polyui.layouts.Layout
+import cc.polyfrost.polyui.utils.forEachNoAlloc
 
 class EventManager(private val polyUI: PolyUI) {
     var mouseX: Float = 0F
@@ -21,7 +22,7 @@ class EventManager(private val polyUI: PolyUI) {
         mouseX = x
         mouseY = y
         onApplicableLayouts(x, y) {
-            components.forEach {
+            components.forEachNoAlloc {
                 if (it.isInside(x, y)) {
                     if (it.mouseOver) {
                         //it.accept(ComponentEvent.MouseMoved(x, y))
@@ -38,11 +39,17 @@ class EventManager(private val polyUI: PolyUI) {
     }
 
     private inline fun onApplicableLayouts(x: Float, y: Float, func: Layout.() -> Unit) {
-        return polyUI.master.children.forEach { if (it.isInside(x, y)) func(it) }
+        polyUI.master.children.forEachNoAlloc {
+            if (it.isInside(x, y)) {
+                func(it)
+                return
+            }
+        }
+        return polyUI.master.func()
     }
 
     private inline fun onApplicableComponents(x: Float, y: Float, func: Component.() -> Unit) {
-        return onApplicableLayouts(x, y) { components.forEach { if (it.isInside(x, y)) func(it) } }
+        return onApplicableLayouts(x, y) { components.forEachNoAlloc { if (it.isInside(x, y)) func(it) } }
     }
 
     fun onMousePressed(button: Int) {

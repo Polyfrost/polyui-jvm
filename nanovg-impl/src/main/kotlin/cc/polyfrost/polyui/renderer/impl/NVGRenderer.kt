@@ -92,19 +92,19 @@ class NVGRenderer : Renderer() {
     }
 
     fun drawImage(img: Int, x: Float, y: Float, width: Float, height: Float, colorMask: Int = 0) {
-        nvgBeginPath(vg)
         nvgImagePattern(vg, x, y, width, height, 0F, img, 1F, nvgPaint)
         if (colorMask != 0) nvgRGBA(
             (colorMask shr 16 and 0xFF).toByte(), (colorMask shr 8 and 0xFF).toByte(),
             (colorMask and 0xFF).toByte(), (colorMask shr 24 and 0xFF).toByte(), nvgPaint.innerColor()
         )
+        nvgBeginPath(vg)
         nvgRect(vg, x, y, width, height)
         nvgFillPaint(vg, nvgPaint)
         nvgFill(vg)
     }
 
     override fun createFramebuffer(width: Int, height: Int, type: Settings.BufferType): Framebuffer {
-        val f = Framebuffer(width.toFloat(), height.toFloat(), fbos.size + 69420, type)
+        val f = Framebuffer(width.toFloat(), height.toFloat(), type)
         fbos[f] = NanoVGGL3.nvgluCreateFramebuffer(
             vg,
             width,
@@ -114,13 +114,16 @@ class NVGRenderer : Renderer() {
         return f
     }
 
-    override fun deleteFramebuffer(fbo: Framebuffer) = NanoVGGL3.nvgluDeleteFramebuffer(
-        vg, fbos[fbo] ?: throw IllegalStateException("Framebuffer not found when deleting it, already cleaned?")
-    )
+    override fun deleteFramebuffer(fbo: Framebuffer) {
+        fbos.remove(fbo).also {
+            NanoVGGL3.nvgluDeleteFramebuffer(
+                vg, it ?: throw IllegalStateException("Framebuffer not found when deleting it, already cleaned?")
+            )
+        }
+    }
 
     override fun bindFramebuffer(fbo: Framebuffer, mode: Framebuffer.Mode) {
         NanoVGGL3.nvgluBindFramebuffer(vg, fbos[fbo])
-        glViewport(0, 0, fbo.width.toInt(), fbo.height.toInt())
         glClearColor(0F, 0F, 0F, 0F)
         glClear(GL_COLOR_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
     }

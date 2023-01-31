@@ -8,17 +8,12 @@ import org.lwjgl.glfw.GLFWErrorCallback
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL.createCapabilities
 import org.lwjgl.opengl.GL11.*
-import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.system.Platform
 
 class GLWindow(title: String, width: Int, height: Int) : Window(title, width, height) {
     val handle: Long
     var fps: Int = 0
-
-    // memory usage is key kids
-    private val mouseXBuf = MemoryStack.stackPush().mallocDouble(1)
-    private val mouseYBuf = MemoryStack.stackPush().mallocDouble(1)
     lateinit var polyUI: PolyUI
 
     init {
@@ -45,13 +40,6 @@ class GLWindow(title: String, width: Int, height: Int) : Window(title, width, he
         glfwSwapInterval(0)
     }
 
-    fun getCursorPos() {
-        mouseXBuf.clear()
-        mouseYBuf.clear()
-        glfwGetCursorPos(handle, mouseXBuf, mouseYBuf)
-        polyUI.eventManager.setMousePosAndUpdate(mouseXBuf[0].toFloat(), mouseYBuf[0].toFloat())
-    }
-
     override fun createCallbacks() {
         // Add some callbacks for window resizing and content scale
         glfwSetFramebufferSizeCallback(handle) { _, width, height ->
@@ -64,6 +52,10 @@ class GLWindow(title: String, width: Int, height: Int) : Window(title, width, he
             } else if (action == GLFW_RELEASE) {
                 polyUI.eventManager.onMouseReleased(button)
             }
+        }
+
+        glfwSetCursorPosCallback(handle) { _, x, y ->
+            polyUI.eventManager.setMousePosAndUpdate(x.toFloat(), y.toFloat())
         }
 
         glfwSetKeyCallback(handle) { _, key, _, action, _ ->
@@ -98,7 +90,6 @@ class GLWindow(title: String, width: Int, height: Int) : Window(title, width, he
 
             glfwSwapBuffers(handle)
             glfwPollEvents()
-            getCursorPos()
 
             if (lastSecond + 1000 < System.currentTimeMillis()) {
                 lastSecond = System.currentTimeMillis()

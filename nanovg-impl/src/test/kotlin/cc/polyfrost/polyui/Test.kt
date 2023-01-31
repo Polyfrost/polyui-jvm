@@ -13,6 +13,8 @@ import cc.polyfrost.polyui.renderer.impl.GLWindow
 import cc.polyfrost.polyui.renderer.impl.NVGRenderer
 import cc.polyfrost.polyui.units.Point
 import cc.polyfrost.polyui.units.Size
+import cc.polyfrost.polyui.utils.UnitUtils.fill
+import cc.polyfrost.polyui.utils.percent
 import cc.polyfrost.polyui.utils.px
 import cc.polyfrost.polyui.utils.seconds
 
@@ -35,8 +37,8 @@ fun main() {
                     ComponentEvent.Added().then { })
             ),
             Block(
-                at = Point(100.px(), 0.px()),
-                size = Size(50.px(), 50.px()),
+                at = Point(80.percent(), 0.px()),
+                size = Size(1.3.percent(), fill()),
             ),
             ImageBlock(
                 Image("/test.png", 100, 100),

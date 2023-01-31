@@ -30,8 +30,8 @@ abstract class Component(
     private val eventHandlers: EnumMap<ComponentEvent.Type, Component.() -> kotlin.Unit> =
         EnumMap(ComponentEvent.Type::class.java)
 
-    private val animations: ArrayList<Animation> = ArrayList()
-    private val transforms: ArrayList<TransformOp> = ArrayList()
+    private val animations: ArrayList<Pair<Animation, (Component.() -> kotlin.Unit)?>> = ArrayList()
+    private val transforms: ArrayList<Pair<TransformOp, (Component.() -> kotlin.Unit)?>> = ArrayList()
     var scaleX: Float = 1F
     var scaleY: Float = 1F
 
@@ -90,8 +90,8 @@ abstract class Component(
 
 
     /** Add a [TransformOp] to this component. */
-    open fun transform(transformOp: TransformOp) {
-        transforms.add(transformOp)
+    open fun transform(transformOp: TransformOp, onFinish: (Component.() -> kotlin.Unit)? = null) {
+        transforms.add(transformOp to onFinish)
     }
 
     /**
@@ -99,8 +99,14 @@ abstract class Component(
      *
      * Please note that this ignores all bounds, and will simply scale this component, meaning that it can be clipped by its layout, and overlap nearby components.
      */
-    fun scale(byX: Float, byY: Float, animation: Animation.Type? = null, durationMillis: Long = 0L) {
-        transform(TransformOp.Scale(byX, byY, this, animation, durationMillis))
+    fun scale(
+        byX: Float,
+        byY: Float,
+        animation: Animation.Type? = null,
+        durationMillis: Long = 0L,
+        onFinish: (Component.() -> kotlin.Unit)? = null
+    ) {
+        transform(TransformOp.Scale(byX, byY, this, animation, durationMillis), onFinish)
     }
 
     /**
@@ -108,8 +114,13 @@ abstract class Component(
      *
      * Please note that this ignores all bounds, and will simply scale this component, meaning that it can be clipped by its layout, and overlap nearby components.
      */
-    fun rotate(degrees: Double, animation: Animation.Type? = null, durationMillis: Long = 0L) {
-        transform(TransformOp.Rotate(Math.toRadians(degrees), this, animation, durationMillis))
+    fun rotate(
+        degrees: Double,
+        animation: Animation.Type? = null,
+        durationMillis: Long = 0L,
+        onFinish: (Component.() -> kotlin.Unit)? = null
+    ) {
+        transform(TransformOp.Rotate(Math.toRadians(degrees), this, animation, durationMillis), onFinish)
     }
 
     /**
@@ -118,15 +129,26 @@ abstract class Component(
      * Please note that this ignores all bounds, and will simply scale this component, meaning that it can be clipped by its layout, and overlap nearby components.
      */
     // todo this might change ^
-    fun move(byX: Float, byY: Float, animation: Animation.Type? = null, durationMillis: Long = 0L) {
-        transform(TransformOp.Translate(byX, byY, this, animation, durationMillis))
+    fun move(
+        byX: Float,
+        byY: Float,
+        animation: Animation.Type? = null,
+        durationMillis: Long = 0L,
+        onFinish: (Component.() -> kotlin.Unit)? = null
+    ) {
+        transform(TransformOp.Translate(byX, byY, this, animation, durationMillis), onFinish)
     }
 
-    open fun animate(animation: Animation) {
-        animations.add(animation)
+    open fun animate(animation: Animation, onFinish: (Component.() -> kotlin.Unit)? = null) {
+        animations.add(animation to onFinish)
     }
 
-    open fun recolor(toColor: Color, animation: Animation.Type, durationMillis: Long) {
+    open fun recolor(
+        toColor: Color,
+        animation: Animation.Type,
+        durationMillis: Long,
+        onFinish: (Component.() -> kotlin.Unit)? = null
+    ) {
         if (color.equals(toColor)) return
         color.recolor(toColor, animation, durationMillis)
     }
@@ -134,6 +156,8 @@ abstract class Component(
     override fun calculateBounds() {
         if (sized == null) sized =
             getSize() ?: throw UnsupportedOperationException("getSize() not implemented for ${this::class.simpleName}!")
+        doDynamicSize()
+
         boundingBox = Box(at, sized!!).expand(properties.padding)
     }
 
@@ -151,15 +175,15 @@ abstract class Component(
      * **make sure to call super [Component.preRender]!**
      */
     override fun preRender() {
-        animations.removeIfNoAlloc { it.finished }
-        transforms.removeIfNoAlloc { it.finished }
+        animations.removeIfNoAlloc { it.first.finished.also { b -> if (b) it.second?.invoke(this) } }
+        transforms.removeIfNoAlloc { it.first.finished.also { b -> if (b) it.second?.invoke(this) } }
 
         val delta = clock.getDelta()
-        animations.forEachNoAlloc {
+        animations.forEachNoAlloc { (it, _) ->
             it.update(delta)
             if (!it.finished) wantRedraw()
         }
-        transforms.forEachNoAlloc {
+        transforms.forEachNoAlloc { (it, _) ->
             it.update(delta)
             if (!it.finished) wantRedraw()
             it.apply(renderer)

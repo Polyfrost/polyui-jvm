@@ -17,7 +17,7 @@ class PixelLayout(
 ) : Layout(at, sized, onAdded, onRemoved, *items) {
     init {
         items.forEach {
-            if (it.atUnitType() != Unit.Type.Pixel) {
+            if (it.atUnitType() == Unit.Type.Flex) {
                 // todo make special exceptions that can tell you more verbosely which component is at fault
                 throw Exception("Unit type mismatch: Drawable $it does not have a valid unit type for layout: PixelLayout (using ${it.atUnitType()})")
             }

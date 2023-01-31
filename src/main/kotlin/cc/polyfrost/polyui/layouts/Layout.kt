@@ -24,7 +24,7 @@ abstract class Layout(
 
     // small arraylist because it's only used for removal
     val removeQueue: ArrayList<Drawable> = ArrayList(5)
-    lateinit var fbo: Framebuffer
+    var fbo: Framebuffer? = null
     final override lateinit var renderer: Renderer
 
     /** reference to parent */
@@ -40,14 +40,21 @@ abstract class Layout(
 
     fun reRenderIfNecessary() {
         children.forEachNoAlloc { it.reRenderIfNecessary() }
-        if (needsRedraw) {
-            // todo framebuffer issues
-//            renderer.bindFramebuffer(fbo)
+        if (fbo != null) {
+            if (needsRedraw) {
+                // TODO framebuffer issues
+//                renderer.bindFramebuffer(fbo!!)
+                preRender()
+                render()
+                postRender()
+//                renderer.unbindFramebuffer(fbo!!)
+//                needsRedraw = false
+            }
+            renderer.drawFramebuffer(fbo!!, x(), y(), width(), height())
+        } else {
             preRender()
             render()
             postRender()
-//            renderer.unbindFramebuffer(fbo)
-//            needsRedraw = false
         }
     }
 
