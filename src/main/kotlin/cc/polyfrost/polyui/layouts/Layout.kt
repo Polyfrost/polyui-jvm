@@ -116,6 +116,7 @@ abstract class Layout(
      * This is marked as internal because you should be using [removeComponent] for most cases to remove a component, as it waits for it to finish and play any removal animations. */
     @ApiStatus.Internal
     fun removeComponentNow(drawable: Drawable) {
+        removeQueue.remove(drawable)
         when (drawable) {
             is Component -> {
                 if (!components.remove(drawable)) PolyUI.LOGGER.warn("Tried to remove component $drawable from $this, but it wasn't found!")
