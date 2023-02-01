@@ -110,7 +110,7 @@ class NVGRenderer : Renderer() {
             width,
             height,
             NVG_IMAGE_REPEATX or NVG_IMAGE_REPEATY
-        ) ?: throw ExceptionInInitializerError("Could not create: $f")
+        ) ?: throw ExceptionInInitializerError("Could not create: $f (possibly an invalid sized layout?)")
         return f
     }
 

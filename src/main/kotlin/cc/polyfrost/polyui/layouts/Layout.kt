@@ -31,6 +31,7 @@ abstract class Layout(
     override var layout: Layout? = null
 
     init {
+        if (items.isEmpty()) throw IllegalStateException("Layout cannot be empty!")
         components.forEachNoAlloc { it.layout = this }
         children.forEachNoAlloc { it.layout = this }
     }
@@ -56,6 +57,24 @@ abstract class Layout(
             render()
             postRender()
         }
+    }
+
+    /**
+     * adds the given components to this layout.
+     *
+     * this will add the component to the [components] list, and invoke its [onAdded] function.
+     */
+    fun addComponents(components: Collection<Drawable>) {
+        components.forEach { addComponent(it) }
+    }
+
+    /**
+     * adds the given components to this layout.
+     *
+     * this will add the component to the [components] list, and invoke its [onAdded] function.
+     */
+    fun addComponents(vararg components: Drawable) {
+        components.forEach { addComponent(it) }
     }
 
     /**

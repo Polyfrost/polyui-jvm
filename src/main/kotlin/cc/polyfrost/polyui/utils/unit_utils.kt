@@ -79,6 +79,10 @@ fun Int.seconds(): Long {
     return this * 1000L
 }
 
+fun Double.seconds(): Long {
+    return (this * 1000L).toLong()
+}
+
 object UnitUtils {
     @JvmStatic
     fun index(index: Int): Unit.Flex {

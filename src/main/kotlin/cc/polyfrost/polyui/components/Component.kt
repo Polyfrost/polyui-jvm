@@ -38,6 +38,7 @@ abstract class Component(
     /** current rotation of this component (radians). */
     var rotation: Double = 0.0
     val color: Color.Mutable = properties.color.toMutable()
+    private var finishColorFunc: (Component.() -> kotlin.Unit)? = null
     private val clock = Clock()
     final override lateinit var renderer: Renderer
     final override lateinit var layout: Layout
@@ -149,8 +150,8 @@ abstract class Component(
         durationMillis: Long,
         onFinish: (Component.() -> kotlin.Unit)? = null
     ) {
-        if (color.equals(toColor)) return
         color.recolor(toColor, animation, durationMillis)
+        finishColorFunc = onFinish
     }
 
     override fun calculateBounds() {
@@ -190,7 +191,10 @@ abstract class Component(
         }
         if (scaleX != 1f && scaleY != 1f) renderer.scale(scaleX, scaleY)
         if (rotation != 0.0) renderer.rotate(rotation)
-        color.update(delta)
+        if (color.update(delta)) {
+            finishColorFunc?.invoke(this)
+            finishColorFunc = null
+        }
     }
 
     /**

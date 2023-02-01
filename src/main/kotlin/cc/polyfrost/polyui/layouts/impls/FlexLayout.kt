@@ -10,6 +10,7 @@ import kotlin.Exception
 import kotlin.Float
 import kotlin.Int
 import kotlin.Suppress
+import kotlin.math.max
 
 @Suppress("unused")
 
@@ -21,11 +22,11 @@ import kotlin.Suppress
  */
 class FlexLayout(
     at: Point<Unit>, sized: Size<Unit>? = null,
-    private val wrap: Unit.Concrete? = null,
+    wrap: Unit.Concrete? = null,
     onAdded: (Drawable.() -> kotlin.Unit)? = null,
     onRemoved: (Drawable.() -> kotlin.Unit)? = null,
     val flexDirection: Direction = Direction.Row,
-    val wrapDirection: Wrap = Wrap.NoWrap,
+    wrapDirection: Wrap? = null,
     val contentJustify: JustifyContent = JustifyContent.Start,
     val itemAlign: AlignItems = AlignItems.Start,
     val contentAlign: AlignContent = AlignContent.Start,
@@ -33,8 +34,19 @@ class FlexLayout(
     vararg items: Drawable,
 ) : Layout(at, sized, onAdded, onRemoved, *items) {
     private val drawables: ArrayList<FlexDrawable>
+    private val wrap: Unit.Concrete?
+    private val wrapDirection: Wrap
 
     init {
+        this.wrapDirection =
+            wrapDirection ?: if (wrap != null) {
+                PolyUI.LOGGER.warn("Wrap direction was not specified, but a wrap value was. Defaulting to Wrap.")
+                Wrap.Wrap
+            } else if (sized?.a != null) {
+                PolyUI.LOGGER.warn("Wrap direction was not specified, but a width was. Defaulting to Wrap.")
+                Wrap.Wrap
+            } else Wrap.NoWrap
+        this.wrap = wrap
         items.forEachIndexed { i, it ->
             if (it.atUnitType() != Unit.Type.Flex) {
                 throw Exception("Unit type mismatch: Drawable $it needs to be placed using a Flex unit for a flex layout.")
@@ -63,52 +75,57 @@ class FlexLayout(
                 Direction.Column, Direction.ColumnReverse -> sized?.height() ?: (wrap as Unit?)?.px
             } ?: throw Exception("wrap direction is set to wrap, but no wrap size is specified")
             drawables.forEachNoAlloc {
+                // size all the sizeable drawables
                 if (it.drawable.sized == null) it.drawable.sized = getSize()
 
-                if (mainAxis + it.lengthOrMin() + gapMain() > wrap) { // means we need to wrap
-                    val spareSpace = wrap - mainAxis
+                mainAxis += it.lengthOrMin() + gapMain()
+                if (mainAxis > wrap) { // means we need to wrap
+                    crossAxis += doRow(wrap, mainAxis, crossAxis, list)
                     mainAxis = 0F
-
-                    // calculate cross stuff
-                    val maxCross = list.sumOf { it.crossLengthOrMin() } + (gapCross() * (list.size - 1))
-                    var spareCrossSpace = cross() - maxCross
-                    if (spareCrossSpace < 0) {
-                        PolyUI.LOGGER.warn("FlexLayout: Not enough space to fit all items in the cross axis. (cross: ${cross()}, maxCross: $maxCross")
-                        spareCrossSpace = 0F
-                    }
-                    var cross = 0
-                    expandMainIfCan(list, spareSpace)
-                    list.forEachNoAlloc {
-                        // set cross size and position
-                        it.setCrossPos(crossAxis, list.size, spareCrossSpace, cross)
-                        if (contentAlign == AlignContent.Stretch) {
-                            it.setCrossSize(cross() / list.size)
-                        }
-                        cross++
-                        crossAxis += it.crossLengthOrMin() + gapCross()
-
-                        // set main size and position
-                        it.setMainPos(mainAxis, list.size, spareSpace)
-                        mainAxis += it.lengthOrMin() + gapMain()
-                    }
-
-
-                    mainAxis = 0F
+                    list.clear()
+                    println("wrap")
                 }
-
                 list.add(it)
             }
-            return
-        }
-        // no-wrap:
-        drawables.forEachNoAlloc {
-            //it.flex.px =
+
+            // do last row
+            if (list.isNotEmpty()) {
+                println("last row")
+                crossAxis += doRow(wrap, 0F, crossAxis, list)
+            }
         }
         this.sized = Size(
             main().px(),
             crossAxis.px()
         )
         needsRecalculation = false
+    }
+
+    private fun doRow(wrap: Float, main: Float, cross: Float, list: ArrayList<FlexDrawable>): Float {
+        val spareSpace = wrap - main
+        var toAdd = 0F
+        var mainAxis = 0F
+        // calculate cross stuff
+        val maxCross = list.sumOf { it.crossLengthOrMin() } + (gapCross() * (list.size - 1))
+        var spareCrossSpace = if (cross() != 0F) cross() - maxCross else 0F
+        if (spareCrossSpace < 0) {
+            PolyUI.LOGGER.warn("FlexLayout: Not enough space to fit all items in the cross axis. (cross: ${cross()}, maxCross: $maxCross)")
+            spareCrossSpace = 0F
+        }
+//        expandMainIfCan(list, spareSpace)
+        list.forEachNoAlloc {
+            // set cross size and position
+            it.setCrossPos(cross, list.size, spareCrossSpace, 0)
+            if (contentAlign == AlignContent.Stretch) {
+                //it.setCrossSize(cross() / list.size)
+            }
+            toAdd = max(toAdd, it.crossLengthOrMin() + gapCross())
+
+            // set main size and position
+            it.setMainPos(mainAxis, list.size, spareSpace)
+            mainAxis += it.lengthOrMin() + gapMain()
+        }
+        return cross + toAdd
     }
 
 
@@ -301,7 +318,7 @@ class FlexLayout(
     private fun cross(): Float {
         return when (flexDirection) {
             Direction.Row, Direction.RowReverse -> {
-                sized?.height() ?: (wrap as Unit).px
+                sized?.height() ?: 0F
             }
 
             Direction.Column, Direction.ColumnReverse -> {
@@ -317,7 +334,7 @@ class FlexLayout(
             }
 
             Direction.Column, Direction.ColumnReverse -> {
-                sized?.height() ?: 0F
+                sized?.height() ?: (wrap as Unit).px
             }
         }
     }

@@ -61,8 +61,11 @@ interface Drawable {
 
     fun x(): Float = at.x()
     fun y(): Float = at.y()
-    fun width(): Float = sized!!.width()
-    fun height(): Float = sized!!.height()
+    fun width(): Float = sized?.width()
+        ?: throw IllegalStateException("drawable $this has no size, but should have a size initialized by this point")
+
+    fun height(): Float = sized?.height()
+        ?: throw IllegalStateException("drawable $this has no size, but should have a size initialized by this point")
 
     fun isInside(x: Float, y: Float): Boolean {
         return x >= this.x() && x <= this.x() + this.width() && y >= this.y() && y <= this.y() + this.height()

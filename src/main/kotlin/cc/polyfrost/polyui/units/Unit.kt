@@ -30,6 +30,7 @@ abstract class Unit(val type: Type) : Cloneable {
 
     public abstract override fun clone(): Unit
 
+    /** pixel unit. It is just a wrapper for a float to be honest, it's that simple. */
     class Pixel(pixels: Float) : Unit(Type.Pixel), Concrete {
         override var px: Float = pixels
         override fun clone(): Pixel {

@@ -88,8 +88,8 @@ class GLWindow(title: String, width: Int, height: Int) : Window(title, width, he
             this.polyUI.render()
 
 
-            glfwSwapBuffers(handle)
             glfwPollEvents()
+            glfwSwapBuffers(handle)
 
             if (lastSecond + 1000 < System.currentTimeMillis()) {
                 lastSecond = System.currentTimeMillis()

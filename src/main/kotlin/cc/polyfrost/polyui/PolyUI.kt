@@ -123,6 +123,14 @@ class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg ite
         master.addComponent(drawable)
     }
 
+    fun addComponents(vararg drawables: Drawable) {
+        master.addComponents(*drawables)
+    }
+
+    fun addComponents(drawables: Collection<Drawable>) {
+        master.addComponents(drawables)
+    }
+
     fun focus(drawable: Focusable) {
         focused?.unfocus()
         focused = drawable

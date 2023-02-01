@@ -12,7 +12,22 @@ abstract class Properties : Cloneable {
     abstract val color: Color
     abstract val padding: Float
     val eventHandlers: EnumMap<ComponentEvent.Type, Component.() -> Unit> = EnumMap(ComponentEvent.Type::class.java)
-    abstract fun accept(event: ComponentEvent)
+
+    /** add a universal event handler to this component's properties.
+     *
+     * This means that every component using this property will have this event handler.
+     */
+    fun addEventHandler(type: ComponentEvent.Type, function: Component.() -> Unit) {
+        eventHandlers[type] = function
+    }
+
+    /** add a universal event handler to this component's properties.
+     *
+     * This means that every component using this property will have this event handler.
+     */
+    fun addEventHandlers(vararg handlers: Pair<ComponentEvent.Type, Component.() -> Unit>) {
+        handlers.forEach { addEventHandler(it.first, it.second) }
+    }
 
     companion object {
         private val properties: MutableMap<String, Properties> = mutableMapOf(

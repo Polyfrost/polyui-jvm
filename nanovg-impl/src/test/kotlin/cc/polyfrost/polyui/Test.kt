@@ -2,6 +2,7 @@ package cc.polyfrost.polyui
 
 import cc.polyfrost.polyui.animate.Animations
 import cc.polyfrost.polyui.color.Color
+import cc.polyfrost.polyui.components.Drawable
 import cc.polyfrost.polyui.components.impls.Block
 import cc.polyfrost.polyui.components.impls.ImageBlock
 import cc.polyfrost.polyui.components.impls.Text
@@ -20,6 +21,21 @@ import cc.polyfrost.polyui.utils.seconds
 
 fun main() {
     val window = GLWindow("Test", 800, 600)
+    val things = Array<Drawable>(10) {
+        Block(
+            at = Point((it * 30).px(), 0.px()),
+            size = Size(20.px(), 20.px()),
+            events = events(
+                ComponentEvent.MousePressed(0).then {
+                    println("Mouse pressed!")
+                    recolor(Color(0.5f, 0f, 1f, 1f), Animations.EaseInOutCubic, 1.seconds())
+                },
+                ComponentEvent.MouseReleased(0).then {
+                    println("Mouse released!")
+                },
+                ComponentEvent.Added().then { })
+        )
+    }
     val polyUI = PolyUI(
         window.width, window.height, NVGRenderer(),
         items = items(
@@ -48,22 +64,10 @@ fun main() {
                 text = "Hello, world!",
                 at = Point(0.px(), 0.px()),
             ),
-//            FlexLayout(
-//                at = Point(0.px(), 0.px()),
-//                wrap = 100.px(),
-//                items = items(
-//                    Block(
-//                        at = flex(),
-//                        size = Size(50.px(), 50.px()),
-//                    ),
-//                    Block(
-//                        at = flex(),
-//                        size = Size(50.px(), 50.px()),
-//                    )
-//                )
-//            )
+            *things
         )
     )
+
     window.open(polyUI)
 
 }

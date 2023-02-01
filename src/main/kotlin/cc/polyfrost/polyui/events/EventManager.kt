@@ -27,8 +27,8 @@ class EventManager(private val polyUI: PolyUI) {
                     if (it.mouseOver) {
                         //it.accept(ComponentEvent.MouseMoved(x, y))
                     } else {
-                        it.mouseOver = true
                         it.accept(ComponentEvent.MouseEntered(x, y))
+                        it.mouseOver = true
                     }
                 } else if (it.mouseOver) {
                     it.accept(ComponentEvent.MouseExited(x, y))
@@ -42,7 +42,6 @@ class EventManager(private val polyUI: PolyUI) {
         polyUI.master.children.forEachNoAlloc {
             if (it.isInside(x, y)) {
                 func(it)
-                return
             }
         }
         return polyUI.master.func()
