@@ -4,8 +4,10 @@ import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.components.Component
 import cc.polyfrost.polyui.layouts.Layout
 import cc.polyfrost.polyui.utils.forEachNoAlloc
+import cc.polyfrost.polyui.utils.removeIfNoAlloc
 
 class EventManager(private val polyUI: PolyUI) {
+    private val mouseOverComponents = ArrayList<Component>()
     var mouseX: Float = 0F
         private set
     var mouseY: Float = 0F
@@ -28,9 +30,15 @@ class EventManager(private val polyUI: PolyUI) {
                         //it.accept(ComponentEvent.MouseMoved(x, y))
                     } else {
                         it.accept(ComponentEvent.MouseEntered(x, y))
+                        mouseOverComponents.add(it)
                         it.mouseOver = true
                     }
-                } else if (it.mouseOver) {
+                }
+            }
+        }
+        mouseOverComponents.removeIfNoAlloc {
+            (!it.isInside(x, y) && it.mouseOver).also { b ->
+                if (b) {
                     it.accept(ComponentEvent.MouseExited(x, y))
                     it.mouseOver = false
                 }
@@ -44,7 +52,9 @@ class EventManager(private val polyUI: PolyUI) {
                 func(it)
             }
         }
-        return polyUI.master.func()
+        if (polyUI.master.isInside(x, y)) {
+            func(polyUI.master)
+        }
     }
 
     private inline fun onApplicableComponents(x: Float, y: Float, func: Component.() -> Unit) {

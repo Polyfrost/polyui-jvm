@@ -87,4 +87,7 @@ abstract class Renderer {
         drawRectangleVaried(x, y, width, height, argb, radius, radius, radius, radius)
 
     abstract fun textBounds(font: Font, text: String, fontSize: Float, wrapWidth: Float): Vec2<Unit.Pixel>
+
+    /** cleanup the PolyUI instance. Use this to free any native resources. */
+    abstract fun cleanup()
 }

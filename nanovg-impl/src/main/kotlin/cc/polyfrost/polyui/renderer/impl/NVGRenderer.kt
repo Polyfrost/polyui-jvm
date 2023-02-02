@@ -241,6 +241,17 @@ class NVGRenderer : Renderer() {
         }
     }
 
+    override fun cleanup() {
+        fonts.clear()
+        images.values.forEach { nvgDeleteImage(vg, it.id) }
+        images.clear()
+        fbos.values.forEach { NanoVGGL3.nvgluDeleteFramebuffer(vg, it) }
+        fbos.clear()
+        nvgColor.free()
+        nvgPaint.free()
+        vg = -1
+    }
+
     // used to ensure that the data is not discarded by the GC
     data class NVGImage(val id: Int, val width: Float, val height: Float, val data: ByteBuffer)
     data class NVGFont(val id: Int, val data: ByteBuffer)

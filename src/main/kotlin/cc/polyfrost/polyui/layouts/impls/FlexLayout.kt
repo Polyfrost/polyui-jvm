@@ -29,7 +29,7 @@ class FlexLayout(
     wrapDirection: Wrap? = null,
     val contentJustify: JustifyContent = JustifyContent.Start,
     val itemAlign: AlignItems = AlignItems.Start,
-    val contentAlign: AlignContent = AlignContent.Start,
+    val contentAlign: AlignContent = AlignContent.SpaceBetween,
     val gap: Gap = Gap.Auto,
     vararg items: Drawable,
 ) : Layout(at, sized, onAdded, onRemoved, *items) {
@@ -64,15 +64,18 @@ class FlexLayout(
     }
 
     override fun calculateBounds() {
+        doDynamicSize()
         // todo fix this lol
         var mainAxis = 0F
         var crossAxis = 0F
 
         val list = ArrayList<FlexDrawable>()
+        val rows = ArrayList<ArrayList<FlexDrawable>>()
+        // todo change this to use a special row wrapper class because it needs to be more fixed in how it works for some of the settings
         if (wrapDirection != Wrap.NoWrap) {
             val wrap = when (flexDirection) {
-                Direction.Row, Direction.RowReverse -> sized?.width() ?: (wrap as Unit?)?.px
-                Direction.Column, Direction.ColumnReverse -> sized?.height() ?: (wrap as Unit?)?.px
+                Direction.Row, Direction.RowReverse -> (wrap as Unit?)?.px ?: sized?.width()
+                Direction.Column, Direction.ColumnReverse -> (wrap as Unit?)?.px ?: sized?.height()
             } ?: throw Exception("wrap direction is set to wrap, but no wrap size is specified")
             drawables.forEachNoAlloc {
                 // size all the sizeable drawables
@@ -80,7 +83,7 @@ class FlexLayout(
 
                 mainAxis += it.lengthOrMin() + gapMain()
                 if (mainAxis > wrap) { // means we need to wrap
-                    crossAxis += doRow(wrap, mainAxis, crossAxis, list)
+                    rows.add(list)
                     mainAxis = 0F
                     list.clear()
                     println("wrap")
@@ -90,9 +93,14 @@ class FlexLayout(
 
             // do last row
             if (list.isNotEmpty()) {
-                println("last row")
-                crossAxis += doRow(wrap, 0F, crossAxis, list)
+                rows.add(list)
             }
+        }
+
+        //rows.forEachNoAlloc { doRow() }
+
+        this.drawables.forEachNoAlloc {
+            println(it.drawable.at)
         }
         this.sized = Size(
             main().px(),
@@ -117,7 +125,7 @@ class FlexLayout(
             // set cross size and position
             it.setCrossPos(cross, list.size, spareCrossSpace, 0)
             if (contentAlign == AlignContent.Stretch) {
-                //it.setCrossSize(cross() / list.size)
+                it.setCrossSize(cross() / list.size)
             }
             toAdd = max(toAdd, it.crossLengthOrMin() + gapCross())
 
@@ -125,7 +133,7 @@ class FlexLayout(
             it.setMainPos(mainAxis, list.size, spareSpace)
             mainAxis += it.lengthOrMin() + gapMain()
         }
-        return cross + toAdd
+        return toAdd
     }
 
 
@@ -203,7 +211,7 @@ class FlexLayout(
         }
 
         private fun setCrossPos0(currentCross: Float, amount: Int, spare: Float, row: Int): Float {
-            return when (contentAlign) {
+            return minCross() + when (contentAlign) {
                 AlignContent.Start -> currentCross
                 AlignContent.End -> currentCross + spare
                 AlignContent.Center -> currentCross + (spare / 2)
@@ -242,7 +250,7 @@ class FlexLayout(
         }
 
         private fun setMainPos0(currentMain: Float, amount: Int, spare: Float): Float {
-            return when (contentAlign) {
+            return minMain() + when (contentAlign) {
                 AlignContent.Start -> currentMain
                 AlignContent.End -> currentMain + spare
                 AlignContent.Center -> currentMain + (spare / 2)
@@ -335,6 +343,30 @@ class FlexLayout(
 
             Direction.Column, Direction.ColumnReverse -> {
                 sized?.height() ?: (wrap as Unit).px
+            }
+        }
+    }
+
+    fun minMain(): Float {
+        return when (flexDirection) {
+            Direction.Row, Direction.RowReverse -> {
+                at.x()
+            }
+
+            Direction.Column, Direction.ColumnReverse -> {
+                at.y()
+            }
+        }
+    }
+
+    fun minCross(): Float {
+        return when (flexDirection) {
+            Direction.Row, Direction.RowReverse -> {
+                at.y()
+            }
+
+            Direction.Column, Direction.ColumnReverse -> {
+                at.x()
             }
         }
     }

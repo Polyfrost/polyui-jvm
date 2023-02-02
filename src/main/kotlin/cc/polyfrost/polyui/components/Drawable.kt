@@ -34,7 +34,7 @@ interface Drawable {
     /** post-render functions, such as removing transforms. */
     fun postRender()
 
-    /** calculate the position and size of this drawable.
+    /** calculate the position and size of this drawable. Make sure to call [doDynamicSize] in this method to avoid issues with sizing.
      *
      * This method is called once the [layout] is populated for children and components, and when a recalculation is requested.
      *

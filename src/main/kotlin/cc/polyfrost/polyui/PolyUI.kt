@@ -70,9 +70,9 @@ class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg ite
         }
         if (settings.masterIsFramebuffer) master.fbo = renderer.createFramebuffer(width, height, settings.bufferType)
         if (this.settings.debug) this.master.debugPrint()
-        LOGGER.info("PolyUI initialized")
         Unit.VUnits.vHeight = height.toFloat()
         Unit.VUnits.vWidth = width.toFloat()
+        LOGGER.info("PolyUI initialized")
     }
 
     fun onResize(newWidth: Int, newHeight: Int) {
@@ -137,8 +137,15 @@ class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg ite
         focused?.focus()
     }
 
+    /** cleanup the polyUI instance. This will delete all resources, and render this instance unusable. */
     fun cleanup() {
-        // todo
+        renderer.cleanup()
+        focused = null
+        renderHooks.clear()
+        master.children.clear()
+        master.components.clear()
+        Unit.VUnits.vHeight = 0f
+        Unit.VUnits.vWidth = 0f
     }
 
     companion object {

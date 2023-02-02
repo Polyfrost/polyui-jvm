@@ -103,6 +103,7 @@ class GLWindow(title: String, width: Int, height: Int) : Window(title, width, he
             } else frames++
         }
 
+        polyUI.cleanup()
         GL.setCapabilities(null)
         Callbacks.glfwFreeCallbacks(handle)
         glfwTerminate()

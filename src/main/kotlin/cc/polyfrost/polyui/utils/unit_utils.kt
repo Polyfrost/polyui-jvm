@@ -93,19 +93,43 @@ object UnitUtils {
     @JvmStatic
     fun flex(index: Int = -1, flexGrow: Int = 1, flexBasis: Unit.Concrete? = null): Vec2<Unit> {
         val u = Unit.Flex(index, flexGrow, flexBasis)
-        return Vec2(u, u)
+        // i'm not mad.
+        return Vec2(u, u.clone())
     }
 
+    /** 0,0 as a pixel vector */
     @JvmStatic
-            /** fill as a vec */
+    fun origin(): Vec2<Unit> {
+        return Vec2(0.px(), 0.px())
+    }
+
+    /** fill as a vec */
+    @JvmStatic
     fun fillv(): Vec2<Unit> {
         return Vec2(fill(), fill())
     }
 
-
+    /** fill as a unit */
     @JvmStatic
-            /** fill as a unit */
     fun fill(): Unit {
         return Unit.Percent(100f)
+    }
+
+    /** declare a vec2 of units, for either at or sized properties.
+     *
+     * example:
+     * `30.px() x 30.px()`
+     * */
+    infix fun Unit.x(other: Unit): Vec2<Unit> {
+        return Vec2(this, other)
+    }
+
+    /** declare a vec2 of units, for either at or sized properties.
+     *
+     * example:
+     * `30.px() by 30.px()`
+     * */
+    infix fun Unit.by(other: Unit): Vec2<Unit> {
+        return Vec2(this, other)
     }
 }

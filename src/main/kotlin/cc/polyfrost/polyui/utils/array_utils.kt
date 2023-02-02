@@ -20,11 +20,12 @@ inline fun <E> ArrayList<out E>.forEachIndexedNoAlloc(f: (Int, E) -> Unit) {
 /** [java.util.ArrayList.removeIf], that doesn't allocate any memory. Utilizes the [java.util.RandomAccess] trait.
  * @see [forEachNoAlloc] */
 inline fun <E> ArrayList<E>.removeIfNoAlloc(f: (E) -> Boolean) {
-    val max = this.size
+    var max = this.size
     var i = 0
     while (i < max) {
         if (f(this[i])) {
             this.removeAt(i)
+            max--
         }
         i++
     }

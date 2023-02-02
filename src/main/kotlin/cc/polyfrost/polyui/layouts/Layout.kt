@@ -86,6 +86,7 @@ abstract class Layout(
         when (drawable) {
             is Component -> {
                 components.add(drawable)
+                drawable.renderer = renderer
                 drawable.layout = this
                 // allows properties' onAdded to be called
                 drawable.accept(ComponentEvent.Added())
@@ -93,6 +94,7 @@ abstract class Layout(
 
             is Layout -> {
                 children.add(drawable)
+                drawable.renderer = renderer
                 drawable.layout = this
                 drawable.onAdded?.invoke(drawable)
             }
