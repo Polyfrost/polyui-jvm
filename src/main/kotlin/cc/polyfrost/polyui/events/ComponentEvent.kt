@@ -25,7 +25,14 @@ open class ComponentEvent(val type: Type) : Event {
     /** specify a handler for this event.
      *
      * in the given [action], you can perform things on this component, such as [Component.rotate], [Component.recolor], etc.*/
-    fun then(action: Component.() -> Unit): Handler {
+    infix fun to(action: Component.() -> Unit): Handler {
+        return Handler(this.type, action)
+    }
+
+    /** specify a handler for this event.
+     *
+     * in the given [action], you can perform things on this component, such as [Component.rotate], [Component.recolor], etc.*/
+    infix fun then(action: Component.() -> Unit): Handler {
         return Handler(this.type, action)
     }
 

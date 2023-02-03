@@ -1,5 +1,9 @@
 package cc.polyfrost.polyui.units
 
+/** class to represent a 2d vector of units
+ *
+ * @property T the unit type
+ * */
 data class Vec2<T : Unit>(val a: T, val b: T) : Cloneable {
     operator fun minus(value: Float): Vec2<T> {
         this.a.px - value
@@ -49,6 +53,10 @@ data class Vec2<T : Unit>(val a: T, val b: T) : Cloneable {
 
     override fun clone(): Vec2<T> {
         return Vec2(a.clone() as T, b.clone() as T)
+    }
+
+    override fun toString(): String {
+        return "Vec2.${type()}(${a.px} x ${b.px})"
     }
 
     fun scale(scaleX: Float, scaleY: Float) {

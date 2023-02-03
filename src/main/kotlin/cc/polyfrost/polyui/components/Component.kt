@@ -23,6 +23,7 @@ abstract class Component(
     /** position relative to this layout. */
     override val at: Point<Unit>,
     override var sized: Size<Unit>? = null,
+    final override var acceptInput: Boolean = true,
     vararg events: ComponentEvent.Handler
 ) : Drawable {
     override var onAdded: (Drawable.() -> kotlin.Unit)? = null

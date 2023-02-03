@@ -9,12 +9,17 @@ import cc.polyfrost.polyui.units.Vec2
 import cc.polyfrost.polyui.utils.px
 import kotlin.math.max
 
-class PixelLayout(
+/** the most basic layout.
+ *
+ * Just a container basically, that can infer it's size.
+ * */
+open class PixelLayout(
     at: Point<Unit>, sized: Size<Unit>? = null,
     onAdded: (Drawable.() -> kotlin.Unit)? = null,
     onRemoved: (Drawable.() -> kotlin.Unit)? = null,
+    acceptInput: Boolean = true,
     vararg items: Drawable
-) : Layout(at, sized, onAdded, onRemoved, *items) {
+) : Layout(at, sized, onAdded, onRemoved, acceptInput, *items) {
     init {
         items.forEach {
             if (it.atUnitType() == Unit.Type.Flex) {

@@ -25,7 +25,7 @@ abstract class Unit(val type: Type) : Cloneable {
     }
 
     override fun toString(): String {
-        return "Unit(px=$px, type=$type)"
+        return "Unit.$type($px)"
     }
 
     public abstract override fun clone(): Unit
@@ -91,7 +91,7 @@ abstract class Unit(val type: Type) : Cloneable {
 
     /** represents the index of a flex component */
     class Flex(val index: Int = -1, val flexGrow: Int = 0, val flexBasis: Concrete? = null) : Unit(Units.Flex) {
-        override var px by Delegates.notNull<Float>()
+        override var px: Float = 0f
 
         init {
             if (flexGrow < 0) {

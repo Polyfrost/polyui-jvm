@@ -25,14 +25,14 @@ fun main() {
             at = flex(),
             size = Size((random() * 40 + 40).px(), (random() * 40 + 40).px()),
             events = events(
-                ComponentEvent.MousePressed(0).then {
+                ComponentEvent.MousePressed(0) to {
                     println("Mouse pressed!")
                     recolor(Color(0.5f, 0f, 1f, 1f), Animations.EaseInOutCubic, 1.seconds())
                 },
-                ComponentEvent.MouseReleased(0).then {
+                ComponentEvent.MouseReleased(0) to {
                     println("Mouse released!")
                 },
-                ComponentEvent.Added().then { })
+                ComponentEvent.Added() to { })
         )
     }
     val polyUI = PolyUI(
@@ -64,7 +64,7 @@ fun main() {
 //                at = Point(0.px(), 0.px()),
 //            ),
             FlexLayout(
-                at = 20.px() x 20.px(),
+                at = 20.px() x 30.px(),
                 sized = 80.percent() x 80.percent(),
                 items = things
             )

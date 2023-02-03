@@ -17,6 +17,7 @@ abstract class Layout(
     override var sized: Size<Unit>? = null,
     override var onAdded: (Drawable.() -> kotlin.Unit)? = null,
     override var onRemoved: (Drawable.() -> kotlin.Unit)? = null,
+    final override var acceptInput: Boolean = true,
     vararg items: Drawable
 ) : Drawable {
     val components: ArrayList<Component> = items.filterIsInstance<Component>() as ArrayList<Component>

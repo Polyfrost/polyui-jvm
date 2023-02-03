@@ -12,9 +12,10 @@ import cc.polyfrost.polyui.utils.px
 open class ImageBlock(
     private val image: Image,
     properties: Properties = Properties.get<ImageBlockProperties>("cc.polyfrost.polyui.components.impls.ImageBlock"),
+    acceptInput: Boolean = true,
     at: Vec2<Unit>,
     vararg events: ComponentEvent.Handler
-) : Component(properties, at, null, *events) {
+) : Component(properties, at, null, acceptInput, *events) {
 
     override fun render() {
         renderer.drawImage(image, x(), y())

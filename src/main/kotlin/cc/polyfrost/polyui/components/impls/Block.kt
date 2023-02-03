@@ -16,8 +16,9 @@ import cc.polyfrost.polyui.units.Vec2
 open class Block(
     properties: Properties = Properties.get<BlockProperties>("cc.polyfrost.polyui.components.impls.Block"),
     at: Vec2<Unit>, size: Size<Unit>,
+    acceptInput: Boolean = true,
     vararg events: ComponentEvent.Handler
-) : Component(properties, at, size, *events) {
+) : Component(properties, at, size, acceptInput, *events) {
     private val props: BlockProperties = properties as BlockProperties
 
     override fun render() {

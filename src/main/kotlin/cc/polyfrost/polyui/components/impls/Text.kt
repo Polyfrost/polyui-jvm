@@ -11,10 +11,11 @@ import cc.polyfrost.polyui.utils.px
 
 open class Text(
     properties: Properties = Properties.get("cc.polyfrost.polyui.components.impls.Text"),
+    acceptInput: Boolean = false,
     var text: String, val fontSize: Unit.Pixel = 12.px(), private val wrapWidth: Unit? = 100.px(),
     at: Vec2<Unit>, size: Size<Unit>? = null,
     vararg events: ComponentEvent.Handler
-) : Component(properties, at, size, *events) {
+) : Component(properties, at, size, acceptInput, *events) {
     val props: TextProperties = properties as TextProperties
 
     override fun render() {

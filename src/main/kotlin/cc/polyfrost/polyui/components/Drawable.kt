@@ -20,6 +20,9 @@ interface Drawable {
     var onAdded: (Drawable.() -> kotlin.Unit)?
     var onRemoved: (Drawable.() -> kotlin.Unit)?
 
+    /** weather this component should receive mouse events, such as on click, hover, etc. */
+    var acceptInput: Boolean
+
     /** reference to the layout encapsulating this drawable.
      * For components, this is never null, but for layouts, it can be null (meaning its parent is the polyui)
      */
@@ -68,7 +71,8 @@ interface Drawable {
         ?: throw IllegalStateException("drawable $this has no size, but should have a size initialized by this point")
 
     fun isInside(x: Float, y: Float): Boolean {
-        return x >= this.x() && x <= this.x() + this.width() && y >= this.y() && y <= this.y() + this.height()
+        return if (acceptInput) false
+        else x >= this.x() && x <= this.x() + this.width() && y >= this.y() && y <= this.y() + this.height()
     }
 
     fun atUnitType(): Unit.Type {
