@@ -69,18 +69,12 @@ class NVGRenderer : Renderer() {
         drawImage(framebuffer.image(), x, y, width, height, 0)
     }
 
-    override fun drawText(
-        font: Font,
-        x: Float, y: Float,
-        width: Float, text: String,
-        argb: Int,
-        fontSize: Float
-    ) {
+    override fun drawText(font: Font, x: Float, y: Float, width: Float, text: String, color: Color, fontSize: Float) {
         nvgBeginPath(vg)
         nvgFontSize(vg, fontSize)
         nvgFontFaceId(vg, getFont(font).id)
         nvgTextAlign(vg, NVG_ALIGN_LEFT or NVG_ALIGN_TOP)
-        color(argb)
+        color(color)
         nvgFillColor(vg, nvgColor)
         if (width != 0f) {
             nvgTextBox(vg, x, y, width, text)
@@ -150,11 +144,11 @@ class NVGRenderer : Renderer() {
         return false
     }
 
-    override fun drawRect(x: Float, y: Float, width: Float, height: Float, argb: Int) {
+    override fun drawRect(x: Float, y: Float, width: Float, height: Float, color: Color) {
         nvgBeginPath(vg)
         nvgRect(vg, x, y, width, height)
-        color(argb)
-        nvgFillColor(vg, nvgColor)
+        if (color(color, x, y, width, height)) nvgFillPaint(vg, nvgPaint)
+        else nvgFillColor(vg, nvgColor)
         nvgFill(vg)
     }
 
@@ -165,61 +159,28 @@ class NVGRenderer : Renderer() {
     override fun drawRoundRectVaried(
         x: Float, y: Float,
         width: Float, height: Float,
-        argb: Int,
+        color: Color,
         topLeft: Float, topRight: Float,
         bottomLeft: Float, bottomRight: Float
     ) {
         nvgBeginPath(vg)
         nvgRoundedRectVarying(vg, x, y, width, height, topLeft, topRight, bottomLeft, bottomRight)
-        color(argb)
-        nvgFillColor(vg, nvgColor)
+        if (color(color, x, y, width, height)) nvgFillPaint(vg, nvgPaint)
+        else nvgFillColor(vg, nvgColor)
         nvgFill(vg)
     }
 
-    override fun drawLine(x1: Float, y1: Float, x2: Float, y2: Float, argb: Int, width: Float) {
+    override fun drawLine(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float) {
         nvgBeginPath(vg)
         nvgMoveTo(vg, x1, y1)
         nvgLineTo(vg, x2, y2)
         nvgStrokeWidth(vg, width)
-        color(argb)
-        nvgStrokeColor(vg, nvgColor)
+        if (color(color, x1, y1, x2, y2)) nvgStrokePaint(vg, nvgPaint)
+        else nvgStrokeColor(vg, nvgColor)
         nvgStroke(vg)
     }
 
-    override fun drawGradientRect(
-        x: Float,
-        y: Float,
-        width: Float,
-        height: Float,
-        argb1: Int,
-        argb2: Int,
-        type: Color.Gradient.Type
-    ) {
-        gradient(x, y, width, height, argb1, argb2, type)
-        nvgBeginPath(vg)
-        nvgRect(vg, x, y, width, height)
-        nvgFillPaint(vg, nvgPaint)
-        nvgFill(vg)
-    }
-
-    override fun drawGradientRoundRect(
-        x: Float,
-        y: Float,
-        width: Float,
-        height: Float,
-        argb1: Int,
-        argb2: Int,
-        radius: Float,
-        type: Color.Gradient.Type
-    ) {
-        gradient(x, y, width, height, argb1, argb2, type)
-        nvgBeginPath(vg)
-        nvgRoundedRect(vg, x, y, width, height, radius)
-        nvgFillPaint(vg, nvgPaint)
-        nvgFill(vg)
-    }
-
-    override fun textBounds(font: Font, text: String, fontSize: Float, wrapWidth: Float): Vec2<Unit.Pixel> {
+    override fun textBounds(font: Font, text: String, fontSize: Float): Vec2<Unit.Pixel> {
         val out = FloatArray(4)
         nvgFontFaceId(vg, getFont(font).id)
         nvgFontSize(vg, fontSize)
@@ -227,32 +188,29 @@ class NVGRenderer : Renderer() {
         return Vec2(out[2].px(), out[3].px())
     }
 
-    private fun color(argb: Int) {
-        nvgRGBA(
-            (argb shr 16 and 0xFF).toByte(), (argb shr 8 and 0xFF).toByte(),
-            (argb and 0xFF).toByte(), (argb shr 24 and 0xFF).toByte(), nvgColor
-        )
+    private fun color(color: Color) {
+        if (color is Color.Gradient) {
+            nvgRGBA(color.r.toByte(), color.g.toByte(), color.b.toByte(), color.a.toByte(), nvgColor)
+            nvgRGBA(
+                color.color2.r.toByte(), color.color2.g.toByte(),
+                color.color2.b.toByte(), color.color2.a.toByte(),
+                nvgColor2
+            )
+        } else {
+            nvgRGBA(color.r.toByte(), color.g.toByte(), color.b.toByte(), color.a.toByte(), nvgColor)
+        }
     }
 
-    private fun color2(argb: Int) {
-        nvgRGBA(
-            (argb shr 16 and 0xFF).toByte(), (argb shr 8 and 0xFF).toByte(),
-            (argb and 0xFF).toByte(), (argb shr 24 and 0xFF).toByte(), nvgColor2
-        )
-    }
-
-    private fun gradient(
+    private fun color(
+        color: Color,
         x: Float,
         y: Float,
         width: Float,
-        height: Float,
-        argb1: Int,
-        argb2: Int,
-        type: Color.Gradient.Type
-    ) {
-        color(argb1)
-        color2(argb2)
-        when (type) {
+        height: Float
+    ): Boolean {
+        color(color)
+        if (color !is Color.Gradient) return false
+        when (color.type) {
             is Color.Gradient.Type.TopToBottom -> nvgLinearGradient(
                 vg, x, y, x, y + height,
                 nvgColor, nvgColor2, nvgPaint
@@ -276,10 +234,13 @@ class NVGRenderer : Renderer() {
             is Color.Gradient.Type.Radial ->
                 nvgRadialGradient(
                     vg, x + (width / 2f), y + (height / 2f),
-                    type.innerRadius, type.outerRadius,
-                    nvgColor, nvgColor2, nvgPaint
+                    (color.type as Color.Gradient.Type.Radial).innerRadius,
+                    (color.type as Color.Gradient.Type.Radial).outerRadius,
+                    nvgColor, nvgColor2,
+                    nvgPaint
                 )
         }
+        return true
     }
 
     private fun getFont(font: Font): NVGFont {
@@ -363,12 +324,12 @@ class NVGRenderer : Renderer() {
         vg = -1
     }
 
-    override fun drawHollowRect(x: Float, y: Float, width: Float, height: Float, argb: Int, lineWidth: Int) {
-        color(argb)
+    override fun drawHollowRect(x: Float, y: Float, width: Float, height: Float, color: Color, lineWidth: Int) {
         nvgBeginPath(vg)
         nvgRect(vg, x, y, width, height)
         nvgStrokeWidth(vg, lineWidth.toFloat())
-        nvgStrokeColor(vg, nvgColor)
+        if (color(color, x, y, width, height)) nvgStrokePaint(vg, nvgPaint)
+        else nvgStrokeColor(vg, nvgColor)
         nvgStroke(vg)
     }
 

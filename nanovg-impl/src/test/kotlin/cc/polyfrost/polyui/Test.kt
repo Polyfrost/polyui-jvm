@@ -1,13 +1,14 @@
 package cc.polyfrost.polyui
 
-import cc.polyfrost.polyui.animate.Animations
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.components.Drawable
 import cc.polyfrost.polyui.components.impls.Block
+import cc.polyfrost.polyui.components.impls.Text
 import cc.polyfrost.polyui.events.ComponentEvent
 import cc.polyfrost.polyui.events.ComponentEvent.Companion.events
 import cc.polyfrost.polyui.layouts.Layout.Companion.items
 import cc.polyfrost.polyui.layouts.impls.FlexLayout
+import cc.polyfrost.polyui.properties.impls.BlockProperties
 import cc.polyfrost.polyui.renderer.impl.GLWindow
 import cc.polyfrost.polyui.renderer.impl.NVGRenderer
 import cc.polyfrost.polyui.units.Size
@@ -20,41 +21,40 @@ import java.lang.Math.random
 
 fun main() {
     val window = GLWindow("Test", 800, 800)
-    val things = Array<Drawable>(8) {
+    val things = Array<Drawable>(50) {
         Block(
             at = flex(),
             size = Size((random() * 40 + 40).px(), (random() * 40 + 40).px()),
             events = events(
-                ComponentEvent.MousePressed(0) to {
-                    println("Mouse pressed!")
-                    recolor(Color(0.5f, 0f, 1f, 1f), Animations.EaseInOutCubic, 1.seconds())
+                ComponentEvent.MouseClicked(0) to {
+                    println("Mouse clicked!")
                 },
-                ComponentEvent.MouseReleased(0) to {
-                    println("Mouse released!")
+                ComponentEvent.MouseClicked(0, 2) to {
+                    println("Mouse double-clicked!")
                 },
-                ComponentEvent.Added() to { })
+                ComponentEvent.MouseClicked(1) to {
+                    println("Mouse right-clicked!")
+                },
+            )
         )
     }
     val polyUI = PolyUI(
         window.width, window.height, NVGRenderer(),
         items = items(
+            Text(
+                text = "Kotlin...       rainbow!",
+                fontSize = 32.px(),
+                at = 20.px() x 570.px(),
+            ),
             Block(
+                properties = BlockProperties(Color.Gradient(Color(1f, 0f, 1f, 1f), Color(0f, 1f, 1f, 1f))),
                 at = 20.px() x 600.px(),
                 size = 120.px() x 120.px(),
-                color = Color.Gradient(
-                    Color(0.5f, 0f, 0f, 1f),
-                    Color(0f, 0.5f, 0f, 1f),
-                    Color.Gradient.Type.BottomLeftToTopRight
-                ),
-                events = events(
-                    ComponentEvent.MousePressed(0) to {
-                        println("Mouse pressed!")
-                        recolor(Color(0.5f, 0f, 1f, 1f), Animations.EaseInOutCubic, 1.seconds())
-                    },
-                    ComponentEvent.MouseReleased(0) to {
-                        println("Mouse released!")
-                    },
-                    ComponentEvent.Added().then { })
+            ),
+            Block(
+                properties = BlockProperties(Color.Chroma(5.seconds(), 255)),
+                at = 200.px() x 600.px(),
+                size = 120.px() x 120.px(),
             ),
 //            Block(
 //                at = Point(80.percent(), 0.px()),

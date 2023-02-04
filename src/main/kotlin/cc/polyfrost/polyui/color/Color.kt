@@ -1,8 +1,6 @@
 package cc.polyfrost.polyui.color
 
-import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.animate.Animation
-import kotlin.math.sin
 
 /** an immutable color used by PolyUI.
  * @see [Color.Mutable] */
@@ -32,7 +30,7 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         return Mutable(r, g, b, a)
     }
 
-    override fun clone(): Any {
+    public override fun clone(): Color {
         return Color(r, g, b, a)
     }
 
@@ -60,6 +58,7 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         val GRAYf = Color(0.5f, 0.5f, 0.5f, 0.5f)
     }
 
+
     /** A mutable version of [Color], that supports [recoloring][recolor] with animations.*/
     open class Mutable(override var r: Int, override var g: Int, override var b: Int, override var a: Int) :
         Color(r, g, b, a) {
@@ -69,12 +68,17 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
             return Color(r, g, b, a)
         }
 
-        @Deprecated("This would convert a mutable color to a mutable one. You don't need to do that. use [clone] instead.")
+        @Deprecated("This would convert a mutable color to a mutable one.", replaceWith = ReplaceWith("clone()"))
         override fun toMutable(): Mutable {
-            PolyUI.LOGGER.warn("Tried to convert an already mutable color to mutable. Returning self.")
-            return this
+            return clone()
         }
 
+        /** recolor this color to the target color, with the given animation type and duration.
+         *
+         * **make sure to check if the color is a gradient, as this method may not have the expected result!**
+         * @param type animation type. if it is null, the color will be set to the target color immediately.
+         * @see [Gradient]
+         * */
         open fun recolor(target: Color, type: Animation.Type? = null, durationMillis: Long = 1000) {
             if (type != null) {
                 this.animation = Array(4) {
@@ -118,12 +122,15 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
             return animation != null
         }
 
-        override fun clone(): Any {
+        override fun clone(): Mutable {
             return Mutable(r, g, b, a)
         }
     }
 
-    class Gradient(color1: Color, val color2: Color, val type: Type) : Mutable(color1.r, color1.g, color1.b, color1.a) {
+    class Gradient(color1: Color, color2: Color, val type: Type = Type.TopLeftToBottomRight) :
+        Mutable(color1.r, color1.g, color1.b, color1.a) {
+        val color2 = if (color2 !is Mutable) color2.toMutable() else color2
+
         sealed class Type {
             object TopToBottom : Type()
             object LeftToRight : Type()
@@ -163,18 +170,66 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
             result = 31 * result + type.hashCode()
             return result
         }
+
+        override fun clone(): Gradient {
+            return Gradient(this, color2, type)
+        }
+
+        /**
+         * [Mutable.recolor] this gradient color.
+         * @param whichColor which color to recolor. 1 for the first color, 2 for the second color.
+         */
+        fun recolor(whichColor: Int, target: Color, type: Animation.Type? = null, durationMillis: Long = 1000) {
+            if (whichColor == 1) {
+                super.recolor(target, type, durationMillis)
+            } else if (whichColor == 2) {
+                color2.recolor(target, type, durationMillis)
+            } else {
+                throw IllegalArgumentException("Invalid color index")
+            }
+        }
+
+        /** merge the colors of this gradient into one color.
+         * @param colorToMergeTo which color to merge to. 1 for the first color, 2 for the second. */
+        fun mergeColors(colorToMergeTo: Int, type: Animation.Type? = null, durationMillis: Long = 1000L) {
+            if (colorToMergeTo == 1) {
+                color2.recolor(this, type, durationMillis)
+            } else if (colorToMergeTo == 2) {
+                super.recolor(color2, type, durationMillis)
+            } else {
+                throw IllegalArgumentException("Invalid color index")
+            }
+        }
+
+        @Deprecated(
+            "Gradient colors cannot be animated in this way.",
+            ReplaceWith("recolor(1, target, type, durationMillis"),
+            DeprecationLevel.ERROR
+        )
+        override fun recolor(target: Color, type: Animation.Type?, durationMillis: Long) {
+            recolor(1, target, type, durationMillis)
+        }
     }
 
-    class Chroma(var speed: Long, alpha: Int) : Mutable(0, 0, 0, alpha) {
+    class Chroma(val speed: Long = 5000L, alpha: Int = 255) : Mutable(0, 0, 0, alpha) {
+
+
         @Deprecated("Chroma colors cannot be animated.", level = DeprecationLevel.ERROR)
-        override fun recolor(target: Color, type: Animation.Type?, durationMillis: Long) =
-            throw UnsupportedOperationException("Chroma colors cannot be animated.")
+        override fun recolor(target: Color, type: Animation.Type?, durationMillis: Long) {
+            // no-op
+        }
+
+
+        override fun clone(): Chroma {
+            return Chroma(speed, a)
+        }
 
         override fun update(deltaTimeMillis: Long): Boolean {
-            val time = System.currentTimeMillis()
-            r = (sin((time * speed).toDouble()) * 127.0 + 128.0).toInt()
-            g = (sin(time * speed + 2.0) * 127.0 + 128.0).toInt()
-            b = (sin(time * speed + 4.0) * 127.0 + 128.0).toInt()
+            java.awt.Color.HSBtoRGB(System.currentTimeMillis() % speed / speed.toFloat(), 1f, 1f).let {
+                r = (it shr 16) and 0xFF
+                g = (it shr 8) and 0xFF
+                b = it and 0xFF
+            }
             return false
         }
 
@@ -185,5 +240,3 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
     }
 
 }
-
-typealias Gradients = Color.Gradient.Type

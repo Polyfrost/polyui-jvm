@@ -6,6 +6,7 @@ import cc.polyfrost.polyui.renderer.Renderer
 class Settings(private val renderer: Renderer) {
     var debug = System.getProperty("polyui.debug")?.toBoolean() ?: true
     var debugLog = System.getProperty("polyui.debug.logAll")?.toBoolean() ?: false
+
     var showFPS = false
     var useAntialiasing = true
 
@@ -14,6 +15,12 @@ class Settings(private val renderer: Renderer) {
 
     /** minimum number of items in a layout before it will use a framebuffer. */
     var minItemsForFramebuffer: Int = 5
+
+    /** the time between clicks for them to be considered as a combo. */
+    var multiClickInterval: Long = 500L
+
+    /** maximum amount of clicks that can be 'combo-ed' in any interval */
+    var maxClicksThatCanCombo: Int = 2
 
     /** set the buffer type to use for rendering. */
     var bufferType: BufferType = BufferType.FRAMEBUFFER

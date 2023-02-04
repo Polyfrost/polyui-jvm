@@ -29,7 +29,7 @@ class FlexLayout(
     private val flexDirection: Direction = Direction.Row,
     wrapDirection: Wrap = Wrap.Wrap,
     // todo test these modes and make sure they all work
-    private val contentJustify: JustifyContent = JustifyContent.SpaceEvenly,
+    private val contentJustify: JustifyContent = JustifyContent.Start,
     private val itemAlign: AlignItems = AlignItems.Start,
     private val contentAlign: AlignContent = AlignContent.Start,
     gap: Gap = Gap.Auto,
@@ -284,24 +284,16 @@ class FlexLayout(
                 }
 
                 AlignContent.SpaceBetween -> {
-                    if (numRows == 1) {
-                        drawables.forEachNoAlloc { it.crossPos = crossPos + thisRow }
-                    } else {
-                        val gap = (crossSize - drawables.sumOf { it.crossSize }) / (numRows - 1)
-                        drawables.forEachIndexedNoAlloc { i, it ->
-                            it.crossPos = crossPos + thisRow + (i * (it.crossSize + gap))
-                        }
+                    val gap = (crossSize - drawables.sumOf { it.crossSize })
+                    drawables.forEachIndexedNoAlloc { i, it ->
+                        it.crossPos = crossPos + thisRow + ((i - 2) * gap + i * it.crossSize)
                     }
                 }
 
                 AlignContent.SpaceEvenly -> {
-                    if (numRows == 1) {
-                        drawables.forEachNoAlloc { it.crossPos = crossPos + thisRow }
-                    } else {
-                        val gap = (crossSize - drawables.sumOf { it.crossSize }) / (numRows + 1)
-                        drawables.forEachIndexedNoAlloc { i, it ->
-                            it.crossPos = crossPos + thisRow + ((i + 1) * gap + i * it.crossSize)
-                        }
+                    val gap = (crossSize - drawables.sumOf { it.crossSize })
+                    drawables.forEachIndexedNoAlloc { i, it ->
+                        it.crossPos = crossPos + thisRow + ((i - 1) * gap + i * it.crossSize)
                     }
                 }
 
@@ -363,7 +355,7 @@ class FlexLayout(
                     if (drawables.size == 1) {
                         drawables.forEachNoAlloc { it.mainPos = 0F }
                     } else {
-                        val gap = (mainSize - mainGap * (drawables.size - 1)) / drawables.size
+                        val gap = drawables.sumOf { it.mainSize } / (drawables.size - 1)
                         var pos = mainPos
                         drawables.forEachNoAlloc {
                             it.mainPos = pos
@@ -376,7 +368,7 @@ class FlexLayout(
                     if (drawables.size == 1) {
                         drawables.forEachNoAlloc { it.mainPos = 0F }
                     } else {
-                        val gap = (mainSize - thisMainSize) / (drawables.size - 1)
+                        val gap = (mainSize - drawables.sumOf { it.mainSize }) / drawables.size
                         var pos = gap + mainPos
                         drawables.forEachNoAlloc {
                             it.mainPos = pos

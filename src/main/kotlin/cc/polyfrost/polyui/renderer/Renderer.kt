@@ -53,7 +53,7 @@ abstract class Renderer {
         y: Float,
         width: Float = 0f,
         text: String,
-        argb: Int,
+        color: Color,
         fontSize: Float
     )
 
@@ -71,7 +71,7 @@ abstract class Renderer {
     abstract fun unbindFramebuffer(fbo: Framebuffer, mode: Framebuffer.Mode = Framebuffer.Mode.ReadWrite)
     abstract fun supportsRenderbuffer(): Boolean
 
-    abstract fun drawRect(x: Float, y: Float, width: Float, height: Float, argb: Int)
+    abstract fun drawRect(x: Float, y: Float, width: Float, height: Float, color: Color)
 
     /** Function that can be called to explicitly initialize an image. This is used mainly for getting the size of an image, or to ensure an SVG has been rasterized. */
     abstract fun initImage(image: Image)
@@ -81,42 +81,22 @@ abstract class Renderer {
         y: Float,
         width: Float,
         height: Float,
-        argb: Int,
+        color: Color,
         topLeft: Float,
         topRight: Float,
         bottomLeft: Float,
         bottomRight: Float
     )
 
-    abstract fun drawLine(x1: Float, y1: Float, x2: Float, y2: Float, argb: Int, width: Float)
+    abstract fun drawLine(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float)
 
-    fun drawRoundRect(x: Float, y: Float, width: Float, height: Float, argb: Int, radius: Float) =
-        drawRoundRectVaried(x, y, width, height, argb, radius, radius, radius, radius)
+    fun drawRoundRect(x: Float, y: Float, width: Float, height: Float, color: Color, radius: Float) =
+        drawRoundRectVaried(x, y, width, height, color, radius, radius, radius, radius)
 
-    abstract fun drawGradientRect(
-        x: Float,
-        y: Float,
-        width: Float,
-        height: Float,
-        argb1: Int,
-        argb2: Int,
-        type: Color.Gradient.Type
-    )
 
-    abstract fun drawGradientRoundRect(
-        x: Float,
-        y: Float,
-        width: Float,
-        height: Float,
-        argb1: Int,
-        argb2: Int,
-        radius: Float,
-        type: Color.Gradient.Type
-    )
-
-    abstract fun textBounds(font: Font, text: String, fontSize: Float, wrapWidth: Float): Vec2<Unit.Pixel>
+    abstract fun textBounds(font: Font, text: String, fontSize: Float): Vec2<Unit.Pixel>
 
     /** cleanup the PolyUI instance. Use this to free any native resources. */
     abstract fun cleanup()
-    abstract fun drawHollowRect(x: Float, y: Float, width: Float, height: Float, argb: Int, lineWidth: Int)
+    abstract fun drawHollowRect(x: Float, y: Float, width: Float, height: Float, color: Color, lineWidth: Int)
 }

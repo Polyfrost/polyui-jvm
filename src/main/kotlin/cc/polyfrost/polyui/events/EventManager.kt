@@ -12,6 +12,10 @@ class EventManager(private val polyUI: PolyUI) {
         private set
     var mouseY: Float = 0F
         private set
+    private var clickTimer: Long = 0L
+    var clickAmount = 0
+        private set
+
     fun onKeyPressed(key: Int) {
         polyUI.focused?.accept(FocusedEvent.KeyPressed(key))
     }
@@ -29,7 +33,7 @@ class EventManager(private val polyUI: PolyUI) {
                     if (it.mouseOver) {
                         //it.accept(ComponentEvent.MouseMoved(x, y))
                     } else {
-                        it.accept(ComponentEvent.MouseEntered(x, y))
+                        it.accept(ComponentEvent.MouseEntered)
                         mouseOverComponents.add(it)
                         it.mouseOver = true
                     }
@@ -39,7 +43,7 @@ class EventManager(private val polyUI: PolyUI) {
         mouseOverComponents.removeIfNoAlloc {
             (!it.isInside(x, y) && it.mouseOver).also { b ->
                 if (b) {
-                    it.accept(ComponentEvent.MouseExited(x, y))
+                    it.accept(ComponentEvent.MouseExited)
                     it.mouseOver = false
                 }
             }
@@ -70,9 +74,18 @@ class EventManager(private val polyUI: PolyUI) {
     }
 
     fun onMouseReleased(button: Int) {
+        val curr = System.currentTimeMillis()
+        if (curr - clickTimer < polyUI.renderer.settings.multiClickInterval) {
+            if (clickAmount < polyUI.renderer.settings.maxClicksThatCanCombo) clickAmount++
+            else clickAmount = 1
+        } else {
+            clickAmount = 1
+        }
+        clickTimer = curr
         onApplicableComponents(mouseX, mouseY) {
             if (mouseOver) {
                 accept(ComponentEvent.MouseReleased(button))
+                accept(ComponentEvent.MouseClicked(button, clickAmount))
             }
         }
     }

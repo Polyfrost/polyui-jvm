@@ -93,7 +93,7 @@ abstract class Layout(
                 drawable.renderer = renderer
                 drawable.layout = this
                 // allows properties' onAdded to be called
-                drawable.accept(ComponentEvent.Added())
+                drawable.accept(ComponentEvent.Added)
             }
 
             is Layout -> {
@@ -122,7 +122,7 @@ abstract class Layout(
         when (drawable) {
             is Component -> {
                 removeQueue.add(components[components.indexOf(drawable)])
-                drawable.accept(ComponentEvent.Removed())
+                drawable.accept(ComponentEvent.Removed)
             }
 
             is Layout -> {
@@ -206,8 +206,8 @@ abstract class Layout(
     }
 
     override fun debugRender() {
-        renderer.drawHollowRect(x(), y(), width(), height(), Color.GRAYf.getARGB(), 2)
-        renderer.drawText(renderer.defaultFont, x(), y(), 0f, simpleName, -1, 10f)
+        renderer.drawHollowRect(x(), y(), width(), height(), Color.GRAYf, 2)
+        renderer.drawText(renderer.defaultFont, x() + 1, y() + 1, 0f, simpleName, Color.WHITE, 10f)
     }
 
     /** give this, and all its children, a renderer. */

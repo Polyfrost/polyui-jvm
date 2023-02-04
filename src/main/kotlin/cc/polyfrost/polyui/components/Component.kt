@@ -3,7 +3,6 @@ package cc.polyfrost.polyui.components
 import cc.polyfrost.polyui.animate.Animation
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.events.ComponentEvent
-import cc.polyfrost.polyui.events.ComponentEvents
 import cc.polyfrost.polyui.layouts.Layout
 import cc.polyfrost.polyui.properties.Properties
 import cc.polyfrost.polyui.renderer.Renderer
@@ -14,7 +13,6 @@ import cc.polyfrost.polyui.units.Unit
 import cc.polyfrost.polyui.utils.Clock
 import cc.polyfrost.polyui.utils.forEachNoAlloc
 import cc.polyfrost.polyui.utils.removeIfNoAlloc
-import java.util.*
 
 /** A component is a drawable object that can be interacted with. <br>
  * It has a [properties] attached to it, which contains various pieces of information about how this component should look, and its default responses to events. <br>*/
@@ -28,9 +26,7 @@ abstract class Component(
 ) : Drawable {
     override var onAdded: (Drawable.() -> kotlin.Unit)? = null
     override var onRemoved: (Drawable.() -> kotlin.Unit)? = null
-    private val eventHandlers: EnumMap<ComponentEvent.Type, Component.() -> kotlin.Unit> =
-        EnumMap(ComponentEvent.Type::class.java)
-
+    private val eventHandlers: HashMap<ComponentEvent, Component.() -> kotlin.Unit> = HashMap()
     private val animations: ArrayList<Pair<Animation, (Component.() -> kotlin.Unit)?>> = ArrayList()
     private val transforms: ArrayList<Pair<TransformOp, (Component.() -> kotlin.Unit)?>> = ArrayList()
     var scaleX: Float = 1F
@@ -38,7 +34,7 @@ abstract class Component(
 
     /** current rotation of this component (radians). */
     var rotation: Double = 0.0
-    open val color: Color.Mutable = properties.color.toMutable()
+    val color: Color.Mutable = properties.color.toMutable()
     private var finishColorFunc: (Component.() -> kotlin.Unit)? = null
     private val clock = Clock()
     final override lateinit var renderer: Renderer
@@ -51,7 +47,7 @@ abstract class Component(
 
     init {
         events.forEach {
-            addEventHandler(it.type, it.handler)
+            addEventHandler(it.event, it.handler)
         }
     }
 
@@ -62,31 +58,31 @@ abstract class Component(
      * **make sure to call super [Component.accept]!**
      */
     open fun accept(event: ComponentEvent) {
-        properties.eventHandlers[event.type]?.let { it(this) }
-        when (event.type) {
-            ComponentEvents.Added -> {
+        properties.eventHandlers[event]?.let { it(this) }
+        when (event) {
+            is ComponentEvent.Added -> {
                 onAdded?.invoke(this)
             }
 
-            ComponentEvents.Removed -> {
+            is ComponentEvent.Removed -> {
                 onRemoved?.invoke(this)
             }
 
-            else -> eventHandlers[event.type]?.let { it(this) }
+            else -> eventHandlers[event]?.let { it(this) }
         }
     }
 
-    fun addEventHandler(type: ComponentEvent.Type, handler: Component.() -> kotlin.Unit) {
-        when (type) {
-            ComponentEvents.Added -> {
+    fun addEventHandler(event: ComponentEvent, handler: Component.() -> kotlin.Unit) {
+        when (event) {
+            is ComponentEvent.Added -> {
                 onAdded = handler as Drawable.() -> kotlin.Unit
             }
 
-            ComponentEvents.Removed -> {
+            is ComponentEvent.Removed -> {
                 onRemoved = handler as Drawable.() -> kotlin.Unit
             }
 
-            else -> this.eventHandlers[type] = handler
+            else -> this.eventHandlers[event] = handler
         }
     }
 

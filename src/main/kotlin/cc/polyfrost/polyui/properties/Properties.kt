@@ -6,18 +6,17 @@ import cc.polyfrost.polyui.events.ComponentEvent
 import cc.polyfrost.polyui.properties.impls.BlockProperties
 import cc.polyfrost.polyui.properties.impls.ImageBlockProperties
 import cc.polyfrost.polyui.properties.impls.TextProperties
-import java.util.*
 
 abstract class Properties : Cloneable {
     abstract val color: Color
     abstract val padding: Float
-    val eventHandlers: EnumMap<ComponentEvent.Type, Component.() -> Unit> = EnumMap(ComponentEvent.Type::class.java)
+    val eventHandlers: HashMap<ComponentEvent, Component.() -> Unit> = HashMap()
 
     /** add a universal event handler to this component's properties.
      *
      * This means that every component using this property will have this event handler.
      */
-    fun addEventHandler(type: ComponentEvent.Type, function: Component.() -> Unit) {
+    fun addEventHandler(type: ComponentEvent, function: Component.() -> Unit) {
         eventHandlers[type] = function
     }
 
@@ -25,8 +24,8 @@ abstract class Properties : Cloneable {
      *
      * This means that every component using this property will have this event handler.
      */
-    fun addEventHandlers(vararg handlers: Pair<ComponentEvent.Type, Component.() -> Unit>) {
-        handlers.forEach { addEventHandler(it.first, it.second) }
+    fun addEventHandlers(vararg handlers: ComponentEvent.Handler) {
+        handlers.forEach { addEventHandler(it.event, it.handler) }
     }
 
     companion object {
