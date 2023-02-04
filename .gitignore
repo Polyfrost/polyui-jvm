@@ -402,3 +402,5 @@ gradle-app.setting
 .idea/uiDesigner.xml
 
 # End of https://www.toptal.com/developers/gitignore/api/forgegradle,gradle,intellij,intellij+all,intellij+iml,visualstudiocode,java,kotlin,maven,macos,linux,git
+
+.idea
