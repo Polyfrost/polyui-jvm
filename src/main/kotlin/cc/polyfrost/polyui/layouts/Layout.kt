@@ -10,7 +10,7 @@ import cc.polyfrost.polyui.renderer.data.Framebuffer
 import cc.polyfrost.polyui.units.Point
 import cc.polyfrost.polyui.units.Size
 import cc.polyfrost.polyui.units.Unit
-import cc.polyfrost.polyui.utils.forEachNoAlloc
+import cc.polyfrost.polyui.utils.fastEach
 import org.jetbrains.annotations.ApiStatus
 
 abstract class Layout(
@@ -19,14 +19,13 @@ abstract class Layout(
     override var onAdded: (Drawable.() -> kotlin.Unit)? = null,
     override var onRemoved: (Drawable.() -> kotlin.Unit)? = null,
     final override var acceptInput: Boolean = true,
-    vararg items: Drawable
+    vararg items: Drawable,
 ) : Drawable {
-    val simpleName = this.toString().substringAfterLast(".")
-    val components: ArrayList<Component> = items.filterIsInstance<Component>() as ArrayList<Component>
-    val children: ArrayList<Layout> = items.filterIsInstance<Layout>() as ArrayList<Layout>
+    private val simpleName = this.toString().substringAfterLast(".")
+    val components = mutableListOf(*items.filterIsInstance<Component>().toTypedArray())
+    val children = mutableListOf(*items.filterIsInstance<Layout>().toTypedArray())
 
-    // small arraylist because it's only used for removal
-    val removeQueue: ArrayList<Drawable> = ArrayList(5)
+    val removeQueue = mutableListOf<Drawable>()
     var fbo: Framebuffer? = null
     final override lateinit var renderer: Renderer
 
@@ -35,15 +34,15 @@ abstract class Layout(
 
     init {
         if (items.isEmpty()) throw IllegalStateException("Layout cannot be empty!")
-        components.forEachNoAlloc { it.layout = this }
-        children.forEachNoAlloc { it.layout = this }
+        components.fastEach { it.layout = this }
+        children.fastEach { it.layout = this }
     }
 
     var needsRedraw = true
     var needsRecalculation = true
 
     fun reRenderIfNecessary() {
-        children.forEachNoAlloc { it.reRenderIfNecessary() }
+        children.fastEach { it.reRenderIfNecessary() }
         if (fbo != null) {
             if (needsRedraw) {
                 // TODO framebuffer issues
@@ -54,7 +53,7 @@ abstract class Layout(
                 if (renderer.settings.debug) debugRender()
 //                renderer.unbindFramebuffer(fbo!!)
 //                needsRedraw = false
-            } else renderer.drawFramebuffer(fbo!!, x(), y(), width(), height())
+            } else renderer.drawFramebuffer(fbo!!, x, y, width, height)
         } else {
             preRender()
             render()
@@ -158,19 +157,11 @@ abstract class Layout(
         needsRedraw = true
     }
 
-    fun getComponents(): List<Component> {
-        return components
-    }
-
-    fun getChildren(): List<Layout> {
-        return children
-    }
-
     override fun calculateBounds() {
-        components.forEachNoAlloc {
+        components.fastEach {
             it.calculateBounds()
         }
-        children.forEachNoAlloc {
+        children.fastEach {
             it.calculateBounds()
         }
         if (this.sized == null) this.sized =
@@ -179,16 +170,16 @@ abstract class Layout(
     }
 
     override fun preRender() {
-        removeQueue.forEachNoAlloc { if (it.canBeRemoved()) removeComponentNow(it) }
-        components.forEachNoAlloc { it.preRender() }
+        removeQueue.fastEach { if (it.canBeRemoved()) removeComponentNow(it) }
+        components.fastEach { it.preRender() }
     }
 
     override fun render() {
-        components.forEachNoAlloc { it.render() }
+        components.fastEach { it.render() }
     }
 
     override fun postRender() {
-        components.forEachNoAlloc { it.postRender() }
+        components.fastEach { it.postRender() }
     }
 
     override fun debugPrint() {
@@ -202,26 +193,25 @@ abstract class Layout(
         println("FBO: $fbo")
         println("Layout: $layout")
         println()
-        children.forEachNoAlloc { it.debugPrint() }
+        children.fastEach { it.debugPrint() }
     }
 
     override fun debugRender() {
-        renderer.drawHollowRect(x(), y(), width(), height(), Color.GRAYf, 2)
-        renderer.drawText(renderer.defaultFont, x() + 1, y() + 1, 0f, simpleName, Color.WHITE, 10f)
+        renderer.drawHollowRect(x, y, width, height, Color.GRAYf, 2)
+        renderer.drawText(renderer.defaultFont, x + 1, y + 1, 0f, simpleName, Color.WHITE, 10f)
     }
 
     /** give this, and all its children, a renderer. */
     fun giveRenderer(renderer: Renderer) {
         if (this::renderer.isInitialized) throw Exception("Renderer already initialized!") // sanity check
         this.renderer = renderer
-        components.forEachNoAlloc { it.renderer = renderer }
-        children.forEachNoAlloc { it.giveRenderer(renderer) }
+        components.fastEach { it.renderer = renderer }
+        children.fastEach { it.giveRenderer(renderer) }
     }
 
     override fun canBeRemoved(): Boolean {
         return !needsRedraw
     }
-
 
     companion object {
         /** wrapper for varargs, when arguments are in the wrong order */

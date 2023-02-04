@@ -24,10 +24,20 @@ interface Drawable {
     /** weather this component should receive mouse events, such as on click, hover, etc. */
     var acceptInput: Boolean
 
-    /** reference to the layout encapsulating this drawable.
+    /**
+     * Reference to the layout encapsulating this drawable.
      * For components, this is never null, but for layouts, it can be null (meaning its parent is the polyui)
      */
     val layout: Layout?
+
+    val x get() = at.x
+    val y get() = at.y
+    val width
+        get() = sized?.width
+            ?: throw IllegalStateException("Drawable $this has no size, but should have a size initialized by this point")
+    val height
+        get() = sized?.height
+            ?: throw IllegalStateException("Drawable $this has no size, but should have a size initialized by this point")
 
     /** pre-render functions, such as applying transforms. */
     fun preRender()
@@ -38,7 +48,8 @@ interface Drawable {
     /** post-render functions, such as removing transforms. */
     fun postRender()
 
-    /** calculate the position and size of this drawable. Make sure to call [doDynamicSize] in this method to avoid issues with sizing.
+    /**
+     * Calculate the position and size of this drawable. Make sure to call [doDynamicSize] in this method to avoid issues with sizing.
      *
      * This method is called once the [layout] is populated for children and components, and when a recalculation is requested.
      *
@@ -46,7 +57,9 @@ interface Drawable {
      */
     fun calculateBounds()
 
-    /** method that is called when the physical size of the total window area changes. */
+    /**
+     * Method that is called when the physical size of the total window area changes.
+     */
     fun rescale(scaleX: Float, scaleY: Float) {
         at.scale(scaleX, scaleY)
         sized!!.scale(scaleX, scaleY)
@@ -69,48 +82,39 @@ interface Drawable {
         PolyUI.LOGGER.warn("Drawable $this has no debug print method implemented, defaulting to no-op.")
     }
 
-    fun x(): Float = at.x()
-    fun y(): Float = at.y()
-    fun width(): Float = sized?.width()
-        ?: throw IllegalStateException("drawable $this has no size, but should have a size initialized by this point")
-
-    fun height(): Float = sized?.height()
-        ?: throw IllegalStateException("drawable $this has no size, but should have a size initialized by this point")
-
     fun isInside(x: Float, y: Float): Boolean {
         return if (!acceptInput) false
-        else x >= this.x() && x <= this.x() + this.width() && y >= this.y() && y <= this.y() + this.height()
+        else x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height
     }
 
-    fun atUnitType(): Unit.Type {
-        return at.type()
-    }
-
-    fun sizedUnitType(): Unit.Type {
-        return sized!!.type()
-    }
+    fun atUnitType(): Unit.Type = at.type()
+    fun sizedUnitType(): Unit.Type = sized!!.type()
 
     fun doDynamicSize() {
-        if (sized!!.a is Unit.Dynamic) (sized!!.a as Unit.Dynamic).set(
-            layout?.sized?.a ?: throw IllegalStateException("Dynamic units only work on parents with a set size!")
-        )
-        if (sized!!.b is Unit.Dynamic) (sized!!.b as Unit.Dynamic).set(
-            layout?.sized?.b ?: throw IllegalStateException("Dynamic units only work on parents with a set size!")
-        )
-        if (at.a is Unit.Dynamic) (at.a as Unit.Dynamic).set(
-            layout?.sized?.a ?: throw IllegalStateException("Dynamic units only work on parents with a set size!")
-        )
-        if (at.b is Unit.Dynamic) (at.b as Unit.Dynamic).set(
-            layout?.sized?.b ?: throw IllegalStateException("Dynamic units only work on parents with a set size!")
-        )
+        if (sized!!.a is Unit.Dynamic)
+            (sized!!.a as Unit.Dynamic).set(
+                layout?.sized?.a ?: throw IllegalStateException("Dynamic units only work on parents with a set size!")
+            )
+        if (sized!!.b is Unit.Dynamic)
+            (sized!!.b as Unit.Dynamic).set(
+                layout?.sized?.b ?: throw IllegalStateException("Dynamic units only work on parents with a set size!")
+            )
+        if (at.a is Unit.Dynamic)
+            (at.a as Unit.Dynamic).set(
+                layout?.sized?.a ?: throw IllegalStateException("Dynamic units only work on parents with a set size!")
+            )
+        if (at.b is Unit.Dynamic)
+            (at.b as Unit.Dynamic).set(
+                layout?.sized?.b ?: throw IllegalStateException("Dynamic units only work on parents with a set size!")
+            )
     }
 
-    /** Implement this function to return the size of this drawable, if no size is specified during construction.
+    /**
+     * Implement this function to return the size of this drawable, if no size is specified during construction.
      *
      * This should be so that if the component can determine its own size (for example, it is an image), then the size parameter in the constructor can be omitted using:
      *
      * `sized: Vec2<cc.polyfrost.polyui.units.Unit>? = null;` and this method **needs** to be implemented!
-     *
      *
      * Otherwise, the size parameter in the constructor must be specified.
      * @throws UnsupportedOperationException if this method is not implemented, and the size parameter in the constructor is not specified. */

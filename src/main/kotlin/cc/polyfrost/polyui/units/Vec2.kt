@@ -1,10 +1,19 @@
 package cc.polyfrost.polyui.units
 
-/** class to represent a 2d vector of units
+/**
+ * Class to represent a 2D vector of units
  *
- * @property T the unit type
- * */
-data class Vec2<T : Unit>(val a: T, val b: T) : Cloneable {
+ * @param T The type of unit to use
+ */
+data class Vec2<T : Unit>(
+    val a: T,
+    val b: T,
+) : Cloneable {
+    val x get() = a.px
+    val y get() = b.px
+    val width get() = a.px
+    val height get() = b.px
+
     operator fun minus(value: Float): Vec2<T> {
         this.a.px - value
         this.b.px - value
@@ -35,22 +44,7 @@ data class Vec2<T : Unit>(val a: T, val b: T) : Cloneable {
         return a.type
     }
 
-    fun x(): Float {
-        return a.px
-    }
-
-    fun y(): Float {
-        return b.px
-    }
-
-    fun width(): Float {
-        return a.px
-    }
-
-    fun height(): Float {
-        return b.px
-    }
-
+    @Suppress("UNCHECKED_CAST")
     override fun clone(): Vec2<T> {
         return Vec2(a.clone() as T, b.clone() as T)
     }

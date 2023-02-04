@@ -3,8 +3,8 @@ package cc.polyfrost.polyui.events
 import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.components.Component
 import cc.polyfrost.polyui.layouts.Layout
-import cc.polyfrost.polyui.utils.forEachNoAlloc
-import cc.polyfrost.polyui.utils.removeIfNoAlloc
+import cc.polyfrost.polyui.utils.fastEach
+import cc.polyfrost.polyui.utils.fastRemoveIf
 
 class EventManager(private val polyUI: PolyUI) {
     private val mouseOverComponents = ArrayList<Component>()
@@ -28,7 +28,7 @@ class EventManager(private val polyUI: PolyUI) {
         mouseX = x
         mouseY = y
         onApplicableLayouts(x, y) {
-            components.forEachNoAlloc {
+            components.fastEach {
                 if (it.isInside(x, y)) {
                     if (it.mouseOver) {
                         //it.accept(ComponentEvent.MouseMoved(x, y))
@@ -40,7 +40,7 @@ class EventManager(private val polyUI: PolyUI) {
                 }
             }
         }
-        mouseOverComponents.removeIfNoAlloc {
+        mouseOverComponents.fastRemoveIf {
             (!it.isInside(x, y) && it.mouseOver).also { b ->
                 if (b) {
                     it.accept(ComponentEvent.MouseExited)
@@ -51,7 +51,7 @@ class EventManager(private val polyUI: PolyUI) {
     }
 
     private inline fun onApplicableLayouts(x: Float, y: Float, func: Layout.() -> Unit) {
-        polyUI.master.children.forEachNoAlloc {
+        polyUI.master.children.fastEach {
             if (it.isInside(x, y)) {
                 func(it)
             }
@@ -62,7 +62,7 @@ class EventManager(private val polyUI: PolyUI) {
     }
 
     private inline fun onApplicableComponents(x: Float, y: Float, func: Component.() -> Unit) {
-        return onApplicableLayouts(x, y) { components.forEachNoAlloc { if (it.isInside(x, y)) func(it) } }
+        return onApplicableLayouts(x, y) { components.fastEach { if (it.isInside(x, y)) func(it) } }
     }
 
     fun onMousePressed(button: Int) {

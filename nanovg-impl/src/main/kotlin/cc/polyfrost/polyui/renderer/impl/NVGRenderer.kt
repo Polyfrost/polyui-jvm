@@ -9,9 +9,10 @@ import cc.polyfrost.polyui.renderer.data.Framebuffer
 import cc.polyfrost.polyui.renderer.data.Image
 import cc.polyfrost.polyui.units.Unit
 import cc.polyfrost.polyui.units.Vec2
-import cc.polyfrost.polyui.utils.IOUtils
-import cc.polyfrost.polyui.utils.IOUtils.toByteBuffer
-import cc.polyfrost.polyui.utils.px
+import cc.polyfrost.polyui.utils.getResourceStream
+import cc.polyfrost.polyui.utils.getResourceStreamNullable
+import cc.polyfrost.polyui.units.px
+import cc.polyfrost.polyui.utils.toByteBuffer
 import org.lwjgl.nanovg.*
 import org.lwjgl.nanovg.NanoVG.*
 import org.lwjgl.opengl.GL30.*
@@ -161,7 +162,7 @@ class NVGRenderer : Renderer() {
         width: Float, height: Float,
         color: Color,
         topLeft: Float, topRight: Float,
-        bottomLeft: Float, bottomRight: Float
+        bottomLeft: Float, bottomRight: Float,
     ) {
         nvgBeginPath(vg)
         nvgRoundedRectVarying(vg, x, y, width, height, topLeft, topRight, bottomLeft, bottomRight)
@@ -185,7 +186,7 @@ class NVGRenderer : Renderer() {
         nvgFontFaceId(vg, getFont(font).id)
         nvgFontSize(vg, fontSize)
         nvgTextBounds(vg, 0F, 0F, text, out)
-        return Vec2(out[2].px(), out[3].px())
+        return Vec2(out[2].px, out[3].px)
     }
 
     private fun color(color: Color) {
@@ -206,7 +207,7 @@ class NVGRenderer : Renderer() {
         x: Float,
         y: Float,
         width: Float,
-        height: Float
+        height: Float,
     ): Boolean {
         color(color)
         if (color !is Color.Gradient) return false
@@ -246,9 +247,10 @@ class NVGRenderer : Renderer() {
     private fun getFont(font: Font): NVGFont {
         return fonts[font] ?: run {
             val data =
-                IOUtils.getResourceAsStreamNullable(font.fileName)?.toByteBuffer() ?: IOUtils.getResourceAsStream(
-                    defaultFont.fileName
-                ).toByteBuffer()
+                getResourceStreamNullable(font.fileName)?.toByteBuffer()
+                    ?: getResourceStream(
+                        defaultFont.fileName
+                    ).toByteBuffer()
             val ft = nvgCreateFontMem(vg, font.name, data, 0)
             NVGFont(ft, data).also { fonts[font] = it }
         }
@@ -263,7 +265,7 @@ class NVGRenderer : Renderer() {
                     val w = IntArray(1)
                     val h = IntArray(1)
                     data = STBImage.stbi_load_from_memory(
-                        IOUtils.getResourceAsStream(image.fileName).toByteBuffer(),
+                        getResourceStream(image.fileName).toByteBuffer(),
                         w, h, IntArray(1), 4
                     ).also {
                         if (it == null) {
@@ -285,7 +287,7 @@ class NVGRenderer : Renderer() {
                 }
 
                 Image.Type.SVG -> {
-                    val d = InputStreamReader(IOUtils.getResourceAsStream(image.fileName)).readText() as CharSequence
+                    val d = InputStreamReader(getResourceStream(image.fileName)).readText() as CharSequence
                     val svg =
                         NanoSVG.nsvgParse(d, "px", 96F) ?: throw Exception("Failed to open SVG: $image (invalid data?)")
                     val raster = NanoSVG.nsvgCreateRasterizer()

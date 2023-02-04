@@ -1,10 +1,10 @@
-package cc.polyfrost.polyui.properties.impls
+package cc.polyfrost.polyui.properties.impl
 
 import cc.polyfrost.polyui.animate.Animations
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.events.ComponentEvent
 import cc.polyfrost.polyui.properties.Properties
-import cc.polyfrost.polyui.utils.seconds
+import cc.polyfrost.polyui.units.seconds
 
 open class BlockProperties(override val color: Color = Color.BLACK) : Properties() {
     open val hoverColor = Color(12, 48, 255)
@@ -14,9 +14,11 @@ open class BlockProperties(override val color: Color = Color.BLACK) : Properties
     init {
         addEventHandlers(
             ComponentEvent.MouseEntered to {
-                recolor(hoverColor, Animations.EaseInOutQuad, 0.2.seconds())
+                recolor(hoverColor, Animations.EaseInOutQuad, 0.2.seconds)
             },
-            ComponentEvent.MouseExited to { recolor(properties.color, Animations.EaseInOutQuad, 0.4.seconds()) },
+            ComponentEvent.MouseExited to {
+                recolor(properties.color, Animations.EaseInOutQuad, 0.4.seconds)
+            },
         )
     }
 }

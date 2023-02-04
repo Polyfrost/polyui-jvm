@@ -11,22 +11,27 @@ import cc.polyfrost.polyui.units.Point
 import cc.polyfrost.polyui.units.Size
 import cc.polyfrost.polyui.units.Unit
 import cc.polyfrost.polyui.utils.Clock
-import cc.polyfrost.polyui.utils.forEachNoAlloc
-import cc.polyfrost.polyui.utils.removeIfNoAlloc
+import cc.polyfrost.polyui.utils.fastEach
+import cc.polyfrost.polyui.utils.fastRemoveIf
 
-/** A component is a drawable object that can be interacted with. <br>
- * It has a [properties] attached to it, which contains various pieces of information about how this component should look, and its default responses to events. <br>*/
+/**
+ * A component is a drawable object that can be interacted with. <br>
+ *
+ * It has a [properties] attached to it, which contains various pieces of
+ * information about how this component should look, and its default responses
+ * to events.
+ */
 abstract class Component(
     val properties: Properties,
     /** position relative to this layout. */
     override val at: Point<Unit>,
     override var sized: Size<Unit>? = null,
     final override var acceptInput: Boolean = true,
-    vararg events: ComponentEvent.Handler
+    vararg events: ComponentEvent.Handler,
 ) : Drawable {
     override var onAdded: (Drawable.() -> kotlin.Unit)? = null
     override var onRemoved: (Drawable.() -> kotlin.Unit)? = null
-    private val eventHandlers: HashMap<ComponentEvent, Component.() -> kotlin.Unit> = HashMap()
+    private val eventHandlers = mutableMapOf<ComponentEvent, Component.() -> kotlin.Unit>()
     private val animations: ArrayList<Pair<Animation, (Component.() -> kotlin.Unit)?>> = ArrayList()
     private val transforms: ArrayList<Pair<TransformOp, (Component.() -> kotlin.Unit)?>> = ArrayList()
     var scaleX: Float = 1F
@@ -72,6 +77,7 @@ abstract class Component(
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     fun addEventHandler(event: ComponentEvent, handler: Component.() -> kotlin.Unit) {
         when (event) {
             is ComponentEvent.Added -> {
@@ -102,7 +108,7 @@ abstract class Component(
         byY: Float,
         animation: Animation.Type? = null,
         durationMillis: Long = 0L,
-        onFinish: (Component.() -> kotlin.Unit)? = null
+        onFinish: (Component.() -> kotlin.Unit)? = null,
     ) {
         transform(TransformOp.Scale(byX, byY, this, animation, durationMillis), onFinish)
     }
@@ -116,7 +122,7 @@ abstract class Component(
         degrees: Double,
         animation: Animation.Type? = null,
         durationMillis: Long = 0L,
-        onFinish: (Component.() -> kotlin.Unit)? = null
+        onFinish: (Component.() -> kotlin.Unit)? = null,
     ) {
         transform(TransformOp.Rotate(Math.toRadians(degrees), this, animation, durationMillis), onFinish)
     }
@@ -132,7 +138,7 @@ abstract class Component(
         byY: Float,
         animation: Animation.Type? = null,
         durationMillis: Long = 0L,
-        onFinish: (Component.() -> kotlin.Unit)? = null
+        onFinish: (Component.() -> kotlin.Unit)? = null,
     ) {
         transform(TransformOp.Translate(byX, byY, this, animation, durationMillis), onFinish)
     }
@@ -145,7 +151,7 @@ abstract class Component(
         toColor: Color,
         animation: Animation.Type,
         durationMillis: Long,
-        onFinish: (Component.() -> kotlin.Unit)? = null
+        onFinish: (Component.() -> kotlin.Unit)? = null,
     ) {
         color.recolor(toColor, animation, durationMillis)
         finishColorFunc = onFinish
@@ -173,15 +179,15 @@ abstract class Component(
      * **make sure to call super [Component.preRender]!**
      */
     override fun preRender() {
-        animations.removeIfNoAlloc { it.first.finished.also { b -> if (b) it.second?.invoke(this) } }
-        transforms.removeIfNoAlloc { it.first.finished.also { b -> if (b) it.second?.invoke(this) } }
+        animations.fastRemoveIf { it.first.finished.also { b -> if (b) it.second?.invoke(this) } }
+        transforms.fastRemoveIf { it.first.finished.also { b -> if (b) it.second?.invoke(this) } }
 
         val delta = clock.getDelta()
-        animations.forEachNoAlloc { (it, _) ->
+        animations.fastEach { (it, _) ->
             it.update(delta)
             if (!it.finished) wantRedraw()
         }
-        transforms.forEachNoAlloc { (it, _) ->
+        transforms.fastEach { (it, _) ->
             it.update(delta)
             if (!it.finished) wantRedraw()
             it.apply(renderer)
@@ -207,8 +213,4 @@ abstract class Component(
     override fun canBeRemoved(): Boolean {
         return animations.size == 0 && transforms.size == 0 && !color.isRecoloring()
     }
-
-
 }
-
-

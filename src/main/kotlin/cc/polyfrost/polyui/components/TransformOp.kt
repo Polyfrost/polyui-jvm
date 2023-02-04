@@ -24,10 +24,10 @@ abstract class TransformOp(val component: Component) {
     @ApiStatus.Internal
     class Translate(
         private val x: Float, private val y: Float, component: Component,
-        type: Animations? = null, durationMillis: Long = 0L
+        type: Animations? = null, durationMillis: Long = 0L,
     ) : TransformOp(component) {
-        override val animation = type?.create(durationMillis, component.x(), component.x() + x)
-        private val yAnim = type?.create(durationMillis, component.y(), component.y() + y)
+        override val animation = type?.create(durationMillis, component.x, component.x + x)
+        private val yAnim = type?.create(durationMillis, component.y, component.y + y)
         override fun apply(renderer: Renderer) {
             if (animation != null) {
                 component.at.a.px += animation.value
@@ -44,7 +44,7 @@ abstract class TransformOp(val component: Component) {
     @ApiStatus.Internal
     class Scale(
         private val x: Float, private val y: Float, component: Component,
-        type: Animations? = null, durationMillis: Long = 0L
+        type: Animations? = null, durationMillis: Long = 0L,
     ) : TransformOp(component) {
         override val animation = type?.create(durationMillis, component.scaleX, component.scaleX + x)
         private val yAnim = type?.create(durationMillis, component.scaleY, component.scaleY + y)

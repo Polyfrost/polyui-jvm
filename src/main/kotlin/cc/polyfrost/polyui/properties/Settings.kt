@@ -4,8 +4,8 @@ import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.renderer.Renderer
 
 class Settings(private val renderer: Renderer) {
-    var debug = System.getProperty("polyui.debug")?.toBoolean() ?: true
-    var debugLog = System.getProperty("polyui.debug.logAll")?.toBoolean() ?: false
+    var debug = System.getProperty("polyui.debug", "true").toBoolean()
+    var debugLog = System.getProperty("polyui.debug.logAll", "false").toBoolean()
 
     var showFPS = false
     var useAntialiasing = true
@@ -33,9 +33,13 @@ class Settings(private val renderer: Renderer) {
 
 
     enum class BufferType {
-        /** RenderBuffers are marginally faster than framebuffers, but all read operations will not work.
+        /**
+         * RenderBuffers are marginally faster than framebuffers, but all read
+         * operations will not work.
          *
-         * Note that not all renderers will support this, and will use a framebuffer instead. */
+         * Note that not all renderers will support this, and you might use a
+         * [FRAMEBUFFER] instead.
+         */
         RENDERBUFFER,
 
         /** Use a framebuffer object for rendering.*/

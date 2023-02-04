@@ -3,16 +3,15 @@ package cc.polyfrost.polyui
 import cc.polyfrost.polyui.components.Drawable
 import cc.polyfrost.polyui.components.Focusable
 import cc.polyfrost.polyui.events.EventManager
-import cc.polyfrost.polyui.layouts.impls.PixelLayout
+import cc.polyfrost.polyui.layouts.impl.PixelLayout
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.units.Point
 import cc.polyfrost.polyui.units.Size
 import cc.polyfrost.polyui.units.Unit
-import cc.polyfrost.polyui.utils.forEachNoAlloc
-import cc.polyfrost.polyui.utils.px
+import cc.polyfrost.polyui.units.px
+import cc.polyfrost.polyui.utils.fastEach
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-
 
 /**
  * note: in early stages. I have not updated this kdoc.
@@ -48,23 +47,27 @@ import org.slf4j.LoggerFactory
  * It uses about 60MB of ram during usage, with 70% of that being OpenGL and the JVM itself, so about 10MB of RAM is used. (not bad?)
  * And it gets around 9000 fps with 8% CPU usage (lol)
  * CPU wise, the most expensive part of the code is OpenGL, with roughly 0.46% of the time being spent in the code itself. The rest is openGL, most expensive being blitFramebuffer and swapBuffers (15% and 68% respectively)
- *
- *
  */
-class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg items: Drawable) {
-    val master = PixelLayout(Point(0.px(), 0.px()), Size(width.px(), height.px()), items = items)
-    private var renderHooks = ArrayList<Renderer.() -> kotlin.Unit>(5)
+class PolyUI(
+    var width: Int,
+    var height: Int,
+    val renderer: Renderer,
+    vararg items: Drawable,
+) {
+    val master = PixelLayout(Point(0.px, 0.px), Size(width.px, height.px), items = items)
     val eventManager = EventManager(this)
     private val settings = renderer.settings
+    private var renderHooks = mutableListOf<Renderer.() -> kotlin.Unit>()
     internal var focused: (Focusable)? = null
 
     init {
         master.giveRenderer(renderer)
         master.calculateBounds()
-        master.children.forEachNoAlloc {
-            if (settings.minItemsForFramebuffer > it.children.size + it.components.size) it.fbo =
-                renderer.createFramebuffer(it.width().toInt(), it.height().toInt(), settings.bufferType)
-            if (it.width() > width || it.height() > height) {
+        master.children.fastEach {
+            if (settings.minItemsForFramebuffer > it.children.size + it.components.size) {
+                it.fbo = renderer.createFramebuffer(it.width.toInt(), it.height.toInt(), settings.bufferType)
+            }
+            if (it.width > width || it.height > height) {
                 LOGGER.warn("Layout $it is larger than the window. This may cause issues.")
             }
         }
@@ -89,14 +92,14 @@ class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg ite
             master.fbo = renderer.createFramebuffer(newWidth, newHeight, settings.bufferType)
         }
 
-        master.children.forEachNoAlloc {
+        master.children.fastEach {
             it.rescale(
                 newWidth.toFloat() / this.width.toFloat(),
                 newHeight.toFloat() / this.height.toFloat()
             )
             if (it.fbo != null) {
                 renderer.deleteFramebuffer(it.fbo!!)
-                it.fbo = renderer.createFramebuffer(it.width().toInt(), it.height().toInt(), settings.bufferType)
+                it.fbo = renderer.createFramebuffer(it.width.toInt(), it.height.toInt(), settings.bufferType)
             }
         }
         this.width = newWidth
@@ -106,7 +109,7 @@ class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg ite
     fun render() {
         renderer.beginFrame(width, height)
         master.reRenderIfNecessary()
-        renderHooks.forEachNoAlloc { it(renderer) }
+        renderHooks.fastEach { it(renderer) }
         renderer.endFrame()
     }
 

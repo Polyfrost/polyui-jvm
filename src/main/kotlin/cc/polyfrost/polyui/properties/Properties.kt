@@ -3,16 +3,17 @@ package cc.polyfrost.polyui.properties
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.components.Component
 import cc.polyfrost.polyui.events.ComponentEvent
-import cc.polyfrost.polyui.properties.impls.BlockProperties
-import cc.polyfrost.polyui.properties.impls.ImageBlockProperties
-import cc.polyfrost.polyui.properties.impls.TextProperties
+import cc.polyfrost.polyui.properties.impl.BlockProperties
+import cc.polyfrost.polyui.properties.impl.ImageBlockProperties
+import cc.polyfrost.polyui.properties.impl.TextProperties
 
 abstract class Properties : Cloneable {
     abstract val color: Color
     abstract val padding: Float
-    val eventHandlers: HashMap<ComponentEvent, Component.() -> Unit> = HashMap()
+    val eventHandlers = mutableMapOf<ComponentEvent, Component.() -> Unit>()
 
-    /** add a universal event handler to this component's properties.
+    /**
+     * Add a universal event handler to this component's properties.
      *
      * This means that every component using this property will have this event handler.
      */
@@ -30,20 +31,23 @@ abstract class Properties : Cloneable {
 
     companion object {
         private val properties: MutableMap<String, Properties> = mutableMapOf(
-            "cc.polyfrost.polyui.components.impls.Block" to BlockProperties(),
-            "cc.polyfrost.polyui.components.impls.ImageBlock" to ImageBlockProperties(),
-            "cc.polyfrost.polyui.components.impls.Text" to TextProperties()
+            "cc.polyfrost.polyui.components.impl.Block" to BlockProperties(),
+            "cc.polyfrost.polyui.components.impl.ImageBlock" to ImageBlockProperties(),
+            "cc.polyfrost.polyui.components.impl.Text" to TextProperties()
         )
 
-        fun <T : Properties> get(component: Component): T {
-            return get(component::class.java.simpleName)
-        }
+        inline fun <T : Properties, reified C : Component> get(): T =
+            get(C::class.java.name)
 
-        fun <T : Properties> get(name: String): T {
-            return (properties[name] ?: throw Exception("Properties for component $name not found")) as T
-        }
+        fun <T : Properties> get(component: Component): T =
+            get(component::class.java.name)
 
-        /** add the given properties to the properties' registry.
+        @Suppress("UNCHECKED_CAST")
+        fun <T : Properties> get(name: String): T = properties[name] as? T
+            ?: throw Exception("Properties for component $name not found")
+
+        /**
+         * Add the given properties to the properties' registry.
          *
          * This will **OVERWRITE** any existing properties for the given component.
          * @param properties the properties to add
@@ -52,11 +56,12 @@ abstract class Properties : Cloneable {
             this.properties[forComponent::class.java.simpleName] = properties
         }
 
-        /** add the given properties to the properties' registry.
+        /**
+         * Add the given properties to the properties' registry.
          *
          * This will **OVERWRITE** any existing properties for the given component.
          *
-         * @param name the simple class name of the component (e.g. cc.polyfrost.polyui.components.impls.Block)
+         * @param name the simple class name of the component (e.g. cc.polyfrost.polyui.components.impl.Block)
          * @param properties the properties to add
          */
         fun addPropertyType(name: String, properties: Properties) {

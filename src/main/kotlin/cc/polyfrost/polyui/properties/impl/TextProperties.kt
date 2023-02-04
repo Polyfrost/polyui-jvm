@@ -1,4 +1,4 @@
-package cc.polyfrost.polyui.properties.impls
+package cc.polyfrost.polyui.properties.impl
 
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.properties.Properties
