@@ -4,7 +4,8 @@ import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.renderer.Renderer
 
 class Settings(private val renderer: Renderer) {
-    var debug = System.getProperty("polyui.debug")?.toBoolean() ?: false
+    var debug = System.getProperty("polyui.debug")?.toBoolean() ?: true
+    var debugLog = System.getProperty("polyui.debug.logAll")?.toBoolean() ?: false
     var showFPS = false
     var useAntialiasing = true
 

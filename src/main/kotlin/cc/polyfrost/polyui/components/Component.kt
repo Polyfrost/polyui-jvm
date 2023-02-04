@@ -38,12 +38,12 @@ abstract class Component(
 
     /** current rotation of this component (radians). */
     var rotation: Double = 0.0
-    val color: Color.Mutable = properties.color.toMutable()
+    open val color: Color.Mutable = properties.color.toMutable()
     private var finishColorFunc: (Component.() -> kotlin.Unit)? = null
     private val clock = Clock()
     final override lateinit var renderer: Renderer
     final override lateinit var layout: Layout
-    private lateinit var boundingBox: Box<Unit>
+    open lateinit var boundingBox: Box<Unit>
 
     /** weather or not the mouse is currently over this component. DO NOT modify this value. It is managed automatically by [cc.polyfrost.polyui.events.EventManager]. */
     var mouseOver = false

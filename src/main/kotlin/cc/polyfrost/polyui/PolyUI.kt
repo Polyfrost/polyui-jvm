@@ -69,7 +69,7 @@ class PolyUI(var width: Int, var height: Int, val renderer: Renderer, vararg ite
             }
         }
         if (settings.masterIsFramebuffer) master.fbo = renderer.createFramebuffer(width, height, settings.bufferType)
-        if (this.settings.debug) this.master.debugPrint()
+        if (this.settings.debugLog) this.master.debugPrint()
         Unit.VUnits.vHeight = height.toFloat()
         Unit.VUnits.vWidth = width.toFloat()
         LOGGER.info("PolyUI initialized")

@@ -1,5 +1,6 @@
 package cc.polyfrost.polyui.components
 
+import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.layouts.Layout
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.units.Point
@@ -58,8 +59,14 @@ interface Drawable {
     fun canBeRemoved(): Boolean
 
 
+    /** implement this method to add a debug render overlay for this drawable. */
     fun debugRender() {
-        TODO("Not yet implemented")
+        // no-op
+    }
+
+    /** implement this method to add a debug print message for this drawable. */
+    fun debugPrint() {
+        PolyUI.LOGGER.warn("Drawable $this has no debug print method implemented, defaulting to no-op.")
     }
 
     fun x(): Float = at.x()
@@ -71,7 +78,7 @@ interface Drawable {
         ?: throw IllegalStateException("drawable $this has no size, but should have a size initialized by this point")
 
     fun isInside(x: Float, y: Float): Boolean {
-        return if (acceptInput) false
+        return if (!acceptInput) false
         else x >= this.x() && x <= this.x() + this.width() && y >= this.y() && y <= this.y() + this.height()
     }
 

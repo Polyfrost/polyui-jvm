@@ -1,6 +1,7 @@
 package cc.polyfrost.polyui.layouts
 
 import cc.polyfrost.polyui.PolyUI
+import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.components.Component
 import cc.polyfrost.polyui.components.Drawable
 import cc.polyfrost.polyui.events.ComponentEvent
@@ -20,6 +21,7 @@ abstract class Layout(
     final override var acceptInput: Boolean = true,
     vararg items: Drawable
 ) : Drawable {
+    val simpleName = this.toString().substringAfterLast(".")
     val components: ArrayList<Component> = items.filterIsInstance<Component>() as ArrayList<Component>
     val children: ArrayList<Layout> = items.filterIsInstance<Layout>() as ArrayList<Layout>
 
@@ -49,14 +51,15 @@ abstract class Layout(
                 preRender()
                 render()
                 postRender()
+                if (renderer.settings.debug) debugRender()
 //                renderer.unbindFramebuffer(fbo!!)
 //                needsRedraw = false
-            }
-            renderer.drawFramebuffer(fbo!!, x(), y(), width(), height())
+            } else renderer.drawFramebuffer(fbo!!, x(), y(), width(), height())
         } else {
             preRender()
             render()
             postRender()
+            if (renderer.settings.debug) debugRender()
         }
     }
 
@@ -188,8 +191,8 @@ abstract class Layout(
         components.forEachNoAlloc { it.postRender() }
     }
 
-    fun debugPrint() {
-        println("Layout: $this")
+    override fun debugPrint() {
+        println("Layout: $simpleName")
         println("Children: ${children.size}")
         println("Components: ${components.size}")
         println("At: $at")
@@ -200,6 +203,11 @@ abstract class Layout(
         println("Layout: $layout")
         println()
         children.forEachNoAlloc { it.debugPrint() }
+    }
+
+    override fun debugRender() {
+        renderer.drawHollowRect(x(), y(), width(), height(), Color.GRAYf.getARGB(), 2)
+        renderer.drawText(renderer.defaultFont, x(), y(), 0f, simpleName, -1, 10f)
     }
 
     /** give this, and all its children, a renderer. */

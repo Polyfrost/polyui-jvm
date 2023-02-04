@@ -20,7 +20,7 @@ import java.lang.Math.random
 
 fun main() {
     val window = GLWindow("Test", 800, 800)
-    val things = Array<Drawable>(50) {
+    val things = Array<Drawable>(8) {
         Block(
             at = flex(),
             size = Size((random() * 40 + 40).px(), (random() * 40 + 40).px()),
@@ -38,19 +38,24 @@ fun main() {
     val polyUI = PolyUI(
         window.width, window.height, NVGRenderer(),
         items = items(
-//            Block(
-//                at = Point(0.px(), 0.px()),
-//                size = Size(20.px(), 35.px()),
-//                events = events(
-//                    ComponentEvent.MousePressed(0).then {
-//                        println("Mouse pressed!")
-//                        recolor(Color(0.5f, 0f, 1f, 1f), Animations.EaseInOutCubic, 1.seconds())
-//                    },
-//                    ComponentEvent.MouseReleased(0).then {
-//                        println("Mouse released!")
-//                    },
-//                    ComponentEvent.Added().then { })
-//            ),
+            Block(
+                at = 20.px() x 600.px(),
+                size = 120.px() x 120.px(),
+                color = Color.Gradient(
+                    Color(0.5f, 0f, 0f, 1f),
+                    Color(0f, 0.5f, 0f, 1f),
+                    Color.Gradient.Type.BottomLeftToTopRight
+                ),
+                events = events(
+                    ComponentEvent.MousePressed(0) to {
+                        println("Mouse pressed!")
+                        recolor(Color(0.5f, 0f, 1f, 1f), Animations.EaseInOutCubic, 1.seconds())
+                    },
+                    ComponentEvent.MouseReleased(0) to {
+                        println("Mouse released!")
+                    },
+                    ComponentEvent.Added().then { })
+            ),
 //            Block(
 //                at = Point(80.percent(), 0.px()),
 //                size = Size(1.3.percent(), fill()),

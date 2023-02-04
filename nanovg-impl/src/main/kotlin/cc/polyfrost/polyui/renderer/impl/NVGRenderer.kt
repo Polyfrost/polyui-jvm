@@ -1,6 +1,7 @@
 package cc.polyfrost.polyui.renderer.impl
 
 import cc.polyfrost.polyui.PolyUI
+import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.properties.Settings
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.data.Font
@@ -23,8 +24,10 @@ import kotlin.math.max
 
 
 class NVGRenderer : Renderer() {
+    override val defaultFont: Font = Font("/Inter-Regular.ttf")
     private val nvgPaint: NVGPaint = NVGPaint.create()
     private val nvgColor: NVGColor = NVGColor.malloc()
+    private val nvgColor2: NVGColor = NVGColor.malloc()
     private val fbos: MutableMap<Framebuffer, NVGLUFramebuffer> = mutableMapOf()
     private val images: MutableMap<Image, NVGImage> = mutableMapOf()
     private val fonts: MutableMap<Font, NVGFont> = mutableMapOf()
@@ -78,17 +81,30 @@ class NVGRenderer : Renderer() {
         nvgFontFaceId(vg, getFont(font).id)
         nvgTextAlign(vg, NVG_ALIGN_LEFT or NVG_ALIGN_TOP)
         color(argb)
+        nvgFillColor(vg, nvgColor)
         if (width != 0f) {
             nvgTextBox(vg, x, y, width, text)
         } else {
             nvgText(vg, x, y, text)
         }
-        nvgFillColor(vg, nvgColor)
     }
 
     override fun drawImage(image: Image, x: Float, y: Float, colorMask: Int) {
         val img = getImage(image)
         drawImage(img.id, x, y, img.width, img.height, colorMask)
+    }
+
+    override fun drawRoundImage(image: Image, x: Float, y: Float, radius: Float, colorMask: Int) {
+        val img = getImage(image)
+        nvgImagePattern(vg, x, y, img.width, img.height, 0F, img.id, 1F, nvgPaint)
+        if (colorMask != 0) nvgRGBA(
+            (colorMask shr 16 and 0xFF).toByte(), (colorMask shr 8 and 0xFF).toByte(),
+            (colorMask and 0xFF).toByte(), (colorMask shr 24 and 0xFF).toByte(), nvgPaint.innerColor()
+        )
+        nvgBeginPath(vg)
+        nvgRoundedRect(vg, x, y, img.width, img.height, radius)
+        nvgFillPaint(vg, nvgPaint)
+        nvgFill(vg)
     }
 
     fun drawImage(img: Int, x: Float, y: Float, width: Float, height: Float, colorMask: Int = 0) {
@@ -138,6 +154,7 @@ class NVGRenderer : Renderer() {
         nvgBeginPath(vg)
         nvgRect(vg, x, y, width, height)
         color(argb)
+        nvgFillColor(vg, nvgColor)
         nvgFill(vg)
     }
 
@@ -145,7 +162,7 @@ class NVGRenderer : Renderer() {
         getImage(image)
     }
 
-    override fun drawRectangleVaried(
+    override fun drawRoundRectVaried(
         x: Float, y: Float,
         width: Float, height: Float,
         argb: Int,
@@ -155,6 +172,50 @@ class NVGRenderer : Renderer() {
         nvgBeginPath(vg)
         nvgRoundedRectVarying(vg, x, y, width, height, topLeft, topRight, bottomLeft, bottomRight)
         color(argb)
+        nvgFillColor(vg, nvgColor)
+        nvgFill(vg)
+    }
+
+    override fun drawLine(x1: Float, y1: Float, x2: Float, y2: Float, argb: Int, width: Float) {
+        nvgBeginPath(vg)
+        nvgMoveTo(vg, x1, y1)
+        nvgLineTo(vg, x2, y2)
+        nvgStrokeWidth(vg, width)
+        color(argb)
+        nvgStrokeColor(vg, nvgColor)
+        nvgStroke(vg)
+    }
+
+    override fun drawGradientRect(
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        argb1: Int,
+        argb2: Int,
+        type: Color.Gradient.Type
+    ) {
+        gradient(x, y, width, height, argb1, argb2, type)
+        nvgBeginPath(vg)
+        nvgRect(vg, x, y, width, height)
+        nvgFillPaint(vg, nvgPaint)
+        nvgFill(vg)
+    }
+
+    override fun drawGradientRoundRect(
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        argb1: Int,
+        argb2: Int,
+        radius: Float,
+        type: Color.Gradient.Type
+    ) {
+        gradient(x, y, width, height, argb1, argb2, type)
+        nvgBeginPath(vg)
+        nvgRoundedRect(vg, x, y, width, height, radius)
+        nvgFillPaint(vg, nvgPaint)
         nvgFill(vg)
     }
 
@@ -171,12 +232,62 @@ class NVGRenderer : Renderer() {
             (argb shr 16 and 0xFF).toByte(), (argb shr 8 and 0xFF).toByte(),
             (argb and 0xFF).toByte(), (argb shr 24 and 0xFF).toByte(), nvgColor
         )
-        nvgFillColor(vg, nvgColor)
+    }
+
+    private fun color2(argb: Int) {
+        nvgRGBA(
+            (argb shr 16 and 0xFF).toByte(), (argb shr 8 and 0xFF).toByte(),
+            (argb and 0xFF).toByte(), (argb shr 24 and 0xFF).toByte(), nvgColor2
+        )
+    }
+
+    private fun gradient(
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        argb1: Int,
+        argb2: Int,
+        type: Color.Gradient.Type
+    ) {
+        color(argb1)
+        color2(argb2)
+        when (type) {
+            is Color.Gradient.Type.TopToBottom -> nvgLinearGradient(
+                vg, x, y, x, y + height,
+                nvgColor, nvgColor2, nvgPaint
+            )
+
+            is Color.Gradient.Type.TopLeftToBottomRight -> nvgLinearGradient(
+                vg, x, y, x + width, y + height,
+                nvgColor, nvgColor2, nvgPaint
+            )
+
+            is Color.Gradient.Type.LeftToRight -> nvgLinearGradient(
+                vg, x, y, x + width, y,
+                nvgColor, nvgColor2, nvgPaint
+            )
+
+            is Color.Gradient.Type.BottomLeftToTopRight -> nvgLinearGradient(
+                vg, x, y + height, x + width, y,
+                nvgColor, nvgColor2, nvgPaint
+            )
+
+            is Color.Gradient.Type.Radial ->
+                nvgRadialGradient(
+                    vg, x + (width / 2f), y + (height / 2f),
+                    type.innerRadius, type.outerRadius,
+                    nvgColor, nvgColor2, nvgPaint
+                )
+        }
     }
 
     private fun getFont(font: Font): NVGFont {
         return fonts[font] ?: run {
-            val data = IOUtils.getResourceAsStream(font.fileName).toByteBuffer()
+            val data =
+                IOUtils.getResourceAsStreamNullable(font.fileName)?.toByteBuffer() ?: IOUtils.getResourceAsStream(
+                    defaultFont.fileName
+                ).toByteBuffer()
             val ft = nvgCreateFontMem(vg, font.name, data, 0)
             NVGFont(ft, data).also { fonts[font] = it }
         }
@@ -250,6 +361,15 @@ class NVGRenderer : Renderer() {
         nvgColor.free()
         nvgPaint.free()
         vg = -1
+    }
+
+    override fun drawHollowRect(x: Float, y: Float, width: Float, height: Float, argb: Int, lineWidth: Int) {
+        color(argb)
+        nvgBeginPath(vg)
+        nvgRect(vg, x, y, width, height)
+        nvgStrokeWidth(vg, lineWidth.toFloat())
+        nvgStrokeColor(vg, nvgColor)
+        nvgStroke(vg)
     }
 
     // used to ensure that the data is not discarded by the GC

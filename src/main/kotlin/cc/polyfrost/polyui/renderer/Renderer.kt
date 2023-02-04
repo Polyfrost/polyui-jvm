@@ -1,5 +1,6 @@
 package cc.polyfrost.polyui.renderer
 
+import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.properties.Settings
 import cc.polyfrost.polyui.renderer.data.Font
 import cc.polyfrost.polyui.renderer.data.Framebuffer
@@ -19,6 +20,8 @@ import cc.polyfrost.polyui.units.Vec2
  *
  */
 abstract class Renderer {
+    /** override this to set a default font if the font isn't found, and it is used internally for PolyUI properties. */
+    abstract val defaultFont: Font
     val settings: Settings = Settings(this)
 
     internal inline fun alsoRender(block: Renderer.() -> kotlin.Unit) {
@@ -56,6 +59,8 @@ abstract class Renderer {
 
     abstract fun drawImage(image: Image, x: Float, y: Float, colorMask: Int = 0)
 
+    abstract fun drawRoundImage(image: Image, x: Float, y: Float, radius: Float, colorMask: Int = 0)
+
     /** Create a new framebuffer. It is down to you (as a rendering implementation) to cache this, and dispose of it as necessary. */
     abstract fun createFramebuffer(width: Int, height: Int, type: Settings.BufferType): Framebuffer
 
@@ -71,7 +76,7 @@ abstract class Renderer {
     /** Function that can be called to explicitly initialize an image. This is used mainly for getting the size of an image, or to ensure an SVG has been rasterized. */
     abstract fun initImage(image: Image)
 
-    abstract fun drawRectangleVaried(
+    abstract fun drawRoundRectVaried(
         x: Float,
         y: Float,
         width: Float,
@@ -83,11 +88,35 @@ abstract class Renderer {
         bottomRight: Float
     )
 
-    fun drawRoundRectangle(x: Float, y: Float, width: Float, height: Float, argb: Int, radius: Float) =
-        drawRectangleVaried(x, y, width, height, argb, radius, radius, radius, radius)
+    abstract fun drawLine(x1: Float, y1: Float, x2: Float, y2: Float, argb: Int, width: Float)
+
+    fun drawRoundRect(x: Float, y: Float, width: Float, height: Float, argb: Int, radius: Float) =
+        drawRoundRectVaried(x, y, width, height, argb, radius, radius, radius, radius)
+
+    abstract fun drawGradientRect(
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        argb1: Int,
+        argb2: Int,
+        type: Color.Gradient.Type
+    )
+
+    abstract fun drawGradientRoundRect(
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        argb1: Int,
+        argb2: Int,
+        radius: Float,
+        type: Color.Gradient.Type
+    )
 
     abstract fun textBounds(font: Font, text: String, fontSize: Float, wrapWidth: Float): Vec2<Unit.Pixel>
 
     /** cleanup the PolyUI instance. Use this to free any native resources. */
     abstract fun cleanup()
+    abstract fun drawHollowRect(x: Float, y: Float, width: Float, height: Float, argb: Int, lineWidth: Int)
 }
