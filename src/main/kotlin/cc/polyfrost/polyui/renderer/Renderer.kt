@@ -1,16 +1,16 @@
 package cc.polyfrost.polyui.renderer
 
 import cc.polyfrost.polyui.color.Color
-import cc.polyfrost.polyui.properties.Settings
+import cc.polyfrost.polyui.property.Settings
 import cc.polyfrost.polyui.renderer.data.Font
 import cc.polyfrost.polyui.renderer.data.Framebuffer
 import cc.polyfrost.polyui.renderer.data.Image
-import cc.polyfrost.polyui.units.Unit
-import cc.polyfrost.polyui.units.Vec2
+import cc.polyfrost.polyui.unit.Unit
+import cc.polyfrost.polyui.unit.Vec2
 
 /**
  * # Renderer
- * The renderer is responsible for drawing all components to the screen, handling framebuffers, and more.
+ * The renderer is responsible for drawing all component to the screen, handling framebuffers, and more.
  * Please make sure to implement all the functions in this class, and you may want to familiarize yourself with how [cc.polyfrost.polyui.PolyUI] works.
  *
  * It is also responsible for loading and caching all images and fonts, but this is down to you as a rendering implementation to implement.
@@ -19,7 +19,7 @@ import cc.polyfrost.polyui.units.Vec2
 abstract class Renderer : AutoCloseable {
     /**
      * Override this to set a default font if the font isn't found. It is
-     * used internally for PolyUI properties.
+     * used internally for PolyUI property.
      */
     abstract val defaultFont: Font
     val settings = Settings(this)

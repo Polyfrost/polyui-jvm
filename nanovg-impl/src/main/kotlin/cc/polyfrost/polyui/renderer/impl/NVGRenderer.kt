@@ -2,16 +2,16 @@ package cc.polyfrost.polyui.renderer.impl
 
 import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.color.Color
-import cc.polyfrost.polyui.properties.Settings
+import cc.polyfrost.polyui.property.Settings
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.data.Font
 import cc.polyfrost.polyui.renderer.data.Framebuffer
 import cc.polyfrost.polyui.renderer.data.Image
-import cc.polyfrost.polyui.units.Unit
-import cc.polyfrost.polyui.units.Vec2
+import cc.polyfrost.polyui.unit.Unit
+import cc.polyfrost.polyui.unit.Vec2
 import cc.polyfrost.polyui.utils.getResourceStream
 import cc.polyfrost.polyui.utils.getResourceStreamNullable
-import cc.polyfrost.polyui.units.px
+import cc.polyfrost.polyui.unit.px
 import cc.polyfrost.polyui.utils.toByteBuffer
 import org.lwjgl.nanovg.*
 import org.lwjgl.nanovg.NanoVG.*

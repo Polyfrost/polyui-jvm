@@ -1,17 +1,17 @@
 package cc.polyfrost.polyui
 
 import cc.polyfrost.polyui.color.Color
-import cc.polyfrost.polyui.components.Drawable
-import cc.polyfrost.polyui.components.impl.Block
-import cc.polyfrost.polyui.components.impl.Text
-import cc.polyfrost.polyui.events.ComponentEvent
-import cc.polyfrost.polyui.events.ComponentEvent.Companion.events
-import cc.polyfrost.polyui.layouts.Layout.Companion.items
-import cc.polyfrost.polyui.layouts.impl.FlexLayout
-import cc.polyfrost.polyui.properties.impl.BlockProperties
+import cc.polyfrost.polyui.component.Drawable
+import cc.polyfrost.polyui.component.impl.Block
+import cc.polyfrost.polyui.component.impl.Text
+import cc.polyfrost.polyui.event.ComponentEvent
+import cc.polyfrost.polyui.event.ComponentEvent.Companion.events
+import cc.polyfrost.polyui.layout.Layout.Companion.items
+import cc.polyfrost.polyui.layout.impl.FlexLayout
+import cc.polyfrost.polyui.property.impl.BlockProperties
 import cc.polyfrost.polyui.renderer.impl.GLWindow
 import cc.polyfrost.polyui.renderer.impl.NVGRenderer
-import cc.polyfrost.polyui.units.*
+import cc.polyfrost.polyui.unit.*
 import java.lang.Math.random
 
 fun main() {

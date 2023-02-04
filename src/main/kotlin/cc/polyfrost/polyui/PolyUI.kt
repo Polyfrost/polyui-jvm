@@ -1,14 +1,14 @@
 package cc.polyfrost.polyui
 
-import cc.polyfrost.polyui.components.Drawable
-import cc.polyfrost.polyui.components.Focusable
-import cc.polyfrost.polyui.events.EventManager
-import cc.polyfrost.polyui.layouts.impl.PixelLayout
+import cc.polyfrost.polyui.component.Drawable
+import cc.polyfrost.polyui.component.Focusable
+import cc.polyfrost.polyui.event.EventManager
+import cc.polyfrost.polyui.layout.impl.PixelLayout
 import cc.polyfrost.polyui.renderer.Renderer
-import cc.polyfrost.polyui.units.Point
-import cc.polyfrost.polyui.units.Size
-import cc.polyfrost.polyui.units.Unit
-import cc.polyfrost.polyui.units.px
+import cc.polyfrost.polyui.unit.Point
+import cc.polyfrost.polyui.unit.Size
+import cc.polyfrost.polyui.unit.Unit
+import cc.polyfrost.polyui.unit.px
 import cc.polyfrost.polyui.utils.fastEach
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -18,32 +18,32 @@ import org.slf4j.LoggerFactory
  *
  * how this is going to work
  * 1. window: an abstract class that is impl for each renderer impl that creates a window.
- * 2. polyui: the screen that is rendered by the window. it handles frame buffers and its layouts.
+ * 2. polyui: the screen that is rendered by the window. it handles frame buffers and its layout.
  * 3. renderer: the renderer that is used to draw to the screen. it handles all the drawing methods.
- * 4. layout: a layout that is used to organize the components on the screen. can contain sub layouts as well.
- * 5. properties: component properties, such as colors, its events, etc.
+ * 4. layout: a layout that is used to organize the component on the screen. can contain sub layout as well.
+ * 5. property: component property, such as colors, its event, etc.
  * 6. component: a component. need I say more?
  *
- * events:
- * animations will be mostly triggered by events. The only exception is an animation that is constantly happening e.g. a video.
- * these events will be for everything, from mouse enter, key press, etc.
- * events are dispatched to only the component that it is relevant to, like the one the mouse is over or the one that is currently focused.
+ * event:
+ * animations will be mostly triggered by event. The only exception is an animation that is constantly happening e.g. a video.
+ * these event will be for everything, from mouse enter, key press, etc.
+ * event are dispatched to only the component that it is relevant to, like the one the mouse is over or the one that is currently focused.
  *
  * component:
- * a component is a drawable that can be focused and has events. basically everything.
+ * a component is a drawable that can be focused and has event. basically everything.
  * it is UNAWARE of surrounding elements. it just has its raw x, y, width, height, draw scripts, and update scripts.
  * it does not need to know its position or parents as it is handled by a layout which DOES know what its relatives are. this prevents circular loops and stuff.
  * if I need to I may make it keep its layout for ease of use.
  *
  * on creation of a window, a screen is created and the matching renderer is created.
- * the window will then calculate all of its layouts sizes, then each layout will calculate its components sizes and sub layouts... -> this can be recalculated e.g. on window resize.
+ * the window will then calculate all of its layout sizes, then each layout will calculate its component sizes and sub layout... -> this can be recalculated e.g. on window resize.
  * everything will be effectively scaled to the window size. This is a fundamental part of how it works, as basically saying 'draw this at this px' is not supported. It will all work on relevancy to the window size.
  * everything is rendered to a framebuffer. this framebuffer will only be redrawn if a component needs to be redrawn, like if there is an animation to do or something.
  * if it isn't redrawn its just handed right back to the renderer to draw statically = mad speed.
  *
  *
  * updated: performance information:
- * I have optimized this to use very little memory allocations. The only allocations that occur are the iterators for the layouts and stuff, and by using Arrays on most things (except component stuff) it rarely allocates; so memory usage is very constant.
+ * I have optimized this to use very little memory allocations. The only allocations that occur are the iterators for the layout and stuff, and by using Arrays on most things (except component stuff) it rarely allocates; so memory usage is very constant.
  * It uses about 60MB of ram during usage, with 70% of that being OpenGL and the JVM itself, so about 10MB of RAM is used. (not bad?)
  * And it gets around 9000 fps with 8% CPU usage (lol)
  * CPU wise, the most expensive part of the code is OpenGL, with roughly 0.46% of the time being spent in the code itself. The rest is openGL, most expensive being blitFramebuffer and swapBuffers (15% and 68% respectively)
