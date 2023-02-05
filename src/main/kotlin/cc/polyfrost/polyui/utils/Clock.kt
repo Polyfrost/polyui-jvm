@@ -1,6 +1,9 @@
 package cc.polyfrost.polyui.utils
 
-/** a simple class for timing of animations and things. Literally a delta function. */
+/**
+ * A simple class for timing of animations and things.
+ * Literally a delta function.
+ */
 class Clock {
     private var lastTime: Long = System.currentTimeMillis()
 
@@ -10,5 +13,4 @@ class Clock {
         lastTime = currentTime
         return delta
     }
-
 }

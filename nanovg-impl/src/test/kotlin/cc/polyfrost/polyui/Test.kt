@@ -1,22 +1,17 @@
 package cc.polyfrost.polyui
 
 import cc.polyfrost.polyui.color.Color
-import cc.polyfrost.polyui.components.Drawable
-import cc.polyfrost.polyui.components.impls.Block
-import cc.polyfrost.polyui.components.impls.Text
-import cc.polyfrost.polyui.events.ComponentEvent
-import cc.polyfrost.polyui.events.ComponentEvent.Companion.events
-import cc.polyfrost.polyui.layouts.Layout.Companion.items
-import cc.polyfrost.polyui.layouts.impls.FlexLayout
-import cc.polyfrost.polyui.properties.impls.BlockProperties
+import cc.polyfrost.polyui.component.Drawable
+import cc.polyfrost.polyui.component.impl.Block
+import cc.polyfrost.polyui.component.impl.Text
+import cc.polyfrost.polyui.event.ComponentEvent
+import cc.polyfrost.polyui.event.ComponentEvent.Companion.events
+import cc.polyfrost.polyui.layout.Layout.Companion.items
+import cc.polyfrost.polyui.layout.impl.FlexLayout
+import cc.polyfrost.polyui.property.impl.BlockProperties
 import cc.polyfrost.polyui.renderer.impl.GLWindow
 import cc.polyfrost.polyui.renderer.impl.NVGRenderer
-import cc.polyfrost.polyui.units.Size
-import cc.polyfrost.polyui.utils.UnitUtils.flex
-import cc.polyfrost.polyui.utils.UnitUtils.x
-import cc.polyfrost.polyui.utils.percent
-import cc.polyfrost.polyui.utils.px
-import cc.polyfrost.polyui.utils.seconds
+import cc.polyfrost.polyui.unit.*
 import java.lang.Math.random
 
 fun main() {
@@ -24,7 +19,7 @@ fun main() {
     val things = Array<Drawable>(50) {
         Block(
             at = flex(),
-            size = Size((random() * 40 + 40).px(), (random() * 40 + 40).px()),
+            size = Size((random() * 40 + 40).px, (random() * 40 + 40).px),
             events = events(
                 ComponentEvent.MouseClicked(0) to {
                     println("Mouse clicked!")
@@ -43,34 +38,34 @@ fun main() {
         items = items(
             Text(
                 text = "Kotlin...       rainbow!",
-                fontSize = 32.px(),
-                at = 20.px() x 570.px(),
+                fontSize = 32.px,
+                at = 20.px * 570.px,
             ),
             Block(
-                properties = BlockProperties(Color.Gradient(Color(1f, 0f, 1f, 1f), Color(0f, 1f, 1f, 1f))),
-                at = 20.px() x 600.px(),
-                size = 120.px() x 120.px(),
+                props = BlockProperties(Color.Gradient(Color(1f, 0f, 1f, 1f), Color(0f, 1f, 1f, 1f))),
+                at = 20.px * 600.px,
+                size = 120.px * 120.px,
             ),
             Block(
-                properties = BlockProperties(Color.Chroma(5.seconds(), 255)),
-                at = 200.px() x 600.px(),
-                size = 120.px() x 120.px(),
+                props = BlockProperties(Color.Chroma(5.seconds, 255)),
+                at = 200.px * 600.px,
+                size = 120.px * 120.px,
             ),
 //            Block(
-//                at = Point(80.percent(), 0.px()),
-//                size = Size(1.3.percent(), fill()),
+//                at = 80.percent x 0.px,
+//                size = Size(1.3.percent, fill()),
 //            ),
 //            ImageBlock(
 //                Image("/test.png", 100, 100),
-//                at = Point(50.px(), 10.px()),
+//                at = 50.px x 10.px,
 //            ),
 //            Text(
 //                text = "Hello, world!",
-//                at = Point(0.px(), 0.px()),
+//                at = 0.px x 0.px,
 //            ),
             FlexLayout(
-                at = 20.px() x 30.px(),
-                sized = 80.percent() x 80.percent(),
+                at = 20.px * 30.px,
+                sized = 80.percent * 80.percent,
                 items = things
             )
         )

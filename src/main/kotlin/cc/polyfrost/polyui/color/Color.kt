@@ -2,10 +2,12 @@ package cc.polyfrost.polyui.color
 
 import cc.polyfrost.polyui.animate.Animation
 
-/** an immutable color used by PolyUI.
- * @see [Color.Mutable] */
+/**
+ * An immutable color used by PolyUI.
+ *
+ * @see [Color.Mutable]
+ */
 open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: Int) : Cloneable {
-
     constructor(r: Int, g: Int, b: Int) : this(r, g, b, 255)
 
     constructor(r: Float, g: Float, b: Float) : this(
@@ -25,14 +27,12 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         return (a shl 24) or (r shl 16) or (g shl 8) or b
     }
 
-    /** return a new, [mutable][Mutable] version of this color */
-    open fun toMutable(): Mutable {
-        return Mutable(r, g, b, a)
-    }
+    /**
+     * @return a new, [mutable][Mutable] version of this color
+     */
+    open fun toMutable() = Mutable(r, g, b, a)
 
-    public override fun clone(): Color {
-        return Color(r, g, b, a)
-    }
+    public override fun clone() = Color(r, g, b, a)
 
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
@@ -52,21 +52,24 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
     }
 
     companion object {
-        val NONE = Color(0f, 0f, 0f, 0f)
+        val TRANSPARENT = Color(0f, 0f, 0f, 0f)
         val WHITE = Color(1f, 1f, 1f, 1f)
         val BLACK = Color(0f, 0f, 0f, 1f)
         val GRAYf = Color(0.5f, 0.5f, 0.5f, 0.5f)
     }
 
-
-    /** A mutable version of [Color], that supports [recoloring][recolor] with animations.*/
-    open class Mutable(override var r: Int, override var g: Int, override var b: Int, override var a: Int) :
-        Color(r, g, b, a) {
+    /**
+     * A mutable version of [Color], that supports [recoloring][recolor] with animations.
+     */
+    open class Mutable(
+        override var r: Int,
+        override var g: Int,
+        override var b: Int,
+        override var a: Int,
+    ) : Color(r, g, b, a) {
         private var animation: Array<Animation>? = null
 
-        fun toImmutable(): Color {
-            return Color(r, g, b, a)
-        }
+        fun toImmutable() = Color(r, g, b, a)
 
         @Deprecated("This would convert a mutable color to a mutable one.", replaceWith = ReplaceWith("clone()"))
         override fun toMutable(): Mutable {
@@ -212,13 +215,10 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
     }
 
     class Chroma(val speed: Long = 5000L, alpha: Int = 255) : Mutable(0, 0, 0, alpha) {
-
-
         @Deprecated("Chroma colors cannot be animated.", level = DeprecationLevel.ERROR)
         override fun recolor(target: Color, type: Animation.Type?, durationMillis: Long) {
             // no-op
         }
-
 
         override fun clone(): Chroma {
             return Chroma(speed, a)

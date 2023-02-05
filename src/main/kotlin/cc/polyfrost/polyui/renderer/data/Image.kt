@@ -4,7 +4,7 @@ data class Image(
     val fileName: String,
     var width: Int? = null,
     var height: Int? = null,
-    val type: Type = Type.from(fileName)
+    val type: Type = Type.from(fileName),
 ) {
     enum class Type {
         PNG, SVG;
@@ -15,7 +15,9 @@ data class Image(
                 return when (fileName.substringAfterLast(".")) {
                     "png" -> PNG
                     "svg" -> SVG
-                    else -> throw IllegalArgumentException("Unknown image type for file $fileName")
+                    else -> throw IllegalArgumentException(
+                        "Unknown image type for file $fileName"
+                    )
                 }
             }
         }
