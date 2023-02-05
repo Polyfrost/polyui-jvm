@@ -12,7 +12,7 @@ package cc.polyfrost.polyui.utils
  *
  * @see [fastRemoveIf]
  */
-inline fun <E> List<E>.fastEach(f: (E) -> Unit) {
+inline fun <L, E> L.fastEach(f: (E) -> Unit) where L : List<E>, L : RandomAccess {
     if (this.size == 0) return
     for (i in 0 until this.size) {
         f(this[i])
@@ -28,7 +28,7 @@ inline fun <E> List<E>.fastEach(f: (E) -> Unit) {
  *
  * @see [fastRemoveIf]
  */
-inline fun <E> List<E>.fastEachIndexed(f: (Int, E) -> Unit) {
+inline fun <L, E> L.fastEachIndexed(f: (Int, E) -> Unit) where L : List<E>, L : RandomAccess {
     if (this.size == 0) return
     for (i in 0 until this.size) {
         f(i, this[i])
@@ -42,7 +42,7 @@ inline fun <E> List<E>.fastEachIndexed(f: (Int, E) -> Unit) {
  *
  * @see [fastEach]
  */
-inline fun <E> MutableList<E>.fastRemoveIf(f: (E) -> Boolean) {
+inline fun <L, E> L.fastRemoveIf(f: (E) -> Boolean) where L : MutableList<E>, L : RandomAccess {
     if (this.size == 0) return
     var max = this.size
     var i = 0
@@ -65,7 +65,7 @@ inline fun <E> MutableList<E>.fastRemoveIf(f: (E) -> Boolean) {
  *
  * @see [fastEach]
  */
-inline fun <E> List<E>.sumOf(selector: (E) -> Float): Float {
+inline fun <L, E> L.sumOf(selector: (E) -> Float): Float where L : List<E>, L : RandomAccess {
     if (this.size == 0) return 0f
     var sum = .0f
     fastEach {

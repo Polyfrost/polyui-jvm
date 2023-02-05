@@ -24,7 +24,6 @@ subprojects {
 }
 
 allprojects {
-
     repositories {
         mavenCentral()
         maven("https://repo.polyfrost.cc/releases")
@@ -38,7 +37,13 @@ allprojects {
         withType(KotlinCompile::class).all {
             kotlinOptions {
                 jvmTarget = "1.8"
-                freeCompilerArgs = listOf("-Xjvm-default=enable")
+                freeCompilerArgs = listOf(
+                    "-Xjvm-default=all-compatibility",
+
+                    "-Xno-call-assertions",
+                    "-Xno-receiver-assertions",
+                    "-Xno-param-assertions"
+                )
             }
         }
     }

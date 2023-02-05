@@ -57,7 +57,7 @@ class PolyUI(
     val master = PixelLayout(Point(0.px, 0.px), Size(width.px, height.px), items = items)
     val eventManager = EventManager(this)
     private val settings = renderer.settings
-    private var renderHooks = mutableListOf<Renderer.() -> kotlin.Unit>()
+    private var renderHooks = arrayListOf<Renderer.() -> kotlin.Unit>()
     internal var focused: (Focusable)? = null
 
     init {

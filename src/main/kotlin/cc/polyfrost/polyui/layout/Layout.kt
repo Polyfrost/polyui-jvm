@@ -22,10 +22,10 @@ abstract class Layout(
     vararg items: Drawable,
 ) : Drawable {
     private val simpleName = this.toString().substringAfterLast(".")
-    val components = mutableListOf(*items.filterIsInstance<Component>().toTypedArray())
-    val children = mutableListOf(*items.filterIsInstance<Layout>().toTypedArray())
+    val components = arrayListOf(*items.filterIsInstance<Component>().toTypedArray())
+    val children = arrayListOf(*items.filterIsInstance<Layout>().toTypedArray())
 
-    val removeQueue = mutableListOf<Drawable>()
+    val removeQueue = arrayListOf<Drawable>()
     var fbo: Framebuffer? = null
     final override lateinit var renderer: Renderer
 
@@ -164,8 +164,9 @@ abstract class Layout(
         children.fastEach {
             it.calculateBounds()
         }
-        if (this.sized == null) this.sized =
-            getSize() ?: throw UnsupportedOperationException("getSize() not implemented for ${this::class.simpleName}!")
+        if (this.sized == null)
+            this.sized = getSize()
+                ?: throw UnsupportedOperationException("getSize() not implemented for ${this::class.simpleName}!")
         needsRecalculation = false
     }
 

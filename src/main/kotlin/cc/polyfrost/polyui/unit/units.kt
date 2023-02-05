@@ -34,6 +34,6 @@ fun flex(index: Int = -1, flexShrink: Int = 0, flexGrow: Int = 0): Vec2<Unit> {
  * Declare a vec2 of unit, for either at or sized property.
  *
  * example:
- * `30.px() x 30.px()`
+ * `30.px * 30.px`
  * */
 inline operator fun Unit.times(other: Unit): Vec2<Unit> = Vec2(this, other)

@@ -134,10 +134,10 @@ class FlexLayout(
     override fun calculateBounds() {
         doDynamicSize()
         var mainAxis = 0F
-        val rows = ArrayList<FlexRow>()
+        val rows = arrayListOf<FlexRow>()
 
         if (wrapDirection != Wrap.NoWrap) {
-            var row = ArrayList<FlexDrawable>()
+            var row = arrayListOf<FlexDrawable>()
             drawables.fastEachIndexed { i, it ->
                 if (strictSize) {
                     mainAxis += it.mainSize + mainGap
@@ -145,7 +145,7 @@ class FlexLayout(
                     if (mainAxis + (drawables.getOrNull(i + 1)?.mainSize ?: 0F) + mainGap >= this.width) {
                         rows.add(FlexRow(row))
                         mainAxis = 0F
-                        row = ArrayList()
+                        row = arrayListOf()
                     }
                     row.add(it)
 
@@ -154,7 +154,7 @@ class FlexLayout(
                     if (mainAxis >= this.width) { // means we need to wrap
                         rows.add(FlexRow(row))
                         mainAxis = 0F
-                        row = ArrayList()
+                        row = arrayListOf()
                     }
                     row.add(it)
                 }
@@ -201,7 +201,7 @@ class FlexLayout(
 
 
         // justify, with the largest row first.
-        rows.sortedByDescending { it.thisMainSizeWithGaps }.fastEach {
+        (rows.sortedByDescending { it.thisMainSizeWithGaps } as ArrayList).fastEach {
             it.justify()
         }
         rows.fastEach { row ->

@@ -1,6 +1,3 @@
-
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 dependencies {
     // Depend on LWJGL3 and its NanoVG bindings, as well as OpenGL
     implementation("org.lwjgl:lwjgl:3.3.1")
@@ -19,15 +16,5 @@ dependencies {
         nativePlatforms.forEach { platform ->
             testRuntimeOnly("org.lwjgl:$module:3.3.1:natives-$platform")
         }
-    }
-}
-
-tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        freeCompilerArgs += listOf(
-            "-Xno-call-assertions",
-            "-Xno-receiver-assertions",
-            "-Xno-param-assertions"
-        )
     }
 }
