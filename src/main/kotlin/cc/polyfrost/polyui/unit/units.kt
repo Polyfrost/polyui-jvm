@@ -24,8 +24,8 @@ val fillv = fill * fill
 fun index(index: Int) = Unit.Flex(index)
 
 /** create a new flex unit, in vec2 form for at property. */
-fun flex(index: Int = -1, flexGrow: Int = 1, flexBasis: Unit.Concrete? = null): Vec2<Unit> {
-    val u = Unit.Flex(index, flexGrow, flexBasis)
+fun flex(index: Int = -1, flexShrink: Int = 0, flexGrow: Int = 0): Vec2<Unit> {
+    val u = Unit.Flex(index, flexShrink, flexGrow)
     // i'm not mad.
     return Vec2(u, u.clone())
 }

@@ -9,9 +9,9 @@ import cc.polyfrost.polyui.renderer.data.Framebuffer
 import cc.polyfrost.polyui.renderer.data.Image
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.unit.Vec2
+import cc.polyfrost.polyui.unit.px
 import cc.polyfrost.polyui.utils.getResourceStream
 import cc.polyfrost.polyui.utils.getResourceStreamNullable
-import cc.polyfrost.polyui.unit.px
 import cc.polyfrost.polyui.utils.toByteBuffer
 import org.lwjgl.nanovg.*
 import org.lwjgl.nanovg.NanoVG.*
@@ -26,6 +26,7 @@ import kotlin.math.max
 
 class NVGRenderer : Renderer() {
     override val defaultFont: Font = Font("/Inter-Regular.ttf")
+    override val defaultImage: Image = Image("/err.png")
     private val nvgPaint: NVGPaint = NVGPaint.create()
     private val nvgColor: NVGColor = NVGColor.malloc()
     private val nvgColor2: NVGColor = NVGColor.malloc()
@@ -248,9 +249,11 @@ class NVGRenderer : Renderer() {
         return fonts[font] ?: run {
             val data =
                 getResourceStreamNullable(font.fileName)?.toByteBuffer()
-                    ?: getResourceStream(
+                    ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) getResourceStream(
                         defaultFont.fileName
-                    ).toByteBuffer()
+                    ).also { PolyUI.LOGGER.warn("Failed to get font: ${font.fileName}, falling back to default font!") }
+                        .toByteBuffer()
+                    else throw ExceptionInInitializerError("Failed to get font: ${font.fileName}")
             val ft = nvgCreateFontMem(vg, font.name, data, 0)
             NVGFont(ft, data).also { fonts[font] = it }
         }
@@ -259,13 +262,17 @@ class NVGRenderer : Renderer() {
     private fun getImage(image: Image): NVGImage {
         return images[image] ?: run {
             if (image.width != null && image.height == null) throw ExceptionInInitializerError("$image width is set but height is not!")
+            val stream = getResourceStreamNullable(image.fileName)
+                ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) getResourceStream(defaultImage.fileName)
+                    .also { PolyUI.LOGGER.warn("Failed to get image: ${image.fileName}, falling back to default image!") }
+                else throw ExceptionInInitializerError("Failed to get image: ${image.fileName}")
             val data: ByteBuffer
             when (image.type) {
                 Image.Type.PNG -> {
                     val w = IntArray(1)
                     val h = IntArray(1)
                     data = STBImage.stbi_load_from_memory(
-                        getResourceStream(image.fileName).toByteBuffer(),
+                        stream.toByteBuffer(),
                         w, h, IntArray(1), 4
                     ).also {
                         if (it == null) {
@@ -287,7 +294,7 @@ class NVGRenderer : Renderer() {
                 }
 
                 Image.Type.SVG -> {
-                    val d = InputStreamReader(getResourceStream(image.fileName)).readText() as CharSequence
+                    val d = InputStreamReader(stream).readText() as CharSequence
                     val svg =
                         NanoSVG.nsvgParse(d, "px", 96F) ?: throw Exception("Failed to open SVG: $image (invalid data?)")
                     val raster = NanoSVG.nsvgCreateRasterizer()

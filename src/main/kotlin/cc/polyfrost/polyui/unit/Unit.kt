@@ -1,6 +1,7 @@
 package cc.polyfrost.polyui.unit
 
-import kotlin.properties.Delegates
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * class to represent a unit of measurement.
@@ -39,7 +40,12 @@ abstract class Unit(val type: Type) : Cloneable {
     }
 
     class Percent(val amount: Float) : Unit(Type.Percent), Dynamic {
-        override var px: Float by Delegates.notNull()
+        override var px: Float = 0F
+            get() {
+                if (!initialized) throw UninitializedPropertyAccessException("Percent must be initialized before use.")
+                return field
+            }
+        private var initialized: Boolean = false
 
         init {
             if (amount < 0 || amount > 100) throw IllegalArgumentException("Percent must be between 0 and 100 (inclusive).")
@@ -50,6 +56,7 @@ abstract class Unit(val type: Type) : Cloneable {
         }
 
         override fun set(parent: Unit) {
+            initialized = true
             px = parent.px * (amount / 100f)
         }
     }
@@ -82,25 +89,19 @@ abstract class Unit(val type: Type) : Cloneable {
             internal var vMax = 0f
                 private set
             internal var vWidth = 0f
-                set(value) = run { field = value; vMin = Math.min(vWidth, vHeight); vMax = Math.max(vWidth, vHeight) }
+                set(value) = run { field = value; vMin = min(vWidth, vHeight); vMax = max(vWidth, vHeight) }
             internal var vHeight = 0f
-                set(value) = run { field = value; vMin = Math.min(vWidth, vHeight); vMax = Math.max(vWidth, vHeight) }
+                set(value) = run { field = value; vMin = min(vWidth, vHeight); vMax = max(vWidth, vHeight) }
         }
     }
 
 
     /** represents the index of a flex component */
-    class Flex(val index: Int = -1, val flexGrow: Int = 0, val flexBasis: Concrete? = null) : Unit(Units.Flex) {
+    class Flex(val index: Int = -1, val flexShrink: Int = 0, val flexGrow: Int = 0) : Unit(Units.Flex) {
         override var px: Float = 0f
 
-        init {
-            if (flexGrow < 0) {
-                throw IllegalArgumentException("flexGrow cannot be negative.")
-            }
-        }
-
         override fun clone(): Flex {
-            return Flex(index, flexGrow, flexBasis?.clone())
+            return Flex(index, flexShrink, flexGrow)
         }
     }
 

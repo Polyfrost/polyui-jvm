@@ -11,7 +11,8 @@ import org.lwjgl.opengl.GL11.*
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.system.Platform
 
-class GLWindow(title: String, width: Int, height: Int) : Window(title, width, height) {
+class GLWindow(title: String, width: Int, height: Int, resizeable: Boolean = true, decorated: Boolean = true) :
+    Window(title, width, height) {
     val handle: Long
     var fps: Int = 0
     lateinit var polyUI: PolyUI
@@ -25,7 +26,8 @@ class GLWindow(title: String, width: Int, height: Int) : Window(title, width, he
             glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE)
             glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE)
         }
-
+        if (!resizeable) glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE)
+        if (!decorated) glfwWindowHint(GLFW_DECORATED, GLFW_FALSE)
         glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE)
 
         handle = glfwCreateWindow(width, height, title, MemoryUtil.NULL, MemoryUtil.NULL)
@@ -44,6 +46,8 @@ class GLWindow(title: String, width: Int, height: Int) : Window(title, width, he
         // Add some callbacks for window resizing and content scale
         glfwSetFramebufferSizeCallback(handle) { _, width, height ->
             polyUI.onResize(width, height)
+            // decreases the wierd effects
+            polyUI.render()
         }
 
         glfwSetMouseButtonCallback(handle) { _, button, action, _ ->
@@ -74,8 +78,6 @@ class GLWindow(title: String, width: Int, height: Int) : Window(title, width, he
     override fun open(polyUI: PolyUI): Window {
         this.polyUI = polyUI
         var frames = 0
-        //var memoryDiff = 0
-        //var lastMemory = -1L
         var lastSecond = System.currentTimeMillis()
 
         createCallbacks()
@@ -96,10 +98,6 @@ class GLWindow(title: String, width: Int, height: Int) : Window(title, width, he
                 fps = frames
                 frames = 0
                 println("FPS: $fps")
-
-                //val memory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
-                //memoryDiff = if (lastMemory == -1L) 0 else (memory - lastMemory).toInt()
-                //lastMemory = memory
             } else frames++
         }
 
@@ -124,7 +122,9 @@ class GLWindow(title: String, width: Int, height: Int) : Window(title, width, he
     }
 
     override fun fullscreen() {
-        TODO()
+        glfwGetVideoMode(glfwGetPrimaryMonitor())?.let {
+            glfwSetWindowSize(handle, it.width(), it.height())
+        }
     }
 
 }

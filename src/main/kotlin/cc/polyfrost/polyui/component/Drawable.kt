@@ -61,8 +61,9 @@ interface Drawable {
      * Method that is called when the physical size of the total window area changes.
      */
     fun rescale(scaleX: Float, scaleY: Float) {
-        at.scale(scaleX, scaleY)
-        sized!!.scale(scaleX, scaleY)
+        // TODO fix this
+//        at.scale(scaleX, scaleY)
+//        sized!!.scale(-scaleX, -scaleY)
     }
 
     /** function that should return true if it is ready to be removed from its parent.

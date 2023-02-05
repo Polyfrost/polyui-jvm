@@ -10,6 +10,9 @@ class Settings(private val renderer: Renderer) {
     var showFPS = false
     var useAntialiasing = true
 
+    /** How to handle resource (image and font) loading errors. */
+    var resourcePolicy = ResourcePolicy.WARN
+
     /** If true, the renderer will render all layout and component to a 'master' framebuffer, then every frame, render that. */
     var masterIsFramebuffer = false
 
@@ -43,5 +46,14 @@ class Settings(private val renderer: Renderer) {
 
         /** Use a framebuffer object for rendering.*/
         FRAMEBUFFER,
+    }
+
+    /** How to handle resource (image and font) loading errors. */
+    enum class ResourcePolicy {
+        /** Throw an exception and crash the program. */
+        CRASH,
+
+        /** Warn in the log and use the default resource (bundled with your rendering implementation). */
+        WARN
     }
 }

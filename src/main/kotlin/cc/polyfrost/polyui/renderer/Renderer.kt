@@ -19,9 +19,17 @@ import cc.polyfrost.polyui.unit.Vec2
 abstract class Renderer : AutoCloseable {
     /**
      * Override this to set a default font if the font isn't found. It is
-     * used internally for PolyUI property.
+     * also used internally for PolyUI debug rendering.
+     * @see [Settings.resourcePolicy]
      */
     abstract val defaultFont: Font
+
+    /**
+     * Override this to set a default image if the image isn't found.
+     * @see [Settings.resourcePolicy]
+     */
+    abstract val defaultImage: Image
+
     val settings = Settings(this)
 
     internal inline fun alsoRender(block: Renderer.() -> kotlin.Unit) =

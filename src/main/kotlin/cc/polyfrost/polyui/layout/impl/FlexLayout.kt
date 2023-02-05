@@ -20,15 +20,18 @@ import kotlin.math.max
  * A flex layout that implements all the features of the [Flexbox](https://css-tricks.com/snippets/css/a-guide-to-flexbox/#aa-flexbox-property) system.
  *
  * This layout is very powerful, and is used commonly in web development. If you need to know more, I would recommend checking out the link above.
+ *
+ * @param [sized] The size of this layout. This is a 'hard' limit for the wrap. If the next item would exceed the size, it will not be added. If you want a hard limit, but auto cross size, use 0 as the cross size.
+ * @param [wrap] The wrap size of this layout. If this is set, the layout will automatically wrap to the next line if the next item would exceed the wrap size. This is a 'soft' limit, so that if it needs to exceed, it can. Takes precedence over [sized].
  */
 class FlexLayout(
-    at: Point<Unit>, sized: Size<Unit>? = null,
+    at: Point<Unit>,
+    sized: Size<Unit>? = null,
     wrap: Unit? = null,
     onAdded: (Drawable.() -> kotlin.Unit)? = null,
     onRemoved: (Drawable.() -> kotlin.Unit)? = null,
     private val flexDirection: Direction = Direction.Row,
     wrapDirection: Wrap = Wrap.Wrap,
-    // todo test these modes and make sure they all work
     private val contentJustify: JustifyContent = JustifyContent.Start,
     private val itemAlign: AlignItems = AlignItems.Start,
     private val contentAlign: AlignContent = AlignContent.Start,
@@ -36,8 +39,7 @@ class FlexLayout(
     vararg items: Drawable,
 ) : Layout(at, sized, onAdded, onRemoved, true, *items) {
     private val drawables: ArrayList<FlexDrawable>
-    private var crossSize: Float = 0F
-    private var mainSize: Float = 0F
+
     private val mainGap = when (flexDirection) {
         Direction.Row, Direction.RowReverse -> gap.mainGap.px
         Direction.Column, Direction.ColumnReverse -> gap.crossGap.px
@@ -62,10 +64,12 @@ class FlexLayout(
             }
         }
     private val wrapDirection: Wrap
+    private val strictSize = sized != null && wrap == null
 
 
     init {
-        if (wrapDirection == Wrap.NoWrap) {
+        if (this.sized == null) this.sized = origin
+        if (wrapDirection != Wrap.NoWrap) {
             if (wrap != null) {
                 PolyUI.LOGGER.warn("wrap is set, but wrap direction is set to NoWrap. Defaulting to Wrap.")
                 this.wrapDirection = Wrap.Wrap
@@ -98,35 +102,67 @@ class FlexLayout(
         if (wrapDirection == Wrap.WrapReverse) drawables.reverse()
     }
 
+    private var crossSize: Float
+        get() {
+            return when (flexDirection) {
+                Direction.Row, Direction.RowReverse -> sized!!.b.px
+                Direction.Column, Direction.ColumnReverse -> sized!!.a.px
+            }
+        }
+        set(value) {
+            if (strictSize) return
+            when (flexDirection) {
+                Direction.Row, Direction.RowReverse -> sized!!.b.px = value
+                Direction.Column, Direction.ColumnReverse -> sized!!.a.px = value
+            }
+        }
+    private var mainSize: Float
+        get() {
+            return when (flexDirection) {
+                Direction.Row, Direction.RowReverse -> sized!!.a.px
+                Direction.Column, Direction.ColumnReverse -> sized!!.b.px
+            }
+        }
+        set(value) {
+            if (strictSize) return
+            when (flexDirection) {
+                Direction.Row, Direction.RowReverse -> sized!!.a.px = value
+                Direction.Column, Direction.ColumnReverse -> sized!!.b.px = value
+            }
+        }
+
     override fun calculateBounds() {
         doDynamicSize()
-        mainSize = when (flexDirection) {
-            Direction.Row, Direction.RowReverse -> sized!!.a.px
-            Direction.Column, Direction.ColumnReverse -> sized!!.b.px
-        }
-        crossSize = when (flexDirection) {
-            Direction.Row, Direction.RowReverse -> sized!!.b.px
-            Direction.Column, Direction.ColumnReverse -> sized!!.a.px
-        }
         var mainAxis = 0F
-        var mainAxisMax = 0F
-
         val rows = ArrayList<FlexRow>()
+
         if (wrapDirection != Wrap.NoWrap) {
             var row = ArrayList<FlexDrawable>()
-            drawables.fastEach {
-                mainAxis += it.mainSize + mainGap
-                if (mainAxis > width) { // means we need to wrap
-                    rows.add(FlexRow(row, mainAxis, mainAxisMax))
-                    mainAxisMax = max(mainAxisMax, mainAxis)
-                    mainAxis = 0F
-                    row = ArrayList()
+            drawables.fastEachIndexed { i, it ->
+                if (strictSize) {
+                    mainAxis += it.mainSize + mainGap
+                    // strict sizing
+                    if (mainAxis + (drawables.getOrNull(i + 1)?.mainSize ?: 0F) + mainGap >= this.width) {
+                        rows.add(FlexRow(row))
+                        mainAxis = 0F
+                        row = ArrayList()
+                    }
+                    row.add(it)
+
+                } else {
+                    mainAxis += it.mainSize + mainGap
+                    if (mainAxis >= this.width) { // means we need to wrap
+                        rows.add(FlexRow(row))
+                        mainAxis = 0F
+                        row = ArrayList()
+                    }
+                    row.add(it)
                 }
-                row.add(it)
             }
+
             // do last row
             if (row.isNotEmpty()) {
-                rows.add(FlexRow(row, mainAxis, mainAxisMax))
+                rows.add(FlexRow(row))
             }
             if (wrapDirection == Wrap.WrapReverse) {
                 rows.reverse()
@@ -134,31 +170,51 @@ class FlexLayout(
             }
             row = ArrayList()
         } else {
-            rows.add(FlexRow(drawables, 0F, width))
+            // add all to the row if wrap is off
+            rows.add(FlexRow(drawables))
         }
 
-        val crossAxis = rows.sumOf { it.maxCrossSize } + (rows.size - 1) * crossGap
+
+        var maxCrossSizeNoGaps = 0F
+        var minIndex = 0
+        var err = false
+        kotlin.run {
+            rows.fastEach {
+                maxCrossSizeNoGaps += it.maxCrossSize
+                minIndex += it.drawables.size
+                if (strictSize) {
+                    if (maxCrossSizeNoGaps > crossSize) {
+                        PolyUI.LOGGER.warn("Cross size is too small for the content. (Cross size: $crossSize, content size: $maxCrossSizeNoGaps). Excess removed.")
+                        err = true
+                        return@run // break https://kotlinlang.org/docs/returns.html#return-to-labels
+                    }
+                }
+            }
+        }
+        if (err) {
+            for (i in minIndex until drawables.size) {
+                removeComponentNow(drawables[i].drawable)
+            }
+        }
+        crossSize = maxCrossSizeNoGaps + (rows.size - 1) * crossGap
         var cross = 0F
-        var i = 0
-        rows.fastEach { row ->
-            row.justifyContent()
-            if (contentAlign == AlignContent.End) cross -= (row.alignItemsAndContent(
-                rows.size, cross, crossAxis
-            ) + crossGap)
-            else cross += (row.alignItemsAndContent(rows.size, cross, crossAxis) + crossGap)
-            println("ROW: $i (${row.drawables.size} items)")
-            row.drawables.fastEach { println(it.drawable.at) }
-            println("END ROW $i")
-            println("")
-            i++
-        }
 
+
+        // justify, with the largest row first.
+        rows.sortedByDescending { it.thisMainSizeWithGaps }.fastEach {
+            it.justify()
+        }
+        rows.fastEach { row ->
+            row.align(rows.size, cross, maxCrossSizeNoGaps)
+            if (contentAlign == AlignContent.End) cross -= row.maxCrossSize + crossGap
+            else cross += row.maxCrossSize + crossGap
+        }
         rows.clear()
-        this.sized = Size(
-            max(mainAxisMax, width).px,
-            crossAxis.px
-        )
         needsRecalculation = false
+    }
+
+    fun trySetMainSize(new: Float) {
+        mainSize = max(mainSize, new)
     }
 
 
@@ -226,7 +282,7 @@ class FlexLayout(
         val isSizedMain = if (mainSize != 0F) {
             true
         } else {
-            if (wrapDirection != Wrap.NoWrap) PolyUI.LOGGER.warn("Drawable ${this.drawable} has a main size of 0. This may lead to odd things on wrapped layout.")
+            if (wrapDirection != Wrap.NoWrap) PolyUI.LOGGER.warn("Drawable ${this.drawable} has a main size of 0. This may lead to odd things on wrapped layouts.")
             false
         }
         val isSizedCross = crossSize != 0F
@@ -234,34 +290,32 @@ class FlexLayout(
 
     private inner class FlexRow(
         val drawables: ArrayList<FlexDrawable>,
-        thisMainSize: Float = 0f,
-        maxMainSize: Float,
     ) {
         val thisMainSize: Float
         val maxCrossSize: Float
-        val maxMainSize: Float
+        val thisMainSizeWithGaps: Float
 
         init {
-            if (thisMainSize == 0f) {
-                var main = 0F
-                drawables.fastEach { main += it.mainSize + mainGap }
-                this.thisMainSize = main
-            } else this.thisMainSize = thisMainSize
-            if (maxMainSize == 0f) {
-                this.maxMainSize = thisMainSize
-            } else this.maxMainSize = maxMainSize
-            //expandMainIfCan()
+            var main = 0F
+            drawables.fastEach { main += it.mainSize }
+            this.thisMainSize = main
+            this.thisMainSizeWithGaps = main + (drawables.size - 1) * mainGap
+            resizeMainIfCan()
 
             var cross = 0F
             drawables.fastEach { cross = max(cross, it.crossSize) }
             this.maxCrossSize = cross
         }
 
-        fun expandMainIfCan() {
+        fun resizeMainIfCan() {
+            val spare = mainSize - thisMainSize
             var i = 0
-            drawables.fastEach { i += it.flex.flexGrow }
+            if (spare > 0) {
+                drawables.fastEach { i += it.flex.flexGrow }
+            } else {
+                drawables.fastEach { i += it.flex.flexShrink }
+            }
             if (i == 0) return
-            val spare = maxMainSize - thisMainSize
             drawables.fastEach {
                 val grow = it.flex.flexGrow
                 if (grow == 0) return@fastEach
@@ -269,38 +323,39 @@ class FlexLayout(
             }
         }
 
-        fun alignItemsAndContent(numRows: Int, thisRow: Float, crossSize: Float): Float {
+        fun align(numRows: Int, thisRowCrossPos: Float, allMaxCrossSize: Float) {
+            val startCross = crossPos + thisRowCrossPos
             when (contentAlign) {
                 AlignContent.Start -> {
-                    drawables.fastEach { it.crossPos = crossPos + thisRow }
+                    drawables.fastEach { it.crossPos = startCross }
                 }
 
                 AlignContent.End -> {
-                    drawables.fastEach { it.crossPos = crossPos + thisRow + (crossSize - it.crossSize) }
+                    drawables.fastEach { it.crossPos = startCross + (crossSize - it.crossSize) }
                 }
 
                 AlignContent.Center -> {
-                    drawables.fastEach { it.crossPos = crossPos + thisRow + (crossSize - it.crossSize) / 2 }
+                    drawables.fastEach { it.crossPos = startCross + (crossSize - it.crossSize) / 2 }
                 }
 
                 AlignContent.SpaceBetween -> {
-                    val gap = (crossSize - drawables.sumOf { it.crossSize })
-                    drawables.fastEachIndexed { i, it ->
-                        it.crossPos = crossPos + thisRow + ((i - 2) * gap + i * it.crossSize)
+                    val gap = (crossSize - allMaxCrossSize) / (numRows - 1)
+                    drawables.fastEach {
+                        it.crossPos = startCross + gap
                     }
                 }
 
                 AlignContent.SpaceEvenly -> {
-                    val gap = (crossSize - drawables.sumOf { it.crossSize })
-                    drawables.fastEachIndexed { i, it ->
-                        it.crossPos = crossPos + thisRow + ((i - 1) * gap + i * it.crossSize)
+                    val gap = (crossSize - allMaxCrossSize) / (numRows + 1)
+                    drawables.fastEach {
+                        it.crossPos = startCross + gap
                     }
                 }
 
                 AlignContent.Stretch -> {
                     drawables.fastEach {
-                        it.crossPos = 0F
-                        it.crossSize = crossSize / numRows
+                        it.crossPos = startCross
+                        it.crossSize = maxCrossSize
                     }
                 }
             }
@@ -310,21 +365,17 @@ class FlexLayout(
                 }
 
                 AlignItems.End -> {
-                    drawables.fastEach { it.crossPos += crossSize - it.crossSize }
+                    drawables.fastEach { it.crossPos += maxCrossSize - it.crossSize }
                 }
 
                 AlignItems.Center -> {
-                    drawables.fastEach { it.crossPos += (crossSize - it.crossSize) / 2 }
-                }
-
-                AlignItems.Stretch -> {
-                    drawables.fastEach { it.crossSize = crossSize / numRows }
+                    drawables.fastEach { it.crossPos += (maxCrossSize - it.crossSize) / 2 }
                 }
             }
-            return maxCrossSize
         }
 
-        fun justifyContent() {
+        fun justify() {
+            trySetMainSize(thisMainSizeWithGaps)
             when (contentJustify) {
                 JustifyContent.Start -> {
                     var pos = 0F
@@ -344,7 +395,7 @@ class FlexLayout(
                 }
 
                 JustifyContent.Center -> {
-                    var pos = (mainSize - thisMainSize) / 2
+                    var pos = (mainSize - thisMainSizeWithGaps) / 2
                     drawables.fastEach {
                         it.mainPos = pos + mainPos
                         pos += it.mainSize + mainGap
@@ -353,27 +404,27 @@ class FlexLayout(
 
                 JustifyContent.SpaceBetween -> {
                     if (drawables.size == 1) {
-                        drawables.fastEach { it.mainPos = 0F }
-                    } else {
-                        val gap = drawables.sumOf { it.mainSize } / (drawables.size - 1)
-                        var pos = mainPos
-                        drawables.fastEach {
-                            it.mainPos = pos
-                            pos += it.mainSize + gap
-                        }
+                        drawables[0].mainPos = mainPos + (mainSize - drawables[0].mainSize) / 2
+                        return
+                    }
+                    val gap = (mainSize - thisMainSize) / (drawables.size - 1)
+                    var pos = mainPos
+                    drawables.fastEach {
+                        it.mainPos = pos
+                        pos += it.mainSize + gap
                     }
                 }
 
                 JustifyContent.SpaceEvenly -> {
                     if (drawables.size == 1) {
-                        drawables.fastEach { it.mainPos = 0F }
-                    } else {
-                        val gap = (mainSize - drawables.sumOf { it.mainSize }) / drawables.size
-                        var pos = gap + mainPos
-                        drawables.fastEach {
-                            it.mainPos = pos
-                            pos += it.mainSize + gap
-                        }
+                        drawables[0].mainPos = mainPos + (mainSize - drawables[0].mainSize) / 2
+                        return
+                    }
+                    val gap = (mainSize - thisMainSize) / drawables.size
+                    var pos = mainPos + gap
+                    drawables.fastEach {
+                        it.mainPos = pos
+                        pos += it.mainSize + gap
                     }
                 }
             }
@@ -400,7 +451,7 @@ class FlexLayout(
 
     /** [Flex Align Items](https://css-tricks.com/snippets/css/a-guide-to-flexbox/#aa-align-items) */
     enum class AlignItems {
-        Start, End, Center, Stretch
+        Start, End, Center
     }
 
     /** [Flex Align Content](https://css-tricks.com/snippets/css/a-guide-to-flexbox/#aa-align-content) */
