@@ -22,7 +22,7 @@ import cc.polyfrost.polyui.unit.Vec2
  *
  * A simple block component, supporting the full PolyUI API.
  */
-open class Block(
+open class Block @JvmOverloads constructor (
     val props: BlockProperties = Properties.get<_, Block>(),
     at: Vec2<Unit>, size: Size<Unit>,
     acceptInput: Boolean = true,

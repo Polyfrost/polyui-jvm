@@ -30,7 +30,7 @@ import cc.polyfrost.polyui.utils.fastRemoveIf
  * information about how this component should look, and its default responses
  * to event.
  */
-abstract class Component(
+abstract class Component @JvmOverloads constructor (
     val properties: Properties,
     /** position relative to this layout. */
     override val at: Point<Unit>,

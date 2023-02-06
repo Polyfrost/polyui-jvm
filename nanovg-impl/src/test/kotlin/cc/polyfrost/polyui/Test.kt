@@ -18,7 +18,7 @@ import java.lang.Math.random
 
 fun main() {
     val window = GLWindow("Test", 800, 800)
-    val things = Array<Drawable>(50) {
+    val things = Array<Drawable>(50) { // creates 50 rectangles with random sizes
         Block(
             at = flex(),
             size = Size((random() * 40 + 40).px, (random() * 40 + 40).px),

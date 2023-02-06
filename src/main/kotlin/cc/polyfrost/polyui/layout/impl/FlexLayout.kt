@@ -33,7 +33,7 @@ import kotlin.math.max
  * @param [sized] The size of this layout. This is a 'hard' limit for the wrap. If the next item would exceed the size, it will not be added. If you want a hard limit, but auto cross size, use 0 as the cross size.
  * @param [wrap] The wrap size of this layout. If this is set, the layout will automatically wrap to the next line if the next item would exceed the wrap size. This is a 'soft' limit, so that if it needs to exceed, it can. Takes precedence over [sized].
  */
-class FlexLayout(
+class FlexLayout @JvmOverloads constructor(
     at: Point<Unit>,
     sized: Size<Unit>? = null,
     wrap: Unit? = null,
@@ -47,6 +47,8 @@ class FlexLayout(
     gap: Gap = Gap.AUTO,
     vararg items: Drawable,
 ) : Layout(at, sized, onAdded, onRemoved, true, *items) {
+    constructor(at: Point<Unit>, wrap: Unit.Percent, vararg items: Drawable) : this(at, null, wrap, null, null, items = items)
+
     private val drawables: ArrayList<FlexDrawable>
 
     private val mainGap = when (flexDirection) {

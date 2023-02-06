@@ -9,7 +9,7 @@
 
 package cc.polyfrost.polyui.renderer.data
 
-data class Image(
+data class Image @JvmOverloads constructor(
     val fileName: String,
     var width: Int? = null,
     var height: Int? = null,

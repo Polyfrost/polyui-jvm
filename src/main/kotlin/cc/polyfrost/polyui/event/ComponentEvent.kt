@@ -10,12 +10,13 @@
 package cc.polyfrost.polyui.event
 
 import cc.polyfrost.polyui.component.Component
+import java.util.function.Consumer
 
 sealed class ComponentEvent : Event {
     // imagine this is a rust enum okay
     data class MousePressed(val button: Int) : ComponentEvent()
     data class MouseReleased(val button: Int) : ComponentEvent()
-    data class MouseClicked(val button: Int, val amountClicks: Int = 1) : ComponentEvent()
+    data class MouseClicked @JvmOverloads constructor(val button: Int, val amountClicks: Int = 1) : ComponentEvent()
     object MouseEntered : ComponentEvent()
     object MouseExited : ComponentEvent()
     data class MouseScrolled(val amount: Int) : ComponentEvent()
@@ -30,12 +31,22 @@ sealed class ComponentEvent : Event {
         return Handler(this, action)
     }
 
+    /**
+     * Java compat version of [to]
+     */
+    fun to(action: Consumer<Component>): Handler = to { action.accept(this) }
+
     /** specify a handler for this event.
      *
      * in the given [action], you can perform things on this component, such as [Component.rotate], [Component.recolor], etc.*/
     open infix fun then(action: (Component.() -> Unit)): Handler {
         return Handler(this, action)
     }
+
+    /**
+     * Java compat version of [then]
+     */
+    fun then(action: Consumer<Component>): Handler = then { action.accept(this) }
 
     companion object {
         /** wrapper for varargs, when arguments are in the wrong order */

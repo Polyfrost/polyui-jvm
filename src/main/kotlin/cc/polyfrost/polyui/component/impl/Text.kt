@@ -18,13 +18,15 @@ import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.unit.Vec2
 import cc.polyfrost.polyui.unit.px
 
-open class Text(
+open class Text @JvmOverloads constructor(
     properties: Properties = Properties.get("cc.polyfrost.polyui.component.impl.Text"),
     acceptInput: Boolean = false,
     var text: String, val fontSize: Unit.Pixel = 12.px,
     at: Vec2<Unit>, size: Size<Unit>? = null,
     vararg events: ComponentEvent.Handler,
 ) : Component(properties, at, size, acceptInput, *events) {
+    constructor(text: String, fontSize: Unit.Pixel, at: Vec2<Unit>, vararg events: ComponentEvent.Handler) : this(text = text, fontSize = fontSize, at = at, size = null, events = events)
+
     val props: TextProperties = properties as TextProperties
     var autoSized = false
 

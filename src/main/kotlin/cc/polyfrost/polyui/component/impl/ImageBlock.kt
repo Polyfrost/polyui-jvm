@@ -18,7 +18,7 @@ import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.unit.Vec2
 import cc.polyfrost.polyui.unit.px
 
-open class ImageBlock(
+open class ImageBlock @JvmOverloads constructor(
     private val image: Image,
     properties: ImageBlockProperties = Properties.get<_, ImageBlock>(),
     acceptInput: Boolean = true,

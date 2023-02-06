@@ -139,7 +139,7 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         }
     }
 
-    class Gradient(color1: Color, color2: Color, val type: Type = Type.TopLeftToBottomRight) :
+    class Gradient @JvmOverloads constructor(color1: Color, color2: Color, val type: Type = Type.TopLeftToBottomRight) :
         Mutable(color1.r, color1.g, color1.b, color1.a) {
         val color2 = if (color2 !is Mutable) color2.toMutable() else color2
 
@@ -223,7 +223,7 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         }
     }
 
-    class Chroma(val speed: Long = 5000L, alpha: Int = 255) : Mutable(0, 0, 0, alpha) {
+    class Chroma @JvmOverloads constructor(val speed: Long = 5000L, alpha: Int = 255) : Mutable(0, 0, 0, alpha) {
         @Deprecated("Chroma colors cannot be animated.", level = DeprecationLevel.ERROR)
         override fun recolor(target: Color, type: Animation.Type?, durationMillis: Long) {
             // no-op

@@ -22,7 +22,7 @@ import org.lwjgl.system.MemoryUtil
 import org.lwjgl.system.Platform
 import kotlin.math.max
 
-class GLWindow(title: String, width: Int, height: Int, resizeable: Boolean = true, decorated: Boolean = true) :
+class GLWindow @JvmOverloads constructor (title: String, width: Int, height: Int, resizeable: Boolean = true, decorated: Boolean = true) :
     Window(title, width, height) {
     val handle: Long
     var fps: Int = 0
@@ -144,7 +144,7 @@ class GLWindow(title: String, width: Int, height: Int, resizeable: Boolean = tru
             glfwPollEvents()
             glfwSwapBuffers(handle)
 
-            if (lastSecond + 1000 < System.currentTimeMillis()) {
+            if (lastSecond + 2000 < System.currentTimeMillis()) {
                 lastSecond = System.currentTimeMillis()
                 fps = frames
                 frames = 0
