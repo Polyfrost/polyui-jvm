@@ -190,6 +190,7 @@ fabric.properties
 
 !.idea/codeStyles
 !.idea/runConfigurations
+!.idea/copyright
 
 ### Intellij+iml ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
@@ -402,5 +403,3 @@ gradle-app.setting
 .idea/uiDesigner.xml
 
 # End of https://www.toptal.com/developers/gitignore/api/forgegradle,gradle,intellij,intellij+all,intellij+iml,visualstudiocode,java,kotlin,maven,macos,linux,git
-
-.idea
