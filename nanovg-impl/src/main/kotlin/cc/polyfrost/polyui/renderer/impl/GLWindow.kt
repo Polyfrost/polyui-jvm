@@ -110,6 +110,9 @@ class GLWindow(title: String, width: Int, height: Int, resizeable: Boolean = tru
             glfwGetFramebufferSize(handle, w, h)
             glfwGetWindowContentScale(handle, contentScaleX, contentScaleY)
 
+            this.contentScaleX = contentScaleX[0]
+            this.contentScaleY = contentScaleY[0]
+
             this.width = w[0]
             this.height = h[0]
 
