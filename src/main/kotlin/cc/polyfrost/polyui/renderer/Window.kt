@@ -19,24 +19,10 @@ import cc.polyfrost.polyui.PolyUI
  *  - create callbacks for all the event-related methods in [cc.polyfrost.polyui.event.EventManager]
  *  - call [open] to start the rendering loop; this can be blocking or non-blocking. Please note that after open is called, the rendering implementation will be created. This means that in a thread-based system such as LWJGL's OpenGL, you **must** ensure that it is fully setup before exiting `init {}`.
  */
-abstract class Window(var title: String, var width: Int, var height: Int) {
+abstract class Window(var width: Int, var height: Int) {
     abstract fun open(polyUI: PolyUI): Window
-    abstract fun setIcon(icon: String)
-    protected abstract fun closeWindow()
-    protected abstract fun renameWindow(title: String)
-    abstract fun fullscreen()
 
     /** Create the callbacks for window event.
      * @see Window */
     abstract fun createCallbacks()
-
-    fun close() {
-        closeWindow()
-    }
-
-    fun rename(title: String): Window {
-        this.title = title
-        this.renameWindow(title)
-        return this
-    }
 }

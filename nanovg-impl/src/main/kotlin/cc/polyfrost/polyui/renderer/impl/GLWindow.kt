@@ -23,7 +23,7 @@ import org.lwjgl.system.Platform
 import kotlin.math.max
 
 class GLWindow @JvmOverloads constructor (title: String, width: Int, height: Int, resizeable: Boolean = true, decorated: Boolean = true) :
-    Window(title, width, height) {
+    Window(width, height) {
     val handle: Long
     var fps: Int = 0
         private set
@@ -35,6 +35,12 @@ class GLWindow @JvmOverloads constructor (title: String, width: Int, height: Int
         private set
     lateinit var polyUI: PolyUI
         private set
+
+    var title = title
+        set(new) {
+            field = new
+            glfwSetWindowTitle(handle, new)
+        }
 
     init {
         GLFWErrorCallback.createPrint().set()
@@ -160,19 +166,15 @@ class GLWindow @JvmOverloads constructor (title: String, width: Int, height: Int
         return this
     }
 
-    override fun closeWindow() {
+    fun closeWindow() {
         glfwWindowShouldClose(handle)
     }
 
-    override fun setIcon(icon: String) {
+    fun setIcon(icon: String) {
         TODO("Not yet implemented")
     }
 
-    override fun renameWindow(title: String) {
-        glfwSetWindowTitle(handle, title)
-    }
-
-    override fun fullscreen() {
+    fun fullscreen() {
         glfwGetVideoMode(glfwGetPrimaryMonitor())?.let {
             glfwSetWindowSize(handle, it.width(), it.height())
         }
