@@ -8,14 +8,24 @@ import org.lwjgl.glfw.GLFWErrorCallback
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL.createCapabilities
 import org.lwjgl.opengl.GL11.*
+import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.system.Platform
+import kotlin.math.max
 
 class GLWindow(title: String, width: Int, height: Int, resizeable: Boolean = true, decorated: Boolean = true) :
     Window(title, width, height) {
     val handle: Long
     var fps: Int = 0
+        private set
+    var contentScaleX = 1f
+        private set
+    var contentScaleY = 1f
+        private set
+    var pixelRatio = 1f
+        private set
     lateinit var polyUI: PolyUI
+        private set
 
     init {
         GLFWErrorCallback.createPrint().set()
@@ -28,6 +38,7 @@ class GLWindow(title: String, width: Int, height: Int, resizeable: Boolean = tru
         }
         if (!resizeable) glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE)
         if (!decorated) glfwWindowHint(GLFW_DECORATED, GLFW_FALSE)
+
         glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE)
 
         handle = glfwCreateWindow(width, height, title, MemoryUtil.NULL, MemoryUtil.NULL)
@@ -45,7 +56,16 @@ class GLWindow(title: String, width: Int, height: Int, resizeable: Boolean = tru
     override fun createCallbacks() {
         // Add some callbacks for window resizing and content scale
         glfwSetFramebufferSizeCallback(handle) { _, width, height ->
-            polyUI.onResize(width, height)
+            this.width = width
+            this.height = height
+            polyUI.onResize(width, height, pixelRatio)
+            // decreases the wierd effects
+            polyUI.render()
+        }
+
+        glfwSetWindowContentScaleCallback(handle) { _, xScale, yScale ->
+            pixelRatio = max(xScale, yScale)
+            polyUI.onResize(width, height, pixelRatio)
             // decreases the wierd effects
             polyUI.render()
         }
@@ -81,6 +101,25 @@ class GLWindow(title: String, width: Int, height: Int, resizeable: Boolean = tru
         var lastSecond = System.currentTimeMillis()
 
         createCallbacks()
+
+        MemoryStack.stackPush().use {
+            val w = it.mallocInt(1)
+            val h = it.mallocInt(1)
+            val contentScaleX = it.mallocFloat(1)
+            val contentScaleY = it.mallocFloat(1)
+            glfwGetFramebufferSize(handle, w, h)
+            glfwGetWindowContentScale(handle, contentScaleX, contentScaleY)
+
+            this.width = w[0]
+            this.height = h[0]
+
+            polyUI.onResize(
+                (this.width / this.contentScaleX).toInt(),
+                (this.height / this.contentScaleY).toInt(),
+                max(this.contentScaleX, this.contentScaleY).also { this.pixelRatio = it }
+            )
+        }
+
         while (!glfwWindowShouldClose(handle)) {
 
             glViewport(0, 0, width, height)
@@ -110,7 +149,7 @@ class GLWindow(title: String, width: Int, height: Int, resizeable: Boolean = tru
     }
 
     override fun closeWindow() {
-        TODO("Not yet implemented")
+        glfwWindowShouldClose(handle)
     }
 
     override fun setIcon(icon: String) {

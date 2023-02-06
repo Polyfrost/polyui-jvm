@@ -55,6 +55,16 @@ inline fun <L, E> L.fastRemoveIf(f: (E) -> Boolean) where L : MutableList<E>, L 
     }
 }
 
+/**
+ * Returns a list of all elements sorted descending according to natural sort order of the value returned by specified selector function.
+ *
+ * The sort is *stable*. It means that equal elements preserve their order relative to each other after sorting.
+ */
+inline fun <L, reified E, R : Comparable<R>> L.sortedByDescending(crossinline selector: (E) -> R?): L where L : MutableList<E>, L : RandomAccess {
+    if (this.size <= 1) return this
+    return this.toTypedArray().sortedByDescending(selector).toMutableList() as L
+}
+
 
 /**
  * Returns the sum of all values produced by [selector] function applied to
@@ -111,20 +121,9 @@ fun <E> Array<E>.append(element: E, stillPutOnFail: Boolean = false): Array<E> {
     } else throw IndexOutOfBoundsException("Array is already full!")
 }
 
-inline fun <T, R : Comparable<R>> Iterable<T>.sortedByDescending(crossinline selector: (T) -> R?): ArrayList<T> {
-    val comparator = compareByDescending(selector)
-    if (this is Collection) {
-        if (size <= 1) return this.toArrayList()
-        @Suppress("UNCHECKED_CAST")
-        return (toTypedArray<Any?>() as Array<T>).apply { sortWith(comparator) }.toArrayList()
-    }
-    return toArrayList().apply { sortWith(comparator) }
-}
-
 fun <T> Iterable<T>.toArrayList(): ArrayList<T> {
-    if (this is Collection<T>)
-        return ArrayList(this)
-    return toCollection(ArrayList())
+    return if (this is ArrayList) this
+    else this.toMutableList() as ArrayList<T>
 }
 
-fun <T> Array<T>.toArrayList(): ArrayList<T> = toCollection(ArrayList())
+fun <T> Array<T>.toArrayList(): ArrayList<T> = this.toMutableList() as ArrayList<T>

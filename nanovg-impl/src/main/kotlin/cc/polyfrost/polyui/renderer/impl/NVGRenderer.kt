@@ -50,7 +50,7 @@ class NVGRenderer : Renderer() {
 
     override fun beginFrame(width: Int, height: Int) {
         checkInit()
-        nvgBeginFrame(vg, width.toFloat(), height.toFloat(), 1F)
+        nvgBeginFrame(vg, width.toFloat(), height.toFloat(), pixelRatio)
     }
 
     override fun endFrame() = nvgEndFrame(vg)

@@ -6,18 +6,27 @@ import cc.polyfrost.polyui.event.ComponentEvent
 import cc.polyfrost.polyui.property.impl.BlockProperties
 import cc.polyfrost.polyui.property.impl.ImageBlockProperties
 import cc.polyfrost.polyui.property.impl.TextProperties
+import cc.polyfrost.polyui.unit.Size
+import cc.polyfrost.polyui.unit.Unit
 
 abstract class Properties : Cloneable {
     abstract val color: Color
+
+    /** use this to set a size for the target component.
+     *
+     * This will **not** override the size of the component if it is already set.
+     * Else, if this is not null and the component's size is null, the component's size will be set to this.
+     */
+    open val size: Size<Unit>? = null
     abstract val padding: Float
-    val eventHandlers = mutableMapOf<ComponentEvent, Component.() -> Unit>()
+    val eventHandlers = mutableMapOf<ComponentEvent, Component.() -> kotlin.Unit>()
 
     /**
      * Add a universal event handler to this component's property.
      *
      * This means that every component using this property will have this event handler.
      */
-    fun addEventHandler(type: ComponentEvent, function: Component.() -> Unit) {
+    fun addEventHandler(type: ComponentEvent, function: Component.() -> kotlin.Unit) {
         eventHandlers[type] = function
     }
 

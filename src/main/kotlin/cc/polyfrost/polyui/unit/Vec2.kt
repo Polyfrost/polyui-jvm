@@ -45,7 +45,7 @@ data class Vec2<T : Unit>(
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun clone(): Vec2<T> {
+    public override fun clone(): Vec2<T> {
         return Vec2(a.clone() as T, b.clone() as T)
     }
 

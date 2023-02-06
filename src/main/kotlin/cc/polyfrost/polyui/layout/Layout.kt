@@ -21,11 +21,11 @@ abstract class Layout(
     final override var acceptInput: Boolean = true,
     vararg items: Drawable,
 ) : Drawable {
-    private val simpleName = this.toString().substringAfterLast(".")
+    protected open val simpleName = this.toString().substringAfterLast(".")
     val components = arrayListOf(*items.filterIsInstance<Component>().toTypedArray())
     val children = arrayListOf(*items.filterIsInstance<Layout>().toTypedArray())
 
-    val removeQueue = arrayListOf<Drawable>()
+    protected val removeQueue = arrayListOf<Drawable>()
     var fbo: Framebuffer? = null
     final override lateinit var renderer: Renderer
 
@@ -41,7 +41,7 @@ abstract class Layout(
     var needsRedraw = true
     var needsRecalculation = true
 
-    fun reRenderIfNecessary() {
+    open fun reRenderIfNecessary() {
         children.fastEach { it.reRenderIfNecessary() }
         if (fbo != null) {
             if (needsRedraw) {
@@ -63,27 +63,27 @@ abstract class Layout(
     }
 
     /**
-     * adds the given component to this layout.
+     * adds the given components/layouts to this layout.
      *
-     * this will add the component to the [components] list, and invoke its [onAdded] function.
+     * this will add the drawables to the [components] or [children] list, and invoke its [onAdded] function.
      */
     fun addComponents(components: Collection<Drawable>) {
         components.forEach { addComponent(it) }
     }
 
     /**
-     * adds the given component to this layout.
+     * adds the given components/layouts to this layout.
      *
-     * this will add the component to the [components] list, and invoke its [onAdded] function.
+     * this will add the drawables to the [components] or [children] list, and invoke its [onAdded] function.
      */
     fun addComponents(vararg components: Drawable) {
         components.forEach { addComponent(it) }
     }
 
     /**
-     * adds a component to this layout.
+     * adds the given component/layout to this layout.
      *
-     * this will add the component to the [components] list, and invoke its [onAdded] function.
+     * this will add the drawable to the [components] or [children] list, and invoke its [onAdded] function.
      */
     open fun addComponent(drawable: Drawable) {
         when (drawable) {
@@ -91,7 +91,7 @@ abstract class Layout(
                 components.add(drawable)
                 drawable.renderer = renderer
                 drawable.layout = this
-                // allows property' onAdded to be called
+                // allows the properties' onAdded to be called
                 drawable.accept(ComponentEvent.Added)
             }
 

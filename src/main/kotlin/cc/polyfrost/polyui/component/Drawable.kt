@@ -61,9 +61,8 @@ interface Drawable {
      * Method that is called when the physical size of the total window area changes.
      */
     fun rescale(scaleX: Float, scaleY: Float) {
-        // TODO fix this
 //        at.scale(scaleX, scaleY)
-//        sized!!.scale(-scaleX, -scaleY)
+        sized!!.scale(scaleX, scaleY)
     }
 
     /** function that should return true if it is ready to be removed from its parent.
@@ -92,22 +91,21 @@ interface Drawable {
     fun sizedUnitType(): Unit.Type = sized!!.type()
 
     fun doDynamicSize() {
-        if (sized!!.a is Unit.Dynamic)
-            (sized!!.a as Unit.Dynamic).set(
+        doDynamicSize(at)
+        doDynamicSize(sized!!)
+    }
+
+    fun doDynamicSize(upon: Vec2<Unit>) {
+        if (upon.a is Unit.Dynamic) {
+            upon.a.set(
                 layout?.sized?.a ?: throw IllegalStateException("Dynamic unit only work on parents with a set size!")
             )
-        if (sized!!.b is Unit.Dynamic)
-            (sized!!.b as Unit.Dynamic).set(
+        }
+        if (upon.b is Unit.Dynamic) {
+            upon.b.set(
                 layout?.sized?.b ?: throw IllegalStateException("Dynamic unit only work on parents with a set size!")
             )
-        if (at.a is Unit.Dynamic)
-            (at.a as Unit.Dynamic).set(
-                layout?.sized?.a ?: throw IllegalStateException("Dynamic unit only work on parents with a set size!")
-            )
-        if (at.b is Unit.Dynamic)
-            (at.b as Unit.Dynamic).set(
-                layout?.sized?.b ?: throw IllegalStateException("Dynamic unit only work on parents with a set size!")
-            )
+        }
     }
 
     /**

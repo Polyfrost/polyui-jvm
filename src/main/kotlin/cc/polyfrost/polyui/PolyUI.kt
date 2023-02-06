@@ -49,11 +49,14 @@ import org.slf4j.LoggerFactory
  * CPU wise, the most expensive part of the code is OpenGL, with roughly 0.46% of the time being spent in the code itself. The rest is openGL, most expensive being blitFramebuffer and swapBuffers (15% and 68% respectively)
  */
 class PolyUI(
-    var width: Int,
-    var height: Int,
+    width: Int, height: Int,
     val renderer: Renderer,
     vararg items: Drawable,
 ) {
+    var width = width
+        private set
+    var height = height
+        private set
     val master = PixelLayout(Point(0.px, 0.px), Size(width.px, height.px), items = items)
     val eventManager = EventManager(this)
     private val settings = renderer.settings
@@ -78,8 +81,7 @@ class PolyUI(
         LOGGER.info("PolyUI initialized")
     }
 
-    fun onResize(newWidth: Int, newHeight: Int) {
-        // todo very amongsus
+    fun onResize(newWidth: Int, newHeight: Int, pixelRatio: Float) {
         println("resize: $newWidth x $newHeight")
 
         master.sized!!.a.px = newWidth.toFloat()
@@ -104,6 +106,7 @@ class PolyUI(
         }
         this.width = newWidth
         this.height = newHeight
+        renderer.pixelRatio = pixelRatio
     }
 
     fun render() {

@@ -2,12 +2,12 @@ package cc.polyfrost.polyui.animate
 
 import cc.polyfrost.polyui.animate.animations.*
 
-abstract class Animation(val durationMillis: Long, val from: Float, val to: Float) {
+abstract class Animation(val durationMillis: Long, val from: Float, val to: Float) : Cloneable {
     val range = to - from
     var passedTime = 0F
-        private set
+        protected set
     var finished: Boolean = false
-        private set
+        protected set
 
     val value: Float
         get() {
@@ -22,6 +22,8 @@ abstract class Animation(val durationMillis: Long, val from: Float, val to: Floa
     }
 
     protected abstract fun getValue(percent: Float): Float
+
+    public abstract override fun clone(): Animation
 
 
     enum class Type {

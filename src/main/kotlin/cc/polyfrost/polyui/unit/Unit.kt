@@ -97,11 +97,12 @@ abstract class Unit(val type: Type) : Cloneable {
 
 
     /** represents the index of a flex component */
-    class Flex(val index: Int = -1, val flexShrink: Int = 0, val flexGrow: Int = 0) : Unit(Units.Flex) {
+    class Flex(val index: Int = -1, val flexShrink: Int = 0, val flexGrow: Int = 0, val endRowAfter: Boolean = false) :
+        Unit(Units.Flex) {
         override var px: Float = 0f
 
         override fun clone(): Flex {
-            return Flex(index, flexShrink, flexGrow)
+            return Flex(index, flexShrink, flexGrow, endRowAfter)
         }
     }
 

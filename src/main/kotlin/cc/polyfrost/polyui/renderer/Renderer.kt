@@ -31,6 +31,8 @@ abstract class Renderer : AutoCloseable {
     abstract val defaultImage: Image
 
     val settings = Settings(this)
+    var pixelRatio: Float = 1f
+        internal set
 
     internal inline fun alsoRender(block: Renderer.() -> kotlin.Unit) =
         block()

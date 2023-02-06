@@ -33,7 +33,7 @@ abstract class Component(
     override var onRemoved: (Drawable.() -> kotlin.Unit)? = null
     private val eventHandlers = mutableMapOf<ComponentEvent, Component.() -> kotlin.Unit>()
     private val animations: ArrayList<Pair<Animation, (Component.() -> kotlin.Unit)?>> = ArrayList()
-    private val transforms: ArrayList<Pair<TransformOp, (Component.() -> kotlin.Unit)?>> = ArrayList()
+    private val operations: ArrayList<Pair<DrawableOp, (Component.() -> kotlin.Unit)?>> = ArrayList()
     var scaleX: Float = 1F
     var scaleY: Float = 1F
 
@@ -93,9 +93,9 @@ abstract class Component(
     }
 
 
-    /** Add a [TransformOp] to this component. */
-    open fun transform(transformOp: TransformOp, onFinish: (Component.() -> kotlin.Unit)? = null) {
-        transforms.add(transformOp to onFinish)
+    /** Add a [DrawableOp] to this component. */
+    open fun addOperation(drawableOp: DrawableOp, onFinish: (Component.() -> kotlin.Unit)? = null) {
+        operations.add(drawableOp to onFinish)
     }
 
     /**
@@ -110,7 +110,7 @@ abstract class Component(
         durationMillis: Long = 0L,
         onFinish: (Component.() -> kotlin.Unit)? = null,
     ) {
-        transform(TransformOp.Scale(byX, byY, this, animation, durationMillis), onFinish)
+        addOperation(DrawableOp.Scale(byX, byY, this, animation, durationMillis), onFinish)
     }
 
     /**
@@ -124,7 +124,7 @@ abstract class Component(
         durationMillis: Long = 0L,
         onFinish: (Component.() -> kotlin.Unit)? = null,
     ) {
-        transform(TransformOp.Rotate(Math.toRadians(degrees), this, animation, durationMillis), onFinish)
+        addOperation(DrawableOp.Rotate(Math.toRadians(degrees), this, animation, durationMillis), onFinish)
     }
 
     /**
@@ -140,7 +140,15 @@ abstract class Component(
         durationMillis: Long = 0L,
         onFinish: (Component.() -> kotlin.Unit)? = null,
     ) {
-        transform(TransformOp.Translate(byX, byY, this, animation, durationMillis), onFinish)
+        addOperation(DrawableOp.Translate(byX, byY, this, animation, durationMillis), onFinish)
+    }
+
+    fun resize(
+        toSize: Size<Unit>,
+        animation: Animation.Type? = null,
+    ) {
+        doDynamicSize(toSize)
+        addOperation(DrawableOp.Resize(toSize, this, animation), null)
     }
 
     open fun animate(animation: Animation, onFinish: (Component.() -> kotlin.Unit)? = null) {
@@ -158,8 +166,11 @@ abstract class Component(
     }
 
     override fun calculateBounds() {
-        if (sized == null) sized =
-            getSize() ?: throw UnsupportedOperationException("getSize() not implemented for ${this::class.simpleName}!")
+        if (sized == null) {
+            sized = if (properties.size != null) properties.size!!.clone()
+            else getSize()
+                ?: throw UnsupportedOperationException("getSize() not implemented for ${this::class.simpleName}!")
+        }
         doDynamicSize()
 
         boundingBox = Box(at, sized!!).expand(properties.padding)
@@ -180,14 +191,14 @@ abstract class Component(
      */
     override fun preRender() {
         animations.fastRemoveIf { it.first.finished.also { b -> if (b) it.second?.invoke(this) } }
-        transforms.fastRemoveIf { it.first.finished.also { b -> if (b) it.second?.invoke(this) } }
+        operations.fastRemoveIf { it.first.finished.also { b -> if (b) it.second?.invoke(this) } }
 
         val delta = clock.getDelta()
         animations.fastEach { (it, _) ->
             it.update(delta)
             if (!it.finished) wantRedraw()
         }
-        transforms.fastEach { (it, _) ->
+        operations.fastEach { (it, _) ->
             it.update(delta)
             if (!it.finished) wantRedraw()
             it.apply(renderer)
@@ -211,6 +222,6 @@ abstract class Component(
     }
 
     override fun canBeRemoved(): Boolean {
-        return animations.size == 0 && transforms.size == 0 && !color.isRecoloring()
+        return animations.size == 0 && operations.size == 0 && !color.isRecoloring()
     }
 }
