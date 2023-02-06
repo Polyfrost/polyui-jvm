@@ -201,7 +201,7 @@ class FlexLayout(
 
 
         // justify, with the largest row first.
-        (rows.sortedByDescending { it.thisMainSizeWithGaps } as ArrayList).fastEach {
+        (rows.sortedByDescending { it.thisMainSizeWithGaps }).fastEach {
             it.justify()
         }
         rows.fastEach { row ->

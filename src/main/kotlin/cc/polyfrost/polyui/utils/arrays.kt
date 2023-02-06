@@ -110,3 +110,27 @@ fun <E> Array<E>.append(element: E, stillPutOnFail: Boolean = false): Array<E> {
         return this.plus(element)
     } else throw IndexOutOfBoundsException("Array is already full!")
 }
+
+inline fun <T, R : Comparable<R>> Iterable<T>.sortedByDescending(crossinline selector: (T) -> R?): ArrayList<T> {
+    val comparator = compareByDescending(selector)
+    if (this is Collection) {
+        if (size <= 1) return this.toArrayList()
+        @Suppress("UNCHECKED_CAST")
+        return (toTypedArray<Any?>() as Array<T>).apply { sortWith(comparator) }.toArrayList()
+    }
+    return toArrayList().apply { sortWith(comparator) }
+}
+
+fun <T> Iterable<T>.toArrayList(): ArrayList<T> {
+    if (this is Collection<T>)
+        return ArrayList(this)
+    return toCollection(ArrayList())
+}
+
+fun <T> Array<T>.toArrayList(): ArrayList<T> {
+    val arraylist = arrayListOf<T>()
+    for (element in this) {
+        arraylist.add(element)
+    }
+    return arraylist
+}
