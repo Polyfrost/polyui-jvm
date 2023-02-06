@@ -127,10 +127,4 @@ fun <T> Iterable<T>.toArrayList(): ArrayList<T> {
     return toCollection(ArrayList())
 }
 
-fun <T> Array<T>.toArrayList(): ArrayList<T> {
-    val arraylist = arrayListOf<T>()
-    for (element in this) {
-        arraylist.add(element)
-    }
-    return arraylist
-}
+fun <T> Array<T>.toArrayList(): ArrayList<T> = toCollection(ArrayList())
