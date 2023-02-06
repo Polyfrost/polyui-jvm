@@ -58,14 +58,14 @@ class GLWindow(title: String, width: Int, height: Int, resizeable: Boolean = tru
         glfwSetFramebufferSizeCallback(handle) { _, width, height ->
             this.width = width
             this.height = height
-            polyUI.onResize(width, height, pixelRatio)
+            polyUI.onResize((width / pixelRatio).toInt(), (height / pixelRatio).toInt(), pixelRatio)
             // decreases the wierd effects
             polyUI.render()
         }
 
         glfwSetWindowContentScaleCallback(handle) { _, xScale, yScale ->
             pixelRatio = max(xScale, yScale)
-            polyUI.onResize(width, height, pixelRatio)
+            polyUI.onResize((width / pixelRatio).toInt(), (height / pixelRatio).toInt(), pixelRatio)
             // decreases the wierd effects
             polyUI.render()
         }
@@ -109,6 +109,9 @@ class GLWindow(title: String, width: Int, height: Int, resizeable: Boolean = tru
             val contentScaleY = it.mallocFloat(1)
             glfwGetFramebufferSize(handle, w, h)
             glfwGetWindowContentScale(handle, contentScaleX, contentScaleY)
+
+            this.contentScaleX = contentScaleX[0]
+            this.contentScaleY = contentScaleY[0]
 
             this.width = w[0]
             this.height = h[0]
