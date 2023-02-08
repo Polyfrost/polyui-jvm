@@ -12,9 +12,13 @@ package cc.polyfrost.polyui.color
 import cc.polyfrost.polyui.animate.Animation
 
 /**
- * An immutable color used by PolyUI.
+ * # Color
+ *
+ * The color used by PolyUI. It stores the color in the ARGB format.
  *
  * @see [Color.Mutable]
+ * @see [Color.Gradient]
+ * @see [Color.Chroma]
  */
 open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: Int) : Cloneable {
     constructor(r: Int, g: Int, b: Int) : this(r, g, b, 255)
@@ -117,7 +121,7 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
          * @return true if the animation finished on this tick, false if otherwise */
         open fun update(deltaTimeMillis: Long): Boolean {
             if (animation != null) {
-                if (animation!![0].finished) {
+                if (animation!![0].isFinished) {
                     animation = null
                     return true
                 }
@@ -139,6 +143,8 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         }
     }
 
+
+    /** A gradient color. */
     class Gradient @JvmOverloads constructor(color1: Color, color2: Color, val type: Type = Type.TopLeftToBottomRight) :
         Mutable(color1.r, color1.g, color1.b, color1.a) {
         val color2 = if (color2 !is Mutable) color2.toMutable() else color2
@@ -223,18 +229,41 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         }
     }
 
-    class Chroma @JvmOverloads constructor(val speed: Long = 5000L, alpha: Int = 255) : Mutable(0, 0, 0, alpha) {
+
+    /** # Chroma Color
+     *
+     * A color that changes over [time][speedMillis], in an endless cycle. You can use the [saturation] and [brightness] fields to set the tone of the chroma. Some examples:
+     *
+     * `brightness = 0.2f, saturation = 0.8f` -> dark chroma
+     *
+     * `brightness = 0.8f, saturation = 0.8f` -> less offensive chroma tone
+     * */
+    class Chroma @JvmOverloads constructor(
+        /** the speed of this color, in milliseconds.
+         *
+         * The speed refers to the amount of time it takes for this color to complete one cycle, e.g. from red, through to blue, through to green, then back to red. */
+        private val speedMillis: Long = 5000L,
+        /** brightness of the color range (0.0 - 1.0) */
+        private val brightness: Float = 1f,
+        /** saturation of the color range (0.0 - 1.0) */
+        private val saturation: Float = 1f,
+        alpha: Int = 255
+    ) : Mutable(0, 0, 0, alpha) {
         @Deprecated("Chroma colors cannot be animated.", level = DeprecationLevel.ERROR)
         override fun recolor(target: Color, type: Animation.Type?, durationMillis: Long) {
             // no-op
         }
 
         override fun clone(): Chroma {
-            return Chroma(speed, a)
+            return Chroma(speedMillis, brightness, saturation, a)
         }
 
         override fun update(deltaTimeMillis: Long): Boolean {
-            java.awt.Color.HSBtoRGB(System.currentTimeMillis() % speed / speed.toFloat(), 1f, 1f).let {
+            java.awt.Color.HSBtoRGB(
+                System.currentTimeMillis() % speedMillis / speedMillis.toFloat(),
+                saturation,
+                brightness
+            ).let {
                 r = (it shr 16) and 0xFF
                 g = (it shr 8) and 0xFF
                 b = it and 0xFF

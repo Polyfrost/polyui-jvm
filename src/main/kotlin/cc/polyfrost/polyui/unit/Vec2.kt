@@ -10,7 +10,7 @@
 package cc.polyfrost.polyui.unit
 
 /**
- * Class to represent a 2D vector of unit
+ * Class to represent a 2D vector of the given unit.
  *
  * @param T The type of unit to use
  */

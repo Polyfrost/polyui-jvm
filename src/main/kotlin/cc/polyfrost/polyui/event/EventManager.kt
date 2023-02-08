@@ -15,6 +15,10 @@ import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.utils.fastEach
 import cc.polyfrost.polyui.utils.fastRemoveIf
 
+/** # EventManager
+ * Handles all events and passes them to the correct components.
+ * @param polyUI The PolyUI instance to use.
+ */
 class EventManager(private val polyUI: PolyUI) {
     private val mouseOverComponents = ArrayList<Component>()
     var mouseX: Float = 0F

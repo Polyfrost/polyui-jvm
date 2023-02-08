@@ -15,6 +15,11 @@ data class Image @JvmOverloads constructor(
     var height: Int? = null,
     val type: Type = Type.from(fileName),
 ) {
+
+    override fun toString(): String {
+        return "$type Image(file=$fileName, ${width}x$height)"
+    }
+
     enum class Type {
         PNG, SVG;
 

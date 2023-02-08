@@ -7,6 +7,7 @@
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  */
 
+/** default animations packaged with PolyUI. */
 package cc.polyfrost.polyui.animate.animations
 
 import cc.polyfrost.polyui.animate.Animation

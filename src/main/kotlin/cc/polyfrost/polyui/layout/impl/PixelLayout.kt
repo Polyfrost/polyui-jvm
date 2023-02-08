@@ -36,6 +36,11 @@ open class PixelLayout(
         }
     }
 
+    override fun calculateBounds() {
+        super.calculateBounds()
+        if (needsRecalculation) sized = getSize()
+    }
+
     override fun getSize(): Vec2<Unit> {
         var width = children.maxOfOrNull { it.x + it.width } ?: 0f
         width = max(width, components.maxOfOrNull { it.x + it.width } ?: 0f)

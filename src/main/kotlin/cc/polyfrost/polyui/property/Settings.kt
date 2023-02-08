@@ -12,6 +12,10 @@ package cc.polyfrost.polyui.property
 import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.renderer.Renderer
 
+/** Settings for PolyUI.
+ *
+ * This contains many values that concern the rendering and event handling of PolyUI internally.
+ * */
 class Settings(private val renderer: Renderer) {
     var debug = System.getProperty("polyui.debug", "true").toBoolean()
     var debugLog = System.getProperty("polyui.debug.logAll", "false").toBoolean()

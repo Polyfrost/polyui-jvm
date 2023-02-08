@@ -18,38 +18,55 @@ import cc.polyfrost.polyui.unit.Vec2
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Class to represent an operation that can be applied on a component that modifies is applied before and after it renders, for example a [Translate], [Scale], or [Rotate] operation, or a transition.
+ * Class to represent an operation that can be applied on a component that modifies it in some way.
+ *
+ * It is applied before and after rendering, for example a [Translate], [Scale], or [Rotate] operation, or a transition.
  */
-abstract class DrawableOp(val component: Component) {
+abstract class DrawableOp(protected open val drawable: Drawable) {
     abstract val animation: Animation?
+
+    /** apply this drawable operation.
+     *
+     * the renderer is provided in case you want to do some transformations.
+     *
+     * **please note that this is NOT intended** to be used directly for rendering of objects, and only for transformations.
+     */
     abstract fun apply(renderer: Renderer)
+
+    /** optionally de-apply this operation, if required.
+     *
+     * The renderer is provided in case you want to revert any transformations that you did.
+     *
+     * **It is extremely important that any transformations, such as scale, are undone in this method.**
+     */
     open fun unapply(renderer: Renderer) {
         // no-op
     }
 
+    /** update the underlying animation, if present. */
     fun update(deltaTimeMillis: Long) {
         animation?.update(deltaTimeMillis)
     }
 
-    open val finished
-        get() = animation?.finished ?: true
+    open val isFinished
+        get() = animation?.isFinished ?: true
 
     /** Note: if you are making a UI, you should probably be using [scale][cc.polyfrost.polyui.component.Component.scale], [rotate][cc.polyfrost.polyui.component.Component.rotate], or [translate][cc.polyfrost.polyui.component.Component.move] instead of this class.
      */
     @ApiStatus.Internal
     class Translate(
-        private val x: Float, private val y: Float, component: Component,
+        private val x: Float, private val y: Float, drawable: Drawable,
         type: Animations? = null, durationMillis: Long = 1000L,
-    ) : DrawableOp(component) {
-        override val animation = type?.create(durationMillis, component.x, component.x + x)
-        private val yAnim = type?.create(durationMillis, component.y, component.y + y)
+    ) : DrawableOp(drawable) {
+        override val animation = type?.create(durationMillis, drawable.x, drawable.x + x)
+        private val yAnim = type?.create(durationMillis, drawable.y, drawable.y + y)
         override fun apply(renderer: Renderer) {
             if (animation != null) {
-                component.at.a.px += animation.value
-                component.at.b.px += yAnim!!.value
+                drawable.at.a.px += animation.value
+                drawable.at.b.px += yAnim!!.value
             } else {
-                component.at.a.px += x
-                component.at.b.px += y
+                drawable.at.a.px += x
+                drawable.at.b.px += y
             }
         }
     }
@@ -58,18 +75,18 @@ abstract class DrawableOp(val component: Component) {
      */
     @ApiStatus.Internal
     class Scale(
-        private val x: Float, private val y: Float, component: Component,
+        private val x: Float, private val y: Float, override val drawable: Component,
         type: Animations? = null, durationMillis: Long = 1000L,
-    ) : DrawableOp(component) {
-        override val animation = type?.create(durationMillis, component.scaleX, component.scaleX + x)
-        private val yAnim = type?.create(durationMillis, component.scaleY, component.scaleY + y)
+    ) : DrawableOp(drawable) {
+        override val animation = type?.create(durationMillis, drawable.scaleX, drawable.scaleX + x)
+        private val yAnim = type?.create(durationMillis, drawable.scaleY, drawable.scaleY + y)
         override fun apply(renderer: Renderer) {
             if (animation != null) {
-                component.scaleX = animation.value
-                component.scaleY = yAnim!!.value
+                drawable.scaleX = animation.value
+                drawable.scaleY = yAnim!!.value
             } else {
-                component.scaleX = x
-                component.scaleY = y
+                drawable.scaleX = x
+                drawable.scaleY = y
             }
         }
     }
@@ -79,36 +96,42 @@ abstract class DrawableOp(val component: Component) {
     @ApiStatus.Internal
     class Rotate(
         private val angle: Double,
-        component: Component,
+        override val drawable: Component,
         type: Animations? = null,
         durationMillis: Long = 1000L
     ) :
-        DrawableOp(component) {
+        DrawableOp(drawable) {
         override val animation =
-            type?.create(durationMillis, component.rotation.toFloat(), (component.rotation + angle).toFloat())
+            type?.create(durationMillis, drawable.rotation.toFloat(), (drawable.rotation + angle).toFloat())
 
         override fun apply(renderer: Renderer) {
             if (animation != null) {
-                component.rotation = animation.value.toDouble()
+                drawable.rotation = animation.value.toDouble()
             } else {
-                component.rotation += angle
+                drawable.rotation += angle
             }
         }
     }
 
     @ApiStatus.Internal
     class Resize(
-        toSize: Vec2<Unit>,
-        component: Component,
+        private val toSize: Vec2<Unit>,
+        drawable: Drawable,
         animation: Animation.Type?,
         durationMillis: Long = 1000L
     ) :
-        DrawableOp(component) {
-        override val animation = animation?.create(durationMillis, component.sized!!.a.px, toSize.a.px)
-        private val animation2 = animation?.create(durationMillis, component.sized!!.b.px, toSize.b.px)
+        DrawableOp(drawable) {
+        override val animation = animation?.create(durationMillis, drawable.sized!!.a.px, toSize.a.px)
+        private val animation2 = animation?.create(durationMillis, drawable.sized!!.b.px, toSize.b.px)
 
         override fun apply(renderer: Renderer) {
-
+            if (animation != null) {
+                drawable.sized!!.a.px = animation.value
+                drawable.sized!!.b.px = animation2!!.value
+            } else {
+                drawable.sized!!.a.px = toSize.a.px
+                drawable.sized!!.b.px = toSize.b.px
+            }
         }
     }
 }

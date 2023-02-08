@@ -9,6 +9,7 @@
 
 package cc.polyfrost.polyui.unit
 
+/** A box with a position and size (it's just 2x [Vec2]s)*/
 data class Box<T : Unit>(val point: Point<T>, val sized: Size<T>) {
     var x by point[0]::px
     var y by point[1]::px

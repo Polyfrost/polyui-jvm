@@ -150,7 +150,7 @@ class GLWindow @JvmOverloads constructor (title: String, width: Int, height: Int
             glfwPollEvents()
             glfwSwapBuffers(handle)
 
-            if (lastSecond + 2000 < System.currentTimeMillis()) {
+            if (lastSecond + 1000 < System.currentTimeMillis()) {
                 lastSecond = System.currentTimeMillis()
                 fps = frames
                 frames = 0

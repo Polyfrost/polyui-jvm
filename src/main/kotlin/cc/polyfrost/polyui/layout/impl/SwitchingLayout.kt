@@ -10,8 +10,9 @@
 package cc.polyfrost.polyui.layout.impl
 
 import cc.polyfrost.polyui.PolyUI
+import cc.polyfrost.polyui.animate.transitions.Transition
+import cc.polyfrost.polyui.animate.transitions.Transitions
 import cc.polyfrost.polyui.component.Drawable
-import cc.polyfrost.polyui.component.DrawableOp
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.unit.Point
 import cc.polyfrost.polyui.unit.Size
@@ -24,28 +25,46 @@ class SwitchingLayout(
     onAdded: (Drawable.() -> kotlin.Unit)? = null,
     onRemoved: (Drawable.() -> kotlin.Unit)? = null,
     private val defaultIndex: Int = 0,
-    private val switchOp: DrawableOp? = null,
+    val typ: Transitions? = null,
+    val duration: Long = 1000L,
     vararg layouts: Layout,
 ) : PixelLayout(at, sized, onAdded, onRemoved, true, *layouts) {
     private val clock = Clock()
     private var currentIndex = defaultIndex
-    private var currentSwitchOp: DrawableOp? = null
+    private var goingSwitchOp: Transition? = null
+    private var comingSwitchOp: Transition? = null
     var current: Layout = children[defaultIndex]
         private set
     private var next: Layout? = null
+
+    init {
+        if (layouts.isEmpty()) throw IllegalStateException("SwitchingLayout cannot be empty!")
+        if (defaultIndex !in 0 until children.size) throw IndexOutOfBoundsException("defaultIndex out of bounds: $defaultIndex")
+    }
+
     override fun addComponent(drawable: Drawable) {
         if (drawable !is Layout) throw Exception("SwitchingLayout can only contain Layouts (got $drawable)")
         super.addComponent(drawable)
     }
 
     override fun reRenderIfNecessary() {
-        if (currentSwitchOp != null) {
-            currentSwitchOp!!.update(clock.getDelta())
-            if (currentSwitchOp!!.finished) {
-                currentSwitchOp = null
+        if (goingSwitchOp != null) needsRedraw = true
+        super.reRenderIfNecessary()
+    }
+
+    override fun preRender() {
+        if (goingSwitchOp != null) {
+            if (goingSwitchOp!!.isFinished) {
+                goingSwitchOp = null
+                comingSwitchOp = null
+                return
             }
+
+            val delta = clock.getDelta()
+            goingSwitchOp!!.update(delta)
+            comingSwitchOp!!.update(delta)
         }
-        current.reRenderIfNecessary()
+        super.preRender()
     }
 
 
@@ -53,12 +72,20 @@ class SwitchingLayout(
         if (targetIndex !in 0 until children.size) throw IndexOutOfBoundsException("targetIndex out of bounds: $targetIndex")
         if (targetIndex == currentIndex) return
         next = children[targetIndex]
-        if (switchOp != null) {
+        if (typ == null) {
+            current = next!!
+            currentIndex = targetIndex
+            needsRedraw = true
+            return
+        } else {
+            goingSwitchOp = typ.create(current, duration)
+            comingSwitchOp = typ.create(next!!, duration)
             // todo finish
         }
         // update clock so it's not 289381903812
         clock.getDelta()
         currentIndex = targetIndex
+        needsRedraw = true
     }
 
     fun switch(layout: Layout) = switch(children.indexOf(layout))

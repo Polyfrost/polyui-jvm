@@ -11,11 +11,20 @@ package cc.polyfrost.polyui.animate
 
 import cc.polyfrost.polyui.animate.animations.*
 
+/**
+ * # Animation
+ *
+ * An animation used by the PolyUI system.
+ *
+ * PolyUI comes with many default [animations][cc.polyfrost.polyui.animate.animations], which you can use. To give the user some choice, you can also use the [Animations.create()][Animation.Type.create] to dynamically create them.
+ *
+ * check out [DrawableOperation][cc.polyfrost.polyui.component.DrawableOp] for more information on how to use animations dynamically; and [transistions][cc.polyfrost.polyui.animate.transitions] for more information on how to use animations with components.
+ */
 abstract class Animation(val durationMillis: Long, val from: Float, val to: Float) : Cloneable {
     val range = to - from
     var passedTime = 0F
         protected set
-    var finished: Boolean = false
+    var isFinished: Boolean = false
         protected set
 
     val value: Float
@@ -24,9 +33,9 @@ abstract class Animation(val durationMillis: Long, val from: Float, val to: Floa
         }
 
     fun update(deltaTimeMillis: Long): Float {
-        if (finished) return to
+        if (isFinished) return to
         passedTime += deltaTimeMillis
-        finished = passedTime + deltaTimeMillis >= durationMillis
+        isFinished = passedTime + deltaTimeMillis >= durationMillis
         return value
     }
 

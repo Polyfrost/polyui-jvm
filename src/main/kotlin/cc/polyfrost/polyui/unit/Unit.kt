@@ -9,11 +9,16 @@
 
 package cc.polyfrost.polyui.unit
 
+import cc.polyfrost.polyui.unit.Unit.*
 import kotlin.math.max
 import kotlin.math.min
 
 /**
  * class to represent a unit of measurement.
+ * @see Percent
+ * @see Pixel
+ * @see Flex
+ * @see VUnits
  */
 abstract class Unit(val type: Type) : Cloneable {
     abstract var px: Float
@@ -48,6 +53,7 @@ abstract class Unit(val type: Type) : Cloneable {
         }
     }
 
+    /** a dynamic unit, that is a percentage of its parents size. */
     class Percent(val amount: Float) : Unit(Type.Percent), Dynamic {
         override var px: Float = 0F
             get() {
@@ -71,6 +77,7 @@ abstract class Unit(val type: Type) : Cloneable {
     }
 
 
+    /** viewport-specific units. */
     class VUnits(val amount: Float, type: Type) : Unit(type), Dynamic {
         override var px: Float = 0f
 
@@ -129,7 +136,7 @@ abstract class Unit(val type: Type) : Cloneable {
     }
 }
 
-typealias Units = Unit.Type
+typealias Units = Type
 
 
 

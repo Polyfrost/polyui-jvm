@@ -152,12 +152,15 @@ abstract class Component @JvmOverloads constructor (
         addOperation(DrawableOp.Translate(byX, byY, this, animation, durationMillis), onFinish)
     }
 
+    /** resize this component to the given size. */
     fun resize(
         toSize: Size<Unit>,
         animation: Animation.Type? = null,
+        durationMillis: Long = 0L,
+        onFinish: (Component.() -> kotlin.Unit)? = null,
     ) {
         doDynamicSize(toSize)
-        addOperation(DrawableOp.Resize(toSize, this, animation), null)
+        addOperation(DrawableOp.Resize(toSize, this, animation, durationMillis), onFinish)
     }
 
     open fun animate(animation: Animation, onFinish: (Component.() -> kotlin.Unit)? = null) {
@@ -199,17 +202,17 @@ abstract class Component @JvmOverloads constructor (
      * **make sure to call super [Component.preRender]!**
      */
     override fun preRender() {
-        animations.fastRemoveIf { it.first.finished.also { b -> if (b) it.second?.invoke(this) } }
-        operations.fastRemoveIf { it.first.finished.also { b -> if (b) it.second?.invoke(this) } }
+        animations.fastRemoveIf { it.first.isFinished.also { b -> if (b) it.second?.invoke(this) } }
+        operations.fastRemoveIf { it.first.isFinished.also { b -> if (b) it.second?.invoke(this) } }
 
         val delta = clock.getDelta()
         animations.fastEach { (it, _) ->
             it.update(delta)
-            if (!it.finished) wantRedraw()
+            if (!it.isFinished) wantRedraw()
         }
         operations.fastEach { (it, _) ->
             it.update(delta)
-            if (!it.finished) wantRedraw()
+            if (!it.isFinished) wantRedraw()
             it.apply(renderer)
         }
         if (scaleX != 1f && scaleY != 1f) renderer.scale(scaleX, scaleY)

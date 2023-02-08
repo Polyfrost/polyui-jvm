@@ -16,6 +16,7 @@ import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.data.Font
 import cc.polyfrost.polyui.renderer.data.Framebuffer
 import cc.polyfrost.polyui.renderer.data.Image
+import cc.polyfrost.polyui.unit.TextAlign
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.unit.Vec2
 import cc.polyfrost.polyui.unit.px
@@ -31,6 +32,7 @@ import org.lwjgl.system.MemoryUtil
 import java.io.InputStreamReader
 import java.nio.ByteBuffer
 import kotlin.math.max
+import kotlin.math.min
 
 
 class NVGRenderer : Renderer() {
@@ -42,6 +44,7 @@ class NVGRenderer : Renderer() {
     private val fbos: MutableMap<Framebuffer, NVGLUFramebuffer> = mutableMapOf()
     private val images: MutableMap<Image, NVGImage> = mutableMapOf()
     private val fonts: MutableMap<Font, NVGFont> = mutableMapOf()
+    private var alphaCap = 1f
     private var vg: Long = -1
 
     init {
@@ -51,7 +54,7 @@ class NVGRenderer : Renderer() {
         }
     }
 
-    fun checkInit() {
+    private fun checkInit() {
         if (vg == -1L) {
             throw ExceptionInInitializerError("NanoVG not initialized!")
         }
@@ -67,7 +70,14 @@ class NVGRenderer : Renderer() {
 
     override fun cancelFrame() = nvgCancelFrame(vg)
 
-    override fun globalAlpha(alpha: Float) = nvgGlobalAlpha(vg, alpha)
+    override fun globalAlpha(alpha: Float) {
+        val a = min(alphaCap, alpha)
+        nvgGlobalAlpha(vg, a)
+    }
+
+    override fun capAlpha(alpha: Float) {
+        this.alphaCap = alpha
+    }
 
     override fun translate(x: Float, y: Float) = nvgTranslate(vg, x, y)
 
@@ -80,11 +90,20 @@ class NVGRenderer : Renderer() {
         drawImage(framebuffer.image(), x, y, width, height, 0)
     }
 
-    override fun drawText(font: Font, x: Float, y: Float, width: Float, text: String, color: Color, fontSize: Float) {
+    override fun drawText(
+        font: Font,
+        x: Float,
+        y: Float,
+        width: Float,
+        text: String,
+        color: Color,
+        fontSize: Float,
+        textAlign: TextAlign
+    ) {
         nvgBeginPath(vg)
         nvgFontSize(vg, fontSize)
         nvgFontFaceId(vg, getFont(font).id)
-        nvgTextAlign(vg, NVG_ALIGN_LEFT or NVG_ALIGN_TOP)
+        nvgTextAlign(vg, textAlign(textAlign))
         color(color)
         nvgFillColor(vg, nvgColor)
         if (width != 0f) {
@@ -171,11 +190,21 @@ class NVGRenderer : Renderer() {
         x: Float, y: Float,
         width: Float, height: Float,
         color: Color,
-        topLeft: Float, topRight: Float,
-        bottomLeft: Float, bottomRight: Float,
+        topLeftRadius: Float, topRightRadius: Float,
+        bottomLeftRadius: Float, bottomRightRadius: Float,
     ) {
         nvgBeginPath(vg)
-        nvgRoundedRectVarying(vg, x, y, width, height, topLeft, topRight, bottomLeft, bottomRight)
+        nvgRoundedRectVarying(
+            vg,
+            x,
+            y,
+            width,
+            height,
+            topLeftRadius,
+            topRightRadius,
+            bottomLeftRadius,
+            bottomRightRadius
+        )
         if (color(color, x, y, width, height)) nvgFillPaint(vg, nvgPaint)
         else nvgFillColor(vg, nvgColor)
         nvgFill(vg)
@@ -191,12 +220,21 @@ class NVGRenderer : Renderer() {
         nvgStroke(vg)
     }
 
-    override fun textBounds(font: Font, text: String, fontSize: Float): Vec2<Unit.Pixel> {
+    override fun textBounds(font: Font, text: String, fontSize: Float, textAlign: TextAlign): Vec2<Unit.Pixel> {
         val out = FloatArray(4)
         nvgFontFaceId(vg, getFont(font).id)
+        nvgTextAlign(vg, textAlign(textAlign))
         nvgFontSize(vg, fontSize)
         nvgTextBounds(vg, 0F, 0F, text, out)
         return Vec2(out[2].px, out[3].px)
+    }
+
+    private fun textAlign(textAlign: TextAlign): Int {
+        return when (textAlign) {
+            TextAlign.Left -> NVG_ALIGN_LEFT or NVG_ALIGN_TOP
+            TextAlign.Center -> NVG_ALIGN_CENTER or NVG_ALIGN_TOP
+            TextAlign.Right -> NVG_ALIGN_RIGHT or NVG_ALIGN_TOP
+        }
     }
 
     private fun color(color: Color) {

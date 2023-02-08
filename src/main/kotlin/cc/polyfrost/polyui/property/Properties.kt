@@ -18,6 +18,18 @@ import cc.polyfrost.polyui.property.impl.TextProperties
 import cc.polyfrost.polyui.unit.Size
 import cc.polyfrost.polyui.unit.Unit
 
+/** # Properties
+ *
+ * Properties are PolyUI's take on styling through tokens, or shared states. They are used as default values for [components][Drawable], if component-specific values are not set. Every component will have an accompanying property.
+ *
+ * They contain many values that style a component, such as [color], [padding], [size], and even [eventHandlers].
+ *
+ * They are used to eliminate repeated code on components, and to make styling easier.
+ *
+ * @see [BlockProperties]
+ * @see [ImageBlockProperties]
+ * @see [TextProperties]
+ */
 abstract class Properties : Cloneable {
     abstract val color: Color
 
@@ -54,13 +66,16 @@ abstract class Properties : Cloneable {
             "cc.polyfrost.polyui.component.impl.Text" to TextProperties()
         )
 
+        @JvmStatic
         inline fun <T : Properties, reified C : Component> get(): T =
             get(C::class.java.name)
 
+        @JvmStatic
         fun <T : Properties> get(component: Component): T =
             get(component::class.java.name)
 
         @Suppress("UNCHECKED_CAST")
+        @JvmStatic
         fun <T : Properties> get(name: String): T = properties[name] as? T
             ?: throw Exception("Properties for component $name not found")
 
@@ -70,6 +85,7 @@ abstract class Properties : Cloneable {
          * This will **OVERWRITE** any existing property for the given component.
          * @param properties the property to add
          */
+        @JvmStatic
         fun addPropertyType(forComponent: Component, properties: Properties) {
             this.properties[forComponent::class.java.simpleName] = properties
         }
@@ -82,6 +98,7 @@ abstract class Properties : Cloneable {
          * @param name the simple class name of the component (e.g. cc.polyfrost.polyui.component.impl.Block)
          * @param properties the property to add
          */
+        @JvmStatic
         fun addPropertyType(name: String, properties: Properties) {
             this.properties[name] = properties
         }

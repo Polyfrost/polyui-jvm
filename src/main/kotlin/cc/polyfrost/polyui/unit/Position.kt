@@ -9,7 +9,10 @@
 
 package cc.polyfrost.polyui.unit
 
-enum class Position {
-    Above, Below, Left, Right, Center,
-    Top, Bottom;
+enum class SlideDirection {
+    FromLeft, FromRight, FromTop, FromBottom
+}
+
+enum class TextAlign {
+    Left, Right, Center
 }

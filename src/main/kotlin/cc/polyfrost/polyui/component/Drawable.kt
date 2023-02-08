@@ -19,8 +19,11 @@ import cc.polyfrost.polyui.unit.Vec2
 import org.jetbrains.annotations.ApiStatus
 
 
-/** The most basic component in the PolyUI system. <br>
- * This class is implemented for both [cc.polyfrost.polyui.layout.Layout] and [Component]. <br>
+/**
+ * # Drawable
+ * The most basic thing in the PolyUI rendering system.
+ *
+ * This class is implemented for both [Layout] and [Drawable], and you should use them as bases if you are creating a UI in most cases.
  */
 @ApiStatus.Internal
 interface Drawable {

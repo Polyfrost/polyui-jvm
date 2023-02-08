@@ -82,14 +82,14 @@ class FlexLayout @JvmOverloads constructor(
         if (this.sized == null) this.sized = origin
         if (wrapDirection != Wrap.NoWrap) {
             if (wrap != null) {
-                PolyUI.LOGGER.warn("wrap is set, but wrap direction is set to NoWrap. Defaulting to Wrap.")
+                PolyUI.LOGGER.warn("[Flex] wrap is set, but wrap direction is set to NoWrap. Defaulting to Wrap.")
                 this.wrapDirection = Wrap.Wrap
                 when (flexDirection) {
                     Direction.Row, Direction.RowReverse -> this.sized = Size(wrap, sized?.b ?: 0.px)
                     Direction.Column, Direction.ColumnReverse -> this.sized = Size(sized?.a ?: 0.px, wrap)
                 }
             } else if (sized != null) {
-                PolyUI.LOGGER.warn("sized is set, but wrap direction is set to NoWrap. Defaulting to Wrap.")
+                PolyUI.LOGGER.warn("[Flex] sized is set, but wrap direction is set to NoWrap. Defaulting to Wrap.")
                 this.wrapDirection = Wrap.Wrap
             } else {
                 this.wrapDirection = wrapDirection
@@ -188,7 +188,7 @@ class FlexLayout @JvmOverloads constructor(
                 minIndex += it.drawables.size
                 if (strictSize) {
                     if (maxCrossSizeNoGaps > crossSize) {
-                        PolyUI.LOGGER.warn("Cross size is too small for the content. (Cross size: $crossSize, content size: $maxCrossSizeNoGaps). Excess removed.")
+                        PolyUI.LOGGER.warn("[Flex] Cross size is too small for the content. (Cross size: $crossSize, content size: $maxCrossSizeNoGaps). Excess removed.")
                         err = true
                         return@run // break https://kotlinlang.org/docs/returns.html#return-to-labels
                     }
@@ -286,7 +286,7 @@ class FlexLayout @JvmOverloads constructor(
         val isSizedMain = if (mainSize != 0F) {
             true
         } else {
-            if (wrapDirection != Wrap.NoWrap) PolyUI.LOGGER.warn("Drawable ${this.drawable} has a main size of 0. This may lead to odd things on wrapped layouts.")
+            if (wrapDirection != Wrap.NoWrap) PolyUI.LOGGER.warn("[Flex] Drawable ${this.drawable} has a main size of 0. This may lead to odd things on wrapped layouts.")
             false
         }
         val isSizedCross = crossSize != 0F

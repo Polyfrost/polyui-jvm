@@ -23,39 +23,26 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 /**
- * note: in early stages. I have not updated this kdoc.
+ * # PolyUI
  *
- * how this is going to work
- * 1. window: an abstract class that is impl for each renderer impl that creates a window.
- * 2. polyui: the screen that is rendered by the window. it handles frame buffers and its layout.
- * 3. renderer: the renderer that is used to draw to the screen. it handles all the drawing methods.
- * 4. layout: a layout that is used to organize the component on the screen. can contain sub layout as well.
- * 5. property: component property, such as colors, its event, etc.
- * 6. component: a component. need I say more?
+ * PolyUI is a declarative UI framework developed for, and by [Polyfrost](https://polyfrost.cc).
  *
- * event:
- * animations will be mostly triggered by event. The only exception is an animation that is constantly happening e.g. a video.
- * these event will be for everything, from mouse enter, key press, etc.
- * event are dispatched to only the component that it is relevant to, like the one the mouse is over or the one that is currently focused.
+ * It is designed to be lightweight, fast, extensible and easy to use, while still being very powerful. Make sure to check out the examples for more information.
  *
- * component:
- * a component is a drawable that can be focused and has event. basically everything.
- * it is UNAWARE of surrounding elements. it just has its raw x, y, width, height, draw scripts, and update scripts.
- * it does not need to know its position or parents as it is handled by a layout which DOES know what its relatives are. this prevents circular loops and stuff.
- * if I need to I may make it keep its layout for ease of use.
+ * PolyUI is split into two parts, being PolyUI and its logic, and it's accompanying [Renderer] implementation. This allows us to have PolyUI in many places, including inside Minecraft!
+ * It is **declarative**, meaning that you don't have to worry about the logic of the UI, just the layout and the components.
+ * ###
  *
- * on creation of a window, a screen is created and the matching renderer is created.
- * the window will then calculate all of its layout sizes, then each layout will calculate its component sizes and sub layout... -> this can be recalculated e.g. on window resize.
- * everything will be effectively scaled to the window size. This is a fundamental part of how it works, as basically saying 'draw this at this px' is not supported. It will all work on relevancy to the window size.
- * everything is rendered to a framebuffer. this framebuffer will only be redrawn if a component needs to be redrawn, like if there is an animation to do or something.
- * if it isn't redrawn its just handed right back to the renderer to draw statically = mad speed.
+ * ## How it Works
+ * [Components][cc.polyfrost.polyui.component.Drawable] are the interactive parts of the UI, such as buttons, text fields, etc.
  *
+ * [Layouts][cc.polyfrost.polyui.layout.Layout] are the containers for components, such as a grid layout, or a flex layout, etc. They are responsible for positioning and sizing the components.
  *
- * updated: performance information:
- * I have optimized this to use very little memory allocations. The only allocations that occur are the iterators for the layout and stuff, and by using Arrays on most things (except component stuff) it rarely allocates; so memory usage is very constant.
- * It uses about 60MB of ram during usage, with 70% of that being OpenGL and the JVM itself, so about 10MB of RAM is used. (not bad?)
- * And it gets around 9000 fps with 8% CPU usage (lol)
- * CPU wise, the most expensive part of the code is OpenGL, with roughly 0.46% of the time being spent in the code itself. The rest is openGL, most expensive being blitFramebuffer and swapBuffers (15% and 68% respectively)
+ * [Properties][cc.polyfrost.polyui.property.Properties] are the shared states or tokens for the components. They describe default values, and can be overridden by the components.
+ *
+ * **Interactions** are driven by [events][EventManager], which thanks to Kotlin's inlining are a zero-overhead way of distrbuting events, such as [mouse clicks][cc.polyfrost.polyui.event.ComponentEvent.MouseClicked], or [key presses][cc.polyfrost.polyui.event.FocusedEvent.KeyPressed].
+ *
+ * PolyUI also supports a variety of [animations][cc.polyfrost.polyui.animate.Animation] and [transitions][cc.polyfrost.polyui.animate.transitions.Transition], which can be used to make your UI more dynamic, along with dynamically [adding][addComponent] and [removing][removeComponent] components.
  */
 class PolyUI(
     width: Int, height: Int,
@@ -91,7 +78,11 @@ class PolyUI(
     }
 
     fun onResize(newWidth: Int, newHeight: Int, pixelRatio: Float) {
-        println("resize: $newWidth x $newHeight")
+        if (newWidth == width && newHeight == height && pixelRatio == this.renderer.pixelRatio) {
+            LOGGER.warn("PolyUI was resized to the same size. Ignoring.")
+            return
+        }
+        if (settings.debug) LOGGER.info("resize: $newWidth x $newHeight")
 
         master.sized!!.a.px = newWidth.toFloat()
         master.sized!!.b.px = newHeight.toFloat()

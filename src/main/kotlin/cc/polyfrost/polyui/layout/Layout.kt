@@ -22,6 +22,17 @@ import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.utils.fastEach
 import org.jetbrains.annotations.ApiStatus
 
+/** # Layout
+ * Layout is PolyUI's take on containers. They can contain [components] and other [layouts][children], as children.
+ *
+ * They can dynamically [add][addComponent] and [remove][removeComponent] their children and components.
+ *
+ * They are responsible for all their children's sizes, positions and rendering.
+ *
+ * @see cc.polyfrost.polyui.layout.impl.FlexLayout
+ * @see cc.polyfrost.polyui.layout.impl.PixelLayout
+ * @see cc.polyfrost.polyui.layout.impl.SwitchingLayout
+ */
 abstract class Layout(
     override val at: Point<Unit>,
     override var sized: Size<Unit>? = null,
@@ -71,10 +82,16 @@ abstract class Layout(
         }
     }
 
+    /** perform the given [function] on all this layout's components, and [optionally][onChildLayouts] on all child layouts. */
+    open fun onAll(onChildLayouts: Boolean = false, function: Drawable.() -> kotlin.Unit) {
+        components.fastEach { it.function() }
+        if (onChildLayouts) children.fastEach { it.onAll(true, function) }
+    }
+
     /**
      * adds the given components/layouts to this layout.
      *
-     * this will add the drawables to the [components] or [children] list, and invoke its [onAdded] function.
+     * this will add the drawables to the [Layout.components] or [children] list, and invoke its [onAdded] function.
      */
     fun addComponents(components: Collection<Drawable>) {
         components.forEach { addComponent(it) }
@@ -83,7 +100,7 @@ abstract class Layout(
     /**
      * adds the given components/layouts to this layout.
      *
-     * this will add the drawables to the [components] or [children] list, and invoke its [onAdded] function.
+     * this will add the drawables to the [Layout.components] or [children] list, and invoke its [onAdded] function.
      */
     fun addComponents(vararg components: Drawable) {
         components.forEach { addComponent(it) }
@@ -92,7 +109,7 @@ abstract class Layout(
     /**
      * adds the given component/layout to this layout.
      *
-     * this will add the drawable to the [components] or [children] list, and invoke its [onAdded] function.
+     * this will add the drawable to the [Layout.components] or [children] list, and invoke its [onAdded] function.
      */
     open fun addComponent(drawable: Drawable) {
         when (drawable) {

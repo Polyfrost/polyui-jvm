@@ -10,8 +10,10 @@
 package cc.polyfrost.polyui.event
 
 import cc.polyfrost.polyui.component.Component
+import cc.polyfrost.polyui.event.ComponentEvent.*
 import java.util.function.Consumer
 
+/** Events that components can receive, for example [MouseClicked], [Added], [Removed], and more. */
 sealed class ComponentEvent : Event {
     // imagine this is a rust enum okay
     data class MousePressed(val button: Int) : ComponentEvent()
