@@ -1,8 +1,8 @@
 /*
- * This file is part of PolyUI.
- * Copyright (C) 2022-2023 Polyfrost and its contributors.
- * All rights reserved.
- * PolyUI - Fast and lightweight UI framework https://polyfrost.cc https://github.com/Polyfrost/polui-jvm
+ * This file is part of PolyUI
+ * PolyUI - Fast and lightweight UI framework
+ * Copyright (C) 2023 Polyfrost and its contributors. All rights reserved.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  */
@@ -49,7 +49,6 @@ open class Text @JvmOverloads constructor(
         at: Vec2<Unit>,
         vararg events: Events.Handler
     ) : this(text = text, fontSize = fontSize, at = at, size = null, events = events)
-
 
     override fun render() {
         renderer.drawText(props.font, x, y, if (autoSized) 0f else width, text, props.color, fontSize.get(), textAlign)

@@ -1,8 +1,8 @@
 /*
- * This file is part of PolyUI.
- * Copyright (C) 2022-2023 Polyfrost and its contributors.
- * All rights reserved.
- * PolyUI - Fast and lightweight UI framework https://polyfrost.cc https://github.com/Polyfrost/polui-jvm
+ * This file is part of PolyUI
+ * PolyUI - Fast and lightweight UI framework
+ * Copyright (C) 2023 Polyfrost and its contributors. All rights reserved.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  */
@@ -18,7 +18,6 @@ import cc.polyfrost.polyui.unit.Size
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.unit.Vec2
 import org.jetbrains.annotations.ApiStatus
-
 
 /**
  * # Drawable
@@ -85,7 +84,6 @@ abstract class Drawable(var acceptsInput: Boolean = true) {
      * This is used for component that need to wait for an animation to finish before being removed.
      */
     abstract fun canBeRemoved(): Boolean
-
 
     /** implement this method to add a debug render overlay for this drawable. */
     open fun debugRender() {

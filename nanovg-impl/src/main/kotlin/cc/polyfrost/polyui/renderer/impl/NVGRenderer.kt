@@ -1,8 +1,8 @@
 /*
- * This file is part of PolyUI.
- * Copyright (C) 2022-2023 Polyfrost and its contributors.
- * All rights reserved.
- * PolyUI - Fast and lightweight UI framework https://polyfrost.cc https://github.com/Polyfrost/polui-jvm
+ * This file is part of PolyUI
+ * PolyUI - Fast and lightweight UI framework
+ * Copyright (C) 2023 Polyfrost and its contributors. All rights reserved.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  */
@@ -33,7 +33,6 @@ import java.io.InputStreamReader
 import java.nio.ByteBuffer
 import kotlin.math.max
 import kotlin.math.min
-
 
 class NVGRenderer : Renderer() {
     override val defaultFont: Font = Font("/Inter-Regular.ttf")
@@ -66,7 +65,6 @@ class NVGRenderer : Renderer() {
     }
 
     override fun endFrame() = nvgEndFrame(vg)
-
 
     override fun cancelFrame() = nvgCancelFrame(vg)
 
@@ -121,10 +119,15 @@ class NVGRenderer : Renderer() {
     override fun drawRoundImage(image: Image, x: Float, y: Float, radius: Float, colorMask: Int) {
         val img = getImage(image)
         nvgImagePattern(vg, x, y, img.width, img.height, 0F, img.id, 1F, nvgPaint)
-        if (colorMask != 0) nvgRGBA(
-            (colorMask shr 16 and 0xFF).toByte(), (colorMask shr 8 and 0xFF).toByte(),
-            (colorMask and 0xFF).toByte(), (colorMask shr 24 and 0xFF).toByte(), nvgPaint.innerColor()
-        )
+        if (colorMask != 0) {
+            nvgRGBA(
+                (colorMask shr 16 and 0xFF).toByte(),
+                (colorMask shr 8 and 0xFF).toByte(),
+                (colorMask and 0xFF).toByte(),
+                (colorMask shr 24 and 0xFF).toByte(),
+                nvgPaint.innerColor()
+            )
+        }
         nvgBeginPath(vg)
         nvgRoundedRect(vg, x, y, img.width, img.height, radius)
         nvgFillPaint(vg, nvgPaint)
@@ -133,10 +136,15 @@ class NVGRenderer : Renderer() {
 
     fun drawImage(img: Int, x: Float, y: Float, width: Float, height: Float, colorMask: Int = 0) {
         nvgImagePattern(vg, x, y, width, height, 0F, img, 1F, nvgPaint)
-        if (colorMask != 0) nvgRGBA(
-            (colorMask shr 16 and 0xFF).toByte(), (colorMask shr 8 and 0xFF).toByte(),
-            (colorMask and 0xFF).toByte(), (colorMask shr 24 and 0xFF).toByte(), nvgPaint.innerColor()
-        )
+        if (colorMask != 0) {
+            nvgRGBA(
+                (colorMask shr 16 and 0xFF).toByte(),
+                (colorMask shr 8 and 0xFF).toByte(),
+                (colorMask and 0xFF).toByte(),
+                (colorMask shr 24 and 0xFF).toByte(),
+                nvgPaint.innerColor()
+            )
+        }
         nvgBeginPath(vg)
         nvgRect(vg, x, y, width, height)
         nvgFillPaint(vg, nvgPaint)
@@ -157,7 +165,8 @@ class NVGRenderer : Renderer() {
     override fun deleteFramebuffer(fbo: Framebuffer) {
         fbos.remove(fbo).also {
             NanoVGGL3.nvgluDeleteFramebuffer(
-                vg, it ?: throw IllegalStateException("Framebuffer not found when deleting it, already cleaned?")
+                vg,
+                it ?: throw IllegalStateException("Framebuffer not found when deleting it, already cleaned?")
             )
         }
     }
@@ -177,8 +186,11 @@ class NVGRenderer : Renderer() {
     override fun drawRect(x: Float, y: Float, width: Float, height: Float, color: Color) {
         nvgBeginPath(vg)
         nvgRect(vg, x, y, width, height)
-        if (color(color, x, y, width, height)) nvgFillPaint(vg, nvgPaint)
-        else nvgFillColor(vg, nvgColor)
+        if (color(color, x, y, width, height)) {
+            nvgFillPaint(vg, nvgPaint)
+        } else {
+            nvgFillColor(vg, nvgColor)
+        }
         nvgFill(vg)
     }
 
@@ -187,11 +199,15 @@ class NVGRenderer : Renderer() {
     }
 
     override fun drawRoundRectVaried(
-        x: Float, y: Float,
-        width: Float, height: Float,
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
         color: Color,
-        topLeftRadius: Float, topRightRadius: Float,
-        bottomLeftRadius: Float, bottomRightRadius: Float,
+        topLeftRadius: Float,
+        topRightRadius: Float,
+        bottomLeftRadius: Float,
+        bottomRightRadius: Float
     ) {
         nvgBeginPath(vg)
         nvgRoundedRectVarying(
@@ -205,8 +221,11 @@ class NVGRenderer : Renderer() {
             bottomLeftRadius,
             bottomRightRadius
         )
-        if (color(color, x, y, width, height)) nvgFillPaint(vg, nvgPaint)
-        else nvgFillColor(vg, nvgColor)
+        if (color(color, x, y, width, height)) {
+            nvgFillPaint(vg, nvgPaint)
+        } else {
+            nvgFillColor(vg, nvgColor)
+        }
         nvgFill(vg)
     }
 
@@ -215,8 +234,11 @@ class NVGRenderer : Renderer() {
         nvgMoveTo(vg, x1, y1)
         nvgLineTo(vg, x2, y2)
         nvgStrokeWidth(vg, width)
-        if (color(color, x1, y1, x2, y2)) nvgStrokePaint(vg, nvgPaint)
-        else nvgStrokeColor(vg, nvgColor)
+        if (color(color, x1, y1, x2, y2)) {
+            nvgStrokePaint(vg, nvgPaint)
+        } else {
+            nvgStrokeColor(vg, nvgColor)
+        }
         nvgStroke(vg)
     }
 
@@ -241,8 +263,10 @@ class NVGRenderer : Renderer() {
         if (color is Color.Gradient) {
             nvgRGBA(color.r.toByte(), color.g.toByte(), color.b.toByte(), color.a.toByte(), nvgColor)
             nvgRGBA(
-                color.color2.r.toByte(), color.color2.g.toByte(),
-                color.color2.b.toByte(), color.color2.a.toByte(),
+                color.color2.r.toByte(),
+                color.color2.g.toByte(),
+                color.color2.b.toByte(),
+                color.color2.a.toByte(),
                 nvgColor2
             )
         } else {
@@ -255,37 +279,64 @@ class NVGRenderer : Renderer() {
         x: Float,
         y: Float,
         width: Float,
-        height: Float,
+        height: Float
     ): Boolean {
         color(color)
         if (color !is Color.Gradient) return false
         when (color.type) {
             is Color.Gradient.Type.TopToBottom -> nvgLinearGradient(
-                vg, x, y, x, y + height,
-                nvgColor, nvgColor2, nvgPaint
+                vg,
+                x,
+                y,
+                x,
+                y + height,
+                nvgColor,
+                nvgColor2,
+                nvgPaint
             )
 
             is Color.Gradient.Type.TopLeftToBottomRight -> nvgLinearGradient(
-                vg, x, y, x + width, y + height,
-                nvgColor, nvgColor2, nvgPaint
+                vg,
+                x,
+                y,
+                x + width,
+                y + height,
+                nvgColor,
+                nvgColor2,
+                nvgPaint
             )
 
             is Color.Gradient.Type.LeftToRight -> nvgLinearGradient(
-                vg, x, y, x + width, y,
-                nvgColor, nvgColor2, nvgPaint
+                vg,
+                x,
+                y,
+                x + width,
+                y,
+                nvgColor,
+                nvgColor2,
+                nvgPaint
             )
 
             is Color.Gradient.Type.BottomLeftToTopRight -> nvgLinearGradient(
-                vg, x, y + height, x + width, y,
-                nvgColor, nvgColor2, nvgPaint
+                vg,
+                x,
+                y + height,
+                x + width,
+                y,
+                nvgColor,
+                nvgColor2,
+                nvgPaint
             )
 
             is Color.Gradient.Type.Radial ->
                 nvgRadialGradient(
-                    vg, x + (width / 2f), y + (height / 2f),
+                    vg,
+                    x + (width / 2f),
+                    y + (height / 2f),
                     (color.type as Color.Gradient.Type.Radial).innerRadius,
                     (color.type as Color.Gradient.Type.Radial).outerRadius,
-                    nvgColor, nvgColor2,
+                    nvgColor,
+                    nvgColor2,
                     nvgPaint
                 )
         }
@@ -296,11 +347,14 @@ class NVGRenderer : Renderer() {
         return fonts[font] ?: run {
             val data =
                 getResourceStreamNullable(font.fileName)?.toByteBuffer()
-                    ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) getResourceStream(
-                        defaultFont.fileName
-                    ).also { PolyUI.LOGGER.warn("Failed to get font: ${font.fileName}, falling back to default font!") }
-                        .toByteBuffer()
-                    else throw ExceptionInInitializerError("Failed to get font: ${font.fileName}")
+                    ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) {
+                        getResourceStream(
+                            defaultFont.fileName
+                        ).also { PolyUI.LOGGER.warn("Failed to get font: ${font.fileName}, falling back to default font!") }
+                            .toByteBuffer()
+                    } else {
+                        throw ExceptionInInitializerError("Failed to get font: ${font.fileName}")
+                    }
             val ft = nvgCreateFontMem(vg, font.name, data, 0)
             NVGFont(ft, data).also { fonts[font] = it }
         }
@@ -310,9 +364,12 @@ class NVGRenderer : Renderer() {
         return images[image] ?: run {
             if (image.width != null && image.height == null) throw ExceptionInInitializerError("$image width is set but height is not!")
             val stream = getResourceStreamNullable(image.fileName)
-                ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) getResourceStream(defaultImage.fileName)
-                    .also { PolyUI.LOGGER.warn("Failed to get image: ${image.fileName}, falling back to default image!") }
-                else throw ExceptionInInitializerError("Failed to get image: ${image.fileName}")
+                ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) {
+                    getResourceStream(defaultImage.fileName)
+                        .also { PolyUI.LOGGER.warn("Failed to get image: ${image.fileName}, falling back to default image!") }
+                } else {
+                    throw ExceptionInInitializerError("Failed to get image: ${image.fileName}")
+                }
             val data: ByteBuffer
             when (image.type) {
                 Image.Type.PNG -> {
@@ -320,7 +377,10 @@ class NVGRenderer : Renderer() {
                     val h = IntArray(1)
                     data = STBImage.stbi_load_from_memory(
                         stream.toByteBuffer(),
-                        w, h, IntArray(1), 4
+                        w,
+                        h,
+                        IntArray(1),
+                        4
                     ).also {
                         if (it == null) {
                             throw Exception("Failed to initialize image: $image")
@@ -384,13 +444,15 @@ class NVGRenderer : Renderer() {
         nvgBeginPath(vg)
         nvgRect(vg, x, y, width, height)
         nvgStrokeWidth(vg, lineWidth.toFloat())
-        if (color(color, x, y, width, height)) nvgStrokePaint(vg, nvgPaint)
-        else nvgStrokeColor(vg, nvgColor)
+        if (color(color, x, y, width, height)) {
+            nvgStrokePaint(vg, nvgPaint)
+        } else {
+            nvgStrokeColor(vg, nvgColor)
+        }
         nvgStroke(vg)
     }
 
     // used to ensure that the data is not discarded by the GC
     data class NVGImage(val id: Int, val width: Float, val height: Float, val data: ByteBuffer)
     data class NVGFont(val id: Int, val data: ByteBuffer)
-
 }

@@ -1,13 +1,7 @@
 dependencies {
     // Depend on LWJGL3 and its NanoVG bindings, as well as OpenGL
-    implementation("org.lwjgl:lwjgl:3.3.1")
-    implementation("org.lwjgl:lwjgl-nanovg:3.3.1")
-    implementation("org.lwjgl:lwjgl-opengl:3.3.1")
-    implementation("org.lwjgl:lwjgl-stb:3.3.1")
-    implementation("org.slf4j", "slf4j-api", "1.6.1")
-
-    // Use glfw for test window runner
-    implementation("org.lwjgl:lwjgl-glfw:3.3.1")
+    implementation(libs.bundles.lwjgl)
+    implementation(libs.slf4j.api)
 
     // Add LWJGL modules' native bindings to the test runtime
     val nativePlatforms = listOf("windows", "linux", "macos", "macos-arm64")

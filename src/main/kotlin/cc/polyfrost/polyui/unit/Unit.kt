@@ -1,8 +1,8 @@
 /*
- * This file is part of PolyUI.
- * Copyright (C) 2022-2023 Polyfrost and its contributors.
- * All rights reserved.
- * PolyUI - Fast and lightweight UI framework https://polyfrost.cc https://github.com/Polyfrost/polui-jvm
+ * This file is part of PolyUI
+ * PolyUI - Fast and lightweight UI framework
+ * Copyright (C) 2023 Polyfrost and its contributors. All rights reserved.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  */
@@ -76,7 +76,6 @@ abstract class Unit(val type: Type) : Cloneable {
         }
     }
 
-
     /** viewport-specific units. */
     class VUnits(val amount: Float, type: Type) : Unit(type), Dynamic {
         override var px: Float = 0f
@@ -111,7 +110,6 @@ abstract class Unit(val type: Type) : Cloneable {
         }
     }
 
-
     /** represents the index of a flex component */
     class Flex(val index: Int = -1, val flexShrink: Int = 0, val flexGrow: Int = 0, val endRowAfter: Boolean = false) :
         Unit(Units.Flex) {
@@ -121,7 +119,6 @@ abstract class Unit(val type: Type) : Cloneable {
             return Flex(index, flexShrink, flexGrow, endRowAfter)
         }
     }
-
 
     /** specify a unit as an always present value that does not change. */
     interface Concrete {
@@ -137,7 +134,3 @@ abstract class Unit(val type: Type) : Cloneable {
 }
 
 typealias Units = Type
-
-
-
-

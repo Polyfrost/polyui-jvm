@@ -1,8 +1,8 @@
 /*
- * This file is part of PolyUI.
- * Copyright (C) 2022-2023 Polyfrost and its contributors.
- * All rights reserved.
- * PolyUI - Fast and lightweight UI framework https://polyfrost.cc https://github.com/Polyfrost/polui-jvm
+ * This file is part of PolyUI
+ * PolyUI - Fast and lightweight UI framework
+ * Copyright (C) 2023 Polyfrost and its contributors. All rights reserved.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  */
@@ -16,7 +16,7 @@ package cc.polyfrost.polyui.unit
  */
 data class Vec2<T : Unit>(
     val a: T,
-    val b: T,
+    val b: T
 ) : Cloneable {
     val x get() = a.px
     val y get() = b.px
@@ -70,4 +70,3 @@ data class Vec2<T : Unit>(
 
 typealias Point<T> = Vec2<T>
 typealias Size<T> = Vec2<T>
-

@@ -1,8 +1,8 @@
 /*
- * This file is part of PolyUI.
- * Copyright (C) 2022-2023 Polyfrost and its contributors.
- * All rights reserved.
- * PolyUI - Fast and lightweight UI framework https://polyfrost.cc https://github.com/Polyfrost/polui-jvm
+ * This file is part of PolyUI
+ * PolyUI - Fast and lightweight UI framework
+ * Copyright (C) 2023 Polyfrost and its contributors. All rights reserved.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  */
@@ -74,7 +74,6 @@ inline fun <L, reified E, R : Comparable<R>> L.sortedByDescending(crossinline se
     return this.toTypedArray().sortedByDescending(selector).toMutableList() as L
 }
 
-
 /**
  * Returns the sum of all values produced by [selector] function applied to
  * each element in the collection, for floats.
@@ -127,12 +126,17 @@ fun <E> Array<E>.append(element: E, stillPutOnFail: Boolean = false): Array<E> {
     }
     if (stillPutOnFail) {
         return this.plus(element)
-    } else throw IndexOutOfBoundsException("Array is already full!")
+    } else {
+        throw IndexOutOfBoundsException("Array is already full!")
+    }
 }
 
 fun <T> Iterable<T>.toArrayList(): ArrayList<T> {
-    return if (this is ArrayList) this
-    else this.toMutableList() as ArrayList<T>
+    return if (this is ArrayList) {
+        this
+    } else {
+        this.toMutableList() as ArrayList<T>
+    }
 }
 
 fun <T> Array<T>.toArrayList(): ArrayList<T> = this.toMutableList() as ArrayList<T>

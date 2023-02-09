@@ -1,8 +1,8 @@
 /*
- * This file is part of PolyUI.
- * Copyright (C) 2022-2023 Polyfrost and its contributors.
- * All rights reserved.
- * PolyUI - Fast and lightweight UI framework https://polyfrost.cc https://github.com/Polyfrost/polui-jvm
+ * This file is part of PolyUI
+ * PolyUI - Fast and lightweight UI framework
+ * Copyright (C) 2023 Polyfrost and its contributors. All rights reserved.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  */
@@ -51,11 +51,9 @@ abstract class Renderer : AutoCloseable {
     internal inline fun alsoRender(block: Renderer.() -> kotlin.Unit) =
         block()
 
-
     abstract fun beginFrame(width: Int, height: Int)
     abstract fun endFrame()
     abstract fun cancelFrame()
-
 
     /** Set the alpha for all future draw calls, in the range (0-1), until [reset][resetGlobalAlpha].
      *
@@ -76,7 +74,6 @@ abstract class Renderer : AutoCloseable {
     abstract fun scale(x: Float, y: Float)
     abstract fun rotate(angleRadians: Double)
 
-
     /**
      * draw text to the screen, per the given parameters.
      * @param width the wrap width for this text. If 0, you can just draw the string (it won't wrap). If it is not 0, wrap the string to the given width, strictly.
@@ -84,17 +81,19 @@ abstract class Renderer : AutoCloseable {
      */
     abstract fun drawText(
         font: Font,
-        x: Float, y: Float,
+        x: Float,
+        y: Float,
         width: Float = 0f,
-        text: String, color: Color,
-        fontSize: Float, textAlign: TextAlign = TextAlign.Left
+        text: String,
+        color: Color,
+        fontSize: Float,
+        textAlign: TextAlign = TextAlign.Left
     )
 
     /** calculate the bounds of this text, per the given parameters.
      * @return a Vec2 containing the width and height of the given string.
      */
     abstract fun textBounds(font: Font, text: String, fontSize: Float, textAlign: TextAlign): Vec2<Unit.Pixel>
-
 
     /** Function that can be called to explicitly initialize an image. This is used mainly for getting the size of an image, or to ensure an SVG has been rasterized. */
     abstract fun initImage(image: Image)
@@ -103,15 +102,18 @@ abstract class Renderer : AutoCloseable {
 
     abstract fun drawRoundImage(image: Image, x: Float, y: Float, radius: Float, colorMask: Int = 0)
 
-
     abstract fun drawRect(x: Float, y: Float, width: Float, height: Float, color: Color)
 
     abstract fun drawRoundRectVaried(
-        x: Float, y: Float,
-        width: Float, height: Float,
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
         color: Color,
-        topLeftRadius: Float, topRightRadius: Float,
-        bottomLeftRadius: Float, bottomRightRadius: Float,
+        topLeftRadius: Float,
+        topRightRadius: Float,
+        bottomLeftRadius: Float,
+        bottomRightRadius: Float
     )
 
     fun drawRoundRect(x: Float, y: Float, width: Float, height: Float, color: Color, radius: Float) =
@@ -120,7 +122,6 @@ abstract class Renderer : AutoCloseable {
     abstract fun drawHollowRect(x: Float, y: Float, width: Float, height: Float, color: Color, lineWidth: Int)
 
     abstract fun drawLine(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float)
-
 
     /** Create a new framebuffer. It is down to you (as a rendering implementation) to cache this, and dispose of it as necessary. */
     abstract fun createFramebuffer(width: Int, height: Int, type: Settings.BufferType): Framebuffer
@@ -134,13 +135,13 @@ abstract class Renderer : AutoCloseable {
     /** draw the given framebuffer to the screen. */
     abstract fun drawFramebuffer(
         fbo: Framebuffer,
-        x: Float, y: Float,
+        x: Float,
+        y: Float,
         width: Float = fbo.width,
-        height: Float = fbo.height,
+        height: Float = fbo.height
     )
 
     abstract fun supportsRenderbuffer(): Boolean
-
 
     /**
      * Cleanup the PolyUI instance.

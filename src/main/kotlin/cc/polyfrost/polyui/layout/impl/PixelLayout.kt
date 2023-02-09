@@ -1,8 +1,8 @@
 /*
- * This file is part of PolyUI.
- * Copyright (C) 2022-2023 Polyfrost and its contributors.
- * All rights reserved.
- * PolyUI - Fast and lightweight UI framework https://polyfrost.cc https://github.com/Polyfrost/polui-jvm
+ * This file is part of PolyUI
+ * PolyUI - Fast and lightweight UI framework
+ * Copyright (C) 2023 Polyfrost and its contributors. All rights reserved.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  */
@@ -22,11 +22,12 @@ import kotlin.math.max
  * Just a container basically, that can infer it's size.
  * */
 open class PixelLayout(
-    at: Point<Unit>, sized: Size<Unit>? = null,
+    at: Point<Unit>,
+    sized: Size<Unit>? = null,
     onAdded: (Drawable.() -> kotlin.Unit)? = null,
     onRemoved: (Drawable.() -> kotlin.Unit)? = null,
     acceptInput: Boolean = true,
-    vararg items: Drawable,
+    vararg items: Drawable
 ) : Layout(at, sized, onAdded, onRemoved, acceptInput, *items) {
     init {
         items.forEach {

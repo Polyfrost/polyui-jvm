@@ -1,8 +1,8 @@
 /*
- * This file is part of PolyUI.
- * Copyright (C) 2022-2023 Polyfrost and its contributors.
- * All rights reserved.
- * PolyUI - Fast and lightweight UI framework https://polyfrost.cc https://github.com/Polyfrost/polui-jvm
+ * This file is part of PolyUI
+ * PolyUI - Fast and lightweight UI framework
+ * Copyright (C) 2023 Polyfrost and its contributors. All rights reserved.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  */
@@ -55,8 +55,11 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
      */
     @ApiStatus.Internal
     class Translate(
-        private val x: Float, private val y: Float, drawable: Drawable,
-        type: Animations? = null, durationMillis: Long = 1000L,
+        private val x: Float,
+        private val y: Float,
+        drawable: Drawable,
+        type: Animations? = null,
+        durationMillis: Long = 1000L
     ) : DrawableOp(drawable) {
         override val animation = type?.create(durationMillis, drawable.x, drawable.x + x)
         private val yAnim = type?.create(durationMillis, drawable.y, drawable.y + y)
@@ -75,8 +78,11 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
      */
     @ApiStatus.Internal
     class Scale(
-        private val x: Float, private val y: Float, override val drawable: Component,
-        type: Animations? = null, durationMillis: Long = 1000L,
+        private val x: Float,
+        private val y: Float,
+        override val drawable: Component,
+        type: Animations? = null,
+        durationMillis: Long = 1000L
     ) : DrawableOp(drawable) {
         override val animation = type?.create(durationMillis, drawable.scaleX, drawable.scaleX + x)
         private val yAnim = type?.create(durationMillis, drawable.scaleY, drawable.scaleY + y)
@@ -135,4 +141,3 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         }
     }
 }
-

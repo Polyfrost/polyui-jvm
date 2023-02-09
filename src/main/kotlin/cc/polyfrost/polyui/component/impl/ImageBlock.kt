@@ -23,7 +23,7 @@ open class ImageBlock @JvmOverloads constructor(
     properties: ImageBlockProperties = Properties.get<_, ImageBlock>(),
     acceptInput: Boolean = true,
     at: Vec2<Unit>,
-    vararg events: Events.Handler,
+    vararg events: Events.Handler
 ) : Component(properties, at, null, acceptInput, *events) {
 
     override fun render() {

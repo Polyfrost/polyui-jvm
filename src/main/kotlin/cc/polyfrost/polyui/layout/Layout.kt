@@ -1,8 +1,8 @@
 /*
- * This file is part of PolyUI.
- * Copyright (C) 2022-2023 Polyfrost and its contributors.
- * All rights reserved.
- * PolyUI - Fast and lightweight UI framework https://polyfrost.cc https://github.com/Polyfrost/polui-jvm
+ * This file is part of PolyUI
+ * PolyUI - Fast and lightweight UI framework
+ * Copyright (C) 2023 Polyfrost and its contributors. All rights reserved.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  */
@@ -77,7 +77,9 @@ abstract class Layout(
                 if (renderer.settings.debug) debugRender()
 //                renderer.unbindFramebuffer(fbo!!)
 //                needsRedraw = false
-            } else renderer.drawFramebuffer(fbo!!, x, y, width, height)
+            } else {
+                renderer.drawFramebuffer(fbo!!, x, y, width, height)
+            }
         } else {
             preRender()
             render()
@@ -193,9 +195,10 @@ abstract class Layout(
             it.layout = this
             it.calculateBounds()
         }
-        if (this.sized == null)
+        if (this.sized == null) {
             this.sized = getSize()
                 ?: throw UnsupportedOperationException("getSize() not implemented for ${this::class.simpleName}!")
+        }
         needsRecalculation = false
     }
 

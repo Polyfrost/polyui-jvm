@@ -1,8 +1,8 @@
 /*
- * This file is part of PolyUI.
- * Copyright (C) 2022-2023 Polyfrost and its contributors.
- * All rights reserved.
- * PolyUI - Fast and lightweight UI framework https://polyfrost.cc https://github.com/Polyfrost/polui-jvm
+ * This file is part of PolyUI
+ * PolyUI - Fast and lightweight UI framework
+ * Copyright (C) 2023 Polyfrost and its contributors. All rights reserved.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  */
@@ -35,7 +35,7 @@ abstract class Component @JvmOverloads constructor(
     override val at: Point<Unit>,
     override var sized: Size<Unit>? = null,
     acceptInput: Boolean = true,
-    vararg events: Events.Handler,
+    vararg events: Events.Handler
 ) : Drawable(acceptInput) {
     private val animations: ArrayList<Pair<Animation, (Component.() -> kotlin.Unit)?>> = ArrayList()
     private val operations: ArrayList<Pair<DrawableOp, (Component.() -> kotlin.Unit)?>> = ArrayList()
@@ -62,7 +62,6 @@ abstract class Component @JvmOverloads constructor(
         return false
     }
 
-
     /** Add a [DrawableOp] to this component. */
     open fun addOperation(drawableOp: DrawableOp, onFinish: (Component.() -> kotlin.Unit)? = null) {
         operations.add(drawableOp to onFinish)
@@ -78,7 +77,7 @@ abstract class Component @JvmOverloads constructor(
         byY: Float,
         animation: Animation.Type? = null,
         durationMillis: Long = 0L,
-        onFinish: (Component.() -> kotlin.Unit)? = null,
+        onFinish: (Component.() -> kotlin.Unit)? = null
     ) {
         addOperation(DrawableOp.Scale(byX, byY, this, animation, durationMillis), onFinish)
     }
@@ -92,7 +91,7 @@ abstract class Component @JvmOverloads constructor(
         degrees: Double,
         animation: Animation.Type? = null,
         durationMillis: Long = 0L,
-        onFinish: (Component.() -> kotlin.Unit)? = null,
+        onFinish: (Component.() -> kotlin.Unit)? = null
     ) {
         addOperation(DrawableOp.Rotate(Math.toRadians(degrees), this, animation, durationMillis), onFinish)
     }
@@ -108,7 +107,7 @@ abstract class Component @JvmOverloads constructor(
         byY: Float,
         animation: Animation.Type? = null,
         durationMillis: Long = 0L,
-        onFinish: (Component.() -> kotlin.Unit)? = null,
+        onFinish: (Component.() -> kotlin.Unit)? = null
     ) {
         addOperation(DrawableOp.Translate(byX, byY, this, animation, durationMillis), onFinish)
     }
@@ -118,7 +117,7 @@ abstract class Component @JvmOverloads constructor(
         toSize: Size<Unit>,
         animation: Animation.Type? = null,
         durationMillis: Long = 0L,
-        onFinish: (Component.() -> kotlin.Unit)? = null,
+        onFinish: (Component.() -> kotlin.Unit)? = null
     ) {
         doDynamicSize(toSize)
         addOperation(DrawableOp.Resize(toSize, this, animation, durationMillis), onFinish)
@@ -132,7 +131,7 @@ abstract class Component @JvmOverloads constructor(
         toColor: Color,
         animation: Animation.Type,
         durationMillis: Long,
-        onFinish: (Component.() -> kotlin.Unit)? = null,
+        onFinish: (Component.() -> kotlin.Unit)? = null
     ) {
         color.recolor(toColor, animation, durationMillis)
         finishColorFunc = onFinish
@@ -140,9 +139,12 @@ abstract class Component @JvmOverloads constructor(
 
     override fun calculateBounds() {
         if (sized == null) {
-            sized = if (properties.size != null) properties.size!!.clone()
-            else getSize()
-                ?: throw UnsupportedOperationException("getSize() not implemented for ${this::class.simpleName}!")
+            sized = if (properties.size != null) {
+                properties.size!!.clone()
+            } else {
+                getSize()
+                    ?: throw UnsupportedOperationException("getSize() not implemented for ${this::class.simpleName}!")
+            }
         }
         doDynamicSize()
 

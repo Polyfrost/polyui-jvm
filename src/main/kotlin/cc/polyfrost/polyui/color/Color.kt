@@ -1,8 +1,8 @@
 /*
- * This file is part of PolyUI.
- * Copyright (C) 2022-2023 Polyfrost and its contributors.
- * All rights reserved.
- * PolyUI - Fast and lightweight UI framework https://polyfrost.cc https://github.com/Polyfrost/polui-jvm
+ * This file is part of PolyUI
+ * PolyUI - Fast and lightweight UI framework
+ * Copyright (C) 2023 Polyfrost and its contributors. All rights reserved.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  */
@@ -78,7 +78,7 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         override var r: Int,
         override var g: Int,
         override var b: Int,
-        override var a: Int,
+        override var a: Int
     ) : Color(r, g, b, a) {
         private var animation: Array<Animation>? = null
 
@@ -106,7 +106,6 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
                         else -> throw Exception("Invalid index")
                     }
                 }
-
             } else {
                 this.r = target.r
                 this.g = target.g
@@ -142,7 +141,6 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
             return Mutable(r, g, b, a)
         }
     }
-
 
     /** A gradient color. */
     class Gradient @JvmOverloads constructor(color1: Color, color2: Color, val type: Type = Type.TopLeftToBottomRight) :
@@ -229,7 +227,6 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         }
     }
 
-
     /** # Chroma Color
      *
      * A color that changes over [time][speedMillis], in an endless cycle. You can use the [saturation] and [brightness] fields to set the tone of the chroma. Some examples:
@@ -276,5 +273,4 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
             return false
         }
     }
-
 }
