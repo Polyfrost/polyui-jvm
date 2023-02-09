@@ -1,8 +1,8 @@
 /*
- * This file is part of PolyUI.
- * Copyright (C) 2022-2023 Polyfrost and its contributors.
- * All rights reserved.
- * PolyUI - Fast and lightweight UI framework https://polyfrost.cc https://github.com/Polyfrost/polui-jvm
+ * This file is part of PolyUI
+ * PolyUI - Fast and lightweight UI framework
+ * Copyright (C) 2023 Polyfrost and its contributors. All rights reserved.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  */
@@ -55,7 +55,6 @@ sealed class Events : Event {
     /** acceptable by component and layout */
     object Removed : Events()
 
-
     /** specify a handler for this event.
      *
      * in the given [action], you can perform things on this component, such as [Component.rotate], [Component.recolor], etc.
@@ -92,7 +91,6 @@ sealed class Events : Event {
     infix fun then(action: (Component.() -> Boolean)): Handler {
         return Handler(this, action as Drawable.() -> Boolean)
     }
-
 
     /** specify a handler for this event.
      *
@@ -131,4 +129,3 @@ sealed class Events : Event {
 
     data class Handler(val event: Events, val handler: Drawable.() -> Boolean)
 }
-

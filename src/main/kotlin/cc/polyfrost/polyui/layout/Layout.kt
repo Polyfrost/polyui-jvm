@@ -40,7 +40,7 @@ abstract class Layout(
     internal val onRemoved: (Drawable.() -> kotlin.Unit)? = null,
     /** If this layout can receive events (separate to its children!). */
     acceptInput: Boolean = false,
-    vararg items: Drawable,
+    vararg items: Drawable
 ) : Drawable(acceptInput) {
     open val components = arrayListOf(*items.filterIsInstance<Component>().toTypedArray())
     open val children = arrayListOf(*items.filterIsInstance<Layout>().toTypedArray())

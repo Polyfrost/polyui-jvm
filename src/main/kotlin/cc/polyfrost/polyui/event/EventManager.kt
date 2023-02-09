@@ -51,7 +51,7 @@ class EventManager(private val polyUI: PolyUI) {
             // we only need to check acceptsInput here as it controls the mouseOver flag, so if it doesn't accept input, mouseOver is always false
             if (isInside(x, y) && acceptsInput) {
                 if (mouseOver) {
-                    //it.accept(ComponentEvent.MouseMoved(x, y))
+                    // it.accept(ComponentEvent.MouseMoved(x, y))
                 } else {
                     accept(Events.MouseEntered)
                     mouseOverDrawables.add(this)
@@ -110,8 +110,11 @@ class EventManager(private val polyUI: PolyUI) {
             mouseDown = false
             val curr = System.currentTimeMillis()
             if (curr - clickTimer < polyUI.renderer.settings.multiClickInterval) {
-                if (clickAmount < polyUI.renderer.settings.maxClicksThatCanCombo) clickAmount++
-                else clickAmount = 1
+                if (clickAmount < polyUI.renderer.settings.maxClicksThatCanCombo) {
+                    clickAmount++
+                } else {
+                    clickAmount = 1
+                }
             } else {
                 clickAmount = 1
             }
@@ -123,10 +126,12 @@ class EventManager(private val polyUI: PolyUI) {
         val event2 = Events.MouseClicked(button, clickAmount)
         onApplicableDrawables(mouseX, mouseY) {
             if (mouseOver) {
-                if (!flagReleased)
+                if (!flagReleased) {
                     if (accept(event)) flagReleased = true
-                if (!flagClicked)
+                }
+                if (!flagClicked) {
                     if (accept(event2)) flagClicked = true
+                }
             }
         }
     }
