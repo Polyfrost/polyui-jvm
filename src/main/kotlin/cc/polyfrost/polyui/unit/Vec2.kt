@@ -16,7 +16,7 @@ package cc.polyfrost.polyui.unit
  */
 data class Vec2<T : Unit>(
     val a: T,
-    val b: T,
+    val b: T
 ) : Cloneable {
     val x get() = a.px
     val y get() = b.px
@@ -70,4 +70,3 @@ data class Vec2<T : Unit>(
 
 typealias Point<T> = Vec2<T>
 typealias Size<T> = Vec2<T>
-

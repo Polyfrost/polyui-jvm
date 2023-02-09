@@ -27,7 +27,7 @@ open class BlockProperties(override val color: Color = Color.BLACK) : Properties
             },
             ComponentEvent.MouseExited to {
                 recolor(properties.color, Animations.EaseInOutQuad, 0.4.seconds)
-            },
+            }
         )
     }
 }

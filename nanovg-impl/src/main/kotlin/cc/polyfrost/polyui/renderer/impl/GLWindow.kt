@@ -22,7 +22,7 @@ import org.lwjgl.system.MemoryUtil
 import org.lwjgl.system.Platform
 import kotlin.math.max
 
-class GLWindow @JvmOverloads constructor (title: String, width: Int, height: Int, resizeable: Boolean = true, decorated: Boolean = true) :
+class GLWindow @JvmOverloads constructor(title: String, width: Int, height: Int, resizeable: Boolean = true, decorated: Boolean = true) :
     Window(width, height) {
     val handle: Long
     var fps: Int = 0
@@ -139,13 +139,11 @@ class GLWindow @JvmOverloads constructor (title: String, width: Int, height: Int
         }
 
         while (!glfwWindowShouldClose(handle)) {
-
             glViewport(0, 0, width, height)
             glClearColor(0.1f, 0.1f, 0.1f, 0f)
             glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
 
             this.polyUI.render()
-
 
             glfwPollEvents()
             glfwSwapBuffers(handle)
@@ -155,7 +153,9 @@ class GLWindow @JvmOverloads constructor (title: String, width: Int, height: Int
                 fps = frames
                 frames = 0
                 println("FPS: $fps")
-            } else frames++
+            } else {
+                frames++
+            }
         }
 
         polyUI.cleanup()
@@ -179,5 +179,4 @@ class GLWindow @JvmOverloads constructor (title: String, width: Int, height: Int
             glfwSetWindowSize(handle, it.width(), it.height())
         }
     }
-
 }

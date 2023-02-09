@@ -19,10 +19,12 @@ import cc.polyfrost.polyui.unit.Unit
 open class Text @JvmOverloads constructor(
     properties: Properties = Properties.get("cc.polyfrost.polyui.component.impl.Text"),
     acceptInput: Boolean = false,
-    text: String, fontSize: Unit.Pixel = 12.px,
+    text: String,
+    fontSize: Unit.Pixel = 12.px,
     textAlign: TextAlign? = null,
-    at: Vec2<Unit>, size: Size<Unit>? = null,
-    vararg events: ComponentEvent.Handler,
+    at: Vec2<Unit>,
+    size: Size<Unit>? = null,
+    vararg events: ComponentEvent.Handler
 ) : Component(properties, at, size, acceptInput, *events) {
     private val props: TextProperties = properties as TextProperties
     private var autoSized = false
@@ -49,7 +51,6 @@ open class Text @JvmOverloads constructor(
         at: Vec2<Unit>,
         vararg events: ComponentEvent.Handler
     ) : this(text = text, fontSize = fontSize, at = at, size = null, events = events)
-
 
     override fun render() {
         renderer.drawText(props.font, x, y, if (autoSized) 0f else width, text, props.color, fontSize.get(), textAlign)

@@ -21,13 +21,14 @@ import cc.polyfrost.polyui.utils.Clock
 
 /** a switching layout is a layout that can switch between layouts, with cool animations. */
 class SwitchingLayout(
-    at: Point<Unit>, sized: Size<Unit>? = null,
+    at: Point<Unit>,
+    sized: Size<Unit>? = null,
     onAdded: (Drawable.() -> kotlin.Unit)? = null,
     onRemoved: (Drawable.() -> kotlin.Unit)? = null,
     private val defaultIndex: Int = 0,
     val typ: Transitions? = null,
     val duration: Long = 1000L,
-    vararg layouts: Layout,
+    vararg layouts: Layout
 ) : PixelLayout(at, sized, onAdded, onRemoved, true, *layouts) {
     private val clock = Clock()
     private var currentIndex = defaultIndex
@@ -67,7 +68,6 @@ class SwitchingLayout(
         super.preRender()
     }
 
-
     fun switch(targetIndex: Int) {
         if (targetIndex !in 0 until children.size) throw IndexOutOfBoundsException("targetIndex out of bounds: $targetIndex")
         if (targetIndex == currentIndex) return
@@ -91,7 +91,10 @@ class SwitchingLayout(
     fun switch(layout: Layout) = switch(children.indexOf(layout))
 
     fun switchNext() {
-        if (currentIndex != children.lastIndex) switch(currentIndex + 1)
-        else PolyUI.LOGGER.warn("Tried to switch to next layout, but already at last layout!")
+        if (currentIndex != children.lastIndex) {
+            switch(currentIndex + 1)
+        } else {
+            PolyUI.LOGGER.warn("Tried to switch to next layout, but already at last layout!")
+        }
     }
 }

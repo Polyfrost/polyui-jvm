@@ -62,7 +62,8 @@ class FadeOut(drawable: Drawable, private val animationType: Animations, duratio
 
 class Slide(
     drawable: Drawable,
-    private val direction: SlideDirection = SlideDirection.FromLeft, private val animationType: Animations,
+    private val direction: SlideDirection = SlideDirection.FromLeft,
+    private val animationType: Animations,
     durationMillis: Long = 1000L
 ) :
     Transition(drawable) {
@@ -103,6 +104,5 @@ class Slide(
         return Slide(drawable, direction, animationType, animation.durationMillis)
     }
 }
-
 
 typealias Transitions = Transition.Type

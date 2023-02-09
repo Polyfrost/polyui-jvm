@@ -21,11 +21,12 @@ import kotlin.math.max
  * Just a container basically, that can infer it's size.
  * */
 open class PixelLayout(
-    at: Point<Unit>, sized: Size<Unit>? = null,
+    at: Point<Unit>,
+    sized: Size<Unit>? = null,
     onAdded: (Drawable.() -> kotlin.Unit)? = null,
     onRemoved: (Drawable.() -> kotlin.Unit)? = null,
     acceptInput: Boolean = true,
-    vararg items: Drawable,
+    vararg items: Drawable
 ) : Layout(at, sized, onAdded, onRemoved, acceptInput, *items) {
     init {
         items.forEach {

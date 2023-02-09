@@ -25,7 +25,6 @@ sealed class ComponentEvent : Event {
     object Added : ComponentEvent()
     object Removed : ComponentEvent()
 
-
     /** specify a handler for this event.
      *
      * in the given [action], you can perform things on this component, such as [Component.rotate], [Component.recolor], etc.*/
@@ -60,4 +59,3 @@ sealed class ComponentEvent : Event {
 
     data class Handler(val event: ComponentEvent, val handler: Component.() -> Unit)
 }
-

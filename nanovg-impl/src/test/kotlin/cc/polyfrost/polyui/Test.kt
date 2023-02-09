@@ -40,31 +40,33 @@ fun main() {
                 },
                 ComponentEvent.MouseClicked(1) to {
                     println("Mouse right-clicked!")
-                },
+                }
             )
         )
     }
     val polyUI = PolyUI(
-        window.width, window.height, NVGRenderer(),
+        window.width,
+        window.height,
+        NVGRenderer(),
         items = items(
             Text(
                 text = "Kotlin...       rainbow!      and image",
                 fontSize = 32.px,
-                at = 20.px * 570.px,
+                at = 20.px * 570.px
             ),
             Block(
                 props = BlockProperties(Color.Gradient(Color(1f, 0f, 1f, 1f), Color(0f, 1f, 1f, 1f))),
                 at = 20.px * 600.px,
-                size = 120.px * 120.px,
+                size = 120.px * 120.px
             ),
             Block(
                 props = BlockProperties(Color.Chroma(5.seconds)),
                 at = 200.px * 600.px,
-                size = 120.px * 120.px,
+                size = 120.px * 120.px
             ),
             ImageBlock(
                 Image("/s.png", 120, 120),
-                at = 380.px * 600.px,
+                at = 380.px * 600.px
             ),
             FlexLayout(
                 at = 20.px * 30.px,

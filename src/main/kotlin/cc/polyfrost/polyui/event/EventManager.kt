@@ -44,7 +44,7 @@ class EventManager(private val polyUI: PolyUI) {
             components.fastEach {
                 if (it.isInside(x, y)) {
                     if (it.mouseOver) {
-                        //it.accept(ComponentEvent.MouseMoved(x, y))
+                        // it.accept(ComponentEvent.MouseMoved(x, y))
                     } else {
                         it.accept(ComponentEvent.MouseEntered)
                         mouseOverComponents.add(it)
@@ -89,8 +89,11 @@ class EventManager(private val polyUI: PolyUI) {
     fun onMouseReleased(button: Int) {
         val curr = System.currentTimeMillis()
         if (curr - clickTimer < polyUI.renderer.settings.multiClickInterval) {
-            if (clickAmount < polyUI.renderer.settings.maxClicksThatCanCombo) clickAmount++
-            else clickAmount = 1
+            if (clickAmount < polyUI.renderer.settings.maxClicksThatCanCombo) {
+                clickAmount++
+            } else {
+                clickAmount = 1
+            }
         } else {
             clickAmount = 1
         }

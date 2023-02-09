@@ -16,24 +16,31 @@ operator fun Float.compareTo(x: Unit): Int = compareTo(x.px)
 
 @get:JvmName("pixels")
 val Number.px get() = Unit.Pixel(this.toFloat())
+
 @get:JvmName("percent")
 val Number.percent get() = Unit.Percent(this.toFloat())
 
 @get:JvmName("vwidth")
 val Number.vwidth get() = Unit.VUnits(this.toFloat(), Unit.Type.VWidth)
+
 @get:JvmName("vheight")
 val Number.vheight get() = Unit.VUnits(this.toFloat(), Unit.Type.VHeight)
+
 @get:JvmName("vmin")
 val Number.vmin get() = Unit.VUnits(this.toFloat(), Unit.Type.VMin)
+
 @get:JvmName("vmax")
 val Number.vmax get() = Unit.VUnits(this.toFloat(), Unit.Type.VMax)
 
 @get:JvmName("milliseconds")
 val Number.milliseconds get() = toLong()
+
 @get:JvmName("seconds")
 val Number.seconds get() = (toDouble() * 1000.0).toLong()
+
 @get:JvmName("minutes")
 val Number.minutes get() = (toDouble() * 60_000.0).toLong()
+
 @get:JvmName("hours")
 val Number.hours get() = (toDouble() * 3_600_000.0).toLong()
 

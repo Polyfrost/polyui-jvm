@@ -43,7 +43,6 @@ abstract class Animation(val durationMillis: Long, val from: Float, val to: Floa
 
     public abstract override fun clone(): Animation
 
-
     enum class Type {
         EaseInBack,
         EaseOutBump,
@@ -65,7 +64,6 @@ abstract class Animation(val durationMillis: Long, val from: Float, val to: Floa
             }
         }
     }
-
 }
 
 typealias Animations = Animation.Type

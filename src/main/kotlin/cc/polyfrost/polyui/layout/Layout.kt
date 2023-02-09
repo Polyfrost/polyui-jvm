@@ -39,7 +39,7 @@ abstract class Layout(
     override var onAdded: (Drawable.() -> kotlin.Unit)? = null,
     override var onRemoved: (Drawable.() -> kotlin.Unit)? = null,
     final override var acceptInput: Boolean = true,
-    vararg items: Drawable,
+    vararg items: Drawable
 ) : Drawable {
     protected open val simpleName = this.toString().substringAfterLast(".")
     val components = arrayListOf(*items.filterIsInstance<Component>().toTypedArray())
@@ -73,7 +73,9 @@ abstract class Layout(
                 if (renderer.settings.debug) debugRender()
 //                renderer.unbindFramebuffer(fbo!!)
 //                needsRedraw = false
-            } else renderer.drawFramebuffer(fbo!!, x, y, width, height)
+            } else {
+                renderer.drawFramebuffer(fbo!!, x, y, width, height)
+            }
         } else {
             preRender()
             render()
@@ -190,9 +192,10 @@ abstract class Layout(
         children.fastEach {
             it.calculateBounds()
         }
-        if (this.sized == null)
+        if (this.sized == null) {
             this.sized = getSize()
                 ?: throw UnsupportedOperationException("getSize() not implemented for ${this::class.simpleName}!")
+        }
         needsRecalculation = false
     }
 

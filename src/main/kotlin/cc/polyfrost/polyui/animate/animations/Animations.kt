@@ -53,8 +53,11 @@ class EaseOutQuad(durationMillis: Long, start: Float, end: Float) :
 class EaseOutExpo(durationMillis: Long, start: Float, end: Float) :
     Animation(durationMillis, start, end) {
     override fun getValue(percent: Float): Float {
-        return if (percent == 1F) 1F
-        else 1 - 2.0.pow((-10 * percent).toDouble()).toFloat()
+        return if (percent == 1F) {
+            1F
+        } else {
+            1 - 2.0.pow((-10 * percent).toDouble()).toFloat()
+        }
     }
 
     override fun clone(): Animation {
@@ -62,13 +65,15 @@ class EaseOutExpo(durationMillis: Long, start: Float, end: Float) :
     }
 }
 
-
 // -- easeInOuts --
 class EaseInOutCubic(durationMillis: Long, start: Float, end: Float) :
     Animation(durationMillis, start, end) {
     override fun getValue(percent: Float): Float {
-        return if (percent < 0.5) 4 * percent * percent * percent
-        else (1 - (-2 * percent + 2).toDouble().pow(3.0) / 2).toFloat()
+        return if (percent < 0.5) {
+            4 * percent * percent * percent
+        } else {
+            (1 - (-2 * percent + 2).toDouble().pow(3.0) / 2).toFloat()
+        }
     }
 
     override fun clone(): Animation {
@@ -79,8 +84,11 @@ class EaseInOutCubic(durationMillis: Long, start: Float, end: Float) :
 class EaseInOutQuad(durationMillis: Long, start: Float, end: Float) :
     Animation(durationMillis, start, end) {
     override fun getValue(percent: Float): Float {
-        return if (percent < 0.5) 2 * percent * percent
-        else 1 - (-2 * percent + 2).toDouble().pow(2.0).toFloat() / 2
+        return if (percent < 0.5) {
+            2 * percent * percent
+        } else {
+            1 - (-2 * percent + 2).toDouble().pow(2.0).toFloat() / 2
+        }
     }
 
     override fun clone(): Animation {
@@ -91,8 +99,11 @@ class EaseInOutQuad(durationMillis: Long, start: Float, end: Float) :
 class EaseInOutQuart(durationMillis: Long, start: Float, end: Float) :
     Animation(durationMillis, start, end) {
     override fun getValue(percent: Float): Float {
-        return if (percent < 0.5) 8 * percent * percent * percent * percent
-        else 1 - (-2 * percent + 2).toDouble().pow(4.0).toFloat() / 2
+        return if (percent < 0.5) {
+            8 * percent * percent * percent * percent
+        } else {
+            1 - (-2 * percent + 2).toDouble().pow(4.0).toFloat() / 2
+        }
     }
 
     override fun clone(): Animation {

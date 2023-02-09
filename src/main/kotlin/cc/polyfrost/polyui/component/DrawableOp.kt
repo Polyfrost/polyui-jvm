@@ -55,8 +55,11 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
      */
     @ApiStatus.Internal
     class Translate(
-        private val x: Float, private val y: Float, drawable: Drawable,
-        type: Animations? = null, durationMillis: Long = 1000L,
+        private val x: Float,
+        private val y: Float,
+        drawable: Drawable,
+        type: Animations? = null,
+        durationMillis: Long = 1000L
     ) : DrawableOp(drawable) {
         override val animation = type?.create(durationMillis, drawable.x, drawable.x + x)
         private val yAnim = type?.create(durationMillis, drawable.y, drawable.y + y)
@@ -75,8 +78,11 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
      */
     @ApiStatus.Internal
     class Scale(
-        private val x: Float, private val y: Float, override val drawable: Component,
-        type: Animations? = null, durationMillis: Long = 1000L,
+        private val x: Float,
+        private val y: Float,
+        override val drawable: Component,
+        type: Animations? = null,
+        durationMillis: Long = 1000L
     ) : DrawableOp(drawable) {
         override val animation = type?.create(durationMillis, drawable.scaleX, drawable.scaleX + x)
         private val yAnim = type?.create(durationMillis, drawable.scaleY, drawable.scaleY + y)
@@ -135,4 +141,3 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         }
     }
 }
-

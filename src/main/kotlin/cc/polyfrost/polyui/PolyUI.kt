@@ -45,9 +45,10 @@ import org.slf4j.LoggerFactory
  * PolyUI also supports a variety of [animations][cc.polyfrost.polyui.animate.Animation] and [transitions][cc.polyfrost.polyui.animate.transitions.Transition], which can be used to make your UI more dynamic, along with dynamically [adding][addComponent] and [removing][removeComponent] components.
  */
 class PolyUI(
-    width: Int, height: Int,
+    width: Int,
+    height: Int,
     val renderer: Renderer,
-    vararg items: Drawable,
+    vararg items: Drawable
 ) {
     var width = width
         private set

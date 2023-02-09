@@ -18,7 +18,6 @@ import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.unit.Vec2
 import org.jetbrains.annotations.ApiStatus
 
-
 /**
  * # Drawable
  * The most basic thing in the PolyUI rendering system.
@@ -83,7 +82,6 @@ interface Drawable {
      */
     fun canBeRemoved(): Boolean
 
-
     /** implement this method to add a debug render overlay for this drawable. */
     fun debugRender() {
         // no-op
@@ -95,8 +93,11 @@ interface Drawable {
     }
 
     fun isInside(x: Float, y: Float): Boolean {
-        return if (!acceptInput) false
-        else x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height
+        return if (!acceptInput) {
+            false
+        } else {
+            x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height
+        }
     }
 
     fun atUnitType(): Unit.Type = at.type()

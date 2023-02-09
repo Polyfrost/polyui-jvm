@@ -21,8 +21,6 @@ import kotlin.Int
 import kotlin.Suppress
 import kotlin.math.max
 
-@Suppress("unused")
-
 /**
  * # FlexLayout
  *
@@ -33,6 +31,7 @@ import kotlin.math.max
  * @param [sized] The size of this layout. This is a 'hard' limit for the wrap. If the next item would exceed the size, it will not be added. If you want a hard limit, but auto cross size, use 0 as the cross size.
  * @param [wrap] The wrap size of this layout. If this is set, the layout will automatically wrap to the next line if the next item would exceed the wrap size. This is a 'soft' limit, so that if it needs to exceed, it can. Takes precedence over [sized].
  */
+@Suppress("unused")
 class FlexLayout @JvmOverloads constructor(
     at: Point<Unit>,
     sized: Size<Unit>? = null,
@@ -45,7 +44,7 @@ class FlexLayout @JvmOverloads constructor(
     private val itemAlign: AlignItems = AlignItems.Start,
     private val contentAlign: AlignContent = AlignContent.Start,
     gap: Gap = Gap.AUTO,
-    vararg items: Drawable,
+    vararg items: Drawable
 ) : Layout(at, sized, onAdded, onRemoved, true, *items) {
     constructor(at: Point<Unit>, wrap: Unit.Percent, vararg items: Drawable) : this(at, null, wrap, null, null, items = items)
 
@@ -76,7 +75,6 @@ class FlexLayout @JvmOverloads constructor(
         }
     private val wrapDirection: Wrap
     private val strictSize = sized != null && wrap == null
-
 
     init {
         if (this.sized == null) this.sized = origin
@@ -152,10 +150,15 @@ class FlexLayout @JvmOverloads constructor(
             drawables.fastEachIndexed { i, it ->
                 mainAxis += it.mainSize + mainGap
                 if (it.flex.endRowAfter ||
-                    (mainAxis + (
-                            if (strictSize) (drawables.getOrNull(i + 1)?.mainSize ?: 0F)
-                            else 0F
-                            ) >= this.width)
+                    (
+                        mainAxis + (
+                            if (strictSize) {
+                                (drawables.getOrNull(i + 1)?.mainSize ?: 0F)
+                            } else {
+                                0F
+                            }
+                            ) >= this.width
+                        )
                 ) { // means we need to wrap
                     rows.add(FlexRow(row))
                     mainAxis = 0F
@@ -177,7 +180,6 @@ class FlexLayout @JvmOverloads constructor(
             // add all to the row if wrap is off
             rows.add(FlexRow(drawables))
         }
-
 
         var maxCrossSizeNoGaps = 0F
         var minIndex = 0
@@ -203,15 +205,17 @@ class FlexLayout @JvmOverloads constructor(
         crossSize = maxCrossSizeNoGaps + (rows.size - 1) * crossGap
         var cross = 0F
 
-
         // justify, with the largest row first.
         (rows.sortedByDescending { it.thisMainSizeWithGaps }).fastEach {
             it.justify()
         }
         rows.fastEach { row ->
             row.align(rows.size, cross, maxCrossSizeNoGaps)
-            if (contentAlign == AlignContent.End) cross -= row.maxCrossSize + crossGap
-            else cross += row.maxCrossSize + crossGap
+            if (contentAlign == AlignContent.End) {
+                cross -= row.maxCrossSize + crossGap
+            } else {
+                cross += row.maxCrossSize + crossGap
+            }
         }
         rows.clear()
         needsRecalculation = false
@@ -220,7 +224,6 @@ class FlexLayout @JvmOverloads constructor(
     fun trySetMainSize(new: Float) {
         mainSize = max(mainSize, new)
     }
-
 
     private inner class FlexDrawable(val drawable: Drawable, val flex: Unit.Flex, minSize: Size<Unit>? = null) {
         val size: Size<Unit>
@@ -293,7 +296,7 @@ class FlexLayout @JvmOverloads constructor(
     }
 
     private inner class FlexRow(
-        val drawables: ArrayList<FlexDrawable>,
+        val drawables: ArrayList<FlexDrawable>
     ) {
         val thisMainSize: Float
         val maxCrossSize: Float
@@ -435,7 +438,6 @@ class FlexLayout @JvmOverloads constructor(
         }
     }
 
-
     //  --- data ---
 
     /** [Flex Direction](https://css-tricks.com/snippets/css/a-guide-to-flexbox/#aa-flex-direction) */
@@ -470,5 +472,4 @@ class FlexLayout @JvmOverloads constructor(
             val AUTO = Gap(5.px, 5.px)
         }
     }
-
 }

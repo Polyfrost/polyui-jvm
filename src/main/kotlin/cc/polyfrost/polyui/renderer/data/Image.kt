@@ -13,7 +13,7 @@ data class Image @JvmOverloads constructor(
     val fileName: String,
     var width: Int? = null,
     var height: Int? = null,
-    val type: Type = Type.from(fileName),
+    val type: Type = Type.from(fileName)
 ) {
 
     override fun toString(): String {

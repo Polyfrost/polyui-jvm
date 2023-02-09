@@ -58,7 +58,7 @@ class Settings(private val renderer: Renderer) {
         RENDERBUFFER,
 
         /** Use a framebuffer object for rendering.*/
-        FRAMEBUFFER,
+        FRAMEBUFFER
     }
 
     /** How to handle resource (image and font) loading errors. */
