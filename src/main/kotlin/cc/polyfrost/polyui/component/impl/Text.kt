@@ -10,7 +10,7 @@
 package cc.polyfrost.polyui.component.impl
 
 import cc.polyfrost.polyui.component.Component
-import cc.polyfrost.polyui.event.ComponentEvent
+import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.property.impl.TextProperties
 import cc.polyfrost.polyui.unit.*
@@ -22,7 +22,7 @@ open class Text @JvmOverloads constructor(
     text: String, fontSize: Unit.Pixel = 12.px,
     textAlign: TextAlign? = null,
     at: Vec2<Unit>, size: Size<Unit>? = null,
-    vararg events: ComponentEvent.Handler,
+    vararg events: Events.Handler,
 ) : Component(properties, at, size, acceptInput, *events) {
     private val props: TextProperties = properties as TextProperties
     private var autoSized = false
@@ -47,7 +47,7 @@ open class Text @JvmOverloads constructor(
         text: String,
         fontSize: Unit.Pixel,
         at: Vec2<Unit>,
-        vararg events: ComponentEvent.Handler
+        vararg events: Events.Handler
     ) : this(text = text, fontSize = fontSize, at = at, size = null, events = events)
 
 

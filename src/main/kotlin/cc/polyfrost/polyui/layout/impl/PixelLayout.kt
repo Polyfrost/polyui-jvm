@@ -13,6 +13,7 @@ import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
+import cc.polyfrost.polyui.utils.fastEach
 import kotlin.math.max
 
 /**
@@ -38,6 +39,14 @@ open class PixelLayout(
 
     override fun calculateBounds() {
         super.calculateBounds()
+        children.fastEach {
+            it.at.a.px += x
+            it.at.b.px += y
+        }
+        components.fastEach {
+            it.at.a.px += x
+            it.at.b.px += y
+        }
         if (needsRecalculation) sized = getSize()
     }
 

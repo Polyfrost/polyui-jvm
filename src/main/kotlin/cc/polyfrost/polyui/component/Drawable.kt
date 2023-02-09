@@ -10,6 +10,7 @@
 package cc.polyfrost.polyui.component
 
 import cc.polyfrost.polyui.PolyUI
+import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.Point
@@ -26,39 +27,41 @@ import org.jetbrains.annotations.ApiStatus
  * This class is implemented for both [Layout] and [Drawable], and you should use them as bases if you are creating a UI in most cases.
  */
 @ApiStatus.Internal
-interface Drawable {
-    val at: Point<Unit>
-    var sized: Size<Unit>?
-    val renderer: Renderer
-    var onAdded: (Drawable.() -> kotlin.Unit)?
-    var onRemoved: (Drawable.() -> kotlin.Unit)?
+abstract class Drawable(var acceptsInput: Boolean = true) {
+    protected open val eventHandlers = mutableMapOf<Events, Drawable.() -> Boolean>()
+    open val simpleName = this.toString().substringAfterLast(".")
+    abstract val at: Point<Unit>
+    abstract var sized: Size<Unit>?
+    lateinit var renderer: Renderer
+    lateinit var polyui: PolyUI
 
-    /** weather this component should receive mouse event, such as on click, hover, etc. */
-    var acceptInput: Boolean
+    /** weather or not the mouse is currently over this component. DO NOT modify this value. It is managed automatically by [cc.polyfrost.polyui.event.EventManager]. */
+    var mouseOver = false
+        internal set
 
     /**
      * Reference to the layout encapsulating this drawable.
-     * For component, this is never null, but for layout, it can be null (meaning its parent is the polyui)
+     * For components, this is never null, but for layout, it can be null (meaning its parent is the polyui)
      */
-    val layout: Layout?
+    abstract val layout: Layout?
 
     val x get() = at.x
     val y get() = at.y
     val width
         get() = sized?.width
-            ?: throw IllegalStateException("Drawable $this has no size, but should have a size initialized by this point")
+            ?: throw IllegalStateException("Drawable $simpleName has no size, but should have a size initialized by this point")
     val height
         get() = sized?.height
-            ?: throw IllegalStateException("Drawable $this has no size, but should have a size initialized by this point")
+            ?: throw IllegalStateException("Drawable $simpleName has no size, but should have a size initialized by this point")
 
     /** pre-render functions, such as applying transforms. */
-    fun preRender()
+    abstract fun preRender()
 
     /** draw script for this drawable. */
-    fun render()
+    abstract fun render()
 
     /** post-render functions, such as removing transforms. */
-    fun postRender()
+    abstract fun postRender()
 
     /**
      * Calculate the position and size of this drawable. Make sure to call [doDynamicSize] in this method to avoid issues with sizing.
@@ -67,12 +70,12 @@ interface Drawable {
      *
      * The value of [layout]'s bounds will be updated after this method is called, so **do not** use [layout]'s bounds as an updated value in this method.
      */
-    fun calculateBounds()
+    abstract fun calculateBounds()
 
     /**
      * Method that is called when the physical size of the total window area changes.
      */
-    fun rescale(scaleX: Float, scaleY: Float) {
+    open fun rescale(scaleX: Float, scaleY: Float) {
 //        at.scale(scaleX, scaleY)
         sized!!.scale(scaleX, scaleY)
     }
@@ -81,22 +84,43 @@ interface Drawable {
      *
      * This is used for component that need to wait for an animation to finish before being removed.
      */
-    fun canBeRemoved(): Boolean
+    abstract fun canBeRemoved(): Boolean
 
 
     /** implement this method to add a debug render overlay for this drawable. */
-    fun debugRender() {
+    open fun debugRender() {
         // no-op
     }
 
+    /** called when this drawable receives an event.
+     *
+     * **make sure to call [super.accept()][Drawable.accept]!**
+     *
+     * @return true if the event should be consumed (cancelled so no more handlers are called), false otherwise.
+     * */
+    open fun accept(event: Events): Boolean {
+        return eventHandlers[event]?.let { it(this) } ?: false
+    }
+
+    fun addEventHook(event: Events, handler: Drawable.() -> Boolean) {
+        this.eventHandlers[event] = handler
+    }
+
+    @JvmName("addEventhook")
+    fun addEventHook(event: Events, handler: Drawable.() -> kotlin.Unit) {
+        this.eventHandlers[event] = {
+            handler(this)
+            true
+        }
+    }
+
     /** implement this method to add a debug print message for this drawable. */
-    fun debugPrint() {
+    open fun debugPrint() {
         PolyUI.LOGGER.warn("Drawable $this has no debug print method implemented, defaulting to no-op.")
     }
 
-    fun isInside(x: Float, y: Float): Boolean {
-        return if (!acceptInput) false
-        else x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height
+    open fun isInside(x: Float, y: Float): Boolean {
+        return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height
     }
 
     fun atUnitType(): Unit.Type = at.type()
@@ -129,7 +153,7 @@ interface Drawable {
      *
      * Otherwise, the size parameter in the constructor must be specified.
      * @throws UnsupportedOperationException if this method is not implemented, and the size parameter in the constructor is not specified. */
-    fun getSize(): Vec2<Unit>? {
+    open fun getSize(): Vec2<Unit>? {
         return null
     }
 }

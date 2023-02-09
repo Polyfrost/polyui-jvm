@@ -11,10 +11,9 @@ package cc.polyfrost.polyui.component
 
 import cc.polyfrost.polyui.animate.Animation
 import cc.polyfrost.polyui.color.Color
-import cc.polyfrost.polyui.event.ComponentEvent
+import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.property.Properties
-import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.Box
 import cc.polyfrost.polyui.unit.Point
 import cc.polyfrost.polyui.unit.Size
@@ -30,17 +29,14 @@ import cc.polyfrost.polyui.utils.fastRemoveIf
  * information about how this component should look, and its default responses
  * to event.
  */
-abstract class Component @JvmOverloads constructor (
+abstract class Component @JvmOverloads constructor(
     val properties: Properties,
     /** position relative to this layout. */
     override val at: Point<Unit>,
     override var sized: Size<Unit>? = null,
-    final override var acceptInput: Boolean = true,
-    vararg events: ComponentEvent.Handler,
-) : Drawable {
-    override var onAdded: (Drawable.() -> kotlin.Unit)? = null
-    override var onRemoved: (Drawable.() -> kotlin.Unit)? = null
-    private val eventHandlers = mutableMapOf<ComponentEvent, Component.() -> kotlin.Unit>()
+    acceptInput: Boolean = true,
+    vararg events: Events.Handler,
+) : Drawable(acceptInput) {
     private val animations: ArrayList<Pair<Animation, (Component.() -> kotlin.Unit)?>> = ArrayList()
     private val operations: ArrayList<Pair<DrawableOp, (Component.() -> kotlin.Unit)?>> = ArrayList()
     var scaleX: Float = 1F
@@ -51,54 +47,19 @@ abstract class Component @JvmOverloads constructor (
     val color: Color.Mutable = properties.color.toMutable()
     private var finishColorFunc: (Component.() -> kotlin.Unit)? = null
     private val clock = Clock()
-    final override lateinit var renderer: Renderer
     final override lateinit var layout: Layout
     open lateinit var boundingBox: Box<Unit>
 
-    /** weather or not the mouse is currently over this component. DO NOT modify this value. It is managed automatically by [cc.polyfrost.polyui.event.EventManager]. */
-    var mouseOver = false
-        internal set
-
     init {
         events.forEach {
-            addEventHandler(it.event, it.handler)
+            addEventHook(it.event, it.handler)
         }
     }
 
-
-    /**
-     * Called when an event is received by this component.
-     *
-     * **make sure to call super [Component.accept]!**
-     */
-    open fun accept(event: ComponentEvent) {
-        properties.eventHandlers[event]?.let { it(this) }
-        when (event) {
-            is ComponentEvent.Added -> {
-                onAdded?.invoke(this)
-            }
-
-            is ComponentEvent.Removed -> {
-                onRemoved?.invoke(this)
-            }
-
-            else -> eventHandlers[event]?.let { it(this) }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    fun addEventHandler(event: ComponentEvent, handler: Component.() -> kotlin.Unit) {
-        when (event) {
-            is ComponentEvent.Added -> {
-                onAdded = handler as Drawable.() -> kotlin.Unit
-            }
-
-            is ComponentEvent.Removed -> {
-                onRemoved = handler as Drawable.() -> kotlin.Unit
-            }
-
-            else -> this.eventHandlers[event] = handler
-        }
+    override fun accept(event: Events): Boolean {
+        if (super.accept(event)) return true
+        if (properties.eventHandlers[event]?.let { it(this) } == true) return true
+        return false
     }
 
 

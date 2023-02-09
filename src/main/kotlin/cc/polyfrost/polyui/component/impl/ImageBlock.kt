@@ -10,7 +10,7 @@
 package cc.polyfrost.polyui.component.impl
 
 import cc.polyfrost.polyui.component.Component
-import cc.polyfrost.polyui.event.ComponentEvent
+import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.property.impl.ImageBlockProperties
 import cc.polyfrost.polyui.renderer.data.Image
@@ -23,7 +23,7 @@ open class ImageBlock @JvmOverloads constructor(
     properties: ImageBlockProperties = Properties.get<_, ImageBlock>(),
     acceptInput: Boolean = true,
     at: Vec2<Unit>,
-    vararg events: ComponentEvent.Handler,
+    vararg events: Events.Handler,
 ) : Component(properties, at, null, acceptInput, *events) {
 
     override fun render() {

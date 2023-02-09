@@ -1,13 +1,21 @@
+/*
+ * This file is part of PolyUI.
+ * Copyright (C) 2022-2023 Polyfrost and its contributors.
+ * All rights reserved.
+ * PolyUI - Fast and lightweight UI framework https://polyfrost.cc https://github.com/Polyfrost/polui-jvm
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ */
+
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     `java-library`
-    kotlin("jvm") version "1.8.0" //ktVersion https://github.com/gradle/gradle/issues/22797
+    kotlin("jvm") version "1.8.10" //ktVersion https://github.com/gradle/gradle/issues/22797
     `maven-publish`
-
 }
 
-val ktVersion = "1.8.0"
+val ktVersion = "1.8.10"
 group = "cc.polyfrost"
 version = "1.0.2"
 
@@ -39,7 +47,7 @@ allprojects {
                 jvmTarget = "1.8"
                 freeCompilerArgs = listOf(
                     "-Xjvm-default=all-compatibility",
-
+                    "-Xuse-k2",         // use k2 because why not :)
                     "-Xno-call-assertions",
                     "-Xno-receiver-assertions",
                     "-Xno-param-assertions"

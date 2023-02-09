@@ -13,7 +13,7 @@ import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
-import cc.polyfrost.polyui.event.ComponentEvent
+import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.data.Framebuffer
 import cc.polyfrost.polyui.unit.Point
@@ -36,31 +36,35 @@ import org.jetbrains.annotations.ApiStatus
 abstract class Layout(
     override val at: Point<Unit>,
     override var sized: Size<Unit>? = null,
-    override var onAdded: (Drawable.() -> kotlin.Unit)? = null,
-    override var onRemoved: (Drawable.() -> kotlin.Unit)? = null,
-    final override var acceptInput: Boolean = true,
+    internal val onAdded: (Drawable.() -> kotlin.Unit)? = null,
+    internal val onRemoved: (Drawable.() -> kotlin.Unit)? = null,
+    /** If this layout can receive events (separate to its children!). */
+    acceptInput: Boolean = false,
     vararg items: Drawable,
-) : Drawable {
-    protected open val simpleName = this.toString().substringAfterLast(".")
-    val components = arrayListOf(*items.filterIsInstance<Component>().toTypedArray())
-    val children = arrayListOf(*items.filterIsInstance<Layout>().toTypedArray())
-
-    protected val removeQueue = arrayListOf<Drawable>()
+) : Drawable(acceptInput) {
+    open val components = arrayListOf(*items.filterIsInstance<Component>().toTypedArray())
+    open val children = arrayListOf(*items.filterIsInstance<Layout>().toTypedArray())
+    open var needsRedraw = true
+    open var needsRecalculation = true
+    internal val removeQueue = arrayListOf<Drawable>()
     var fbo: Framebuffer? = null
-    final override lateinit var renderer: Renderer
 
     /** reference to parent */
     override var layout: Layout? = null
 
     init {
         if (items.isEmpty()) throw IllegalStateException("Layout cannot be empty!")
-        components.fastEach { it.layout = this }
-        children.fastEach { it.layout = this }
+        if (onAdded != null) addEventHook(Events.Added, onAdded)
+        if (onRemoved != null) addEventHook(Events.Removed, onRemoved)
     }
 
-    var needsRedraw = true
-    var needsRecalculation = true
-
+    /** this is the function that is called every frame. It decides whether the layout needs to be entirely re-rendered.
+     * If so, the [preRender], [render], [postRender] functions are called.
+     *
+     * If this layout is [using a framebuffer][cc.polyfrost.polyui.property.Settings.minItemsForFramebuffer], it will be drawn to the framebuffer, and then drawn to the screen.
+     *
+     * **Note:** Do not call this function yourself, and although it is open, please refrain from doing large amounts of logic in this function. Instead, use [preRender], as in line with the PolyUI design philosophy.
+     */
     open fun reRenderIfNecessary() {
         children.fastEach { it.reRenderIfNecessary() }
         if (fbo != null) {
@@ -83,7 +87,7 @@ abstract class Layout(
     }
 
     /** perform the given [function] on all this layout's components, and [optionally][onChildLayouts] on all child layouts. */
-    open fun onAll(onChildLayouts: Boolean = false, function: Drawable.() -> kotlin.Unit) {
+    open fun onAll(onChildLayouts: Boolean = false, function: Component.() -> kotlin.Unit) {
         components.fastEach { it.function() }
         if (onChildLayouts) children.fastEach { it.onAll(true, function) }
     }
@@ -91,7 +95,7 @@ abstract class Layout(
     /**
      * adds the given components/layouts to this layout.
      *
-     * this will add the drawables to the [Layout.components] or [children] list, and invoke its [onAdded] function.
+     * this will add the drawables to the [Layout.components] or [children] list, and invoke its added event function.
      */
     fun addComponents(components: Collection<Drawable>) {
         components.forEach { addComponent(it) }
@@ -100,7 +104,7 @@ abstract class Layout(
     /**
      * adds the given components/layouts to this layout.
      *
-     * this will add the drawables to the [Layout.components] or [children] list, and invoke its [onAdded] function.
+     * this will add the drawables to the [Layout.components] or [children] list, and invoke its added event function.
      */
     fun addComponents(vararg components: Drawable) {
         components.forEach { addComponent(it) }
@@ -109,37 +113,35 @@ abstract class Layout(
     /**
      * adds the given component/layout to this layout.
      *
-     * this will add the drawable to the [Layout.components] or [children] list, and invoke its [onAdded] function.
+     * this will add the drawable to the [Layout.components] or [children] list, and invoke its added event function.
      */
     open fun addComponent(drawable: Drawable) {
         when (drawable) {
             is Component -> {
                 components.add(drawable)
-                drawable.renderer = renderer
                 drawable.layout = this
-                // allows the properties' onAdded to be called
-                drawable.accept(ComponentEvent.Added)
             }
 
             is Layout -> {
                 children.add(drawable)
-                drawable.renderer = renderer
                 drawable.layout = this
-                drawable.onAdded?.invoke(drawable)
             }
 
             else -> {
                 throw Exception("Drawable $drawable is not a component or layout!")
             }
         }
+        drawable.renderer = renderer
+        drawable.polyui = polyui
         drawable.calculateBounds()
+        drawable.accept(Events.Added)
         needsRedraw = true
     }
 
     /**
      * removes a component from this layout.
      *
-     * this will add the component to the removal queue, and invoke its [onRemoved] function.
+     * this will add the component to the removal queue, and invoke its removal event function.
      *
      * This removal queue is used so that component can finish up any animations they're doing before being removed.
      */
@@ -147,25 +149,24 @@ abstract class Layout(
         when (drawable) {
             is Component -> {
                 removeQueue.add(components[components.indexOf(drawable)])
-                drawable.accept(ComponentEvent.Removed)
             }
 
             is Layout -> {
                 removeQueue.add(children[children.indexOf(drawable)])
-                drawable.onRemoved?.invoke(drawable)
             }
 
             else -> {
                 throw Exception("Drawable $drawable is not a component or layout!")
             }
         }
+        drawable.accept(Events.Removed)
     }
 
     /** removes a component immediately, without waiting for it to finish up.
      *
      * This is marked as internal because you should be using [removeComponent] for most cases to remove a component, as it waits for it to finish and play any removal animations. */
     @ApiStatus.Internal
-    fun removeComponentNow(drawable: Drawable) {
+    open fun removeComponentNow(drawable: Drawable) {
         removeQueue.remove(drawable)
         when (drawable) {
             is Component -> {
@@ -185,9 +186,11 @@ abstract class Layout(
 
     override fun calculateBounds() {
         components.fastEach {
+            it.layout = this
             it.calculateBounds()
         }
         children.fastEach {
+            it.layout = this
             it.calculateBounds()
         }
         if (this.sized == null)
@@ -229,11 +232,14 @@ abstract class Layout(
     }
 
     /** give this, and all its children, a renderer. */
-    fun giveRenderer(renderer: Renderer) {
-        if (this::renderer.isInitialized) throw Exception("Renderer already initialized!") // sanity check
+    open fun setup(renderer: Renderer, polyUI: PolyUI) {
+        this.polyui = polyUI
         this.renderer = renderer
-        components.fastEach { it.renderer = renderer }
-        children.fastEach { it.giveRenderer(renderer) }
+        components.fastEach {
+            it.renderer = renderer
+            it.polyui = polyUI
+        }
+        children.fastEach { it.setup(renderer, polyUI) }
     }
 
     override fun canBeRemoved(): Boolean {

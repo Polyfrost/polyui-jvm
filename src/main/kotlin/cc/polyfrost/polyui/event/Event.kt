@@ -12,6 +12,6 @@ package cc.polyfrost.polyui.event
 // wow, much empty
 /** An event in the PolyUI system.
  * @see EventManager
- * @see ComponentEvent
+ * @see Events
  */
 interface Event

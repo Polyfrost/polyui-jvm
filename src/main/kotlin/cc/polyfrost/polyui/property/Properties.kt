@@ -11,7 +11,8 @@ package cc.polyfrost.polyui.property
 
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.component.Component
-import cc.polyfrost.polyui.event.ComponentEvent
+import cc.polyfrost.polyui.component.Drawable
+import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.property.impl.BlockProperties
 import cc.polyfrost.polyui.property.impl.ImageBlockProperties
 import cc.polyfrost.polyui.property.impl.TextProperties
@@ -40,22 +41,30 @@ abstract class Properties : Cloneable {
      */
     open val size: Size<Unit>? = null
     abstract val padding: Float
-    val eventHandlers = mutableMapOf<ComponentEvent, Component.() -> kotlin.Unit>()
+    val eventHandlers = mutableMapOf<Events, Component.() -> Boolean>()
 
     /**
      * Add a universal event handler to this component's property.
      *
      * This means that every component using this property will have this event handler.
      */
-    fun addEventHandler(type: ComponentEvent, function: Component.() -> kotlin.Unit) {
+    fun addEventHandler(type: Events, function: Component.() -> Boolean) {
         eventHandlers[type] = function
+    }
+
+    @JvmName("addEventhandler")
+    fun addEventHandler(event: Events, handler: Component.() -> kotlin.Unit) {
+        this.eventHandlers[event] = {
+            handler(this)
+            true
+        }
     }
 
     /** add a universal event handler to this component's property.
      *
      * This means that every component using this property will have this event handler.
      */
-    fun addEventHandlers(vararg handlers: ComponentEvent.Handler) {
+    fun addEventHandlers(vararg handlers: Events.Handler) {
         handlers.forEach { addEventHandler(it.event, it.handler) }
     }
 
