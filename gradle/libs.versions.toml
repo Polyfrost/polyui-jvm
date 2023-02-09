@@ -1,0 +1,31 @@
+[versions]
+kotlin = "1.8.0"
+lwjgl = "3.3.1"
+slf4j = "1.6.1"
+annotations = "24.0.0"
+kotlinter = "3.13.0"
+textile = "1.+"
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+licenser = { id = "org.quiltmc.gradle.licenser", version.ref = "textile" }
+kotlinter = { id = "org.jmailen.kotlinter", version.ref = "kotlinter" }
+
+[libraries]
+lwjgl = { module = "org.lwjgl:lwjgl", version.ref = "lwjgl" }
+lwjgl-nanovg = { module = "org.lwjgl:lwjgl-nanovg", version.ref = "lwjgl" }
+lwjgl-opengl = { module = "org.lwjgl:lwjgl-opengl", version.ref = "lwjgl" }
+lwjgl-stb = { module = "org.lwjgl:lwjgl-stb", version.ref = "lwjgl" }
+lwjgl-glfw = { module = "org.lwjgl:lwjgl-glfw", version.ref = "lwjgl" }
+
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
+
+kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+kotlin-annotations = { module = "org.jetbrains:annotations", version.ref = "annotations" }
+
+[bundles]
+lwjgl = ["lwjgl", "lwjgl-nanovg", "lwjgl-opengl", "lwjgl-stb", "lwjgl-glfw"]
+slf4j = ["slf4j-api", "slf4j-simple"]
+kotlin = ["kotlin-stdlib", "kotlin-reflect", "kotlin-annotations"]

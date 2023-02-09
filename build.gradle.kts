@@ -1,28 +1,33 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+@Suppress("DSL_SCOPE_VIOLATION") // TODO: remove when we update to gradle 8.1
+
 plugins {
     `java-library`
-    kotlin("jvm") version "1.8.0" //ktVersion https://github.com/gradle/gradle/issues/22797
     `maven-publish`
-
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.licenser)
+    alias(libs.plugins.kotlinter)
 }
 
-val ktVersion = "1.8.0"
 group = "cc.polyfrost"
 version = "1.0.2"
 
 subprojects {
     apply(plugin = "java-library")
     apply(plugin = "kotlin")
+    apply(plugin = "org.quiltmc.gradle.licenser")
+    apply(plugin = "org.jmailen.kotlinter")
 
-    group = rootProject.group.toString()
-    version = rootProject.version.toString()
+    group = rootProject.group
+    version = rootProject.version
 
     dependencies {
-        api(project(":"))
+        api(project.rootProject)
     }
 }
 
+// TODO: cleanup with some simple build logic/integrate into textile
 allprojects {
     repositories {
         mavenCentral()
@@ -42,18 +47,33 @@ allprojects {
 
                     "-Xno-call-assertions",
                     "-Xno-receiver-assertions",
-                    "-Xno-param-assertions"
+                    "-Xno-param-assertions",
+                    "-opt-in=kotlin.io.path.ExperimentalPathApi"
                 )
             }
         }
+
+        register("format") {
+            group = "formatting"
+            description = "Formats source code according to project style"
+            dependsOn(checkLicenses, formatKotlin)
+        }
+    }
+
+    kotlinter {
+        ignoreFailures = false
+        reporters = arrayOf("checkstyle", "plain")
+        experimentalRules = true
+        disabledRules = arrayOf("no-wildcard-imports", "filename", "max-line-length")
+    }
+
+    license {
+        rule(rootProject.file("FILEHEADER"))
+        include("**/*.kt")
     }
 }
 
 dependencies {
-    implementation("org.slf4j", "slf4j-api", "1.6.1")
-    implementation("org.slf4j", "slf4j-simple", "1.6.1")
-    implementation("org.jetbrains.kotlin", "kotlin-stdlib-jdk8", ktVersion)
-    implementation("org.jetbrains.kotlin", "kotlin-reflect", ktVersion)
-
-    implementation("org.jetbrains", "annotations", "24.0.0")
+    implementation(libs.bundles.slf4j)
+    implementation(libs.bundles.kotlin)
 }
