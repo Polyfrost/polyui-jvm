@@ -110,29 +110,33 @@ class GLWindow @JvmOverloads constructor(
             if (keyCode < 100) {
                 if (mods > 1 && action != GLFW_RELEASE) polyUI.eventManager.onKeyTyped(keyCode.toChar())
             } else if (keyCode < 340) {
-                val key: Keys = (when (keyCode) {
-                    // insert, pg down, etc
-                    in 256..261 -> Keys.fromValue(keyCode - 156)
-                    in 266..269 -> Keys.fromValue(keyCode - 160)
-                    // arrows
-                    in 262..265 -> Keys.fromValue(keyCode - 62)
-                    // function keys
-                    in 290..314 -> Keys.fromValue(keyCode - 289)
-                    else -> Keys.UNKNOWN
-                })
+                val key: Keys = (
+                    when (keyCode) {
+                        // insert, pg down, etc
+                        in 256..261 -> Keys.fromValue(keyCode - 156)
+                        in 266..269 -> Keys.fromValue(keyCode - 160)
+                        // arrows
+                        in 262..265 -> Keys.fromValue(keyCode - 62)
+                        // function keys
+                        in 290..314 -> Keys.fromValue(keyCode - 289)
+                        else -> Keys.UNKNOWN
+                    }
+                    )
                 if (action != GLFW_RELEASE) polyUI.eventManager.onKeyPressed(key)
             } else {
-                val key: KeyModifiers = (when (keyCode) {
-                    340 -> KeyModifiers.LSHIFT
-                    341 -> KeyModifiers.LCONTROL
-                    342 -> KeyModifiers.LALT
-                    343 -> KeyModifiers.LMETA
-                    344 -> KeyModifiers.RSHIFT
-                    345 -> KeyModifiers.RCONTROL
-                    346 -> KeyModifiers.RALT
-                    347 -> KeyModifiers.RMETA
-                    else -> KeyModifiers.UNKNOWN
-                })
+                val key: KeyModifiers = (
+                    when (keyCode) {
+                        340 -> KeyModifiers.LSHIFT
+                        341 -> KeyModifiers.LCONTROL
+                        342 -> KeyModifiers.LALT
+                        343 -> KeyModifiers.LMETA
+                        344 -> KeyModifiers.RSHIFT
+                        345 -> KeyModifiers.RCONTROL
+                        346 -> KeyModifiers.RALT
+                        347 -> KeyModifiers.RMETA
+                        else -> KeyModifiers.UNKNOWN
+                    }
+                    )
                 if (action == GLFW_PRESS) {
                     polyUI.eventManager.addModifier(key.value)
                 } else if (action == GLFW_RELEASE) {

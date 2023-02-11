@@ -57,21 +57,21 @@ fun main() {
                     Text(
                         text = "Kotlin...       rainbow!      and image",
                         fontSize = 32.px,
-                        at = 20.px * 0.px,
+                        at = 20.px * 0.px
                     ),
                     Block(
                         props = BlockProperties(Color.Gradient(Color(1f, 0f, 1f, 1f), Color(0f, 1f, 1f, 1f))),
                         at = 20.px * 30.px,
-                        size = 120.px * 120.px,
+                        size = 120.px * 120.px
                     ),
                     Block(
                         props = BlockProperties(Color.Chroma(5.seconds)),
                         at = 200.px * 30.px,
-                        size = 120.px * 120.px,
+                        size = 120.px * 120.px
                     ),
                     ImageBlock(
                         Image("/s.png", 120, 120),
-                        at = 380.px * 30.px,
+                        at = 380.px * 30.px
                     )
                 )
             ).draggable(),

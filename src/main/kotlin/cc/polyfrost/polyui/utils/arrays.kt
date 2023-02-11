@@ -78,7 +78,6 @@ inline fun <L, E> L.noneAre(f: (E) -> Boolean): Boolean where L : List<E>, L : R
     return !anyAre(f)
 }
 
-
 /**
  * Returns a list of all elements sorted descending according to natural sort order of the value returned by specified selector function.
  *

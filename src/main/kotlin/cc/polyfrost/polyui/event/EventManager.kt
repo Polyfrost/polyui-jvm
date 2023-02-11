@@ -43,7 +43,6 @@ class EventManager(private val polyUI: PolyUI) {
     var mouseDown = false
         private set
 
-
     /** This method should be called when a printable key is typed. This key should be **mapped to the user's keyboard layout!** */
     fun onKeyTyped(key: Char) {
         if (polyUI.focused == null) return

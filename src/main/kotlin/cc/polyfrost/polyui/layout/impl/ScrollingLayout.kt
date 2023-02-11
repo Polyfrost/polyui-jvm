@@ -1,3 +1,12 @@
+/*
+ * This file is part of PolyUI
+ * PolyUI - Fast and lightweight UI framework
+ * Copyright (C) 2023 Polyfrost and its contributors. All rights reserved.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/polui-jvm>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ */
+
 package cc.polyfrost.polyui.layout.impl
 
 import cc.polyfrost.polyui.animate.Animations
@@ -20,7 +29,7 @@ class ScrollingLayout(
     layout: Layout,
     /** the size of the scrollable area, aka the display size for this layout. Seperate from its actual size. */
     @get:JvmName("scrollingLayoutSize")
-    val size: Size<Unit>,
+    val size: Size<Unit>
 ) : PointerLayout(layout) {
     val scrollbar = Scrollbar(this)
 
@@ -42,7 +51,6 @@ class ScrollingLayout(
         super.calculateBounds()
     }
 
-
     companion object {
         @JvmField
         var scrollbarProperties = ScrollbarProperties()
@@ -51,7 +59,7 @@ class ScrollingLayout(
     class Scrollbar(private val owner: ScrollingLayout) : Block(
         scrollbarProperties,
         (owner.at + owner.size),
-        scrollbarProperties.width.px * 0.px,
+        scrollbarProperties.width.px * 0.px
     ) {
         private val contentSize = owner.ptr.sized
         private val windowSize = owner.size

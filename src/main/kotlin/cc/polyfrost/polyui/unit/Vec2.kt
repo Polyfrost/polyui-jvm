@@ -53,7 +53,6 @@ data class Vec2<T : Unit>(
         }
     }
 
-
     fun move(x: Float, y: Float): Vec2<T> {
         this.a.px += x
         this.b.px += y

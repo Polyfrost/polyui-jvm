@@ -31,12 +31,14 @@ fun getResources(path: String, extension: String = ""): List<Pair<String, InputS
     val out = ArrayList<Pair<String, InputStream>>()
     while (resources.hasMoreElements()) {
         val resource = resources.nextElement()
-        if (extension.isEmpty() || resource.path.endsWith(extension)) out.add(
-            Pair(
-                resource.path,
-                resource.openStream()
+        if (extension.isEmpty() || resource.path.endsWith(extension)) {
+            out.add(
+                Pair(
+                    resource.path,
+                    resource.openStream()
+                )
             )
-        )
+        }
     }
     return out
 }
@@ -54,4 +56,3 @@ fun InputStream.toByteBuffer(): ByteBuffer {
         .put(bytes)
         .also { it.flip() }
 }
-

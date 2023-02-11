@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.archivesName
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 @Suppress("DSL_SCOPE_VIOLATION") // TODO: remove when we update to gradle 8.1
@@ -11,7 +12,8 @@ plugins {
 }
 
 group = "cc.polyfrost"
-version = "1.0.2"
+version = "0.9.3"
+val targetKotlinVersion = "1.6"
 
 subprojects {
     apply(plugin = "java-library")
@@ -25,6 +27,8 @@ subprojects {
     dependencies {
         api(project.rootProject)
     }
+
+    archivesName.set("${rootProject.name}-${project.name}")
 }
 
 // TODO: cleanup with some simple build logic/integrate into textile
@@ -42,7 +46,8 @@ allprojects {
         sourceSets.all {
             languageSettings.apply {
                 optIn("kotlin.experimental.ExperimentalTypeInference")
-                languageVersion = "2.0"
+                languageVersion = targetKotlinVersion
+                apiVersion = targetKotlinVersion
             }
         }
     }
@@ -53,6 +58,7 @@ allprojects {
                 jvmTarget = "1.8"
                 freeCompilerArgs = listOf(
                     "-Xjvm-default=all-compatibility",
+                    "-Xuse-k2",
                     "-Xno-call-assertions",
                     "-Xno-receiver-assertions",
                     "-Xno-param-assertions",
