@@ -184,7 +184,7 @@ class FlexLayout @JvmOverloads constructor(
         var maxCrossSizeNoGaps = 0F
         var minIndex = 0
         var err = false
-        kotlin.run {
+        run {
             rows.fastEach {
                 maxCrossSizeNoGaps += it.maxCrossSize
                 minIndex += it.drawables.size
