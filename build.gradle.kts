@@ -63,7 +63,7 @@ allprojects {
         register("format") {
             group = "formatting"
             description = "Formats source code according to project style"
-            dependsOn(checkLicenses, formatKotlin)
+            dependsOn(applyLicenses, formatKotlin)
         }
     }
 

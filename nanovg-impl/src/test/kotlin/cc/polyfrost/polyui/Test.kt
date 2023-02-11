@@ -79,7 +79,7 @@ fun main() {
                 at = 20.px * 30.px,
                 wrap = 80.percent,
                 items = things
-            ),
+            )
         )
     )
 

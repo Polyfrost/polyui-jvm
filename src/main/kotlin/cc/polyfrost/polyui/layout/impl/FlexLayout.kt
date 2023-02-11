@@ -151,14 +151,14 @@ class FlexLayout @JvmOverloads constructor(
                 mainAxis += it.mainSize + mainGap
                 if (it.flex.endRowAfter ||
                     (
-                            mainAxis + (
-                                    if (strictSize) {
-                                        (drawables.getOrNull(i + 1)?.mainSize ?: 0F)
-                                    } else {
-                                        0F
-                                    }
-                                    ) >= this.width
-                            )
+                        mainAxis + (
+                            if (strictSize) {
+                                (drawables.getOrNull(i + 1)?.mainSize ?: 0F)
+                            } else {
+                                0F
+                            }
+                            ) >= this.width
+                        )
                 ) { // means we need to wrap
                     rows.add(FlexRow(row))
                     mainAxis = 0F

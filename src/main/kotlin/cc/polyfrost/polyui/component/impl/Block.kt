@@ -27,7 +27,7 @@ open class Block @JvmOverloads constructor(
     at: Vec2<Unit>,
     size: Size<Unit>,
     acceptInput: Boolean = true,
-    vararg events: Events.Handler,
+    vararg events: Events.Handler
 ) : Component(props, at, size, acceptInput, *events) {
 
     override fun render() {
