@@ -17,7 +17,6 @@ import cc.polyfrost.polyui.component.impl.Text
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.event.Events.Companion.events
 import cc.polyfrost.polyui.layout.Layout.Companion.items
-import cc.polyfrost.polyui.layout.impl.DraggableLayout
 import cc.polyfrost.polyui.layout.impl.FlexLayout
 import cc.polyfrost.polyui.layout.impl.PixelLayout
 import cc.polyfrost.polyui.property.impl.BlockProperties
@@ -52,32 +51,30 @@ fun main() {
         window.height,
         NVGRenderer(),
         items = items(
-            DraggableLayout(
-                PixelLayout(
-                    at = 20.px * 570.px,
-                    items = items(
-                        Text(
-                            text = "Kotlin...       rainbow!      and image",
-                            fontSize = 32.px,
-                            at = 20.px * 0.px,
-                        ),
-                        Block(
-                            props = BlockProperties(Color.Gradient(Color(1f, 0f, 1f, 1f), Color(0f, 1f, 1f, 1f))),
-                            at = 20.px * 30.px,
-                            size = 120.px * 120.px,
-                        ),
-                        Block(
-                            props = BlockProperties(Color.Chroma(5.seconds)),
-                            at = 200.px * 30.px,
-                            size = 120.px * 120.px,
-                        ),
-                        ImageBlock(
-                            Image("/s.png", 120, 120),
-                            at = 380.px * 30.px,
-                        )
+            PixelLayout(
+                at = 20.px * 570.px,
+                items = items(
+                    Text(
+                        text = "Kotlin...       rainbow!      and image",
+                        fontSize = 32.px,
+                        at = 20.px * 0.px,
+                    ),
+                    Block(
+                        props = BlockProperties(Color.Gradient(Color(1f, 0f, 1f, 1f), Color(0f, 1f, 1f, 1f))),
+                        at = 20.px * 30.px,
+                        size = 120.px * 120.px,
+                    ),
+                    Block(
+                        props = BlockProperties(Color.Chroma(5.seconds)),
+                        at = 200.px * 30.px,
+                        size = 120.px * 120.px,
+                    ),
+                    ImageBlock(
+                        Image("/s.png", 120, 120),
+                        at = 380.px * 30.px,
                     )
                 )
-            ),
+            ).draggable(),
             FlexLayout(
                 at = 20.px * 30.px,
                 wrap = 80.percent,

@@ -10,6 +10,8 @@
 package cc.polyfrost.polyui.renderer.impl
 
 import cc.polyfrost.polyui.PolyUI
+import cc.polyfrost.polyui.input.KeyModifiers
+import cc.polyfrost.polyui.input.Keys
 import cc.polyfrost.polyui.renderer.Window
 import org.lwjgl.glfw.Callbacks
 import org.lwjgl.glfw.GLFW.*
@@ -103,16 +105,48 @@ class GLWindow @JvmOverloads constructor(
             polyUI.eventManager.setMousePosAndUpdate(x.toFloat(), y.toFloat())
         }
 
-        glfwSetKeyCallback(handle) { _, key, _, action, _ ->
-            if (action == GLFW_PRESS) {
-                polyUI.eventManager.onKeyPressed(key)
-            } else if (action == GLFW_RELEASE) {
-                polyUI.eventManager.onKeyReleased(key)
+        glfwSetKeyCallback(handle) { _, keyCode, _, action, mods ->
+            // p.s. I have performance tested this; and it is very fast (doesn't even show up on profiler). kotlin is good at int ranges lol
+            if (keyCode < 100) {
+                if (mods > 1 && action != GLFW_RELEASE) polyUI.eventManager.onKeyTyped(keyCode.toChar())
+            } else if (keyCode < 340) {
+                val key: Keys = (when (keyCode) {
+                    // insert, pg down, etc
+                    in 256..261 -> Keys.fromValue(keyCode - 156)
+                    in 266..269 -> Keys.fromValue(keyCode - 160)
+                    // arrows
+                    in 262..265 -> Keys.fromValue(keyCode - 62)
+                    // function keys
+                    in 290..314 -> Keys.fromValue(keyCode - 289)
+                    else -> Keys.UNKNOWN
+                })
+                if (action != GLFW_RELEASE) polyUI.eventManager.onKeyPressed(key)
+            } else {
+                val key: KeyModifiers = (when (keyCode) {
+                    340 -> KeyModifiers.LSHIFT
+                    341 -> KeyModifiers.LCONTROL
+                    342 -> KeyModifiers.LALT
+                    343 -> KeyModifiers.LMETA
+                    344 -> KeyModifiers.RSHIFT
+                    345 -> KeyModifiers.RCONTROL
+                    346 -> KeyModifiers.RALT
+                    347 -> KeyModifiers.RMETA
+                    else -> KeyModifiers.UNKNOWN
+                })
+                if (action == GLFW_PRESS) {
+                    polyUI.eventManager.addModifier(key.value)
+                } else if (action == GLFW_RELEASE) {
+                    polyUI.eventManager.removeModifier(key.value)
+                }
             }
         }
 
-        glfwSetScrollCallback(handle) { _, _, yoffset ->
-            polyUI.eventManager.onMouseScrolled(yoffset.toInt())
+        glfwSetCharCallback(handle) { _, codepoint ->
+            polyUI.eventManager.onKeyTyped(codepoint.toChar())
+        }
+
+        glfwSetScrollCallback(handle) { _, x, y ->
+            polyUI.eventManager.onMouseScrolled(x.toInt(), y.toInt())
         }
     }
 

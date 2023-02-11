@@ -12,7 +12,14 @@ package cc.polyfrost.polyui.layout.impl
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.utils.fastEach
+import cc.polyfrost.polyui.utils.noneAre
 
+/**
+ * A layout that you can drag around.
+ *
+ * This is a so-called "extension layout", meaning that you apply it to an existing layout, like this:
+ * `DraggableLayout(myLayout)` or using [myLayout.draggable()][Layout.draggable]
+ */
 class DraggableLayout(layout: Layout) : PointerLayout(layout) {
     init {
         layout.acceptsInput = true
@@ -24,28 +31,27 @@ class DraggableLayout(layout: Layout) : PointerLayout(layout) {
 
     override fun reRenderIfNecessary() {
         if (mouseDown) {
-            val movementX = polyui.eventManager.mouseX - mouseClickX - self.at.a.px
-            val movementY = polyui.eventManager.mouseY - mouseClickY - self.at.b.px
-            self.at.a.px = polyui.eventManager.mouseX - mouseClickX
-            self.at.b.px = polyui.eventManager.mouseY - mouseClickY
-            self.children.fastEach {
+            val movementX = polyui.eventManager.mouseX - mouseClickX - ptr.at.a.px
+            val movementY = polyui.eventManager.mouseY - mouseClickY - ptr.at.b.px
+            ptr.at.a.px = polyui.eventManager.mouseX - mouseClickX
+            ptr.at.b.px = polyui.eventManager.mouseY - mouseClickY
+            ptr.children.fastEach {
                 it.at.a.px += movementX
                 it.at.b.px += movementY
             }
-            self.components.fastEach {
+            ptr.components.fastEach {
                 it.at.a.px += movementX
                 it.at.b.px += movementY
             }
-            needsRedraw = true
         }
         super.reRenderIfNecessary()
     }
 
     override fun accept(event: Events): Boolean {
         if (event is Events.MousePressed) {
-            mouseClickX = polyui.eventManager.mouseX - self.at.a.px
-            mouseClickY = polyui.eventManager.mouseY - self.at.b.px
-            mouseDown = true
+            mouseClickX = polyui.eventManager.mouseX - ptr.at.a.px
+            mouseClickY = polyui.eventManager.mouseY - ptr.at.b.px
+            mouseDown = components.noneAre { it.mouseOver } && children.noneAre { it.mouseOver }
         }
         if (event is Events.MouseReleased) {
             mouseDown = false

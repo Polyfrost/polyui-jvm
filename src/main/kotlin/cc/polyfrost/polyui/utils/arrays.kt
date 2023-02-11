@@ -64,6 +64,21 @@ inline fun <L, E> L.fastRemoveIf(f: (E) -> Boolean) where L : MutableList<E>, L 
     }
 }
 
+/** returns true if **any of** the given predicate is true. */
+inline fun <L, E> L.anyAre(f: (E) -> Boolean): Boolean where L : List<E>, L : RandomAccess {
+    if (this.size == 0) return false
+    for (i in 0 until this.size) {
+        if (f(this[i])) return true
+    }
+    return false
+}
+
+/** return true if **none** of the given predicate is true. */
+inline fun <L, E> L.noneAre(f: (E) -> Boolean): Boolean where L : List<E>, L : RandomAccess {
+    return !anyAre(f)
+}
+
+
 /**
  * Returns a list of all elements sorted descending according to natural sort order of the value returned by specified selector function.
  *

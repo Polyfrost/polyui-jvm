@@ -23,12 +23,6 @@ data class Vec2<T : Unit>(
     val width get() = a.px
     val height get() = b.px
 
-    operator fun minus(value: Float): Vec2<T> {
-        this.a.px - value
-        this.b.px - value
-        return this
-    }
-
     operator fun get(index: Int): T {
         return when (index) {
             0 -> a
@@ -37,11 +31,28 @@ data class Vec2<T : Unit>(
         }
     }
 
-    operator fun plus(value: Float): Vec2<T> {
-        this.a.px + value
-        this.b.px + value
+    operator fun plus(value: Vec2<T>): Vec2<T> {
+        this.a.px + value.a.px
+        this.b.px + value.b.px
         return this
     }
+
+    operator fun minus(value: Vec2<T>): Vec2<T> {
+        this.a.px - value.a.px
+        this.b.px - value.b.px
+        return this
+    }
+
+    operator fun compareTo(value: Vec2<T>): Int {
+        return when {
+            this.a.px > value.a.px -> 1
+            this.a.px < value.a.px -> -1
+            this.b.px > value.b.px -> 1
+            this.b.px < value.b.px -> -1
+            else -> 0
+        }
+    }
+
 
     fun move(x: Float, y: Float): Vec2<T> {
         this.a.px += x

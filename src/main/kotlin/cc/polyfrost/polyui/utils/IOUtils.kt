@@ -25,6 +25,22 @@ fun getResourceStream(fileName: String): InputStream =
                     "is in the resources folder/on classpath)"
         )
 
+/** get all resources matching the given path and (optionally) extension. Keep empty to ignore extensions. */
+fun getResources(path: String, extension: String = ""): List<Pair<String, InputStream>> {
+    val resources = PolyUI::class.java.classLoader.getResources(path)
+    val out = ArrayList<Pair<String, InputStream>>()
+    while (resources.hasMoreElements()) {
+        val resource = resources.nextElement()
+        if (extension.isEmpty() || resource.path.endsWith(extension)) out.add(
+            Pair(
+                resource.path,
+                resource.openStream()
+            )
+        )
+    }
+    return out
+}
+
 fun getResourceStreamNullable(fileName: String): InputStream? =
     PolyUI::class.java.getResourceAsStream(fileName)
         ?: PolyUI::class.java.getResourceAsStream("/$fileName")
@@ -38,3 +54,4 @@ fun InputStream.toByteBuffer(): ByteBuffer {
         .put(bytes)
         .also { it.flip() }
 }
+

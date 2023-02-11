@@ -37,16 +37,16 @@ abstract class Component @JvmOverloads constructor(
     acceptInput: Boolean = true,
     vararg events: Events.Handler
 ) : Drawable(acceptInput) {
-    private val animations: ArrayList<Pair<Animation, (Component.() -> kotlin.Unit)?>> = ArrayList()
-    private val operations: ArrayList<Pair<DrawableOp, (Component.() -> kotlin.Unit)?>> = ArrayList()
+    protected val animations: ArrayList<Pair<Animation, (Component.() -> kotlin.Unit)?>> = ArrayList()
+    protected val operations: ArrayList<Pair<DrawableOp, (Component.() -> kotlin.Unit)?>> = ArrayList()
     var scaleX: Float = 1F
     var scaleY: Float = 1F
 
     /** current rotation of this component (radians). */
     var rotation: Double = 0.0
     val color: Color.Mutable = properties.color.toMutable()
-    private var finishColorFunc: (Component.() -> kotlin.Unit)? = null
-    private val clock = Clock()
+    protected var finishColorFunc: (Component.() -> kotlin.Unit)? = null
+    protected val clock = Clock()
     final override lateinit var layout: Layout
     open lateinit var boundingBox: Box<Unit>
 

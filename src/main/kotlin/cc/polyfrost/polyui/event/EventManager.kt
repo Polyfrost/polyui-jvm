@@ -12,11 +12,16 @@ package cc.polyfrost.polyui.event
 import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
+import cc.polyfrost.polyui.input.KeyModifiers
+import cc.polyfrost.polyui.input.Keys
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.utils.fastEach
 import cc.polyfrost.polyui.utils.fastRemoveIf
+import kotlin.experimental.or
+import kotlin.experimental.xor
 
-/** # EventManager
+/**
+ * # EventManager
  * Handles all events and passes them to the correct components/layouts.
  * @param polyUI The PolyUI instance to use.
  */
@@ -27,6 +32,8 @@ class EventManager(private val polyUI: PolyUI) {
     var mouseY: Float = 0F
         private set
     private var clickTimer: Long = 0L
+    var keyModifiers: Short = 0
+        private set
 
     /** amount of left clicks in the current combo */
     var clickAmount = 0
@@ -36,12 +43,33 @@ class EventManager(private val polyUI: PolyUI) {
     var mouseDown = false
         private set
 
-    fun onKeyPressed(key: Int) {
-        polyUI.focused?.accept(FocusedEvents.KeyPressed(key))
+
+    /** This method should be called when a printable key is typed. This key should be **mapped to the user's keyboard layout!** */
+    fun onKeyTyped(key: Char) {
+        if (polyUI.focused == null) return
+        polyUI.focused!!.accept(FocusedEvents.KeyTyped(key, keyModifiers))
     }
 
-    fun onKeyReleased(key: Int) {
-        polyUI.focused?.accept(FocusedEvents.KeyReleased(key))
+    /** This method should be called when a non-printable key is pressed. */
+    fun onKeyPressed(key: Keys) {
+        if (polyUI.focused == null) return
+        polyUI.focused!!.accept(FocusedEvents.KeyPressed(key, keyModifiers))
+    }
+
+    /**
+     * add a modifier to the current keyModifiers.
+     * @see KeyModifiers
+     */
+    fun addModifier(modifier: Short) {
+        keyModifiers = keyModifiers or modifier
+    }
+
+    /**
+     * remove a modifier from the current keyModifiers.
+     * @see KeyModifiers
+     */
+    fun removeModifier(modifier: Short) {
+        keyModifiers = keyModifiers xor modifier
     }
 
     fun setMousePosAndUpdate(x: Float, y: Float) {
@@ -131,17 +159,13 @@ class EventManager(private val polyUI: PolyUI) {
         }
     }
 
-    fun onMouseScrolled(amount: Int) {
-        val event = Events.MouseScrolled(amount)
+    fun onMouseScrolled(amountX: Int, amountY: Int) {
+        val event = Events.MouseScrolled(amountX, amountY)
         onApplicableDrawables(mouseX, mouseY) {
             if (mouseOver) {
                 if (accept(event)) return
             }
         }
-    }
-
-    fun getCharFromCode(key: Int): Char {
-        TODO()
     }
 
     companion object {

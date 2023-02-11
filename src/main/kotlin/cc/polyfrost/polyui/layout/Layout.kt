@@ -14,6 +14,8 @@ import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.event.Events
+import cc.polyfrost.polyui.layout.impl.DraggableLayout
+import cc.polyfrost.polyui.layout.impl.ScrollingLayout
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.data.Framebuffer
 import cc.polyfrost.polyui.unit.Point
@@ -247,6 +249,18 @@ abstract class Layout(
 
     override fun canBeRemoved(): Boolean {
         return !needsRedraw
+    }
+
+    /** wraps this layout in a [DraggableLayout] (so you can drag it) */
+    fun draggable(): DraggableLayout {
+        if (this is DraggableLayout) return this
+        return DraggableLayout(this)
+    }
+
+    /** wraps this layout in a [ScrollingLayout] (so you can scroll it) */
+    fun scrolling(size: Size<Unit>): ScrollingLayout {
+        if (this is ScrollingLayout) return this
+        return ScrollingLayout(this, size)
     }
 
     companion object {

@@ -9,7 +9,24 @@
 
 package cc.polyfrost.polyui.event
 
+import cc.polyfrost.polyui.input.Keys
+
 open class FocusedEvents : Event {
-    data class KeyPressed(val key: Int) : FocusedEvents()
-    data class KeyReleased(val key: Int) : FocusedEvents()
+    /**
+     * called when a key is typed (and modifiers) is pressed.
+     *
+     * @see [Keys]
+     * @see [Keys.Modifiers]
+     * @see [Keys.Modifiers.Companion.fromModifierMerged]
+     */
+    data class KeyTyped(val key: Char, val mods: Short = 0) : FocusedEvents()
+
+    /**
+     * called when a non-printable key (and modifiers) is pressed.
+     *
+     * @see [Keys]
+     * @see [Keys.Modifiers]
+     * @see [Keys.Modifiers.Companion.fromModifierMerged]
+     */
+    data class KeyPressed(val key: Keys, val mods: Short = 0) : FocusedEvents()
 }

@@ -22,40 +22,40 @@ import cc.polyfrost.polyui.unit.Vec2
 open class PointerLayout(
     layout: Layout
 ) : Layout(layout.at, layout.sized, layout.onAdded, layout.onRemoved, layout.acceptsInput, layout) {
-    protected val self = layout
-    override val at: Point<Unit> = self.at
-    override var sized: Vec2<Unit>? = self.sized
-    override var needsRedraw = self.needsRedraw
-    override var needsRecalculation = self.needsRecalculation
-    override val children = self.children
-    override val components = self.components
+    protected val ptr = layout
+    override val at: Point<Unit> = ptr.at
+    override var sized: Vec2<Unit>? = ptr.sized
+    override var needsRedraw = ptr.needsRedraw
+    override var needsRecalculation = ptr.needsRecalculation
+    override val children = ptr.children
+    override val components = ptr.components
 
-    override fun reRenderIfNecessary() = self.reRenderIfNecessary()
-    override fun preRender() = self.preRender()
+    override fun reRenderIfNecessary() = ptr.reRenderIfNecessary()
+    override fun preRender() = ptr.preRender()
 
-    override fun render() = self.preRender()
-    override fun postRender() = self.postRender()
-    override fun addComponent(drawable: Drawable) = self.addComponent(drawable)
-    override fun removeComponentNow(drawable: Drawable) = self.removeComponentNow(drawable)
-    override fun removeComponent(drawable: Drawable) = self.removeComponent(drawable)
+    override fun render() = ptr.preRender()
+    override fun postRender() = ptr.postRender()
+    override fun addComponent(drawable: Drawable) = ptr.addComponent(drawable)
+    override fun removeComponentNow(drawable: Drawable) = ptr.removeComponentNow(drawable)
+    override fun removeComponent(drawable: Drawable) = ptr.removeComponent(drawable)
     override fun calculateBounds() {
-        self.calculateBounds()
+        ptr.calculateBounds()
         if (sized == null) {
-            sized = self.sized
+            sized = ptr.sized
         }
         needsRecalculation = false
     }
 
-    override fun canBeRemoved(): Boolean = self.canBeRemoved()
+    override fun canBeRemoved(): Boolean = ptr.canBeRemoved()
     override fun onAll(onChildLayouts: Boolean, function: Component.() -> kotlin.Unit) =
-        self.onAll(onChildLayouts) { function() }
+        ptr.onAll(onChildLayouts) { function() }
 
-    override fun isInside(x: Float, y: Float): Boolean = self.isInside(x, y)
-    override fun getSize(): Vec2<Unit>? = self.getSize()
+    override fun isInside(x: Float, y: Float): Boolean = ptr.isInside(x, y)
+    override fun getSize(): Vec2<Unit>? = ptr.getSize()
 
     override fun setup(renderer: Renderer, polyUI: PolyUI) {
         super.setup(renderer, polyUI)
-        self.setup(renderer, polyUI)
+        ptr.setup(renderer, polyUI)
     }
 
 }

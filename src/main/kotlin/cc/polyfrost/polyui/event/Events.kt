@@ -15,7 +15,6 @@ import cc.polyfrost.polyui.event.EventManager.Companion.insertFalseInsn
 import cc.polyfrost.polyui.event.Events.*
 import java.util.function.Consumer
 import java.util.function.Function
-import kotlin.experimental.ExperimentalTypeInference
 
 /** Events that components can receive, for example [MouseClicked], [Added], [Removed], and more. */
 sealed class Events : Event {
@@ -47,7 +46,13 @@ sealed class Events : Event {
     object MouseExited : Events()
 
     /** acceptable by component and layout */
-    data class MouseScrolled(val amount: Int) : Events()
+    data class MouseScrolled internal constructor(val amountX: Int, val amountY: Int) : Events() {
+        constructor() : this(0, 0)
+
+        override fun hashCode(): Int {
+            return 0
+        }
+    }
 
     /** acceptable by component and layout */
     object Added : Events()
@@ -62,7 +67,6 @@ sealed class Events : Event {
      *
      * @return return true to consume the event/cancel it, false to pass it on to other handlers.
      * */
-    @OptIn(ExperimentalTypeInference::class)
     @OverloadResolutionByLambdaReturnType
     infix fun to(action: (Component.() -> Boolean)): Handler {
         return Handler(this, action as Drawable.() -> Boolean)
@@ -74,7 +78,6 @@ sealed class Events : Event {
      *
      * @return returns a [Handler] for the event, which will return false when called, meaning it will not cancel the event. Return true to cancel the event.
      * */
-    @OptIn(ExperimentalTypeInference::class)
     @OverloadResolutionByLambdaReturnType
     @JvmName("To")
     infix fun to(action: (Component.() -> Unit)): Handler {
@@ -87,7 +90,6 @@ sealed class Events : Event {
      *
      * @return return true to consume the event/cancel it, false to pass it on to other handlers.
      * */
-    @OptIn(ExperimentalTypeInference::class)
     @OverloadResolutionByLambdaReturnType
     infix fun then(action: (Component.() -> Boolean)): Handler {
         return Handler(this, action as Drawable.() -> Boolean)
@@ -100,7 +102,6 @@ sealed class Events : Event {
      *
      * @return returns a [Handler] for the event, which will return false when called, meaning it will not cancel the event. Return true to cancel the event.
      * */
-    @OptIn(ExperimentalTypeInference::class)
     @OverloadResolutionByLambdaReturnType
     @JvmName("Then")
     infix fun then(action: (Component.() -> Unit)): Handler {

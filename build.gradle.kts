@@ -38,17 +38,24 @@ allprojects {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+    kotlin {
+        sourceSets.all {
+            languageSettings.apply {
+                optIn("kotlin.experimental.ExperimentalTypeInference")
+                languageVersion = "2.0"
+            }
+        }
+    }
     tasks {
         withType(KotlinCompile::class).all {
+            // todo migrate this when it is in the kotlin {} block
             kotlinOptions {
                 jvmTarget = "1.8"
                 freeCompilerArgs = listOf(
                     "-Xjvm-default=all-compatibility",
-                    "-Xuse-k2",         // use k2 because why not :)
                     "-Xno-call-assertions",
                     "-Xno-receiver-assertions",
                     "-Xno-param-assertions",
-                    "-opt-in=kotlin.io.path.ExperimentalPathApi"
                 )
             }
         }

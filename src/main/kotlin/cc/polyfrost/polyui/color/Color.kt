@@ -89,12 +89,13 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
             return clone()
         }
 
-        /** recolor this color to the target color, with the given animation type and duration.
+        /**
+         * recolor this color to the target color, with the given animation type and duration.
          *
          * **make sure to check if the color is a gradient, as this method may not have the expected result!**
          * @param type animation type. if it is null, the color will be set to the target color immediately.
          * @see [Gradient]
-         * */
+         */
         open fun recolor(target: Color, type: Animation.Type? = null, durationMillis: Long = 1000) {
             if (type != null) {
                 this.animation = Array(4) {
@@ -114,10 +115,12 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
             }
         }
 
-        /** update the color animation, if present.
+        /**
+         * update the color animation, if present.
          * After, the animation is cleared, and the color becomes static again.
          *
-         * @return true if the animation finished on this tick, false if otherwise */
+         * @return true if the animation finished on this tick, false if otherwise
+         * */
         open fun update(deltaTimeMillis: Long): Boolean {
             if (animation != null) {
                 if (animation!![0].isFinished) {
@@ -206,7 +209,8 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         }
 
         /** merge the colors of this gradient into one color.
-         * @param colorToMergeTo which color to merge to. 1 for the first color, 2 for the second. */
+         * @param colorToMergeTo which color to merge to. 1 for the first color, 2 for the second.
+         * */
         fun mergeColors(colorToMergeTo: Int, type: Animation.Type? = null, durationMillis: Long = 1000L) {
             if (colorToMergeTo == 1) {
                 color2.recolor(this, type, durationMillis)
@@ -227,18 +231,21 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         }
     }
 
-    /** # Chroma Color
+    /**
+     * # Chroma Color
      *
      * A color that changes over [time][speedMillis], in an endless cycle. You can use the [saturation] and [brightness] fields to set the tone of the chroma. Some examples:
      *
      * `brightness = 0.2f, saturation = 0.8f` -> dark chroma
      *
      * `brightness = 0.8f, saturation = 0.8f` -> less offensive chroma tone
-     * */
+     */
     class Chroma @JvmOverloads constructor(
-        /** the speed of this color, in milliseconds.
+        /**
+         * the speed of this color, in milliseconds.
          *
-         * The speed refers to the amount of time it takes for this color to complete one cycle, e.g. from red, through to blue, through to green, then back to red. */
+         * The speed refers to the amount of time it takes for this color to complete one cycle, e.g. from red, through to blue, through to green, then back to red.
+         * */
         private val speedMillis: Long = 5000L,
         /** brightness of the color range (0.0 - 1.0) */
         private val brightness: Float = 1f,
