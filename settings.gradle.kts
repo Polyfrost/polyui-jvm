@@ -7,6 +7,6 @@ pluginManagement {
 
 rootProject.name = "polyui"
 
-include("nanovg-impl")
+include(":nanovg-impl")
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")

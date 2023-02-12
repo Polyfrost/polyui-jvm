@@ -1,38 +1,48 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.archivesName
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.dokka.base.DokkaBase
+import org.jetbrains.dokka.base.DokkaBaseConfiguration
+import org.jetbrains.dokka.gradle.AbstractDokkaTask
+import java.time.Year
 
-@Suppress("DSL_SCOPE_VIOLATION") // TODO: remove when we update to gradle 8.1
+@Suppress(
+    "DSL_SCOPE_VIOLATION",
+    "MISSING_DEPENDENCY_CLASS",
+    "UNRESOLVED_REFERENCE_WRONG_RECEIVER",
+    "FUNCTION_CALL_EXPECTED"
+)
 
 plugins {
     `java-library`
-    `maven-publish`
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.licenser)
     alias(libs.plugins.kotlinter)
+    alias(libs.plugins.git.hooks)
+    alias(libs.plugins.dokka)
+    `maven-publish`
+}
+
+buildscript {
+    dependencies {
+        classpath(libs.dokka.base)
+    }
 }
 
 group = "cc.polyfrost"
 version = project.findProperty("version") as String
 val targetKotlinVersion = project.findProperty("kotlin.target") as String? ?: "1.8"
 
-subprojects {
+allprojects {
     apply(plugin = "java-library")
-    apply(plugin = "kotlin")
-    apply(plugin = "org.quiltmc.gradle.licenser")
-    apply(plugin = "org.jmailen.kotlinter")
+    apply(plugin=rootProject.libs.plugins.kotlin.jvm.get().pluginId)
+    apply(plugin=rootProject.libs.plugins.licenser.get().pluginId)
+    apply(plugin=rootProject.libs.plugins.kotlinter.get().pluginId)
+    apply(plugin=rootProject.libs.plugins.dokka.get().pluginId)
+    apply(plugin="maven-publish")
 
     group = rootProject.group
     version = rootProject.version
 
-    dependencies {
-        api(project.rootProject)
-    }
-
-    archivesName.set("${rootProject.name}-${project.name}")
-}
-
-// TODO: cleanup with some simple build logic/integrate into textile
-allprojects {
     repositories {
         mavenCentral()
         maven("https://repo.polyfrost.cc/releases")
@@ -42,6 +52,7 @@ allprojects {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+
     kotlin {
         sourceSets.all {
             languageSettings.apply {
@@ -51,6 +62,19 @@ allprojects {
             }
         }
     }
+
+    kotlinter {
+        ignoreFailures = false
+        reporters = arrayOf("checkstyle", "plain")
+        experimentalRules = true
+        disabledRules = arrayOf("no-wildcard-imports", "filename", "max-line-length")
+    }
+
+    license {
+        rule("${rootProject.projectDir}/format/HEADER")
+        include("**/*.kt")
+    }
+
     tasks {
         withType(KotlinCompile::class).all {
             // todo migrate this when it is in the kotlin {} block
@@ -65,6 +89,27 @@ allprojects {
                 )
             }
         }
+
+        withType<AbstractDokkaTask> {
+            pluginConfiguration<DokkaBase, DokkaBaseConfiguration> {
+                val rootPath = "${rootProject.projectDir.absolutePath}/format/dokka"
+                customStyleSheets = file("$rootPath/styles").listFiles()!!.toList()
+                customAssets = file("$rootPath/assets").listFiles()!!.toList()
+                templatesDir = file("$rootPath/templates")
+
+                footerMessage = "© ${Year.now().value} PolyUI"
+            }
+
+            doLast {
+                val scriptsOut = outputDirectory.get().resolve("scripts")
+                val scriptsIn = file("${rootProject.projectDir}/format/dokka/scripts")
+                if (project != rootProject) return@doLast
+                scriptsIn.listFiles()!!.forEach {
+                    it.copyTo(scriptsOut.resolve(it.name), overwrite = true)
+                }
+            }
+        }
+
         named("build") {
             dependsOn("format")
         }
@@ -76,20 +121,89 @@ allprojects {
         }
     }
 
-    kotlinter {
-        ignoreFailures = false
-        reporters = arrayOf("checkstyle", "plain")
-        experimentalRules = true
-        disabledRules = arrayOf("no-wildcard-imports", "filename", "max-line-length")
+    tasks {
+        val dokkaJavadocJar by creating(Jar::class.java) {
+            group = "documentation"
+            archiveClassifier.set("javadoc")
+            from(dokkaJavadoc)
+        }
     }
 
-    license {
-        rule(rootProject.file("FILEHEADER"))
-        include("**/*.kt")
+    publishing {
+        publications {
+            create<MavenPublication>("Maven") {
+                artifactId = project.name
+                version = rootProject.version.toString()
+
+                artifact(tasks.getByName<Jar>("jar").archiveFile)
+
+                artifact(tasks.getByName<Jar>("dokkaJavadocJar").archiveFile) {
+                    builtBy(tasks.getByName("dokkaJavadocJar"))
+                    this.classifier = "javadoc"
+                }
+            }
+        }
+
+        repositories {
+            mavenLocal()
+            maven {
+                url = uri("https://repo.polyfrost.cc/releases")
+                name = "polyReleases"
+                credentials(PasswordCredentials::class)
+            }
+            maven {
+                url = uri("https://repo.polyfrost.cc/snapshots")
+                name = "polySnapshots"
+                credentials(PasswordCredentials::class)
+            }
+            maven {
+                url = uri("https://repo.polyfrost.cc/private")
+                name = "polyPrivate"
+                credentials(PasswordCredentials::class)
+            }
+        }
+    }
+}
+
+subprojects {
+    dependencies {
+        api(project.rootProject)
+    }
+
+    archivesName.set("${rootProject.name}-${project.name}")
+
+    tasks.named<Jar>("dokkaJavadocJar") {
+        archiveBaseName.set("polyui-${project.name}")
     }
 }
 
 dependencies {
     implementation(libs.bundles.slf4j)
     implementation(libs.bundles.kotlin)
+}
+
+tasks {
+    create("dokkaHtmlJar", Jar::class.java) {
+        group = "documentation"
+        archiveBaseName.set("polyui")
+        archiveClassifier.set("dokka")
+        from(dokkaHtmlMultiModule.get().outputDirectory)
+        duplicatesStrategy = DuplicatesStrategy.FAIL
+    }
+}
+
+publishing {
+    publications {
+        getByName<MavenPublication>("Maven") {
+            val dokka = rootProject.tasks.getByName<Jar>("dokkaHtmlJar")
+            artifact(dokka.archiveFile) {
+                builtBy(dokka)
+                classifier = "dokka"
+            }
+        }
+    }
+}
+
+gitHooks {
+    setHooks(mapOf("pre-commit" to "format"))
 }
