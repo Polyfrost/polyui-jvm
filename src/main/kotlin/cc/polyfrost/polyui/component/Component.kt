@@ -14,9 +14,7 @@ import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.property.Properties
-import cc.polyfrost.polyui.unit.Box
-import cc.polyfrost.polyui.unit.Point
-import cc.polyfrost.polyui.unit.Size
+import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.utils.Clock
 import cc.polyfrost.polyui.utils.fastEach
@@ -58,8 +56,7 @@ abstract class Component @JvmOverloads constructor(
 
     override fun accept(event: Events): Boolean {
         if (super.accept(event)) return true
-        if (properties.eventHandlers[event]?.let { it(this) } == true) return true
-        return false
+        return properties.eventHandlers[event]?.let { it(this) } == true
     }
 
     /** Add a [DrawableOp] to this component. */
@@ -103,13 +100,13 @@ abstract class Component @JvmOverloads constructor(
      */
     // todo this might change ^
     fun move(
-        byX: Float,
-        byY: Float,
+        to: Vec2<Unit>,
         animation: Animation.Type? = null,
         durationMillis: Long = 0L,
         onFinish: (Component.() -> kotlin.Unit)? = null
     ) {
-        addOperation(DrawableOp.Translate(byX, byY, this, animation, durationMillis), onFinish)
+        doDynamicSize(to)
+        addOperation(DrawableOp.Move(to, this, animation, durationMillis), onFinish)
     }
 
     /** resize this component to the given size. */

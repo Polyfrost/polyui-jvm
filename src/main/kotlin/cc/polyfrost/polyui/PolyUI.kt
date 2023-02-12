@@ -12,6 +12,8 @@ package cc.polyfrost.polyui
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.component.Focusable
 import cc.polyfrost.polyui.event.EventManager
+import cc.polyfrost.polyui.input.KeyBinder
+import cc.polyfrost.polyui.input.KeyModifiers
 import cc.polyfrost.polyui.layout.impl.PixelLayout
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.Point
@@ -72,6 +74,7 @@ class PolyUI(
         private set
     val master = PixelLayout(Point(0.px, 0.px), Size(width.px, height.px), items = items)
     val eventManager = EventManager(this)
+    val keyBinder = KeyBinder()
     private val settings = renderer.settings
     private var renderHooks = arrayListOf<Renderer.() -> kotlin.Unit>()
     internal var focused: (Focusable)? = null
@@ -84,22 +87,32 @@ class PolyUI(
                 it.fbo = renderer.createFramebuffer(it.width.toInt(), it.height.toInt(), settings.bufferType)
             }
             if (it.width > width || it.height > height) {
-                LOGGER.warn("Layout $it is larger than the window. This may cause issues.")
+                LOGGER.warn("Layout {} is larger than the window. This may cause issues.", it)
             }
         }
         if (settings.masterIsFramebuffer) master.fbo = renderer.createFramebuffer(width, height, settings.bufferType)
         if (this.settings.debugLog) this.master.debugPrint()
         Unit.VUnits.vHeight = height.toFloat()
         Unit.VUnits.vWidth = width.toFloat()
+        keyBinder.add('I', KeyModifiers.LCONTROL, KeyModifiers.LSHIFT) {
+            settings.debug = !settings.debug
+            LOGGER.info("Debug mode {}", if (settings.debug) "enabled" else "disabled")
+            true
+        }
+        keyBinder.add('R', KeyModifiers.LCONTROL) {
+            LOGGER.info("Reloading PolyUI")
+            onResize(width, height, renderer.pixelRatio, true)
+            true
+        }
         LOGGER.info("PolyUI initialized")
     }
 
-    fun onResize(newWidth: Int, newHeight: Int, pixelRatio: Float) {
-        if (newWidth == width && newHeight == height && pixelRatio == this.renderer.pixelRatio) {
+    fun onResize(newWidth: Int, newHeight: Int, pixelRatio: Float, force: Boolean = false) {
+        if (!force && newWidth == width && newHeight == height && pixelRatio == this.renderer.pixelRatio) {
             LOGGER.warn("PolyUI was resized to the same size. Ignoring.")
             return
         }
-        if (settings.debug) LOGGER.info("resize: $newWidth x $newHeight")
+        if (settings.debug) LOGGER.info("resize: {} x {}", newWidth, newHeight)
 
         master.sized!!.a.px = newWidth.toFloat()
         master.sized!!.b.px = newHeight.toFloat()

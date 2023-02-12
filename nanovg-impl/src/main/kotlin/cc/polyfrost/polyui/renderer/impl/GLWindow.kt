@@ -108,7 +108,12 @@ class GLWindow @JvmOverloads constructor(
         glfwSetKeyCallback(handle) { _, keyCode, _, action, mods ->
             // p.s. I have performance tested this; and it is very fast (doesn't even show up on profiler). kotlin is good at int ranges lol
             if (keyCode < 100) {
-                if (mods > 1 && action != GLFW_RELEASE) polyUI.eventManager.onKeyTyped(keyCode.toChar())
+                if (mods > 1 && action != GLFW_RELEASE) {
+                    polyUI.eventManager.onKeyTyped(
+                        keyCode.toChar(),
+                        action == GLFW_REPEAT
+                    )
+                }
             } else if (keyCode < 340) {
                 val key: Keys = (
                     when (keyCode) {
@@ -122,7 +127,7 @@ class GLWindow @JvmOverloads constructor(
                         else -> Keys.UNKNOWN
                     }
                     )
-                if (action != GLFW_RELEASE) polyUI.eventManager.onKeyPressed(key)
+                if (action != GLFW_RELEASE) polyUI.eventManager.onKeyPressed(key, action == GLFW_REPEAT)
             } else {
                 val key: KeyModifiers = (
                     when (keyCode) {
@@ -146,7 +151,7 @@ class GLWindow @JvmOverloads constructor(
         }
 
         glfwSetCharCallback(handle) { _, codepoint ->
-            polyUI.eventManager.onKeyTyped(codepoint.toChar())
+            polyUI.eventManager.onKeyTyped(codepoint.toChar(), false)
         }
 
         glfwSetScrollCallback(handle) { _, x, y ->

@@ -14,11 +14,10 @@ import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
-import cc.polyfrost.polyui.utils.*
-import kotlin.Exception
-import kotlin.Float
-import kotlin.Int
-import kotlin.Suppress
+import cc.polyfrost.polyui.utils.fastEach
+import cc.polyfrost.polyui.utils.fastEachIndexed
+import cc.polyfrost.polyui.utils.moveElement
+import cc.polyfrost.polyui.utils.sortedByDescending
 import kotlin.math.max
 
 /**
@@ -190,7 +189,11 @@ class FlexLayout @JvmOverloads constructor(
                 minIndex += it.drawables.size
                 if (strictSize) {
                     if (maxCrossSizeNoGaps > crossSize) {
-                        PolyUI.LOGGER.warn("[Flex] Cross size is too small for the content. (Cross size: $crossSize, content size: $maxCrossSizeNoGaps). Excess removed.")
+                        PolyUI.LOGGER.warn(
+                            "[Flex] Cross size is too small for the content. (Cross size: {}, content size: {}). Excess removed.",
+                            crossSize,
+                            maxCrossSizeNoGaps
+                        )
                         err = true
                         return@run // break https://kotlinlang.org/docs/returns.html#return-to-labels
                     }
@@ -289,7 +292,12 @@ class FlexLayout @JvmOverloads constructor(
         val isSizedMain = if (mainSize != 0F) {
             true
         } else {
-            if (wrapDirection != Wrap.NoWrap) PolyUI.LOGGER.warn("[Flex] Drawable ${this.drawable} has a main size of 0. This may lead to odd things on wrapped layouts.")
+            if (wrapDirection != Wrap.NoWrap) {
+                PolyUI.LOGGER.warn(
+                    "[Flex] Drawable {} has a main size of 0. This may lead to odd things on wrapped layouts.",
+                    this.drawable
+                )
+            }
             false
         }
         val isSizedCross = crossSize != 0F

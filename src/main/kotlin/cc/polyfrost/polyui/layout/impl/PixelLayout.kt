@@ -13,7 +13,6 @@ import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
-import cc.polyfrost.polyui.utils.fastEach
 import kotlin.math.max
 
 /**
@@ -35,27 +34,16 @@ open class PixelLayout(
                 // todo make special exceptions that can tell you more verbosely which component is at fault
                 throw Exception("Unit type mismatch: Drawable $it does not have a valid unit type for layout: ${this.simpleName} (using ${it.atUnitType()})")
             }
-        }
-    }
-
-    override fun calculateBounds() {
-        super.calculateBounds()
-        children.fastEach {
             it.at.a.px += x
             it.at.b.px += y
         }
-        components.fastEach {
-            it.at.a.px += x
-            it.at.b.px += y
-        }
-        if (needsRecalculation) sized = getSize()
     }
 
     override fun getSize(): Vec2<Unit> {
-        var width = children.maxOfOrNull { it.x + it.width } ?: 0f
-        width = max(width, components.maxOfOrNull { it.x + it.width } ?: 0f)
-        var height = children.maxOfOrNull { it.y + it.height } ?: 0f
-        height = max(height, components.maxOfOrNull { it.y + it.height } ?: 0f)
+        var width = children.maxOfOrNull { (it.x - x) + it.width } ?: 0f
+        width = max(width, components.maxOfOrNull { (it.x - x) + it.width } ?: 0f)
+        var height = children.maxOfOrNull { (it.y - y) + it.height } ?: 0f
+        height = max(height, components.maxOfOrNull { (it.y - y) + it.height } ?: 0f)
         if (width == 0f) throw Exception("unable to infer width of ${this.simpleName}: no sized children or component, please specify a size")
         if (height == 0f) throw Exception("unable to infer height of ${this.simpleName}: no sized children or component, please specify a size")
         return width.px * height.px

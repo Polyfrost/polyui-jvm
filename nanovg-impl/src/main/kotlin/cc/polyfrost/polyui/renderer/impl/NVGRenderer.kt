@@ -350,7 +350,12 @@ class NVGRenderer : Renderer() {
                     ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) {
                         getResourceStream(
                             defaultFont.fileName
-                        ).also { PolyUI.LOGGER.warn("Failed to get font: ${font.fileName}, falling back to default font!") }
+                        ).also {
+                            PolyUI.LOGGER.warn(
+                                "Failed to get font: {}, falling back to default font!",
+                                font.fileName
+                            )
+                        }
                             .toByteBuffer()
                     } else {
                         throw ExceptionInInitializerError("Failed to get font: ${font.fileName}")
@@ -366,7 +371,12 @@ class NVGRenderer : Renderer() {
             val stream = getResourceStreamNullable(image.fileName)
                 ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) {
                     getResourceStream(defaultImage.fileName)
-                        .also { PolyUI.LOGGER.warn("Failed to get image: ${image.fileName}, falling back to default image!") }
+                        .also {
+                            PolyUI.LOGGER.warn(
+                                "Failed to get image: {}, falling back to default image!",
+                                image.fileName
+                            )
+                        }
                 } else {
                     throw ExceptionInInitializerError("Failed to get image: ${image.fileName}")
                 }

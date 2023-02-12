@@ -5,7 +5,7 @@ pluginManagement {
     }
 }
 
-rootProject.name = "polyui-jvm"
+rootProject.name = "polyui"
 
 include("nanovg-impl")
 

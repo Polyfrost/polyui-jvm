@@ -15,12 +15,11 @@ import cc.polyfrost.polyui.component.DrawableOp.*
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.unit.Vec2
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Class to represent an operation that can be applied on a component that modifies it in some way.
  *
- * It is applied before and after rendering, for example a [Translate], [Scale], or [Rotate] operation, or a transition.
+ * It is applied before and after rendering, for example a [Move], [Scale], or [Rotate] operation, or a transition.
  */
 abstract class DrawableOp(protected open val drawable: Drawable) {
     abstract val animation: Animation?
@@ -51,32 +50,31 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
     open val isFinished
         get() = animation?.isFinished ?: true
 
-    /** Note: if you are making a UI, you should probably be using [scale][cc.polyfrost.polyui.component.Component.scale], [rotate][cc.polyfrost.polyui.component.Component.rotate], or [translate][cc.polyfrost.polyui.component.Component.move] instead of this class.
+    /**
+     * Note: if you are making a UI, you should probably be using [scale][cc.polyfrost.polyui.component.Component.scale], [rotate][cc.polyfrost.polyui.component.Component.rotate], or [translate][cc.polyfrost.polyui.component.Component.move] instead of this class.
      */
-    @ApiStatus.Internal
-    class Translate(
-        private val x: Float,
-        private val y: Float,
+    class Move(
+        private val to: Vec2<Unit>,
         drawable: Drawable,
         type: Animations? = null,
         durationMillis: Long = 1000L
     ) : DrawableOp(drawable) {
-        override val animation = type?.create(durationMillis, drawable.x, drawable.x + x)
-        private val yAnim = type?.create(durationMillis, drawable.y, drawable.y + y)
+        override val animation = type?.create(durationMillis, drawable.x, drawable.x + to.x)
+        private val animation2 = type?.create(durationMillis, drawable.y, drawable.y + to.y)
         override fun apply(renderer: Renderer) {
             if (animation != null) {
                 drawable.at.a.px += animation.value
-                drawable.at.b.px += yAnim!!.value
+                drawable.at.b.px += animation2!!.value
             } else {
-                drawable.at.a.px += x
-                drawable.at.b.px += y
+                drawable.at.a.px += to.x
+                drawable.at.b.px += to.y
             }
         }
     }
 
-    /** Note: if you are making a UI, you should probably be using [scale][cc.polyfrost.polyui.component.Component.scale], [rotate][cc.polyfrost.polyui.component.Component.rotate], or [translate][cc.polyfrost.polyui.component.Component.move] instead of this class.
+    /**
+     * Note: if you are making a UI, you should probably be using [scale][cc.polyfrost.polyui.component.Component.scale], [rotate][cc.polyfrost.polyui.component.Component.rotate], or [translate][cc.polyfrost.polyui.component.Component.move] instead of this class.
      */
-    @ApiStatus.Internal
     class Scale(
         private val x: Float,
         private val y: Float,
@@ -97,9 +95,9 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         }
     }
 
-    /** Note: if you are making a UI, you should probably be using [scale][cc.polyfrost.polyui.component.Component.scale], [rotate][cc.polyfrost.polyui.component.Component.rotate], or [translate][cc.polyfrost.polyui.component.Component.move] instead of this class.
+    /**
+     * Note: if you are making a UI, you should probably be using [scale][cc.polyfrost.polyui.component.Component.scale], [rotate][cc.polyfrost.polyui.component.Component.rotate], or [translate][cc.polyfrost.polyui.component.Component.move] instead of this class.
      */
-    @ApiStatus.Internal
     class Rotate(
         private val angle: Double,
         override val drawable: Component,
@@ -119,7 +117,6 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         }
     }
 
-    @ApiStatus.Internal
     class Resize(
         private val toSize: Vec2<Unit>,
         drawable: Drawable,

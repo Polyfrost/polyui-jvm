@@ -47,10 +47,6 @@ class ScrollingLayout(
         return false
     }
 
-    override fun calculateBounds() {
-        super.calculateBounds()
-    }
-
     companion object {
         @JvmField
         var scrollbarProperties = ScrollbarProperties()
@@ -63,25 +59,19 @@ class ScrollingLayout(
     ) {
         private val contentSize = owner.ptr.sized
         private val windowSize = owner.size
+        private val normalPos =
+            ((owner.at.a.px + owner.size.b.px) - properties.padding - (properties as ScrollbarProperties).width).px * owner.at.b.px.px
+        private val hiddenPos =
+            normalPos.clone().also { it.a.px += (properties as ScrollbarProperties).width + properties.padding }
         var shown = false
             private set(value) {
                 if (value == field) return
                 field = value
                 properties as ScrollbarProperties
                 if (value) {
-                    this.move(
-                        -(this.width + properties.padding),
-                        0F,
-                        properties.showAnimation,
-                        properties.showAnimationDuration
-                    )
+                    this.move(normalPos, properties.showAnimation, properties.showAnimationDuration)
                 } else {
-                    this.move(
-                        this.width + properties.padding,
-                        0F,
-                        properties.showAnimation,
-                        properties.showAnimationDuration
-                    )
+                    this.move(hiddenPos, properties.showAnimation, properties.showAnimationDuration)
                 }
             }
 
@@ -99,11 +89,7 @@ class ScrollingLayout(
         }
 
         override fun accept(event: Events): Boolean {
-            if (event is Events.MouseScrolled) {
-                println("d")
-                return true
-            }
-            return false
+            return event is Events.MouseScrolled
         }
 
         override fun render() {

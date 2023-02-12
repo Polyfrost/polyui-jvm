@@ -12,8 +12,8 @@ plugins {
 }
 
 group = "cc.polyfrost"
-version = "0.9.3"
-val targetKotlinVersion = "1.6"
+version = project.findProperty("version") as String
+val targetKotlinVersion = project.findProperty("kotlin.target") as String? ?: "1.8"
 
 subprojects {
     apply(plugin = "java-library")
@@ -64,6 +64,9 @@ allprojects {
                     "-Xno-param-assertions",
                 )
             }
+        }
+        named("build") {
+            dependsOn("format")
         }
 
         register("format") {

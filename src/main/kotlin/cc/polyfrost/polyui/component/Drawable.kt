@@ -17,7 +17,6 @@ import cc.polyfrost.polyui.unit.Point
 import cc.polyfrost.polyui.unit.Size
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.unit.Vec2
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * # Drawable
@@ -25,10 +24,9 @@ import org.jetbrains.annotations.ApiStatus
  *
  * This class is implemented for both [Layout] and [Drawable], and you should use them as bases if you are creating a UI in most cases.
  */
-@ApiStatus.Internal
 abstract class Drawable(var acceptsInput: Boolean = true) {
     protected open val eventHandlers = mutableMapOf<Events, Drawable.() -> Boolean>()
-    open val simpleName = this.toString().substringAfterLast(".")
+    open var simpleName = this.toString().substringAfterLast(".")
     abstract val at: Point<Unit>
     abstract var sized: Size<Unit>?
     lateinit var renderer: Renderer
@@ -114,7 +112,7 @@ abstract class Drawable(var acceptsInput: Boolean = true) {
 
     /** implement this method to add a debug print message for this drawable. */
     open fun debugPrint() {
-        PolyUI.LOGGER.warn("Drawable $this has no debug print method implemented, defaulting to no-op.")
+        PolyUI.LOGGER.warn("Drawable {} has no debug print method implemented, defaulting to no-op.", this)
     }
 
     open fun isInside(x: Float, y: Float): Boolean {

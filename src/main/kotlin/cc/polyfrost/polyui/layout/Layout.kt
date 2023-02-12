@@ -168,17 +168,30 @@ abstract class Layout(
 
     /** removes a component immediately, without waiting for it to finish up.
      *
-     * This is marked as internal because you should be using [removeComponent] for most cases to remove a component, as it waits for it to finish and play any removal animations. */
+     * This is marked as internal because you should be using [removeComponent] for most cases to remove a component, as it waits for it to finish and play any removal animations.
+     */
     @ApiStatus.Internal
     open fun removeComponentNow(drawable: Drawable) {
         removeQueue.remove(drawable)
         when (drawable) {
             is Component -> {
-                if (!components.remove(drawable)) PolyUI.LOGGER.warn("Tried to remove component $drawable from $this, but it wasn't found!")
+                if (!components.remove(drawable)) {
+                    PolyUI.LOGGER.warn(
+                        "Tried to remove component {} from {}, but it wasn't found!",
+                        drawable,
+                        this
+                    )
+                }
             }
 
             is Layout -> {
-                if (!children.remove(drawable)) PolyUI.LOGGER.warn("Tried to remove layout $drawable from $this, but it wasn't found!")
+                if (!children.remove(drawable)) {
+                    PolyUI.LOGGER.warn(
+                        "Tried to remove layout {} from {}, but it wasn't found!",
+                        drawable,
+                        this
+                    )
+                }
             }
 
             else -> {

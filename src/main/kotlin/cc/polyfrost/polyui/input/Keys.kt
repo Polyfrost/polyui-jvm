@@ -10,7 +10,10 @@
 package cc.polyfrost.polyui.input
 
 import cc.polyfrost.polyui.input.Keys.Modifiers
+import cc.polyfrost.polyui.input.Keys.Modifiers.Companion.fromModifierMerged
+import cc.polyfrost.polyui.input.Keys.Modifiers.Companion.merge
 import kotlin.experimental.and
+import kotlin.experimental.or
 
 /**
  * PolyUI's mapping for unprintable key codes.
@@ -79,7 +82,7 @@ enum class Keys(val keyName: String, val value: Short) {
             val mods = Modifiers.fromModifierMerged(modifiers)
             if (mods.size == 0) return key.keyName
             val modString = mods.joinToString("+") { it.toString() }
-            return "$modString + ${key.keyName}"
+            return "$modString+${key.keyName}"
         }
 
         /**
@@ -124,6 +127,9 @@ enum class Keys(val keyName: String, val value: Short) {
 
     /**
      * PolyUI's mapping for modifier keys, in binary form so logical OR can be used to check for multiple modifiers.
+     *
+     * @see fromModifierMerged
+     * @see merge
      */
     enum class Modifiers(val keyName: String, val value: Short) {
         LSHIFT("Left Shift", 0b00000001),
@@ -142,7 +148,10 @@ enum class Keys(val keyName: String, val value: Short) {
         UNKNOWN("Unknown", 0);
 
         companion object {
-            /** take the given short-merged modifiers and return a list of the modifiers. */
+            /**
+             * take the given short-merged modifiers and return a list of the modifiers.
+             * @see merge
+             */
             @JvmStatic
             fun fromModifierMerged(modifiers: Short): MutableList<Modifiers> {
                 if (modifiers == 0.toShort()) return mutableListOf()
@@ -154,8 +163,25 @@ enum class Keys(val keyName: String, val value: Short) {
                 }
                 return mods
             }
+
+            /**
+             * merge the given modifiers into a single short.
+             * @see fromModifierMerged
+             */
+            @JvmStatic
+            fun merge(vararg modifiers: Modifiers): Short {
+                var merged = 0.toShort()
+                for (mod in modifiers) {
+                    merged = merged or mod.value
+                }
+                return merged
+            }
         }
     }
 }
+
+fun Short.fromModifierMerged(): MutableList<Modifiers> = Modifiers.fromModifierMerged(this)
+
+fun Array<out Modifiers>.merge(): Short = Modifiers.merge(*this)
 
 typealias KeyModifiers = Modifiers

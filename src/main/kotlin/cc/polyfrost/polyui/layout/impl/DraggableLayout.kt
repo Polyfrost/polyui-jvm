@@ -23,6 +23,7 @@ import cc.polyfrost.polyui.utils.noneAre
 class DraggableLayout(layout: Layout) : PointerLayout(layout) {
     init {
         layout.acceptsInput = true
+        layout.simpleName += " [Draggable]"
     }
 
     private var mouseClickX = 0f

@@ -22,10 +22,9 @@ slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }
-kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlin-annotations = { module = "org.jetbrains:annotations", version.ref = "annotations" }
 
 [bundles]
 lwjgl = ["lwjgl", "lwjgl-nanovg", "lwjgl-opengl", "lwjgl-stb", "lwjgl-glfw"]
 slf4j = ["slf4j-api", "slf4j-simple"]
-kotlin = ["kotlin-stdlib", "kotlin-reflect", "kotlin-annotations"]
+kotlin = ["kotlin-stdlib", "kotlin-annotations"]

@@ -44,15 +44,23 @@ class EventManager(private val polyUI: PolyUI) {
         private set
 
     /** This method should be called when a printable key is typed. This key should be **mapped to the user's keyboard layout!** */
-    fun onKeyTyped(key: Char) {
-        if (polyUI.focused == null) return
-        polyUI.focused!!.accept(FocusedEvents.KeyTyped(key, keyModifiers))
+    fun onKeyTyped(key: Char, isRepeat: Boolean) {
+        val event = FocusedEvents.KeyTyped(key, keyModifiers, isRepeat)
+        if (!isRepeat) {
+            if (polyUI.keyBinder.accept(event)) return
+        } else {
+            polyUI.focused?.accept(event)
+        }
     }
 
     /** This method should be called when a non-printable key is pressed. */
-    fun onKeyPressed(key: Keys) {
-        if (polyUI.focused == null) return
-        polyUI.focused!!.accept(FocusedEvents.KeyPressed(key, keyModifiers))
+    fun onKeyPressed(key: Keys, isRepeat: Boolean) {
+        val event = FocusedEvents.KeyPressed(key, keyModifiers, isRepeat)
+        if (!isRepeat) {
+            if (polyUI.keyBinder.accept(event)) return
+        } else {
+            polyUI.focused?.accept(event)
+        }
     }
 
     /**
@@ -74,15 +82,17 @@ class EventManager(private val polyUI: PolyUI) {
     fun setMousePosAndUpdate(x: Float, y: Float) {
         mouseX = x
         mouseY = y
-        onApplicableDrawables_dontCheckChildren(x, y) {
-            // we only need to check acceptsInput here as it controls the mouseOver flag, so if it doesn't accept input, mouseOver is always false
-            if (isInside(x, y) && acceptsInput) {
-                if (mouseOver) {
-                    // it.accept(ComponentEvent.MouseMoved(x, y))
-                } else {
-                    accept(Events.MouseEntered)
-                    mouseOverDrawables.add(this)
-                    mouseOver = true
+        if (!mouseDown) {
+            onApplicableDrawables_dontCheckChildren(x, y) {
+                // we only need to check acceptsInput here as it controls the mouseOver flag, so if it doesn't accept input, mouseOver is always false
+                if (isInside(x, y) && acceptsInput) {
+                    if (mouseOver) {
+                        // it.accept(ComponentEvent.MouseMoved(x, y))
+                    } else {
+                        accept(Events.MouseEntered)
+                        mouseOverDrawables.add(this)
+                        mouseOver = true
+                    }
                 }
             }
         }
