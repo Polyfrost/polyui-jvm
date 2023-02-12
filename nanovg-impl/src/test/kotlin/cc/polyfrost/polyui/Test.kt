@@ -26,6 +26,8 @@ import cc.polyfrost.polyui.renderer.impl.NVGRenderer
 import cc.polyfrost.polyui.unit.*
 import java.lang.Math.random
 
+private var lastSecond = System.currentTimeMillis()
+
 fun main() {
     val window = GLWindow("Test", 800, 800)
     val things = Array<Drawable>(50) { // creates 50 rectangles with random sizes
@@ -82,6 +84,21 @@ fun main() {
             )
         )
     )
+
+    val fpsText = Text(
+        text = "FPS: ${window.fps}",
+        fontSize = 16.px,
+        at = 50.percent * 1.px,
+        textAlign = TextAlign.Center
+    )
+    polyUI.master.addComponent(fpsText)
+
+    polyUI.addRenderHook {
+        if (lastSecond + 1000 < System.currentTimeMillis()) {
+            lastSecond = System.currentTimeMillis()
+            fpsText.text = "FPS: ${window.fps}"
+        }
+    }
 
     window.open(polyUI)
 }
