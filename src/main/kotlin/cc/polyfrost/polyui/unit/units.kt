@@ -50,10 +50,25 @@ val fillv = fill * fill
 
 fun index(index: Int) = Unit.Flex(index)
 
-/** create a new flex unit, in vec2 form for at property. */
+/**
+ * create a new flex unit, in vec2 form for at property.
+ * @see Unit.Flex
+ * @see cc.polyfrost.polyui.layout.impl.FlexLayout
+ */
 @JvmOverloads
 fun flex(index: Int = -1, flexShrink: Int = 0, flexGrow: Int = 0, endRowAfter: Boolean = false): Vec2<Unit> {
     val u = Unit.Flex(index, flexShrink, flexGrow, endRowAfter)
+    return Vec2(u, u.clone())
+}
+
+/**
+ * create a new grid unit, in vec2 form for at property.
+ * @see Unit.Grid
+ * @see cc.polyfrost.polyui.layout.impl.GridLayout
+ */
+@JvmOverloads
+fun grid(row: Int, column: Int, rowSpan: Int = 1, columnSpan: Int = 1): Vec2<Unit> {
+    val u = Unit.Grid(row, column, rowSpan, columnSpan)
     return Vec2(u, u.clone())
 }
 

@@ -7,7 +7,7 @@
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  */
 
-package cc.polyfrost.polyui.layout.impl
+package cc.polyfrost.polyui.layout.impl.extension
 
 import cc.polyfrost.polyui.animate.Animations
 import cc.polyfrost.polyui.color.Color

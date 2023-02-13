@@ -42,10 +42,17 @@ class FlexLayout @JvmOverloads constructor(
     private val contentJustify: JustifyContent = JustifyContent.Start,
     private val itemAlign: AlignItems = AlignItems.Start,
     private val contentAlign: AlignContent = AlignContent.Start,
-    gap: Gap = Gap.AUTO,
+    gap: Gap = Gap.Default,
     vararg items: Drawable
-) : Layout(at, sized, onAdded, onRemoved, true, *items) {
-    constructor(at: Point<Unit>, wrap: Unit.Percent, vararg items: Drawable) : this(at, null, wrap, null, null, items = items)
+) : Layout(at, sized, onAdded, onRemoved, false, *items) {
+    constructor(at: Point<Unit>, wrap: Unit.Percent, vararg items: Drawable) : this(
+        at,
+        null,
+        wrap,
+        null,
+        null,
+        items = items
+    )
 
     private val drawables: ArrayList<FlexDrawable>
 
@@ -471,13 +478,5 @@ class FlexLayout @JvmOverloads constructor(
     /** [Flex Align Content](https://css-tricks.com/snippets/css/a-guide-to-flexbox/#aa-align-content) */
     enum class AlignContent {
         Start, End, Center, SpaceBetween, SpaceEvenly, Stretch
-    }
-
-    /** [Row Gap Column Gap](https://css-tricks.com/snippets/css/a-guide-to-flexbox/#aa-gap-row-gap-column-gap) */
-    data class Gap(val mainGap: Unit.Pixel, val crossGap: Unit.Pixel) {
-        companion object {
-            @JvmField
-            val AUTO = Gap(5.px, 5.px)
-        }
     }
 }

@@ -14,8 +14,8 @@ import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.event.Events
-import cc.polyfrost.polyui.layout.impl.DraggableLayout
-import cc.polyfrost.polyui.layout.impl.ScrollingLayout
+import cc.polyfrost.polyui.layout.impl.extension.DraggableLayout
+import cc.polyfrost.polyui.layout.impl.extension.ScrollingLayout
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.data.Framebuffer
 import cc.polyfrost.polyui.unit.Point
@@ -55,7 +55,6 @@ abstract class Layout(
     override var layout: Layout? = null
 
     init {
-        if (items.isEmpty()) throw IllegalStateException("Layout cannot be empty!")
         if (onAdded != null) addEventHook(Events.Added, onAdded)
         if (onRemoved != null) addEventHook(Events.Removed, onRemoved)
     }
@@ -202,6 +201,7 @@ abstract class Layout(
     }
 
     override fun calculateBounds() {
+        if (layout != null) doDynamicSize()
         components.fastEach {
             it.layout = this
             it.calculateBounds()

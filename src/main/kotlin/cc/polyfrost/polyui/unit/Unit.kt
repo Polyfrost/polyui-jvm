@@ -36,7 +36,7 @@ abstract class Unit(val type: Type) : Cloneable {
     }
 
     enum class Type {
-        Pixel, Flex, Percent, VMin, VMax, VWidth, VHeight
+        Pixel, Flex, Grid, Percent, VMin, VMax, VWidth, VHeight
     }
 
     override fun toString(): String {
@@ -117,6 +117,25 @@ abstract class Unit(val type: Type) : Cloneable {
 
         override fun clone(): Flex {
             return Flex(index, flexShrink, flexGrow, endRowAfter)
+        }
+    }
+
+    /**
+     * Represents a grid component.
+     *
+     * @param row the row of the grid to place the component in.
+     * @param column the column of the grid to place the component in.
+     * @param rs the number of rows the component should span.
+     * @param cs the number of columns the component should span.
+     *
+     * @since 0.10.0
+     */
+    class Grid @JvmOverloads constructor(val row: Int, val column: Int, val rs: Int = 1, val cs: Int = 1) :
+        Unit(Units.Grid) {
+        override var px: Float = 0f
+
+        override fun clone(): Grid {
+            return Grid(row, column, rs, cs)
         }
     }
 
