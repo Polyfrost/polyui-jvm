@@ -48,18 +48,11 @@ fun main() {
             )
         )
     }
-    val fpsText: Text
     val polyUI = PolyUI(
         window.width,
         window.height,
         NVGRenderer(),
         items = items(
-            Text(
-                text = "FPS: ${window.fps}",
-                fontSize = 16.px,
-                at = 50.percent * 1.px,
-                textAlign = TextAlign.Center
-            ).also { fpsText = it },
             PixelLayout(
                 at = 20.px * 570.px,
                 items = items(
@@ -95,9 +88,7 @@ fun main() {
                 items = things
             )
         )
-    ).every(1.seconds) {
-        fpsText.text = "FPS: ${window.fps}"
-    }
+    )
 
     window.open(polyUI)
 }

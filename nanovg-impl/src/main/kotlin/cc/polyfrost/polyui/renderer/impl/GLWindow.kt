@@ -33,8 +33,6 @@ class GLWindow @JvmOverloads constructor(
 ) :
     Window(width, height) {
     val handle: Long
-    var fps: Int = 0
-        private set
     var contentScaleX = 1f
         private set
     var contentScaleY = 1f
@@ -161,8 +159,6 @@ class GLWindow @JvmOverloads constructor(
 
     override fun open(polyUI: PolyUI): Window {
         this.polyUI = polyUI
-        var frames = 0
-        var lastSecond = System.currentTimeMillis()
 
         createCallbacks()
 
@@ -196,15 +192,6 @@ class GLWindow @JvmOverloads constructor(
 
             glfwPollEvents()
             glfwSwapBuffers(handle)
-
-            if (lastSecond + 1000 < System.currentTimeMillis()) {
-                lastSecond = System.currentTimeMillis()
-                fps = frames
-                frames = 0
-                println("FPS: $fps")
-            } else {
-                frames++
-            }
         }
 
         polyUI.cleanup()

@@ -9,6 +9,7 @@
 
 package cc.polyfrost.polyui
 
+import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.component.Focusable
 import cc.polyfrost.polyui.event.EventManager
@@ -16,10 +17,8 @@ import cc.polyfrost.polyui.input.KeyBinder
 import cc.polyfrost.polyui.input.KeyModifiers
 import cc.polyfrost.polyui.layout.impl.PixelLayout
 import cc.polyfrost.polyui.renderer.Renderer
-import cc.polyfrost.polyui.unit.Point
-import cc.polyfrost.polyui.unit.Size
+import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
-import cc.polyfrost.polyui.unit.px
 import cc.polyfrost.polyui.utils.Clock
 import cc.polyfrost.polyui.utils.fastEach
 import org.slf4j.Logger
@@ -81,6 +80,15 @@ class PolyUI(
     private var renderHooks = arrayListOf<Renderer.() -> kotlin.Unit>()
     internal var focused: (Focusable)? = null
 
+    // telemetry
+    var fps: Int = 1
+        private set
+    private var frames = 0
+    private var longestFrame = 0f
+    private var shortestFrame = 100f
+    private var timeInFrames = 0f
+    private var avgFrame = 0f
+
     init {
         master.setup(renderer, this)
         master.calculateBounds()
@@ -98,13 +106,28 @@ class PolyUI(
         Unit.VUnits.vWidth = width.toFloat()
         keyBinder.add('I', KeyModifiers.LCONTROL, KeyModifiers.LSHIFT) {
             settings.debug = !settings.debug
-            LOGGER.info("Debug mode {}", if (settings.debug) "enabled" else "disabled")
+            LOGGER.info(
+                "Debug mode {}", if (settings.debug) {
+                    frames = 0; "enabled"
+                } else "disabled"
+            )
             true
         }
         keyBinder.add('R', KeyModifiers.LCONTROL) {
             LOGGER.info("Reloading PolyUI")
             onResize(width, height, renderer.pixelRatio, true)
             true
+        }
+        every(1.seconds) {
+            if (settings.debug) {
+                longestFrame = 0f
+                shortestFrame = 100f
+                avgFrame = timeInFrames / fps
+                timeInFrames = 0f
+                fps = frames
+                frames = 0
+                LOGGER.info("FPS: {}", fps)
+            }
         }
         LOGGER.info("PolyUI initialized")
     }
@@ -142,9 +165,39 @@ class PolyUI(
     }
 
     fun render() {
+        val now = System.nanoTime()
         renderer.beginFrame(width, height)
         master.reRenderIfNecessary()
         renderHooks.fastEach { it(renderer) }
+
+        // telemetry
+        if (settings.debug) {
+            val frameTime = (System.nanoTime() - now) / 1_000_000f
+            timeInFrames += frameTime
+            if (frameTime > longestFrame) longestFrame = frameTime
+            if (frameTime < shortestFrame) shortestFrame = frameTime
+            renderer.drawText(
+                renderer.defaultFont,
+                width - 1f,
+                height - 11f,
+                text = "max/avg/min: ${longestFrame}ms; ${avgFrame}ms; ${shortestFrame}ms",
+                color = Color.WHITE,
+                fontSize = 10f,
+                textAlign = TextAlign.Right
+            )
+            frames++
+            renderer.drawText(
+                renderer.defaultFont,
+                width / 2f,
+                1f,
+                text = "FPS: $fps",
+                color = Color.WHITE,
+                fontSize = 16f,
+                textAlign = TextAlign.Center
+            )
+        }
+
+
         renderer.endFrame()
         executors.fastEach { it.tick() }
     }
