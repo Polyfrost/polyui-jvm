@@ -20,6 +20,7 @@ import cc.polyfrost.polyui.unit.Point
 import cc.polyfrost.polyui.unit.Size
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.unit.px
+import cc.polyfrost.polyui.utils.Clock
 import cc.polyfrost.polyui.utils.fastEach
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -75,6 +76,7 @@ class PolyUI(
     val master = PixelLayout(Point(0.px, 0.px), Size(width.px, height.px), items = items)
     val eventManager = EventManager(this)
     val keyBinder = KeyBinder()
+    private val executors: ArrayList<Clock.FixedTimeExecutor> = arrayListOf()
     private val settings = renderer.settings
     private var renderHooks = arrayListOf<Renderer.() -> kotlin.Unit>()
     internal var focused: (Focusable)? = null
@@ -144,6 +146,7 @@ class PolyUI(
         master.reRenderIfNecessary()
         renderHooks.fastEach { it(renderer) }
         renderer.endFrame()
+        executors.fastEach { it.tick() }
     }
 
     /** add something to be rendered after each frame. */
@@ -151,26 +154,36 @@ class PolyUI(
         renderHooks.add(func)
     }
 
-    fun removeComponent(drawable: Drawable) {
+    fun removeComponent(drawable: Drawable): PolyUI {
         master.removeComponent(drawable)
+        return this
     }
 
-    fun addComponent(drawable: Drawable) {
+    fun addComponent(drawable: Drawable): PolyUI {
         master.addComponent(drawable)
+        return this
     }
 
-    fun addComponents(vararg drawables: Drawable) {
+    fun addComponents(vararg drawables: Drawable): PolyUI {
         master.addComponents(*drawables)
+        return this
     }
 
-    fun addComponents(drawables: Collection<Drawable>) {
+    fun addComponents(drawables: Collection<Drawable>): PolyUI {
         master.addComponents(drawables)
+        return this
     }
 
     fun focus(drawable: Focusable) {
         focused?.unfocus()
         focused = drawable
         focused?.focus()
+    }
+
+    /** add a function that is called every [millis] milliseconds. */
+    fun every(millis: Long, func: () -> kotlin.Unit): PolyUI {
+        executors.add(Clock.FixedTimeExecutor(millis, func))
+        return this
     }
 
     /** cleanup the polyUI instance. This will delete all resources, and render this instance unusable. */

@@ -9,25 +9,27 @@
 
 package cc.polyfrost.polyui.property.impl
 
-import cc.polyfrost.polyui.animate.Animations
 import cc.polyfrost.polyui.color.Color
-import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.property.Properties
-import cc.polyfrost.polyui.unit.seconds
 
-open class BlockProperties(override val color: Color = Color.BLACK) : Properties() {
+/**
+ * @param cornerRadii The corner radii of the block. The order is top-left, top-right, bottom-right, bottom-left.
+ */
+open class BlockProperties @JvmOverloads constructor(
+    override val color: Color = Color.BLACK,
+    open val cornerRadii: FloatArray = floatArrayOf(0f, 0f, 0f, 0f)
+) : Properties() {
     open val hoverColor = Color(12, 48, 255)
     override val padding: Float = 0F
-    open val cornerRadius: Float = 0F
 
-    init {
-        addEventHandlers(
-            Events.MouseEntered to {
-                recolor(hoverColor, Animations.EaseInOutQuad, 0.2.seconds)
-            },
-            Events.MouseExited to {
-                recolor(properties.color, Animations.EaseInOutQuad, 0.4.seconds)
-            }
-        )
-    }
+//    init {
+//        addEventHandlers(
+//            Events.MouseEntered to {
+//                recolor(hoverColor, Animations.EaseInOutQuad, 0.2.seconds)
+//            },
+//            Events.MouseExited to {
+//                recolor(properties.color, Animations.EaseInOutQuad, 0.4.seconds)
+//            }
+//        )
+//    }
 }

@@ -29,6 +29,7 @@ open class PointerLayout(
     override var needsRecalculation = ptr.needsRecalculation
     override val children = ptr.children
     override val components = ptr.components
+    override var layout: Layout? = ptr.layout
 
     override fun reRenderIfNecessary() = ptr.reRenderIfNecessary()
     override fun preRender() = ptr.preRender()

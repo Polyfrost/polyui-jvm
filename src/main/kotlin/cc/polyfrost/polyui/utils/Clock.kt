@@ -22,4 +22,23 @@ class Clock {
         lastTime = currentTime
         return delta
     }
+
+    fun peekDelta(): Long {
+        return System.currentTimeMillis() - lastTime
+    }
+
+    class FixedTimeExecutor(private val millis: Long, private val func: () -> Unit) {
+        private val clock = Clock()
+
+        init {
+            clock.getDelta()
+        }
+
+        fun tick() {
+            if (clock.peekDelta() >= millis) {
+                func()
+                clock.getDelta()
+            }
+        }
+    }
 }

@@ -111,12 +111,16 @@ class NVGRenderer : Renderer() {
         }
     }
 
-    override fun drawImage(image: Image, x: Float, y: Float, colorMask: Int) {
-        val img = getImage(image)
-        drawImage(img.id, x, y, img.width, img.height, colorMask)
-    }
-
-    override fun drawRoundImage(image: Image, x: Float, y: Float, radius: Float, colorMask: Int) {
+    override fun drawImage(
+        image: Image,
+        x: Float,
+        y: Float,
+        colorMask: Int,
+        topLeftRadius: Float,
+        topRightRadius: Float,
+        bottomLeftRadius: Float,
+        bottomRightRadius: Float
+    ) {
         val img = getImage(image)
         nvgImagePattern(vg, x, y, img.width, img.height, 0F, img.id, 1F, nvgPaint)
         if (colorMask != 0) {
@@ -129,7 +133,17 @@ class NVGRenderer : Renderer() {
             )
         }
         nvgBeginPath(vg)
-        nvgRoundedRect(vg, x, y, img.width, img.height, radius)
+        nvgRoundedRectVarying(
+            vg,
+            x,
+            y,
+            img.width,
+            img.height,
+            topLeftRadius,
+            topRightRadius,
+            bottomLeftRadius,
+            bottomRightRadius
+        )
         nvgFillPaint(vg, nvgPaint)
         nvgFill(vg)
     }
@@ -183,22 +197,11 @@ class NVGRenderer : Renderer() {
         return false
     }
 
-    override fun drawRect(x: Float, y: Float, width: Float, height: Float, color: Color) {
-        nvgBeginPath(vg)
-        nvgRect(vg, x, y, width, height)
-        if (color(color, x, y, width, height)) {
-            nvgFillPaint(vg, nvgPaint)
-        } else {
-            nvgFillColor(vg, nvgColor)
-        }
-        nvgFill(vg)
-    }
-
     override fun initImage(image: Image) {
         getImage(image)
     }
 
-    override fun drawRoundRectVaried(
+    override fun drawRect(
         x: Float,
         y: Float,
         width: Float,
@@ -209,6 +212,7 @@ class NVGRenderer : Renderer() {
         bottomLeftRadius: Float,
         bottomRightRadius: Float
     ) {
+        // note: nvg checks params and draws class rec if 0, so we don't need to
         nvgBeginPath(vg)
         nvgRoundedRectVarying(
             vg,
@@ -227,6 +231,39 @@ class NVGRenderer : Renderer() {
             nvgFillColor(vg, nvgColor)
         }
         nvgFill(vg)
+    }
+
+    override fun drawHollowRect(
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        color: Color,
+        lineWidth: Int,
+        topLeftRadius: Float,
+        topRightRadius: Float,
+        bottomLeftRadius: Float,
+        bottomRightRadius: Float
+    ) {
+        nvgBeginPath(vg)
+        nvgRoundedRectVarying(
+            vg,
+            x,
+            y,
+            width,
+            height,
+            topLeftRadius,
+            topRightRadius,
+            bottomLeftRadius,
+            bottomRightRadius
+        )
+        nvgStrokeWidth(vg, lineWidth.toFloat())
+        if (color(color, x, y, width, height)) {
+            nvgStrokePaint(vg, nvgPaint)
+        } else {
+            nvgStrokeColor(vg, nvgColor)
+        }
+        nvgStroke(vg)
     }
 
     override fun drawLine(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float) {
@@ -328,17 +365,32 @@ class NVGRenderer : Renderer() {
                 nvgPaint
             )
 
-            is Color.Gradient.Type.Radial ->
+            is Color.Gradient.Type.Radial -> {
                 nvgRadialGradient(
                     vg,
-                    x + (width / 2f),
-                    y + (height / 2f),
+                    // smart-cast impossible: [x] is a public API property declared in different module (bit cringe)
+                    if ((color.type as Color.Gradient.Type.Radial).centerX == -1f) x + (width / 2f) else (color.type as Color.Gradient.Type.Radial).centerX,
+                    if ((color.type as Color.Gradient.Type.Radial).centerY == -1f) y + (height / 2f) else (color.type as Color.Gradient.Type.Radial).centerY,
                     (color.type as Color.Gradient.Type.Radial).innerRadius,
                     (color.type as Color.Gradient.Type.Radial).outerRadius,
                     nvgColor,
                     nvgColor2,
                     nvgPaint
                 )
+            }
+
+            is Color.Gradient.Type.Box -> nvgBoxGradient(
+                vg,
+                x,
+                y,
+                width,
+                height,
+                (color.type as Color.Gradient.Type.Box).radius,
+                (color.type as Color.Gradient.Type.Box).feather,
+                nvgColor,
+                nvgColor2,
+                nvgPaint
+            )
         }
         return true
     }
@@ -448,18 +500,6 @@ class NVGRenderer : Renderer() {
         nvgColor.free()
         nvgPaint.free()
         vg = -1
-    }
-
-    override fun drawHollowRect(x: Float, y: Float, width: Float, height: Float, color: Color, lineWidth: Int) {
-        nvgBeginPath(vg)
-        nvgRect(vg, x, y, width, height)
-        nvgStrokeWidth(vg, lineWidth.toFloat())
-        if (color(color, x, y, width, height)) {
-            nvgStrokePaint(vg, nvgPaint)
-        } else {
-            nvgStrokeColor(vg, nvgColor)
-        }
-        nvgStroke(vg)
     }
 
     // used to ensure that the data is not discarded by the GC

@@ -48,11 +48,18 @@ fun main() {
             )
         )
     }
+    val fpsText: Text
     val polyUI = PolyUI(
         window.width,
         window.height,
         NVGRenderer(),
         items = items(
+            Text(
+                text = "FPS: ${window.fps}",
+                fontSize = 16.px,
+                at = 50.percent * 1.px,
+                textAlign = TextAlign.Center
+            ).also { fpsText = it },
             PixelLayout(
                 at = 20.px * 570.px,
                 items = items(
@@ -62,7 +69,12 @@ fun main() {
                         at = 20.px * 0.px
                     ),
                     Block(
-                        props = BlockProperties(Color.Gradient(Color(1f, 0f, 1f, 1f), Color(0f, 1f, 1f, 1f))),
+                        props = BlockProperties(
+                            Color.Gradient(
+                                Color(1f, 0f, 1f, 1f),
+                                Color(0f, 1f, 1f, 1f)
+                            )
+                        ),
                         at = 20.px * 30.px,
                         size = 120.px * 120.px
                     ),
@@ -83,21 +95,8 @@ fun main() {
                 items = things
             )
         )
-    )
-
-    val fpsText = Text(
-        text = "FPS: ${window.fps}",
-        fontSize = 16.px,
-        at = 50.percent * 1.px,
-        textAlign = TextAlign.Center
-    )
-    polyUI.master.addComponent(fpsText)
-
-    polyUI.addRenderHook {
-        if (lastSecond + 1000 < System.currentTimeMillis()) {
-            lastSecond = System.currentTimeMillis()
-            fpsText.text = "FPS: ${window.fps}"
-        }
+    ).every(1.seconds) {
+        fpsText.text = "FPS: ${window.fps}"
     }
 
     window.open(polyUI)

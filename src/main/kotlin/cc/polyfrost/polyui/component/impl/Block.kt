@@ -31,6 +31,6 @@ open class Block @JvmOverloads constructor(
 ) : Component(props, at, size, acceptInput, *events) {
 
     override fun render() {
-        renderer.drawRoundRect(x, y, width, height, color, props.cornerRadius)
+        renderer.drawRect(x, y, width, height, color, props.cornerRadii)
     }
 }

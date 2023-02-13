@@ -9,6 +9,7 @@
 
 package cc.polyfrost.polyui.color
 
+import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.animate.Animation
 
 /**
@@ -69,6 +70,55 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         val WHITE = Color(1f, 1f, 1f, 1f)
         val BLACK = Color(0f, 0f, 0f, 1f)
         val GRAYf = Color(0.5f, 0.5f, 0.5f, 0.5f)
+
+        /**
+         * Turn the given hex string into a color.
+         *
+         * - If it is 8 characters long, it is assumed to be in the format `#RRGGBBAA` (alpha optional)
+         * - If there is a leading `#`, it will be removed.
+         * - If it is 1 character long, the character is repeated e.g. `#f` -> `#ffffff`
+         * - If it is 2 characters long, the character is repeated e.g. `#0f` -> `#0f0f0f`
+         * - If it is 3 characters long, the character is repeated e.g. `#0fe` -> `#00ffee`
+         *
+         * @throws IllegalArgumentException if the hex string is not in a valid format
+         * @throws NumberFormatException if the hex string is not a valid hex string
+         */
+        @JvmStatic
+        fun from(hex: String): Color {
+            var hexColor = hex.replace("#", "")
+            when (hexColor.length) {
+                1 -> hexColor = hexColor.repeat(6)
+                2 -> hexColor = hexColor.repeat(3)
+                3 -> hexColor = run {
+                    var newHex = ""
+                    hexColor.forEach {
+                        newHex += it.toString().repeat(2)
+                    }
+                    newHex
+                }
+
+                6 -> {}
+                8 -> {}
+                else -> throw IllegalArgumentException("Invalid hex color: $hex")
+            }
+            val r = hexColor.substring(0, 2).toInt(16)
+            val g = hexColor.substring(2, 4).toInt(16)
+            val b = hexColor.substring(4, 6).toInt(16)
+            val a = if (hexColor.length == 8) hexColor.substring(6, 8).toInt(16) else 255
+            return Color(r, g, b, a)
+        }
+
+        /** @see from(hex) */
+        @JvmStatic
+        fun from(hex: String, alpha: Int = 255): Color {
+            return from(hex + alpha.toString(16))
+        }
+
+        /** @see from(hex) */
+        @JvmStatic
+        fun from(hex: String, alpha: Float = 1f): Color {
+            return from(hex, (alpha * 255).toInt())
+        }
     }
 
     /**
@@ -155,7 +205,32 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
             object LeftToRight : Type()
             object TopLeftToBottomRight : Type()
             object BottomLeftToTopRight : Type()
-            data class Radial(val innerRadius: Float, val outerRadius: Float) : Type()
+
+            /**
+             * Radial gradient.
+             *
+             * Note that if your radii are very close together, you may just get a circle in a box.
+             * @param innerRadius how much of the shape should be filled entirely with color1
+             * @param outerRadius how much of the shape should be filled entirely with color2
+             * @param centerX the center of the gradient, in the x-axis. if it is -1, it will be the center of the shape
+             * @param centerY the center of the gradient, in the y-axis. if it is -1, it will be the center of the shape
+             *
+             * @throws IllegalArgumentException if innerRadius1 is larger than outerRadius2
+             */
+            data class Radial @JvmOverloads constructor(
+                val innerRadius: Float,
+                val outerRadius: Float,
+                val centerX: Float = -1f,
+                val centerY: Float = -1f
+            ) : Type() {
+                init {
+                    if (innerRadius > outerRadius) {
+                        throw IllegalArgumentException("innerRadius must be smaller than outerRadius! ($innerRadius > $outerRadius)")
+                    } else if (innerRadius + 5 > outerRadius) PolyUI.LOGGER.warn("[Gradient] innerRadius and outerRadius are very close together, you may just get a circle in a box.")
+                }
+            }
+
+            data class Box(val radius: Float, val feather: Float) : Type()
         }
 
         @Deprecated(

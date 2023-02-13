@@ -130,12 +130,14 @@ abstract class Drawable(var acceptsInput: Boolean = true) {
     fun doDynamicSize(upon: Vec2<Unit>) {
         if (upon.a is Unit.Dynamic) {
             upon.a.set(
-                layout?.sized?.a ?: throw IllegalStateException("Dynamic unit only work on parents with a set size!")
+                layout?.sized?.a
+                    ?: throw IllegalStateException("Dynamic unit only work on parents with a set size! ($this)")
             )
         }
         if (upon.b is Unit.Dynamic) {
             upon.b.set(
-                layout?.sized?.b ?: throw IllegalStateException("Dynamic unit only work on parents with a set size!")
+                layout?.sized?.b
+                    ?: throw IllegalStateException("Dynamic unit only work on parents with a set size! ($this)")
             )
         }
     }

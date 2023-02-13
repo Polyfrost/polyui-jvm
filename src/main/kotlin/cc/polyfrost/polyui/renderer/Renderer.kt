@@ -98,13 +98,23 @@ abstract class Renderer : AutoCloseable {
     /** Function that can be called to explicitly initialize an image. This is used mainly for getting the size of an image, or to ensure an SVG has been rasterized. */
     abstract fun initImage(image: Image)
 
-    abstract fun drawImage(image: Image, x: Float, y: Float, colorMask: Int = 0)
+    abstract fun drawImage(
+        image: Image,
+        x: Float,
+        y: Float,
+        colorMask: Int = 0,
+        topLeftRadius: Float,
+        topRightRadius: Float,
+        bottomLeftRadius: Float,
+        bottomRightRadius: Float
+    )
 
-    abstract fun drawRoundImage(image: Image, x: Float, y: Float, radius: Float, colorMask: Int = 0)
-
-    abstract fun drawRect(x: Float, y: Float, width: Float, height: Float, color: Color)
-
-    abstract fun drawRoundRectVaried(
+    /**
+     * draw a rectangle to the screen, per the given parameters.
+     *
+     * If the radii are 0, this will just draw a normal rectangle. If they are not 0, it will draw a rounded rectangle.
+     */
+    abstract fun drawRect(
         x: Float,
         y: Float,
         width: Float,
@@ -116,10 +126,52 @@ abstract class Renderer : AutoCloseable {
         bottomRightRadius: Float
     )
 
-    fun drawRoundRect(x: Float, y: Float, width: Float, height: Float, color: Color, radius: Float) =
-        drawRoundRectVaried(x, y, width, height, color, radius, radius, radius, radius)
+    abstract fun drawHollowRect(
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        color: Color,
+        lineWidth: Int,
+        topLeftRadius: Float,
+        topRightRadius: Float,
+        bottomLeftRadius: Float,
+        bottomRightRadius: Float
+    )
 
-    abstract fun drawHollowRect(x: Float, y: Float, width: Float, height: Float, color: Color, lineWidth: Int)
+    fun drawImage(image: Image, x: Float, y: Float, radius: Float = 0f, colorMask: Int = 0) =
+        drawImage(image, x, y, colorMask, radius, radius, radius, radius)
+
+    fun drawImage(image: Image, x: Float, y: Float, radii: FloatArray, colorMask: Int = 0) =
+        drawImage(image, x, y, colorMask, radii[0], radii[1], radii[2], radii[3])
+
+    fun drawRect(x: Float, y: Float, width: Float, height: Float, color: Color, radius: Float = 0f) =
+        drawRect(x, y, width, height, color, radius, radius, radius, radius)
+
+    fun drawRect(x: Float, y: Float, width: Float, height: Float, color: Color, radii: FloatArray) =
+        drawRect(x, y, width, height, color, radii[0], radii[1], radii[2], radii[3])
+
+    fun drawHollowRect(
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        color: Color,
+        lineWidth: Int,
+        radius: Float = 0f
+    ) =
+        drawHollowRect(x, y, width, height, color, lineWidth, radius, radius, radius, radius)
+
+    fun drawHollowRect(
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        color: Color,
+        lineWidth: Int,
+        radii: FloatArray
+    ) =
+        drawHollowRect(x, y, width, height, color, lineWidth, radii[0], radii[1], radii[2], radii[3])
 
     abstract fun drawLine(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float)
 
