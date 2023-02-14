@@ -33,8 +33,7 @@ import org.slf4j.LoggerFactory
  *
  * PolyUI is split into two parts, being PolyUI and its logic, and it's accompanying [Renderer] implementation. This allows us to have PolyUI in many places, including inside Minecraft!
  * It is **declarative**, meaning that you don't have to worry about the logic of the UI, just the layout and the components.
- * ###
- * ###
+ *
  *
  * ## Rendering Pipeline
  * PolyUI has the policy of ***'render what you need ONLY WHEN you need it'***.
@@ -49,8 +48,7 @@ import org.slf4j.LoggerFactory
  *  - [postRender][cc.polyfrost.polyui.layout.Layout.postRender]: This will do post-rendering logic, such as cleaning up transformations.
  *
  * Check out [some components][cc.polyfrost.polyui.component.Component] to see how this works.
- * ###
- * ###
+ *
  * ## How it Works
  * [Components][cc.polyfrost.polyui.component.Drawable] are the interactive parts of the UI, such as buttons, text fields, etc.
  *
