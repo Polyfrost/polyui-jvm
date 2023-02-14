@@ -10,6 +10,7 @@
 package cc.polyfrost.polyui.utils
 
 import cc.polyfrost.polyui.color.Color
+import kotlin.math.pow
 
 fun rgba(r: Float, g: Float, b: Float, a: Float): Color {
     return Color(r, g, b, a)
@@ -31,6 +32,11 @@ fun Int.toColor(): Color {
 
 fun java.awt.Color.asPolyColor(): Color {
     return Color(this.red.toFloat(), this.green.toFloat(), this.blue.toFloat(), this.alpha.toFloat())
+}
+
+fun Float.rounded(places: Int = 2): Float {
+    val f = 10.0.pow(places).toFloat()
+    return (this * f).toInt() / f
 }
 
 /** convert the given float into an array of 4 floats for radii. */

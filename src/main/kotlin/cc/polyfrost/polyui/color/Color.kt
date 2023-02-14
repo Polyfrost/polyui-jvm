@@ -68,6 +68,7 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
     companion object {
         val TRANSPARENT = Color(0f, 0f, 0f, 0f)
         val WHITE = Color(1f, 1f, 1f, 1f)
+        val WHITE_90 = Color(0.9f, 0.9f, 0.9f, 1f)
         val BLACK = Color(0f, 0f, 0f, 1f)
         val GRAYf = Color(0.5f, 0.5f, 0.5f, 0.5f)
 

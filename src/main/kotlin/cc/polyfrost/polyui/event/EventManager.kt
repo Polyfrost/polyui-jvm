@@ -136,9 +136,8 @@ class EventManager(private val polyUI: PolyUI) {
         val event = Events.MousePressed(button, mouseX, mouseY)
         onApplicableDrawables(mouseX, mouseY) {
             if (mouseOver) {
-                if (button == 0 && this is Focusable && polyUI.focused != this) {
-                    polyUI.focused = this
-                    accept(FocusedEvents.FocusGained)
+                if (button == 0 && this is Focusable) {
+                    polyUI.focus(this)
                     return
                 }
                 if (accept(event)) return
@@ -162,8 +161,7 @@ class EventManager(private val polyUI: PolyUI) {
             clickTimer = curr
             if (polyUI.focused != null) {
                 if (!(polyUI.focused as Drawable).isInside(mouseX, mouseY)) {
-                    polyUI.focused?.accept(FocusedEvents.FocusLost)
-                    polyUI.focused = null
+                    polyUI.unfocus()
                 }
             }
         }

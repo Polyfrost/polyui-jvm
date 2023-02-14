@@ -13,6 +13,7 @@ import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.component.Focusable
 import cc.polyfrost.polyui.event.EventManager
+import cc.polyfrost.polyui.event.FocusedEvents
 import cc.polyfrost.polyui.input.KeyBinder
 import cc.polyfrost.polyui.input.KeyModifiers
 import cc.polyfrost.polyui.layout.impl.PixelLayout
@@ -21,6 +22,7 @@ import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.utils.Clock
 import cc.polyfrost.polyui.utils.fastEach
+import cc.polyfrost.polyui.utils.rounded
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -86,6 +88,7 @@ class PolyUI(
     private var shortestFrame = 100f
     private var timeInFrames = 0f
     private var avgFrame = 0f
+    private var perf: String = ""
 
     init {
         master.setup(renderer, this)
@@ -120,13 +123,14 @@ class PolyUI(
         }
         every(1.seconds) {
             if (settings.debug) {
+                perf = "fps: $fps, avg/max/min: ${avgFrame.rounded(4)}ms; ${longestFrame}ms; ${shortestFrame}ms"
                 longestFrame = 0f
                 shortestFrame = 100f
                 avgFrame = timeInFrames / fps
                 timeInFrames = 0f
                 fps = frames
                 frames = 0
-                LOGGER.info("FPS: {}", fps)
+                LOGGER.info(perf)
             }
         }
         LOGGER.info("PolyUI initialized")
@@ -181,21 +185,12 @@ class PolyUI(
                 Renderer.DefaultFont,
                 width - 1f,
                 height - 11f,
-                text = "max/avg/min: ${longestFrame}ms; ${avgFrame}ms; ${shortestFrame}ms",
-                color = Color.WHITE,
+                text = perf,
+                color = Color.WHITE_90,
                 fontSize = 10f,
                 textAlign = TextAlign.Right
             )
             frames++
-            renderer.drawText(
-                Renderer.DefaultFont,
-                width / 2f,
-                1f,
-                text = "FPS: $fps",
-                color = Color.WHITE,
-                fontSize = 16f,
-                textAlign = TextAlign.Center
-            )
         }
 
         renderer.endFrame()
@@ -235,6 +230,17 @@ class PolyUI(
     fun every(millis: Long, func: () -> kotlin.Unit): PolyUI {
         executors.add(Clock.FixedTimeExecutor(millis, func))
         return this
+    }
+
+    fun focus(focusable: Focusable?) {
+        if (focusable == focused) return
+        focused?.accept(FocusedEvents.FocusLost)
+        focused = focusable
+        focused?.accept(FocusedEvents.FocusGained)
+    }
+
+    fun unfocus() {
+        focus(null)
     }
 
     /** cleanup the polyUI instance. This will delete all resources, and render this instance unusable. */
