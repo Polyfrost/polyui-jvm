@@ -71,7 +71,7 @@ allprojects {
     }
 
     license {
-        rule("${rootProject.projectDir}/format/HEADER")
+        rule("${rootProject.projectDir}/HEADER")
         include("**/*.kt")
     }
 
