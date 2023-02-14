@@ -27,18 +27,6 @@ import cc.polyfrost.polyui.unit.Vec2
  * for these functions, such as [drawImage] and [drawText], an initialized [Font] or [Image] instance will be given. This class simply contains a filepath to the resource. You will need to load it, and cache it for future use (ideally).
  */
 abstract class Renderer : AutoCloseable {
-    /**
-     * Override this to set a default font if the font isn't found. It is
-     * also used internally for PolyUI debug rendering.
-     * @see [Settings.resourcePolicy]
-     */
-    abstract val defaultFont: Font
-
-    /**
-     * Override this to set a default image if the image isn't found.
-     * @see [Settings.resourcePolicy]
-     */
-    abstract val defaultImage: Image
 
     /** settings instance for this renderer. */
     val settings = Settings(this)
@@ -132,7 +120,7 @@ abstract class Renderer : AutoCloseable {
         width: Float,
         height: Float,
         color: Color,
-        lineWidth: Int,
+        lineWidth: Float,
         topLeftRadius: Float,
         topRightRadius: Float,
         bottomLeftRadius: Float,
@@ -157,7 +145,7 @@ abstract class Renderer : AutoCloseable {
         width: Float,
         height: Float,
         color: Color,
-        lineWidth: Int,
+        lineWidth: Float,
         radius: Float = 0f
     ) =
         drawHollowRect(x, y, width, height, color, lineWidth, radius, radius, radius, radius)
@@ -168,7 +156,7 @@ abstract class Renderer : AutoCloseable {
         width: Float,
         height: Float,
         color: Color,
-        lineWidth: Int,
+        lineWidth: Float,
         radii: FloatArray
     ) =
         drawHollowRect(x, y, width, height, color, lineWidth, radii[0], radii[1], radii[2], radii[3])
@@ -203,5 +191,10 @@ abstract class Renderer : AutoCloseable {
 
     override fun close() {
         cleanup()
+    }
+
+    companion object {
+        var DefaultImage = Image("./err.png")
+        var DefaultFont = Font("./Inter-Regular.ttf")
     }
 }

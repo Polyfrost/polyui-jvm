@@ -15,6 +15,11 @@ fun rgba(r: Float, g: Float, b: Float, a: Float): Color {
     return Color(r, g, b, a)
 }
 
+/** figma copy-paste accessor */
+fun rgba(r: Int, g: Int, b: Int, a: Float): Color {
+    return Color(r, g, b, (a * 255f).toInt())
+}
+
 fun Int.toColor(): Color {
     return Color(
         ((this shr 16) and 0xFF) / 255f,
@@ -27,3 +32,6 @@ fun Int.toColor(): Color {
 fun java.awt.Color.asPolyColor(): Color {
     return Color(this.red.toFloat(), this.green.toFloat(), this.blue.toFloat(), this.alpha.toFloat())
 }
+
+/** convert the given float into an array of 4 floats for radii. */
+fun Float.asRadii() = floatArrayOf(this, this, this, this)

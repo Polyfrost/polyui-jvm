@@ -75,7 +75,6 @@ abstract class Layout(
                 preRender()
                 render()
                 postRender()
-                if (renderer.settings.debug) debugRender()
 //                renderer.unbindFramebuffer(fbo!!)
 //                needsRedraw = false
             } else {
@@ -85,7 +84,6 @@ abstract class Layout(
             preRender()
             render()
             postRender()
-            if (renderer.settings.debug) debugRender()
         }
     }
 
@@ -134,8 +132,7 @@ abstract class Layout(
                 throw Exception("Drawable $drawable is not a component or layout!")
             }
         }
-        drawable.renderer = renderer
-        drawable.polyui = polyui
+        drawable.setup(renderer, polyui)
         drawable.calculateBounds()
         drawable.accept(Events.Added)
         needsRedraw = true
@@ -245,19 +242,17 @@ abstract class Layout(
     }
 
     override fun debugRender() {
-        renderer.drawHollowRect(x, y, width, height, Color.GRAYf, 2)
-        renderer.drawText(renderer.defaultFont, x + 1, y + 1, 0f, simpleName, Color.WHITE, 10f)
+        renderer.drawHollowRect(x, y, width, height, Color.GRAYf, 2f)
+        renderer.drawText(Renderer.DefaultFont, x + 1, y + 1, 0f, simpleName, Color.WHITE, 10f)
+        children.fastEach { it.debugRender() }
+        components.fastEach { it.debugRender() }
     }
 
     /** give this, and all its children, a renderer. */
-    open fun setup(renderer: Renderer, polyUI: PolyUI) {
-        this.polyui = polyUI
-        this.renderer = renderer
-        components.fastEach {
-            it.renderer = renderer
-            it.polyui = polyUI
-        }
-        children.fastEach { it.setup(renderer, polyUI) }
+    override fun setup(renderer: Renderer, polyui: PolyUI) {
+        super.setup(renderer, polyui)
+        components.fastEach { it.setup(renderer, polyui) }
+        children.fastEach { it.setup(renderer, polyui) }
     }
 
     override fun canBeRemoved(): Boolean {

@@ -7,16 +7,11 @@
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  */
 
-package cc.polyfrost.polyui.unit
+package cc.polyfrost.polyui.property.impl
 
-enum class SlideDirection {
-    FromLeft, FromRight, FromTop, FromBottom
-}
+import cc.polyfrost.polyui.color.Color
+import cc.polyfrost.polyui.property.Properties
 
-enum class TextAlign {
-    Left, Right, Center
-}
-
-enum class Direction {
-    Horizontal, Vertical
+class DividerProperties(override val color: Color = Color.WHITE, val thickness: Float = 1f) : Properties() {
+    override val padding: Float = 0F
 }

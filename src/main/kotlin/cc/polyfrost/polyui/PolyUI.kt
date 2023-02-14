@@ -105,11 +105,13 @@ class PolyUI(
         keyBinder.add('I', KeyModifiers.LCONTROL, KeyModifiers.LSHIFT) {
             settings.debug = !settings.debug
             LOGGER.info(
-                "Debug mode {}", if (settings.debug) {
+                "Debug mode {}",
+                if (settings.debug) {
                     frames = 0; "enabled"
-                } else "disabled"
+                } else {
+                    "disabled"
+                }
             )
-            true
         }
         keyBinder.add('R', KeyModifiers.LCONTROL) {
             LOGGER.info("Reloading PolyUI")
@@ -170,12 +172,13 @@ class PolyUI(
 
         // telemetry
         if (settings.debug) {
+            debugRender()
             val frameTime = (System.nanoTime() - now) / 1_000_000f
             timeInFrames += frameTime
             if (frameTime > longestFrame) longestFrame = frameTime
             if (frameTime < shortestFrame) shortestFrame = frameTime
             renderer.drawText(
-                renderer.defaultFont,
+                Renderer.DefaultFont,
                 width - 1f,
                 height - 11f,
                 text = "max/avg/min: ${longestFrame}ms; ${avgFrame}ms; ${shortestFrame}ms",
@@ -185,7 +188,7 @@ class PolyUI(
             )
             frames++
             renderer.drawText(
-                renderer.defaultFont,
+                Renderer.DefaultFont,
                 width / 2f,
                 1f,
                 text = "FPS: $fps",
@@ -195,9 +198,12 @@ class PolyUI(
             )
         }
 
-
         renderer.endFrame()
         executors.fastEach { it.tick() }
+    }
+
+    fun debugRender() {
+        master.debugRender()
     }
 
     /** add something to be rendered after each frame. */
@@ -223,12 +229,6 @@ class PolyUI(
     fun addComponents(drawables: Collection<Drawable>): PolyUI {
         master.addComponents(drawables)
         return this
-    }
-
-    fun focus(drawable: Focusable) {
-        focused?.unfocus()
-        focused = drawable
-        focused?.focus()
     }
 
     /** add a function that is called every [millis] milliseconds. */

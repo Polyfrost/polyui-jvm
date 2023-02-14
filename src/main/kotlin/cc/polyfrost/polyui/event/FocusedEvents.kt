@@ -10,8 +10,12 @@
 package cc.polyfrost.polyui.event
 
 import cc.polyfrost.polyui.input.Keys
+import kotlin.experimental.and
 
 open class FocusedEvents : Event {
+    object FocusGained : FocusedEvents()
+    object FocusLost : FocusedEvents()
+
     /**
      * called when a key is typed (and modifiers) is pressed.
      *
@@ -30,6 +34,10 @@ open class FocusedEvents : Event {
 
         fun getModifiers(): MutableList<Keys.Modifiers> {
             return Keys.Modifiers.fromModifierMerged(mods)
+        }
+
+        fun hasModifier(modifier: Keys.Modifiers): Boolean {
+            return (mods and modifier.value) != 0.toShort()
         }
 
         override fun hashCode(): Int {
@@ -57,6 +65,10 @@ open class FocusedEvents : Event {
 
         fun getModifiers(): MutableList<Keys.Modifiers> {
             return Keys.Modifiers.fromModifierMerged(mods)
+        }
+
+        fun hasModifier(modifier: Keys.Modifiers): Boolean {
+            return (mods and modifier.value) != 0.toShort()
         }
 
         override fun hashCode(): Int {

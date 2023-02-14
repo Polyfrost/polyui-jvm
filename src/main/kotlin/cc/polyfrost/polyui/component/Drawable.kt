@@ -29,8 +29,8 @@ abstract class Drawable(var acceptsInput: Boolean = true) {
     open var simpleName = this.toString().substringAfterLast(".")
     abstract val at: Point<Unit>
     abstract var sized: Size<Unit>?
-    lateinit var renderer: Renderer
-    lateinit var polyui: PolyUI
+    protected lateinit var renderer: Renderer
+    protected lateinit var polyui: PolyUI
 
     /** weather or not the mouse is currently over this component. DO NOT modify this value. It is managed automatically by [cc.polyfrost.polyui.event.EventManager]. */
     var mouseOver = false
@@ -108,6 +108,11 @@ abstract class Drawable(var acceptsInput: Boolean = true) {
             handler(this)
             true
         }
+    }
+
+    open fun setup(renderer: Renderer, polyui: PolyUI) {
+        this.renderer = renderer
+        this.polyui = polyui
     }
 
     /** implement this method to add a debug print message for this drawable. */

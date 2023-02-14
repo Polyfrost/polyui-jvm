@@ -12,10 +12,9 @@ package cc.polyfrost.polyui.property
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
+import cc.polyfrost.polyui.component.impl.*
 import cc.polyfrost.polyui.event.Events
-import cc.polyfrost.polyui.property.impl.BlockProperties
-import cc.polyfrost.polyui.property.impl.ImageBlockProperties
-import cc.polyfrost.polyui.property.impl.TextProperties
+import cc.polyfrost.polyui.property.impl.*
 import cc.polyfrost.polyui.unit.Size
 import cc.polyfrost.polyui.unit.Unit
 
@@ -32,6 +31,7 @@ import cc.polyfrost.polyui.unit.Unit
  * @see [TextProperties]
  */
 abstract class Properties : Cloneable {
+
     abstract val color: Color
 
     /** use this to set a size for the target component.
@@ -70,9 +70,11 @@ abstract class Properties : Cloneable {
 
     companion object {
         private val properties: MutableMap<String, Properties> = mutableMapOf(
-            "cc.polyfrost.polyui.component.impl.Block" to BlockProperties(),
-            "cc.polyfrost.polyui.component.impl.ImageBlock" to ImageBlockProperties(),
-            "cc.polyfrost.polyui.component.impl.Text" to TextProperties()
+            TextInput::class.java.name to TextInputProperties(TextProperties()),
+            Block::class.java.name to BlockProperties(),
+            Divider::class.java.name to DividerProperties(),
+            ImageBlock::class.java.name to ImageBlockProperties(),
+            Text::class.java.name to TextProperties()
         )
 
         @JvmStatic

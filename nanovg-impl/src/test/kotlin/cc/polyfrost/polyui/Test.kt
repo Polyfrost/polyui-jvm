@@ -33,7 +33,7 @@ fun main() {
     val things = Array<Drawable>(50) { // creates 50 rectangles with random sizes
         Block(
             at = flex(),
-            size = Size((random() * 40 + 40).px, (random() * 40 + 40).px),
+            sized = Size((random() * 40 + 40).px, (random() * 40 + 40).px),
             events = events(
                 Events.MouseClicked(0) to {
                     println("Mouse clicked! $it")
@@ -62,19 +62,19 @@ fun main() {
                         at = 20.px * 0.px
                     ),
                     Block(
-                        props = BlockProperties(
+                        properties = BlockProperties(
                             Color.Gradient(
                                 Color(1f, 0f, 1f, 1f),
                                 Color(0f, 1f, 1f, 1f)
                             )
                         ),
                         at = 20.px * 30.px,
-                        size = 120.px * 120.px
+                        sized = 120.px * 120.px
                     ),
                     Block(
-                        props = BlockProperties(Color.Chroma(5.seconds)),
+                        properties = BlockProperties(Color.Chroma(5.seconds)),
                         at = 200.px * 30.px,
-                        size = 120.px * 120.px
+                        sized = 120.px * 120.px
                     ),
                     ImageBlock(
                         Image("/s.png", 120, 120),

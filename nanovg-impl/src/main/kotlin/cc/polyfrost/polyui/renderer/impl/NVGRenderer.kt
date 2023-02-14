@@ -35,8 +35,6 @@ import kotlin.math.max
 import kotlin.math.min
 
 class NVGRenderer : Renderer() {
-    override val defaultFont: Font = Font("/Inter-Regular.ttf")
-    override val defaultImage: Image = Image("/err.png")
     private val nvgPaint: NVGPaint = NVGPaint.create()
     private val nvgColor: NVGColor = NVGColor.malloc()
     private val nvgColor2: NVGColor = NVGColor.malloc()
@@ -141,8 +139,8 @@ class NVGRenderer : Renderer() {
             img.height,
             topLeftRadius,
             topRightRadius,
-            bottomLeftRadius,
-            bottomRightRadius
+            bottomRightRadius,
+            bottomLeftRadius
         )
         nvgFillPaint(vg, nvgPaint)
         nvgFill(vg)
@@ -222,8 +220,8 @@ class NVGRenderer : Renderer() {
             height,
             topLeftRadius,
             topRightRadius,
-            bottomLeftRadius,
-            bottomRightRadius
+            bottomRightRadius,
+            bottomLeftRadius
         )
         if (color(color, x, y, width, height)) {
             nvgFillPaint(vg, nvgPaint)
@@ -239,7 +237,7 @@ class NVGRenderer : Renderer() {
         width: Float,
         height: Float,
         color: Color,
-        lineWidth: Int,
+        lineWidth: Float,
         topLeftRadius: Float,
         topRightRadius: Float,
         bottomLeftRadius: Float,
@@ -254,10 +252,10 @@ class NVGRenderer : Renderer() {
             height,
             topLeftRadius,
             topRightRadius,
-            bottomLeftRadius,
-            bottomRightRadius
+            bottomRightRadius,
+            bottomLeftRadius
         )
-        nvgStrokeWidth(vg, lineWidth.toFloat())
+        nvgStrokeWidth(vg, lineWidth)
         if (color(color, x, y, width, height)) {
             nvgStrokePaint(vg, nvgPaint)
         } else {
@@ -401,7 +399,7 @@ class NVGRenderer : Renderer() {
                 getResourceStreamNullable(font.fileName)?.toByteBuffer()
                     ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) {
                         getResourceStream(
-                            defaultFont.fileName
+                            DefaultFont.fileName
                         ).also {
                             PolyUI.LOGGER.warn(
                                 "Failed to get font: {}, falling back to default font!",
@@ -422,7 +420,7 @@ class NVGRenderer : Renderer() {
             if (image.width != null && image.height == null) throw ExceptionInInitializerError("$image width is set but height is not!")
             val stream = getResourceStreamNullable(image.fileName)
                 ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) {
-                    getResourceStream(defaultImage.fileName)
+                    getResourceStream(DefaultImage.fileName)
                         .also {
                             PolyUI.LOGGER.warn(
                                 "Failed to get image: {}, falling back to default image!",

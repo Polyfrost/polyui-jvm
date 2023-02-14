@@ -12,6 +12,7 @@ package cc.polyfrost.polyui.event
 import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
+import cc.polyfrost.polyui.component.Focusable
 import cc.polyfrost.polyui.input.KeyModifiers
 import cc.polyfrost.polyui.input.Keys
 import cc.polyfrost.polyui.layout.Layout
@@ -48,9 +49,8 @@ class EventManager(private val polyUI: PolyUI) {
         val event = FocusedEvents.KeyTyped(key, keyModifiers, isRepeat)
         if (!isRepeat) {
             if (polyUI.keyBinder.accept(event)) return
-        } else {
-            polyUI.focused?.accept(event)
         }
+        polyUI.focused?.accept(event)
     }
 
     /** This method should be called when a non-printable key is pressed. */
@@ -58,9 +58,8 @@ class EventManager(private val polyUI: PolyUI) {
         val event = FocusedEvents.KeyPressed(key, keyModifiers, isRepeat)
         if (!isRepeat) {
             if (polyUI.keyBinder.accept(event)) return
-        } else {
-            polyUI.focused?.accept(event)
         }
+        polyUI.focused?.accept(event)
     }
 
     /**
@@ -137,6 +136,11 @@ class EventManager(private val polyUI: PolyUI) {
         val event = Events.MousePressed(button, mouseX, mouseY)
         onApplicableDrawables(mouseX, mouseY) {
             if (mouseOver) {
+                if (button == 0 && this is Focusable && polyUI.focused != this) {
+                    polyUI.focused = this
+                    accept(FocusedEvents.FocusGained)
+                    return
+                }
                 if (accept(event)) return
             }
         }
@@ -156,6 +160,12 @@ class EventManager(private val polyUI: PolyUI) {
                 clickAmount = 1
             }
             clickTimer = curr
+            if (polyUI.focused != null) {
+                if (!(polyUI.focused as Drawable).isInside(mouseX, mouseY)) {
+                    polyUI.focused?.accept(FocusedEvents.FocusLost)
+                    polyUI.focused = null
+                }
+            }
         }
         val event = Events.MouseReleased(button, mouseX, mouseY)
         var flagReleased = false

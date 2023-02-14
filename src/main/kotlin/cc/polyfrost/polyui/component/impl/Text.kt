@@ -17,32 +17,35 @@ import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
 
 open class Text @JvmOverloads constructor(
-    properties: Properties = Properties.get("cc.polyfrost.polyui.component.impl.Text"),
-    acceptInput: Boolean = false,
+    properties: Properties = Properties.get<_, Text>(),
     text: String,
-    fontSize: Unit.Pixel = 12.px,
+    fontSize: Unit.Pixel? = null,
     textAlign: TextAlign? = null,
     at: Vec2<Unit>,
     size: Size<Unit>? = null,
+    acceptInput: Boolean = false,
     vararg events: Events.Handler
 ) : Component(properties, at, size, acceptInput, *events) {
     private val props: TextProperties = properties as TextProperties
-    private var autoSized = false
+    var autoSized = false
     var text = text
         set(value) {
             field = value
-            sized = renderer.textBounds(props.font, text, fontSize.get(), textAlign) as Vec2<Unit>
+            if (autoSized) sized = renderer.textBounds(props.font, text, fontSize.get(), textAlign) as Vec2<Unit>
             wantRecalculation()
+            wantRedraw()
         }
     var textAlign = textAlign ?: props.textAlignment
         set(value) {
             field = value
             wantRecalculation()
+            wantRedraw()
         }
-    var fontSize = fontSize
+    var fontSize = fontSize ?: props.fontSize
         set(value) {
             field = value
             wantRecalculation()
+            wantRedraw()
         }
 
     constructor(

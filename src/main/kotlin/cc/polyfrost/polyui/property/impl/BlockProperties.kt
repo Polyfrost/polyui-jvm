@@ -14,11 +14,14 @@ import cc.polyfrost.polyui.property.Properties
 
 /**
  * @param cornerRadii The corner radii of the block. The order is top-left, top-right, bottom-right, bottom-left.
+ * @param lineThickness The thickness of this component. If you set it to something other than 0, it will become hollow.
  */
 open class BlockProperties @JvmOverloads constructor(
     override val color: Color = Color.BLACK,
-    open val cornerRadii: FloatArray = floatArrayOf(0f, 0f, 0f, 0f)
+    val cornerRadii: FloatArray = floatArrayOf(0f, 0f, 0f, 0f),
+    val lineThickness: Float = 0f
 ) : Properties() {
+
     open val hoverColor = Color(12, 48, 255)
     override val padding: Float = 0F
 

@@ -24,13 +24,16 @@ abstract class Transition(drawable: Drawable) : DrawableOp(drawable), Cloneable 
     public abstract override fun clone(): Transition
 
     enum class Type {
-        FadeOut, FadeIn, Slide;
+        FadeOut, FadeIn, SlideFromLeft, SlideFromRight, SlideFromTop, SlideFromBottom;
 
         fun create(drawable: Drawable, durationMillis: Long): Transition {
             return when (this) {
                 FadeOut -> FadeOut(drawable, Animations.EaseOutQuad, durationMillis)
                 FadeIn -> FadeIn(drawable, Animations.EaseOutQuad, durationMillis)
-                Slide -> Slide(drawable, SlideDirection.FromLeft, Animations.EaseOutQuad, durationMillis)
+                SlideFromLeft -> Slide(drawable, SlideDirection.FromLeft, Animations.EaseOutQuad, durationMillis)
+                SlideFromRight -> Slide(drawable, SlideDirection.FromRight, Animations.EaseOutQuad, durationMillis)
+                SlideFromTop -> Slide(drawable, SlideDirection.FromTop, Animations.EaseOutQuad, durationMillis)
+                SlideFromBottom -> Slide(drawable, SlideDirection.FromBottom, Animations.EaseOutQuad, durationMillis)
             }
         }
     }

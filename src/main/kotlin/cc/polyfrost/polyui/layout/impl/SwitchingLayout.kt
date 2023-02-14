@@ -9,9 +9,9 @@
 
 package cc.polyfrost.polyui.layout.impl
 
-import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.animate.transitions.Transition
 import cc.polyfrost.polyui.animate.transitions.Transitions
+import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.unit.Point
@@ -25,76 +25,99 @@ class SwitchingLayout(
     sized: Size<Unit>? = null,
     onAdded: (Drawable.() -> kotlin.Unit)? = null,
     onRemoved: (Drawable.() -> kotlin.Unit)? = null,
-    private val defaultIndex: Int = 0,
-    val typ: Transitions? = null,
-    val duration: Long = 1000L,
-    vararg layouts: Layout
-) : PixelLayout(at, sized, onAdded, onRemoved, true, *layouts) {
+    val transition: Transitions? = null,
+    val transitionDuration: Long = 1000L,
+    private var current: Layout? = null
+) : PixelLayout(at, sized, onAdded, onRemoved, false) {
+    override var simpleName: String = "SwitchingLayout@${this.toString().substringAfterLast("@")}"
     private val clock = Clock()
-    private var currentIndex = defaultIndex
     private var goingSwitchOp: Transition? = null
     private var comingSwitchOp: Transition? = null
-    var current: Layout = children[defaultIndex]
-        private set
     private var next: Layout? = null
 
-    init {
-        if (layouts.isEmpty()) throw IllegalStateException("SwitchingLayout cannot be empty!")
-        if (defaultIndex !in 0 until children.size) throw IndexOutOfBoundsException("defaultIndex out of bounds: $defaultIndex")
+    @Deprecated(
+        "this method should not be used on a SwitchingLayout, as the targeted layout will vary depending on the current layout, and may switch unexpectedly.",
+        replaceWith = ReplaceWith("targetLayout.addComponent(drawable)"),
+        DeprecationLevel.ERROR
+    )
+    override fun addComponent(drawable: Drawable) {
     }
 
-    override fun addComponent(drawable: Drawable) {
-        if (drawable !is Layout) throw Exception("SwitchingLayout can only contain Layouts (got $drawable)")
-        super.addComponent(drawable)
+    @Deprecated(
+        "this method should not be used on a SwitchingLayout, as the targeted layout will vary depending on the current layout, and may switch unexpectedly.",
+        ReplaceWith("targetLayout.removeComponent(drawable)"),
+        DeprecationLevel.ERROR
+    )
+    override fun removeComponent(drawable: Drawable) {
+    }
+
+    @Deprecated(
+        "this method should not be used on a SwitchingLayout, as the targeted layout will vary depending on the current layout, and may switch unexpectedly.",
+        ReplaceWith("targetLayout.onAll(onChildLayouts, function)"),
+        DeprecationLevel.ERROR
+    )
+    override fun onAll(onChildLayouts: Boolean, function: Component.() -> kotlin.Unit) {
+    }
+
+    @Deprecated(
+        "this method should not be used on a SwitchingLayout, as the targeted layout will vary depending on the current layout, and may switch unexpectedly.",
+        ReplaceWith("targetLayout.removeComponentNow(drawable)"),
+        DeprecationLevel.ERROR
+    )
+    override fun removeComponentNow(drawable: Drawable) {
+    }
+
+    override fun calculateBounds() {
+        super.calculateBounds()
+        current?.calculateBounds()
     }
 
     override fun reRenderIfNecessary() {
+        if (current == null) return
         if (goingSwitchOp != null) needsRedraw = true
         super.reRenderIfNecessary()
     }
 
     override fun preRender() {
         if (goingSwitchOp != null) {
-            if (goingSwitchOp!!.isFinished) {
-                goingSwitchOp = null
-                comingSwitchOp = null
-                return
-            }
-
             val delta = clock.getDelta()
             goingSwitchOp!!.update(delta)
             comingSwitchOp!!.update(delta)
         }
-        super.preRender()
     }
 
-    fun switch(targetIndex: Int) {
-        if (targetIndex !in 0 until children.size) throw IndexOutOfBoundsException("targetIndex out of bounds: $targetIndex")
-        if (targetIndex == currentIndex) return
-        next = children[targetIndex]
-        if (typ == null) {
-            current = next!!
-            currentIndex = targetIndex
-            needsRedraw = true
-            return
+    override fun render() {
+        if (goingSwitchOp != null) {
+            goingSwitchOp!!.apply(renderer)
+            current!!.render()
+            goingSwitchOp!!.unapply(renderer)
+            comingSwitchOp!!.apply(renderer)
+            next!!.render()
+            comingSwitchOp!!.unapply(renderer)
         } else {
-            goingSwitchOp = typ.create(current, duration)
-            comingSwitchOp = typ.create(next!!, duration)
-            // todo finish
+            current!!.render()
         }
+    }
+
+    override fun postRender() {
+        if (goingSwitchOp?.isFinished == true) {
+            goingSwitchOp = null
+            comingSwitchOp = null
+            needsRedraw = false
+        }
+    }
+
+    fun switch(layout: Layout) {
+        next = layout
+        next!!.calculateBounds()
+        needsRedraw = true
+        if (transition == null || current == null) {
+            current = next!!
+            return
+        }
+        goingSwitchOp = transition.create(current!!, transitionDuration)
+        comingSwitchOp = transition.create(next!!, transitionDuration)
         // update clock so it's not 289381903812
         clock.getDelta()
-        currentIndex = targetIndex
-        needsRedraw = true
-    }
-
-    fun switch(layout: Layout) = switch(children.indexOf(layout))
-
-    fun switchNext() {
-        if (currentIndex != children.lastIndex) {
-            switch(currentIndex + 1)
-        } else {
-            PolyUI.LOGGER.warn("Tried to switch to next layout, but already at last layout!")
-        }
     }
 }

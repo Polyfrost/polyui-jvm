@@ -13,8 +13,11 @@ import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.renderer.data.Font
 import cc.polyfrost.polyui.unit.TextAlign
+import cc.polyfrost.polyui.unit.Unit
+import cc.polyfrost.polyui.unit.px
 
 open class TextProperties : Properties() {
+    val fontSize: Unit.Pixel = 12.px
     override val color: Color = Color.WHITE
     override val padding: Float = 0F
     val textAlignment = TextAlign.Left

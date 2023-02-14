@@ -23,14 +23,19 @@ import cc.polyfrost.polyui.unit.Vec2
  * A simple block component, supporting the full PolyUI API.
  */
 open class Block @JvmOverloads constructor(
-    val props: BlockProperties = Properties.get<_, Block>(),
+    properties: Properties = Properties.get<_, Block>(),
     at: Vec2<Unit>,
-    size: Size<Unit>,
+    sized: Size<Unit>,
     acceptInput: Boolean = true,
     vararg events: Events.Handler
-) : Component(props, at, size, acceptInput, *events) {
+) : Component(properties, at, sized, acceptInput, *events) {
+    val props = properties as BlockProperties
 
     override fun render() {
-        renderer.drawRect(x, y, width, height, color, props.cornerRadii)
+        if (props.lineThickness == 0f) {
+            renderer.drawRect(x, y, width, height, color, props.cornerRadii)
+        } else {
+            renderer.drawHollowRect(x, y, width, height, color, props.lineThickness, props.cornerRadii)
+        }
     }
 }
