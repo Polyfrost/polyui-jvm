@@ -43,6 +43,7 @@ abstract class Component @JvmOverloads constructor(
     /** current rotation of this component (radians). */
     var rotation: Double = 0.0
     val color: Color.Mutable = properties.color.toMutable()
+    protected var sizedBySelf = false
     protected var finishColorFunc: (Component.() -> kotlin.Unit)? = null
     protected val clock = Clock()
     final override lateinit var layout: Layout
@@ -139,9 +140,13 @@ abstract class Component @JvmOverloads constructor(
             sized = if (properties.size != null) {
                 properties.size!!.clone()
             } else {
+                sizedBySelf = true
                 getSize()
                     ?: throw UnsupportedOperationException("getSize() not implemented for ${this::class.simpleName}!")
             }
+        }
+        if(sizedBySelf) {
+            sized = getSize()
         }
         doDynamicSize()
 

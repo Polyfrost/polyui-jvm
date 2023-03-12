@@ -21,7 +21,7 @@ data class Image @JvmOverloads constructor(
     }
 
     enum class Type {
-        PNG, SVG;
+        PNG, JPEG, SVG;
 
         companion object {
             @JvmStatic
@@ -29,6 +29,7 @@ data class Image @JvmOverloads constructor(
                 return when (fileName.substringAfterLast(".")) {
                     "png" -> PNG
                     "svg" -> SVG
+                    "jpg", "jpeg" -> JPEG
                     else -> throw IllegalArgumentException(
                         "Unknown image type for file $fileName"
                     )

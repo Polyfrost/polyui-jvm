@@ -20,7 +20,7 @@ import cc.polyfrost.polyui.unit.px
 
 open class ImageBlock @JvmOverloads constructor(
     private val image: Image,
-    properties: ImageBlockProperties = Properties.get<_, ImageBlock>(),
+    properties: ImageBlockProperties = Properties.get<ImageBlock>() as ImageBlockProperties,
     acceptInput: Boolean = true,
     at: Vec2<Unit>,
     vararg events: Events.Handler

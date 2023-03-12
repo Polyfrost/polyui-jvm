@@ -91,6 +91,7 @@ class PolyUI(
     private var perf: String = ""
 
     init {
+        LOGGER.info("PolyUI initializing...")
         master.setup(renderer, this)
         master.calculateBounds()
         master.children.fastEach {
@@ -256,6 +257,6 @@ class PolyUI(
 
     companion object {
         @JvmField
-        val LOGGER: Logger = LoggerFactory.getLogger("PolyUI").also { it.info("PolyUI initializing") }
+        val LOGGER: Logger = LoggerFactory.getLogger("PolyUI")
     }
 }

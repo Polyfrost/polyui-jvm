@@ -18,7 +18,6 @@ class TextInputProperties(val textProperties: TextProperties) : Properties() {
     override val padding: Float = 0f
     val paddingFromTextLateral: Float = 12f
     val paddingFromTextVertical: Float = 8f
-    val lineSpacing = 1f
     val defaultText: String = "HI"
     val cornerRadii: FloatArray = floatArrayOf(0f, 0f, 0f, 0f)
     val backgroundColor: Color? = null

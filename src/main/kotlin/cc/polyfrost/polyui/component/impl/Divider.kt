@@ -19,7 +19,7 @@ import cc.polyfrost.polyui.unit.Unit
  * A static divider component.
  */
 class Divider @JvmOverloads constructor(
-    properties: Properties = Properties.get<_, Divider>(),
+    properties: Properties = Properties.get<Divider>(),
     at: Vec2<Unit>,
     val length: Unit,
     val direction: Direction = Direction.Horizontal

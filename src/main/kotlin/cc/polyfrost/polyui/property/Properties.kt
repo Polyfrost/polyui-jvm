@@ -69,7 +69,7 @@ abstract class Properties : Cloneable {
     }
 
     companion object {
-        private val properties: MutableMap<String, Properties> = mutableMapOf(
+        val properties: MutableMap<String, Properties> = mutableMapOf(
             TextInput::class.java.name to TextInputProperties(TextProperties()),
             Block::class.java.name to BlockProperties(),
             Divider::class.java.name to DividerProperties(),
@@ -78,8 +78,7 @@ abstract class Properties : Cloneable {
         )
 
         @JvmStatic
-        inline fun <T : Properties, reified C : Component> get(): T =
-            get(C::class.java.name)
+        inline fun <reified C : Component> get(): Properties = get(C::class.java.name)
 
         @JvmStatic
         fun <T : Properties> get(component: Component): T =

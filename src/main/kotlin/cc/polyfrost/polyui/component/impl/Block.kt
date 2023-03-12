@@ -23,7 +23,7 @@ import cc.polyfrost.polyui.unit.Vec2
  * A simple block component, supporting the full PolyUI API.
  */
 open class Block @JvmOverloads constructor(
-    properties: Properties = Properties.get<_, Block>(),
+    properties: Properties = Properties.get<Block>(),
     at: Vec2<Unit>,
     sized: Size<Unit>,
     acceptInput: Boolean = true,
