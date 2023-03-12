@@ -17,7 +17,7 @@ import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
 
 open class Text @JvmOverloads constructor(
-    properties: Properties = Properties.get<_, Text>(),
+    properties: Properties = Properties.get<Text>(),
     text: String,
     fontSize: Unit.Pixel? = null,
     textAlign: TextAlign? = null,

@@ -145,7 +145,7 @@ abstract class Component @JvmOverloads constructor(
                     ?: throw UnsupportedOperationException("getSize() not implemented for ${this::class.simpleName}!")
             }
         }
-        if(sizedBySelf) {
+        if (sizedBySelf) {
             sized = getSize()
         }
         doDynamicSize()

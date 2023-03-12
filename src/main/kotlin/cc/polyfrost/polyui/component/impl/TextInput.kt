@@ -22,7 +22,7 @@ import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.unit.Vec2
 
 class TextInput @JvmOverloads constructor(
-    properties: Properties = Properties.get<_, TextInput>(),
+    properties: Properties = Properties.get<TextInput>(),
     at: Vec2<Unit>,
     sized: Vec2<Unit>? = null,
     vararg events: Events.Handler

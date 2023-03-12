@@ -36,6 +36,4 @@ data class Font @JvmOverloads constructor(val fileName: String, @Transient val l
         if (letterSpacing != other.letterSpacing) return false
         return lineSpacing == other.lineSpacing
     }
-
-
 }

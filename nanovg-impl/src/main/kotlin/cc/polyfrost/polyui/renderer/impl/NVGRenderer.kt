@@ -432,7 +432,7 @@ class NVGRenderer : Renderer() {
                 }
             val data: ByteBuffer
             when (image.type) {
-                Image.Type.PNG -> {
+                Image.Type.PNG, Image.Type.JPEG -> {
                     val w = IntArray(1)
                     val h = IntArray(1)
                     data = STBImage.stbi_load_from_memory(
