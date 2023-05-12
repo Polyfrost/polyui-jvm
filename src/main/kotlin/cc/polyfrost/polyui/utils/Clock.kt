@@ -9,25 +9,30 @@
 
 package cc.polyfrost.polyui.utils
 
+import kotlin.math.abs
+
 /**
  * A simple class for timing of animations and things.
  * Literally a delta function.
+ *
+ * PolyUI internally uses nanoseconds as the time unit. There are a few reasons for this:
+ * - animations will be smoother as frames are usually shorter than 1ms, around 0.02ms. This means that the delta will be a decimal, which is not possible with longs, so some accuracy is lost with milliseconds.
+ * - [System.nanoTime] (the function we use to measure time) ignores changes to the system clock, so if the user changes their clock PolyUI won't crash or go very crazy because of a negative time.
+ * - 9,223,372,036,854,775,808 is max for a long, so the program can run for 2,562,047.78802 hours, or 106,751.991167 days, or 292.471 years. So we can use these.
  */
 class Clock {
-    private var lastTime: Long = System.currentTimeMillis()
+    private var lastTime: Long = System.nanoTime()
 
     fun getDelta(): Long {
-        val currentTime = System.currentTimeMillis()
+        val currentTime = System.nanoTime()
         val delta = currentTime - lastTime
         lastTime = currentTime
-        return delta
+        return abs(delta) // failsafe for if the 'arbitrary timestamp' is in the future, which according to System.nanoTime() doc is possible
     }
 
-    fun peekDelta(): Long {
-        return System.currentTimeMillis() - lastTime
-    }
+    fun peekDelta(): Long = abs(System.nanoTime() - lastTime)
 
-    class FixedTimeExecutor(private val millis: Long, private val func: () -> Unit) {
+    class FixedTimeExecutor(private val nanos: Long, private val func: () -> Unit) {
         private val clock = Clock()
 
         init {
@@ -35,7 +40,7 @@ class Clock {
         }
 
         fun tick() {
-            if (clock.peekDelta() >= millis) {
+            if (clock.peekDelta() >= nanos) {
                 func()
                 clock.getDelta()
             }

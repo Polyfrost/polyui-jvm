@@ -64,8 +64,6 @@ class NVGRenderer : Renderer() {
 
     override fun endFrame() = nvgEndFrame(vg)
 
-    override fun cancelFrame() = nvgCancelFrame(vg)
-
     override fun globalAlpha(alpha: Float) {
         val a = min(alphaCap, alpha)
         nvgGlobalAlpha(vg, a)
@@ -90,7 +88,6 @@ class NVGRenderer : Renderer() {
         font: Font,
         x: Float,
         y: Float,
-        width: Float,
         text: String,
         color: Color,
         fontSize: Float,
@@ -102,11 +99,7 @@ class NVGRenderer : Renderer() {
         nvgTextAlign(vg, textAlign(textAlign))
         color(color)
         nvgFillColor(vg, nvgColor)
-        if (width != 0f) {
-            nvgTextBox(vg, x, y, width, text)
-        } else {
-            nvgText(vg, x, y, text)
-        }
+        nvgText(vg, x, y, text)
     }
 
     override fun drawImage(

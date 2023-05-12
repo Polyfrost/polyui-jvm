@@ -43,8 +43,8 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
     }
 
     /** update the underlying animation, if present. */
-    fun update(deltaTimeMillis: Long) {
-        animation?.update(deltaTimeMillis)
+    fun update(deltaTimeNanos: Long) {
+        animation?.update(deltaTimeNanos)
     }
 
     open val isFinished
@@ -57,10 +57,10 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         private val to: Vec2<Unit>,
         drawable: Drawable,
         type: Animations? = null,
-        durationMillis: Long = 1000L
+        durationNanos: Long = 1000L
     ) : DrawableOp(drawable) {
-        override val animation = type?.create(durationMillis, drawable.x, drawable.x + to.x)
-        private val animation2 = type?.create(durationMillis, drawable.y, drawable.y + to.y)
+        override val animation = type?.create(durationNanos, drawable.x, drawable.x + to.x)
+        private val animation2 = type?.create(durationNanos, drawable.y, drawable.y + to.y)
         override fun apply(renderer: Renderer) {
             if (animation != null) {
                 drawable.at.a.px += animation.value
@@ -80,10 +80,10 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         private val y: Float,
         override val drawable: Component,
         type: Animations? = null,
-        durationMillis: Long = 1000L
+        durationNanos: Long = 1000L
     ) : DrawableOp(drawable) {
-        override val animation = type?.create(durationMillis, drawable.scaleX, drawable.scaleX + x)
-        private val yAnim = type?.create(durationMillis, drawable.scaleY, drawable.scaleY + y)
+        override val animation = type?.create(durationNanos, drawable.scaleX, drawable.scaleX + x)
+        private val yAnim = type?.create(durationNanos, drawable.scaleY, drawable.scaleY + y)
         override fun apply(renderer: Renderer) {
             if (animation != null) {
                 drawable.scaleX = animation.value
@@ -102,11 +102,11 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         private val angle: Double,
         override val drawable: Component,
         type: Animations? = null,
-        durationMillis: Long = 1000L
+        durationNanos: Long = 1000L
     ) :
         DrawableOp(drawable) {
         override val animation =
-            type?.create(durationMillis, drawable.rotation.toFloat(), (drawable.rotation + angle).toFloat())
+            type?.create(durationNanos, drawable.rotation.toFloat(), (drawable.rotation + angle).toFloat())
 
         override fun apply(renderer: Renderer) {
             if (animation != null) {
@@ -121,11 +121,11 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         private val toSize: Vec2<Unit>,
         drawable: Drawable,
         animation: Animation.Type?,
-        durationMillis: Long = 1000L
+        durationNanos: Long = 1000L
     ) :
         DrawableOp(drawable) {
-        override val animation = animation?.create(durationMillis, drawable.sized!!.a.px, toSize.a.px)
-        private val animation2 = animation?.create(durationMillis, drawable.sized!!.b.px, toSize.b.px)
+        override val animation = animation?.create(durationNanos, drawable.sized!!.a.px, toSize.a.px)
+        private val animation2 = animation?.create(durationNanos, drawable.sized!!.b.px, toSize.b.px)
 
         override fun apply(renderer: Renderer) {
             if (animation != null) {

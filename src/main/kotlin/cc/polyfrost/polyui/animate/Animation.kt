@@ -20,7 +20,7 @@ import cc.polyfrost.polyui.animate.animations.*
  *
  * check out [DrawableOperation][cc.polyfrost.polyui.component.DrawableOp] for more information on how to use animations dynamically; and [transistions][cc.polyfrost.polyui.animate.transitions] for more information on how to use animations with components.
  */
-abstract class Animation(val durationMillis: Long, val from: Float, val to: Float) : Cloneable {
+abstract class Animation(val durationNanos: Long, val from: Float, val to: Float) : Cloneable {
     val range = to - from
     var passedTime = 0F
         protected set
@@ -29,13 +29,13 @@ abstract class Animation(val durationMillis: Long, val from: Float, val to: Floa
 
     val value: Float
         get() {
-            return getValue(passedTime / durationMillis) * range + from
+            return getValue(passedTime / durationNanos) * range + from
         }
 
-    fun update(deltaTimeMillis: Long): Float {
+    fun update(deltaTimeNanos: Long): Float {
         if (isFinished) return to
-        passedTime += deltaTimeMillis
-        isFinished = passedTime + deltaTimeMillis >= durationMillis
+        passedTime += deltaTimeNanos
+        isFinished = passedTime + deltaTimeNanos >= durationNanos
         return value
     }
 
@@ -52,15 +52,15 @@ abstract class Animation(val durationMillis: Long, val from: Float, val to: Floa
         EaseInOutQuad,
         EaseInOutQuart;
 
-        fun create(durationMillis: Long, start: Float, end: Float): Animation {
+        fun create(durationNanos: Long, start: Float, end: Float): Animation {
             return when (this) {
-                EaseInBack -> EaseInBack(durationMillis, start, end)
-                EaseOutBump -> EaseOutBump(durationMillis, start, end)
-                EaseOutQuad -> EaseOutQuad(durationMillis, start, end)
-                EaseOutExpo -> EaseOutExpo(durationMillis, start, end)
-                EaseInOutCubic -> EaseInOutCubic(durationMillis, start, end)
-                EaseInOutQuad -> EaseInOutQuad(durationMillis, start, end)
-                EaseInOutQuart -> EaseInOutQuart(durationMillis, start, end)
+                EaseInBack -> EaseInBack(durationNanos, start, end)
+                EaseOutBump -> EaseOutBump(durationNanos, start, end)
+                EaseOutQuad -> EaseOutQuad(durationNanos, start, end)
+                EaseOutExpo -> EaseOutExpo(durationNanos, start, end)
+                EaseInOutCubic -> EaseInOutCubic(durationNanos, start, end)
+                EaseInOutQuad -> EaseInOutQuad(durationNanos, start, end)
+                EaseInOutQuart -> EaseInOutQuart(durationNanos, start, end)
             }
         }
     }

@@ -36,12 +36,10 @@ abstract class Renderer : AutoCloseable {
         internal set
 
     /** hook into this renderer. */
-    internal inline fun alsoRender(block: Renderer.() -> kotlin.Unit) =
-        block()
+    internal inline fun alsoRender(block: Renderer.() -> kotlin.Unit) = block()
 
     abstract fun beginFrame(width: Int, height: Int)
     abstract fun endFrame()
-    abstract fun cancelFrame()
 
     /** Set the alpha for all future draw calls, in the range (0-1), until [reset][resetGlobalAlpha].
      *
@@ -63,15 +61,12 @@ abstract class Renderer : AutoCloseable {
     abstract fun rotate(angleRadians: Double)
 
     /**
-     * draw text to the screen, per the given parameters.
-     * @param width the wrap width for this text. If 0, you can just draw the string (it won't wrap). If it is not 0, wrap the string to the given width, strictly.
-     * This means that the string will NEVER go over the given width, and will be cut off to the next line if it does.
+     * draw text to the screen, per the given parameters. The string will already be wrapped to the given width, and will be aligned according to the given [textAlign].
      */
     abstract fun drawText(
         font: Font,
         x: Float,
         y: Float,
-        width: Float = 0f,
         text: String,
         color: Color,
         fontSize: Float,
@@ -79,7 +74,7 @@ abstract class Renderer : AutoCloseable {
     )
 
     /** calculate the bounds of this text, per the given parameters.
-     * @return a Vec2 containing the width and height of the given string.
+     * @return a Vec2 containing the width and height of the given string. If your API does not support returning string heights, just return the font size. The discrepancy should be negligible.
      */
     abstract fun textBounds(font: Font, text: String, fontSize: Float, textAlign: TextAlign): Vec2<Unit.Pixel>
 
@@ -194,7 +189,7 @@ abstract class Renderer : AutoCloseable {
     }
 
     companion object {
-        var DefaultImage = Image("./err.png")
-        var DefaultFont = Font("./Inter-Regular.ttf")
+        var DefaultImage = Image("err.png")
+        var DefaultFont = Font("Inter-Regular.ttf")
     }
 }

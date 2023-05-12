@@ -18,10 +18,12 @@ data class Vec2<T : Unit>(
     val a: T,
     val b: T
 ) : Cloneable {
-    val x get() = a.px
-    val y get() = b.px
-    val width get() = a.px
-    val height get() = b.px
+    inline val x get() = a.px
+    inline val y get() = b.px
+    inline val width get() = a.px
+    inline val height get() = b.px
+
+    inline val type get() = a.type
 
     operator fun get(index: Int): T {
         return when (index) {
@@ -59,8 +61,10 @@ data class Vec2<T : Unit>(
         return this
     }
 
-    fun type(): Unit.Type {
-        return a.type
+    override fun equals(other: Any?): Boolean {
+        if (other !is Vec2<*>) return false
+        if (this === other) return true
+        return this.a.px == other.a.px && this.b.px == other.b.px
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -69,7 +73,7 @@ data class Vec2<T : Unit>(
     }
 
     override fun toString(): String {
-        return "Vec2.${type()}(${a.px} x ${b.px})"
+        return "Vec2.$type(${a.px} x ${b.px})"
     }
 
     fun scale(scaleX: Float, scaleY: Float) {

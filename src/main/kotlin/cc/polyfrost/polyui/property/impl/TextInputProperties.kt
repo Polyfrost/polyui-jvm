@@ -12,7 +12,7 @@ package cc.polyfrost.polyui.property.impl
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.property.Properties
 
-class TextInputProperties(val textProperties: TextProperties) : Properties() {
+class TextInputProperties(val text: TextProperties) : Properties() {
     @Deprecated("use background color instead", ReplaceWith("backgroundColor"), DeprecationLevel.ERROR)
     override val color: Color = Color.BLACK
     override val padding: Float = 0f

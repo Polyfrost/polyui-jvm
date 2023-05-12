@@ -36,9 +36,11 @@ class EventManager(private val polyUI: PolyUI) {
     var keyModifiers: Short = 0
         private set
 
-    /** amount of left clicks in the current combo */
-    var clickAmount = 0
-        private set
+    /** amount of clicks in the current combo */
+    private var clickAmount = 0
+
+    /** tracker for the combo */
+    private var clickedButton: Int = 0
 
     /** weather or not the left button/primary click is DOWN (aka repeating) */
     var mouseDown = false
@@ -54,7 +56,7 @@ class EventManager(private val polyUI: PolyUI) {
     }
 
     /** This method should be called when a non-printable key is pressed. */
-    fun onKeyPressed(key: Keys, isRepeat: Boolean) {
+    fun onUnprintableKeyTyped(key: Keys, isRepeat: Boolean) {
         val event = FocusedEvents.KeyPressed(key, keyModifiers, isRepeat)
         if (!isRepeat) {
             if (polyUI.keyBinder.accept(event)) return
@@ -148,12 +150,15 @@ class EventManager(private val polyUI: PolyUI) {
     fun onMouseReleased(button: Int) {
         if (button == 0) {
             mouseDown = false
-            val curr = System.currentTimeMillis()
-            if (curr - clickTimer < polyUI.renderer.settings.multiClickInterval) {
-                if (clickAmount < polyUI.renderer.settings.maxClicksThatCanCombo) {
+        }
+        if (clickedButton != button) {
+            clickedButton = button
+            clickAmount = 1
+        } else {
+            val curr = System.nanoTime()
+            if (curr - clickTimer < polyUI.renderer.settings.comboMaxInterval) {
+                if (clickAmount < polyUI.renderer.settings.maxComboSize) {
                     clickAmount++
-                } else {
-                    clickAmount = 1
                 }
             } else {
                 clickAmount = 1
@@ -166,16 +171,16 @@ class EventManager(private val polyUI: PolyUI) {
             }
         }
         val event = Events.MouseReleased(button, mouseX, mouseY)
-        var flagReleased = false
-        var flagClicked = false
+        var releaseCancelled = false
+        var clickedCancelled = false
         val event2 = Events.MouseClicked(button, clickAmount)
         onApplicableDrawables(mouseX, mouseY) {
             if (mouseOver) {
-                if (!flagReleased) {
-                    if (accept(event)) flagReleased = true
+                if (!releaseCancelled) {
+                    if (accept(event)) releaseCancelled = true
                 }
-                if (!flagClicked) {
-                    if (accept(event2)) flagClicked = true
+                if (!clickedCancelled) {
+                    if (accept(event2)) clickedCancelled = true
                 }
             }
         }

@@ -124,8 +124,8 @@ abstract class Drawable(var acceptsInput: Boolean = true) {
         return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height
     }
 
-    fun atUnitType(): Unit.Type = at.type()
-    fun sizedUnitType(): Unit.Type = sized!!.type()
+    fun atUnitType(): Unit.Type = at.type
+    fun sizedUnitType(): Unit.Type = sized!!.type
 
     fun doDynamicSize() {
         doDynamicSize(at)

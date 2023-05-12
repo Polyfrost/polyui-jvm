@@ -122,6 +122,12 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         }
     }
 
+    /** Add this interface to your Color class if it's always updating, but still can be removed while updating, for
+     * example a chroma color, which always needs to update, but still can be removed any time.
+     * @see Chroma
+     */
+    interface AlwaysUpdate
+
     /**
      * A mutable version of [Color], that supports [recoloring][recolor] with animations.
      */
@@ -147,14 +153,14 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
          * @param type animation type. if it is null, the color will be set to the target color immediately.
          * @see [Gradient]
          */
-        open fun recolor(target: Color, type: Animation.Type? = null, durationMillis: Long = 1000) {
+        open fun recolor(target: Color, type: Animation.Type? = null, durationNanos: Long = 1000) {
             if (type != null) {
                 this.animation = Array(4) {
                     when (it) {
-                        0 -> type.create(durationMillis, r.toFloat(), target.r.toFloat())
-                        1 -> type.create(durationMillis, g.toFloat(), target.g.toFloat())
-                        2 -> type.create(durationMillis, b.toFloat(), target.b.toFloat())
-                        3 -> type.create(durationMillis, a.toFloat(), target.a.toFloat())
+                        0 -> type.create(durationNanos, r.toFloat(), target.r.toFloat())
+                        1 -> type.create(durationNanos, g.toFloat(), target.g.toFloat())
+                        2 -> type.create(durationNanos, b.toFloat(), target.b.toFloat())
+                        3 -> type.create(durationNanos, a.toFloat(), target.a.toFloat())
                         else -> throw Exception("Invalid index")
                     }
                 }
@@ -172,16 +178,16 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
          *
          * @return true if the animation finished on this tick, false if otherwise
          * */
-        open fun update(deltaTimeMillis: Long): Boolean {
+        open fun update(deltaTimeNanos: Long): Boolean {
             if (animation != null) {
                 if (animation!![0].isFinished) {
                     animation = null
                     return true
                 }
-                this.r = animation!![0].update(deltaTimeMillis).toInt()
-                this.g = animation!![1].update(deltaTimeMillis).toInt()
-                this.b = animation!![2].update(deltaTimeMillis).toInt()
-                this.a = animation!![3].update(deltaTimeMillis).toInt()
+                this.r = animation!![0].update(deltaTimeNanos).toInt()
+                this.g = animation!![1].update(deltaTimeNanos).toInt()
+                this.b = animation!![2].update(deltaTimeNanos).toInt()
+                this.a = animation!![3].update(deltaTimeNanos).toInt()
                 return false
             }
             return true
@@ -274,11 +280,11 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
          * [Mutable.recolor] this gradient color.
          * @param whichColor which color to recolor. 1 for the first color, 2 for the second color.
          */
-        fun recolor(whichColor: Int, target: Color, type: Animation.Type? = null, durationMillis: Long = 1000) {
+        fun recolor(whichColor: Int, target: Color, type: Animation.Type? = null, durationNanos: Long = 1000) {
             if (whichColor == 1) {
-                super.recolor(target, type, durationMillis)
+                super.recolor(target, type, durationNanos)
             } else if (whichColor == 2) {
-                color2.recolor(target, type, durationMillis)
+                color2.recolor(target, type, durationNanos)
             } else {
                 throw IllegalArgumentException("Invalid color index")
             }
@@ -287,11 +293,11 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         /** merge the colors of this gradient into one color.
          * @param colorToMergeTo which color to merge to. 1 for the first color, 2 for the second.
          * */
-        fun mergeColors(colorToMergeTo: Int, type: Animation.Type? = null, durationMillis: Long = 1000L) {
+        fun mergeColors(colorToMergeTo: Int, type: Animation.Type? = null, durationNanos: Long = 1000L) {
             if (colorToMergeTo == 1) {
-                color2.recolor(this, type, durationMillis)
+                color2.recolor(this, type, durationNanos)
             } else if (colorToMergeTo == 2) {
-                super.recolor(color2, type, durationMillis)
+                super.recolor(color2, type, durationNanos)
             } else {
                 throw IllegalArgumentException("Invalid color index")
             }
@@ -299,18 +305,18 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
 
         @Deprecated(
             "Gradient colors cannot be animated in this way.",
-            ReplaceWith("recolor(1, target, type, durationMillis"),
+            ReplaceWith("recolor(1, target, type, durationNanos"),
             DeprecationLevel.ERROR
         )
-        override fun recolor(target: Color, type: Animation.Type?, durationMillis: Long) {
-            recolor(1, target, type, durationMillis)
+        override fun recolor(target: Color, type: Animation.Type?, durationNanos: Long) {
+            recolor(1, target, type, durationNanos)
         }
     }
 
     /**
      * # Chroma Color
      *
-     * A color that changes over [time][speedMillis], in an endless cycle. You can use the [saturation] and [brightness] fields to set the tone of the chroma. Some examples:
+     * A color that changes over [time][speedNanos], in an endless cycle. You can use the [saturation] and [brightness] fields to set the tone of the chroma. Some examples:
      *
      * `brightness = 0.2f, saturation = 0.8f` -> dark chroma
      *
@@ -318,29 +324,29 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
      */
     class Chroma @JvmOverloads constructor(
         /**
-         * the speed of this color, in milliseconds.
+         * the speed of this color, in nanoseconds.
          *
          * The speed refers to the amount of time it takes for this color to complete one cycle, e.g. from red, through to blue, through to green, then back to red.
          * */
-        private val speedMillis: Long = 5000L,
+        private val speedNanos: Long = 5000L,
         /** brightness of the color range (0.0 - 1.0) */
         private val brightness: Float = 1f,
         /** saturation of the color range (0.0 - 1.0) */
         private val saturation: Float = 1f,
         alpha: Int = 255
-    ) : Mutable(0, 0, 0, alpha) {
+    ) : Mutable(0, 0, 0, alpha), AlwaysUpdate {
         @Deprecated("Chroma colors cannot be animated.", level = DeprecationLevel.ERROR)
-        override fun recolor(target: Color, type: Animation.Type?, durationMillis: Long) {
+        override fun recolor(target: Color, type: Animation.Type?, durationNanos: Long) {
             // no-op
         }
 
         override fun clone(): Chroma {
-            return Chroma(speedMillis, brightness, saturation, a)
+            return Chroma(speedNanos, brightness, saturation, a)
         }
 
-        override fun update(deltaTimeMillis: Long): Boolean {
+        override fun update(deltaTimeNanos: Long): Boolean {
             java.awt.Color.HSBtoRGB(
-                System.currentTimeMillis() % speedMillis / speedMillis.toFloat(),
+                System.nanoTime() % speedNanos / speedNanos.toFloat(),
                 saturation,
                 brightness
             ).let {

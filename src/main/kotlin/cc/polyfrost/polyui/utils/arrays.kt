@@ -50,9 +50,10 @@ inline fun <L, E> L.fastEachIndexed(f: (Int, E) -> Unit) where L : List<E>, L : 
  * Utilizes the [java.util.RandomAccess] trait.
  *
  * @see [fastEach]
+ * @return false if the list is empty, true otherwise.
  */
-inline fun <L, E> L.fastRemoveIf(f: (E) -> Boolean) where L : MutableList<E>, L : RandomAccess {
-    if (this.size == 0) return
+inline fun <L, E> L.fastRemoveIf(f: (E) -> Boolean): Boolean where L : MutableList<E>, L : RandomAccess {
+    if (this.size == 0) return false
     var max = this.size
     var i = 0
     while (i < max) {
@@ -62,6 +63,7 @@ inline fun <L, E> L.fastRemoveIf(f: (E) -> Boolean) where L : MutableList<E>, L 
         }
         i++
     }
+    return true
 }
 
 /** returns true if **any of** the given predicate is true. */

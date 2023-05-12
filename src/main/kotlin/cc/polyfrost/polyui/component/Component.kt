@@ -74,10 +74,10 @@ abstract class Component @JvmOverloads constructor(
         byX: Float,
         byY: Float,
         animation: Animation.Type? = null,
-        durationMillis: Long = 0L,
+        durationNanos: Long = 0L,
         onFinish: (Component.() -> kotlin.Unit)? = null
     ) {
-        addOperation(DrawableOp.Scale(byX, byY, this, animation, durationMillis), onFinish)
+        addOperation(DrawableOp.Scale(byX, byY, this, animation, durationNanos), onFinish)
     }
 
     /**
@@ -88,10 +88,10 @@ abstract class Component @JvmOverloads constructor(
     fun rotate(
         degrees: Double,
         animation: Animation.Type? = null,
-        durationMillis: Long = 0L,
+        durationNanos: Long = 0L,
         onFinish: (Component.() -> kotlin.Unit)? = null
     ) {
-        addOperation(DrawableOp.Rotate(Math.toRadians(degrees), this, animation, durationMillis), onFinish)
+        addOperation(DrawableOp.Rotate(Math.toRadians(degrees), this, animation, durationNanos), onFinish)
     }
 
     /**
@@ -103,22 +103,22 @@ abstract class Component @JvmOverloads constructor(
     fun move(
         to: Vec2<Unit>,
         animation: Animation.Type? = null,
-        durationMillis: Long = 0L,
+        durationNanos: Long = 0L,
         onFinish: (Component.() -> kotlin.Unit)? = null
     ) {
         doDynamicSize(to)
-        addOperation(DrawableOp.Move(to, this, animation, durationMillis), onFinish)
+        addOperation(DrawableOp.Move(to, this, animation, durationNanos), onFinish)
     }
 
     /** resize this component to the given size. */
     fun resize(
         toSize: Size<Unit>,
         animation: Animation.Type? = null,
-        durationMillis: Long = 0L,
+        durationNanos: Long = 0L,
         onFinish: (Component.() -> kotlin.Unit)? = null
     ) {
         doDynamicSize(toSize)
-        addOperation(DrawableOp.Resize(toSize, this, animation, durationMillis), onFinish)
+        addOperation(DrawableOp.Resize(toSize, this, animation, durationNanos), onFinish)
     }
 
     open fun animate(animation: Animation, onFinish: (Component.() -> kotlin.Unit)? = null) {
@@ -128,10 +128,10 @@ abstract class Component @JvmOverloads constructor(
     open fun recolor(
         toColor: Color,
         animation: Animation.Type,
-        durationMillis: Long,
+        durationNanos: Long,
         onFinish: (Component.() -> kotlin.Unit)? = null
     ) {
-        color.recolor(toColor, animation, durationMillis)
+        color.recolor(toColor, animation, durationNanos)
         finishColorFunc = onFinish
     }
 
@@ -167,25 +167,31 @@ abstract class Component @JvmOverloads constructor(
      * **make sure to call super [Component.preRender]!**
      */
     override fun preRender() {
-        animations.fastRemoveIf { it.first.isFinished.also { b -> if (b) it.second?.invoke(this) } }
-        operations.fastRemoveIf { it.first.isFinished.also { b -> if (b) it.second?.invoke(this) } }
+        val a = animations.fastRemoveIf { it.first.isFinished.also { b -> if (b) it.second?.invoke(this) } }
+        val o = operations.fastRemoveIf { it.first.isFinished.also { b -> if (b) it.second?.invoke(this) } }
 
-        val delta = clock.getDelta()
-        animations.fastEach { (it, _) ->
-            it.update(delta)
-            if (!it.isFinished) wantRedraw()
-        }
-        operations.fastEach { (it, _) ->
-            it.update(delta)
-            if (!it.isFinished) wantRedraw()
-            it.apply(renderer)
+        if (a || o || (color is Color.AlwaysUpdate || color.isRecoloring())) {
+            val delta = clock.getDelta()
+            if (a) {
+                animations.fastEach { (it, _) ->
+                    it.update(delta)
+                    if (!it.isFinished) wantRedraw()
+                }
+            }
+            if (o) {
+                operations.fastEach { (it, _) ->
+                    it.update(delta)
+                    if (!it.isFinished) wantRedraw()
+                    it.apply(renderer)
+                }
+            }
+            if (color.update(delta)) {
+                finishColorFunc?.invoke(this)
+                finishColorFunc = null
+            }
         }
         if (scaleX != 1f && scaleY != 1f) renderer.scale(scaleX, scaleY)
         if (rotation != 0.0) renderer.rotate(rotation)
-        if (color.update(delta)) {
-            finishColorFunc?.invoke(this)
-            finishColorFunc = null
-        }
     }
 
     /**

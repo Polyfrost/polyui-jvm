@@ -71,7 +71,6 @@ class GLWindow @JvmOverloads constructor(
         glfwMakeContextCurrent(handle)
         createCapabilities()
         glfwSetTime(0.0)
-        glfwSwapInterval(0)
     }
 
     override fun createCallbacks() {
@@ -125,7 +124,7 @@ class GLWindow @JvmOverloads constructor(
                         else -> Keys.UNKNOWN
                     }
                     )
-                if (action != GLFW_RELEASE) polyUI.eventManager.onKeyPressed(key, action == GLFW_REPEAT)
+                if (action != GLFW_RELEASE) polyUI.eventManager.onUnprintableKeyTyped(key, action == GLFW_REPEAT)
             } else {
                 val key: KeyModifiers = (
                     when (keyCode) {
@@ -157,8 +156,13 @@ class GLWindow @JvmOverloads constructor(
         }
     }
 
+    override fun videoSettingsChanged() {
+        glfwSwapInterval(if (polyUI.renderer.settings.enableVSync) 1 else 0)
+    }
+
     override fun open(polyUI: PolyUI): Window {
         this.polyUI = polyUI
+        videoSettingsChanged()
 
         createCallbacks()
 
@@ -202,7 +206,7 @@ class GLWindow @JvmOverloads constructor(
         return this
     }
 
-    fun closeWindow() {
+    override fun close() {
         glfwWindowShouldClose(handle)
     }
 

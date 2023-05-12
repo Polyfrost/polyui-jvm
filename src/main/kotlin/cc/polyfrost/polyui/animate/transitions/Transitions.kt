@@ -26,22 +26,22 @@ abstract class Transition(drawable: Drawable) : DrawableOp(drawable), Cloneable 
     enum class Type {
         FadeOut, FadeIn, SlideFromLeft, SlideFromRight, SlideFromTop, SlideFromBottom;
 
-        fun create(drawable: Drawable, durationMillis: Long): Transition {
+        fun create(drawable: Drawable, durationNanos: Long): Transition {
             return when (this) {
-                FadeOut -> FadeOut(drawable, Animations.EaseOutQuad, durationMillis)
-                FadeIn -> FadeIn(drawable, Animations.EaseOutQuad, durationMillis)
-                SlideFromLeft -> Slide(drawable, SlideDirection.FromLeft, Animations.EaseOutQuad, durationMillis)
-                SlideFromRight -> Slide(drawable, SlideDirection.FromRight, Animations.EaseOutQuad, durationMillis)
-                SlideFromTop -> Slide(drawable, SlideDirection.FromTop, Animations.EaseOutQuad, durationMillis)
-                SlideFromBottom -> Slide(drawable, SlideDirection.FromBottom, Animations.EaseOutQuad, durationMillis)
+                FadeOut -> FadeOut(drawable, Animations.EaseOutQuad, durationNanos)
+                FadeIn -> FadeIn(drawable, Animations.EaseOutQuad, durationNanos)
+                SlideFromLeft -> Slide(drawable, SlideDirection.FromLeft, Animations.EaseOutQuad, durationNanos)
+                SlideFromRight -> Slide(drawable, SlideDirection.FromRight, Animations.EaseOutQuad, durationNanos)
+                SlideFromTop -> Slide(drawable, SlideDirection.FromTop, Animations.EaseOutQuad, durationNanos)
+                SlideFromBottom -> Slide(drawable, SlideDirection.FromBottom, Animations.EaseOutQuad, durationNanos)
             }
         }
     }
 }
 
-open class FadeIn(drawable: Drawable, private val animationType: Animations, durationMillis: Long = 1000L) :
+open class FadeIn(drawable: Drawable, private val animationType: Animations, durationNanos: Long = 1000L) :
     Transition(drawable) {
-    override val animation: Animation = animationType.create(durationMillis, 0f, 1f)
+    override val animation: Animation = animationType.create(durationNanos, 0f, 1f)
     final override fun apply(renderer: Renderer) {
         renderer.globalAlpha(animation.value)
     }
@@ -51,15 +51,15 @@ open class FadeIn(drawable: Drawable, private val animationType: Animations, dur
     }
 
     override fun clone(): FadeIn {
-        return FadeIn(drawable, animationType, animation.durationMillis)
+        return FadeIn(drawable, animationType, animation.durationNanos)
     }
 }
 
-class FadeOut(drawable: Drawable, private val animationType: Animations, durationMillis: Long = 1000L) :
-    FadeIn(drawable, animationType, durationMillis) {
-    override val animation: Animation = animationType.create(durationMillis, 1f, 0f)
+class FadeOut(drawable: Drawable, private val animationType: Animations, durationNanos: Long = 1000L) :
+    FadeIn(drawable, animationType, durationNanos) {
+    override val animation: Animation = animationType.create(durationNanos, 1f, 0f)
     override fun clone(): FadeOut {
-        return FadeOut(drawable, animationType, animation.durationMillis)
+        return FadeOut(drawable, animationType, animation.durationNanos)
     }
 }
 
@@ -67,21 +67,21 @@ class Slide(
     drawable: Drawable,
     private val direction: SlideDirection = SlideDirection.FromLeft,
     private val animationType: Animations,
-    durationMillis: Long = 1000L
+    durationNanos: Long = 1000L
 ) :
     Transition(drawable) {
     override val animation: Animation =
         when (direction) {
-            SlideDirection.FromLeft -> animationType.create(durationMillis, -1f - drawable.width, drawable.x)
+            SlideDirection.FromLeft -> animationType.create(durationNanos, -1f - drawable.width, drawable.x)
             SlideDirection.FromRight -> animationType.create(
-                durationMillis,
+                durationNanos,
                 Unit.VUnits.vWidth + drawable.width,
                 drawable.x
             )
 
-            SlideDirection.FromTop -> animationType.create(durationMillis, -1f - drawable.height, drawable.y)
+            SlideDirection.FromTop -> animationType.create(durationNanos, -1f - drawable.height, drawable.y)
             SlideDirection.FromBottom -> animationType.create(
-                durationMillis,
+                durationNanos,
                 Unit.VUnits.vHeight + drawable.height,
                 drawable.y
             )
@@ -104,7 +104,7 @@ class Slide(
     }
 
     override fun clone(): Slide {
-        return Slide(drawable, direction, animationType, animation.durationMillis)
+        return Slide(drawable, direction, animationType, animation.durationNanos)
     }
 }
 

@@ -243,7 +243,7 @@ abstract class Layout(
 
     override fun debugRender() {
         renderer.drawHollowRect(x, y, width, height, Color.GRAYf, 2f)
-        renderer.drawText(Renderer.DefaultFont, x + 1, y + 1, 0f, simpleName, Color.WHITE, 10f)
+        renderer.drawText(Renderer.DefaultFont, x + 1, y + 1, simpleName, Color.WHITE, 10f)
         children.fastEach { it.debugRender() }
         components.fastEach { it.debugRender() }
     }

@@ -106,16 +106,18 @@ class PolyUI(
         if (this.settings.debugLog) this.master.debugPrint()
         Unit.VUnits.vHeight = height.toFloat()
         Unit.VUnits.vWidth = width.toFloat()
-        keyBinder.add('I', KeyModifiers.LCONTROL, KeyModifiers.LSHIFT) {
-            settings.debug = !settings.debug
-            LOGGER.info(
-                "Debug mode {}",
-                if (settings.debug) {
-                    frames = 0; "enabled"
-                } else {
-                    "disabled"
-                }
-            )
+        if (settings.enableDebugKeybind) {
+            keyBinder.add('I', KeyModifiers.LCONTROL, KeyModifiers.LSHIFT) {
+                settings.debug = !settings.debug
+                LOGGER.info(
+                    "Debug mode {}",
+                    if (settings.debug) {
+                        frames = 0; "enabled"
+                    } else {
+                        "disabled"
+                    }
+                )
+            }
         }
         keyBinder.add('R', KeyModifiers.LCONTROL) {
             LOGGER.info("Reloading PolyUI")
@@ -124,7 +126,7 @@ class PolyUI(
         }
         every(1.seconds) {
             if (settings.debug) {
-                perf = "fps: $fps, avg/max/min: ${avgFrame.rounded(4)}ms; ${longestFrame}ms; ${shortestFrame}ms"
+                perf = "fps: $fps, avg/max/min: ${avgFrame.rounded(4)}ms; ${longestFrame.rounded(4)}ms; ${shortestFrame.rounded(4)}ms"
                 longestFrame = 0f
                 shortestFrame = 100f
                 avgFrame = timeInFrames / fps
@@ -182,20 +184,25 @@ class PolyUI(
             timeInFrames += frameTime
             if (frameTime > longestFrame) longestFrame = frameTime
             if (frameTime < shortestFrame) shortestFrame = frameTime
-            renderer.drawText(
-                Renderer.DefaultFont,
-                width - 1f,
-                height - 11f,
-                text = perf,
-                color = Color.WHITE_90,
-                fontSize = 10f,
-                textAlign = TextAlign.Right
-            )
+            drawDebugOverlay(width - 1f, height - 11f)
             frames++
         }
 
         renderer.endFrame()
         executors.fastEach { it.tick() }
+    }
+
+    /** draw the debug overlay text. It is right-aligned. */
+    fun drawDebugOverlay(x: Float, y: Float) {
+        renderer.drawText(
+            Renderer.DefaultFont,
+            x,
+            y,
+            text = perf,
+            color = Color.WHITE_90,
+            fontSize = 10f,
+            textAlign = TextAlign.Right
+        )
     }
 
     fun debugRender() {
@@ -227,9 +234,9 @@ class PolyUI(
         return this
     }
 
-    /** add a function that is called every [millis] milliseconds. */
-    fun every(millis: Long, func: () -> kotlin.Unit): PolyUI {
-        executors.add(Clock.FixedTimeExecutor(millis, func))
+    /** add a function that is called every [nanos] nanoseconds. */
+    fun every(nanos: Long, func: () -> kotlin.Unit): PolyUI {
+        executors.add(Clock.FixedTimeExecutor(nanos, func))
         return this
     }
 

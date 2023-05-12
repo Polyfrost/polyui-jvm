@@ -12,41 +12,44 @@
 
 package cc.polyfrost.polyui.unit
 
-operator fun Float.compareTo(x: Unit): Int = compareTo(x.px)
+inline operator fun Float.compareTo(x: Unit): Int = compareTo(x.px)
 
 @get:JvmName("pixels")
-val Number.px get() = Unit.Pixel(this.toFloat())
+inline val Number.px get() = Unit.Pixel(this.toFloat())
 
 @get:JvmName("percent")
-val Number.percent get() = Unit.Percent(this.toFloat())
+inline val Number.percent get() = Unit.Percent(this.toFloat())
 
 @get:JvmName("vwidth")
-val Number.vwidth get() = Unit.VUnits(this.toFloat(), Unit.Type.VWidth)
+inline val Number.vwidth get() = Unit.VUnits(this.toFloat(), Unit.Type.VWidth)
 
 @get:JvmName("vheight")
-val Number.vheight get() = Unit.VUnits(this.toFloat(), Unit.Type.VHeight)
+inline val Number.vheight get() = Unit.VUnits(this.toFloat(), Unit.Type.VHeight)
 
 @get:JvmName("vmin")
-val Number.vmin get() = Unit.VUnits(this.toFloat(), Unit.Type.VMin)
+inline val Number.vmin get() = Unit.VUnits(this.toFloat(), Unit.Type.VMin)
 
 @get:JvmName("vmax")
-val Number.vmax get() = Unit.VUnits(this.toFloat(), Unit.Type.VMax)
+inline val Number.vmax get() = Unit.VUnits(this.toFloat(), Unit.Type.VMax)
+
+@get:JvmName("nanoseconds")
+inline val Number.nanoseconds get() = toLong()
 
 @get:JvmName("milliseconds")
-val Number.milliseconds get() = toLong()
+inline val Number.milliseconds get() = (toLong() * 1_000_000L)
 
 @get:JvmName("seconds")
-val Number.seconds get() = (toDouble() * 1000.0).toLong()
+inline val Number.seconds get() = (toLong() * 1_000_000_000L)
 
 @get:JvmName("minutes")
-val Number.minutes get() = (toDouble() * 60_000.0).toLong()
+inline val Number.minutes get() = (toLong() * 60_000_000_000L)
 
 @get:JvmName("hours")
 val Number.hours get() = (toDouble() * 3_600_000.0).toLong()
 
-val origin = 0.px * 0.px
-val fill = Unit.Percent(100f)
-val fillv = fill * fill
+inline val origin get() = (0.px * 0.px).clone()
+inline val fill get() = Unit.Percent(100f).clone()
+inline val fillv get() = (Unit.Percent(100f) * Unit.Percent(100f)).clone()
 
 fun index(index: Int) = Unit.Flex(index)
 

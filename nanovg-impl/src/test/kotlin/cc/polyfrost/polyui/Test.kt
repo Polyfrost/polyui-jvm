@@ -26,8 +26,6 @@ import cc.polyfrost.polyui.renderer.impl.NVGRenderer
 import cc.polyfrost.polyui.unit.*
 import java.lang.Math.random
 
-private var lastSecond = System.currentTimeMillis()
-
 fun main() {
     val window = GLWindow("Test", 800, 800)
     val things = Array<Drawable>(50) { // creates 50 rectangles with random sizes
