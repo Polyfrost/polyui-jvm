@@ -7,6 +7,8 @@
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  */
 
+@file:Suppress("NOTHING_TO_INLINE")
+
 package cc.polyfrost.polyui.utils
 
 import cc.polyfrost.polyui.color.Color
@@ -44,7 +46,12 @@ fun Float.rounded(places: Int = 2): Float {
 }
 
 /** convert the given float into an array of 4 floats for radii. */
-fun Float.asRadii() = floatArrayOf(this, this, this, this)
+inline fun Float.asRadii() = floatArrayOf(this, this, this, this)
+
+/** varargs wrapper */
+inline fun varargs(vararg any: Any): Array<out Any> {
+    return any
+}
 
 /** print the object to stdout, then return it. */
 inline fun <T> T.stdout(): T {
@@ -84,9 +91,6 @@ fun String.substringSafe(fromIndex: Int, toIndex: Int = length): String {
     }
     if (fromIndex < 0) {
         return substringSafe(0, toIndex)
-    }
-    if (toIndex < 0) {
-        return substringSafe(fromIndex, length)
     }
     if (toIndex > length) {
         return substringSafe(fromIndex, length)
@@ -270,7 +274,6 @@ fun String.wrap(
     return lines to false
 }
 
-// not private in case it is needed by someone?
 internal fun addLine(
     lines: ArrayList<String>,
     currentLine: String,

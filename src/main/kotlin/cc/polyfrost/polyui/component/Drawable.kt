@@ -13,10 +13,8 @@ import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.renderer.Renderer
-import cc.polyfrost.polyui.unit.Point
-import cc.polyfrost.polyui.unit.Size
+import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
-import cc.polyfrost.polyui.unit.Vec2
 
 /**
  * # Drawable
@@ -25,12 +23,12 @@ import cc.polyfrost.polyui.unit.Vec2
  * This class is implemented for both [Layout] and [Drawable], and you should use them as bases if you are creating a UI in most cases.
  */
 abstract class Drawable(var acceptsInput: Boolean = true) {
-    protected open val eventHandlers = mutableMapOf<Events, Drawable.() -> Boolean>()
+    open val eventHandlers = mutableMapOf<Events, Drawable.() -> Boolean>()
     open var simpleName = this.toString().substringAfterLast(".")
     abstract val at: Point<Unit>
     abstract var sized: Size<Unit>?
-    protected lateinit var renderer: Renderer
-    protected lateinit var polyui: PolyUI
+    internal open lateinit var renderer: Renderer
+    internal open lateinit var polyui: PolyUI
 
     /** weather or not the mouse is currently over this component. DO NOT modify this value. It is managed automatically by [cc.polyfrost.polyui.event.EventManager]. */
     var mouseOver = false
@@ -45,13 +43,12 @@ abstract class Drawable(var acceptsInput: Boolean = true) {
     val x get() = at.x
     val y get() = at.y
     val width
-        get() = sized?.width
-            ?: throw IllegalStateException("Drawable $simpleName has no size, but should have a size initialized by this point")
+        get() = sized!!.width // ?: throw IllegalStateException("Drawable $simpleName has no size, but should have a size initialized by this point")
     val height
-        get() = sized?.height
-            ?: throw IllegalStateException("Drawable $simpleName has no size, but should have a size initialized by this point")
+        get() = sized!!.height // ?: throw IllegalStateException("Drawable $simpleName has no size, but should have a size initialized by this point") // note: this hot method kinda needs this not to be here
 
-    /** pre-render functions, such as applying transforms. */
+    /** pre-render functions, such as applying transforms.
+     * In this method, you should set needsRedraw to true if you have something to redraw for the **next frame**.*/
     abstract fun preRender()
 
     /** draw script for this drawable. */
@@ -73,7 +70,7 @@ abstract class Drawable(var acceptsInput: Boolean = true) {
      * Method that is called when the physical size of the total window area changes.
      */
     open fun rescale(scaleX: Float, scaleY: Float) {
-//        at.scale(scaleX, scaleY)
+        at.scale(scaleX, scaleY)
         sized!!.scale(scaleX, scaleY)
     }
 
@@ -121,7 +118,9 @@ abstract class Drawable(var acceptsInput: Boolean = true) {
     }
 
     open fun isInside(x: Float, y: Float): Boolean {
-        return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height
+        val tx = this.x + (layout?.x ?: 0f)
+        val ty = this.y + (layout?.y ?: 0f)
+        return x >= tx && x <= tx + this.width && y >= ty && y <= ty + this.height
     }
 
     fun atUnitType(): Unit.Type = at.type
@@ -129,7 +128,7 @@ abstract class Drawable(var acceptsInput: Boolean = true) {
 
     fun doDynamicSize() {
         doDynamicSize(at)
-        doDynamicSize(sized!!)
+        if (sized != null) doDynamicSize(sized!!)
     }
 
     fun doDynamicSize(upon: Vec2<Unit>) {

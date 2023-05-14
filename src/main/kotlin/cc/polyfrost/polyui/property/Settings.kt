@@ -36,8 +36,14 @@ class Settings(private val renderer: Renderer) {
      */
     var masterIsFramebuffer = false
 
-    /** minimum number of items in a layout before it will use a framebuffer. */
-    var minItemsForFramebuffer: Int = 5
+    /**
+     * minimum number of items in a layout (and its children) before it will use a framebuffer.
+     *
+     * This value should be set to something relatively high, as the performance gain from using a framebuffer only works if there is a large amount of draw calls.
+     *
+     * @see [cc.polyfrost.polyui.layout.Layout.countDrawables]
+     */
+    var minItemsForFramebuffer: Int = 30
 
     /** the time between clicks for them to be considered as a combo.
      * @see maxComboSize

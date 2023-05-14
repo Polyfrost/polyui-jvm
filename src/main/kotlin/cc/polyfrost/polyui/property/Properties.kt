@@ -27,7 +27,7 @@ import cc.polyfrost.polyui.unit.Unit
  * They are used to eliminate repeated code on components, and to make styling easier.
  *
  * @see [BlockProperties]
- * @see [ImageBlockProperties]
+ * @see [ImageProperties]
  * @see [TextProperties]
  */
 abstract class Properties : Cloneable {
@@ -73,7 +73,7 @@ abstract class Properties : Cloneable {
             TextInput::class.java.name to TextInputProperties(TextProperties()),
             Block::class.java.name to BlockProperties(),
             Divider::class.java.name to DividerProperties(),
-            ImageBlock::class.java.name to ImageBlockProperties(),
+            Image::class.java.name to ImageProperties(),
             Text::class.java.name to TextProperties()
         )
 

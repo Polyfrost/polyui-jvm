@@ -15,7 +15,7 @@ import cc.polyfrost.polyui.property.Settings
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.data.Font
 import cc.polyfrost.polyui.renderer.data.Framebuffer
-import cc.polyfrost.polyui.renderer.data.Image
+import cc.polyfrost.polyui.renderer.data.PolyImage
 import cc.polyfrost.polyui.unit.TextAlign
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.unit.Vec2
@@ -30,6 +30,7 @@ import org.lwjgl.stb.STBImage
 import org.lwjgl.stb.STBImageResize
 import org.lwjgl.system.MemoryUtil
 import java.io.InputStreamReader
+import java.lang.NullPointerException
 import java.nio.ByteBuffer
 import kotlin.math.max
 import kotlin.math.min
@@ -39,7 +40,7 @@ class NVGRenderer : Renderer() {
     private val nvgColor: NVGColor = NVGColor.malloc()
     private val nvgColor2: NVGColor = NVGColor.malloc()
     private val fbos: MutableMap<Framebuffer, NVGLUFramebuffer> = mutableMapOf()
-    private val images: MutableMap<Image, NVGImage> = mutableMapOf()
+    private val images: MutableMap<PolyImage, NVGImage> = mutableMapOf()
     private val fonts: MutableMap<Font, NVGFont> = mutableMapOf()
     private var alphaCap = 1f
     private var vg: Long = -1
@@ -78,6 +79,9 @@ class NVGRenderer : Renderer() {
     override fun scale(x: Float, y: Float) = nvgScale(vg, x, y)
 
     override fun rotate(angleRadians: Double) = nvgRotate(vg, angleRadians.toFloat())
+    override fun pushScissor(x: Float, y: Float, width: Float, height: Float) = nvgScissor(vg, x, y, width, height)
+
+    override fun popScissor() = nvgResetScissor(vg)
 
     override fun drawFramebuffer(fbo: Framebuffer, x: Float, y: Float, width: Float, height: Float) {
         val framebuffer = fbos[fbo] ?: throw IllegalStateException("unknown framebuffer!")
@@ -103,9 +107,11 @@ class NVGRenderer : Renderer() {
     }
 
     override fun drawImage(
-        image: Image,
+        image: PolyImage,
         x: Float,
         y: Float,
+        width: Float,
+        height: Float,
         colorMask: Int,
         topLeftRadius: Float,
         topRightRadius: Float,
@@ -113,7 +119,7 @@ class NVGRenderer : Renderer() {
         bottomRightRadius: Float
     ) {
         val img = getImage(image)
-        nvgImagePattern(vg, x, y, img.width, img.height, 0F, img.id, 1F, nvgPaint)
+        nvgImagePattern(vg, x, y, width, height, 0F, img.id, 1F, nvgPaint)
         if (colorMask != 0) {
             nvgRGBA(
                 (colorMask shr 16 and 0xFF).toByte(),
@@ -128,8 +134,8 @@ class NVGRenderer : Renderer() {
             vg,
             x,
             y,
-            img.width,
-            img.height,
+            width,
+            height,
             topLeftRadius,
             topRightRadius,
             bottomRightRadius,
@@ -177,18 +183,21 @@ class NVGRenderer : Renderer() {
     }
 
     override fun bindFramebuffer(fbo: Framebuffer, mode: Framebuffer.Mode) {
-        NanoVGGL3.nvgluBindFramebuffer(vg, fbos[fbo])
+        NanoVGGL3.nvgluBindFramebuffer(vg, fbos[fbo] ?: throw NullPointerException("Cannot bind: $fbo does not exist!"))
+        glViewport(0, 0, fbo.width.toInt(), fbo.height.toInt())
         glClearColor(0F, 0F, 0F, 0F)
         glClear(GL_COLOR_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
+        nvgBeginFrame(vg, fbo.width, fbo.height, pixelRatio)
     }
 
-    override fun unbindFramebuffer(fbo: Framebuffer, mode: Framebuffer.Mode) = NanoVGGL3.nvgluBindFramebuffer(vg, null)
-
-    override fun supportsRenderbuffer(): Boolean {
-        return false
+    override fun unbindFramebuffer(fbo: Framebuffer, mode: Framebuffer.Mode) {
+        nvgEndFrame(vg)
+        NanoVGGL3.nvgluBindFramebuffer(vg, null)
     }
 
-    override fun initImage(image: Image) {
+    override fun supportsRenderbuffer() = false
+
+    override fun initImage(image: PolyImage) {
         getImage(image)
     }
 
@@ -398,8 +407,7 @@ class NVGRenderer : Renderer() {
                                 "Failed to get font: {}, falling back to default font!",
                                 font.fileName
                             )
-                        }
-                            .toByteBuffer()
+                        }.toByteBuffer()
                     } else {
                         throw ExceptionInInitializerError("Failed to get font: ${font.fileName}")
                     }
@@ -408,9 +416,8 @@ class NVGRenderer : Renderer() {
         }
     }
 
-    private fun getImage(image: Image): NVGImage {
+    private fun getImage(image: PolyImage): NVGImage {
         return images[image] ?: run {
-            if (image.width != null && image.height == null) throw ExceptionInInitializerError("$image width is set but height is not!")
             val stream = getResourceStreamNullable(image.fileName)
                 ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) {
                     getResourceStream(DefaultImage.fileName)
@@ -425,7 +432,7 @@ class NVGRenderer : Renderer() {
                 }
             val data: ByteBuffer
             when (image.type) {
-                Image.Type.PNG, Image.Type.JPEG -> {
+                PolyImage.Type.PNG, PolyImage.Type.JPEG -> {
                     val w = IntArray(1)
                     val h = IntArray(1)
                     data = STBImage.stbi_load_from_memory(
@@ -438,47 +445,47 @@ class NVGRenderer : Renderer() {
                         if (it == null) {
                             throw Exception("Failed to initialize image: $image")
                         }
-                        if (image.width == null) {
-                            image.width = w[0]
-                            image.height = h[0]
+                        if (image.width == -1f || image.height == -1f) {
+                            image.width = w[0].toFloat()
+                            image.height = h[0].toFloat()
                         } else {
                             PolyUI.LOGGER.info("resizing $image: ${w[0]}x${h[0]} -> ${image.width}x${image.height}")
                             STBImageResize.stbir_resize_uint8(
                                 it, w[0], h[0],
                                 0, it,
-                                image.width!!, image.height!!,
+                                image.width.toInt(), image.height.toInt(),
                                 0, 4
                             )
                         }
                     } ?: throw Exception("Failed to initialize image: $image")
                 }
 
-                Image.Type.SVG -> {
+                PolyImage.Type.SVG -> {
                     val d = InputStreamReader(stream).readText() as CharSequence
                     val svg =
                         NanoSVG.nsvgParse(d, "px", 96F) ?: throw Exception("Failed to open SVG: $image (invalid data?)")
                     val raster = NanoSVG.nsvgCreateRasterizer()
-                    val scale = if (image.width != null) {
-                        max(image.width!! / svg.width(), (image.height ?: 0) / svg.height())
+                    val scale = if (image.width != -1f || image.height != -1f) {
+                        max(image.width / svg.width(), image.height / svg.height())
                     } else {
                         1F
                     }
-                    image.width = (svg.width() * scale).toInt()
-                    image.height = (svg.height() * scale).toInt()
-                    data = MemoryUtil.memAlloc(image.width!! * image.height!! * 4)
+                    image.width = (svg.width() * scale).toInt().toFloat()
+                    image.height = (svg.height() * scale).toInt().toFloat()
+                    data = MemoryUtil.memAlloc(image.width.toInt() * image.height.toInt() * 4)
                     NanoSVG.nsvgRasterize(
                         raster, svg,
                         0F, 0F,
                         scale, data,
-                        image.width!!, image.height!!,
-                        image.width!! * 4
+                        image.width.toInt(), image.height.toInt(),
+                        image.width.toInt() * 4
                     )
                     NanoSVG.nsvgDeleteRasterizer(raster)
                     NanoSVG.nsvgDelete(svg)
                 }
             }
-            val img = nvgCreateImageRGBA(vg, image.width!!, image.height!!, 0, data)
-            NVGImage(img, image.width!!.toFloat(), image.height!!.toFloat(), data).also { images[image] = it }
+            val img = nvgCreateImageRGBA(vg, image.width.toInt(), image.height.toInt(), 0, data)
+            NVGImage(img, image.width, image.height, data).also { images[image] = it }
         }
     }
 

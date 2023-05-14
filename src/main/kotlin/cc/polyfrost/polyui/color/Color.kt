@@ -122,12 +122,6 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         }
     }
 
-    /** Add this interface to your Color class if it's always updating, but still can be removed while updating, for
-     * example a chroma color, which always needs to update, but still can be removed any time.
-     * @see Chroma
-     */
-    interface AlwaysUpdate
-
     /**
      * A mutable version of [Color], that supports [recoloring][recolor] with animations.
      */
@@ -137,6 +131,13 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         override var b: Int,
         override var a: Int
     ) : Color(r, g, b, a) {
+
+        /** Set this in your Color class if it's always updating, but still can be removed while updating, for
+         * example a chroma color, which always needs to update, but still can be removed any time.
+         * @see Chroma
+         */
+        open val alwaysUpdates get() = false
+        open val updating get() = animation != null
         private var animation: Array<Animation>? = null
 
         fun toImmutable() = Color(r, g, b, a)
@@ -191,10 +192,6 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
                 return false
             }
             return true
-        }
-
-        open fun isRecoloring(): Boolean {
-            return animation != null
         }
 
         override fun clone(): Mutable {
@@ -334,7 +331,7 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         /** saturation of the color range (0.0 - 1.0) */
         private val saturation: Float = 1f,
         alpha: Int = 255
-    ) : Mutable(0, 0, 0, alpha), AlwaysUpdate {
+    ) : Mutable(0, 0, 0, alpha) {
         @Deprecated("Chroma colors cannot be animated.", level = DeprecationLevel.ERROR)
         override fun recolor(target: Color, type: Animation.Type?, durationNanos: Long) {
             // no-op
@@ -358,8 +355,7 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         }
 
         // although this technically should be true, we don't want a chroma color preventing an element from being deleted.
-        override fun isRecoloring(): Boolean {
-            return false
-        }
+        override val updating get() = false
+        override val alwaysUpdates get() = true
     }
 }

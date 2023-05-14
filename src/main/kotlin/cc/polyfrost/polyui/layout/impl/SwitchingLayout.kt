@@ -27,8 +27,9 @@ class SwitchingLayout(
     onRemoved: (Drawable.() -> kotlin.Unit)? = null,
     val transition: Transitions? = null,
     val transitionDuration: Long = 1000L,
-    private var current: Layout? = null
-) : PixelLayout(at, sized, onAdded, onRemoved, false) {
+    private var current: Layout? = null,
+    resizesChildren: Boolean = true
+) : PixelLayout(at, sized, onAdded, onRemoved, resizesChildren, false) {
     override var simpleName: String = "SwitchingLayout@${this.toString().substringAfterLast("@")}"
     private val clock = Clock()
     private var goingSwitchOp: Transition? = null

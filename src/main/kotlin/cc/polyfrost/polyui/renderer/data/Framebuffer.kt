@@ -15,4 +15,8 @@ data class Framebuffer(val width: Float, val height: Float, val type: Settings.B
     enum class Mode {
         Read, Write, ReadWrite
     }
+
+    override fun toString(): String {
+        return "${type.toString().lowercase().replaceFirstChar { c -> c.uppercaseChar() }}($width x $height)"
+    }
 }

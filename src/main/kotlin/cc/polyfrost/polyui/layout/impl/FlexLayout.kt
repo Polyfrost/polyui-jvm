@@ -10,6 +10,7 @@
 package cc.polyfrost.polyui.layout.impl
 
 import cc.polyfrost.polyui.PolyUI
+import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.unit.*
@@ -43,8 +44,9 @@ class FlexLayout @JvmOverloads constructor(
     private val itemAlign: AlignItems = AlignItems.Start,
     private val contentAlign: AlignContent = AlignContent.Start,
     gap: Gap = Gap.Default,
+    resizesChildren: Boolean = true,
     vararg items: Drawable
-) : Layout(at, sized, onAdded, onRemoved, false, *items) {
+) : Layout(at, sized, onAdded, onRemoved, false, resizesChildren, *items) {
     constructor(at: Point<Unit>, wrap: Unit.Percent, vararg items: Drawable) : this(
         at,
         null,
@@ -65,20 +67,6 @@ class FlexLayout @JvmOverloads constructor(
         Direction.Row, Direction.RowReverse -> gap.crossGap.px
         Direction.Column, Direction.ColumnReverse -> gap.mainGap.px
     }
-    private val mainPos: Float
-        get() {
-            return when (flexDirection) {
-                Direction.Row, Direction.RowReverse -> at.a.px
-                Direction.Column, Direction.ColumnReverse -> at.b.px
-            }
-        }
-    private val crossPos: Float
-        get() {
-            return when (flexDirection) {
-                Direction.Row, Direction.RowReverse -> at.b.px
-                Direction.Column, Direction.ColumnReverse -> at.a.px
-            }
-        }
     private val wrapDirection: Wrap
     private val strictSize = sized != null && wrap == null
 
@@ -112,6 +100,8 @@ class FlexLayout @JvmOverloads constructor(
             if ((it.at as Point<Unit.Flex>).a.index >= 0) {
                 items.moveElement(i, (it.at.a as Unit.Flex).index)
             }
+            if (it is Component) it.layout = this // why are smart casts so goofy? like I seriously have to do this?
+            if (it is Layout) it.layout = this
         }
         drawables = items.map { FlexDrawable(it, it.at.a as Unit.Flex, it.sized) } as ArrayList<FlexDrawable>
         if (wrapDirection == Wrap.WrapReverse) drawables.reverse()
@@ -236,12 +226,10 @@ class FlexLayout @JvmOverloads constructor(
     }
 
     private inner class FlexDrawable(val drawable: Drawable, val flex: Unit.Flex, minSize: Size<Unit>? = null) {
-        val size: Size<Unit>
+        val size get() = drawable.sized!!
 
         init {
             if (drawable.sized == null) drawable.sized = getSize() ?: minSize ?: origin
-            // just so I don't have to !! everywhere
-            size = drawable.sized!!
         }
 
         /** x */
@@ -346,37 +334,36 @@ class FlexLayout @JvmOverloads constructor(
         }
 
         fun align(numRows: Int, thisRowCrossPos: Float, allMaxCrossSize: Float) {
-            val startCross = crossPos + thisRowCrossPos
             when (contentAlign) {
                 AlignContent.Start -> {
-                    drawables.fastEach { it.crossPos = startCross }
+                    drawables.fastEach { it.crossPos = thisRowCrossPos }
                 }
 
                 AlignContent.End -> {
-                    drawables.fastEach { it.crossPos = startCross + (crossSize - it.crossSize) }
+                    drawables.fastEach { it.crossPos = thisRowCrossPos + (crossSize - it.crossSize) }
                 }
 
                 AlignContent.Center -> {
-                    drawables.fastEach { it.crossPos = startCross + (crossSize - it.crossSize) / 2 }
+                    drawables.fastEach { it.crossPos = thisRowCrossPos + (crossSize - it.crossSize) / 2 }
                 }
 
                 AlignContent.SpaceBetween -> {
                     val gap = (crossSize - allMaxCrossSize) / (numRows - 1)
                     drawables.fastEach {
-                        it.crossPos = startCross + gap
+                        it.crossPos = thisRowCrossPos + gap
                     }
                 }
 
                 AlignContent.SpaceEvenly -> {
                     val gap = (crossSize - allMaxCrossSize) / (numRows + 1)
                     drawables.fastEach {
-                        it.crossPos = startCross + gap
+                        it.crossPos = thisRowCrossPos + gap
                     }
                 }
 
                 AlignContent.Stretch -> {
                     drawables.fastEach {
-                        it.crossPos = startCross
+                        it.crossPos = thisRowCrossPos
                         it.crossSize = maxCrossSize
                     }
                 }
@@ -402,13 +389,13 @@ class FlexLayout @JvmOverloads constructor(
                 JustifyContent.Start -> {
                     var pos = 0F
                     drawables.fastEach {
-                        it.mainPos = pos + mainPos
+                        it.mainPos = pos
                         pos += it.mainSize + mainGap
                     }
                 }
 
                 JustifyContent.End -> {
-                    var pos = mainPos + mainSize
+                    var pos = mainSize
                     drawables.fastEach {
                         pos -= it.mainSize
                         it.mainPos = pos
@@ -419,18 +406,18 @@ class FlexLayout @JvmOverloads constructor(
                 JustifyContent.Center -> {
                     var pos = (mainSize - thisMainSizeWithGaps) / 2
                     drawables.fastEach {
-                        it.mainPos = pos + mainPos
+                        it.mainPos = pos
                         pos += it.mainSize + mainGap
                     }
                 }
 
                 JustifyContent.SpaceBetween -> {
                     if (drawables.size == 1) {
-                        drawables[0].mainPos = mainPos + (mainSize - drawables[0].mainSize) / 2
+                        drawables[0].mainPos = (mainSize - drawables[0].mainSize) / 2
                         return
                     }
                     val gap = (mainSize - thisMainSize) / (drawables.size - 1)
-                    var pos = mainPos
+                    var pos = 0f
                     drawables.fastEach {
                         it.mainPos = pos
                         pos += it.mainSize + gap
@@ -439,11 +426,11 @@ class FlexLayout @JvmOverloads constructor(
 
                 JustifyContent.SpaceEvenly -> {
                     if (drawables.size == 1) {
-                        drawables[0].mainPos = mainPos + (mainSize - drawables[0].mainSize) / 2
+                        drawables[0].mainPos = (mainSize - drawables[0].mainSize) / 2
                         return
                     }
                     val gap = (mainSize - thisMainSize) / drawables.size
-                    var pos = mainPos + gap
+                    var pos = gap
                     drawables.fastEach {
                         it.mainPos = pos
                         pos += it.mainSize + gap

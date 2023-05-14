@@ -164,7 +164,7 @@ class TextInput @JvmOverloads constructor(
 
     fun caretPos(): Pair<Float, Float> {
         val (line, idx, lni) = text.getByCharIndex(caret)
-        return (renderer.textBounds(props.text.font, line.string.substring(0, idx), props.text.fontSize.px, props.text.textAlignment).width + text.x to lni * props.text.fontSize.px + text.y)
+        return (renderer.textBounds(props.text.font, line.string.substring(0, idx), props.text.fontSize.px, props.text.textAlignment).width + text.x + text.textOffset to lni * props.text.fontSize.px + text.y)
     }
 
     fun toLastSpace() {
@@ -237,8 +237,8 @@ class TextInput @JvmOverloads constructor(
         if (!init) {
             text.at.a.px += props.paddingFromTextLateral
             text.at.b.px += props.paddingFromTextVertical
-            text.sized!!.a.px -= props.paddingFromTextLateral * 2
-            text.sized!!.b.px -= props.paddingFromTextVertical * 2
+            text.sized!!.a.px -= props.paddingFromTextLateral
+            text.sized!!.b.px -= props.paddingFromTextVertical
             init = true
         }
     }

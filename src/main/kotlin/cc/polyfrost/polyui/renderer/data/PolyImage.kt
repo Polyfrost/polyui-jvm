@@ -9,15 +9,19 @@
 
 package cc.polyfrost.polyui.renderer.data
 
-data class Image @JvmOverloads constructor(
+data class PolyImage @JvmOverloads constructor(
     val fileName: String,
-    var width: Int? = null,
-    var height: Int? = null,
+    var width: Float = -1f, // uninitialized
+    var height: Float = -1f,
     val type: Type = Type.from(fileName)
 ) {
 
     override fun toString(): String {
         return "$type Image(file=$fileName, ${width}x$height)"
+    }
+
+    override fun hashCode(): Int {
+        return fileName.hashCode()
     }
 
     enum class Type {

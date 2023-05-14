@@ -12,6 +12,8 @@
 
 package cc.polyfrost.polyui.utils
 
+import java.io.Serializable
+
 /**
  * [java.util.List.forEach] re-implementation that doesn't allocate any memory.
  *
@@ -156,3 +158,82 @@ fun <T> Iterable<T>.toArrayList(): ArrayList<T> {
 }
 
 fun <T> Array<T>.toArrayList(): ArrayList<T> = this.toMutableList() as ArrayList<T>
+
+/**
+ * Represents a generic pair of two values.
+ *
+ * There is no meaning attached to values in this class, it can be used for any purpose.
+ * Pair exhibits value semantics, i.e. two pairs are equal if both components are equal.
+ *
+ * An example of decomposing it into values:
+ *
+ * @param A type of the first value.
+ * @param B type of the second value.
+ * @property first First value.
+ * @property second Second value.
+ * @constructor Creates a new instance of Pair.
+ * @see Pair
+ */
+data class MutablePair<A, B>(
+    var first: A,
+    var second: B
+) : Serializable {
+
+    /**
+     * Returns string representation of the [MutablePair] including its [first] and [second] values.
+     */
+    override fun toString(): String = "($first, $second)"
+
+    /**
+     * Converts this pair into a list.
+     */
+    fun toList() = mutableListOf(first, second)
+
+    /**
+     * Converts this mutable pair into an immutable [Pair].
+     */
+    fun toPair() = Pair(first, second)
+}
+
+/**
+ * Represents a triad of values.
+ *
+ * There is no meaning attached to values in this class, it can be used for any purpose.
+ * Triple exhibits value semantics, i.e. two triples are equal if all three components are equal.
+ * An example of decomposing it into values:
+ *
+ * @param A type of the first value.
+ * @param B type of the second value.
+ * @param C type of the third value.
+ * @property first First value.
+ * @property second Second value.
+ * @property third Third value.
+ * @see Triple
+ */
+data class MutableTriple<A, B, C>(
+    var first: A,
+    var second: B,
+    var third: C
+) : Serializable {
+
+    /**
+     * Returns string representation of the [MutableTriple] including its [first], [second] and [third] values.
+     */
+    override fun toString(): String = "($first, $second, $third)"
+
+    /**
+     * Converts this triple into a list.
+     */
+    fun toList() = mutableListOf(first, second, third)
+
+    /**
+     * Converts this mutable pair into an immutable [Triple].
+     */
+    fun toTriple() = Triple(first, second, third)
+}
+
+/** convert this triple to a [mutable triple][MutableTriple]. */
+fun <A, B, C> Triple<A, B, C>.toMutableTriple() = MutableTriple(first, second, third)
+
+/** convert this pair to a [mutable pair][MutablePair]. */
+fun <A, B> Pair<A, B>.toMutablePair() = MutablePair(first, second)

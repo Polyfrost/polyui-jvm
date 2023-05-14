@@ -42,14 +42,21 @@ abstract class Layout(
     internal val onRemoved: (Drawable.() -> kotlin.Unit)? = null,
     /** If this layout can receive events (separate to its children!). */
     acceptInput: Boolean = false,
+    val resizesChildren: Boolean = true,
     vararg items: Drawable
 ) : Drawable(acceptInput) {
     open val components = arrayListOf(*items.filterIsInstance<Component>().toTypedArray())
     open val children = arrayListOf(*items.filterIsInstance<Layout>().toTypedArray())
     open var needsRedraw = true
     open var needsRecalculation = true
-    internal val removeQueue = arrayListOf<Drawable>()
-    var fbo: Framebuffer? = null
+    internal open val removeQueue = arrayListOf<Drawable>()
+
+    /** set this to true if you want this layout to never use a framebuffer. Recommended in situations with chroma colors */
+    open var refuseFramebuffer: Boolean = false
+    open var fbo: Framebuffer? = null // these all have to be open for ptr layout
+        set(value) {
+            if (!refuseFramebuffer) field = value
+        }
 
     /** reference to parent */
     override var layout: Layout? = null
@@ -67,23 +74,28 @@ abstract class Layout(
      * **Note:** Do not call this function yourself, and although it is open, please refrain from doing large amounts of logic in this function. Instead, use [preRender], as in line with the PolyUI design philosophy.
      */
     open fun reRenderIfNecessary() {
-        children.fastEach { it.reRenderIfNecessary() }
+        children.fastEach {
+            if (it.needsRedraw) needsRedraw = true // child is going to redraw, so we need to as well
+            it.reRenderIfNecessary()
+        }
         if (fbo != null) {
             if (needsRedraw) {
-                // TODO framebuffer issues
-//                renderer.bindFramebuffer(fbo!!)
+                renderer.bindFramebuffer(fbo!!)
+                needsRedraw = false // so, if anything says yo! redraw in preRender then it is put true, else it is false.
                 preRender()
                 render()
                 postRender()
-//                renderer.unbindFramebuffer(fbo!!)
-//                needsRedraw = false
+                renderer.unbindFramebuffer(fbo!!)
+                renderer.drawFramebuffer(fbo!!, x, y, width, height)
             } else {
                 renderer.drawFramebuffer(fbo!!, x, y, width, height)
             }
         } else {
+            renderer.translate(x, y)
             preRender()
             render()
             postRender()
+            renderer.translate(-x, -y)
         }
     }
 
@@ -214,6 +226,11 @@ abstract class Layout(
         needsRecalculation = false
     }
 
+    override fun rescale(scaleX: Float, scaleY: Float) {
+        super.rescale(scaleX, scaleY)
+        if (resizesChildren) components.fastEach { it.rescale(scaleX, scaleY) }
+    }
+
     override fun preRender() {
         removeQueue.fastEach { if (it.canBeRemoved()) removeComponentNow(it) }
         components.fastEach { it.preRender() }
@@ -225,6 +242,14 @@ abstract class Layout(
 
     override fun postRender() {
         components.fastEach { it.postRender() }
+    }
+
+    /** count the amount of drawables this contains, including the drawables its children have */
+    fun countDrawables(): Int {
+        var i = 0
+        children.fastEach { i += it.countDrawables() }
+        i += components.size
+        return i
     }
 
     override fun debugPrint() {

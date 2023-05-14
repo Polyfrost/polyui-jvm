@@ -12,7 +12,7 @@ package cc.polyfrost.polyui
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.component.impl.Block
-import cc.polyfrost.polyui.component.impl.ImageBlock
+import cc.polyfrost.polyui.component.impl.Image
 import cc.polyfrost.polyui.component.impl.Text
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.event.Events.Companion.events
@@ -20,7 +20,7 @@ import cc.polyfrost.polyui.layout.Layout.Companion.items
 import cc.polyfrost.polyui.layout.impl.FlexLayout
 import cc.polyfrost.polyui.layout.impl.PixelLayout
 import cc.polyfrost.polyui.property.impl.BlockProperties
-import cc.polyfrost.polyui.renderer.data.Image
+import cc.polyfrost.polyui.renderer.data.PolyImage
 import cc.polyfrost.polyui.renderer.impl.GLWindow
 import cc.polyfrost.polyui.renderer.impl.NVGRenderer
 import cc.polyfrost.polyui.unit.*
@@ -74,8 +74,8 @@ fun main() {
                         at = 200.px * 30.px,
                         sized = 120.px * 120.px
                     ),
-                    ImageBlock(
-                        Image("/s.png", 120, 120),
+                    Image(
+                        PolyImage("/s.png", 120f, 120f),
                         at = 380.px * 30.px
                     )
                 )

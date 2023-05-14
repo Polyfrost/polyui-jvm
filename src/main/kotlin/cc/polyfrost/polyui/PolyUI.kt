@@ -23,6 +23,7 @@ import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.utils.Clock
 import cc.polyfrost.polyui.utils.fastEach
 import cc.polyfrost.polyui.utils.rounded
+import cc.polyfrost.polyui.utils.varargs
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -95,11 +96,12 @@ class PolyUI(
         master.setup(renderer, this)
         master.calculateBounds()
         master.children.fastEach {
-            if (settings.minItemsForFramebuffer > it.children.size + it.components.size) {
+            if (settings.minItemsForFramebuffer < it.countDrawables()) {
                 it.fbo = renderer.createFramebuffer(it.width.toInt(), it.height.toInt(), settings.bufferType)
+                if (settings.debug) LOGGER.info("Layout {} ({} items) created with {}", varargs(it.simpleName, it.countDrawables(), it.fbo!!))
             }
             if (it.width > width || it.height > height) {
-                LOGGER.warn("Layout {} is larger than the window. This may cause issues.", it)
+                LOGGER.warn("Layout {} is larger than the window. This may cause issues.", it.simpleName)
             }
         }
         if (settings.masterIsFramebuffer) master.fbo = renderer.createFramebuffer(width, height, settings.bufferType)
@@ -165,6 +167,7 @@ class PolyUI(
                 renderer.deleteFramebuffer(it.fbo!!)
                 it.fbo = renderer.createFramebuffer(it.width.toInt(), it.height.toInt(), settings.bufferType)
             }
+            it.needsRedraw = true // lol that was funny to debug
         }
         this.width = newWidth
         this.height = newHeight

@@ -11,7 +11,6 @@ package cc.polyfrost.polyui.layout.impl.extension
 
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.layout.Layout
-import cc.polyfrost.polyui.utils.fastEach
 import cc.polyfrost.polyui.utils.noneAre
 
 /**
@@ -32,18 +31,8 @@ class DraggableLayout(layout: Layout) : PointerLayout(layout) {
 
     override fun reRenderIfNecessary() {
         if (mouseDown) {
-            val movementX = polyui.eventManager.mouseX - mouseClickX - ptr.at.a.px
-            val movementY = polyui.eventManager.mouseY - mouseClickY - ptr.at.b.px
             ptr.at.a.px = polyui.eventManager.mouseX - mouseClickX
             ptr.at.b.px = polyui.eventManager.mouseY - mouseClickY
-            ptr.children.fastEach {
-                it.at.a.px += movementX
-                it.at.b.px += movementY
-            }
-            ptr.components.fastEach {
-                it.at.a.px += movementX
-                it.at.b.px += movementY
-            }
         }
         super.reRenderIfNecessary()
     }
@@ -57,6 +46,6 @@ class DraggableLayout(layout: Layout) : PointerLayout(layout) {
         if (event is Events.MouseReleased) {
             mouseDown = false
         }
-        return false
+        return super.accept(event)
     }
 }

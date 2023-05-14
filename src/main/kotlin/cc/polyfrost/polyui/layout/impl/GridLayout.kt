@@ -31,8 +31,9 @@ class GridLayout @JvmOverloads constructor(
     private val cellSize: CellSize = CellSize.AllSame,
     private val contentStretch: ContentStretch = ContentStretch.FillCell,
     private val gap: Gap = Gap.Default,
+    resizesChildren: Boolean = true,
     vararg items: Drawable
-) : Layout(at, origin, onAdded, onRemoved, false, *items) {
+) : Layout(at, origin, onAdded, onRemoved, false, resizesChildren, *items) {
 
     /** list of rows */
     private var grid: Array<Array<Drawable?>>
@@ -74,8 +75,8 @@ class GridLayout @JvmOverloads constructor(
             it.calculateBounds()
         }
 
-        var atX = this.at.x
-        var atY = this.at.y
+        var atX = 0f
+        var atY = 0f
         var width = atX
         var height = atY
         when (cellSize) {

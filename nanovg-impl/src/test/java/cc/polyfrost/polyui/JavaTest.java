@@ -12,13 +12,13 @@ package cc.polyfrost.polyui;
 import cc.polyfrost.polyui.color.Color;
 import cc.polyfrost.polyui.component.Drawable;
 import cc.polyfrost.polyui.component.impl.Block;
-import cc.polyfrost.polyui.component.impl.ImageBlock;
+import cc.polyfrost.polyui.component.impl.Image;
 import cc.polyfrost.polyui.component.impl.Text;
 import cc.polyfrost.polyui.event.Events;
 import cc.polyfrost.polyui.layout.Layout;
 import cc.polyfrost.polyui.layout.impl.FlexLayout;
 import cc.polyfrost.polyui.property.impl.BlockProperties;
-import cc.polyfrost.polyui.renderer.data.Image;
+import cc.polyfrost.polyui.renderer.data.PolyImage;
 import cc.polyfrost.polyui.renderer.impl.GLWindow;
 import cc.polyfrost.polyui.renderer.impl.NVGRenderer;
 import cc.polyfrost.polyui.unit.Units;
@@ -44,7 +44,7 @@ public class JavaTest {
                 new Text("Java...         rainbow!     and image", Units.pixels(32), Units.times(Units.pixels(20), Units.pixels(570))),
                 new Block(new BlockProperties(new Color.Gradient(new Color(1f, 0f, 0f), new Color(0f, 1f, 1f))), Units.times(Units.pixels(20), Units.pixels(600)), Units.times(Units.pixels(120), Units.pixels(120))),
                 new Block(new BlockProperties(new Color.Chroma(Units.seconds(5))), Units.times(Units.pixels(200), Units.pixels(600)), Units.times(Units.pixels(120), Units.pixels(120))),
-                new ImageBlock(new Image("/s.png", 120, 120), Units.times(Units.pixels(380), Units.pixels(600))),
+                new Image(new PolyImage("/s.png", 120, 120), Units.times(Units.pixels(380), Units.pixels(600))),
                 new FlexLayout(Units.times(Units.pixels(20), Units.pixels(30)), Units.percent(80), things.toArray(new Drawable[50]))));
         window.open(polyUI);
     }

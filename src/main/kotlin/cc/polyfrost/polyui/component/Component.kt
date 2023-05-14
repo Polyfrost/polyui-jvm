@@ -145,9 +145,6 @@ abstract class Component @JvmOverloads constructor(
                     ?: throw UnsupportedOperationException("getSize() not implemented for ${this::class.simpleName}!")
             }
         }
-        if (sizedBySelf) {
-            sized = getSize()
-        }
         doDynamicSize()
 
         boundingBox = Box(at, sized!!).expand(properties.padding)
@@ -170,7 +167,7 @@ abstract class Component @JvmOverloads constructor(
         val a = animations.fastRemoveIf { it.first.isFinished.also { b -> if (b) it.second?.invoke(this) } }
         val o = operations.fastRemoveIf { it.first.isFinished.also { b -> if (b) it.second?.invoke(this) } }
 
-        if (a || o || (color is Color.AlwaysUpdate || color.isRecoloring())) {
+        if (a || o || (color.alwaysUpdates || color.updating)) {
             val delta = clock.getDelta()
             if (a) {
                 animations.fastEach { (it, _) ->
@@ -189,8 +186,9 @@ abstract class Component @JvmOverloads constructor(
                 finishColorFunc?.invoke(this)
                 finishColorFunc = null
             }
+            wantRedraw()
         }
-        if (scaleX != 1f && scaleY != 1f) renderer.scale(scaleX, scaleY)
+        if (scaleX != 1f || scaleY != 1f) renderer.scale(scaleX, scaleY)
         if (rotation != 0.0) renderer.rotate(rotation)
     }
 
@@ -205,6 +203,6 @@ abstract class Component @JvmOverloads constructor(
     }
 
     override fun canBeRemoved(): Boolean {
-        return animations.size == 0 && operations.size == 0 && !color.isRecoloring()
+        return animations.size == 0 && operations.size == 0 && !color.updating
     }
 }

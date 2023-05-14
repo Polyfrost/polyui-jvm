@@ -13,7 +13,7 @@ import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.property.Settings
 import cc.polyfrost.polyui.renderer.data.Font
 import cc.polyfrost.polyui.renderer.data.Framebuffer
-import cc.polyfrost.polyui.renderer.data.Image
+import cc.polyfrost.polyui.renderer.data.PolyImage
 import cc.polyfrost.polyui.unit.TextAlign
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.unit.Vec2
@@ -24,7 +24,7 @@ import cc.polyfrost.polyui.unit.Vec2
  * Please make sure to implement all the functions in this class, and you may want to familiarize yourself with how [cc.polyfrost.polyui.PolyUI] works.
  *
  * It is also responsible for loading and caching all images and fonts, but this is down to you as a rendering implementation to implement.
- * for these functions, such as [drawImage] and [drawText], an initialized [Font] or [Image] instance will be given. This class simply contains a filepath to the resource. You will need to load it, and cache it for future use (ideally).
+ * for these functions, such as [drawImage] and [drawText], an initialized [Font] or [PolyImage] instance will be given. This class simply contains a filepath to the resource. You will need to load it, and cache it for future use (ideally).
  */
 abstract class Renderer : AutoCloseable {
 
@@ -56,9 +56,39 @@ abstract class Renderer : AutoCloseable {
 
     /** reset the global alpha to normal. */
     fun resetGlobalAlpha() = globalAlpha(1f)
+
+    /**
+     * translate the origin of all future draw calls by the given amount.
+     *
+     * **you must** call the inverse of this function ([translate(-x,-y)][translate]) when you are done with this transform!
+     */
     abstract fun translate(x: Float, y: Float)
+
+    /**
+     * scales all future draw calls by the given amount.
+     *
+     * **you must** call the inverse of this function ([scale(-x,-y)][scale]) when you are done with this transform!
+     */
     abstract fun scale(x: Float, y: Float)
+
+    /**
+     * rotate all future draw calls by the given amount.
+     *
+     * **you must** call the inverse of this function ([rotate(-angleRadians)][rotate]) when you are done with this transform!
+     */
     abstract fun rotate(angleRadians: Double)
+
+    /**
+     * begin a scissor, that will clip rendering to the given rectangle. The scissor is affected by [translate], [scale], and [rotate].
+     *
+     * **you must** call [popScissor] after you are done with this scissor!
+     */
+    abstract fun pushScissor(x: Float, y: Float, width: Float, height: Float)
+
+    /** end a scissor.
+     * @see pushScissor
+     */
+    abstract fun popScissor()
 
     /**
      * draw text to the screen, per the given parameters. The string will already be wrapped to the given width, and will be aligned according to the given [textAlign].
@@ -79,12 +109,14 @@ abstract class Renderer : AutoCloseable {
     abstract fun textBounds(font: Font, text: String, fontSize: Float, textAlign: TextAlign): Vec2<Unit.Pixel>
 
     /** Function that can be called to explicitly initialize an image. This is used mainly for getting the size of an image, or to ensure an SVG has been rasterized. */
-    abstract fun initImage(image: Image)
+    abstract fun initImage(image: PolyImage)
 
     abstract fun drawImage(
-        image: Image,
+        image: PolyImage,
         x: Float,
         y: Float,
+        width: Float = image.width,
+        height: Float = image.height,
         colorMask: Int = 0,
         topLeftRadius: Float,
         topRightRadius: Float,
@@ -122,11 +154,11 @@ abstract class Renderer : AutoCloseable {
         bottomRightRadius: Float
     )
 
-    fun drawImage(image: Image, x: Float, y: Float, radius: Float = 0f, colorMask: Int = 0) =
-        drawImage(image, x, y, colorMask, radius, radius, radius, radius)
+    fun drawImage(image: PolyImage, x: Float, y: Float, width: Float = image.width, height: Float = image.height, radius: Float = 0f, colorMask: Int = 0) =
+        drawImage(image, x, y, width, height, colorMask, radius, radius, radius, radius)
 
-    fun drawImage(image: Image, x: Float, y: Float, radii: FloatArray, colorMask: Int = 0) =
-        drawImage(image, x, y, colorMask, radii[0], radii[1], radii[2], radii[3])
+    fun drawImage(image: PolyImage, x: Float, y: Float, width: Float = image.width, height: Float = image.height, radii: FloatArray, colorMask: Int = 0) =
+        drawImage(image, x, y, width, height, colorMask, radii[0], radii[1], radii[2], radii[3])
 
     fun drawRect(x: Float, y: Float, width: Float, height: Float, color: Color, radius: Float = 0f) =
         drawRect(x, y, width, height, color, radius, radius, radius, radius)
@@ -189,7 +221,7 @@ abstract class Renderer : AutoCloseable {
     }
 
     companion object {
-        var DefaultImage = Image("err.png")
+        var DefaultImage = PolyImage("err.png")
         var DefaultFont = Font("Inter-Regular.ttf")
     }
 }
