@@ -32,9 +32,9 @@ import java.lang.Math.random
 
 fun main() {
     // use the no-op rendering implementation (for profiling of the system code)
-    val useNoOp = false
+    val useNoOp = true
 
-    val window = if(!useNoOp) GLWindow("Test", 800, 800) else NoOpWindow("Test", 800, 800)
+    val window = if (!useNoOp) GLWindow("Test", 800, 800) else NoOpWindow("Test", 800, 800)
     val things = Array<Drawable>(50) { // creates 50 rectangles with random sizes
         Block(
             at = flex(),
@@ -56,7 +56,7 @@ fun main() {
         )
     }
     val polyUI = PolyUI(
-        renderer = if(!useNoOp) NVGRenderer(window.width.toFloat(), window.height.toFloat()) else NoOpRenderer(window.width.toFloat(), window.height.toFloat()),
+        renderer = if (!useNoOp) NVGRenderer(window.width.toFloat(), window.height.toFloat()) else NoOpRenderer(window.width.toFloat(), window.height.toFloat()),
         items = items(
             PixelLayout(
                 at = 20.px * 570.px,

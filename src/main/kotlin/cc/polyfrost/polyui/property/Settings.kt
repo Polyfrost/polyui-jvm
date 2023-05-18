@@ -11,6 +11,7 @@ package cc.polyfrost.polyui.property
 
 import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.renderer.Renderer
+import cc.polyfrost.polyui.unit.milliseconds
 
 /** Settings for PolyUI.
  *
@@ -57,7 +58,7 @@ class Settings(private val renderer: Renderer) {
      * @see maxComboSize
      * @see clearComboWhenMaxed
      */
-    var comboMaxInterval: Long = 500L
+    var comboMaxInterval: Long = 500L.milliseconds
 
     /** maximum amount of clicks that can be comboed in any interval
      * @see comboMaxInterval

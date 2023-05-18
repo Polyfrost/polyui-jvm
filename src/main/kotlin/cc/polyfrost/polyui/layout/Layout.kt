@@ -21,6 +21,7 @@ import cc.polyfrost.polyui.renderer.data.Framebuffer
 import cc.polyfrost.polyui.unit.Point
 import cc.polyfrost.polyui.unit.Size
 import cc.polyfrost.polyui.unit.Unit
+import cc.polyfrost.polyui.utils.Clock
 import cc.polyfrost.polyui.utils.fastEach
 import org.jetbrains.annotations.ApiStatus
 
@@ -48,6 +49,7 @@ abstract class Layout(
     open val components = arrayListOf(*items.filterIsInstance<Component>().toTypedArray())
     open val children = arrayListOf(*items.filterIsInstance<Layout>().toTypedArray())
     open var needsRedraw = true
+    open val clock = Clock()
 
     /** tracker variable for framebuffer disabling/enabling. don't touch this. */
     internal open var fboTracker = 0
@@ -235,15 +237,16 @@ abstract class Layout(
         ReplaceWith("render()"),
         DeprecationLevel.ERROR
     )
-    final override fun preRender() {
+    final override fun preRender(deltaTimeNanos: Long) {
     }
 
     /** render this layout's components, and remove them if they are ready to be removed. */
     override fun render() {
         removeQueue.fastEach { if (it.canBeRemoved()) removeComponentNow(it) }
         needsRedraw = false
+        val delta = clock.getDelta()
         components.fastEach {
-            it.preRender()
+            it.preRender(delta)
             it.render()
             it.postRender()
         }

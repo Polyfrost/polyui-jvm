@@ -16,7 +16,6 @@ import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
-import cc.polyfrost.polyui.utils.Clock
 import cc.polyfrost.polyui.utils.fastEach
 import cc.polyfrost.polyui.utils.fastRemoveIf
 
@@ -46,7 +45,6 @@ abstract class Component @JvmOverloads constructor(
     val color: Color.Mutable = properties.color.toMutable()
     protected var sizedBySelf = false
     protected var finishColorFunc: (Component.() -> kotlin.Unit)? = null
-    protected val clock = Clock()
     final override lateinit var layout: Layout
     open lateinit var boundingBox: Box<Unit>
 
@@ -63,7 +61,6 @@ abstract class Component @JvmOverloads constructor(
 
     /** Add a [DrawableOp] to this component. */
     open fun addOperation(drawableOp: DrawableOp, onFinish: (Component.() -> kotlin.Unit)? = null) {
-        clock.getDelta() // clear clock
         wantRedraw()
         operations.add(drawableOp to onFinish)
     }
@@ -157,6 +154,7 @@ abstract class Component @JvmOverloads constructor(
 
     fun wantRedraw() {
         layout.needsRedraw = true
+        layout.clock.getDelta()
     }
 
     /**
@@ -164,10 +162,9 @@ abstract class Component @JvmOverloads constructor(
      *
      * **make sure to call super [Component.preRender]!**
      */
-    override fun preRender() {
-        val delta = clock.getDelta()
+    override fun preRender(deltaTimeNanos: Long) {
         animations.fastRemoveIf { (it, func) ->
-            it.update(delta)
+            it.update(deltaTimeNanos)
             return@fastRemoveIf if (!it.isFinished) {
                 wantRedraw()
                 false
@@ -177,7 +174,7 @@ abstract class Component @JvmOverloads constructor(
             }
         }
         operations.fastRemoveIf { (it, func) ->
-            it.update(delta)
+            it.update(deltaTimeNanos)
             return@fastRemoveIf if (!it.isFinished) {
                 wantRedraw()
                 it.apply(renderer)
@@ -195,7 +192,7 @@ abstract class Component @JvmOverloads constructor(
                 true
             }
         }
-        if (color.update(delta)) {
+        if (color.update(deltaTimeNanos)) {
             finishColorFunc?.invoke(this)
             finishColorFunc = null
         }

@@ -75,6 +75,7 @@ open class PointerLayout(
         set(value) { ptr.fboTracker = value }
     final override inline val children get() = ptr.children
     final override inline val components get() = ptr.components
+    final override inline val clock get() = ptr.clock
     final override var layout: Layout?
         get() = ptr.layout
         set(value) {

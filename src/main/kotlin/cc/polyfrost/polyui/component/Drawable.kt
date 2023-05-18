@@ -52,9 +52,12 @@ abstract class Drawable(var acceptsInput: Boolean = true) {
     inline val sizedUnitType: Unit.Type
         get() = sized!!.type
 
-    /** pre-render functions, such as applying transforms.
-     * In this method, you should set needsRedraw to true if you have something to redraw for the **next frame**.*/
-    abstract fun preRender()
+    /**
+     * pre-render functions, such as applying transforms.
+     * In this method, you should set needsRedraw to true if you have something to redraw for the **next frame**.
+     * @param deltaTimeNanos the time in nanoseconds since the last frame. Use this for animations.
+     */
+    abstract fun preRender(deltaTimeNanos: Long)
 
     /** draw script for this drawable. */
     abstract fun render()

@@ -17,7 +17,6 @@ import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.unit.Point
 import cc.polyfrost.polyui.unit.Size
 import cc.polyfrost.polyui.unit.Unit
-import cc.polyfrost.polyui.utils.Clock
 
 /** a switching layout is a layout that can switch between layouts, with cool animations. */
 class SwitchingLayout(
@@ -31,7 +30,6 @@ class SwitchingLayout(
     resizesChildren: Boolean = true
 ) : PixelLayout(at, sized, onAdded, onRemoved, resizesChildren, false) {
     override var simpleName: String = "SwitchingLayout@${this.toString().substringAfterLast("@")}"
-    private val clock = Clock()
     private var goingSwitchOp: Transition? = null
     private var comingSwitchOp: Transition? = null
     private var next: Layout? = null
