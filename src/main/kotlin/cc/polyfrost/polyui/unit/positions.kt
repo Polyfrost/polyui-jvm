@@ -20,3 +20,17 @@ enum class TextAlign {
 enum class Direction {
     Horizontal, Vertical
 }
+
+/**
+ * Represents a fixed-size gap between rows or columns, used in flex and grid layouts.
+ *
+ * @see [cc.polyfrost.polyui.layout.impl.FlexLayout]
+ * @see [cc.polyfrost.polyui.layout.impl.GridLayout]
+ */
+data class Gap(val mainGap: Unit.Pixel, val crossGap: Unit.Pixel) {
+
+    companion object {
+        @JvmField
+        val Default = Gap(5.px, 5.px)
+    }
+}

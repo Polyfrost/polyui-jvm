@@ -15,6 +15,7 @@ import cc.polyfrost.polyui.component.impl.Block;
 import cc.polyfrost.polyui.component.impl.Image;
 import cc.polyfrost.polyui.component.impl.Text;
 import cc.polyfrost.polyui.event.Events;
+import cc.polyfrost.polyui.input.PolyTranslator;
 import cc.polyfrost.polyui.layout.Layout;
 import cc.polyfrost.polyui.layout.impl.FlexLayout;
 import cc.polyfrost.polyui.property.impl.BlockProperties;
@@ -40,8 +41,8 @@ public class JavaTest {
                 System.out.println("Mouse right clicked! " + finalI);
             })));
         }
-        PolyUI polyUI = new PolyUI(window.getWidth(), window.getHeight(), new NVGRenderer(), Layout.items(
-                new Text("Java...         rainbow!     and image", Units.pixels(32), Units.times(Units.pixels(20), Units.pixels(570))),
+        PolyUI polyUI = new PolyUI("",new NVGRenderer(window.getWidth(), window.getHeight()), Layout.items(
+                new Text(PolyTranslator.localised("Java...         rainbow!     and image"), Units.pixels(32), Units.times(Units.pixels(20), Units.pixels(570))),
                 new Block(new BlockProperties(new Color.Gradient(new Color(1f, 0f, 0f), new Color(0f, 1f, 1f))), Units.times(Units.pixels(20), Units.pixels(600)), Units.times(Units.pixels(120), Units.pixels(120))),
                 new Block(new BlockProperties(new Color.Chroma(Units.seconds(5))), Units.times(Units.pixels(200), Units.pixels(600)), Units.times(Units.pixels(120), Units.pixels(120))),
                 new Image(new PolyImage("/s.png", 120, 120), Units.times(Units.pixels(380), Units.pixels(600))),

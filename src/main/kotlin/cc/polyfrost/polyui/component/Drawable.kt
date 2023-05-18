@@ -38,14 +38,19 @@ abstract class Drawable(var acceptsInput: Boolean = true) {
      * Reference to the layout encapsulating this drawable.
      * For components, this is never null, but for layout, it can be null (meaning its parent is the polyui)
      */
-    abstract val layout: Layout?
+    internal abstract val layout: Layout?
 
-    val x get() = at.x
-    val y get() = at.y
-    val width
-        get() = sized!!.width // ?: throw IllegalStateException("Drawable $simpleName has no size, but should have a size initialized by this point")
-    val height
-        get() = sized!!.height // ?: throw IllegalStateException("Drawable $simpleName has no size, but should have a size initialized by this point") // note: this hot method kinda needs this not to be here
+    inline val x get() = at.a.px
+    inline val y get() = at.b.px
+    inline val width
+        get() = sized!!.a.px // ?: throw IllegalStateException("Drawable $simpleName has no size, but should have a size initialized by this point")
+    inline val height
+        get() = sized!!.b.px // ?: throw IllegalStateException("Drawable $simpleName has no size, but should have a size initialized by this point") // note: this hot method kinda needs this not to be here
+
+    inline val atUnitType: Unit.Type
+        get() = at.type
+    inline val sizedUnitType: Unit.Type
+        get() = sized!!.type
 
     /** pre-render functions, such as applying transforms.
      * In this method, you should set needsRedraw to true if you have something to redraw for the **next frame**.*/
@@ -95,19 +100,24 @@ abstract class Drawable(var acceptsInput: Boolean = true) {
         return eventHandlers[event]?.let { it(this) } ?: false
     }
 
-    fun addEventHook(event: Events, handler: Drawable.() -> Boolean) {
+    protected fun addEventHook(event: Events, handler: Drawable.() -> Boolean) {
         this.eventHandlers[event] = handler
     }
 
     @JvmName("addEventhook")
-    fun addEventHook(event: Events, handler: Drawable.() -> kotlin.Unit) {
+    protected fun addEventHook(event: Events, handler: Drawable.() -> kotlin.Unit) {
         this.eventHandlers[event] = {
             handler(this)
             true
         }
     }
 
-    open fun setup(renderer: Renderer, polyui: PolyUI) {
+    /** Use this function to reset your component's [PolyText][cc.polyfrost.polyui.input.PolyTranslator] if it is using one */
+    open fun resetText() {
+        // no-op
+    }
+
+    internal open fun setup(renderer: Renderer, polyui: PolyUI) {
         this.renderer = renderer
         this.polyui = polyui
     }
@@ -118,20 +128,17 @@ abstract class Drawable(var acceptsInput: Boolean = true) {
     }
 
     open fun isInside(x: Float, y: Float): Boolean {
-        val tx = this.x + (layout?.x ?: 0f)
-        val ty = this.y + (layout?.y ?: 0f)
-        return x >= tx && x <= tx + this.width && y >= ty && y <= ty + this.height
+        val tx = this.at.a.px + (layout?.at?.a?.px ?: 0f)
+        val ty = this.at.b.px + (layout?.at?.b?.px ?: 0f)
+        return x >= tx && x <= tx + this.sized!!.a.px && y >= ty && y <= ty + this.sized!!.b.px
     }
 
-    fun atUnitType(): Unit.Type = at.type
-    fun sizedUnitType(): Unit.Type = sized!!.type
-
-    fun doDynamicSize() {
+    protected fun doDynamicSize() {
         doDynamicSize(at)
         if (sized != null) doDynamicSize(sized!!)
     }
 
-    fun doDynamicSize(upon: Vec2<Unit>) {
+    protected fun doDynamicSize(upon: Vec2<Unit>) {
         if (upon.a is Unit.Dynamic) {
             upon.a.set(
                 layout?.sized?.a
@@ -155,7 +162,5 @@ abstract class Drawable(var acceptsInput: Boolean = true) {
      *
      * Otherwise, the size parameter in the constructor must be specified.
      * @throws UnsupportedOperationException if this method is not implemented, and the size parameter in the constructor is not specified. */
-    open fun getSize(): Vec2<Unit>? {
-        return null
-    }
+    open fun getSize(): Vec2<Unit>? = null
 }

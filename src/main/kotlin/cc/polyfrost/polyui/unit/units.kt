@@ -45,7 +45,7 @@ inline val Number.seconds get() = (toLong() * 1_000_000_000L)
 inline val Number.minutes get() = (toLong() * 60_000_000_000L)
 
 @get:JvmName("hours")
-val Number.hours get() = (toLong() * 3_600_000_000_000L)
+inline val Number.hours get() = (toLong() * 3_600_000_000_000L)
 
 inline val origin get() = (0.px * 0.px).clone()
 inline val fill get() = Unit.Percent(100f).clone()

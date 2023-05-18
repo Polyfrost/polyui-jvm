@@ -34,9 +34,9 @@ open class PixelLayout(
 
     init {
         items.forEach {
-            if (it.atUnitType() == Unit.Type.Flex || it.atUnitType() == Unit.Type.Grid) {
+            if (it.atUnitType == Unit.Type.Flex || it.atUnitType == Unit.Type.Grid) {
                 // todo make special exceptions that can tell you more verbosely which component is at fault
-                throw Exception("Unit type mismatch: Drawable $it does not have a valid unit type for layout: ${this.simpleName} (using ${it.atUnitType()})")
+                throw Exception("Unit type mismatch: Drawable $it does not have a valid unit type for layout: ${this.simpleName} (using ${it.atUnitType})")
             }
         }
     }
@@ -54,7 +54,6 @@ open class PixelLayout(
         if (this.sized == null) {
             sized = getSize()
         }
-        needsRecalculation = false
     }
 
     override fun getSize(): Vec2<Unit> {

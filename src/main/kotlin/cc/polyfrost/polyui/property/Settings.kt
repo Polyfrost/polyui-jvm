@@ -17,16 +17,24 @@ import cc.polyfrost.polyui.renderer.Renderer
  * This contains many values that concern the rendering and event handling of PolyUI internally.
  * */
 class Settings(private val renderer: Renderer) {
-    /** this enables the debug renderer and various other debug features, including more verbose checks and [logging][debugLog].
-     * It can be enabled using -Dpolyui.debug=true in the JVM arguments, or by pressing Ctrl+Shift+I in the application [if enabled][enableDebugKeybind].
+    /** this enables the debug renderer and various other debug features, including more verbose checks and logging.
+     *
+     * It can be enabled using `-Dpolyui.debug=true` in the JVM arguments, or by pressing Ctrl+Shift+I in the application [if enabled][enableDebugKeybind].
      */
     var debug = System.getProperty("polyui.debug", "true").toBoolean()
-    var debugLog = System.getProperty("polyui.debug.logAll", "false").toBoolean()
+
+    /** enable the debug keybind in the window (Ctrl+Shift+I)
+     * @see debug*/
     var enableDebugKeybind = true
 
-    var showFPS = false
+    /** set this to something other than 0 to set a framerate cap for the UI. */
+    var maxFPS = 0
+
     var useAntialiasing = true
     var enableVSync = false
+
+    /** @see cc.polyfrost.polyui.input.PolyTranslator */
+    var defaultLocale = System.getProperty("polyui.locale") ?: null
 
     /** How to handle resource (image and font) loading errors. */
     var resourcePolicy = ResourcePolicy.WARN

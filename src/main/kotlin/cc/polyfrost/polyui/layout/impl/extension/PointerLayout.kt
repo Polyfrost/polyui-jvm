@@ -20,6 +20,7 @@ import cc.polyfrost.polyui.unit.Point
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.unit.Vec2
 
+@Suppress("OVERRIDE_BY_INLINE")
 /** layout that points to another layout. */
 open class PointerLayout(
     layout: Layout
@@ -32,76 +33,67 @@ open class PointerLayout(
     layout.resizesChildren,
     layout
 ) {
-    protected val ptr = layout
+    val ptr = layout
 
-    override var polyui: PolyUI
+    final override inline var polyui: PolyUI
         get() = ptr.polyui
         set(value) { ptr.polyui = value }
-    override var renderer: Renderer
+    final override inline var renderer: Renderer
         get() = ptr.renderer
         set(value) { ptr.renderer = value }
-    override var simpleName: String
-        get() = super.simpleName
+    final override inline var simpleName: String
+        get() = ptr.simpleName
         set(value) {
-            super.simpleName = value
+            ptr.simpleName = value
         }
     override var refuseFramebuffer: Boolean
         get() = ptr.refuseFramebuffer
         set(value) { ptr.refuseFramebuffer = value }
 
-    override var fbo: Framebuffer?
+    final override inline var fbo: Framebuffer?
         get() = ptr.fbo
         set(value) {
             if (refuseFramebuffer) ptr.fbo = value
         }
-
-    override val removeQueue: ArrayList<Drawable> get() = ptr.removeQueue
-
-    override fun debugPrint() = ptr.debugPrint()
-    override val eventHandlers: MutableMap<Events, Drawable.() -> Boolean>
+    final override inline val removeQueue: ArrayList<Drawable> get() = ptr.removeQueue
+    final override inline val eventHandlers: MutableMap<Events, Drawable.() -> Boolean>
         get() = ptr.eventHandlers
-
-    override fun debugRender() = ptr.debugRender()
-
-    override fun rescale(scaleX: Float, scaleY: Float) = ptr.rescale(scaleX, scaleY)
-
-    override fun accept(event: Events): Boolean = ptr.accept(event)
-    override val at: Point<Unit> get() = ptr.at
-    override var sized: Vec2<Unit>?
+    final override inline val at: Point<Unit> get() = ptr.at
+    final override inline var sized: Vec2<Unit>?
         get() = ptr.sized
         set(value) {
             ptr.sized = value
         }
-    override var needsRedraw: Boolean
+    final override inline var needsRedraw: Boolean
         get() = ptr.needsRedraw
         set(value) {
             ptr.needsRedraw = value
         }
-    override var needsRecalculation
-        get() = ptr.needsRecalculation
-        set(value) {
-            ptr.needsRecalculation = value
-        }
-    override val children get() = ptr.children
-    override val components get() = ptr.components
-    override var layout: Layout?
+
+    final override inline var fboTracker: Int
+        get() = ptr.fboTracker
+        set(value) { ptr.fboTracker = value }
+    final override inline val children get() = ptr.children
+    final override inline val components get() = ptr.components
+    final override var layout: Layout?
         get() = ptr.layout
         set(value) {
             ptr.layout = value
         }
 
     override fun reRenderIfNecessary() = ptr.reRenderIfNecessary()
-    override fun preRender() = ptr.preRender()
-    override fun render() = ptr.preRender()
-    override fun postRender() = ptr.postRender()
+    override fun render() = ptr.render()
 
     override fun addComponent(drawable: Drawable) = ptr.addComponent(drawable)
     override fun removeComponentNow(drawable: Drawable) = ptr.removeComponentNow(drawable)
-
     override fun removeComponent(drawable: Drawable) = ptr.removeComponent(drawable)
-    override fun calculateBounds() = ptr.calculateBounds()
 
-    override fun canBeRemoved(): Boolean = ptr.canBeRemoved()
+    override fun calculateBounds() = ptr.calculateBounds()
+    override fun debugRender() = ptr.debugRender()
+    override fun rescale(scaleX: Float, scaleY: Float) = ptr.rescale(scaleX, scaleY)
+    override fun accept(event: Events): Boolean = ptr.accept(event)
+    override fun canBeRemoved() = ptr.canBeRemoved()
+    override fun debugPrint() = ptr.debugPrint()
     override fun onAll(onChildLayouts: Boolean, function: Component.() -> kotlin.Unit) =
         ptr.onAll(onChildLayouts) { function() }
 

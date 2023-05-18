@@ -48,8 +48,10 @@ abstract class Layout(
     open val components = arrayListOf(*items.filterIsInstance<Component>().toTypedArray())
     open val children = arrayListOf(*items.filterIsInstance<Layout>().toTypedArray())
     open var needsRedraw = true
-    open var needsRecalculation = true
-    internal open val removeQueue = arrayListOf<Drawable>()
+
+    /** tracker variable for framebuffer disabling/enabling. don't touch this. */
+    internal open var fboTracker = 0
+    open val removeQueue = arrayListOf<Drawable>()
 
     /** set this to true if you want this layout to never use a framebuffer. Recommended in situations with chroma colors */
     open var refuseFramebuffer: Boolean = false
@@ -78,24 +80,22 @@ abstract class Layout(
             if (it.needsRedraw) needsRedraw = true // child is going to redraw, so we need to as well
             it.reRenderIfNecessary()
         }
-        if (fbo != null) {
+        if (fbo != null && fboTracker < 2) {
             if (needsRedraw) {
+                if (fboTracker < 2) fboTracker++
                 renderer.bindFramebuffer(fbo!!)
-                needsRedraw = false // so, if anything says yo! redraw in preRender then it is put true, else it is false.
-                preRender()
                 render()
-                postRender()
                 renderer.unbindFramebuffer(fbo!!)
-                renderer.drawFramebuffer(fbo!!, x, y, width, height)
-            } else {
-                renderer.drawFramebuffer(fbo!!, x, y, width, height)
             }
+            renderer.drawFramebuffer(fbo!!, x, y, width, height)
         } else {
             renderer.translate(x, y)
-            preRender()
             render()
-            postRender()
             renderer.translate(-x, -y)
+            if (!needsRedraw && fboTracker > 1) {
+                needsRedraw = true
+                fboTracker = 0
+            }
         }
     }
 
@@ -223,7 +223,6 @@ abstract class Layout(
             this.sized = getSize()
                 ?: throw UnsupportedOperationException("getSize() not implemented for ${this::class.simpleName}!")
         }
-        needsRecalculation = false
     }
 
     override fun rescale(scaleX: Float, scaleY: Float) {
@@ -231,17 +230,31 @@ abstract class Layout(
         if (resizesChildren) components.fastEach { it.rescale(scaleX, scaleY) }
     }
 
-    override fun preRender() {
-        removeQueue.fastEach { if (it.canBeRemoved()) removeComponentNow(it) }
-        components.fastEach { it.preRender() }
+    @Deprecated(
+        "Layouts do not use postRender or preRender methods. All the logic happens in the render method.",
+        ReplaceWith("render()"),
+        DeprecationLevel.ERROR
+    )
+    final override fun preRender() {
     }
 
+    /** render this layout's components, and remove them if they are ready to be removed. */
     override fun render() {
-        components.fastEach { it.render() }
+        removeQueue.fastEach { if (it.canBeRemoved()) removeComponentNow(it) }
+        needsRedraw = false
+        components.fastEach {
+            it.preRender()
+            it.render()
+            it.postRender()
+        }
     }
 
-    override fun postRender() {
-        components.fastEach { it.postRender() }
+    @Deprecated(
+        "Layouts do not use postRender or preRender methods. All the logic happens in the render method.",
+        ReplaceWith("render()"),
+        DeprecationLevel.ERROR
+    )
+    final override fun postRender() {
     }
 
     /** count the amount of drawables this contains, including the drawables its children have */
@@ -259,7 +272,6 @@ abstract class Layout(
         println("At: $at")
         println("Sized: $sized")
         println("Needs redraw: $needsRedraw")
-        println("Needs recalculation: $needsRecalculation")
         println("FBO: $fbo")
         println("Layout: $layout")
         println()
@@ -268,7 +280,7 @@ abstract class Layout(
 
     override fun debugRender() {
         renderer.drawHollowRect(x, y, width, height, Color.GRAYf, 2f)
-        renderer.drawText(Renderer.DefaultFont, x + 1, y + 1, simpleName, Color.WHITE, 10f)
+        renderer.drawText(Renderer.DefaultFont, x + 1f, y + 1f, simpleName, Color.WHITE, 10f)
         children.fastEach { it.debugRender() }
         components.fastEach { it.debugRender() }
     }
@@ -280,8 +292,11 @@ abstract class Layout(
         children.fastEach { it.setup(renderer, polyui) }
     }
 
-    override fun canBeRemoved(): Boolean {
-        return !needsRedraw
+    override fun canBeRemoved() = !needsRedraw
+
+    final override fun resetText() {
+        components.fastEach { it.resetText() }
+        children.fastEach { it.resetText() }
     }
 
     /** wraps this layout in a [DraggableLayout] (so you can drag it) */

@@ -33,6 +33,14 @@ data class Vec2<T : Unit>(
         }
     }
 
+    operator fun set(index: Int, value: T) {
+        when (index) {
+            0 -> a.px = value.px
+            1 -> b.px = value.px
+            else -> throw IndexOutOfBoundsException()
+        }
+    }
+
     operator fun plus(value: Vec2<T>): Vec2<T> {
         this.a.px + value.a.px
         this.b.px + value.b.px
@@ -61,6 +69,11 @@ data class Vec2<T : Unit>(
         return this
     }
 
+    fun scale(scaleX: Float, scaleY: Float) {
+        this.a.px *= scaleX
+        this.b.px *= scaleY
+    }
+
     override fun equals(other: Any?): Boolean {
         if (other !is Vec2<*>) return false
         if (this === other) return true
@@ -74,11 +87,6 @@ data class Vec2<T : Unit>(
 
     override fun toString(): String {
         return "Vec2.$type(${a.px} x ${b.px})"
-    }
-
-    fun scale(scaleX: Float, scaleY: Float) {
-        this.a.px *= scaleX
-        this.b.px *= scaleY
     }
 }
 

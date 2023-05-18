@@ -12,6 +12,8 @@ package cc.polyfrost.polyui.component.impl
 import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.event.Events
+import cc.polyfrost.polyui.input.PolyText
+import cc.polyfrost.polyui.input.PolyTranslator.Companion.localised
 import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.property.impl.TextProperties
 import cc.polyfrost.polyui.renderer.Renderer
@@ -23,7 +25,7 @@ import kotlin.math.floor
 
 open class Text @JvmOverloads constructor(
     properties: Properties = Properties.get<Text>(),
-    text: String,
+    text: PolyText,
     fontSize: Unit.Pixel? = null,
     at: Vec2<Unit>,
     size: Size<Unit>? = null,
@@ -31,7 +33,18 @@ open class Text @JvmOverloads constructor(
     acceptInput: Boolean = false,
     vararg events: Events.Handler
 ) : Component(properties, at, null, acceptInput, *events) {
-    constructor(text: String, fontSize: Unit.Pixel, at: Vec2<Unit>) : this(Properties.get<Text>(), text, fontSize, at) // java accessor
+    /** Internally [text] is stored as a [PolyText] object, which supports localization and object substitution */
+    @JvmOverloads constructor(
+        properties: Properties = Properties.get<Text>(),
+        text: String,
+        fontSize: Unit.Pixel? = null,
+        at: Vec2<Unit>,
+        size: Size<Unit>? = null,
+        textAlign: TextAlign = TextAlign.Left,
+        acceptInput: Boolean = false,
+        vararg events: Events.Handler
+    ) : this(properties, text.localised(), fontSize, at, size, textAlign, acceptInput, *events)
+    constructor(text: PolyText, fontSize: Unit.Pixel, at: Vec2<Unit>) : this(Properties.get<Text>(), text, fontSize, at) // java accessor
 
     private val props: TextProperties = properties as TextProperties
     var autoSized = size == null
@@ -73,6 +86,8 @@ open class Text @JvmOverloads constructor(
 
     operator fun get(index: Int) = str[index]
 
+    override fun resetText() = str.text.reset()
+
     fun getByCharIndex(index: Int) = str.getByCharIndex(index)
 
     override fun rescale(scaleX: Float, scaleY: Float) {
@@ -82,6 +97,7 @@ open class Text @JvmOverloads constructor(
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {
         super.setup(renderer, polyui)
+        str.text.polyTranslator = polyui.polyTranslator
         str.calculate(renderer)
         sized = str.size
     }

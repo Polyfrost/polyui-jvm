@@ -11,6 +11,7 @@ package cc.polyfrost.polyui.renderer.data
 
 import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.color.Color
+import cc.polyfrost.polyui.input.PolyText
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.TextAlign
 import cc.polyfrost.polyui.unit.Unit
@@ -27,7 +28,7 @@ import cc.polyfrost.polyui.utils.wrap
  * @see SingleText
  */
 internal abstract class Text(
-    text: String,
+    text: PolyText,
     val font: Font,
     fontSize: Float,
     val textAlign: TextAlign = TextAlign.Left,
@@ -73,7 +74,7 @@ internal abstract class Text(
  * @see Text
  */
 internal class MultilineText(
-    text: String,
+    text: PolyText,
     font: Font,
     fontSize: Float,
     textAlign: TextAlign = TextAlign.Left,
@@ -93,14 +94,14 @@ internal class MultilineText(
     override fun calculate(renderer: Renderer) {
         super.calculate(renderer)
         if (autoSized) {
-            renderer.textBounds(font, text, fontSize, textAlign).also {
+            renderer.textBounds(font, text.string, fontSize, textAlign).also {
                 size.a.px = it.width
                 size.b.px = it.height
             }
-            lines = arrayListOf(Line(text, size.width, size.height))
+            lines = arrayListOf(Line(text.string, size.width, size.height))
             return
         }
-        lines = text.wrap(size.width, size.height, renderer, font, fontSize, textAlign)
+        lines = text.string.wrap(size.width, size.height, renderer, font, fontSize, textAlign)
             .also { full = it.second }.first.map {
                 Line(it, renderer.textBounds(font, it, fontSize, textAlign) as Vec2<Unit>)
             }.toArrayList()
@@ -127,39 +128,39 @@ internal class MultilineText(
  * @see Text
  */
 internal class SingleText(
-    text: String,
+    text: PolyText,
     font: Font,
     fontSize: Float,
     textAlign: TextAlign = TextAlign.Left,
     size: Vec2<Unit>
 ) : Text(text, font, fontSize, textAlign, size) {
-    override var lines: ArrayList<Line> = arrayListOf(Line(text, size.width, size.height))
+    override var lines: ArrayList<Line> = arrayListOf(Line(text.string, size.width, size.height))
     var init = false
     var textOffset: Float = 0f
     override fun render(x: Float, y: Float, color: Color) {
         if (textOffset != 0f) {
             renderer.pushScissor(x, y, size.width, size.height)
-            renderer.drawText(font, x + textOffset, y, text, color, fontSize, textAlign)
+            renderer.drawText(font, x + textOffset, y, text.string, color, fontSize, textAlign)
             renderer.popScissor()
         } else {
-            renderer.drawText(font, x, y, text, color, fontSize, textAlign)
+            renderer.drawText(font, x, y, text.string, color, fontSize, textAlign)
         }
     }
 
     override fun calculate(renderer: Renderer) {
         super.calculate(renderer)
         if (autoSized) {
-            renderer.textBounds(font, text, fontSize, textAlign).also {
+            renderer.textBounds(font, text.string, fontSize, textAlign).also {
                 size.a.px = it.width
                 size.b.px = it.height
             }
-            lines[0] = Line(text, size.width, size.height)
+            lines[0] = Line(text.string, size.width, size.height)
             return
         }
         lines[0] = Line(
-            text,
-            renderer.textBounds(font, text, fontSize, textAlign).also {
-                if (!init && renderer.settings.debug && it.width > size.width) PolyUI.LOGGER.warn("Single line text overflow with initial bounds, is this intended? (text: $text, bounds: $size)")
+            text.string,
+            renderer.textBounds(font, text.string, fontSize, textAlign).also {
+                if (!init && renderer.settings.debug && it.width > size.width) PolyUI.LOGGER.warn("Single line text overflow with initial bounds, is this intended? (text: $text.string, bounds: $size)")
             } as Vec2<Unit>
         )
 

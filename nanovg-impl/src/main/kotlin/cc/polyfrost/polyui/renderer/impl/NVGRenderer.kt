@@ -30,12 +30,11 @@ import org.lwjgl.stb.STBImage
 import org.lwjgl.stb.STBImageResize
 import org.lwjgl.system.MemoryUtil
 import java.io.InputStreamReader
-import java.lang.NullPointerException
 import java.nio.ByteBuffer
 import kotlin.math.max
 import kotlin.math.min
 
-class NVGRenderer : Renderer() {
+class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     private val nvgPaint: NVGPaint = NVGPaint.create()
     private val nvgColor: NVGColor = NVGColor.malloc()
     private val nvgColor2: NVGColor = NVGColor.malloc()
@@ -58,9 +57,9 @@ class NVGRenderer : Renderer() {
         }
     }
 
-    override fun beginFrame(width: Int, height: Int) {
+    override fun beginFrame() {
         checkInit()
-        nvgBeginFrame(vg, width.toFloat(), height.toFloat(), pixelRatio)
+        nvgBeginFrame(vg, width, height, pixelRatio)
     }
 
     override fun endFrame() = nvgEndFrame(vg)
@@ -183,16 +182,19 @@ class NVGRenderer : Renderer() {
     }
 
     override fun bindFramebuffer(fbo: Framebuffer, mode: Framebuffer.Mode) {
+        nvgEndFrame(vg)
         NanoVGGL3.nvgluBindFramebuffer(vg, fbos[fbo] ?: throw NullPointerException("Cannot bind: $fbo does not exist!"))
         glViewport(0, 0, fbo.width.toInt(), fbo.height.toInt())
         glClearColor(0F, 0F, 0F, 0F)
-        glClear(GL_COLOR_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
+        glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
         nvgBeginFrame(vg, fbo.width, fbo.height, pixelRatio)
     }
 
     override fun unbindFramebuffer(fbo: Framebuffer, mode: Framebuffer.Mode) {
         nvgEndFrame(vg)
         NanoVGGL3.nvgluBindFramebuffer(vg, null)
+        glViewport(0, 0, width.toInt(), height.toInt())
+        nvgBeginFrame(vg, width, height, pixelRatio)
     }
 
     override fun supportsRenderbuffer() = false
@@ -418,21 +420,21 @@ class NVGRenderer : Renderer() {
 
     private fun getImage(image: PolyImage): NVGImage {
         return images[image] ?: run {
-            val stream = getResourceStreamNullable(image.fileName)
+            val stream = getResourceStreamNullable(image.resourcePath)
                 ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) {
-                    getResourceStream(DefaultImage.fileName)
+                    getResourceStream(DefaultImage.resourcePath)
                         .also {
                             PolyUI.LOGGER.warn(
                                 "Failed to get image: {}, falling back to default image!",
-                                image.fileName
+                                image.resourcePath
                             )
                         }
                 } else {
-                    throw ExceptionInInitializerError("Failed to get image: ${image.fileName}")
+                    throw ExceptionInInitializerError("Failed to get image: ${image.resourcePath}")
                 }
             val data: ByteBuffer
             when (image.type) {
-                PolyImage.Type.PNG, PolyImage.Type.JPEG -> {
+                PolyImage.Type.PNG, PolyImage.Type.JPEG, PolyImage.Type.BMP -> {
                     val w = IntArray(1)
                     val h = IntArray(1)
                     data = STBImage.stbi_load_from_memory(
@@ -446,17 +448,31 @@ class NVGRenderer : Renderer() {
                             throw Exception("Failed to initialize image: $image")
                         }
                         if (image.width == -1f || image.height == -1f) {
-                            image.width = w[0].toFloat()
-                            image.height = h[0].toFloat()
-                        } else {
-                            PolyUI.LOGGER.info("resizing $image: ${w[0]}x${h[0]} -> ${image.width}x${image.height}")
-                            STBImageResize.stbir_resize_uint8(
-                                it, w[0], h[0],
-                                0, it,
-                                image.width.toInt(), image.height.toInt(),
-                                0, 4
-                            )
+                            val sh = image.height != -1f
+                            val sw = image.width != -1f
+                            if (!sw) {
+                                if (!sh) {
+                                    image.width = w[0].toFloat()
+                                    image.height = h[0].toFloat()
+                                    return@also
+                                } else {
+                                    // !sw, sh
+                                    val ratio = image.height / h[0].toFloat()
+                                    image.width = w[0].toFloat() * ratio
+                                }
+                            } else {
+                                // !sh, sw
+                                val ratio = image.width / w[0].toFloat()
+                                image.height = h[0].toFloat() * ratio
+                            }
                         }
+                        PolyUI.LOGGER.info("resizing image ${image.resourcePath}: ${w[0]}x${h[0]} -> ${image.width}x${image.height}")
+                        STBImageResize.stbir_resize_uint8(
+                            it, w[0], h[0],
+                            0, it,
+                            image.width.toInt(), image.height.toInt(),
+                            0, 4
+                        )
                     } ?: throw Exception("Failed to initialize image: $image")
                 }
 

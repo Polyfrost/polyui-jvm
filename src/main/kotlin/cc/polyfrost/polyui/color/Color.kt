@@ -191,7 +191,7 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
                 this.a = animation!![3].update(deltaTimeNanos).toInt()
                 return false
             }
-            return true
+            return false
         }
 
         override fun clone(): Mutable {

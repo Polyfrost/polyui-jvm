@@ -24,14 +24,14 @@ open class Image @JvmOverloads constructor(
     at: Vec2<Unit>,
     vararg events: Events.Handler
 ) : Component(properties, at, null, acceptInput, *events) {
-    private val props get() = properties as ImageProperties
+    private val props = properties
 
     override fun render() {
         renderer.drawImage(image, x, y, width, height, props.cornerRadii, props.color.getARGB())
     }
 
     override fun getSize(): Vec2<Unit> {
-        if (image.width == -1f) {
+        if (image.width == -1f || image.height == -1f) {
             renderer.initImage(image)
         }
         return Vec2(image.width.px, image.height.px)

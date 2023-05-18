@@ -35,7 +35,9 @@ class TextInput @JvmOverloads constructor(
     vararg events: Events.Handler
 ) : Component(properties, at, sized, true, *events), Focusable {
     private val props = properties as TextInputProperties
-    val text = Text(props.text, props.defaultText, at = at.clone(), size = sized.clone(), acceptInput = false)
+    val text = Text(props.text, props.defaultText.clone(), at = at.clone(), size = sized.clone(), acceptInput = false)
+    inline var txt get() = text.text.string
+        set(value) { text.text.string = value }
     private var init = false
     private var caret = 0
         set(value) {
@@ -48,7 +50,7 @@ class TextInput @JvmOverloads constructor(
         }
     private var caretPos = x to y
     var selecting = false
-    val selection get() = text.text.substringSafe(caret, select).stdout()
+    val selection get() = txt.substringSafe(caret, select).stdout()
     val autoSized get() = text.autoSized
     override fun render() {
         if (props.backgroundColor != null) {
@@ -64,13 +66,13 @@ class TextInput @JvmOverloads constructor(
     override fun accept(event: FocusedEvents) {
         if (event is FocusedEvents.KeyTyped) {
             if (event.mods < 2 && !text.full) {
-                text.text = text.text.substring(0, caret) + event.key + text.text.substring(caret)
+                txt = txt.substring(0, caret) + event.key + txt.substring(caret)
                 caret++
             } else if (event.hasModifier(Keys.Modifiers.LCONTROL) || event.hasModifier(Keys.Modifiers.RCONTROL)) {
                 when (event.key) {
                     'V' -> {
                         try {
-                            text.text += Toolkit.getDefaultToolkit().systemClipboard.getContents(null)
+                            txt += Toolkit.getDefaultToolkit().systemClipboard.getContents(null)
                                 ?.getTransferData(DataFlavor.stringFlavor) as? String ?: ""
                         } catch (e: Exception) {
                             PolyUI.LOGGER.error("Failed to read clipboard data!", e)
@@ -88,7 +90,7 @@ class TextInput @JvmOverloads constructor(
                     'X' -> {
                         try {
                             Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(selection), null)
-                            text.text = text.text.replace(selection, "")
+                            txt = txt.replace(selection, "")
                         } catch (e: Exception) {
                             PolyUI.LOGGER.error("Failed to write clipboard data!", e)
                         }
@@ -107,7 +109,7 @@ class TextInput @JvmOverloads constructor(
             when (event.key) {
                 Keys.BACKSPACE -> {
                     if (!hasControl) {
-                        text.text = text.text.dropAt(caret, 1)
+                        txt = txt.dropAt(caret, 1)
                         if (caret != 0) caret--
                     } else {
                         dropToLastSpace()
@@ -119,11 +121,11 @@ class TextInput @JvmOverloads constructor(
                 }
 
                 Keys.TAB -> {
-                    text.text += "    "
+                    txt += "    "
                 }
 
                 Keys.DELETE -> {
-                    text.text = text.text.drop(1)
+                    txt = txt.drop(1)
                 }
 
                 Keys.LEFT -> {
@@ -168,8 +170,8 @@ class TextInput @JvmOverloads constructor(
     }
 
     fun toLastSpace() {
-        while (caret > 0 && text.text[caret - 1] == ' ') caret--
-        text.text.lastIndexOf(' ', caret - 1).let {
+        while (caret > 0 && txt[caret - 1] == ' ') caret--
+        txt.lastIndexOf(' ', caret - 1).let {
             if (selecting && select != caret) select = caret
             caret = if (it != -1) {
                 it
@@ -181,24 +183,24 @@ class TextInput @JvmOverloads constructor(
 
     fun dropToLastSpace() {
         val c = caret
-        text.text.lastIndexOf(' ', caret).let {
+        txt.lastIndexOf(' ', caret).let {
             caret = if (it != -1) {
                 it
             } else {
                 0
             }
         }
-        text.text = text.text.substring(0, caret) + text.text.substring(c)
+        txt = txt.substring(0, caret) + txt.substring(c)
     }
 
     fun toNextSpace() {
-        while (caret < text.text.length && text.text[caret] == ' ') caret++
-        text.text.indexOf(' ', caret).let {
+        while (caret < txt.length && txt[caret] == ' ') caret++
+        txt.indexOf(' ', caret).let {
             if (selecting && select != caret) select = caret
             caret = if (it != -1) {
                 it
             } else {
-                text.text.length
+                txt.length
             }
         }
     }
@@ -214,11 +216,16 @@ class TextInput @JvmOverloads constructor(
 
     fun forward() {
         if (selecting && select != caret) select = caret
-        caret = if (caret < text.text.length) {
+        caret = if (caret < txt.length) {
             caret + 1
         } else {
-            text.text.length
+            txt.length
         }
+    }
+
+    override fun resetText() {
+        props.defaultText.reset()
+        text.text = props.defaultText.clone()
     }
 
     fun clearSelection() {

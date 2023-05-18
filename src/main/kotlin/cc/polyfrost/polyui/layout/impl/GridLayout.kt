@@ -42,7 +42,7 @@ class GridLayout @JvmOverloads constructor(
         var nrows = 0
         var ncols = 0
         items.forEach {
-            if (it.atUnitType() != Unit.Type.Grid) {
+            if (it.atUnitType != Unit.Type.Grid) {
                 throw Exception("Unit type mismatch: Drawable $it needs to be placed using a Grid unit for a grid layout.")
             }
             val u = it.at.a as Unit.Grid

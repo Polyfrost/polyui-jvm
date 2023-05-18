@@ -9,6 +9,7 @@
 
 package cc.polyfrost.polyui
 
+import cc.polyfrost.polyui.animate.Animations
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.component.impl.Block
@@ -16,6 +17,7 @@ import cc.polyfrost.polyui.component.impl.Image
 import cc.polyfrost.polyui.component.impl.Text
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.event.Events.Companion.events
+import cc.polyfrost.polyui.input.PolyTranslator.Companion.localised
 import cc.polyfrost.polyui.layout.Layout.Companion.items
 import cc.polyfrost.polyui.layout.impl.FlexLayout
 import cc.polyfrost.polyui.layout.impl.PixelLayout
@@ -23,11 +25,16 @@ import cc.polyfrost.polyui.property.impl.BlockProperties
 import cc.polyfrost.polyui.renderer.data.PolyImage
 import cc.polyfrost.polyui.renderer.impl.GLWindow
 import cc.polyfrost.polyui.renderer.impl.NVGRenderer
+import cc.polyfrost.polyui.renderer.impl.NoOpRenderer
+import cc.polyfrost.polyui.renderer.impl.NoOpWindow
 import cc.polyfrost.polyui.unit.*
 import java.lang.Math.random
 
 fun main() {
-    val window = GLWindow("Test", 800, 800)
+    // use the no-op rendering implementation (for profiling of the system code)
+    val useNoOp = false
+
+    val window = if(!useNoOp) GLWindow("Test", 800, 800) else NoOpWindow("Test", 800, 800)
     val things = Array<Drawable>(50) { // creates 50 rectangles with random sizes
         Block(
             at = flex(),
@@ -35,27 +42,27 @@ fun main() {
             events = events(
                 Events.MouseClicked(0) to {
                     println("Mouse clicked! $it")
+                    rotate(120.0, Animations.EaseInOutCubic)
                 },
                 Events.MouseClicked(0, 2) to {
                     println("Mouse double-clicked!")
                 },
                 Events.MouseClicked(1) to {
                     println("Mouse right-clicked!")
+                    wantRedraw()
                     true
                 }
             )
         )
     }
     val polyUI = PolyUI(
-        window.width,
-        window.height,
-        NVGRenderer(),
+        renderer = if(!useNoOp) NVGRenderer(window.width.toFloat(), window.height.toFloat()) else NoOpRenderer(window.width.toFloat(), window.height.toFloat()),
         items = items(
             PixelLayout(
                 at = 20.px * 570.px,
                 items = items(
                     Text(
-                        text = "Kotlin...       rainbow!      and image",
+                        text = "polyui.test".localised("rainbow"),
                         fontSize = 32.px,
                         at = 20.px * 0.px
                     ),
@@ -72,11 +79,21 @@ fun main() {
                     Block(
                         properties = BlockProperties(Color.Chroma(5.seconds)),
                         at = 200.px * 30.px,
-                        sized = 120.px * 120.px
+                        sized = 120.px * 120.px,
+                        events = events(
+                            Events.MouseClicked(0) to {
+                                rotate(120.0, Animations.EaseInOutCubic)
+                            }
+                        )
                     ),
                     Image(
-                        PolyImage("/s.png", 120f, 120f),
-                        at = 380.px * 30.px
+                        PolyImage("/test.png", 120f, 120f),
+                        at = 380.px * 30.px,
+                        events = events(
+                            Events.MouseClicked(0) to {
+                                rotate(120.0, Animations.EaseInOutCubic)
+                            }
+                        )
                     )
                 )
             ).draggable(),

@@ -26,7 +26,11 @@ import cc.polyfrost.polyui.unit.Vec2
  * It is also responsible for loading and caching all images and fonts, but this is down to you as a rendering implementation to implement.
  * for these functions, such as [drawImage] and [drawText], an initialized [Font] or [PolyImage] instance will be given. This class simply contains a filepath to the resource. You will need to load it, and cache it for future use (ideally).
  */
-abstract class Renderer : AutoCloseable {
+abstract class Renderer(width: Float, height: Float) : AutoCloseable {
+    var width: Float = width
+        internal set
+    var height: Float = height
+        internal set
 
     /** settings instance for this renderer. */
     val settings = Settings(this)
@@ -38,7 +42,7 @@ abstract class Renderer : AutoCloseable {
     /** hook into this renderer. */
     internal inline fun alsoRender(block: Renderer.() -> kotlin.Unit) = block()
 
-    abstract fun beginFrame(width: Int, height: Int)
+    abstract fun beginFrame()
     abstract fun endFrame()
 
     /** Set the alpha for all future draw calls, in the range (0-1), until [reset][resetGlobalAlpha].
@@ -67,7 +71,7 @@ abstract class Renderer : AutoCloseable {
     /**
      * scales all future draw calls by the given amount.
      *
-     * **you must** call the inverse of this function ([scale(-x,-y)][scale]) when you are done with this transform!
+     * **you must** call the inverse of this function ([scale(1f/x,1f/y)][scale]) when you are done with this transform!
      */
     abstract fun scale(x: Float, y: Float)
 

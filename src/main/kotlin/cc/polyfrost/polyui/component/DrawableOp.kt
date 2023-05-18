@@ -19,7 +19,7 @@ import cc.polyfrost.polyui.unit.Vec2
 /**
  * Class to represent an operation that can be applied on a component that modifies it in some way.
  *
- * It is applied before and after rendering, for example a [Move], [Scale], or [Rotate] operation, or a transition.
+ * It is applied before and after rendering, for example a [Move], [Resize], or [Rotate] operation, or a transition.
  */
 abstract class DrawableOp(protected open val drawable: Drawable) {
     abstract val animation: Animation?
@@ -51,7 +51,7 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         get() = animation?.isFinished ?: true
 
     /**
-     * Note: if you are making a UI, you should probably be using [scale][cc.polyfrost.polyui.component.Component.scale], [rotate][cc.polyfrost.polyui.component.Component.rotate], or [translate][cc.polyfrost.polyui.component.Component.move] instead of this class.
+     * Note: if you are making a UI, you should probably be using [scale][cc.polyfrost.polyui.component.Component.resize], [rotate][cc.polyfrost.polyui.component.Component.rotate], or [translate][cc.polyfrost.polyui.component.Component.move] instead of this class.
      */
     class Move(
         private val to: Vec2<Unit>,
@@ -73,30 +73,7 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
     }
 
     /**
-     * Note: if you are making a UI, you should probably be using [scale][cc.polyfrost.polyui.component.Component.scale], [rotate][cc.polyfrost.polyui.component.Component.rotate], or [translate][cc.polyfrost.polyui.component.Component.move] instead of this class.
-     */
-    class Scale(
-        private val x: Float,
-        private val y: Float,
-        override val drawable: Component,
-        type: Animations? = null,
-        durationNanos: Long = 1000L
-    ) : DrawableOp(drawable) {
-        override val animation = type?.create(durationNanos, drawable.scaleX, drawable.scaleX + x)
-        private val yAnim = type?.create(durationNanos, drawable.scaleY, drawable.scaleY + y)
-        override fun apply(renderer: Renderer) {
-            if (animation != null) {
-                drawable.scaleX = animation.value
-                drawable.scaleY = yAnim!!.value
-            } else {
-                drawable.scaleX = x
-                drawable.scaleY = y
-            }
-        }
-    }
-
-    /**
-     * Note: if you are making a UI, you should probably be using [scale][cc.polyfrost.polyui.component.Component.scale], [rotate][cc.polyfrost.polyui.component.Component.rotate], or [translate][cc.polyfrost.polyui.component.Component.move] instead of this class.
+     * Note: if you are making a UI, you should probably be using [scale][cc.polyfrost.polyui.component.Component.resize], [rotate][cc.polyfrost.polyui.component.Component.rotate], or [translate][cc.polyfrost.polyui.component.Component.move] instead of this class.
      */
     class Rotate(
         private val angle: Double,

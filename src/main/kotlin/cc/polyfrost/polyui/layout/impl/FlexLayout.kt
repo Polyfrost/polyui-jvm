@@ -90,10 +90,10 @@ class FlexLayout @JvmOverloads constructor(
             this.wrapDirection = wrapDirection
         }
         items.forEachIndexed { i, it ->
-            if (it.atUnitType() != Unit.Type.Flex) {
+            if (it.atUnitType != Unit.Type.Flex) {
                 throw Exception("Unit type mismatch: Drawable $it needs to be placed using a Flex unit for a flex layout.")
             }
-            if (it.sizedUnitType() == Units.Flex) {
+            if (it.sizedUnitType == Units.Flex) {
                 throw Exception("A flex layout's sized property is used to specify the minimum size of the component, please use the at property for your flex data.")
             }
             @Suppress("UNCHECKED_CAST") // already type-checked
@@ -218,7 +218,6 @@ class FlexLayout @JvmOverloads constructor(
             }
         }
         rows.clear()
-        needsRecalculation = false
     }
 
     fun trySetMainSize(new: Float) {

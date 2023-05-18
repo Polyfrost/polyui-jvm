@@ -187,14 +187,22 @@ class GLWindow @JvmOverloads constructor(
             )
         }
 
+        var t = glfwGetTime()
+        val frameTime = if (polyUI.renderer.settings.maxFPS == 0) 0.0 else 1.0 / polyUI.renderer.settings.maxFPS
         while (!glfwWindowShouldClose(handle)) {
             glViewport(0, 0, width, height)
             glClearColor(0.1f, 0.1f, 0.1f, 0f)
             glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
 
             this.polyUI.render()
-
-            glfwPollEvents()
+            if (frameTime != 0.0) {
+                while (glfwGetTime() - t < frameTime) {
+                    glfwPollEvents()
+                }
+                t = glfwGetTime()
+            } else {
+                glfwPollEvents()
+            }
             glfwSwapBuffers(handle)
         }
 

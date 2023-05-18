@@ -9,8 +9,6 @@
 
 package cc.polyfrost.polyui.utils
 
-import kotlin.math.abs
-
 /**
  * A simple class for timing of animations and things.
  * Literally a delta function.
@@ -27,17 +25,13 @@ class Clock {
         val currentTime = System.nanoTime()
         val delta = currentTime - lastTime
         lastTime = currentTime
-        return abs(delta) // failsafe for if the 'arbitrary timestamp' is in the future, which according to System.nanoTime() doc is possible
+        return delta
     }
 
-    fun peekDelta(): Long = abs(System.nanoTime() - lastTime)
+    fun peekDelta(): Long = System.nanoTime() - lastTime
 
     class FixedTimeExecutor(private val nanos: Long, private val func: () -> Unit) {
         private val clock = Clock()
-
-        init {
-            clock.getDelta()
-        }
 
         fun tick() {
             if (clock.peekDelta() >= nanos) {

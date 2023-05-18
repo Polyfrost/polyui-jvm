@@ -37,11 +37,12 @@ abstract class Component @JvmOverloads constructor(
 ) : Drawable(acceptInput) {
     protected val animations: ArrayList<Pair<Animation, (Component.() -> kotlin.Unit)?>> = ArrayList()
     protected val operations: ArrayList<Pair<DrawableOp, (Component.() -> kotlin.Unit)?>> = ArrayList()
-    var scaleX: Float = 1F
-    var scaleY: Float = 1F
 
     /** current rotation of this component (radians). */
     var rotation: Double = 0.0
+
+    // needed for translation when rotating
+    private var atCache: Pair<Float, Float>? = null
     val color: Color.Mutable = properties.color.toMutable()
     protected var sizedBySelf = false
     protected var finishColorFunc: (Component.() -> kotlin.Unit)? = null
@@ -62,6 +63,8 @@ abstract class Component @JvmOverloads constructor(
 
     /** Add a [DrawableOp] to this component. */
     open fun addOperation(drawableOp: DrawableOp, onFinish: (Component.() -> kotlin.Unit)? = null) {
+        clock.getDelta() // clear clock
+        wantRedraw()
         operations.add(drawableOp to onFinish)
     }
 
@@ -71,14 +74,12 @@ abstract class Component @JvmOverloads constructor(
      * Please note that this ignores all bounds, and will simply scale this component, meaning that it can be clipped by its layout, and overlap nearby component.
      */
     fun scale(
-        byX: Float,
-        byY: Float,
+        xFactor: Float,
+        yFactor: Float,
         animation: Animation.Type? = null,
-        durationNanos: Long = 0L,
+        durationNanos: Long = 1.seconds,
         onFinish: (Component.() -> kotlin.Unit)? = null
-    ) {
-        addOperation(DrawableOp.Scale(byX, byY, this, animation, durationNanos), onFinish)
-    }
+    ) = resize((width * xFactor).px * (height * yFactor).px, animation, durationNanos, onFinish)
 
     /**
      * Rotate this component by the given amount, in degrees.
@@ -88,10 +89,14 @@ abstract class Component @JvmOverloads constructor(
     fun rotate(
         degrees: Double,
         animation: Animation.Type? = null,
-        durationNanos: Long = 0L,
+        durationNanos: Long = 1L.seconds,
         onFinish: (Component.() -> kotlin.Unit)? = null
     ) {
         addOperation(DrawableOp.Rotate(Math.toRadians(degrees), this, animation, durationNanos), onFinish)
+        if (atCache != null) return
+        atCache = at.a.px to at.b.px
+        at.a.px = -width / 2f
+        at.b.px = -height / 2f
     }
 
     /**
@@ -99,11 +104,11 @@ abstract class Component @JvmOverloads constructor(
      *
      * Please note that this ignores all bounds, and will simply scale this component, meaning that it can be clipped by its layout, and overlap nearby component.
      */
-    // todo this might change ^
+// todo this might change ^
     fun move(
         to: Vec2<Unit>,
         animation: Animation.Type? = null,
-        durationNanos: Long = 0L,
+        durationNanos: Long = 1L.seconds,
         onFinish: (Component.() -> kotlin.Unit)? = null
     ) {
         doDynamicSize(to)
@@ -114,7 +119,7 @@ abstract class Component @JvmOverloads constructor(
     fun resize(
         toSize: Size<Unit>,
         animation: Animation.Type? = null,
-        durationNanos: Long = 0L,
+        durationNanos: Long = 1L.seconds,
         onFinish: (Component.() -> kotlin.Unit)? = null
     ) {
         doDynamicSize(toSize)
@@ -154,42 +159,51 @@ abstract class Component @JvmOverloads constructor(
         layout.needsRedraw = true
     }
 
-    fun wantRecalculation() {
-        layout.needsRecalculation = true
-    }
-
     /**
      * Called before rendering.
      *
      * **make sure to call super [Component.preRender]!**
      */
     override fun preRender() {
-        val a = animations.fastRemoveIf { it.first.isFinished.also { b -> if (b) it.second?.invoke(this) } }
-        val o = operations.fastRemoveIf { it.first.isFinished.also { b -> if (b) it.second?.invoke(this) } }
-
-        if (a || o || (color.alwaysUpdates || color.updating)) {
-            val delta = clock.getDelta()
-            if (a) {
-                animations.fastEach { (it, _) ->
-                    it.update(delta)
-                    if (!it.isFinished) wantRedraw()
-                }
+        val delta = clock.getDelta()
+        animations.fastRemoveIf { (it, func) ->
+            it.update(delta)
+            return@fastRemoveIf if (!it.isFinished) {
+                wantRedraw()
+                false
+            } else {
+                func?.invoke(this)
+                true
             }
-            if (o) {
-                operations.fastEach { (it, _) ->
-                    it.update(delta)
-                    if (!it.isFinished) wantRedraw()
-                    it.apply(renderer)
-                }
-            }
-            if (color.update(delta)) {
-                finishColorFunc?.invoke(this)
-                finishColorFunc = null
-            }
-            wantRedraw()
         }
-        if (scaleX != 1f || scaleY != 1f) renderer.scale(scaleX, scaleY)
-        if (rotation != 0.0) renderer.rotate(rotation)
+        operations.fastRemoveIf { (it, func) ->
+            it.update(delta)
+            return@fastRemoveIf if (!it.isFinished) {
+                wantRedraw()
+                it.apply(renderer)
+                false
+            } else {
+                if (it is DrawableOp.Rotate) {
+                    if (rotation > 6.283 && rotation < 6.284) { // roughly 360 degrees, resets the rotation
+                        at.a.px = atCache!!.first
+                        at.b.px = atCache!!.second
+                        atCache = null
+                        rotation = 0.0
+                    }
+                }
+                func?.invoke(this)
+                true
+            }
+        }
+        if (color.update(delta)) {
+            finishColorFunc?.invoke(this)
+            finishColorFunc = null
+        }
+        if (color.updating || color.alwaysUpdates) wantRedraw()
+        if (rotation != 0.0) {
+            renderer.translate(atCache!!.first + width / 2f, atCache!!.second + height / 2f)
+            renderer.rotate(rotation)
+        }
     }
 
     /**
@@ -198,11 +212,26 @@ abstract class Component @JvmOverloads constructor(
      * **make sure to call super [Component.postRender]!**
      */
     override fun postRender() {
-        if (scaleX != 1f && scaleY != 1f) renderer.scale(-scaleX, -scaleY)
-        if (rotation != 0.0) renderer.rotate(-rotation)
+        if (rotation != 0.0) {
+            renderer.rotate(-rotation)
+            renderer.translate(-(atCache!!.first + width / 2f), -(atCache!!.second + height / 2f))
+        }
+        operations.fastEach { (it, _) ->
+            it.unapply(renderer)
+        }
     }
 
     override fun canBeRemoved(): Boolean {
         return animations.size == 0 && operations.size == 0 && !color.updating
+    }
+
+    override fun isInside(x: Float, y: Float): Boolean {
+        return if (atCache == null) {
+            super.isInside(x, y)
+        } else {
+            val tx = atCache!!.first + layout.at.a.px
+            val ty = atCache!!.second + layout.at.b.px
+            x >= tx && x <= tx + this.sized!!.a.px && y >= ty && y <= ty + this.sized!!.b.px
+        }
     }
 }

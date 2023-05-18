@@ -16,6 +16,7 @@ import cc.polyfrost.polyui.event.EventManager
 import cc.polyfrost.polyui.event.FocusedEvents
 import cc.polyfrost.polyui.input.KeyBinder
 import cc.polyfrost.polyui.input.KeyModifiers
+import cc.polyfrost.polyui.input.PolyTranslator
 import cc.polyfrost.polyui.layout.impl.PixelLayout
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.*
@@ -26,6 +27,7 @@ import cc.polyfrost.polyui.utils.rounded
 import cc.polyfrost.polyui.utils.varargs
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import kotlin.collections.ArrayList
 
 /**
  * # PolyUI
@@ -64,20 +66,22 @@ import org.slf4j.LoggerFactory
  * PolyUI also supports a variety of [animations][cc.polyfrost.polyui.animate.Animation] and [transitions][cc.polyfrost.polyui.animate.transitions.Transition], which can be used to make your UI more dynamic, along with dynamically [adding][addComponent] and [removing][removeComponent] components.
  */
 class PolyUI(
-    width: Int,
-    height: Int,
+    translationDirectory: String? = null,
     val renderer: Renderer,
     vararg items: Drawable
 ) {
-    var width = width
-        private set
-    var height = height
-        private set
-    val master = PixelLayout(Point(0.px, 0.px), Size(width.px, height.px), items = items)
+    val master = PixelLayout(Point(0.px, 0.px), Size(renderer.width.px, renderer.height.px), items = items)
     val eventManager = EventManager(this)
     val keyBinder = KeyBinder()
+    val polyTranslator = PolyTranslator(this, translationDirectory ?: "")
     private val executors: ArrayList<Clock.FixedTimeExecutor> = arrayListOf()
-    private val settings = renderer.settings
+    inline val settings get() = renderer.settings
+    var width
+        set(value) { renderer.width = value }
+        inline get() = renderer.width
+    var height
+        set(value) { renderer.height = value }
+        inline get() = renderer.height
     private var renderHooks = arrayListOf<Renderer.() -> kotlin.Unit>()
     internal var focused: (Focusable)? = null
 
@@ -104,10 +108,9 @@ class PolyUI(
                 LOGGER.warn("Layout {} is larger than the window. This may cause issues.", it.simpleName)
             }
         }
-        if (settings.masterIsFramebuffer) master.fbo = renderer.createFramebuffer(width, height, settings.bufferType)
-        if (this.settings.debugLog) this.master.debugPrint()
-        Unit.VUnits.vHeight = height.toFloat()
-        Unit.VUnits.vWidth = width.toFloat()
+        if (settings.masterIsFramebuffer) master.fbo = renderer.createFramebuffer(width.toInt(), height.toInt(), settings.bufferType)
+        Unit.VUnits.vHeight = height
+        Unit.VUnits.vWidth = width
         if (settings.enableDebugKeybind) {
             keyBinder.add('I', KeyModifiers.LCONTROL, KeyModifiers.LSHIFT) {
                 settings.debug = !settings.debug
@@ -123,7 +126,7 @@ class PolyUI(
         }
         keyBinder.add('R', KeyModifiers.LCONTROL) {
             LOGGER.info("Reloading PolyUI")
-            onResize(width, height, renderer.pixelRatio, true)
+            onResize(width.toInt(), height.toInt(), renderer.pixelRatio, true)
             true
         }
         every(1.seconds) {
@@ -142,7 +145,7 @@ class PolyUI(
     }
 
     fun onResize(newWidth: Int, newHeight: Int, pixelRatio: Float, force: Boolean = false) {
-        if (!force && newWidth == width && newHeight == height && pixelRatio == this.renderer.pixelRatio) {
+        if (!force && newWidth == width.toInt() && newHeight == height.toInt() && pixelRatio == this.renderer.pixelRatio) {
             LOGGER.warn("PolyUI was resized to the same size. Ignoring.")
             return
         }
@@ -160,8 +163,8 @@ class PolyUI(
 
         master.children.fastEach {
             it.rescale(
-                newWidth.toFloat() / this.width.toFloat(),
-                newHeight.toFloat() / this.height.toFloat()
+                newWidth.toFloat() / this.width,
+                newHeight.toFloat() / this.height
             )
             if (it.fbo != null) {
                 renderer.deleteFramebuffer(it.fbo!!)
@@ -169,26 +172,26 @@ class PolyUI(
             }
             it.needsRedraw = true // lol that was funny to debug
         }
-        this.width = newWidth
-        this.height = newHeight
+        this.width = newWidth.toFloat()
+        this.height = newHeight.toFloat()
         renderer.pixelRatio = pixelRatio
     }
 
     fun render() {
         val now = System.nanoTime()
-        renderer.beginFrame(width, height)
+        renderer.beginFrame()
         master.reRenderIfNecessary()
         renderHooks.fastEach { it(renderer) }
 
         // telemetry
         if (settings.debug) {
-            debugRender()
             val frameTime = (System.nanoTime() - now) / 1_000_000f
             timeInFrames += frameTime
             if (frameTime > longestFrame) longestFrame = frameTime
             if (frameTime < shortestFrame) shortestFrame = frameTime
-            drawDebugOverlay(width - 1f, height - 11f)
             frames++
+            master.debugRender()
+            drawDebugOverlay(width - 1f, height - 11f)
         }
 
         renderer.endFrame()
@@ -206,10 +209,6 @@ class PolyUI(
             fontSize = 10f,
             textAlign = TextAlign.Right
         )
-    }
-
-    fun debugRender() {
-        master.debugRender()
     }
 
     /** add something to be rendered after each frame. */

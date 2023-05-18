@@ -79,15 +79,13 @@ class SwitchingLayout(
         super.reRenderIfNecessary()
     }
 
-    override fun preRender() {
+    override fun render() {
         if (goingSwitchOp != null) {
             val delta = clock.getDelta()
             goingSwitchOp!!.update(delta)
             comingSwitchOp!!.update(delta)
         }
-    }
 
-    override fun render() {
         if (goingSwitchOp != null) {
             goingSwitchOp!!.apply(renderer)
             current!!.render()
@@ -98,9 +96,7 @@ class SwitchingLayout(
         } else {
             current!!.render()
         }
-    }
 
-    override fun postRender() {
         if (goingSwitchOp?.isFinished == true) {
             goingSwitchOp = null
             comingSwitchOp = null
