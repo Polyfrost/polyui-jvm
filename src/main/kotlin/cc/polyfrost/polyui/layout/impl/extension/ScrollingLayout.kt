@@ -161,6 +161,8 @@ class ScrollingLayout(
 
     override fun calculateBounds() {
         super.calculateBounds()
+        if (size.a.px == 0f || size.a.px > ptr.sized!!.a.px) size.a.px = ptr.sized!!.a.px
+        if (size.b.px == 0f || size.b.px > ptr.sized!!.b.px) size.b.px = ptr.sized!!.b.px
         origin.first = at.a.px
         origin.second = at.b.px
     }

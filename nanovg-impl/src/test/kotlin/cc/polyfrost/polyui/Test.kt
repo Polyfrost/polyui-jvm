@@ -115,7 +115,7 @@ fun main() {
                 at = 20.px * 30.px,
                 wrap = 80.percent,
                 items = things
-            ).scrolling(640.px * 300.px)
+            ).scrolling(0.px * 300.px)
         )
     )
     polyUI.keyBinder.add(Mouse.LEFT_MOUSE, Modifiers.LCONTROL) {

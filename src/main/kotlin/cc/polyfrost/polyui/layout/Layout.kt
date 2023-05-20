@@ -71,7 +71,7 @@ abstract class Layout(
     }
 
     /** this is the function that is called every frame. It decides whether the layout needs to be entirely re-rendered.
-     * If so, the [preRender], [render], [postRender] functions are called.
+     * If so, the [render] function is called which will redraw all its children and components.
      *
      * If this layout is [using a framebuffer][cc.polyfrost.polyui.property.Settings.minItemsForFramebuffer], it will be drawn to the framebuffer, and then drawn to the screen.
      *
@@ -294,7 +294,9 @@ abstract class Layout(
         return DraggableLayout(this)
     }
 
-    /** wraps this layout in a [ScrollingLayout] (so you can scroll it) */
+    /** wraps this layout in a [ScrollingLayout] (so you can scroll it)
+     * @param size the scrollable area to set. This is the physical size of the layout on the screen. Set either to `0` for it to be set to the same as the layout size. If either is larger than the content size, it will be trimmed.
+     */
     fun scrolling(size: Size<Unit>): ScrollingLayout {
         if (this is ScrollingLayout) return this
         return ScrollingLayout(this, size)
