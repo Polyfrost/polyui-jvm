@@ -28,9 +28,9 @@ import kotlin.experimental.xor
  */
 class EventManager(private val polyUI: PolyUI) {
     private val mouseOverDrawables = ArrayList<Drawable>()
-    var mouseX: Float = 0F
+    var mouseX: Float = 0f
         private set
-    var mouseY: Float = 0F
+    var mouseY: Float = 0f
         private set
     private var clickTimer: Long = 0L
     var keyModifiers: Short = 0
@@ -135,7 +135,8 @@ class EventManager(private val polyUI: PolyUI) {
 
     fun onMousePressed(button: Int) {
         if (button == 0) mouseDown = true
-        val event = Events.MousePressed(button, mouseX, mouseY)
+        val event = Events.MousePressed(button, mouseX, mouseY, keyModifiers)
+        if (polyUI.keyBinder.accept(event)) return
         onApplicableDrawables(mouseX, mouseY) {
             if (mouseOver) {
                 if (button == 0 && this is Focusable) {
@@ -170,10 +171,12 @@ class EventManager(private val polyUI: PolyUI) {
                 }
             }
         }
-        val event = Events.MouseReleased(button, mouseX, mouseY)
+        val event = Events.MouseReleased(button, mouseX, mouseY, keyModifiers)
         var releaseCancelled = false
         var clickedCancelled = false
-        val event2 = Events.MouseClicked(button, clickAmount)
+        val event2 = Events.MouseClicked(button, clickAmount, keyModifiers)
+        if (polyUI.keyBinder.accept(event)) return
+        if (polyUI.keyBinder.accept(event2)) return
         onApplicableDrawables(mouseX, mouseY) {
             if (mouseOver) {
                 if (!releaseCancelled) {
@@ -187,7 +190,11 @@ class EventManager(private val polyUI: PolyUI) {
     }
 
     fun onMouseScrolled(amountX: Int, amountY: Int) {
-        val event = Events.MouseScrolled(amountX, amountY)
+        val amountX = if (polyUI.settings.naturalScrolling) amountX else -amountX
+        val amountY = if (polyUI.settings.naturalScrolling) amountY else -amountY
+        val (sx, sy) = polyUI.settings.scrollMultiplier
+        val event = Events.MouseScrolled(amountX * sx, amountY * sy, keyModifiers)
+        if (polyUI.keyBinder.accept(event)) return
         onApplicableDrawables(mouseX, mouseY) {
             if (mouseOver) {
                 if (accept(event)) return
@@ -196,11 +203,11 @@ class EventManager(private val polyUI: PolyUI) {
     }
 
     companion object {
-        /** insert false return instruction on the end of the method */
-        fun insertFalseInsn(action: (Component.() -> Unit)): (Component.() -> Boolean) {
+        /** insert true return instruction on the end of the method */
+        fun insertTrueInsn(action: (Component.() -> Unit)): (Component.() -> Boolean) {
             return {
                 action(this)
-                false
+                true
             }
         }
     }

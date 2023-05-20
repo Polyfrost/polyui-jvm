@@ -98,9 +98,10 @@ class PolyUI(
     init {
         LOGGER.info("PolyUI initializing...")
         master.setup(renderer, this)
+        master.simpleName += " [Master]"
         master.calculateBounds()
         master.children.fastEach {
-            if (settings.minItemsForFramebuffer < it.countDrawables()) {
+            if (!it.refuseFramebuffer && settings.minItemsForFramebuffer < it.countDrawables()) {
                 it.fbo = renderer.createFramebuffer(it.width.toInt(), it.height.toInt(), settings.bufferType)
                 if (settings.debug) LOGGER.info("Layout {} ({} items) created with {}", varargs(it.simpleName, it.countDrawables(), it.fbo!!))
             }

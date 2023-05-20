@@ -37,23 +37,34 @@ open class PointerLayout(
 
     final override inline var polyui: PolyUI
         get() = ptr.polyui
-        set(value) { ptr.polyui = value }
+        set(value) {
+            ptr.polyui = value
+        }
     final override inline var renderer: Renderer
         get() = ptr.renderer
-        set(value) { ptr.renderer = value }
+        set(value) {
+            ptr.renderer = value
+        }
     final override inline var simpleName: String
         get() = ptr.simpleName
         set(value) {
             ptr.simpleName = value
         }
+    final override inline var acceptsInput: Boolean
+        get() = ptr.acceptsInput
+        set(value) {
+            ptr.acceptsInput = value
+        }
     override var refuseFramebuffer: Boolean
         get() = ptr.refuseFramebuffer
-        set(value) { ptr.refuseFramebuffer = value }
+        set(value) {
+            ptr.refuseFramebuffer = value
+        }
 
     final override inline var fbo: Framebuffer?
         get() = ptr.fbo
         set(value) {
-            if (refuseFramebuffer) ptr.fbo = value
+            if (!refuseFramebuffer) ptr.fbo = value
         }
     final override inline val removeQueue: ArrayList<Drawable> get() = ptr.removeQueue
     final override inline val eventHandlers: MutableMap<Events, Drawable.() -> Boolean>
@@ -72,7 +83,9 @@ open class PointerLayout(
 
     final override inline var fboTracker: Int
         get() = ptr.fboTracker
-        set(value) { ptr.fboTracker = value }
+        set(value) {
+            ptr.fboTracker = value
+        }
     final override inline val children get() = ptr.children
     final override inline val components get() = ptr.components
     final override inline val clock get() = ptr.clock
@@ -82,7 +95,7 @@ open class PointerLayout(
             ptr.layout = value
         }
 
-    override fun reRenderIfNecessary() = ptr.reRenderIfNecessary()
+    // asm: don't override reRenderIfNecessary as it is essentially a pointer method anyway
     override fun render() = ptr.render()
 
     override fun addComponent(drawable: Drawable) = ptr.addComponent(drawable)

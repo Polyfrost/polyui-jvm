@@ -15,6 +15,7 @@ import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Focusable
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.event.FocusedEvents
+import cc.polyfrost.polyui.input.KeyModifiers
 import cc.polyfrost.polyui.input.Keys
 import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.property.impl.TextInputProperties
@@ -68,7 +69,7 @@ class TextInput @JvmOverloads constructor(
             if (event.mods < 2 && !text.full) {
                 txt = txt.substring(0, caret) + event.key + txt.substring(caret)
                 caret++
-            } else if (event.hasModifier(Keys.Modifiers.LCONTROL) || event.hasModifier(Keys.Modifiers.RCONTROL)) {
+            } else if (event.hasModifier(KeyModifiers.LCONTROL) || event.hasModifier(KeyModifiers.RCONTROL)) {
                 when (event.key) {
                     'V' -> {
                         try {
@@ -104,8 +105,8 @@ class TextInput @JvmOverloads constructor(
             }
         }
         if (event is FocusedEvents.KeyPressed) {
-            val hasControl = event.hasModifier(Keys.Modifiers.LCONTROL) || event.hasModifier(Keys.Modifiers.RCONTROL)
-            val hasShift = event.hasModifier(Keys.Modifiers.LSHIFT) || event.hasModifier(Keys.Modifiers.RSHIFT)
+            val hasControl = event.hasModifier(KeyModifiers.LCONTROL) || event.hasModifier(KeyModifiers.RCONTROL)
+            val hasShift = event.hasModifier(KeyModifiers.LSHIFT) || event.hasModifier(KeyModifiers.RSHIFT)
             when (event.key) {
                 Keys.BACKSPACE -> {
                     if (!hasControl) {

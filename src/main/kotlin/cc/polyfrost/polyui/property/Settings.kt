@@ -58,7 +58,7 @@ class Settings(private val renderer: Renderer) {
      * @see maxComboSize
      * @see clearComboWhenMaxed
      */
-    var comboMaxInterval: Long = 500L.milliseconds
+    var comboMaxInterval: Long = 200L.milliseconds
 
     /** maximum amount of clicks that can be comboed in any interval
      * @see comboMaxInterval
@@ -72,6 +72,15 @@ class Settings(private val renderer: Renderer) {
      * @see comboMaxInterval
      */
     var clearComboWhenMaxed = false
+
+    /**
+     * Scroll multiplier factor, which will multiply the returned value of the callback by this value.
+     * First value is the X scroll multiplier, with the second being the Y scroll multiplier.
+     */
+    var scrollMultiplier: Pair<Int, Int> = 60 to 60
+
+    /** Weather to invert the scroll direction */
+    var naturalScrolling = false
 
     /** set the buffer type to use for rendering.
      * @see BufferType

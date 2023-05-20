@@ -27,10 +27,7 @@ class NoOpRenderer(width: Float, height: Float) : Renderer(width, height) {
     override fun endFrame() {
     }
 
-    override fun globalAlpha(alpha: Float) {
-    }
-
-    override fun capAlpha(alpha: Float) {
+    override fun gblAlpha(alpha: Float) {
     }
 
     override fun translate(x: Float, y: Float) {

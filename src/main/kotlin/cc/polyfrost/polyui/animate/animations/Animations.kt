@@ -11,12 +11,25 @@
 package cc.polyfrost.polyui.animate.animations
 
 import cc.polyfrost.polyui.animate.Animation
+import kotlin.math.PI
 import kotlin.math.pow
+import kotlin.math.sin
+
+class Linear(durationNanos: Long, start: Float, end: Float) :
+    Animation(durationNanos, start, end) {
+    override fun getValue(percent: Float): Float {
+        return percent
+    }
+
+    override fun clone(): Animation {
+        return Linear(durationNanos, from, to)
+    }
+}
 
 class EaseInBack(durationNanos: Long, start: Float, end: Float) :
     Animation(durationNanos, start, end) {
-    private val overshoot = 1.70158F
-    private val overshoot2 = overshoot + 1
+    private val overshoot = 1.70158f
+    private val overshoot2 = overshoot + 1f
     override fun getValue(percent: Float): Float {
         return overshoot * percent * percent * percent - overshoot2 * percent * percent
     }
@@ -28,10 +41,8 @@ class EaseInBack(durationNanos: Long, start: Float, end: Float) :
 
 class EaseOutBump(durationNanos: Long, start: Float, end: Float) :
     Animation(durationNanos, start, end) {
-    private val a: Double = 1.7
-    private val b: Double = 2.7
     override fun getValue(percent: Float): Float {
-        return (1 + b * (percent - 1).pow(3) + a * 1.2 * (percent - 1).pow(2)).toFloat()
+        return (3.7 * (percent - 1.0).pow(3.0) + 1.7 * 1.2 * (percent - 1.0).pow(2.0)).toFloat()
     }
 
     override fun clone(): Animation {
@@ -42,7 +53,7 @@ class EaseOutBump(durationNanos: Long, start: Float, end: Float) :
 class EaseOutQuad(durationNanos: Long, start: Float, end: Float) :
     Animation(durationNanos, start, end) {
     override fun getValue(percent: Float): Float {
-        return 1 - (1 - percent) * (1 - percent)
+        return 1f - (1f - percent) * (1f - percent)
     }
 
     override fun clone(): Animation {
@@ -53,11 +64,24 @@ class EaseOutQuad(durationNanos: Long, start: Float, end: Float) :
 class EaseOutExpo(durationNanos: Long, start: Float, end: Float) :
     Animation(durationNanos, start, end) {
     override fun getValue(percent: Float): Float {
-        return if (percent == 1F) {
-            1F
+        return if (percent == 1f) {
+            1f
         } else {
-            1 - 2.0.pow((-10 * percent).toDouble()).toFloat()
+            1f - 2.0.pow((-10.0 * percent.toDouble())).toFloat()
         }
+    }
+
+    override fun clone(): Animation {
+        return EaseOutExpo(durationNanos, from, to)
+    }
+}
+
+class EaseOutElastic(durationNanos: Long, start: Float, end: Float) :
+    Animation(durationNanos, start, end) {
+    private val v = (2.0 * PI) / 3.0
+    override fun getValue(percent: Float): Float {
+        return (2.0.pow(-10.0 * percent.toDouble()) * sin((percent.toDouble() * 10.0 - 0.75) * v) + 1.0).toFloat()
+            .clamped(0f, 1f)
     }
 
     override fun clone(): Animation {
@@ -72,7 +96,7 @@ class EaseInOutCubic(durationNanos: Long, start: Float, end: Float) :
         return if (percent < 0.5) {
             4 * percent * percent * percent
         } else {
-            (1 - (-2 * percent + 2).toDouble().pow(3.0) / 2).toFloat()
+            (1.0 - (-2.0 * percent + 2.0).pow(3.0) / 2.0).toFloat()
         }
     }
 
@@ -85,9 +109,9 @@ class EaseInOutQuad(durationNanos: Long, start: Float, end: Float) :
     Animation(durationNanos, start, end) {
     override fun getValue(percent: Float): Float {
         return if (percent < 0.5) {
-            2 * percent * percent
+            2f * percent * percent
         } else {
-            1 - (-2 * percent + 2).toDouble().pow(2.0).toFloat() / 2
+            (1.0 - (-2.0 * percent + 2.0).pow(2.0) / 2.0).toFloat()
         }
     }
 
@@ -100,13 +124,23 @@ class EaseInOutQuart(durationNanos: Long, start: Float, end: Float) :
     Animation(durationNanos, start, end) {
     override fun getValue(percent: Float): Float {
         return if (percent < 0.5) {
-            8 * percent * percent * percent * percent
+            8f * percent * percent * percent * percent
         } else {
-            1 - (-2 * percent + 2).toDouble().pow(4.0).toFloat() / 2
+            (1.0 - (-2.0 * percent + 2.0).pow(4.0) / 2.0).toFloat()
         }
     }
 
     override fun clone(): Animation {
         return EaseInOutQuart(durationNanos, from, to)
+    }
+}
+
+fun Float.clamped(min: Float, max: Float): Float {
+    return if (this < min) {
+        min
+    } else if (this > max) {
+        max
+    } else {
+        this
     }
 }

@@ -22,7 +22,7 @@ import cc.polyfrost.polyui.unit.Unit
  *
  * This class is implemented for both [Layout] and [Drawable], and you should use them as bases if you are creating a UI in most cases.
  */
-abstract class Drawable(var acceptsInput: Boolean = true) {
+abstract class Drawable(open var acceptsInput: Boolean = true) {
     open val eventHandlers = mutableMapOf<Events, Drawable.() -> Boolean>()
     open var simpleName = this.toString().substringAfterLast(".")
     abstract val at: Point<Unit>
@@ -52,18 +52,8 @@ abstract class Drawable(var acceptsInput: Boolean = true) {
     inline val sizedUnitType: Unit.Type
         get() = sized!!.type
 
-    /**
-     * pre-render functions, such as applying transforms.
-     * In this method, you should set needsRedraw to true if you have something to redraw for the **next frame**.
-     * @param deltaTimeNanos the time in nanoseconds since the last frame. Use this for animations.
-     */
-    abstract fun preRender(deltaTimeNanos: Long)
-
     /** draw script for this drawable. */
     abstract fun render()
-
-    /** post-render functions, such as removing transforms. */
-    abstract fun postRender()
 
     /**
      * Calculate the position and size of this drawable. Make sure to call [doDynamicSize] in this method to avoid issues with sizing.

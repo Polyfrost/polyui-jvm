@@ -44,16 +44,20 @@ abstract class Animation(val durationNanos: Long, val from: Float, val to: Float
     public abstract override fun clone(): Animation
 
     enum class Type {
+        Linear,
         EaseInBack,
         EaseOutBump,
         EaseOutQuad,
         EaseOutExpo,
+        EaseOutElastic,
         EaseInOutCubic,
         EaseInOutQuad,
         EaseInOutQuart;
 
         fun create(durationNanos: Long, start: Float, end: Float): Animation {
+            if (start == end) return Linear(1L, 0f, 0f) // prevent empty animations
             return when (this) {
+                Linear -> Linear(durationNanos, start, end)
                 EaseInBack -> EaseInBack(durationNanos, start, end)
                 EaseOutBump -> EaseOutBump(durationNanos, start, end)
                 EaseOutQuad -> EaseOutQuad(durationNanos, start, end)
@@ -61,6 +65,7 @@ abstract class Animation(val durationNanos: Long, val from: Float, val to: Float
                 EaseInOutCubic -> EaseInOutCubic(durationNanos, start, end)
                 EaseInOutQuad -> EaseInOutQuad(durationNanos, start, end)
                 EaseInOutQuart -> EaseInOutQuart(durationNanos, start, end)
+                EaseOutElastic -> EaseOutElastic(durationNanos, start, end)
             }
         }
     }

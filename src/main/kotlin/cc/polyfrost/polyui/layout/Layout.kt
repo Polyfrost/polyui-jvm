@@ -89,11 +89,13 @@ abstract class Layout(
                 render()
                 renderer.unbindFramebuffer(fbo!!)
             }
-            renderer.drawFramebuffer(fbo!!, x, y, width, height)
+            renderer.drawFramebuffer(fbo!!, at.a.px, at.b.px, sized!!.a.px, sized!!.b.px)
         } else {
-            renderer.translate(x, y)
+            renderer.pushScissor(at.a.px, at.b.px, sized!!.a.px, sized!!.b.px)
+            renderer.translate(at.a.px, at.b.px)
             render()
-            renderer.translate(-x, -y)
+            renderer.translate(-at.a.px, -at.b.px)
+            renderer.popScissor()
             if (!needsRedraw && fboTracker > 1) {
                 needsRedraw = true
                 fboTracker = 0
@@ -232,14 +234,6 @@ abstract class Layout(
         if (resizesChildren) components.fastEach { it.rescale(scaleX, scaleY) }
     }
 
-    @Deprecated(
-        "Layouts do not use postRender or preRender methods. All the logic happens in the render method.",
-        ReplaceWith("render()"),
-        DeprecationLevel.ERROR
-    )
-    final override fun preRender(deltaTimeNanos: Long) {
-    }
-
     /** render this layout's components, and remove them if they are ready to be removed. */
     override fun render() {
         removeQueue.fastEach { if (it.canBeRemoved()) removeComponentNow(it) }
@@ -250,14 +244,6 @@ abstract class Layout(
             it.render()
             it.postRender()
         }
-    }
-
-    @Deprecated(
-        "Layouts do not use postRender or preRender methods. All the logic happens in the render method.",
-        ReplaceWith("render()"),
-        DeprecationLevel.ERROR
-    )
-    final override fun postRender() {
     }
 
     /** count the amount of drawables this contains, including the drawables its children have */

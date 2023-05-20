@@ -25,14 +25,13 @@ import cc.polyfrost.polyui.utils.getResourceStreamNullable
 import cc.polyfrost.polyui.utils.toByteBuffer
 import org.lwjgl.nanovg.*
 import org.lwjgl.nanovg.NanoVG.*
-import org.lwjgl.opengl.GL30.*
+import org.lwjgl.opengl.GL11.*
 import org.lwjgl.stb.STBImage
 import org.lwjgl.stb.STBImageResize
 import org.lwjgl.system.MemoryUtil
 import java.io.InputStreamReader
 import java.nio.ByteBuffer
 import kotlin.math.max
-import kotlin.math.min
 
 class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     private val nvgPaint: NVGPaint = NVGPaint.create()
@@ -41,11 +40,10 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     private val fbos: MutableMap<Framebuffer, NVGLUFramebuffer> = mutableMapOf()
     private val images: MutableMap<PolyImage, NVGImage> = mutableMapOf()
     private val fonts: MutableMap<Font, NVGFont> = mutableMapOf()
-    private var alphaCap = 1f
     private var vg: Long = -1
 
     init {
-        vg = NanoVGGL3.nvgCreate(if (settings.useAntialiasing) NanoVGGL3.NVG_ANTIALIAS else 0)
+        vg = NanoVGGL2.nvgCreate(if (settings.useAntialiasing) NanoVGGL2.NVG_ANTIALIAS else 0)
         if (vg == -1L) {
             throw ExceptionInInitializerError("Could not initialize NanoVG")
         }
@@ -64,14 +62,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
 
     override fun endFrame() = nvgEndFrame(vg)
 
-    override fun globalAlpha(alpha: Float) {
-        val a = min(alphaCap, alpha)
-        nvgGlobalAlpha(vg, a)
-    }
-
-    override fun capAlpha(alpha: Float) {
-        this.alphaCap = alpha
-    }
+    override fun gblAlpha(alpha: Float) = nvgGlobalAlpha(vg, alpha)
 
     override fun translate(x: Float, y: Float) = nvgTranslate(vg, x, y)
 
@@ -163,7 +154,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
 
     override fun createFramebuffer(width: Int, height: Int, type: Settings.BufferType): Framebuffer {
         val f = Framebuffer(width.toFloat(), height.toFloat(), type)
-        fbos[f] = NanoVGGL3.nvgluCreateFramebuffer(
+        fbos[f] = NanoVGGL2.nvgluCreateFramebuffer(
             vg,
             width,
             height,
@@ -174,7 +165,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
 
     override fun deleteFramebuffer(fbo: Framebuffer) {
         fbos.remove(fbo).also {
-            NanoVGGL3.nvgluDeleteFramebuffer(
+            NanoVGGL2.nvgluDeleteFramebuffer(
                 vg,
                 it ?: throw IllegalStateException("Framebuffer not found when deleting it, already cleaned?")
             )
@@ -183,7 +174,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
 
     override fun bindFramebuffer(fbo: Framebuffer, mode: Framebuffer.Mode) {
         nvgEndFrame(vg)
-        NanoVGGL3.nvgluBindFramebuffer(vg, fbos[fbo] ?: throw NullPointerException("Cannot bind: $fbo does not exist!"))
+        NanoVGGL2.nvgluBindFramebuffer(vg, fbos[fbo] ?: throw NullPointerException("Cannot bind: $fbo does not exist!"))
         glViewport(0, 0, fbo.width.toInt(), fbo.height.toInt())
         glClearColor(0F, 0F, 0F, 0F)
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
@@ -192,7 +183,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
 
     override fun unbindFramebuffer(fbo: Framebuffer, mode: Framebuffer.Mode) {
         nvgEndFrame(vg)
-        NanoVGGL3.nvgluBindFramebuffer(vg, null)
+        NanoVGGL2.nvgluBindFramebuffer(vg, null)
         glViewport(0, 0, width.toInt(), height.toInt())
         nvgBeginFrame(vg, width, height, pixelRatio)
     }
@@ -509,7 +500,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         fonts.clear()
         images.values.forEach { nvgDeleteImage(vg, it.id) }
         images.clear()
-        fbos.values.forEach { NanoVGGL3.nvgluDeleteFramebuffer(vg, it) }
+        fbos.values.forEach { NanoVGGL2.nvgluDeleteFramebuffer(vg, it) }
         fbos.clear()
         nvgColor.free()
         nvgPaint.free()

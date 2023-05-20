@@ -127,6 +127,12 @@ abstract class Component @JvmOverloads constructor(
         animations.add(animation to onFinish)
     }
 
+    override fun rescale(scaleX: Float, scaleY: Float) {
+        super.rescale(scaleX, scaleY)
+        atCache?.first?.times(scaleX)
+        atCache?.second?.times(scaleY)
+    }
+
     open fun recolor(
         toColor: Color,
         animation: Animation.Type,
@@ -158,11 +164,13 @@ abstract class Component @JvmOverloads constructor(
     }
 
     /**
-     * Called before rendering.
+     * pre-render functions, such as applying transforms.
+     * In this method, you should set needsRedraw to true if you have something to redraw for the **next frame**.
+     * @param deltaTimeNanos the time in nanoseconds since the last frame. Use this for animations.
      *
      * **make sure to call super [Component.preRender]!**
      */
-    override fun preRender(deltaTimeNanos: Long) {
+    open fun preRender(deltaTimeNanos: Long) {
         animations.fastRemoveIf { (it, func) ->
             it.update(deltaTimeNanos)
             return@fastRemoveIf if (!it.isFinished) {
@@ -204,11 +212,11 @@ abstract class Component @JvmOverloads constructor(
     }
 
     /**
-     * Called after rendering.
+     * Called after rendering, for functions such as removing transformations.
      *
      * **make sure to call super [Component.postRender]!**
      */
-    override fun postRender() {
+    open fun postRender() {
         if (rotation != 0.0) {
             renderer.rotate(-rotation)
             renderer.translate(-(atCache!!.first + width / 2f), -(atCache!!.second + height / 2f))

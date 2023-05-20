@@ -11,7 +11,7 @@ package cc.polyfrost.polyui.event
 
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
-import cc.polyfrost.polyui.event.EventManager.Companion.insertFalseInsn
+import cc.polyfrost.polyui.event.EventManager.Companion.insertTrueInsn
 import cc.polyfrost.polyui.event.Events.*
 import java.util.function.Consumer
 import java.util.function.Function
@@ -20,7 +20,7 @@ import java.util.function.Function
 sealed class Events : Event {
     // imagine this is a rust enum okay
     /** acceptable by component and layout */
-    data class MousePressed internal constructor(val button: Int, val x: Float, val y: Float) : Events() {
+    data class MousePressed internal constructor(val button: Int, val x: Float, val y: Float, val mods: Short = 0) : Events() {
         constructor(button: Int) : this(button, 0f, 0f)
 
         override fun hashCode(): Int {
@@ -29,7 +29,7 @@ sealed class Events : Event {
     }
 
     /** acceptable by component and layout */
-    data class MouseReleased internal constructor(val button: Int, val x: Float, val y: Float) : Events() {
+    data class MouseReleased internal constructor(val button: Int, val x: Float, val y: Float, val mods: Short = 0) : Events() {
         constructor(button: Int) : this(button, 0f, 0f)
 
         override fun hashCode(): Int {
@@ -37,7 +37,7 @@ sealed class Events : Event {
         }
     }
 
-    data class MouseClicked @JvmOverloads constructor(val button: Int, val amountClicks: Int = 1) : Events()
+    data class MouseClicked @JvmOverloads constructor(val button: Int, val amountClicks: Int = 1, val mods: Short = 0) : Events()
 
     /** acceptable by component and layout */
     object MouseEntered : Events()
@@ -46,7 +46,7 @@ sealed class Events : Event {
     object MouseExited : Events()
 
     /** acceptable by component and layout */
-    data class MouseScrolled internal constructor(val amountX: Int, val amountY: Int) : Events() {
+    data class MouseScrolled internal constructor(val amountX: Int, val amountY: Int, val mods: Short = 0) : Events() {
         constructor() : this(0, 0)
 
         override fun hashCode(): Int {
@@ -80,7 +80,7 @@ sealed class Events : Event {
     @OverloadResolutionByLambdaReturnType
     @JvmName("To")
     infix fun to(action: (Component.() -> Unit)): Handler {
-        return Handler(this, insertFalseInsn(action) as Drawable.() -> Boolean)
+        return Handler(this, insertTrueInsn(action) as Drawable.() -> Boolean)
     }
 
     /** specify a handler for this event.
@@ -103,7 +103,7 @@ sealed class Events : Event {
     @OverloadResolutionByLambdaReturnType
     @JvmName("Then")
     infix fun then(action: (Component.() -> Unit)): Handler {
-        return Handler(this, insertFalseInsn(action) as Drawable.() -> Boolean)
+        return Handler(this, insertTrueInsn(action) as Drawable.() -> Boolean)
     }
 
     /**

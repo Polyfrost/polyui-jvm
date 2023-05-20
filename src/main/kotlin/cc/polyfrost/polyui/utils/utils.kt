@@ -12,9 +12,11 @@
 package cc.polyfrost.polyui.utils
 
 import cc.polyfrost.polyui.color.Color
+import cc.polyfrost.polyui.input.KeyModifiers
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.data.Font
 import cc.polyfrost.polyui.unit.TextAlign
+import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.pow
 
@@ -45,6 +47,21 @@ fun Float.rounded(places: Int = 2): Float {
     return (this * f).toInt() / f
 }
 
+/**
+ * Returns the value closer to zero.
+ *
+ * If either value is `NaN`, then the result is `NaN`.
+ *
+ * If `a == b`, then the result is `a`.
+ */
+inline fun clz(a: Float, b: Float): Float {
+    return if (abs(a) <= abs(b)) {
+        a
+    } else {
+        b
+    }
+}
+
 /** convert the given float into an array of 4 floats for radii. */
 inline fun Float.asRadii() = floatArrayOf(this, this, this, this)
 
@@ -64,6 +81,10 @@ inline fun <T> T.prints(string: String): T {
     println(string)
     return this
 }
+
+fun Short.fromModifierMerged(): Array<KeyModifiers> = KeyModifiers.fromModifierMerged(this)
+
+fun Array<out KeyModifiers>.merge(): Short = KeyModifiers.merge(*this)
 
 // strutils.kt
 

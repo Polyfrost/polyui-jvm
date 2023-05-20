@@ -9,6 +9,7 @@
 
 package cc.polyfrost.polyui.event
 
+import cc.polyfrost.polyui.input.KeyModifiers
 import cc.polyfrost.polyui.input.Keys
 import kotlin.experimental.and
 
@@ -20,25 +21,17 @@ open class FocusedEvents : Event {
      * called when a key is typed (and modifiers) is pressed.
      *
      * @see [Keys]
-     * @see [Keys.Modifiers]
-     * @see [Keys.Modifiers.Companion.fromModifierMerged]
+     * @see [KeyModifiers]
+     * @see [cc.polyfrost.polyui.utils.fromModifierMerged]
      */
     data class KeyTyped(val key: Char, val mods: Short = 0, val isRepeat: Boolean = false) : FocusedEvents() {
-        override fun toString(): String {
-            return "KeyTyped(${Keys.toString(key, mods)})"
-        }
+        override fun toString() = "KeyTyped(${Keys.toString(key, mods)})"
 
-        fun toStringPretty(): String {
-            return "KeyTyped(${Keys.toStringPretty(key, mods)})"
-        }
+        fun toStringPretty() = "KeyTyped(${Keys.toStringPretty(key, mods)})"
 
-        fun getModifiers(): MutableList<Keys.Modifiers> {
-            return Keys.Modifiers.fromModifierMerged(mods)
-        }
+        inline val modifiers: Array<KeyModifiers> get() = KeyModifiers.fromModifierMerged(mods)
 
-        fun hasModifier(modifier: Keys.Modifiers): Boolean {
-            return (mods and modifier.value) != 0.toShort()
-        }
+        fun hasModifier(modifier: KeyModifiers): Boolean = (mods and modifier.value) != 0.toShort()
 
         override fun hashCode(): Int {
             var result = key.hashCode()
@@ -51,25 +44,17 @@ open class FocusedEvents : Event {
      * called when a non-printable key (and modifiers) is pressed.
      *
      * @see [Keys]
-     * @see [Keys.Modifiers]
-     * @see [Keys.Modifiers.Companion.fromModifierMerged]
+     * @see [KeyModifiers]
+     * @see [KeyModifiers.Companion.fromModifierMerged]
      */
     data class KeyPressed(val key: Keys, val mods: Short = 0, val isRepeat: Boolean = false) : FocusedEvents() {
-        override fun toString(): String {
-            return "KeyPressed(${Keys.toString(key, mods)})"
-        }
+        override fun toString(): String = "KeyPressed(${Keys.toString(key, mods)})"
 
-        fun toStringPretty(): String {
-            return "KeyPressed(${Keys.toStringPretty(key, mods)})"
-        }
+        fun toStringPretty(): String = "KeyPressed(${Keys.toStringPretty(key, mods)})"
 
-        fun getModifiers(): MutableList<Keys.Modifiers> {
-            return Keys.Modifiers.fromModifierMerged(mods)
-        }
+        inline val modifiers get() = KeyModifiers.fromModifierMerged(mods)
 
-        fun hasModifier(modifier: Keys.Modifiers): Boolean {
-            return (mods and modifier.value) != 0.toShort()
-        }
+        fun hasModifier(modifier: KeyModifiers): Boolean = (mods and modifier.value) != 0.toShort()
 
         override fun hashCode(): Int {
             var result = key.hashCode()

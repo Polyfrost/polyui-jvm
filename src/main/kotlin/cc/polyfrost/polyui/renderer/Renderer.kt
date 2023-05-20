@@ -17,6 +17,7 @@ import cc.polyfrost.polyui.renderer.data.PolyImage
 import cc.polyfrost.polyui.unit.TextAlign
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.unit.Vec2
+import kotlin.math.min
 
 /**
  * # Renderer
@@ -31,6 +32,7 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
         internal set
     var height: Float = height
         internal set
+    var alphaCap: Float = 1f
 
     /** settings instance for this renderer. */
     val settings = Settings(this)
@@ -45,21 +47,30 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
     abstract fun beginFrame()
     abstract fun endFrame()
 
+    /** @see globalAlpha */
+    protected abstract fun gblAlpha(alpha: Float)
+
     /** Set the alpha for all future draw calls, in the range (0-1), until [reset][resetGlobalAlpha].
      *
-     * Note that this call is capped by [capAlpha], so if a value higher than [capAlpha]'s value is set, it will just set it to that.*/
-    abstract fun globalAlpha(alpha: Float)
+     * Note that this call is capped by [capAlpha], so if a value higher than [capAlpha]'s value is set, it will just set it to that.
+     * @see capAlpha
+     * */
+    fun globalAlpha(alpha: Float) {
+        gblAlpha(min(alphaCap, alpha))
+    }
 
     /** set a maximum alpha value for all future draw calls, in the range (0-1), until [reset][resetAlphaCap]. This is useful for fading in/out all of PolyUI, for example.
      *
-     * **Note that this itself will not** set the global alpha, so use [globalAlpha] to do that. */
-    abstract fun capAlpha(alpha: Float)
+     * **Note that this itself will not** set the global alpha, so use [gblAlpha] to do that. */
+    fun capAlpha(alpha: Float) {
+        alphaCap = alpha
+    }
 
     /** reset the alpha cap. */
     fun resetAlphaCap() = capAlpha(1f)
 
     /** reset the global alpha to normal. */
-    fun resetGlobalAlpha() = globalAlpha(1f)
+    fun resetGlobalAlpha() = gblAlpha(1f)
 
     /**
      * translate the origin of all future draw calls by the given amount.
@@ -83,7 +94,7 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
     abstract fun rotate(angleRadians: Double)
 
     /**
-     * begin a scissor, that will clip rendering to the given rectangle. The scissor is affected by [translate], [scale], and [rotate].
+     * begin a scissor rectangle, that will clip rendering to the given rectangle. The scissor is affected by [translate], [scale], and [rotate].
      *
      * **you must** call [popScissor] after you are done with this scissor!
      */
