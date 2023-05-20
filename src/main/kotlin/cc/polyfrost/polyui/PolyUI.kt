@@ -47,10 +47,10 @@ import kotlin.collections.ArrayList
  *
  * Rendering can be [requested][cc.polyfrost.polyui.component.Component.wantRedraw] by components, and if so, it will be rendered during the next frame. This should only be requested if it is necessary, for example to do an animation or something.
  *
- * During a render cycle, PolyUI will systematically go through every layout, and render it to its framebuffer or to the screen. Each layout will then render its components and child layouts, and so on. Rendering happens in three steps:
- *  - [preRender][cc.polyfrost.polyui.layout.Layout.preRender]: This will do pre-rendering logic, such as setting up transformations, updating animations, and more.
- *  - [render][cc.polyfrost.polyui.layout.Layout.render]: This is where the actual rendering happens.
- *  - [postRender][cc.polyfrost.polyui.layout.Layout.postRender]: This will do post-rendering logic, such as cleaning up transformations.
+ * During a render cycle, PolyUI will systematically go through every layout, and [render][cc.polyfrost.polyui.layout.Layout.reRenderIfNecessary] it to its framebuffer or to the screen. Each layout will then render its components and child layouts, and so on. Rendering happens in three steps:
+ *  - [preRender][cc.polyfrost.polyui.component.Component.preRender]: This will do pre-rendering logic, such as setting up transformations, updating animations, and more.
+ *  - [render][cc.polyfrost.polyui.component.Component.render]: This is where the actual rendering happens.
+ *  - [postRender][cc.polyfrost.polyui.component.Component.postRender]: This will do post-rendering logic, such as cleaning up transformations.
  *
  * Check out [some components][cc.polyfrost.polyui.component.Component] to see how this works.
  *
@@ -102,14 +102,14 @@ class PolyUI(
         master.calculateBounds()
         master.children.fastEach {
             if (!it.refuseFramebuffer && settings.minItemsForFramebuffer < it.countDrawables()) {
-                it.fbo = renderer.createFramebuffer(it.width.toInt(), it.height.toInt(), settings.bufferType)
+                it.fbo = renderer.createFramebuffer(it.width, it.height, settings.bufferType)
                 if (settings.debug) LOGGER.info("Layout {} ({} items) created with {}", varargs(it.simpleName, it.countDrawables(), it.fbo!!))
             }
             if (it.width > width || it.height > height) {
                 LOGGER.warn("Layout {} is larger than the window. This may cause issues.", it.simpleName)
             }
         }
-        if (settings.masterIsFramebuffer) master.fbo = renderer.createFramebuffer(width.toInt(), height.toInt(), settings.bufferType)
+        if (settings.masterIsFramebuffer) master.fbo = renderer.createFramebuffer(width, height, settings.bufferType)
         Unit.VUnits.vHeight = height
         Unit.VUnits.vWidth = width
         if (settings.enableDebugKeybind) {
@@ -159,7 +159,7 @@ class PolyUI(
         master.calculateBounds()
         if (settings.masterIsFramebuffer) {
             renderer.deleteFramebuffer(master.fbo!!)
-            master.fbo = renderer.createFramebuffer(newWidth, newHeight, settings.bufferType)
+            master.fbo = renderer.createFramebuffer(newWidth.toFloat(), newHeight.toFloat(), settings.bufferType)
         }
 
         master.children.fastEach {
@@ -169,7 +169,7 @@ class PolyUI(
             )
             if (it.fbo != null) {
                 renderer.deleteFramebuffer(it.fbo!!)
-                it.fbo = renderer.createFramebuffer(it.width.toInt(), it.height.toInt(), settings.bufferType)
+                it.fbo = renderer.createFramebuffer(it.width, it.height, settings.bufferType)
             }
             it.needsRedraw = true // lol that was funny to debug
         }

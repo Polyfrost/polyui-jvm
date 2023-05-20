@@ -107,8 +107,8 @@ class NoOpRenderer(width: Float, height: Float) : Renderer(width, height) {
     override fun drawLine(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float) {
     }
 
-    override fun createFramebuffer(width: Int, height: Int, type: Settings.BufferType): Framebuffer {
-        return Framebuffer(width.toFloat(), height.toFloat(), type)
+    override fun createFramebuffer(width: Float, height: Float, type: Settings.BufferType): Framebuffer {
+        return Framebuffer(width, height, type)
     }
 
     override fun deleteFramebuffer(fbo: Framebuffer) {

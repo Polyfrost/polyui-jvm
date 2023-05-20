@@ -152,13 +152,13 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         nvgFill(vg)
     }
 
-    override fun createFramebuffer(width: Int, height: Int, type: Settings.BufferType): Framebuffer {
-        val f = Framebuffer(width.toFloat(), height.toFloat(), type)
+    override fun createFramebuffer(width: Float, height: Float, type: Settings.BufferType): Framebuffer {
+        val f = Framebuffer(width, height, type)
         fbos[f] = NanoVGGL2.nvgluCreateFramebuffer(
             vg,
-            width,
-            height,
-            NVG_IMAGE_REPEATX or NVG_IMAGE_REPEATY
+            width.toInt(),
+            height.toInt(),
+            0
         ) ?: throw ExceptionInInitializerError("Could not create: $f (possibly an invalid sized layout?)")
         return f
     }

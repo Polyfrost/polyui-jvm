@@ -206,7 +206,7 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
     abstract fun drawLine(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float)
 
     /** Create a new framebuffer. It is down to you (as a rendering implementation) to cache this, and dispose of it as necessary. */
-    abstract fun createFramebuffer(width: Int, height: Int, type: Settings.BufferType): Framebuffer
+    abstract fun createFramebuffer(width: Float, height: Float, type: Settings.BufferType): Framebuffer
 
     abstract fun deleteFramebuffer(fbo: Framebuffer)
 
