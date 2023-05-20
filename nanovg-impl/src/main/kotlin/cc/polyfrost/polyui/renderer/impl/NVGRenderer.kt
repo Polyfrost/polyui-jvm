@@ -43,7 +43,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     private var vg: Long = -1
 
     init {
-        vg = NanoVGGL2.nvgCreate(if (settings.useAntialiasing) NanoVGGL2.NVG_ANTIALIAS else 0)
+        vg = NanoVGGL2.nvgCreate(if (settings.useAntialiasing) NanoVGGL2.NVG_STENCIL_STROKES else 0)    // prevent wierd rendering artefacts
         if (vg == -1L) {
             throw ExceptionInInitializerError("Could not initialize NanoVG")
         }
@@ -177,7 +177,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         NanoVGGL2.nvgluBindFramebuffer(vg, fbos[fbo] ?: throw NullPointerException("Cannot bind: $fbo does not exist!"))
         glViewport(0, 0, fbo.width.toInt(), fbo.height.toInt())
         glClearColor(0F, 0F, 0F, 0F)
-        glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
+        glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
         nvgBeginFrame(vg, fbo.width, fbo.height, pixelRatio)
     }
 
