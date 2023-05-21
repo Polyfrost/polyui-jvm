@@ -19,23 +19,25 @@ import cc.polyfrost.polyui.property.impl.TextProperties
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.data.MultilineText
 import cc.polyfrost.polyui.renderer.data.SingleText
+import cc.polyfrost.polyui.renderer.data.Text
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
 import kotlin.math.floor
 
 open class Text @JvmOverloads constructor(
-    properties: Properties = Properties.get<Text>(),
-    text: PolyText,
+    properties: Properties? = null,
+    private val txt: PolyText,
     fontSize: Unit.Pixel? = null,
     at: Vec2<Unit>,
-    size: Size<Unit>? = null,
-    textAlign: TextAlign = TextAlign.Left,
+    val dimension: Size<Unit>? = null,
+    val textAlign: TextAlign = TextAlign.Left,
     acceptInput: Boolean = false,
     vararg events: Events.Handler
 ) : Component(properties, at, null, acceptInput, *events) {
     /** Internally [text] is stored as a [PolyText] object, which supports localization and object substitution */
-    @JvmOverloads constructor(
-        properties: Properties = Properties.get<Text>(),
+    @JvmOverloads
+    constructor(
+        properties: Properties? = null,
         text: String,
         fontSize: Unit.Pixel? = null,
         at: Vec2<Unit>,
@@ -44,24 +46,19 @@ open class Text @JvmOverloads constructor(
         acceptInput: Boolean = false,
         vararg events: Events.Handler
     ) : this(properties, text.localised(), fontSize, at, size, textAlign, acceptInput, *events)
-    constructor(text: PolyText, fontSize: Unit.Pixel, at: Vec2<Unit>) : this(Properties.get<Text>(), text, fontSize, at) // java accessor
 
-    private val props: TextProperties = properties as TextProperties
-    var autoSized = size == null
-    val fontSize = fontSize ?: props.fontSize
-    private val str = run {
-        if (floor((size?.height ?: 0f) / this.fontSize.px).toInt() > 1) {
-            MultilineText(text, props.font, this.fontSize.px, textAlign, size ?: origin)
-        } else {
-            SingleText(text, props.font, this.fontSize.px, textAlign, size ?: origin)
-        }
-    }
+    constructor(text: PolyText, fontSize: Unit.Pixel, at: Vec2<Unit>) : this(null, text, fontSize, at) // java accessor
+
+    final override val properties: TextProperties
+        get() = super.properties as TextProperties
+    var autoSized = dimension == null
+    val fontSize = fontSize ?: this.properties.fontSize
+    private lateinit var str: Text
     val lines get() = str.lines
     val full get() = str.full
-    val font get() = props.font
-    val textAlign get() = str.textAlign
+    val font get() = this.properties.font
 
-    val textOffset get() = if (str is SingleText) str.textOffset else x
+    val textOffset get() = (str as? SingleText)?.textOffset ?: x
 
     override var sized: Size<Unit>?
         get() = str.size
@@ -71,7 +68,8 @@ open class Text @JvmOverloads constructor(
                 str.size.b.px = value.b.px
             }
         }
-    var text get() = str.text
+    var text
+        get() = str.text
         set(value) {
             str.text = value
             if (autoSized) {
@@ -81,7 +79,7 @@ open class Text @JvmOverloads constructor(
         }
 
     override fun render() {
-        str.render(at.x, at.y, color)
+        str.render(at.a.px, at.b.px, color)
     }
 
     operator fun get(index: Int) = str[index]
@@ -97,6 +95,11 @@ open class Text @JvmOverloads constructor(
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {
         super.setup(renderer, polyui)
+        str = if (floor((dimension?.height ?: 0f) / this.fontSize.px).toInt() > 1) {
+            MultilineText(txt, this.properties.font, this.fontSize.px, textAlign, dimension ?: origin)
+        } else {
+            SingleText(txt, this.properties.font, this.fontSize.px, textAlign, dimension ?: origin)
+        }
         str.text.polyTranslator = polyui.polyTranslator
         str.calculate(renderer)
         sized = str.size

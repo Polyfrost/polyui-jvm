@@ -83,7 +83,6 @@ internal class MultilineText(
     override lateinit var lines: ArrayList<Line>
 
     override fun render(x: Float, y: Float, color: Color) {
-        // renderer.drawHollowRect(x, y, size.width, size.height, color, 1f)
         var y = y
         lines.fastEach { (text, _, h) ->
             renderer.drawText(font, x, y, text, color, fontSize, textAlign)

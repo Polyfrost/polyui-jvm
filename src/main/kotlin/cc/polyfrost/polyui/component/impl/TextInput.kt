@@ -29,14 +29,15 @@ import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
 
-class TextInput @JvmOverloads constructor(
-    properties: Properties = Properties.get<TextInput>(),
+class TextInput(
+    properties: Properties? = null,
     at: Vec2<Unit>,
     sized: Vec2<Unit>,
     vararg events: Events.Handler
 ) : Component(properties, at, sized, true, *events), Focusable {
-    private val props = properties as TextInputProperties
-    val text = Text(props.text, props.defaultText.clone(), at = at.clone(), size = sized.clone(), acceptInput = false)
+    override val properties: TextInputProperties
+        get() = super.properties as TextInputProperties
+    lateinit var text: Text
     inline var txt get() = text.text.string
         set(value) { text.text.string = value }
     private var init = false
@@ -52,15 +53,14 @@ class TextInput @JvmOverloads constructor(
     private var caretPos = x to y
     var selecting = false
     val selection get() = txt.substringSafe(caret, select).stdout()
-    val autoSized get() = text.autoSized
     override fun render() {
-        if (props.backgroundColor != null) {
-            renderer.drawRect(x, y, width, height, props.backgroundColor, props.cornerRadii)
+        if (properties.backgroundColor != null) {
+            renderer.drawRect(at.a.px, at.b.px, sized!!.a.px, sized!!.b.px, properties.backgroundColor!!, properties.cornerRadii)
         }
-        if (props.outlineColor != null) {
-            renderer.drawHollowRect(x, y, width, height, props.outlineColor, props.outlineThickness, props.cornerRadii)
+        if (properties.outlineColor != null) {
+            renderer.drawHollowRect(at.a.px, at.b.px, sized!!.a.px, sized!!.b.px, properties.outlineColor!!, properties.outlineThickness, properties.cornerRadii)
         }
-        renderer.drawRect(caretPos.first, caretPos.second, 2f, props.text.fontSize.px, Color.WHITE_90)
+        renderer.drawRect(caretPos.first, caretPos.second, 2f, properties.text.fontSize.px, Color.WHITE_90)
         text.render()
     }
 
@@ -167,7 +167,7 @@ class TextInput @JvmOverloads constructor(
 
     fun caretPos(): Pair<Float, Float> {
         val (line, idx, lni) = text.getByCharIndex(caret)
-        return (renderer.textBounds(props.text.font, line.string.substring(0, idx), props.text.fontSize.px, props.text.textAlignment).width + text.x + text.textOffset to lni * props.text.fontSize.px + text.y)
+        return (renderer.textBounds(properties.text.font, line.string.substring(0, idx), properties.text.fontSize.px, properties.text.alignment).width + text.x + text.textOffset to lni * properties.text.fontSize.px + text.y)
     }
 
     fun toLastSpace() {
@@ -225,8 +225,8 @@ class TextInput @JvmOverloads constructor(
     }
 
     override fun resetText() {
-        props.defaultText.reset()
-        text.text = props.defaultText.clone()
+        properties.defaultText.reset()
+        text.text = properties.defaultText.clone()
     }
 
     fun clearSelection() {
@@ -235,6 +235,7 @@ class TextInput @JvmOverloads constructor(
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {
         super.setup(renderer, polyui)
+        text = Text(properties.text, properties.defaultText.clone(), properties.text.fontSize, at.clone(), sized?.clone(), properties.text.alignment, false)
         text.setup(renderer, polyui)
     }
 
@@ -243,18 +244,18 @@ class TextInput @JvmOverloads constructor(
         text.calculateBounds()
         super.calculateBounds()
         if (!init) {
-            text.at.a.px += props.paddingFromTextLateral
-            text.at.b.px += props.paddingFromTextVertical
-            text.sized!!.a.px -= props.paddingFromTextLateral
-            text.sized!!.b.px -= props.paddingFromTextVertical
+            text.at.a.px += properties.paddingFromTextLateral
+            text.at.b.px += properties.paddingFromTextVertical
+            text.sized!!.a.px -= properties.paddingFromTextLateral
+            text.sized!!.b.px -= properties.paddingFromTextVertical
             init = true
         }
     }
 
     override fun getSize(): Vec2<Unit> {
         return text.sized!!.clone().also {
-            it.a.px += props.paddingFromTextLateral * 2
-            it.b.px += props.paddingFromTextVertical * 2
+            it.a.px += properties.paddingFromTextLateral * 2
+            it.b.px += properties.paddingFromTextVertical * 2
         }
     }
 }

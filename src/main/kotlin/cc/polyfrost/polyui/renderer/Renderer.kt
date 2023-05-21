@@ -205,14 +205,16 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
 
     abstract fun drawLine(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float)
 
+    abstract fun drawDropShadow(x: Float, y: Float, width: Float, height: Float, blur: Float, spread: Float, radius: Float)
+
     /** Create a new framebuffer. It is down to you (as a rendering implementation) to cache this, and dispose of it as necessary. */
-    abstract fun createFramebuffer(width: Float, height: Float, type: Settings.BufferType): Framebuffer
+    abstract fun createFramebuffer(width: Float, height: Float): Framebuffer
 
     abstract fun deleteFramebuffer(fbo: Framebuffer)
 
-    abstract fun bindFramebuffer(fbo: Framebuffer, mode: Framebuffer.Mode = Framebuffer.Mode.ReadWrite)
+    abstract fun bindFramebuffer(fbo: Framebuffer)
 
-    abstract fun unbindFramebuffer(fbo: Framebuffer, mode: Framebuffer.Mode = Framebuffer.Mode.ReadWrite)
+    abstract fun unbindFramebuffer(fbo: Framebuffer)
 
     /** draw the given framebuffer to the screen. */
     abstract fun drawFramebuffer(
@@ -222,8 +224,6 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
         width: Float = fbo.width,
         height: Float = fbo.height
     )
-
-    abstract fun supportsRenderbuffer(): Boolean
 
     /**
      * Cleanup the PolyUI instance.

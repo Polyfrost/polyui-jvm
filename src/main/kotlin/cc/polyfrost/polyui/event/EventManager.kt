@@ -87,9 +87,7 @@ class EventManager(private val polyUI: PolyUI) {
             onApplicableDrawables_dontCheckChildren(x, y) {
                 // we only need to check acceptsInput here as it controls the mouseOver flag, so if it doesn't accept input, mouseOver is always false
                 if (isInside(x, y) && acceptsInput) {
-                    if (mouseOver) {
-                        // it.accept(ComponentEvent.MouseMoved(x, y))
-                    } else {
+                    if (!mouseOver) {
                         accept(Events.MouseEntered)
                         mouseOverDrawables.add(this)
                         mouseOver = true
@@ -204,6 +202,7 @@ class EventManager(private val polyUI: PolyUI) {
 
     companion object {
         /** insert true return instruction on the end of the method */
+        @JvmStatic
         fun insertTrueInsn(action: (Component.() -> Unit)): (Component.() -> Boolean) {
             return {
                 action(this)

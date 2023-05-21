@@ -19,13 +19,13 @@ import cc.polyfrost.polyui.unit.Unit
  * A static divider component.
  */
 class Divider @JvmOverloads constructor(
-    properties: Properties = Properties.get<Divider>(),
+    properties: Properties? = null,
     at: Vec2<Unit>,
     val length: Unit,
     val direction: Direction = Direction.Horizontal
 ) : Component(properties, at, null, false) {
     override fun render() {
-        renderer.drawLine(at.x, at.y, at.x + sized!!.width, at.y + sized!!.height, properties.color, (properties as DividerProperties).thickness)
+        renderer.drawLine(at.a.px, at.b.px, at.a.px + sized!!.a.px, at.b.px + sized!!.b.px, properties.color, (properties as DividerProperties).thickness)
     }
 
     override fun calculateBounds() {

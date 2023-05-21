@@ -34,7 +34,7 @@ import java.nio.ByteBuffer
 import kotlin.math.max
 
 class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
-    private val nvgPaint: NVGPaint = NVGPaint.create()
+    private val nvgPaint: NVGPaint = NVGPaint.malloc()
     private val nvgColor: NVGColor = NVGColor.malloc()
     private val nvgColor2: NVGColor = NVGColor.malloc()
     private val fbos: MutableMap<Framebuffer, NVGLUFramebuffer> = mutableMapOf()
@@ -152,8 +152,8 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         nvgFill(vg)
     }
 
-    override fun createFramebuffer(width: Float, height: Float, type: Settings.BufferType): Framebuffer {
-        val f = Framebuffer(width, height, type)
+    override fun createFramebuffer(width: Float, height: Float): Framebuffer {
+        val f = Framebuffer(width, height)
         fbos[f] = NanoVGGL2.nvgluCreateFramebuffer(
             vg,
             width.toInt(),
@@ -172,7 +172,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         }
     }
 
-    override fun bindFramebuffer(fbo: Framebuffer, mode: Framebuffer.Mode) {
+    override fun bindFramebuffer(fbo: Framebuffer) {
         nvgEndFrame(vg)
         NanoVGGL2.nvgluBindFramebuffer(vg, fbos[fbo] ?: throw NullPointerException("Cannot bind: $fbo does not exist!"))
         glViewport(0, 0, fbo.width.toInt(), fbo.height.toInt())
@@ -181,14 +181,12 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         nvgBeginFrame(vg, fbo.width, fbo.height, pixelRatio)
     }
 
-    override fun unbindFramebuffer(fbo: Framebuffer, mode: Framebuffer.Mode) {
+    override fun unbindFramebuffer(fbo: Framebuffer) {
         nvgEndFrame(vg)
         NanoVGGL2.nvgluBindFramebuffer(vg, null)
         glViewport(0, 0, width.toInt(), height.toInt())
         nvgBeginFrame(vg, width, height, pixelRatio)
     }
-
-    override fun supportsRenderbuffer() = false
 
     override fun initImage(image: PolyImage) {
         getImage(image)
@@ -270,6 +268,24 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
             nvgStrokeColor(vg, nvgColor)
         }
         nvgStroke(vg)
+    }
+
+    override fun drawDropShadow(
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        blur: Float,
+        spread: Float,
+        radius: Float
+    ) {
+        nvgBoxGradient(vg, x - spread, y - spread, width + spread * 2f, height + spread * 2f, radius + spread, blur, nvgColor, nvgColor2, nvgPaint)
+        nvgBeginPath(vg)
+        nvgRoundedRect(vg, x - spread, y - spread - blur, width + spread * 2f + blur * 2f, height + spread * 2f + blur * 2f, radius + spread)
+        nvgRoundedRect(vg, x, y, width, height, radius)
+        nvgPathWinding(vg, NVG_HOLE)
+        nvgFillPaint(vg, nvgPaint)
+        nvgFill(vg)
     }
 
     override fun textBounds(font: Font, text: String, fontSize: Float, textAlign: TextAlign): Vec2<Unit.Pixel> {

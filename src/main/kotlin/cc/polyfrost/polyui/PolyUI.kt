@@ -18,6 +18,7 @@ import cc.polyfrost.polyui.input.KeyBinder
 import cc.polyfrost.polyui.input.KeyModifiers
 import cc.polyfrost.polyui.input.PolyTranslator
 import cc.polyfrost.polyui.layout.impl.PixelLayout
+import cc.polyfrost.polyui.property.PropertyManager
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
@@ -74,6 +75,7 @@ class PolyUI(
     val eventManager = EventManager(this)
     val keyBinder = KeyBinder()
     val polyTranslator = PolyTranslator(this, translationDirectory ?: "")
+    val property = PropertyManager(this)
     private val executors: ArrayList<Clock.FixedTimeExecutor> = arrayListOf()
     inline val settings get() = renderer.settings
     var width
@@ -102,14 +104,14 @@ class PolyUI(
         master.calculateBounds()
         master.children.fastEach {
             if (!it.refuseFramebuffer && settings.minItemsForFramebuffer < it.countDrawables()) {
-                it.fbo = renderer.createFramebuffer(it.width, it.height, settings.bufferType)
+                it.fbo = renderer.createFramebuffer(it.width, it.height)
                 if (settings.debug) LOGGER.info("Layout {} ({} items) created with {}", varargs(it.simpleName, it.countDrawables(), it.fbo!!))
             }
             if (it.width > width || it.height > height) {
                 LOGGER.warn("Layout {} is larger than the window. This may cause issues.", it.simpleName)
             }
         }
-        if (settings.masterIsFramebuffer) master.fbo = renderer.createFramebuffer(width, height, settings.bufferType)
+        if (settings.masterIsFramebuffer) master.fbo = renderer.createFramebuffer(width, height)
         Unit.VUnits.vHeight = height
         Unit.VUnits.vWidth = width
         if (settings.enableDebugKeybind) {
@@ -159,7 +161,7 @@ class PolyUI(
         master.calculateBounds()
         if (settings.masterIsFramebuffer) {
             renderer.deleteFramebuffer(master.fbo!!)
-            master.fbo = renderer.createFramebuffer(newWidth.toFloat(), newHeight.toFloat(), settings.bufferType)
+            master.fbo = renderer.createFramebuffer(newWidth.toFloat(), newHeight.toFloat())
         }
 
         master.children.fastEach {
@@ -169,7 +171,7 @@ class PolyUI(
             )
             if (it.fbo != null) {
                 renderer.deleteFramebuffer(it.fbo!!)
-                it.fbo = renderer.createFramebuffer(it.width, it.height, settings.bufferType)
+                it.fbo = renderer.createFramebuffer(it.width, it.height)
             }
             it.needsRedraw = true // lol that was funny to debug
         }

@@ -20,6 +20,6 @@ open class TextProperties : Properties() {
     val fontSize: Unit.Pixel = 12.px
     override val color: Color = Color.WHITE
     override val padding: Float = 0F
-    val textAlignment = TextAlign.Left
+    val alignment = TextAlign.Left
     val font = Font("/Inter-Regular.ttf")
 }

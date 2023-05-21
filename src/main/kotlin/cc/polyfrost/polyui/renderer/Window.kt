@@ -20,7 +20,7 @@ import cc.polyfrost.polyui.PolyUI
  *  - call [open] to start the rendering loop; this can be blocking or non-blocking. Please note that after open is called, the rendering implementation will be created. This means that in a thread-based system such as LWJGL's OpenGL, you **must** ensure that it is fully setup before exiting `init {}`.
  */
 abstract class Window(var width: Int, var height: Int) {
-    /** open the window with the specified [PolyUI] instance. This will call [videoSettingsChanged], [createCallbacks] and then start the rendering loop. */
+    /** open the window with the specified [PolyUI] instance. This will call [videoSettingsChanged], [createCallbacks] and then start the rendering loop. It may be blocking or non-blocking. */
     abstract fun open(polyUI: PolyUI): Window
 
     /** destroy the window. */

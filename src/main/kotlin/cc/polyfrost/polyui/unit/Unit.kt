@@ -10,6 +10,7 @@
 package cc.polyfrost.polyui.unit
 
 import cc.polyfrost.polyui.unit.Unit.*
+import java.io.Serializable
 import kotlin.math.max
 import kotlin.math.min
 
@@ -20,15 +21,11 @@ import kotlin.math.min
  * @see Flex
  * @see VUnits
  */
-abstract class Unit(val type: Type) : Cloneable {
+abstract class Unit(val type: Type) : Cloneable, Serializable {
     abstract var px: Float
 
     operator fun plus(other: Unit): Float {
         return px + other.px
-    }
-
-    fun get(): Float {
-        return px
     }
 
     operator fun compareTo(x: Unit): Int {
@@ -116,7 +113,9 @@ abstract class Unit(val type: Type) : Cloneable {
         override var px: Float = 0f
 
         override fun clone(): Flex {
-            return Flex(index, flexShrink, flexGrow, endRowAfter)
+            return Flex(index, flexShrink, flexGrow, endRowAfter).also {
+                it.px = px
+            }
         }
     }
 
@@ -135,7 +134,9 @@ abstract class Unit(val type: Type) : Cloneable {
         override var px: Float = 0f
 
         override fun clone(): Grid {
-            return Grid(row, column, rs, cs)
+            return Grid(row, column, rs, cs).also {
+                it.px = px
+            }
         }
     }
 

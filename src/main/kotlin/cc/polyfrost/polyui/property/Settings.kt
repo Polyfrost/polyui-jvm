@@ -9,7 +9,6 @@
 
 package cc.polyfrost.polyui.property
 
-import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.milliseconds
 
@@ -81,34 +80,6 @@ class Settings(private val renderer: Renderer) {
 
     /** Weather to invert the scroll direction */
     var naturalScrolling = false
-
-    /** set the buffer type to use for rendering.
-     * @see BufferType
-     */
-    var bufferType: BufferType = BufferType.FRAMEBUFFER
-        set(value) = if (value == BufferType.RENDERBUFFER && !renderer.supportsRenderbuffer()) {
-            PolyUI.LOGGER.warn("Renderbuffer is not supported, using framebuffer instead.")
-            field = BufferType.FRAMEBUFFER
-        } else {
-            field = value
-        }
-
-    /**
-     * @see bufferType
-     */
-    enum class BufferType {
-        /**
-         * RenderBuffers are marginally faster than framebuffers, but all read
-         * operations will not work.
-         *
-         * Note that not all renderers will support this, and you might use a
-         * [FRAMEBUFFER] instead.
-         */
-        RENDERBUFFER,
-
-        /** Use a framebuffer object for rendering.*/
-        FRAMEBUFFER
-    }
 
     /** How to handle resource (image and font) loading errors.
      * @see resourcePolicy

@@ -172,18 +172,19 @@ class ScrollingLayout(
         (owner.at + owner.size),
         properties.width.px * 0.px
     ) {
+        override val properties: ScrollbarProperties
+            get() = super.properties as ScrollbarProperties
         private val contentSize = owner.ptr.sized
         private val windowSize = owner.size
         private val normalPos =
-            ((owner.at.a.px + owner.size.b.px) - this.properties.padding - (this.properties as ScrollbarProperties).width).px * owner.at.b.px.px
+            ((owner.at.a.px + owner.size.b.px) - this.properties.padding - this.properties.width).px * owner.at.b.px.px
         private val hiddenPos =
             normalPos.clone()
-                .also { it.a.px += (this.properties as ScrollbarProperties).width + this.properties.padding }
+                .also { it.a.px += this.properties.width + this.properties.padding }
         var shown = false
             private set(value) {
                 if (value == field) return
                 field = value
-                properties as ScrollbarProperties
                 if (value) {
                     this.move(normalPos, properties.showAnimation, properties.showAnimationDuration)
                 } else {
@@ -199,7 +200,6 @@ class ScrollingLayout(
             }
 
         init {
-            this.properties as ScrollbarProperties
             at.a.px -= this.properties.width - this.properties.padding
             owner.components.add(this)
         }
@@ -219,7 +219,6 @@ class ScrollingLayout(
                 shown = false
                 return
             }
-            properties as ScrollbarProperties
             sized!!.b.px = max((contentSize.b.px / owner.size.b.px) * contentSize.b.px, properties.minimumHeight)
         }
     }

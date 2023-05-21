@@ -10,7 +10,6 @@
 package cc.polyfrost.polyui.renderer.impl
 
 import cc.polyfrost.polyui.color.Color
-import cc.polyfrost.polyui.property.Settings
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.data.Font
 import cc.polyfrost.polyui.renderer.data.Framebuffer
@@ -107,23 +106,32 @@ class NoOpRenderer(width: Float, height: Float) : Renderer(width, height) {
     override fun drawLine(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float) {
     }
 
-    override fun createFramebuffer(width: Float, height: Float, type: Settings.BufferType): Framebuffer {
-        return Framebuffer(width, height, type)
+    override fun drawDropShadow(
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        blur: Float,
+        spread: Float,
+        radius: Float
+    ) {
+    }
+
+    override fun createFramebuffer(width: Float, height: Float): Framebuffer {
+        return Framebuffer(width, height)
     }
 
     override fun deleteFramebuffer(fbo: Framebuffer) {
     }
 
-    override fun bindFramebuffer(fbo: Framebuffer, mode: Framebuffer.Mode) {
+    override fun bindFramebuffer(fbo: Framebuffer) {
     }
 
-    override fun unbindFramebuffer(fbo: Framebuffer, mode: Framebuffer.Mode) {
+    override fun unbindFramebuffer(fbo: Framebuffer) {
     }
 
     override fun drawFramebuffer(fbo: Framebuffer, x: Float, y: Float, width: Float, height: Float) {
     }
-
-    override fun supportsRenderbuffer(): Boolean = false
 
     override fun cleanup() {
     }

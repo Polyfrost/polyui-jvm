@@ -75,7 +75,7 @@ abstract class Layout(
      *
      * If this layout is [using a framebuffer][cc.polyfrost.polyui.property.Settings.minItemsForFramebuffer], it will be drawn to the framebuffer, and then drawn to the screen.
      *
-     * **Note:** Do not call this function yourself, and although it is open, please refrain from doing large amounts of logic in this function. Instead, use [preRender], as in line with the PolyUI design philosophy.
+     * **Note:** Do not call this function yourself.
      */
     open fun reRenderIfNecessary() {
         children.fastEach {
@@ -268,8 +268,8 @@ abstract class Layout(
     }
 
     override fun debugRender() {
-        renderer.drawHollowRect(x, y, width, height, Color.GRAYf, 2f)
-        renderer.drawText(Renderer.DefaultFont, x + 1f, y + 1f, simpleName, Color.WHITE, 10f)
+        renderer.drawHollowRect(at.a.px, at.b.px, sized!!.a.px, sized!!.b.px, Color.GRAYf, 2f)
+        renderer.drawText(Renderer.DefaultFont, at.a.px + 1f, at.b.px + 1f, simpleName, Color.WHITE, 10f)
         children.fastEach { it.debugRender() }
         components.fastEach { it.debugRender() }
     }

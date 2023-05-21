@@ -9,11 +9,13 @@
 
 package cc.polyfrost.polyui.component
 
+import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.animate.Animation
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.property.Properties
+import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.utils.fastEach
@@ -27,7 +29,7 @@ import cc.polyfrost.polyui.utils.fastRemoveIf
  * to event.
  */
 abstract class Component @JvmOverloads constructor(
-    val properties: Properties,
+    properties: Properties? = null,
     /** position relative to this layout. */
     override val at: Point<Unit>,
     override var sized: Size<Unit>? = null,
@@ -42,7 +44,11 @@ abstract class Component @JvmOverloads constructor(
 
     // needed for translation when rotating
     private var atCache: Pair<Float, Float>? = null
-    val color: Color.Mutable = properties.color.toMutable()
+
+    @PublishedApi // there's gotta be a more elegant way of doing this
+    internal var p: Properties? = properties
+    open val properties get() = p!!
+    lateinit var color: Color.Mutable
     protected var sizedBySelf = false
     protected var finishColorFunc: (Component.() -> kotlin.Unit)? = null
     final override lateinit var layout: Layout
@@ -161,6 +167,12 @@ abstract class Component @JvmOverloads constructor(
     fun wantRedraw() {
         layout.needsRedraw = true
         layout.clock.getDelta()
+    }
+
+    override fun setup(renderer: Renderer, polyui: PolyUI) {
+        super.setup(renderer, polyui)
+        if (p == null) p = polyui.property.get(this)
+        color = properties.color.toMutable()
     }
 
     /**

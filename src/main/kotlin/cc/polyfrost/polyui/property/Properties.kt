@@ -12,9 +12,10 @@ package cc.polyfrost.polyui.property
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
-import cc.polyfrost.polyui.component.impl.*
 import cc.polyfrost.polyui.event.Events
-import cc.polyfrost.polyui.property.impl.*
+import cc.polyfrost.polyui.property.impl.BlockProperties
+import cc.polyfrost.polyui.property.impl.ImageProperties
+import cc.polyfrost.polyui.property.impl.TextProperties
 import cc.polyfrost.polyui.unit.Size
 import cc.polyfrost.polyui.unit.Unit
 
@@ -66,51 +67,5 @@ abstract class Properties : Cloneable {
      */
     fun addEventHandlers(vararg handlers: Events.Handler) {
         handlers.forEach { addEventHandler(it.event, it.handler) }
-    }
-
-    companion object {
-        val properties: MutableMap<String, Properties> = mutableMapOf(
-            TextInput::class.java.name to TextInputProperties(TextProperties()),
-            Block::class.java.name to BlockProperties(),
-            Divider::class.java.name to DividerProperties(),
-            Image::class.java.name to ImageProperties(),
-            Text::class.java.name to TextProperties()
-        )
-
-        @JvmStatic
-        inline fun <reified C : Component> get(): Properties = get(C::class.java.name)
-
-        @JvmStatic
-        fun <T : Properties> get(component: Component): T =
-            get(component::class.java.name)
-
-        @Suppress("UNCHECKED_CAST")
-        @JvmStatic
-        fun <T : Properties> get(name: String): T = properties[name] as? T
-            ?: throw Exception("Properties for component $name not found")
-
-        /**
-         * Add the given property to the property' registry.
-         *
-         * This will **OVERWRITE** any existing property for the given component.
-         * @param properties the property to add
-         */
-        @JvmStatic
-        fun addPropertyType(forComponent: Component, properties: Properties) {
-            this.properties[forComponent::class.java.simpleName] = properties
-        }
-
-        /**
-         * Add the given property to the property' registry.
-         *
-         * This will **OVERWRITE** any existing property for the given component.
-         *
-         * @param name the simple class name of the component (e.g. cc.polyfrost.polyui.component.impl.Block)
-         * @param properties the property to add
-         */
-        @JvmStatic
-        fun addPropertyType(name: String, properties: Properties) {
-            this.properties[name] = properties
-        }
     }
 }
