@@ -359,6 +359,6 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
 
         // although this technically should be true, we don't want a chroma color preventing an element from being deleted.
         override val updating get() = false
-        override val alwaysUpdates get() = false
+        override val alwaysUpdates get() = true
     }
 }
