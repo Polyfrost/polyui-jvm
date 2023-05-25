@@ -101,16 +101,16 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         durationNanos: Long = 1000L
     ) :
         DrawableOp(drawable) {
-        override val animation = animation?.create(durationNanos, drawable.sized!!.a.px, toSize.a.px)
-        private val animation2 = animation?.create(durationNanos, drawable.sized!!.b.px, toSize.b.px)
+        override val animation = animation?.create(durationNanos, drawable.size!!.a.px, toSize.a.px)
+        private val animation2 = animation?.create(durationNanos, drawable.size!!.b.px, toSize.b.px)
 
         override fun apply(renderer: Renderer) {
             if (animation != null) {
-                drawable.sized!!.a.px = animation.value
-                drawable.sized!!.b.px = animation2!!.value
+                drawable.size!!.a.px = animation.value
+                drawable.size!!.b.px = animation2!!.value
             } else {
-                drawable.sized!!.a.px = toSize.a.px
-                drawable.sized!!.b.px = toSize.b.px
+                drawable.size!!.a.px = toSize.a.px
+                drawable.size!!.b.px = toSize.b.px
             }
         }
     }

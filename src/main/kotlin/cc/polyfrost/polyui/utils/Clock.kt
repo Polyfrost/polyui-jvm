@@ -19,24 +19,27 @@ package cc.polyfrost.polyui.utils
  * - 9,223,372,036,854,775,808 is max for a long, so the program can run for 2,562,047.78802 hours, or 106,751.991167 days, or 292.471 years. So we can use these.
  */
 class Clock {
-    private var lastTime: Long = System.nanoTime()
+    @PublishedApi
+    internal var lastTime: Long = System.nanoTime()
 
-    fun getDelta(): Long {
-        val currentTime = System.nanoTime()
-        val delta = currentTime - lastTime
-        lastTime = currentTime
-        return delta
-    }
+    inline val now get() = lastTime
+    val delta: Long
+        get() {
+            val currentTime = System.nanoTime()
+            val delta = currentTime - lastTime
+            lastTime = currentTime
+            return delta
+        }
 
-    fun peekDelta(): Long = System.nanoTime() - lastTime
+    inline fun peek(): Long = System.nanoTime() - lastTime
+    class FixedTimeExecutor(private val executeEveryNanos: Long, private val func: () -> Unit) {
+        private var time = 0L
 
-    class FixedTimeExecutor(private val nanos: Long, private val func: () -> Unit) {
-        private val clock = Clock()
-
-        fun tick() {
-            if (clock.peekDelta() >= nanos) {
+        fun tick(deltaTimeNanos: Long) {
+            time += deltaTimeNanos
+            if (time >= executeEveryNanos) {
                 func()
-                clock.getDelta()
+                time = 0L
             }
         }
     }

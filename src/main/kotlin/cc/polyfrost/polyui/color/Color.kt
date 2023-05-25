@@ -332,6 +332,8 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         private val saturation: Float = 1f,
         alpha: Int = 255
     ) : Mutable(0, 0, 0, alpha) {
+        private var time: Long = 1000L // don't want to 0div
+
         @Deprecated("Chroma colors cannot be animated.", level = DeprecationLevel.ERROR)
         override fun recolor(target: Color, type: Animation.Type?, durationNanos: Long) {
             // no-op
@@ -342,8 +344,9 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         }
 
         override fun update(deltaTimeNanos: Long): Boolean {
+            time += deltaTimeNanos
             java.awt.Color.HSBtoRGB(
-                System.nanoTime() % speedNanos / speedNanos.toFloat(),
+                time % speedNanos / speedNanos.toFloat(),
                 saturation,
                 brightness
             ).let {
@@ -356,6 +359,6 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
 
         // although this technically should be true, we don't want a chroma color preventing an element from being deleted.
         override val updating get() = false
-        override val alwaysUpdates get() = true
+        override val alwaysUpdates get() = false
     }
 }

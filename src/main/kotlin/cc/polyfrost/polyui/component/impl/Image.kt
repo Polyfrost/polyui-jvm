@@ -27,10 +27,10 @@ open class Image @JvmOverloads constructor(
         get() = super.properties as ImageProperties
 
     override fun render() {
-        renderer.drawImage(image, at.a.px, at.b.px, sized!!.a.px, sized!!.b.px, properties.cornerRadii, properties.color.getARGB())
+        renderer.drawImage(image, at.a.px, at.b.px, size!!.a.px, size!!.b.px, properties.cornerRadii, properties.color.getARGB())
     }
 
-    override fun getSize(): Vec2<Unit> {
+    override fun calculateSize(): Vec2<Unit> {
         if (image.width == -1f || image.height == -1f) {
             renderer.initImage(image)
         }

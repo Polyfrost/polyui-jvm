@@ -29,7 +29,7 @@ open class Text @JvmOverloads constructor(
     private val txt: PolyText,
     fontSize: Unit.Pixel? = null,
     at: Vec2<Unit>,
-    val dimension: Size<Unit>? = null,
+    val sized: Size<Unit>? = null,
     val textAlign: TextAlign = TextAlign.Left,
     acceptInput: Boolean = false,
     vararg events: Events.Handler
@@ -51,16 +51,16 @@ open class Text @JvmOverloads constructor(
 
     final override val properties: TextProperties
         get() = super.properties as TextProperties
-    var autoSized = dimension == null
     val fontSize = fontSize ?: this.properties.fontSize
-    private lateinit var str: Text
+    internal lateinit var str: Text
+    var scaleX: Float = 1f
     val lines get() = str.lines
     val full get() = str.full
     val font get() = this.properties.font
 
     val textOffset get() = (str as? SingleText)?.textOffset ?: x
 
-    override var sized: Size<Unit>?
+    override var size: Size<Unit>?
         get() = str.size
         set(value) {
             if (value != null) {
@@ -72,14 +72,18 @@ open class Text @JvmOverloads constructor(
         get() = str.text
         set(value) {
             str.text = value
-            if (autoSized) {
-                str.calculate(renderer)
-                sized = str.size
-            }
+            str.calculate(renderer)
+            if (autoSized) size = str.size
         }
 
     override fun render() {
-        str.render(at.a.px, at.b.px, color)
+        if (scaleX != 1f) {
+            renderer.scale(scaleX, 1f)
+            str.render(at.a.px, at.b.px, color)
+            renderer.scale(1f / scaleX, 1f)
+        } else {
+            str.render(at.a.px, at.b.px, color)
+        }
     }
 
     operator fun get(index: Int) = str[index]
@@ -91,22 +95,23 @@ open class Text @JvmOverloads constructor(
     override fun rescale(scaleX: Float, scaleY: Float) {
         super.rescale(scaleX, scaleY)
         str.fontSize *= scaleY
+        this.scaleX *= scaleX - (scaleY - 1f)
     }
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {
         super.setup(renderer, polyui)
-        str = if (floor((dimension?.height ?: 0f) / this.fontSize.px).toInt() > 1) {
-            MultilineText(txt, this.properties.font, this.fontSize.px, textAlign, dimension ?: origin)
+        str = if (floor((sized?.height ?: 0f) / this.fontSize.px).toInt() > 1) {
+            MultilineText(txt, this.properties.font, this.fontSize.px, textAlign, sized ?: origin)
         } else {
-            SingleText(txt, this.properties.font, this.fontSize.px, textAlign, dimension ?: origin)
+            SingleText(txt, this.properties.font, this.fontSize.px, textAlign, sized ?: origin)
         }
         str.text.polyTranslator = polyui.polyTranslator
         str.calculate(renderer)
-        sized = str.size
+        size = str.size
     }
 
-    override fun getSize(): Vec2<Unit>? {
+    override fun calculateSize(): Vec2<Unit>? {
         str.calculate(renderer)
-        return sized
+        return size
     }
 }

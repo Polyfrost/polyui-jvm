@@ -25,18 +25,18 @@ import cc.polyfrost.polyui.unit.Vec2
 open class Block @JvmOverloads constructor(
     properties: Properties? = null,
     at: Vec2<Unit>,
-    sized: Size<Unit>,
+    size: Size<Unit>,
     acceptInput: Boolean = true,
     vararg events: Events.Handler
-) : Component(properties, at, sized, acceptInput, *events) {
+) : Component(properties, at, size, acceptInput, *events) {
     override val properties: BlockProperties
         get() = super.properties as BlockProperties
 
     override fun render() {
         if (properties.lineThickness == 0f) {
-            renderer.drawRect(at.a.px, at.b.px, sized!!.a.px, sized!!.b.px, color, properties.cornerRadii)
+            renderer.drawRect(at.a.px, at.b.px, size!!.a.px, size!!.b.px, color, properties.cornerRadii)
         } else {
-            renderer.drawHollowRect(at.a.px, at.b.px, sized!!.a.px, sized!!.b.px, color, properties.lineThickness, properties.cornerRadii)
+            renderer.drawHollowRect(at.a.px, at.b.px, size!!.a.px, size!!.b.px, color, properties.lineThickness, properties.cornerRadii)
         }
     }
 }

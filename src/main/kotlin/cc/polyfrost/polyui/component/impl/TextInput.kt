@@ -32,14 +32,18 @@ import java.awt.datatransfer.StringSelection
 class TextInput(
     properties: Properties? = null,
     at: Vec2<Unit>,
-    sized: Vec2<Unit>,
+    size: Vec2<Unit>,
     vararg events: Events.Handler
-) : Component(properties, at, sized, true, *events), Focusable {
+) : Component(properties, at, size, true, *events), Focusable {
     override val properties: TextInputProperties
         get() = super.properties as TextInputProperties
     lateinit var text: Text
-    inline var txt get() = text.text.string
-        set(value) { text.text.string = value }
+    var txt
+        get() = text.text.string
+        set(value) {
+            text.text.string = value
+            text.str.calculate(renderer)
+        }
     private var init = false
     private var caret = 0
         set(value) {
@@ -47,18 +51,30 @@ class TextInput(
             if (!selecting) select = value
         }
     private var select: Int = 0
-        set(value) {
-            field = value
-        }
     private var caretPos = x to y
     var selecting = false
     val selection get() = txt.substringSafe(caret, select).stdout()
     override fun render() {
         if (properties.backgroundColor != null) {
-            renderer.drawRect(at.a.px, at.b.px, sized!!.a.px, sized!!.b.px, properties.backgroundColor!!, properties.cornerRadii)
+            renderer.drawRect(
+                at.a.px,
+                at.b.px,
+                size!!.a.px,
+                size!!.b.px,
+                properties.backgroundColor!!,
+                properties.cornerRadii
+            )
         }
         if (properties.outlineColor != null) {
-            renderer.drawHollowRect(at.a.px, at.b.px, sized!!.a.px, sized!!.b.px, properties.outlineColor!!, properties.outlineThickness, properties.cornerRadii)
+            renderer.drawHollowRect(
+                at.a.px,
+                at.b.px,
+                size!!.a.px,
+                size!!.b.px,
+                properties.outlineColor!!,
+                properties.outlineThickness,
+                properties.cornerRadii
+            )
         }
         renderer.drawRect(caretPos.first, caretPos.second, 2f, properties.text.fontSize.px, Color.WHITE_90)
         text.render()
@@ -82,7 +98,14 @@ class TextInput(
 
                     'C' -> {
                         try {
-                            if (caret != select) Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(selection), null)
+                            if (caret != select) {
+                                Toolkit.getDefaultToolkit().systemClipboard.setContents(
+                                    StringSelection(
+                                        selection
+                                    ),
+                                    null
+                                )
+                            }
                         } catch (e: Exception) {
                             PolyUI.LOGGER.error("Failed tole write clipboard data!", e)
                         }
@@ -99,7 +122,8 @@ class TextInput(
                     }
 
                     'A' -> {
-                        println("select all")
+                        caret = txt.length
+                        select = 0
                     }
                 }
             }
@@ -109,6 +133,18 @@ class TextInput(
             val hasShift = event.hasModifier(KeyModifiers.LSHIFT) || event.hasModifier(KeyModifiers.RSHIFT)
             when (event.key) {
                 Keys.BACKSPACE -> {
+                    if (select != caret) {
+                        val f: Int
+                        val t: Int
+                        if (select > caret) {
+                            f = caret
+                            t = select
+                        } else {
+                            f = select
+                            t = caret
+                        }
+                        txt = txt.substring(0, f) + txt.substring(t) // todo finish
+                    }
                     if (!hasControl) {
                         txt = txt.dropAt(caret, 1)
                         if (caret != 0) caret--
@@ -167,13 +203,20 @@ class TextInput(
 
     fun caretPos(): Pair<Float, Float> {
         val (line, idx, lni) = text.getByCharIndex(caret)
-        return (renderer.textBounds(properties.text.font, line.string.substring(0, idx), properties.text.fontSize.px, properties.text.alignment).width + text.x + text.textOffset to lni * properties.text.fontSize.px + text.y)
+        return (
+            renderer.textBounds(
+                properties.text.font,
+                txt.substring(0, idx),
+                properties.text.fontSize.px,
+                properties.text.alignment
+            ).width + text.x + text.textOffset to lni * properties.text.fontSize.px + text.y
+            )
     }
 
     fun toLastSpace() {
         while (caret > 0 && txt[caret - 1] == ' ') caret--
         txt.lastIndexOf(' ', caret - 1).let {
-            if (selecting && select != caret) select = caret
+            if (selecting && select == caret) select = caret
             caret = if (it != -1) {
                 it
             } else {
@@ -197,7 +240,7 @@ class TextInput(
     fun toNextSpace() {
         while (caret < txt.length && txt[caret] == ' ') caret++
         txt.indexOf(' ', caret).let {
-            if (selecting && select != caret) select = caret
+            if (selecting && select == caret) select = caret
             caret = if (it != -1) {
                 it
             } else {
@@ -207,7 +250,7 @@ class TextInput(
     }
 
     fun back() {
-        if (selecting && select != caret) select = caret
+        if (selecting && select == caret) select = caret
         caret = if (caret > 0) {
             caret - 1
         } else {
@@ -216,7 +259,7 @@ class TextInput(
     }
 
     fun forward() {
-        if (selecting && select != caret) select = caret
+        if (selecting && select == caret) select = caret
         caret = if (caret < txt.length) {
             caret + 1
         } else {
@@ -235,7 +278,15 @@ class TextInput(
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {
         super.setup(renderer, polyui)
-        text = Text(properties.text, properties.defaultText.clone(), properties.text.fontSize, at.clone(), sized?.clone(), properties.text.alignment, false)
+        text = Text(
+            properties.text,
+            properties.defaultText.clone(),
+            properties.text.fontSize,
+            at.clone(),
+            size?.clone(),
+            properties.text.alignment,
+            false
+        )
         text.setup(renderer, polyui)
     }
 
@@ -246,14 +297,14 @@ class TextInput(
         if (!init) {
             text.at.a.px += properties.paddingFromTextLateral
             text.at.b.px += properties.paddingFromTextVertical
-            text.sized!!.a.px -= properties.paddingFromTextLateral
-            text.sized!!.b.px -= properties.paddingFromTextVertical
+            text.size!!.a.px -= properties.paddingFromTextLateral
+            text.size!!.b.px -= properties.paddingFromTextVertical
             init = true
         }
     }
 
-    override fun getSize(): Vec2<Unit> {
-        return text.sized!!.clone().also {
+    override fun calculateSize(): Vec2<Unit> {
+        return text.size!!.clone().also {
             it.a.px += properties.paddingFromTextLateral * 2
             it.b.px += properties.paddingFromTextVertical * 2
         }

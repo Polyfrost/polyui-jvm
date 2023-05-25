@@ -76,7 +76,7 @@ fun grid(row: Int, column: Int, rowSpan: Int = 1, columnSpan: Int = 1): Vec2<Uni
 }
 
 /**
- * Declare a vec2 of unit, for either at or sized property.
+ * Declare a vec2 of unit, for either at or size property.
  *
  * example:
  * `30.px * 30.px`

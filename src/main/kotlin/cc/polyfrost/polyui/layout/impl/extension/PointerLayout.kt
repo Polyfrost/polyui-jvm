@@ -26,7 +26,7 @@ open class PointerLayout(
     layout: Layout
 ) : Layout(
     layout.at,
-    layout.sized,
+    layout.size,
     layout.onAdded,
     layout.onRemoved,
     layout.acceptsInput,
@@ -70,10 +70,10 @@ open class PointerLayout(
     final override inline val eventHandlers: MutableMap<Events, Drawable.() -> Boolean>
         get() = ptr.eventHandlers
     final override inline val at: Point<Unit> get() = ptr.at
-    final override inline var sized: Vec2<Unit>?
-        get() = ptr.sized
+    final override inline var size: Vec2<Unit>?
+        get() = ptr.size
         set(value) {
-            ptr.sized = value
+            ptr.size = value
         }
     final override inline var needsRedraw: Boolean
         get() = ptr.needsRedraw
@@ -112,7 +112,7 @@ open class PointerLayout(
         ptr.onAll(onChildLayouts) { function() }
 
     override fun isInside(x: Float, y: Float): Boolean = ptr.isInside(x, y)
-    override fun getSize(): Vec2<Unit>? = ptr.getSize()
+    override fun calculateSize(): Vec2<Unit>? = ptr.calculateSize()
 
     override fun setup(renderer: Renderer, polyui: PolyUI) = ptr.setup(renderer, polyui)
 }

@@ -40,7 +40,7 @@ fun main() {
     val things = Array<Drawable>(50) { // creates 50 rectangles with random sizes
         Block(
             at = flex(),
-            sized = Size((random() * 40 + 40).px, (random() * 40 + 40).px),
+            size = Size((random() * 40 + 40).px, (random() * 40 + 40).px),
             events = events(
                 Events.MouseClicked(0) to {
                     println("Mouse clicked! $it")
@@ -83,7 +83,7 @@ fun main() {
                             )
                         ),
                         at = 20.px * 30.px,
-                        sized = 120.px * 120.px,
+                        size = 120.px * 120.px,
                         events = events(
                             Events.MouseClicked(0) to {
                                 rotate(120.0, Animations.EaseOutExpo)
@@ -93,7 +93,7 @@ fun main() {
                     Block(
                         properties = BlockProperties(Color.Chroma(5.seconds)),
                         at = 200.px * 30.px,
-                        sized = 120.px * 120.px,
+                        size = 120.px * 120.px,
                         events = events(
                             Events.MouseClicked(0) to {
                                 rotate(120.0, Animations.EaseInOutCubic)

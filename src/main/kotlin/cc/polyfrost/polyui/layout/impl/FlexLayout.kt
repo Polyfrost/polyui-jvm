@@ -28,13 +28,13 @@ import kotlin.math.max
  *
  * This layout is very powerful, and is used commonly in web development. If you need to know more, I would recommend checking out the link above.
  *
- * @param [sized] The size of this layout. This is a 'hard' limit for the wrap. If the next item would exceed the size, it will not be added. If you want a hard limit, but auto cross size, use 0 as the cross size.
- * @param [wrap] The wrap size of this layout. If this is set, the layout will automatically wrap to the next line if the next item would exceed the wrap size. This is a 'soft' limit, so that if it needs to exceed, it can. Takes precedence over [sized].
+ * @param [size] The size of this layout. This is a 'hard' limit for the wrap. If the next item would exceed the size, it will not be added. If you want a hard limit, but auto cross size, use 0 as the cross size.
+ * @param [wrap] The wrap size of this layout. If this is set, the layout will automatically wrap to the next line if the next item would exceed the wrap size. This is a 'soft' limit, so that if it needs to exceed, it can. Takes precedence over [size].
  */
 @Suppress("unused")
 class FlexLayout @JvmOverloads constructor(
     at: Point<Unit>,
-    sized: Size<Unit>? = null,
+    size: Size<Unit>? = null,
     wrap: Unit? = null,
     onAdded: (Drawable.() -> kotlin.Unit)? = null,
     onRemoved: (Drawable.() -> kotlin.Unit)? = null,
@@ -46,7 +46,7 @@ class FlexLayout @JvmOverloads constructor(
     gap: Gap = Gap.Default,
     resizesChildren: Boolean = true,
     vararg items: Drawable
-) : Layout(at, sized, onAdded, onRemoved, false, resizesChildren, *items) {
+) : Layout(at, size, onAdded, onRemoved, false, resizesChildren, *items) {
     constructor(at: Point<Unit>, wrap: Unit.Percent, vararg items: Drawable) : this(
         at,
         null,
@@ -68,20 +68,20 @@ class FlexLayout @JvmOverloads constructor(
         Direction.Column, Direction.ColumnReverse -> gap.mainGap.px
     }
     private val wrapDirection: Wrap
-    private val strictSize = sized != null && wrap == null
+    private val strictSize = size != null && wrap == null
 
     init {
-        if (this.sized == null) this.sized = origin
+        if (this.size == null) this.size = origin
         if (wrapDirection != Wrap.NoWrap) {
             if (wrap != null) {
                 PolyUI.LOGGER.warn("[Flex] wrap is set, but wrap direction is set to NoWrap. Defaulting to Wrap.")
                 this.wrapDirection = Wrap.Wrap
                 when (flexDirection) {
-                    Direction.Row, Direction.RowReverse -> this.sized = Size(wrap, sized?.b ?: 0.px)
-                    Direction.Column, Direction.ColumnReverse -> this.sized = Size(sized?.a ?: 0.px, wrap)
+                    Direction.Row, Direction.RowReverse -> this.size = Size(wrap, size?.b ?: 0.px)
+                    Direction.Column, Direction.ColumnReverse -> this.size = Size(size?.a ?: 0.px, wrap)
                 }
-            } else if (sized != null) {
-                PolyUI.LOGGER.warn("[Flex] sized is set, but wrap direction is set to NoWrap. Defaulting to Wrap.")
+            } else if (size != null) {
+                PolyUI.LOGGER.warn("[Flex] size is set, but wrap direction is set to NoWrap. Defaulting to Wrap.")
                 this.wrapDirection = Wrap.Wrap
             } else {
                 this.wrapDirection = wrapDirection
@@ -90,11 +90,11 @@ class FlexLayout @JvmOverloads constructor(
             this.wrapDirection = wrapDirection
         }
         items.forEachIndexed { i, it ->
-            if (it.atUnitType != Unit.Type.Flex) {
+            if (it.atType != Unit.Type.Flex) {
                 throw Exception("Unit type mismatch: Drawable $it needs to be placed using a Flex unit for a flex layout.")
             }
-            if (it.sizedUnitType == Units.Flex) {
-                throw Exception("A flex layout's sized property is used to specify the minimum size of the component, please use the at property for your flex data.")
+            if (it.sizeType == Units.Flex) {
+                throw Exception("A flex layout's size property is used to specify the minimum size of the component, please use the at property for your flex data.")
             }
             @Suppress("UNCHECKED_CAST") // already type-checked
             if ((it.at as Point<Unit.Flex>).a.index >= 0) {
@@ -103,36 +103,36 @@ class FlexLayout @JvmOverloads constructor(
             if (it is Component) it.layout = this // why are smart casts so goofy? like I seriously have to do this?
             if (it is Layout) it.layout = this
         }
-        drawables = items.map { FlexDrawable(it, it.at.a as Unit.Flex, it.sized) } as ArrayList<FlexDrawable>
+        drawables = items.map { FlexDrawable(it, it.at.a as Unit.Flex, it.size) } as ArrayList<FlexDrawable>
         if (wrapDirection == Wrap.WrapReverse) drawables.reverse()
     }
 
     private var crossSize: Float
         get() {
             return when (flexDirection) {
-                Direction.Row, Direction.RowReverse -> sized!!.b.px
-                Direction.Column, Direction.ColumnReverse -> sized!!.a.px
+                Direction.Row, Direction.RowReverse -> size!!.b.px
+                Direction.Column, Direction.ColumnReverse -> size!!.a.px
             }
         }
         set(value) {
             if (strictSize) return
             when (flexDirection) {
-                Direction.Row, Direction.RowReverse -> sized!!.b.px = value
-                Direction.Column, Direction.ColumnReverse -> sized!!.a.px = value
+                Direction.Row, Direction.RowReverse -> size!!.b.px = value
+                Direction.Column, Direction.ColumnReverse -> size!!.a.px = value
             }
         }
     private var mainSize: Float
         get() {
             return when (flexDirection) {
-                Direction.Row, Direction.RowReverse -> sized!!.a.px
-                Direction.Column, Direction.ColumnReverse -> sized!!.b.px
+                Direction.Row, Direction.RowReverse -> size!!.a.px
+                Direction.Column, Direction.ColumnReverse -> size!!.b.px
             }
         }
         set(value) {
             if (strictSize) return
             when (flexDirection) {
-                Direction.Row, Direction.RowReverse -> sized!!.a.px = value
-                Direction.Column, Direction.ColumnReverse -> sized!!.b.px = value
+                Direction.Row, Direction.RowReverse -> size!!.a.px = value
+                Direction.Column, Direction.ColumnReverse -> size!!.b.px = value
             }
         }
 
@@ -225,10 +225,10 @@ class FlexLayout @JvmOverloads constructor(
     }
 
     private inner class FlexDrawable(val drawable: Drawable, val flex: Unit.Flex, minSize: Size<Unit>? = null) {
-        val size get() = drawable.sized!!
+        val size get() = drawable.size!!
 
         init {
-            if (drawable.sized == null) drawable.sized = getSize() ?: minSize ?: origin
+            if (drawable.size == null) drawable.size = calculateSize() ?: minSize ?: origin
         }
 
         /** x */

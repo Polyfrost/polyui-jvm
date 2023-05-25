@@ -17,15 +17,13 @@ import cc.polyfrost.polyui.event.FocusedEvents
 import cc.polyfrost.polyui.input.KeyBinder
 import cc.polyfrost.polyui.input.KeyModifiers
 import cc.polyfrost.polyui.input.PolyTranslator
+import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.layout.impl.PixelLayout
 import cc.polyfrost.polyui.property.PropertyManager
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
-import cc.polyfrost.polyui.utils.Clock
-import cc.polyfrost.polyui.utils.fastEach
-import cc.polyfrost.polyui.utils.rounded
-import cc.polyfrost.polyui.utils.varargs
+import cc.polyfrost.polyui.utils.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import kotlin.collections.ArrayList
@@ -43,7 +41,7 @@ import kotlin.collections.ArrayList
  *
  * ## Rendering Pipeline
  * PolyUI has the policy of ***'render what you need ONLY WHEN you need it'***.
- * Most of the time, PolyUI will be drawing frame buffers to the screen instead of drawing directly to the screen, as long as they are [suitably complex][cc.polyfrost.polyui.property.Settings.minItemsForFramebuffer] for it to be worth it.
+ * Most of the time, PolyUI will be drawing frame buffers to the screen instead of drawing directly to the screen, as long as they are [suitably complex][cc.polyfrost.polyui.property.Settings.minItemsForFramebuffer] for it to be worth it; or [not drawing at all][drew]!
  * This allows us to have a very fast rendering pipeline, and allows us to have a lot of components on screen at once, without a performance hit.
  *
  * Rendering can be [requested][cc.polyfrost.polyui.component.Component.wantRedraw] by components, and if so, it will be rendered during the next frame. This should only be requested if it is necessary, for example to do an animation or something.
@@ -76,6 +74,19 @@ class PolyUI(
     val keyBinder = KeyBinder()
     val polyTranslator = PolyTranslator(this, translationDirectory ?: "")
     val property = PropertyManager(this)
+
+    /** weather this PolyUI instance drew on this frame.
+     *
+     * You can use this value to implement a 'frame skipping' function, if you are using a dual-buffered rendering implementation (like OpenGL/GLFW):
+     *
+     * `if (polyUI.drew) glfwSwapBuffers(handle)`
+     *
+     * This is very handy as it will *drastically* reduce required system resources. If you are looking for more efficiency optimizations,
+     * see the settings for [max fps][cc.polyfrost.polyui.property.Settings.maxFPS] and [framebuffer settings][cc.polyfrost.polyui.property.Settings.minItemsForFramebuffer].
+     */
+    var drew = false
+        private set
+    private val clock = Clock()
     private val executors: ArrayList<Clock.FixedTimeExecutor> = arrayListOf()
     inline val settings get() = renderer.settings
     var width
@@ -91,10 +102,13 @@ class PolyUI(
     var fps: Int = 1
         private set
     private var frames = 0
-    private var longestFrame = 0f
-    private var shortestFrame = 100f
+    var longestFrame = 0f
+        private set
+    var shortestFrame = 100f
+        private set
     private var timeInFrames = 0f
-    private var avgFrame = 0f
+    var avgFrame = 0f
+        private set
     private var perf: String = ""
 
     init {
@@ -103,6 +117,7 @@ class PolyUI(
         master.simpleName += " [Master]"
         master.calculateBounds()
         master.children.fastEach {
+            it.layout = master
             if (!it.refuseFramebuffer && settings.minItemsForFramebuffer < it.countDrawables()) {
                 it.fbo = renderer.createFramebuffer(it.width, it.height)
                 if (settings.debug) LOGGER.info("Layout {} ({} items) created with {}", varargs(it.simpleName, it.countDrawables(), it.fbo!!))
@@ -133,7 +148,7 @@ class PolyUI(
             true
         }
         every(1.seconds) {
-            if (settings.debug) {
+            if (settings.debug && drew) {
                 perf = "fps: $fps, avg/max/min: ${avgFrame.rounded(4)}ms; ${longestFrame.rounded(4)}ms; ${shortestFrame.rounded(4)}ms"
                 longestFrame = 0f
                 shortestFrame = 100f
@@ -145,6 +160,7 @@ class PolyUI(
             }
         }
         LOGGER.info("PolyUI initialized")
+        if (settings.debug) debugPrint()
     }
 
     fun onResize(newWidth: Int, newHeight: Int, pixelRatio: Float, force: Boolean = false) {
@@ -154,8 +170,8 @@ class PolyUI(
         }
         if (settings.debug) LOGGER.info("resize: {} x {}", newWidth, newHeight)
 
-        master.sized!!.a.px = newWidth.toFloat()
-        master.sized!!.b.px = newHeight.toFloat()
+        master.size!!.a.px = newWidth.toFloat()
+        master.size!!.b.px = newHeight.toFloat()
         Unit.VUnits.vHeight = newHeight.toFloat()
         Unit.VUnits.vWidth = newWidth.toFloat()
         master.calculateBounds()
@@ -181,24 +197,31 @@ class PolyUI(
     }
 
     fun render() {
-        val now = System.nanoTime()
-        renderer.beginFrame()
-        master.reRenderIfNecessary()
-        renderHooks.fastEach { it(renderer) }
+        val delta = clock.delta
+        if (master.needsRedraw) {
+            master.needsRedraw = false
+            val now = clock.now
+            renderer.beginFrame()
+            master.reRenderIfNecessary()
+            renderHooks.fastEach { it(renderer) }
 
-        // telemetry
-        if (settings.debug) {
-            val frameTime = (System.nanoTime() - now) / 1_000_000f
-            timeInFrames += frameTime
-            if (frameTime > longestFrame) longestFrame = frameTime
-            if (frameTime < shortestFrame) shortestFrame = frameTime
-            frames++
-            master.debugRender()
-            drawDebugOverlay(width - 1f, height - 11f)
+            // telemetry
+            if (settings.debug) {
+                val frameTime = (System.nanoTime() - now) / 1_000_000f
+                timeInFrames += frameTime
+                if (frameTime > longestFrame) longestFrame = frameTime
+                if (frameTime < shortestFrame) shortestFrame = frameTime
+                frames++
+                master.debugRender()
+                drawDebugOverlay(width - 1f, height - 11f)
+            }
+
+            renderer.endFrame()
+            drew = true
+        } else {
+            drew = false
         }
-
-        renderer.endFrame()
-        executors.fastEach { it.tick() }
+        executors.fastEach { it.tick(delta) }
     }
 
     /** draw the debug overlay text. It is right-aligned. */
@@ -252,9 +275,37 @@ class PolyUI(
         focused?.accept(FocusedEvents.FocusGained)
     }
 
-    fun unfocus() {
-        focus(null)
+    fun unfocus() = focus(null)
+
+    fun debugPrint(): String {
+        val sb = StringBuilder()
+        sb.append(toString()).append(" with ${master.components.size} components and ${master.children.size} layouts:")
+        master.components.fastEach {
+            sb.append("\n").append(it.toString())
+        }
+        master.children.fastEach {
+            debugPrint(it, 0, sb)
+        }
+        return sb.toString().stdout()
     }
+
+    private fun debugPrint(it: Layout, depth: Int, sb: StringBuilder) {
+        sb.append("\n").append("\t".repeat(depth)).append(it.toString())
+        var i = 0
+        it.children.fastEach {
+            debugPrint(it, depth + 1, sb)
+        }
+        it.components.fastEach { c ->
+            sb.append("\n").append("\t".repeat(depth + 1)).append(c.toString())
+            i++
+            if (i >= 10) {
+                sb.append("\n").append("\t".repeat(depth + 2)).append("... ").append(it.components.size - i).append(" more")
+                return
+            }
+        }
+    }
+
+    override fun toString() = "PolyUI($width x $height)"
 
     /** cleanup the polyUI instance. This will delete all resources, and render this instance unusable. */
     fun cleanup() {

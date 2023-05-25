@@ -24,9 +24,9 @@ import cc.polyfrost.polyui.unit.Unit
  */
 abstract class Drawable(open var acceptsInput: Boolean = true) {
     open val eventHandlers = mutableMapOf<Events, Drawable.() -> Boolean>()
-    open var simpleName = this.toString().substringAfterLast(".")
+    open var simpleName = "${this::class.simpleName}@${Integer.toHexString(this.hashCode())}"
     abstract val at: Point<Unit>
-    abstract var sized: Size<Unit>?
+    abstract var size: Size<Unit>?
     internal open lateinit var renderer: Renderer
     internal open lateinit var polyui: PolyUI
 
@@ -38,19 +38,26 @@ abstract class Drawable(open var acceptsInput: Boolean = true) {
      * Reference to the layout encapsulating this drawable.
      * For components, this is never null, but for layout, it can be null (meaning its parent is the polyui)
      */
+    @PublishedApi
     internal abstract val layout: Layout?
 
     inline val x get() = at.a.px
     inline val y get() = at.b.px
     inline val width
-        get() = sized!!.a.px // ?: throw IllegalStateException("Drawable $simpleName has no size, but should have a size initialized by this point")
+        get() = size!!.a.px // ?: throw IllegalStateException("Drawable $simpleName has no size, but should have a size initialized by this point")
     inline val height
-        get() = sized!!.b.px // ?: throw IllegalStateException("Drawable $simpleName has no size, but should have a size initialized by this point") // note: this hot method kinda needs this not to be here
+        get() = size!!.b.px // ?: throw IllegalStateException("Drawable $simpleName has no size, but should have a size initialized by this point") // note: this hot method kinda needs this not to be here
 
-    inline val atUnitType: Unit.Type
+    /** true X value (i.e. not relative to the layout) */
+    inline val trueX get() = this.at.a.px + (layout?.at?.a?.px ?: 0f)
+
+    /** true Y value (i.e. not relative to the layout) */
+    inline val trueY get() = this.at.b.px + (layout?.at?.b?.px ?: 0f)
+
+    inline val atType: Unit.Type
         get() = at.type
-    inline val sizedUnitType: Unit.Type
-        get() = sized!!.type
+    inline val sizeType: Unit.Type
+        get() = size!!.type
 
     /** draw script for this drawable. */
     abstract fun render()
@@ -69,7 +76,7 @@ abstract class Drawable(open var acceptsInput: Boolean = true) {
      */
     open fun rescale(scaleX: Float, scaleY: Float) {
         at.scale(scaleX, scaleY)
-        sized!!.scale(scaleX, scaleY)
+        size!!.scale(scaleX, scaleY)
     }
 
     /** function that should return true if it is ready to be removed from its parent.
@@ -121,26 +128,26 @@ abstract class Drawable(open var acceptsInput: Boolean = true) {
     }
 
     open fun isInside(x: Float, y: Float): Boolean {
-        val tx = this.at.a.px + (layout?.at?.a?.px ?: 0f)
-        val ty = this.at.b.px + (layout?.at?.b?.px ?: 0f)
-        return x >= tx && x <= tx + this.sized!!.a.px && y >= ty && y <= ty + this.sized!!.b.px
+        val tx = trueX
+        val ty = trueY
+        return x >= tx && x <= tx + this.size!!.a.px && y >= ty && y <= ty + this.size!!.b.px
     }
 
     protected fun doDynamicSize() {
         doDynamicSize(at)
-        if (sized != null) doDynamicSize(sized!!)
+        if (size != null) doDynamicSize(size!!)
     }
 
     protected fun doDynamicSize(upon: Vec2<Unit>) {
         if (upon.a is Unit.Dynamic) {
             upon.a.set(
-                layout?.sized?.a
+                layout?.size?.a
                     ?: throw IllegalStateException("Dynamic unit only work on parents with a set size! ($this)")
             )
         }
         if (upon.b is Unit.Dynamic) {
             upon.b.set(
-                layout?.sized?.b
+                layout?.size?.b
                     ?: throw IllegalStateException("Dynamic unit only work on parents with a set size! ($this)")
             )
         }
@@ -151,9 +158,9 @@ abstract class Drawable(open var acceptsInput: Boolean = true) {
      *
      * This should be so that if the component can determine its own size (for example, it is an image), then the size parameter in the constructor can be omitted using:
      *
-     * `sized: Vec2<cc.polyfrost.polyui.unit.Unit>? = null;` and this method **needs** to be implemented!
+     * `size: Vec2<cc.polyfrost.polyui.unit.Unit>? = null;` and this method **needs** to be implemented!
      *
      * Otherwise, the size parameter in the constructor must be specified.
      * @throws UnsupportedOperationException if this method is not implemented, and the size parameter in the constructor is not specified. */
-    open fun getSize(): Vec2<Unit>? = null
+    open fun calculateSize(): Vec2<Unit>? = null
 }

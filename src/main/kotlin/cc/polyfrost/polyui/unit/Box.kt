@@ -10,14 +10,11 @@
 package cc.polyfrost.polyui.unit
 
 /** A box with a position and size (it's just 2x [Vec2]s)*/
-data class Box<T : Unit>(val point: Point<T>, val sized: Size<T>) {
+data class Box<T : Unit>(val point: Point<T>, val size: Size<T>) {
     var x by point[0]::px
     var y by point[1]::px
-    var width by sized[0]::px
-    var height by sized[1]::px
-
-    fun isInside(x: Float, y: Float): Boolean =
-        x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height
+    var width by size[0]::px
+    var height by size[1]::px
 
     /** add the given amount of pixels to each edge of this box */
     fun expand(amount: Float): Box<T> {

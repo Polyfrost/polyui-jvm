@@ -53,6 +53,9 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
      * @see PolyTranslator
      */
     class Text(val key: String, private vararg val objects: Any?) : Cloneable, Serializable {
+        inline val length get() = string.length
+
+        @Transient
         var polyTranslator: PolyTranslator? = null
             set(value) {
                 canTranslate = true
@@ -69,7 +72,7 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
                 return field
             }
             set(value) {
-                if (!initialized) string.length // prompt it to initialize
+                if (canTranslate && !initialized) string.length // prompt it to initialize
                 field = value
             }
 

@@ -35,8 +35,7 @@ import kotlin.math.min
 class ScrollingLayout(
     layout: Layout,
     /** the size of the scrollable area, aka the display size for this layout. Seperate from its actual size. */
-    @get:JvmName("scrollingLayoutSize")
-    val size: Size<Unit>
+    val scrollingSize: Size<Unit>
 ) : PointerLayout(layout) {
     private val anims: MutablePair<Animation?, Animation?> = MutablePair(null, null)
     private val offset = MutablePair(at.a.px, at.b.px)
@@ -55,11 +54,11 @@ class ScrollingLayout(
 
     override fun render() {
         val (ox, oy) = origin
-        renderer.pushScissor(ox - at.a.px, oy - at.b.px, size.a.px, size.b.px)
+        renderer.pushScissor(ox - at.a.px, oy - at.b.px, scrollingSize.a.px, scrollingSize.b.px)
 
         ptr.removeQueue.fastEach { if (it.canBeRemoved()) removeComponentNow(it) }
         ptr.needsRedraw = false
-        val delta = ptr.clock.getDelta()
+        val delta = ptr.clock.delta
 
         val (anim, anim1) = anims
         if (anim?.isFinished == true) {
@@ -89,14 +88,14 @@ class ScrollingLayout(
 
     override fun debugRender() {
         val (ox, oy) = origin
-        renderer.pushScissor(ox - 1f, oy - 1f, size.a.px + 3f, size.b.px + 3f) // the outline overlaps the edge
+        renderer.pushScissor(ox - 1f, oy - 1f, scrollingSize.a.px + 3f, scrollingSize.b.px + 3f) // the outline overlaps the edge
         super.debugRender()
         renderer.popScissor()
     }
 
     override fun isInside(x: Float, y: Float): Boolean {
         val (ox, oy) = origin
-        return x >= ox && x <= ox + size.a.px && y >= oy && y <= oy + size.b.px
+        return x >= ox && x <= ox + scrollingSize.a.px && y >= oy && y <= oy + scrollingSize.b.px
     }
 
     override fun accept(event: Events): Boolean {
@@ -131,7 +130,7 @@ class ScrollingLayout(
             }
 
             // scrollbar.accept(event)
-            ptr.clock.getDelta()
+            ptr.clock.delta
             needsRedraw = true
             return true
         }
@@ -143,41 +142,41 @@ class ScrollingLayout(
             if (toAdd > 0f) { // scroll left
                 min(origin.first - at.a.px, toAdd)
             } else { // scroll right
-                clz(-((ptr.sized!!.a.px - size.a.px) - (origin.first - (at.a.px))), toAdd)
+                clz(-((ptr.size!!.a.px - scrollingSize.a.px) - (origin.first - (at.a.px))), toAdd)
             }
         } else {
             if (toAdd > 0f) { // scroll up
                 min(origin.second - at.b.px, toAdd)
             } else { // scroll down
-                clz(-((ptr.sized!!.b.px - size.b.px) - (origin.second - (at.b.px))), toAdd)
+                clz(-((ptr.size!!.b.px - scrollingSize.b.px) - (origin.second - (at.b.px))), toAdd)
             }
         }
     }
 
     override fun rescale(scaleX: Float, scaleY: Float) {
         super.rescale(scaleX, scaleY)
-        size.scale(scaleX, scaleY)
+        scrollingSize.scale(scaleX, scaleY)
     }
 
     override fun calculateBounds() {
         super.calculateBounds()
-        if (size.a.px == 0f || size.a.px > ptr.sized!!.a.px) size.a.px = ptr.sized!!.a.px
-        if (size.b.px == 0f || size.b.px > ptr.sized!!.b.px) size.b.px = ptr.sized!!.b.px
+        if (scrollingSize.a.px == 0f || scrollingSize.a.px > ptr.size!!.a.px) scrollingSize.a.px = ptr.size!!.a.px
+        if (scrollingSize.b.px == 0f || scrollingSize.b.px > ptr.size!!.b.px) scrollingSize.b.px = ptr.size!!.b.px
         origin.first = at.a.px
         origin.second = at.b.px
     }
 
     class Scrollbar(private val owner: ScrollingLayout, properties: ScrollbarProperties) : Block(
         properties,
-        (owner.at + owner.size),
+        (owner.at + owner.scrollingSize),
         properties.width.px * 0.px
     ) {
         override val properties: ScrollbarProperties
             get() = super.properties as ScrollbarProperties
-        private val contentSize = owner.ptr.sized
-        private val windowSize = owner.size
+        private val contentSize = owner.ptr.size
+        private val windowSize = owner.scrollingSize
         private val normalPos =
-            ((owner.at.a.px + owner.size.b.px) - this.properties.padding - this.properties.width).px * owner.at.b.px.px
+            ((owner.at.a.px + owner.scrollingSize.b.px) - this.properties.padding - this.properties.width).px * owner.at.b.px.px
         private val hiddenPos =
             normalPos.clone()
                 .also { it.a.px += this.properties.width + this.properties.padding }
@@ -219,7 +218,7 @@ class ScrollingLayout(
                 shown = false
                 return
             }
-            sized!!.b.px = max((contentSize.b.px / owner.size.b.px) * contentSize.b.px, properties.minimumHeight)
+            size!!.b.px = max((contentSize.b.px / owner.scrollingSize.b.px) * contentSize.b.px, properties.minimumHeight)
         }
     }
 

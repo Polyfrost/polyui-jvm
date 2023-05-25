@@ -51,7 +51,7 @@ class GLWindow @JvmOverloads constructor(
     init {
         GLFWErrorCallback.createPrint().set()
         if (!glfwInit()) throw RuntimeException("Failed to init GLFW")
-        if (Platform.get() === Platform.MACOSX) {
+        if (Platform.get() == Platform.MACOSX) {
             glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2)
             glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1)
             glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE)
@@ -203,7 +203,7 @@ class GLWindow @JvmOverloads constructor(
             } else {
                 glfwPollEvents()
             }
-            glfwSwapBuffers(handle)
+            if (polyUI.drew) glfwSwapBuffers(handle)
         }
 
         polyUI.cleanup()

@@ -24,19 +24,19 @@ import kotlin.math.max
  */
 open class PixelLayout(
     at: Point<Unit>,
-    sized: Size<Unit>? = null,
+    size: Size<Unit>? = null,
     onAdded: (Drawable.() -> kotlin.Unit)? = null,
     onRemoved: (Drawable.() -> kotlin.Unit)? = null,
     acceptInput: Boolean = true,
     resizesChildren: Boolean = true,
     vararg items: Drawable
-) : Layout(at, sized, onAdded, onRemoved, acceptInput, resizesChildren, *items) {
+) : Layout(at, size, onAdded, onRemoved, acceptInput, resizesChildren, *items) {
 
     init {
         items.forEach {
-            if (it.atUnitType == Unit.Type.Flex || it.atUnitType == Unit.Type.Grid) {
+            if (it.atType == Unit.Type.Flex || it.atType == Unit.Type.Grid) {
                 // todo make special exceptions that can tell you more verbosely which component is at fault
-                throw Exception("Unit type mismatch: Drawable $it does not have a valid unit type for layout: ${this.simpleName} (using ${it.atUnitType})")
+                throw Exception("Unit type mismatch: Drawable $it does not have a valid unit type for layout: ${this.simpleName} (using ${it.atType})")
             }
         }
     }
@@ -51,12 +51,12 @@ open class PixelLayout(
             it.layout = this
             it.calculateBounds()
         }
-        if (this.sized == null) {
-            sized = getSize()
+        if (this.size == null) {
+            size = calculateSize()
         }
     }
 
-    override fun getSize(): Vec2<Unit> {
+    override fun calculateSize(): Vec2<Unit> {
         var width = children.maxOfOrNull { it.x + it.width } ?: 0f
         width = max(width, components.maxOfOrNull { it.x + it.width } ?: 0f)
         var height = children.maxOfOrNull { it.y + it.height } ?: 0f

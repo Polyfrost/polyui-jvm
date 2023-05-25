@@ -42,7 +42,7 @@ class GridLayout @JvmOverloads constructor(
         var nrows = 0
         var ncols = 0
         items.forEach {
-            if (it.atUnitType != Unit.Type.Grid) {
+            if (it.atType != Unit.Type.Grid) {
                 throw Exception("Unit type mismatch: Drawable $it needs to be placed using a Grid unit for a grid layout.")
             }
             val u = it.at.a as Unit.Grid
@@ -107,8 +107,8 @@ class GridLayout @JvmOverloads constructor(
                 grid.forEachIndexed { i, row ->
                     val cellw = row.maxOfOrNull { it?.width ?: 0f } ?: 0f
                     val cellh = row.maxOfOrNull { it?.height ?: 0f } ?: 0f
-                    if (cellw == 0f) throw Exception("Row $i has no sized items in it. Please specify at least one's sized width.")
-                    if (cellh == 0f) throw Exception("Row $i has no sized items in it. Please specify at least one's sized height.")
+                    if (cellw == 0f) throw Exception("Row $i has no sized items in it. Please specify at least one's width.")
+                    if (cellh == 0f) throw Exception("Row $i has no sized items in it. Please specify at least one's height.")
                     row.forEach {
                         if (it != null) placeItem(atX, atY, cellw, cellh, it)
                         atX += cellw + gap.mainGap.px
@@ -138,20 +138,20 @@ class GridLayout @JvmOverloads constructor(
             }
         }
 
-        this.sized = Size(width.px, height.px)
+        this.size = Size(width.px, height.px)
     }
 
     private fun placeItem(atX: Float, atY: Float, cellw: Float, cellh: Float, it: Drawable) {
         it.at.a.px = atX
         it.at.b.px = atY
-        if (it.sized == null) {
-            it.sized = Size(cellw.px, cellh.px)
+        if (it.size == null) {
+            it.size = Size(cellw.px, cellh.px)
             return
         }
         when (contentStretch) {
             ContentStretch.FillCell -> {
-                it.sized!!.a.px = cellw
-                it.sized!!.b.px = cellh
+                it.size!!.a.px = cellw
+                it.size!!.b.px = cellh
             }
 
             ContentStretch.DontStretch -> {
@@ -161,11 +161,11 @@ class GridLayout @JvmOverloads constructor(
             ContentStretch.FillRespectAspectRatio -> {
                 val ratio = it.width / it.height
                 if (ratio > 1) {
-                    it.sized!!.a.px = cellw
-                    it.sized!!.b.px = cellw / ratio
+                    it.size!!.a.px = cellw
+                    it.size!!.b.px = cellw / ratio
                 } else {
-                    it.sized!!.a.px = cellh * ratio
-                    it.sized!!.b.px = cellh
+                    it.size!!.a.px = cellh * ratio
+                    it.size!!.b.px = cellh
                 }
             }
         }

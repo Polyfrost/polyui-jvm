@@ -18,6 +18,7 @@ import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
+import cc.polyfrost.polyui.utils.MutablePair
 import cc.polyfrost.polyui.utils.fastEach
 import cc.polyfrost.polyui.utils.fastRemoveIf
 
@@ -32,7 +33,7 @@ abstract class Component @JvmOverloads constructor(
     properties: Properties? = null,
     /** position relative to this layout. */
     override val at: Point<Unit>,
-    override var sized: Size<Unit>? = null,
+    override var size: Size<Unit>? = null,
     acceptInput: Boolean = true,
     vararg events: Events.Handler
 ) : Drawable(acceptInput) {
@@ -43,13 +44,13 @@ abstract class Component @JvmOverloads constructor(
     var rotation: Double = 0.0
 
     // needed for translation when rotating
-    private var atCache: Pair<Float, Float>? = null
+    private var atCache: MutablePair<Float, Float>? = null
 
     @PublishedApi // there's gotta be a more elegant way of doing this
     internal var p: Properties? = properties
     open val properties get() = p!!
     lateinit var color: Color.Mutable
-    protected var sizedBySelf = false
+    protected var autoSized = false
     protected var finishColorFunc: (Component.() -> kotlin.Unit)? = null
     final override lateinit var layout: Layout
     open lateinit var boundingBox: Box<Unit>
@@ -97,7 +98,7 @@ abstract class Component @JvmOverloads constructor(
     ) {
         addOperation(DrawableOp.Rotate(Math.toRadians(degrees), this, animation, durationNanos), onFinish)
         if (atCache != null) return
-        atCache = at.a.px to at.b.px
+        atCache = MutablePair(at.a.px, at.b.px)
         at.a.px = -width / 2f
         at.b.px = -height / 2f
     }
@@ -118,6 +119,25 @@ abstract class Component @JvmOverloads constructor(
         addOperation(DrawableOp.Move(to, this, animation, durationNanos), onFinish)
     }
 
+    /**
+     * Bulk-add drawable operations to this component.
+     * @see move
+     * @see resize
+     * @see rotate
+     * @see DrawableOp
+     */
+    fun animate(
+        to: Vec2<Unit>? = null,
+        size: Vec2<Unit>? = null,
+        degrees: Double = 0.0,
+        animation: Animation.Type? = null,
+        durationNanos: Long = 1L.seconds
+    ) {
+        if (to != null) move(to, animation, durationNanos)
+        if (size != null) resize(size, animation, durationNanos)
+        if (degrees != 0.0) rotate(degrees, animation, durationNanos)
+    }
+
     /** resize this component to the given size. */
     fun resize(
         toSize: Size<Unit>,
@@ -129,14 +149,16 @@ abstract class Component @JvmOverloads constructor(
         addOperation(DrawableOp.Resize(toSize, this, animation, durationNanos), onFinish)
     }
 
-    open fun animate(animation: Animation, onFinish: (Component.() -> kotlin.Unit)? = null) {
+    open fun addAnimation(animation: Animation, onFinish: (Component.() -> kotlin.Unit)? = null) {
         animations.add(animation to onFinish)
     }
 
     override fun rescale(scaleX: Float, scaleY: Float) {
         super.rescale(scaleX, scaleY)
-        atCache?.first?.times(scaleX)
-        atCache?.second?.times(scaleY)
+        if (atCache != null) {
+            atCache!!.first = atCache!!.first * scaleX
+            atCache!!.second = atCache!!.second * scaleY
+        }
     }
 
     open fun recolor(
@@ -150,23 +172,22 @@ abstract class Component @JvmOverloads constructor(
     }
 
     override fun calculateBounds() {
-        if (sized == null) {
-            sized = if (properties.size != null) {
+        if (size == null) {
+            size = if (properties.size != null) {
                 properties.size!!.clone()
             } else {
-                sizedBySelf = true
-                getSize()
+                autoSized = true
+                calculateSize()
                     ?: throw UnsupportedOperationException("getSize() not implemented for ${this::class.simpleName}!")
             }
         }
         doDynamicSize()
 
-        boundingBox = Box(at, sized!!).expand(properties.padding)
+        boundingBox = Box(at, size!!).expand(properties.padding)
     }
 
     fun wantRedraw() {
         layout.needsRedraw = true
-        layout.clock.getDelta()
     }
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {
@@ -242,13 +263,17 @@ abstract class Component @JvmOverloads constructor(
         return animations.size == 0 && operations.size == 0 && !color.updating
     }
 
+    override fun toString(): String {
+        return "$simpleName(${trueX}x$trueY, ${size!!.a.px}x${size!!.b.px}${if (autoSized) " (auto)" else ""}${if (animations.isNotEmpty()) ", animating" else ""}${if (operations.isNotEmpty()) ", operating" else ""})"
+    }
+
     override fun isInside(x: Float, y: Float): Boolean {
         return if (atCache == null) {
             super.isInside(x, y)
         } else {
             val tx = atCache!!.first + layout.at.a.px
             val ty = atCache!!.second + layout.at.b.px
-            x >= tx && x <= tx + this.sized!!.a.px && y >= ty && y <= ty + this.sized!!.b.px
+            x >= tx && x <= tx + this.size!!.a.px && y >= ty && y <= ty + this.size!!.b.px
         }
     }
 }

@@ -38,7 +38,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 abstract class Layout(
     override val at: Point<Unit>,
-    override var sized: Size<Unit>? = null,
+    override var size: Size<Unit>? = null,
     internal val onAdded: (Drawable.() -> kotlin.Unit)? = null,
     internal val onRemoved: (Drawable.() -> kotlin.Unit)? = null,
     /** If this layout can receive events (separate to its children!). */
@@ -46,9 +46,16 @@ abstract class Layout(
     val resizesChildren: Boolean = true,
     vararg items: Drawable
 ) : Drawable(acceptInput) {
-    open val components = arrayListOf(*items.filterIsInstance<Component>().toTypedArray())
-    open val children = arrayListOf(*items.filterIsInstance<Layout>().toTypedArray())
-    open var needsRedraw = true
+    open val components = items.filterIsInstance<Component>() as ArrayList
+    open val children = items.filterIsInstance<Layout>() as ArrayList
+    internal open var needsRedraw = true
+        set(value) {
+            if (value && !field) {
+                layout?.needsRedraw = true
+                clock.delta
+            }
+            field = value
+        }
     open val clock = Clock()
 
     /** tracker variable for framebuffer disabling/enabling. don't touch this. */
@@ -79,7 +86,6 @@ abstract class Layout(
      */
     open fun reRenderIfNecessary() {
         children.fastEach {
-            if (it.needsRedraw) needsRedraw = true // child is going to redraw, so we need to as well
             it.reRenderIfNecessary()
         }
         if (fbo != null && fboTracker < 2) {
@@ -89,12 +95,14 @@ abstract class Layout(
                 render()
                 renderer.unbindFramebuffer(fbo!!)
             }
-            renderer.drawFramebuffer(fbo!!, at.a.px, at.b.px, sized!!.a.px, sized!!.b.px)
+            renderer.drawFramebuffer(fbo!!, at.a.px, at.b.px, size!!.a.px, size!!.b.px)
         } else {
-            renderer.pushScissor(at.a.px, at.b.px, sized!!.a.px, sized!!.b.px)
-            renderer.translate(at.a.px, at.b.px)
+            val x = at.a.px // fix scrolling issue where objects could move very slightly
+            val y = at.b.px
+            renderer.pushScissor(x, y, size!!.a.px, size!!.b.px)
+            renderer.translate(x, y)
             render()
-            renderer.translate(-at.a.px, -at.b.px)
+            renderer.translate(-x, -y)
             renderer.popScissor()
             if (!needsRedraw && fboTracker > 1) {
                 needsRedraw = true
@@ -223,8 +231,8 @@ abstract class Layout(
             it.layout = this
             it.calculateBounds()
         }
-        if (this.sized == null) {
-            this.sized = getSize()
+        if (this.size == null) {
+            this.size = calculateSize()
                 ?: throw UnsupportedOperationException("getSize() not implemented for ${this::class.simpleName}!")
         }
     }
@@ -237,8 +245,9 @@ abstract class Layout(
     /** render this layout's components, and remove them if they are ready to be removed. */
     override fun render() {
         removeQueue.fastEach { if (it.canBeRemoved()) removeComponentNow(it) }
+        val delta = clock.delta
+        if (components.isEmpty()) return
         needsRedraw = false
-        val delta = clock.getDelta()
         components.fastEach {
             it.preRender(delta)
             it.render()
@@ -259,7 +268,7 @@ abstract class Layout(
         println("Children: ${children.size}")
         println("Components: ${components.size}")
         println("At: $at")
-        println("Sized: $sized")
+        println("Size: $size")
         println("Needs redraw: $needsRedraw")
         println("FBO: $fbo")
         println("Layout: $layout")
@@ -268,7 +277,7 @@ abstract class Layout(
     }
 
     override fun debugRender() {
-        renderer.drawHollowRect(at.a.px, at.b.px, sized!!.a.px, sized!!.b.px, Color.GRAYf, 2f)
+        renderer.drawHollowRect(at.a.px, at.b.px, size!!.a.px, size!!.b.px, Color.GRAYf, 2f)
         renderer.drawText(Renderer.DefaultFont, at.a.px + 1f, at.b.px + 1f, simpleName, Color.WHITE, 10f)
         children.fastEach { it.debugRender() }
         components.fastEach { it.debugRender() }
@@ -300,6 +309,10 @@ abstract class Layout(
     fun scrolling(size: Size<Unit>): ScrollingLayout {
         if (this is ScrollingLayout) return this
         return ScrollingLayout(this, size)
+    }
+
+    override fun toString(): String {
+        return "$simpleName(${trueX}x$trueY, ${size!!.a.px} x ${size!!.b.px}${if (fbo != null) ", buffered" else ""}${if (fbo != null && needsRedraw) ", needsRedraw" else ""})"
     }
 
     companion object {

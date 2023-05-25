@@ -29,13 +29,14 @@ class DraggableLayout(layout: Layout) : PointerLayout(layout) {
     private var mouseClickY = 0f
     private var mouseDown = false
 
-    override fun reRenderIfNecessary() {
+    override fun render() {
+        super.render()
         if (mouseDown) {
             if (!polyui.eventManager.mouseDown) mouseDown = false
+            ptr.needsRedraw = true
             ptr.at.a.px = polyui.eventManager.mouseX - mouseClickX
             ptr.at.b.px = polyui.eventManager.mouseY - mouseClickY
         }
-        super.reRenderIfNecessary()
     }
 
     override fun accept(event: Events): Boolean {
@@ -44,6 +45,8 @@ class DraggableLayout(layout: Layout) : PointerLayout(layout) {
             mouseClickX = polyui.eventManager.mouseX - ptr.at.a.px
             mouseClickY = polyui.eventManager.mouseY - ptr.at.b.px
             mouseDown = components.noneAre { it.mouseOver } && children.noneAre { it.mouseOver }
+            ptr.needsRedraw = true
+            return true
         }
         return super.accept(event)
     }

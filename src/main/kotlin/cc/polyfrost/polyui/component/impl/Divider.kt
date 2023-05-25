@@ -25,14 +25,14 @@ class Divider @JvmOverloads constructor(
     val direction: Direction = Direction.Horizontal
 ) : Component(properties, at, null, false) {
     override fun render() {
-        renderer.drawLine(at.a.px, at.b.px, at.a.px + sized!!.a.px, at.b.px + sized!!.b.px, properties.color, (properties as DividerProperties).thickness)
+        renderer.drawLine(at.a.px, at.b.px, at.a.px + size!!.a.px, at.b.px + size!!.b.px, properties.color, (properties as DividerProperties).thickness)
     }
 
     override fun calculateBounds() {
-        sized = getSize()
+        size = calculateSize()
     }
 
-    override fun getSize(): Vec2<Unit> {
+    override fun calculateSize(): Vec2<Unit> {
         return when (direction) {
             Direction.Horizontal -> Vec2(length, 0.px)
             Direction.Vertical -> Vec2(0.px, length)
