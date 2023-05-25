@@ -7,6 +7,8 @@
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  */
 
+@file:Suppress("EqualsOrHashCode")
+
 package cc.polyfrost.polyui.event
 
 import cc.polyfrost.polyui.component.Component

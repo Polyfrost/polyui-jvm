@@ -267,7 +267,7 @@ class TextInput(
         }
     }
 
-    override fun resetText() {
+    override fun reset() {
         properties.defaultText.reset()
         text.text = properties.defaultText.clone()
     }

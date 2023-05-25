@@ -8,7 +8,7 @@
  */
 
 /** This file contains various utilities for arrays and arraylists. */
-@file:Suppress("ReplaceManualRangeWithIndicesCalls", "ReplaceSizeZeroCheckWithIsEmpty")
+@file:Suppress("ReplaceManualRangeWithIndicesCalls", "ReplaceSizeZeroCheckWithIsEmpty", "UNCHECKED_CAST")
 
 package cc.polyfrost.polyui.utils
 

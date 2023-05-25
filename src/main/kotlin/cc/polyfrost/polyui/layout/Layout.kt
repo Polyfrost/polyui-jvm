@@ -46,8 +46,14 @@ abstract class Layout(
     val resizesChildren: Boolean = true,
     vararg items: Drawable
 ) : Drawable(acceptInput) {
+    /** list of components in this layout. */
     open val components = items.filterIsInstance<Component>() as ArrayList
+    /** list of child layouts in this layout */
     open val children = items.filterIsInstance<Layout>() as ArrayList
+
+    /**
+     * Weather this layout needs redrawing.
+     */
     internal open var needsRedraw = true
         set(value) {
             if (value && !field) {
@@ -56,14 +62,24 @@ abstract class Layout(
             }
             field = value
         }
+    /** clock for this layout's animations, etc. */
     open val clock = Clock()
 
     /** tracker variable for framebuffer disabling/enabling. don't touch this. */
     internal open var fboTracker = 0
+
+    /** removal queue of drawables.
+     * @see removeComponent
+     */
     open val removeQueue = arrayListOf<Drawable>()
 
     /** set this to true if you want this layout to never use a framebuffer. Recommended in situations with chroma colors */
     open var refuseFramebuffer: Boolean = false
+
+    /** framebuffer attached to this layout.
+     * @see refuseFramebuffer
+     * @see cc.polyfrost.polyui.property.Settings.minItemsForFramebuffer
+     */
     open var fbo: Framebuffer? = null // these all have to be open for ptr layout
         set(value) {
             if (!refuseFramebuffer) field = value
@@ -115,6 +131,23 @@ abstract class Layout(
     open fun onAll(onChildLayouts: Boolean = false, function: Component.() -> kotlin.Unit) {
         components.fastEach { it.function() }
         if (onChildLayouts) children.fastEach { it.onAll(true, function) }
+    }
+
+    /**
+     * return a component in this layout, by its simple name. This can be accessed using [debugPrint][cc.polyfrost.polyui.PolyUI.debugPrint] or using the [field][cc.polyfrost.polyui.component.Component.simpleName].
+     * @throws IllegalArgumentException if the component does not exist
+     * @see getOrNull
+     */
+    inline operator fun get(simpleName: String) = getOrNull(simpleName) ?: throw IllegalArgumentException("No component found in ${this.simpleName} with ID $simpleName!")
+
+    /**
+     * return a component in this layout, by its simple name. This can be accessed using [debugPrint][cc.polyfrost.polyui.PolyUI.debugPrint] or using the [field][cc.polyfrost.polyui.component.Component.simpleName].
+     * Returns null if not found.
+     * @see get
+     */
+    inline fun getOrNull(simpleName: String): Component? {
+        components.fastEach { if (it.simpleName == simpleName) return it }
+        return null
     }
 
     /**
@@ -283,7 +316,6 @@ abstract class Layout(
         components.fastEach { it.debugRender() }
     }
 
-    /** give this, and all its children, a renderer. */
     override fun setup(renderer: Renderer, polyui: PolyUI) {
         super.setup(renderer, polyui)
         components.fastEach { it.setup(renderer, polyui) }
@@ -292,9 +324,9 @@ abstract class Layout(
 
     override fun canBeRemoved() = !needsRedraw
 
-    final override fun resetText() {
-        components.fastEach { it.resetText() }
-        children.fastEach { it.resetText() }
+    final override fun reset() {
+        components.fastEach { it.reset() }
+        children.fastEach { it.reset() }
     }
 
     /** wraps this layout in a [DraggableLayout] (so you can drag it) */

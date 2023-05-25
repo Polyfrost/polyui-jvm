@@ -43,12 +43,21 @@ abstract class Component @JvmOverloads constructor(
     /** current rotation of this component (radians). */
     var rotation: Double = 0.0
 
-    // needed for translation when rotating
+    /** translation cache for rotating */
     private var atCache: MutablePair<Float, Float>? = null
 
     @PublishedApi // there's gotta be a more elegant way of doing this
     internal var p: Properties? = properties
+
+    /** properties for the component. This is `open` so you can cast it, like so:
+     * ```
+     * final override val properties: YourProperties
+     *     get() = super.properties as YourProperties
+     * ```
+     * @see Properties
+     */
     open val properties get() = p!!
+    /** the color of this component. */
     lateinit var color: Color.Mutable
     protected var autoSized = false
     protected var finishColorFunc: (Component.() -> kotlin.Unit)? = null
@@ -161,6 +170,10 @@ abstract class Component @JvmOverloads constructor(
         }
     }
 
+
+    /**
+     * recolor this component's color.
+     */
     open fun recolor(
         toColor: Color,
         animation: Animation.Type,

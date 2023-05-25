@@ -25,7 +25,9 @@ import cc.polyfrost.polyui.unit.Unit
 abstract class Drawable(open var acceptsInput: Boolean = true) {
     open val eventHandlers = mutableMapOf<Events, Drawable.() -> Boolean>()
     open var simpleName = "${this::class.simpleName}@${Integer.toHexString(this.hashCode())}"
+    /** position **relative** to the [parents][layout] position. */
     abstract val at: Point<Unit>
+    /** size of this drawable. */
     abstract var size: Size<Unit>?
     internal open lateinit var renderer: Renderer
     internal open lateinit var polyui: PolyUI
@@ -85,7 +87,7 @@ abstract class Drawable(open var acceptsInput: Boolean = true) {
      */
     abstract fun canBeRemoved(): Boolean
 
-    /** implement this method to add a debug render overlay for this drawable. */
+    /** add a debug render overlay for this drawable. This is always rendered regardless of the layout re-rendering if debug mode is on. */
     open fun debugRender() {
         // no-op
     }
@@ -104,6 +106,7 @@ abstract class Drawable(open var acceptsInput: Boolean = true) {
         this.eventHandlers[event] = handler
     }
 
+
     @JvmName("addEventhook")
     protected fun addEventHook(event: Events, handler: Drawable.() -> kotlin.Unit) {
         this.eventHandlers[event] = {
@@ -112,26 +115,36 @@ abstract class Drawable(open var acceptsInput: Boolean = true) {
         }
     }
 
-    /** Use this function to reset your component's [PolyText][cc.polyfrost.polyui.input.PolyTranslator] if it is using one */
-    open fun resetText() {
+    /** Use this function to reset your component's [PolyText][cc.polyfrost.polyui.input.PolyTranslator] if it is using one. */
+    open fun reset() {
         // no-op
     }
 
+    /** give this a renderer reference and a PolyUI reference.
+     *
+     * You can also use this method to do some calculations (such as text widths) that are not dependent on other sizes.
+     *
+     * If you need a method that has access to component's sizes, see [here][calculateBounds] or [here][calculateSize] (if you are operating on yourself only).
+     */
     internal open fun setup(renderer: Renderer, polyui: PolyUI) {
         this.renderer = renderer
         this.polyui = polyui
     }
 
-    /** implement this method to add a debug print message for this drawable. */
+    /** debug print for this drawable.*/
     open fun debugPrint() {
-        PolyUI.LOGGER.warn("Drawable {} has no debug print method implemented, defaulting to no-op.", this)
+        // noop
     }
 
+    /**
+     * returns true if the given coordinates are inside this drawable.
+     */
     open fun isInside(x: Float, y: Float): Boolean {
         val tx = trueX
         val ty = trueY
         return x >= tx && x <= tx + this.size!!.a.px && y >= ty && y <= ty + this.size!!.b.px
     }
+
 
     protected fun doDynamicSize() {
         doDynamicSize(at)

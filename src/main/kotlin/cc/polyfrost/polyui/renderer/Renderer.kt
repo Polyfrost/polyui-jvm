@@ -35,6 +35,7 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
     var alphaCap: Float = 1f
 
     /** settings instance for this renderer. */
+    @Suppress("LeakingThis")
     val settings = Settings(this)
 
     /** the pixel ratio of the screen, used mainly on Apple screens which use high-dpi. */
@@ -42,6 +43,7 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
         internal set
 
     /** hook into this renderer. */
+    @Suppress("UNUSED_EXPRESSION")
     internal inline fun alsoRender(block: Renderer.() -> kotlin.Unit) = block()
 
     abstract fun beginFrame()
@@ -55,9 +57,7 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
      * Note that this call is capped by [capAlpha], so if a value higher than [capAlpha]'s value is set, it will just set it to that.
      * @see capAlpha
      * */
-    fun globalAlpha(alpha: Float) {
-        gblAlpha(min(alphaCap, alpha))
-    }
+    fun globalAlpha(alpha: Float) = gblAlpha(min(alphaCap, alpha))
 
     /** set a maximum alpha value for all future draw calls, in the range (0-1), until [reset][resetAlphaCap]. This is useful for fading in/out all of PolyUI, for example.
      *

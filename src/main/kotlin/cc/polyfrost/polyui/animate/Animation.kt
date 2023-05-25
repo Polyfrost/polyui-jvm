@@ -18,7 +18,7 @@ import cc.polyfrost.polyui.animate.animations.*
  *
  * PolyUI comes with many default [animations][cc.polyfrost.polyui.animate.animations], which you can use. To give the user some choice, you can also use the [Animations.create()][Animation.Type.create] to dynamically create them.
  *
- * check out [DrawableOperation][cc.polyfrost.polyui.component.DrawableOp] for more information on how to use animations dynamically; and [transistions][cc.polyfrost.polyui.animate.transitions] for more information on how to use animations with components.
+ * check out [DrawableOperation][cc.polyfrost.polyui.component.DrawableOp] for more information on how to use animations dynamically; and [transitions][cc.polyfrost.polyui.animate.transitions] for more information on how to use animations with components.
  */
 abstract class Animation(val durationNanos: Long, val from: Float, val to: Float) : Cloneable {
     val range = to - from
@@ -54,6 +54,8 @@ abstract class Animation(val durationNanos: Long, val from: Float, val to: Float
         EaseInOutQuad,
         EaseInOutQuart;
 
+        /** create an animation based on the type.
+         * @see Animations */
         fun create(durationNanos: Long, start: Float, end: Float): Animation {
             if (start == end) return Linear(1L, 0f, 0f) // prevent empty animations
             return when (this) {

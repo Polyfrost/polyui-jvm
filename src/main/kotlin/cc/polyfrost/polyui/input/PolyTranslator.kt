@@ -44,7 +44,7 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
     fun setLocale(locale: String) {
         currentFile = "$translationDir/$locale.lang"
         map.clear()
-        polyUI.master.resetText()
+        polyUI.master.reset()
     }
 
     /** Internal representation of a string in PolyUI.

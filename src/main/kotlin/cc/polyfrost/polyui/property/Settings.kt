@@ -59,7 +59,7 @@ class Settings(private val renderer: Renderer) {
      */
     var comboMaxInterval: Long = 200L.milliseconds
 
-    /** maximum amount of clicks that can be comboed in any interval
+    /** maximum amount of clicks that can be combo-ed in any interval
      * @see comboMaxInterval
      * @see clearComboWhenMaxed
      */

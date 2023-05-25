@@ -37,6 +37,14 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         (a * 255).toInt()
     )
 
+    /** return an integer representation of this color.
+     * Utilizes bit-shifts to store the color as one 32-bit integer, like so:
+     *
+     * `0bAAAAAAAARRRRRRRRGGGGGGGGBBBBBBBB`
+     * aka `0xAARRGGBB`
+     *
+     * @see cc.polyfrost.polyui.utils.toColor
+     */
     open fun getARGB(): Int {
         return (a shl 24) or (r shl 16) or (g shl 8) or b
     }
@@ -111,15 +119,11 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
 
         /** @see from(hex) */
         @JvmStatic
-        fun from(hex: String, alpha: Int = 255): Color {
-            return from(hex + alpha.toString(16))
-        }
+        fun from(hex: String, alpha: Int = 255) = from(hex + alpha.toString(16))
 
         /** @see from(hex) */
         @JvmStatic
-        fun from(hex: String, alpha: Float = 1f): Color {
-            return from(hex, (alpha * 255).toInt())
-        }
+        fun from(hex: String, alpha: Float = 1f) = from(hex, (alpha * 255).toInt())
     }
 
     /**
@@ -135,11 +139,17 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         /** Set this in your Color class if it's always updating, but still can be removed while updating, for
          * example a chroma color, which always needs to update, but still can be removed any time.
          * @see Chroma
+         * @see updating
          */
         open val alwaysUpdates get() = false
+
+        /** return if the color is still updating (i.e. it has an animation to finish)
+         * @see alwaysUpdates
+         */
         open val updating get() = animation != null
         private var animation: Array<Animation>? = null
 
+        /** turn this mutable color into an immutable one. */
         fun toImmutable() = Color(r, g, b, a)
 
         @Deprecated("This would convert a mutable color to a mutable one.", replaceWith = ReplaceWith("clone()"))

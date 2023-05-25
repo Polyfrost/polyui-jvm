@@ -45,7 +45,7 @@ open class FocusedEvents : Event {
      *
      * @see [Keys]
      * @see [KeyModifiers]
-     * @see [KeyModifiers.Companion.fromModifierMerged]
+     * @see [cc.polyfrost.polyui.input.Modifiers.fromModifierMerged]
      */
     data class KeyPressed(val key: Keys, val mods: Short = 0, val isRepeat: Boolean = false) : FocusedEvents() {
         override fun toString(): String = "KeyPressed(${Keys.toString(key, mods)})"

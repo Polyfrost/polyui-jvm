@@ -121,7 +121,7 @@ class KeyBinder {
     @OverloadResolutionByLambdaReturnType
     fun add(key: Char, vararg modifiers: KeyModifiers, keybind: () -> Boolean) {
         val mods = modifiers.merge()
-        add0(listeners[FocusedEvents.KeyTyped(key, mods, false)], key, mods) { keybind() }
+        add0(listeners[FocusedEvents.KeyTyped(key, mods, false)], key, mods, keybind)
     }
 
     /**
@@ -129,7 +129,7 @@ class KeyBinder {
      * Return true to prevent other keybindings from being called.
      */
     @OverloadResolutionByLambdaReturnType
-    @JvmName("AddListener")
+    @JvmName("AddListener")     // The following declarations have the same JVM signature add(C[Lcc/polyfrost/polyui/input/Modifiers;Lkotlin/jvm/functions/Function0;)V
     fun add(key: Char, vararg modifiers: KeyModifiers, keybind: () -> Unit) {
         val mods = modifiers.merge()
         add0(listeners[FocusedEvents.KeyTyped(key, mods, false)], key, mods) { keybind(); true }
@@ -153,7 +153,7 @@ class KeyBinder {
     @OverloadResolutionByLambdaReturnType
     fun add(key: Keys, vararg modifiers: KeyModifiers, keybind: () -> Boolean) {
         val mods = modifiers.merge()
-        add0(listeners[FocusedEvents.KeyPressed(key, mods, false)], key, mods) { keybind() }
+        add0(listeners[FocusedEvents.KeyPressed(key, mods, false)], key, mods, keybind)
     }
 
     /**
@@ -174,6 +174,6 @@ class KeyBinder {
     @OverloadResolutionByLambdaReturnType
     fun add(button: Mouse, vararg modifiers: KeyModifiers, keybind: () -> Boolean) {
         val mods = modifiers.merge()
-        add0(listeners[Events.MouseClicked(button.value.toInt(), 1, mods)], button, mods) { keybind() }
+        add0(listeners[Events.MouseClicked(button.value.toInt(), 1, mods)], button, mods, keybind)
     }
 }

@@ -187,7 +187,7 @@ enum class Modifiers(val keyName: String, val value: Short) {
     LMETA("Left Meta", 0b01000000),
     RMETA("Right Meta", 0b10000000),
 
-    /** you will never this value. */
+    /** you will never receive this value. */
     UNKNOWN("Unknown", 0);
 
     companion object {

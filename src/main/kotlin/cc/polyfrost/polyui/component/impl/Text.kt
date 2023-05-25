@@ -88,7 +88,7 @@ open class Text @JvmOverloads constructor(
 
     operator fun get(index: Int) = str[index]
 
-    override fun resetText() = str.text.reset()
+    override fun reset() = str.text.reset()
 
     fun getByCharIndex(index: Int) = str.getByCharIndex(index)
 

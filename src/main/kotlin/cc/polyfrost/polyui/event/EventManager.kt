@@ -33,6 +33,7 @@ class EventManager(private val polyUI: PolyUI) {
     var mouseY: Float = 0f
         private set
     private var clickTimer: Long = 0L
+    /** @see cc.polyfrost.polyui.input.Modifiers */
     var keyModifiers: Short = 0
         private set
 
@@ -80,11 +81,12 @@ class EventManager(private val polyUI: PolyUI) {
         keyModifiers = keyModifiers xor modifier
     }
 
+    /** call this function to update the mouse position. It also will update all necessary mouse over flags. */
     fun setMousePosAndUpdate(x: Float, y: Float) {
         mouseX = x
         mouseY = y
         if (!mouseDown) {
-            onApplicableDrawables_dontCheckChildren(x, y) {
+            onApplicableDrawablesUnsafe(x, y) {
                 // we only need to check acceptsInput here as it controls the mouseOver flag, so if it doesn't accept input, mouseOver is always false
                 if (isInside(x, y) && acceptsInput) {
                     if (!mouseOver) {
@@ -124,7 +126,7 @@ class EventManager(private val polyUI: PolyUI) {
     }
 
     // don't check if the drawable is inside the mouse, this is unsafe and should only be used in setMousePosAndUpdate
-    private inline fun onApplicableDrawables_dontCheckChildren(x: Float, y: Float, func: Drawable.() -> Unit) {
+    private inline fun onApplicableDrawablesUnsafe(x: Float, y: Float, func: Drawable.() -> Unit) {
         return onApplicableLayouts(x, y) {
             components.fastEach { func(it) }
             if (acceptsInput) func()
@@ -146,6 +148,7 @@ class EventManager(private val polyUI: PolyUI) {
         }
     }
 
+    /** call this function when a mouse button is released. */
     fun onMouseReleased(button: Int) {
         if (button == 0) {
             mouseDown = false
@@ -187,6 +190,8 @@ class EventManager(private val polyUI: PolyUI) {
         }
     }
 
+    /** call this function when the mouse is scrolled. */
+    @Suppress("NAME_SHADOWING")
     fun onMouseScrolled(amountX: Int, amountY: Int) {
         val amountX = if (polyUI.settings.naturalScrolling) amountX else -amountX
         val amountY = if (polyUI.settings.naturalScrolling) amountY else -amountY

@@ -28,7 +28,6 @@ indent_style = space
 indent_size = 4
 
 [*.{kt,kts}]
-ktlint_code_style = official
-ktlint_function_signature_body_expression_wrapping = default
+ij_kotlin_code_style_defaults = KOTLIN_OFFICIAL
 
 
