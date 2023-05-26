@@ -48,6 +48,7 @@ abstract class Layout(
 ) : Drawable(acceptInput) {
     /** list of components in this layout. */
     open val components = items.filterIsInstance<Component>() as ArrayList
+
     /** list of child layouts in this layout */
     open val children = items.filterIsInstance<Layout>() as ArrayList
 
@@ -62,6 +63,7 @@ abstract class Layout(
             }
             field = value
         }
+
     /** clock for this layout's animations, etc. */
     open val clock = Clock()
 

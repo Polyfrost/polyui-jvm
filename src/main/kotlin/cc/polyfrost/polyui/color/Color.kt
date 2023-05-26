@@ -11,6 +11,7 @@ package cc.polyfrost.polyui.color
 
 import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.animate.Animation
+import cc.polyfrost.polyui.utils.HSBtoRGB
 
 /**
  * # Color
@@ -45,9 +46,10 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
      *
      * @see cc.polyfrost.polyui.utils.toColor
      */
-    open fun getARGB(): Int {
-        return (a shl 24) or (r shl 16) or (g shl 8) or b
-    }
+    open val argb: Int
+        get() {
+            return (a shl 24) or (r shl 16) or (g shl 8) or b
+        }
 
     /**
      * @return a new, [mutable][Mutable] version of this color
@@ -74,10 +76,19 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
     }
 
     companion object {
+        @JvmField
         val TRANSPARENT = Color(0f, 0f, 0f, 0f)
+
+        @JvmField
         val WHITE = Color(1f, 1f, 1f, 1f)
+
+        @JvmField
         val WHITE_90 = Color(0.9f, 0.9f, 0.9f, 1f)
+
+        @JvmField
         val BLACK = Color(0f, 0f, 0f, 1f)
+
+        @JvmField
         val GRAYf = Color(0.5f, 0.5f, 0.5f, 0.5f)
 
         /**
@@ -153,9 +164,7 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         fun toImmutable() = Color(r, g, b, a)
 
         @Deprecated("This would convert a mutable color to a mutable one.", replaceWith = ReplaceWith("clone()"))
-        override fun toMutable(): Mutable {
-            return clone()
-        }
+        override fun toMutable() = clone()
 
         /**
          * recolor this color to the target color, with the given animation type and duration.
@@ -204,9 +213,7 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
             return false
         }
 
-        override fun clone(): Mutable {
-            return Mutable(r, g, b, a)
-        }
+        override fun clone() = Mutable(r, g, b, a)
     }
 
     /** A gradient color. */
@@ -251,9 +258,10 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
             "Use [getARGB1] or [getARGB2] instead for gradient colors, as to not to confuse the end user.",
             ReplaceWith("getARGB1()")
         )
-        override fun getARGB(): Int {
-            return super.getARGB()
-        }
+        override val argb: Int
+            get() {
+                return super.argb
+            }
 
         override fun equals(other: Any?): Boolean {
             if (other == null) return false
@@ -264,13 +272,8 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
             return false
         }
 
-        fun getARGB1(): Int {
-            return super.getARGB()
-        }
-
-        fun getARGB2(): Int {
-            return color2.getARGB()
-        }
+        val argb1 get() = super.argb
+        val argb2 get() = color2.argb
 
         override fun hashCode(): Int {
             var result = super.hashCode()
@@ -279,21 +282,17 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
             return result
         }
 
-        override fun clone(): Gradient {
-            return Gradient(this, color2, type)
-        }
+        override fun clone() = Gradient(this, color2, type)
 
         /**
          * [Mutable.recolor] this gradient color.
          * @param whichColor which color to recolor. 1 for the first color, 2 for the second color.
          */
         fun recolor(whichColor: Int, target: Color, type: Animation.Type? = null, durationNanos: Long = 1000) {
-            if (whichColor == 1) {
-                super.recolor(target, type, durationNanos)
-            } else if (whichColor == 2) {
-                color2.recolor(target, type, durationNanos)
-            } else {
-                throw IllegalArgumentException("Invalid color index")
+            when (whichColor) {
+                1 -> super.recolor(target, type, durationNanos)
+                2 -> color2.recolor(target, type, durationNanos)
+                else -> throw IllegalArgumentException("Invalid color index")
             }
         }
 
@@ -301,12 +300,10 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
          * @param colorToMergeTo which color to merge to. 1 for the first color, 2 for the second.
          * */
         fun mergeColors(colorToMergeTo: Int, type: Animation.Type? = null, durationNanos: Long = 1000L) {
-            if (colorToMergeTo == 1) {
-                color2.recolor(this, type, durationNanos)
-            } else if (colorToMergeTo == 2) {
-                super.recolor(color2, type, durationNanos)
-            } else {
-                throw IllegalArgumentException("Invalid color index")
+            when (colorToMergeTo) {
+                1 -> color2.recolor(this, type, durationNanos)
+                2 -> super.recolor(color2, type, durationNanos)
+                else -> throw IllegalArgumentException("Invalid color index")
             }
         }
 
@@ -316,7 +313,7 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
             DeprecationLevel.ERROR
         )
         override fun recolor(target: Color, type: Animation.Type?, durationNanos: Long) {
-            recolor(1, target, type, durationNanos)
+            // noop
         }
     }
 
@@ -349,13 +346,11 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
             // no-op
         }
 
-        override fun clone(): Chroma {
-            return Chroma(speedNanos, brightness, saturation, a)
-        }
+        override fun clone() = Chroma(speedNanos, brightness, saturation, a)
 
         override fun update(deltaTimeNanos: Long): Boolean {
             time += deltaTimeNanos
-            java.awt.Color.HSBtoRGB(
+            HSBtoRGB(
                 time % speedNanos / speedNanos.toFloat(),
                 saturation,
                 brightness

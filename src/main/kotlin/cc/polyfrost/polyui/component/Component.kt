@@ -57,6 +57,7 @@ abstract class Component @JvmOverloads constructor(
      * @see Properties
      */
     open val properties get() = p!!
+
     /** the color of this component. */
     lateinit var color: Color.Mutable
     protected var autoSized = false
@@ -169,7 +170,6 @@ abstract class Component @JvmOverloads constructor(
             atCache!!.second = atCache!!.second * scaleY
         }
     }
-
 
     /**
      * recolor this component's color.

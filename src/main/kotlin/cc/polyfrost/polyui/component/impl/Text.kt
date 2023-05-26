@@ -47,7 +47,7 @@ open class Text @JvmOverloads constructor(
         vararg events: Events.Handler
     ) : this(properties, text.localised(), fontSize, at, size, textAlign, acceptInput, *events)
 
-    constructor(text: PolyText, fontSize: Unit.Pixel, at: Vec2<Unit>) : this(null, text, fontSize, at) // java accessor
+    constructor(text: PolyText, fontSize: Unit.Pixel, at: Vec2<Unit>) : this(null, text, fontSize, at)
 
     final override val properties: TextProperties
         get() = super.properties as TextProperties

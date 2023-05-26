@@ -11,8 +11,7 @@ package cc.polyfrost.polyui.input
 
 import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.utils.getResourceStreamNullable
-import java.io.Serializable
-import java.util.*
+import java.util.Locale
 
 /**
  * # PolyTranslator
@@ -52,10 +51,9 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
      * The string can be [translate]d if there is an attached [PolyTranslator] to this instance and the key is present in the file.
      * @see PolyTranslator
      */
-    class Text(val key: String, private vararg val objects: Any?) : Cloneable, Serializable {
+    class Text(val key: String, private vararg val objects: Any?) : Cloneable {
         inline val length get() = string.length
 
-        @Transient
         var polyTranslator: PolyTranslator? = null
             set(value) {
                 canTranslate = true

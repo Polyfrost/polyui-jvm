@@ -129,7 +129,7 @@ class KeyBinder {
      * Return true to prevent other keybindings from being called.
      */
     @OverloadResolutionByLambdaReturnType
-    @JvmName("AddListener")     // The following declarations have the same JVM signature add(C[Lcc/polyfrost/polyui/input/Modifiers;Lkotlin/jvm/functions/Function0;)V
+    @JvmName("AddListener") // The following declarations have the same JVM signature add(C[Lcc/polyfrost/polyui/input/Modifiers;Lkotlin/jvm/functions/Function0;)V
     fun add(key: Char, vararg modifiers: KeyModifiers, keybind: () -> Unit) {
         val mods = modifiers.merge()
         add0(listeners[FocusedEvents.KeyTyped(key, mods, false)], key, mods) { keybind(); true }

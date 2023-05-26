@@ -25,8 +25,10 @@ import cc.polyfrost.polyui.unit.Unit
 abstract class Drawable(open var acceptsInput: Boolean = true) {
     open val eventHandlers = mutableMapOf<Events, Drawable.() -> Boolean>()
     open var simpleName = "${this::class.simpleName}@${Integer.toHexString(this.hashCode())}"
+
     /** position **relative** to the [parents][layout] position. */
     abstract val at: Point<Unit>
+
     /** size of this drawable. */
     abstract var size: Size<Unit>?
     internal open lateinit var renderer: Renderer
@@ -106,7 +108,6 @@ abstract class Drawable(open var acceptsInput: Boolean = true) {
         this.eventHandlers[event] = handler
     }
 
-
     @JvmName("addEventhook")
     protected fun addEventHook(event: Events, handler: Drawable.() -> kotlin.Unit) {
         this.eventHandlers[event] = {
@@ -144,7 +145,6 @@ abstract class Drawable(open var acceptsInput: Boolean = true) {
         val ty = trueY
         return x >= tx && x <= tx + this.size!!.a.px && y >= ty && y <= ty + this.size!!.b.px
     }
-
 
     protected fun doDynamicSize() {
         doDynamicSize(at)

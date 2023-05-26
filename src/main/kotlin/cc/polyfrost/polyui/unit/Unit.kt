@@ -10,7 +10,6 @@
 package cc.polyfrost.polyui.unit
 
 import cc.polyfrost.polyui.unit.Unit.*
-import java.io.Serializable
 import kotlin.math.max
 import kotlin.math.min
 
@@ -21,7 +20,7 @@ import kotlin.math.min
  * @see Flex
  * @see VUnits
  */
-abstract class Unit(val type: Type) : Cloneable, Serializable {
+abstract class Unit(val type: Type) : Cloneable {
     abstract var px: Float
 
     operator fun plus(other: Unit): Float {

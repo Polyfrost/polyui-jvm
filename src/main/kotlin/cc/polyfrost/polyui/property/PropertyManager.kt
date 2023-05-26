@@ -16,17 +16,17 @@ import cc.polyfrost.polyui.property.impl.*
 
 class PropertyManager(val polyUI: PolyUI) {
     val properties: MutableMap<String, Properties> = mutableMapOf(
-        TextInput::class.java.name to TextInputProperties(TextProperties()),
-        Block::class.java.name to BlockProperties(),
-        Divider::class.java.name to DividerProperties(),
-        Image::class.java.name to ImageProperties(),
-        Text::class.java.name to TextProperties()
+        TextInput::class.qualifiedName!!to TextInputProperties(TextProperties()),
+        Block::class.qualifiedName!!to BlockProperties(),
+        Divider::class.qualifiedName!!to DividerProperties(),
+        Image::class.qualifiedName!!to ImageProperties(),
+        Text::class.qualifiedName!! to TextProperties()
     )
 
-    inline fun <reified C : Component> get(): Properties = get(C::class.java.name)
+    inline fun <reified C : Component> get(): Properties = get(C::class.qualifiedName!!)
 
     fun <T : Properties> get(component: Component): T =
-        get(component::class.java.name)
+        get(component::class.qualifiedName!!)
 
     @Suppress("UNCHECKED_CAST")
     fun <T : Properties> get(name: String): T = properties[name] as? T
@@ -39,7 +39,7 @@ class PropertyManager(val polyUI: PolyUI) {
      * @param properties the property to add
      */
     fun addPropertyType(forComponent: Component, properties: Properties) {
-        this.properties[forComponent::class.java.simpleName] = properties
+        this.properties[forComponent::class.qualifiedName!!] = properties
     }
 
     /**

@@ -33,6 +33,7 @@ class EventManager(private val polyUI: PolyUI) {
     var mouseY: Float = 0f
         private set
     private var clickTimer: Long = 0L
+
     /** @see cc.polyfrost.polyui.input.Modifiers */
     var keyModifiers: Short = 0
         private set

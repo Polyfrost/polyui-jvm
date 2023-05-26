@@ -24,33 +24,14 @@ import java.nio.ByteOrder
  * @throws java.io.IOException if an IO error occurs.
  * @throws FileNotFoundException if the URL is invalid and/or the resource is not found
  * @see getResourceStreamNullable
- * @see getResources
  */
-fun getResourceStream(resourcePath: String): InputStream =
+fun getResourceStream(resourcePath: String) =
     getResourceStreamNullable(resourcePath)
         ?: throw FileNotFoundException(
             "Resource $resourcePath not found " +
                 "(check your Properties, and make sure the file " +
                 "is in the resources folder/on classpath; or the URL is valid)"
         )
-
-/** get all resources matching the given path and (optionally) extension. Keep empty to ignore extensions. */
-fun getResources(path: String, extension: String = ""): List<Pair<String, InputStream>> {
-    val resources = PolyUI::class.java.classLoader.getResources(path)
-    val out = ArrayList<Pair<String, InputStream>>()
-    while (resources.hasMoreElements()) {
-        val resource = resources.nextElement()
-        if (extension.isEmpty() || resource.path.endsWith(extension)) {
-            out.add(
-                Pair(
-                    resource.path,
-                    resource.openStream()
-                )
-            )
-        }
-    }
-    return out
-}
 
 /**
  * return a stream of the given resource or null.

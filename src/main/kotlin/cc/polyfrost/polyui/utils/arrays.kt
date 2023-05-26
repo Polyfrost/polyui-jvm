@@ -9,15 +9,14 @@
 
 /** This file contains various utilities for arrays and arraylists. */
 @file:Suppress("ReplaceManualRangeWithIndicesCalls", "ReplaceSizeZeroCheckWithIsEmpty", "UNCHECKED_CAST")
+@file:JvmName("ArrayUtils")
 
 package cc.polyfrost.polyui.utils
 
-import java.io.Serializable
-
 /**
- * [java.util.List.forEach] re-implementation that doesn't allocate any memory.
+ * [forEach] re-implementation that doesn't allocate any memory.
  *
- * Utilizes the [java.util.RandomAccess] trait.
+ * Utilizes the [RandomAccess] trait.
  *
  * @param f The function to apply to each element.
  *
@@ -31,9 +30,9 @@ inline fun <L, E> L.fastEach(f: (E) -> Unit) where L : List<E>, L : RandomAccess
 }
 
 /**
- * [java.util.List.forEachIndexed] re-implementation that doesn't allocate any memory.
+ * [forEachIndexed] re-implementation that doesn't allocate any memory.
  *
- * Utilizes the [java.util.RandomAccess] trait.
+ * Utilizes the [RandomAccess] trait.
  *
  * @param f The function to apply to each element.
  *
@@ -47,9 +46,9 @@ inline fun <L, E> L.fastEachIndexed(f: (Int, E) -> Unit) where L : List<E>, L : 
 }
 
 /**
- * [java.util.List.removeIf] re-implementation that doesn't allocate any memory.
+ * [removeIf][kotlin.collections.filterInPlace] re-implementation that doesn't allocate any memory.
  *
- * Utilizes the [java.util.RandomAccess] trait.
+ * Utilizes the [RandomAccess] trait.
  *
  * @see [fastEach]
  * @return false if the list is empty, true otherwise.
@@ -177,7 +176,7 @@ fun <T> Array<T>.toArrayList(): ArrayList<T> = this.toMutableList() as ArrayList
 data class MutablePair<A, B>(
     var first: A,
     var second: B
-) : Serializable {
+) {
 
     /**
      * Returns string representation of the [MutablePair] including its [first] and [second] values.
@@ -214,7 +213,7 @@ data class MutableTriple<A, B, C>(
     var first: A,
     var second: B,
     var third: C
-) : Serializable {
+) {
 
     /**
      * Returns string representation of the [MutableTriple] including its [first], [second] and [third] values.

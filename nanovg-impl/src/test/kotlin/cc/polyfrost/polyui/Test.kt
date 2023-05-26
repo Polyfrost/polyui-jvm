@@ -30,7 +30,7 @@ import cc.polyfrost.polyui.renderer.impl.NVGRenderer
 import cc.polyfrost.polyui.renderer.impl.NoOpRenderer
 import cc.polyfrost.polyui.renderer.impl.NoOpWindow
 import cc.polyfrost.polyui.unit.*
-import java.lang.Math.random
+import kotlin.random.Random
 
 fun main() {
     // use the no-op rendering implementation (for profiling of the system code)
@@ -40,7 +40,7 @@ fun main() {
     val things = Array<Drawable>(50) { // creates 50 rectangles with random sizes
         Block(
             at = flex(),
-            size = Size((random() * 40 + 40).px, (random() * 40 + 40).px),
+            size = Size((Random.Default.nextFloat() * 40f + 40f).px, (Random.Default.nextFloat() * 40f + 40f).px),
             events = events(
                 Events.MouseClicked(0) to {
                     println("Mouse clicked! $it")

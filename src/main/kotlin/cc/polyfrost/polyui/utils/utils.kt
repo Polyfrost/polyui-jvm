@@ -8,6 +8,7 @@
  */
 
 @file:Suppress("NOTHING_TO_INLINE")
+@file:JvmName("Utils")
 
 package cc.polyfrost.polyui.utils
 
@@ -29,6 +30,84 @@ fun rgba(r: Int, g: Int, b: Int, a: Float): Color {
     return Color(r, g, b, (a * 255f).toInt())
 }
 
+/**
+ * Converts the components of a color, as specified by the HSB
+ * model, to an equivalent set of values for the default RGB model.
+ *
+ * The `saturation` and `brightness` components
+ * should be floating-point values between zero and one
+ * (numbers in the range 0.0-1.0).  The `hue` component
+ * can be any floating-point number.  The floor of this number is
+ * subtracted from it to create a fraction between 0 and 1.  This
+ * fractional number is then multiplied by 360 to produce the hue
+ * angle in the HSB color model.
+ *
+ * The integer that is returned by [HSBtoRGB] encodes the
+ * value of a color in bits 0-23 of an integer value that is the same
+ * format used by the method [getARGB()][Color.argb]
+ * This integer can be supplied as an argument to the
+ * [toColor] method that takes a single integer argument to create a [Color].
+ * @param hue   the hue component of the color
+ * @param saturation   the saturation of the color
+ * @param brightness   the brightness of the color
+ * @return the RGB value of the color with the indicated hue,
+ *                            saturation, and brightness.
+ */
+fun HSBtoRGB(hue: Float, saturation: Float, brightness: Float): Int {
+    var r = 0
+    var g = 0
+    var b = 0
+    if (saturation == 0f) {
+        b = (brightness * 255.0f + 0.5f).toInt()
+        g = b
+        r = g
+    } else {
+        val h = (hue - floor(hue)) * 6.0f
+        val f = h - floor(h)
+        val p = brightness * (1.0f - saturation)
+        val q = brightness * (1.0f - saturation * f)
+        val t = brightness * (1.0f - saturation * (1.0f - f))
+        when (h.toInt()) {
+            0 -> {
+                r = (brightness * 255.0f + 0.5f).toInt()
+                g = (t * 255.0f + 0.5f).toInt()
+                b = (p * 255.0f + 0.5f).toInt()
+            }
+
+            1 -> {
+                r = (q * 255.0f + 0.5f).toInt()
+                g = (brightness * 255.0f + 0.5f).toInt()
+                b = (p * 255.0f + 0.5f).toInt()
+            }
+
+            2 -> {
+                r = (p * 255.0f + 0.5f).toInt()
+                g = (brightness * 255.0f + 0.5f).toInt()
+                b = (t * 255.0f + 0.5f).toInt()
+            }
+
+            3 -> {
+                r = (p * 255.0f + 0.5f).toInt()
+                g = (q * 255.0f + 0.5f).toInt()
+                b = (brightness * 255.0f + 0.5f).toInt()
+            }
+
+            4 -> {
+                r = (t * 255.0f + 0.5f).toInt()
+                g = (p * 255.0f + 0.5f).toInt()
+                b = (brightness * 255.0f + 0.5f).toInt()
+            }
+
+            5 -> {
+                r = (brightness * 255.0f + 0.5f).toInt()
+                g = (p * 255.0f + 0.5f).toInt()
+                b = (q * 255.0f + 0.5f).toInt()
+            }
+        }
+    }
+    return -0x1000000 or (r shl 16) or (g shl 8) or (b shl 0)
+}
+
 fun Int.toColor(): Color {
     return Color(
         ((this shr 16) and 0xFF) / 255f,
@@ -38,9 +117,7 @@ fun Int.toColor(): Color {
     )
 }
 
-fun java.awt.Color.asPolyColor(): Color {
-    return Color(this.red.toFloat(), this.green.toFloat(), this.blue.toFloat(), this.alpha.toFloat())
-}
+fun java.awt.Color.toPolyColor() = Color(this.red, this.green, this.blue, this.alpha)
 
 fun Float.rounded(places: Int = 2): Float {
     val f = 10.0.pow(places).toFloat()
