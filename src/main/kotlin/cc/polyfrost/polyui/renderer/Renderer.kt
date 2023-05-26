@@ -236,7 +236,9 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
     }
 
     companion object {
+        @JvmField
         var DefaultImage = PolyImage("err.png")
+        @JvmField
         var DefaultFont = Font("Inter-Regular.ttf")
     }
 }
