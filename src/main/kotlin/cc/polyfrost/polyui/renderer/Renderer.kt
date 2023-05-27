@@ -44,7 +44,7 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
 
     /** hook into this renderer. */
     @Suppress("UNUSED_EXPRESSION")
-    internal inline fun alsoRender(block: Renderer.() -> kotlin.Unit) = block()
+    internal inline fun render(block: Renderer.() -> kotlin.Unit) = block()
 
     abstract fun beginFrame()
     abstract fun endFrame()
@@ -238,6 +238,7 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
     companion object {
         @JvmField
         var DefaultImage = PolyImage("err.png")
+
         @JvmField
         var DefaultFont = Font("Inter-Regular.ttf")
     }

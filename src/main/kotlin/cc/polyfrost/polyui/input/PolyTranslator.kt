@@ -74,12 +74,6 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
                 field = value
             }
 
-        inline fun get() = string
-
-        inline fun set(value: String) {
-            string = value
-        }
-
         /** reset this text according to the translation table (if attached) */
         fun reset() {
             if (canTranslate) string = key

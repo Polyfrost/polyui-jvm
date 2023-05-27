@@ -7,6 +7,8 @@
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  */
 
+@file:Suppress("UNCHECKED_CAST")
+
 package cc.polyfrost.polyui.renderer.data
 
 import cc.polyfrost.polyui.PolyUI

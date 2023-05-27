@@ -31,6 +31,7 @@ buildscript {
 group = "cc.polyfrost"
 version = project.findProperty("version") as String
 val targetKotlinVersion = project.findProperty("kotlin.target") as String? ?: "1.8"
+val jvmToolchainVersion = (project.findProperty("jvm.toolchain") as String? ?: "8").toInt()
 
 allprojects {
     apply(plugin = "java-library")
@@ -48,11 +49,6 @@ allprojects {
         maven("https://repo.polyfrost.cc/releases")
     }
 
-    java {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-
     kotlin {
         sourceSets.all {
             languageSettings.apply {
@@ -61,6 +57,7 @@ allprojects {
                 apiVersion = targetKotlinVersion
             }
         }
+        jvmToolchain(jvmToolchainVersion)
     }
 
     kotlinter {
@@ -77,12 +74,9 @@ allprojects {
 
     tasks {
         withType(KotlinCompile::class).all {
-            // todo migrate this when it is in the kotlin {} block
             kotlinOptions {
-                jvmTarget = "1.8"
                 freeCompilerArgs = listOf(
                     "-Xjvm-default=all-compatibility",
-                    "-Xuse-k2",
                     "-Xno-call-assertions",
                     "-Xno-receiver-assertions",
                     "-Xno-param-assertions",

@@ -9,7 +9,6 @@
 
 package cc.polyfrost.polyui.layout.impl.extension
 
-import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.animate.Animation
 import cc.polyfrost.polyui.animate.Animations
 import cc.polyfrost.polyui.color.Color
@@ -17,13 +16,11 @@ import cc.polyfrost.polyui.component.impl.Block
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.property.impl.BlockProperties
-import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.utils.MutablePair
 import cc.polyfrost.polyui.utils.clz
 import cc.polyfrost.polyui.utils.fastEach
-import kotlin.math.max
 import kotlin.math.min
 
 /**
@@ -40,16 +37,15 @@ class ScrollingLayout(
     private val anims: MutablePair<Animation?, Animation?> = MutablePair(null, null)
     private val offset = MutablePair(at.a.px, at.b.px)
     private val origin = MutablePair(at.a.px, at.b.px)
-    // private val bars = MutablePair(Scrollbar(this, ScrollbarProperties()), Scrollbar(this, ScrollbarProperties()))
+    private var added = false
+    private val bars =
+        MutablePair(Scrollbar(this, ScrollbarProperties(), true), Scrollbar(this, ScrollbarProperties(), false))
+    private inline val excessY get() = ptr.size!!.b.px - scrollingSize.b.px
+    private inline val excessX get() = ptr.size!!.a.px - scrollingSize.a.px
 
     init {
         ptr.simpleName += " [Scrollable]"
         ptr.acceptsInput = true
-    }
-
-    override fun setup(renderer: Renderer, polyui: PolyUI) {
-        super.setup(renderer, polyui)
-        // ptr.addComponent(scrollbar)
     }
 
     override fun render() {
@@ -66,6 +62,7 @@ class ScrollingLayout(
         } else {
             anim?.update(delta)?.also {
                 at.a.px = offset.first + anim.value
+                bars.first.update()
                 ptr.needsRedraw = true
             }
         }
@@ -74,6 +71,7 @@ class ScrollingLayout(
         } else {
             anim1?.update(delta)?.also {
                 at.b.px = offset.second + anim1.value
+                bars.second.update()
                 ptr.needsRedraw = true
             }
         }
@@ -88,7 +86,12 @@ class ScrollingLayout(
 
     override fun debugRender() {
         val (ox, oy) = origin
-        renderer.pushScissor(ox - 1f, oy - 1f, scrollingSize.a.px + 3f, scrollingSize.b.px + 3f) // the outline overlaps the edge
+        renderer.pushScissor(
+            ox - 1f,
+            oy - 1f,
+            scrollingSize.a.px + 3f,
+            scrollingSize.b.px + 3f
+        ) // the outline overlaps the edge
         super.debugRender()
         renderer.popScissor()
     }
@@ -100,8 +103,6 @@ class ScrollingLayout(
 
     override fun accept(event: Events): Boolean {
         if (event is Events.MouseScrolled) {
-            // todo polish and scrollbars
-            // help I cant read your code! I'm enjoying my functional programming okay
             if (event.amountX != 0) {
                 val anim = anims.first
                 val rem = anim?.to?.minus(anim.value)?.also {
@@ -129,7 +130,6 @@ class ScrollingLayout(
                 )
             }
 
-            // scrollbar.accept(event)
             ptr.clock.delta
             needsRedraw = true
             return true
@@ -142,13 +142,13 @@ class ScrollingLayout(
             if (toAdd > 0f) { // scroll left
                 min(origin.first - at.a.px, toAdd)
             } else { // scroll right
-                clz(-((ptr.size!!.a.px - scrollingSize.a.px) - (origin.first - (at.a.px))), toAdd)
+                clz(-(ptr.size!!.a.px - scrollingSize.a.px - (origin.first - at.a.px)), toAdd)
             }
         } else {
             if (toAdd > 0f) { // scroll up
-                min(origin.second - at.b.px, toAdd)
+                min(origin.second - ptr.at.b.px, toAdd)
             } else { // scroll down
-                clz(-((ptr.size!!.b.px - scrollingSize.b.px) - (origin.second - (at.b.px))), toAdd)
+                clz(-(ptr.size!!.b.px - scrollingSize.b.px - (origin.second - ptr.at.b.px)), toAdd)
             }
         }
     }
@@ -160,34 +160,44 @@ class ScrollingLayout(
 
     override fun calculateBounds() {
         super.calculateBounds()
+        if (!added) {
+            ptr.addComponent(bars.first)
+            ptr.addComponent(bars.second)
+            added = true
+        }
         if (scrollingSize.a.px == 0f || scrollingSize.a.px > ptr.size!!.a.px) scrollingSize.a.px = ptr.size!!.a.px
         if (scrollingSize.b.px == 0f || scrollingSize.b.px > ptr.size!!.b.px) scrollingSize.b.px = ptr.size!!.b.px
         origin.first = at.a.px
         origin.second = at.b.px
+        bars.first.calculateBounds()
+        // bars.second.calculateBounds() see to do
     }
 
-    class Scrollbar(private val owner: ScrollingLayout, properties: ScrollbarProperties) : Block(
+    class Scrollbar(
+        private val owner: ScrollingLayout,
+        properties: ScrollbarProperties,
+        private val horizontal: Boolean = false
+    ) : Block(
         properties,
-        (owner.at + owner.scrollingSize),
-        properties.width.px * 0.px
+        origin,
+        if (horizontal) properties.width.px * 0f.px else 0f.px * properties.width.px
     ) {
         override val properties: ScrollbarProperties
             get() = super.properties as ScrollbarProperties
-        private val contentSize = owner.ptr.size
-        private val windowSize = owner.scrollingSize
-        private val normalPos =
-            ((owner.at.a.px + owner.scrollingSize.b.px) - this.properties.padding - this.properties.width).px * owner.at.b.px.px
-        private val hiddenPos =
-            normalPos.clone()
-                .also { it.a.px += this.properties.width + this.properties.padding }
+        private inline val contentSize get() = if (horizontal) owner.ptr.size!!.a.px else owner.ptr.size!!.b.px
+        private inline val scrollingSize get() = if (horizontal) owner.scrollingSize.a.px else owner.scrollingSize.b.px
+        private inline var length
+            get() = if (horizontal) size!!.a.px else size!!.b.px
+            set(value) = if (horizontal) size!!.a.px = value else size!!.b.px = value
+
         var shown = false
             private set(value) {
                 if (value == field) return
                 field = value
                 if (value) {
-                    this.move(normalPos, properties.showAnimation, properties.showAnimationDuration)
+//                    this.move(normalPos, properties.showAnimation, properties.showAnimationDuration)      // todo animations, and clicking of scrollbars, scrollbars other axis (i.e. horizontal does not move down when moved scrolled down)
                 } else {
-                    this.move(hiddenPos, properties.showAnimation, properties.showAnimationDuration)
+//                    this.move(hiddenPos, properties.showAnimation, properties.showAnimationDuration) { shown = false }
                 }
             }
 
@@ -195,40 +205,45 @@ class ScrollingLayout(
             private set(value) {
                 if (value == field) return
                 field = value
-                if (!field && shown) shown = false
+                if (!value && shown) shown = false
             }
-
-        init {
-            at.a.px -= this.properties.width - this.properties.padding
-            owner.components.add(this)
-        }
-
-        override fun accept(event: Events): Boolean {
-            return event is Events.MouseScrolled
-        }
-
-        override fun render() {
-            if (enabled && operations.size != 0) super.render()
-        }
 
         override fun calculateBounds() {
             super.calculateBounds()
-            enabled = contentSize!!.b.px >= windowSize.b.px
+            enabled = contentSize > scrollingSize
             if (!enabled) {
                 shown = false
                 return
             }
-            size!!.b.px = max((contentSize.b.px / owner.scrollingSize.b.px) * contentSize.b.px, properties.minimumHeight)
+            if (horizontal) {
+                at.b.px = owner.scrollingSize.b.px - properties.padding - properties.width
+                at.a.px = 0f
+                length = owner.scrollingSize.a.px * (owner.scrollingSize.a.px / owner.ptr.size!!.a.px)
+            } else {
+                at.a.px = owner.scrollingSize.a.px - properties.padding - properties.width
+                at.b.px = 0f
+                length = owner.scrollingSize.b.px * (owner.scrollingSize.b.px / owner.ptr.size!!.b.px)
+            }
+        }
+
+        fun update() {
+            if (horizontal) {
+                val scrollOffset = owner.origin.first - owner.ptr.at.a.px
+                at.a.px = (owner.ptr.size!!.a.px - length) * (scrollOffset / owner.excessX)
+            } else {
+                val scrollOffset = owner.origin.second - owner.ptr.at.b.px
+                at.b.px = (owner.ptr.size!!.b.px - length) * (scrollOffset / owner.excessY)
+            }
         }
     }
 
     open class ScrollbarProperties : BlockProperties() {
         override val color: Color = Color(0.5f, 0.5f, 0.5f, 0.5f)
         override val hoverColor = Color(0.5f, 0.5f, 0.5f, 0.75f)
+        override val cornerRadii: FloatArray = floatArrayOf(2f, 2f, 2f, 2f)
         open val clickColor = Color(0.5f, 0.5f, 0.5f, 0.8f)
-        override val padding: Float = 5f
-        open val width = 12f
-        open val minimumHeight = 20f
+        override val padding: Float = 2f
+        open val width = 4f
         open val showAnimation: Animations? = Animations.EaseOutExpo
         open val showAnimationDuration: Long = 0.5.seconds
     }

@@ -46,6 +46,7 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
      *
      * @see cc.polyfrost.polyui.utils.toColor
      */
+    @Suppress("INAPPLICABLE_JVM_NAME")
     @get:JvmName("getARGB")
     open val argb: Int
         get() {
@@ -259,6 +260,7 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
             "Use [getARGB1] or [getARGB2] instead for gradient colors, as to not to confuse the end user.",
             ReplaceWith("getARGB1()")
         )
+        @Suppress("INAPPLICABLE_JVM_NAME")
         @get:JvmName("getARGB")
         override val argb: Int
             get() {
@@ -276,6 +278,7 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
 
         @get:JvmName("getARGB1")
         val argb1 get() = super.argb
+
         @get:JvmName("getARGB2")
         val argb2 get() = color2.argb
 

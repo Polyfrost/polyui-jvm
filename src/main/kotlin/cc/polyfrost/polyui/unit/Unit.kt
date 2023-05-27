@@ -51,7 +51,7 @@ abstract class Unit(val type: Type) : Cloneable {
 
     /** a dynamic unit, that is a percentage of its parents size. */
     class Percent(val amount: Float) : Unit(Type.Percent), Dynamic {
-        override var px: Float = 0F
+        override var px: Float = 0f
             get() {
                 if (!initialized) throw UninitializedPropertyAccessException("Percent must be initialized before use.")
                 return field
@@ -59,7 +59,7 @@ abstract class Unit(val type: Type) : Cloneable {
         private var initialized: Boolean = false
 
         init {
-            if (amount < 0 || amount > 100) throw IllegalArgumentException("Percent must be between 0 and 100 (inclusive).")
+            if (amount < 0f || amount > 100f) throw IllegalArgumentException("Percent must be between 0 and 100 (inclusive).")
         }
 
         override fun clone(): Percent {

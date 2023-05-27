@@ -74,14 +74,14 @@ class FlexLayout @JvmOverloads constructor(
         if (this.size == null) this.size = origin
         if (wrapDirection != Wrap.NoWrap) {
             if (wrap != null) {
-                PolyUI.LOGGER.warn("[Flex] wrap is set, but wrap direction is set to NoWrap. Defaulting to Wrap.")
+                PolyUI.LOGGER.debug("[Flex] wrap is set, but wrap direction is set to NoWrap. Defaulting to Wrap.")
                 this.wrapDirection = Wrap.Wrap
                 when (flexDirection) {
                     Direction.Row, Direction.RowReverse -> this.size = Size(wrap, size?.b ?: 0.px)
                     Direction.Column, Direction.ColumnReverse -> this.size = Size(size?.a ?: 0.px, wrap)
                 }
             } else if (size != null) {
-                PolyUI.LOGGER.warn("[Flex] size is set, but wrap direction is set to NoWrap. Defaulting to Wrap.")
+                PolyUI.LOGGER.debug("[Flex] size is set, but wrap direction is set to NoWrap. Defaulting to Wrap.")
                 this.wrapDirection = Wrap.Wrap
             } else {
                 this.wrapDirection = wrapDirection
@@ -206,7 +206,7 @@ class FlexLayout @JvmOverloads constructor(
         var cross = 0F
 
         // justify, with the largest row first.
-        (rows.sortedByDescending { it.thisMainSizeWithGaps }).fastEach {
+        (rows.sortedByDescending { it.rowMainSizeWithGaps }).fastEach {
             it.justify()
         }
         rows.fastEach { row ->
@@ -225,7 +225,7 @@ class FlexLayout @JvmOverloads constructor(
     }
 
     private inner class FlexDrawable(val drawable: Drawable, val flex: Unit.Flex, minSize: Size<Unit>? = null) {
-        val size get() = drawable.size!!
+        inline val size get() = drawable.size!!
 
         init {
             if (drawable.size == null) drawable.size = calculateSize() ?: minSize ?: origin
@@ -300,15 +300,15 @@ class FlexLayout @JvmOverloads constructor(
     private inner class FlexRow(
         val drawables: ArrayList<FlexDrawable>
     ) {
-        val thisMainSize: Float
+        val rowMainSize: Float
         val maxCrossSize: Float
-        val thisMainSizeWithGaps: Float
+        val rowMainSizeWithGaps: Float
 
         init {
             var main = 0F
             drawables.fastEach { main += it.mainSize }
-            this.thisMainSize = main
-            this.thisMainSizeWithGaps = main + (drawables.size - 1) * mainGap
+            this.rowMainSize = main
+            this.rowMainSizeWithGaps = main + (drawables.size - 1) * mainGap
             resizeMainIfCan()
 
             var cross = 0F
@@ -317,7 +317,7 @@ class FlexLayout @JvmOverloads constructor(
         }
 
         fun resizeMainIfCan() {
-            val spare = mainSize - thisMainSize
+            val spare = mainSize - rowMainSize
             var i = 0
             if (spare > 0) {
                 drawables.fastEach { i += it.flex.flexGrow }
@@ -383,7 +383,7 @@ class FlexLayout @JvmOverloads constructor(
         }
 
         fun justify() {
-            trySetMainSize(thisMainSizeWithGaps)
+            trySetMainSize(rowMainSizeWithGaps)
             when (contentJustify) {
                 JustifyContent.Start -> {
                     var pos = 0F
@@ -403,7 +403,7 @@ class FlexLayout @JvmOverloads constructor(
                 }
 
                 JustifyContent.Center -> {
-                    var pos = (mainSize - thisMainSizeWithGaps) / 2
+                    var pos = (mainSize - rowMainSizeWithGaps) / 2
                     drawables.fastEach {
                         it.mainPos = pos
                         pos += it.mainSize + mainGap
@@ -415,7 +415,7 @@ class FlexLayout @JvmOverloads constructor(
                         drawables[0].mainPos = (mainSize - drawables[0].mainSize) / 2
                         return
                     }
-                    val gap = (mainSize - thisMainSize) / (drawables.size - 1)
+                    val gap = (mainSize - rowMainSize) / (drawables.size - 1)
                     var pos = 0f
                     drawables.fastEach {
                         it.mainPos = pos
@@ -428,7 +428,7 @@ class FlexLayout @JvmOverloads constructor(
                         drawables[0].mainPos = (mainSize - drawables[0].mainSize) / 2
                         return
                     }
-                    val gap = (mainSize - thisMainSize) / drawables.size
+                    val gap = (mainSize - rowMainSize) / drawables.size
                     var pos = gap
                     drawables.fastEach {
                         it.mainPos = pos

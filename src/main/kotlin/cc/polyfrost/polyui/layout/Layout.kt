@@ -106,6 +106,10 @@ abstract class Layout(
         children.fastEach {
             it.reRenderIfNecessary()
         }
+        renderSelf()
+    }
+
+    protected fun renderSelf() {
         if (fbo != null && fboTracker < 2) {
             if (needsRedraw) {
                 if (fboTracker < 2) fboTracker++
@@ -274,7 +278,10 @@ abstract class Layout(
 
     override fun rescale(scaleX: Float, scaleY: Float) {
         super.rescale(scaleX, scaleY)
-        if (resizesChildren) components.fastEach { it.rescale(scaleX, scaleY) }
+        if (resizesChildren) {
+            children.fastEach { it.rescale(scaleX, scaleY) }
+            components.fastEach { it.rescale(scaleX, scaleY) }
+        }
     }
 
     /** render this layout's components, and remove them if they are ready to be removed. */

@@ -38,7 +38,7 @@ class SwitchingLayout(
      * If this is true, and this size is not null, it will be scaled accordingly.
      * Else, it will take the size of the largest one, and the smaller ones will be scaled to fit. */
     resizesChildren: Boolean = true
-) : PixelLayout(at, size, onAdded, onRemoved, resizesChildren, false) {
+) : PixelLayout(at, size, onAdded, onRemoved, true, resizesChildren) {
     private var goingSwitchOp: Transition? = null
     private var comingSwitchOp: Transition? = null
     private var idx: Int = defaultIndex
@@ -47,10 +47,18 @@ class SwitchingLayout(
     private var autoSized = false
     private var init = false
 
+    override var needsRedraw: Boolean
+        get() = current?.needsRedraw == true
+        set(value) { current?.needsRedraw = value }
+
+    override var acceptsInput: Boolean
+        get() = current?.acceptsInput == true
+        set(value) { current?.acceptsInput = value }
+
     @Deprecated(
         "this method should not be used on a SwitchingLayout, as the targeted layout will vary depending on the current layout, and may switch unexpectedly.",
         replaceWith = ReplaceWith("targetLayout.addComponent(drawable)"),
-        DeprecationLevel.ERROR
+        DeprecationLevel.WARNING
     )
     override fun addComponent(drawable: Drawable) {
     }
@@ -58,7 +66,7 @@ class SwitchingLayout(
     @Deprecated(
         "this method should not be used on a SwitchingLayout, as the targeted layout will vary depending on the current layout, and may switch unexpectedly.",
         ReplaceWith("targetLayout.removeComponent(drawable)"),
-        DeprecationLevel.ERROR
+        DeprecationLevel.WARNING
     )
     override fun removeComponent(drawable: Drawable) {
     }
@@ -74,9 +82,13 @@ class SwitchingLayout(
     @Deprecated(
         "this method should not be used on a SwitchingLayout, as the targeted layout will vary depending on the current layout, and may switch unexpectedly.",
         ReplaceWith("targetLayout.removeComponentNow(drawable)"),
-        DeprecationLevel.ERROR
+        DeprecationLevel.WARNING
     )
     override fun removeComponentNow(drawable: Drawable) {
+    }
+
+    override fun reRenderIfNecessary() {
+        renderSelf() // don't render children.
     }
 
     override fun accept(event: Events): Boolean {
@@ -155,8 +167,8 @@ class SwitchingLayout(
         }
     }
 
-    fun switch(layout: Layout?) {
-        if (layout == null) return
+    private fun switch(index: Int) {
+        val layout = children.getOrNull(index) ?: return
         current?.onAdded?.invoke(current!!)
         next = layout
         next!!.setup(renderer, polyui)
@@ -176,18 +188,18 @@ class SwitchingLayout(
     fun next() {
         idx++
         if (idx > children.lastIndex) idx = 0
-        switch(children[idx])
+        switch(idx)
     }
 
     fun back() {
         idx--
         if (idx < 0) idx = children.lastIndex
-        switch(children[idx])
+        switch(idx)
     }
 
     fun default() {
         idx = defaultIndex
-        switch(children[idx])
+        switch(idx)
     }
 
     fun addLayouts(vararg layout: Layout) {
@@ -198,12 +210,16 @@ class SwitchingLayout(
 
     private fun init(layout: Layout): Layout {
         if (layout is DraggableLayout) throw IllegalArgumentException("SwitchingLayout cannot contain draggable layouts (${layout.simpleName})!")
-        layout.layout = this
+        println("setting ${layout.simpleName}'s parent to ${this.layout?.simpleName}")
+        layout.layout = this.layout
         if (!init) return layout
         layout.setup(renderer, polyui)
         layout.calculateBounds()
         return layout
     }
+
+    operator fun get(index: Int) = children[index]
+    operator fun set(index: Int, it: Layout) = addAt(index, it)
 
     fun append(layout: Layout) = children.add(init(layout))
 
@@ -211,6 +227,9 @@ class SwitchingLayout(
 
     fun addNext(layout: Layout) = children.add(idx + 1, init(layout))
 
-    fun remove(layout: Layout) = children.remove(layout)
-    fun removeAt(index: Int) = children.removeAt(index)
+    @Suppress("DEPRECATION")
+    fun remove(layout: Layout) = removeComponent(layout)
+
+    @Suppress("DEPRECATION")
+    fun removeAt(index: Int) = removeComponent(children[index])
 }

@@ -175,5 +175,5 @@ abstract class Drawable(open var acceptsInput: Boolean = true) {
      *
      * Otherwise, the size parameter in the constructor must be specified.
      * @throws UnsupportedOperationException if this method is not implemented, and the size parameter in the constructor is not specified. */
-    open fun calculateSize(): Vec2<Unit>? = null
+    open fun calculateSize(): Size<Unit>? = null
 }

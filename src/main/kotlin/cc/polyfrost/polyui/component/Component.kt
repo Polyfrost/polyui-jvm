@@ -191,7 +191,7 @@ abstract class Component @JvmOverloads constructor(
             } else {
                 autoSized = true
                 calculateSize()
-                    ?: throw UnsupportedOperationException("getSize() not implemented for ${this::class.simpleName}!")
+                    ?: throw UnsupportedOperationException("calculateSize() not implemented for ${this::class.simpleName}!")
             }
         }
         doDynamicSize()

@@ -7,7 +7,7 @@
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  */
 
-@file:Suppress("EqualsOrHashCode")
+@file:Suppress("EqualsOrHashCode", "UNCHECKED_CAST")
 
 package cc.polyfrost.polyui.event
 

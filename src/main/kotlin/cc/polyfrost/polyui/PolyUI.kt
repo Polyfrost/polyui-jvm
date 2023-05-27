@@ -281,7 +281,7 @@ class PolyUI(
         val sb = StringBuilder()
         sb.append(toString()).append(" with ${master.components.size} components and ${master.children.size} layouts:")
         master.components.fastEach {
-            sb.append("\n").append(it.toString())
+            sb.append("\n\t").append(it.toString())
         }
         master.children.fastEach {
             debugPrint(it, 0, sb)
@@ -290,16 +290,16 @@ class PolyUI(
     }
 
     private fun debugPrint(it: Layout, depth: Int, sb: StringBuilder) {
-        sb.append("\n").append("\t".repeat(depth)).append(it.toString())
+        sb.append("\n").append("\t", depth).append(it.toString())
         var i = 0
         it.children.fastEach {
             debugPrint(it, depth + 1, sb)
         }
         it.components.fastEach { c ->
-            sb.append("\n").append("\t".repeat(depth + 1)).append(c.toString())
+            sb.append("\n").append("\t", depth + 1).append(c.toString())
             i++
             if (i >= 10) {
-                sb.append("\n").append("\t".repeat(depth + 2)).append("... ").append(it.components.size - i).append(" more")
+                sb.append("\n").append("\t", depth + 2).append("... ").append(it.components.size - i).append(" more")
                 return
             }
         }

@@ -18,8 +18,8 @@ import cc.polyfrost.polyui.property.Properties
  */
 open class BlockProperties @JvmOverloads constructor(
     override val color: Color = Color.BLACK,
-    val cornerRadii: FloatArray = floatArrayOf(0f, 0f, 0f, 0f),
-    val lineThickness: Float = 0f
+    open val cornerRadii: FloatArray = floatArrayOf(0f, 0f, 0f, 0f),
+    open val lineThickness: Float = 0f
 ) : Properties() {
 
     open val hoverColor = Color(12, 48, 255)
