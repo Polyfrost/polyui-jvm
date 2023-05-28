@@ -105,7 +105,7 @@ open class Text @JvmOverloads constructor(
         } else {
             SingleText(txt, this.properties.font, this.fontSize.px, textAlign, sized ?: origin)
         }
-        str.text.polyTranslator = polyui.polyTranslator
+        str.text.polyTranslator = polyui.translator
         str.calculate(renderer)
         size = str.size
     }

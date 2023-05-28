@@ -34,9 +34,7 @@ open class PixelLayout(
 
     init {
         items.forEach {
-            if (it.atType == Unit.Type.Flex || it.atType == Unit.Type.Grid) {
-                throw Exception("Unit type mismatch: Drawable $it does not have a valid unit type for layout: ${this.simpleName} (using ${it.atType})")
-            }
+            require(it.atType != Unit.Type.Flex && it.atType != Unit.Type.Grid) { "Unit type mismatch: Drawable $it does not have a valid unit type for layout: ${this.simpleName} (using ${it.atType})" }
         }
     }
 

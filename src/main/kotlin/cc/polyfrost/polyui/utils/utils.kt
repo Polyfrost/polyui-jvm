@@ -140,7 +140,7 @@ inline fun clz(a: Float, b: Float): Float {
 }
 
 /** convert the given float into an array of 4 floats for radii. */
-inline fun Float.asRadii() = floatArrayOf(this, this, this, this)
+inline fun Float.radii() = floatArrayOf(this, this, this, this)
 
 /** varargs wrapper */
 inline fun varargs(vararg any: Any): Array<out Any> {

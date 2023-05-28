@@ -15,13 +15,17 @@ package cc.polyfrost.polyui.unit
  * @param T The type of unit to use
  */
 data class Vec2<T : Unit>(
+    /** x/width/first/a */
     val a: T,
+    /** y/height/second/b */
     val b: T
 ) : Cloneable {
-    inline val x get() = a.px
+    inline val x get() = a.px // parity with Point
     inline val y get() = b.px
-    inline val width get() = a.px
+    inline val width get() = a.px // parity with Size
     inline val height get() = b.px
+    inline val first get() = a.px // parity with kotlin.Pair
+    inline val second get() = b.px
 
     inline val type get() = a.type
 
@@ -87,6 +91,12 @@ data class Vec2<T : Unit>(
 
     override fun toString(): String {
         return "Vec2.$type(${a.px} x ${b.px})"
+    }
+
+    override fun hashCode(): Int {
+        var result = a.hashCode()
+        result = 31 * result + b.hashCode()
+        return result
     }
 }
 

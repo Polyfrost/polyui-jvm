@@ -176,7 +176,7 @@ abstract class Component @JvmOverloads constructor(
      */
     open fun recolor(
         toColor: Color,
-        animation: Animation.Type,
+        animation: Animation.Type? = null,
         durationNanos: Long,
         onFinish: (Component.() -> kotlin.Unit)? = null
     ) {

@@ -13,6 +13,7 @@ import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.input.PolyText
 import cc.polyfrost.polyui.input.PolyTranslator.Companion.localised
 import cc.polyfrost.polyui.property.Properties
+import cc.polyfrost.polyui.utils.radii
 
 class TextInputProperties(val text: TextProperties) : Properties() {
     @Deprecated("use background color instead", ReplaceWith("backgroundColor"), DeprecationLevel.ERROR)
@@ -21,7 +22,7 @@ class TextInputProperties(val text: TextProperties) : Properties() {
     val paddingFromTextLateral: Float = 12f
     val paddingFromTextVertical: Float = 8f
     val defaultText: PolyText = "polyui.text.default".localised()
-    val cornerRadii: FloatArray = floatArrayOf(0f, 0f, 0f, 0f)
+    val cornerRadii: FloatArray = 0f.radii()
     val backgroundColor: Color? = null
     val outlineColor: Color? = Color.GRAYf
     val outlineThickness: Float = 1f

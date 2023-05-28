@@ -25,6 +25,7 @@ import cc.polyfrost.polyui.utils.getResourceStreamNullable
 import cc.polyfrost.polyui.utils.toByteBuffer
 import org.lwjgl.nanovg.*
 import org.lwjgl.nanovg.NanoVG.*
+import org.lwjgl.nanovg.NanoVGGL3.*
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.stb.STBImage
 import org.lwjgl.stb.STBImageResize
@@ -43,20 +44,14 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     private var vg: Long = -1
 
     init {
-        vg = NanoVGGL2.nvgCreate(if (settings.useAntialiasing) NanoVGGL2.NVG_ANTIALIAS else 0)
-        if (vg == -1L) {
-            throw ExceptionInInitializerError("Could not initialize NanoVG")
-        }
+        vg = nvgCreate(if (settings.useAntialiasing) NVG_ANTIALIAS else 0)
+        require(vg != -1L) { "Could not initialize NanoVG" }
     }
 
-    private fun checkInit() {
-        if (vg == -1L) {
-            throw ExceptionInInitializerError("NanoVG not initialized!")
-        }
-    }
+    private fun checkInit() = require(vg != -1L) { "NanoVG not initialized!" }
 
     override fun beginFrame() {
-        checkInit()
+        if (settings.debug) checkInit()
         nvgBeginFrame(vg, width, height, pixelRatio)
     }
 
@@ -154,7 +149,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
 
     override fun createFramebuffer(width: Float, height: Float): Framebuffer {
         val f = Framebuffer(width, height)
-        fbos[f] = NanoVGGL2.nvgluCreateFramebuffer(
+        fbos[f] = nvgluCreateFramebuffer(
             vg,
             width.toInt(),
             height.toInt(),
@@ -165,7 +160,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
 
     override fun deleteFramebuffer(fbo: Framebuffer) {
         fbos.remove(fbo).also {
-            NanoVGGL2.nvgluDeleteFramebuffer(
+            nvgluDeleteFramebuffer(
                 vg,
                 it ?: throw IllegalStateException("Framebuffer not found when deleting it, already cleaned?")
             )
@@ -174,7 +169,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
 
     override fun bindFramebuffer(fbo: Framebuffer) {
         nvgEndFrame(vg)
-        NanoVGGL2.nvgluBindFramebuffer(vg, fbos[fbo] ?: throw NullPointerException("Cannot bind: $fbo does not exist!"))
+        nvgluBindFramebuffer(vg, fbos[fbo] ?: throw NullPointerException("Cannot bind: $fbo does not exist!"))
         glViewport(0, 0, fbo.width.toInt(), fbo.height.toInt())
         glClearColor(0F, 0F, 0F, 0F)
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
@@ -183,7 +178,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
 
     override fun unbindFramebuffer(fbo: Framebuffer) {
         nvgEndFrame(vg)
-        NanoVGGL2.nvgluBindFramebuffer(vg, null)
+        nvgluBindFramebuffer(vg, null)
         glViewport(0, 0, width.toInt(), height.toInt())
         nvgBeginFrame(vg, width, height, pixelRatio)
     }
@@ -516,7 +511,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         fonts.clear()
         images.values.forEach { nvgDeleteImage(vg, it.id) }
         images.clear()
-        fbos.values.forEach { NanoVGGL2.nvgluDeleteFramebuffer(vg, it) }
+        fbos.values.forEach { nvgluDeleteFramebuffer(vg, it) }
         fbos.clear()
         nvgColor.free()
         nvgPaint.free()

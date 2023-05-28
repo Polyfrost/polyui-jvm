@@ -57,7 +57,7 @@ abstract class Animation(val durationNanos: Long, val from: Float, val to: Float
         /** create an animation based on the type.
          * @see Animations */
         fun create(durationNanos: Long, start: Float, end: Float): Animation {
-            if (start == end) return Linear(1L, 0f, 0f) // prevent empty animations
+            if (start == end) return Linear(1L, start, start) // prevent empty animations
             return when (this) {
                 Linear -> Linear(durationNanos, start, end)
                 EaseInBack -> EaseInBack(durationNanos, start, end)

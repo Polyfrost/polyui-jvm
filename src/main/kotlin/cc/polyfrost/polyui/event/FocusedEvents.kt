@@ -7,6 +7,8 @@
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  */
 
+@file:Suppress("EqualsOrHashCode")
+
 package cc.polyfrost.polyui.event
 
 import cc.polyfrost.polyui.input.KeyModifiers
@@ -25,9 +27,7 @@ open class FocusedEvents : Event {
      * @see [cc.polyfrost.polyui.utils.fromModifierMerged]
      */
     data class KeyTyped(val key: Char, val mods: Short = 0, val isRepeat: Boolean = false) : FocusedEvents() {
-        override fun toString() = "KeyTyped(${Keys.toString(key, mods)})"
-
-        fun toStringPretty() = "KeyTyped(${Keys.toStringPretty(key, mods)})"
+        override fun toString() = "KeyTyped(${Keys.toStringPretty(key, mods)})"
 
         inline val modifiers: Array<KeyModifiers> get() = KeyModifiers.fromModifierMerged(mods)
 

@@ -87,8 +87,8 @@ class SwitchingLayout(
     override fun removeComponentNow(drawable: Drawable) {
     }
 
-    override fun reRenderIfNecessary() {
-        renderSelf() // don't render children.
+    override fun renderChildren() {
+        // don't render children.
     }
 
     override fun accept(event: Events): Boolean {

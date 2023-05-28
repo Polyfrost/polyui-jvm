@@ -72,7 +72,7 @@ class PolyUI(
     val master = PixelLayout(Point(0.px, 0.px), Size(renderer.width.px, renderer.height.px), items = items)
     val eventManager = EventManager(this)
     val keyBinder = KeyBinder()
-    val polyTranslator = PolyTranslator(this, translationDirectory ?: "")
+    val translator = PolyTranslator(this, translationDirectory ?: "")
     val property = PropertyManager(this)
 
     /** weather this PolyUI instance drew on this frame.
@@ -132,6 +132,7 @@ class PolyUI(
         if (settings.enableDebugKeybind) {
             keyBinder.add('I', KeyModifiers.LCONTROL, KeyModifiers.LSHIFT) {
                 settings.debug = !settings.debug
+                master.needsRedraw = true
                 LOGGER.info(
                     "Debug mode {}",
                     if (settings.debug) {

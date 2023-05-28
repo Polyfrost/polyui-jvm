@@ -103,13 +103,7 @@ abstract class Layout(
      * **Note:** Do not call this function yourself.
      */
     open fun reRenderIfNecessary() {
-        children.fastEach {
-            it.reRenderIfNecessary()
-        }
-        renderSelf()
-    }
-
-    protected fun renderSelf() {
+        renderChildren()
         if (fbo != null && fboTracker < 2) {
             if (needsRedraw) {
                 if (fboTracker < 2) fboTracker++
@@ -133,6 +127,12 @@ abstract class Layout(
         }
     }
 
+    protected open fun renderChildren() {
+        children.fastEach {
+            it.reRenderIfNecessary()
+        }
+    }
+
     /** perform the given [function] on all this layout's components, and [optionally][onChildLayouts] on all child layouts. */
     open fun onAll(onChildLayouts: Boolean = false, function: Component.() -> kotlin.Unit) {
         components.fastEach { it.function() }
@@ -151,7 +151,7 @@ abstract class Layout(
      * Returns null if not found.
      * @see get
      */
-    inline fun getOrNull(simpleName: String): Component? {
+    fun getOrNull(simpleName: String): Component? {
         components.fastEach { if (it.simpleName == simpleName) return it }
         return null
     }

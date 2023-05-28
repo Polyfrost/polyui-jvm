@@ -183,7 +183,7 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
                         1 -> type.create(durationNanos, g.toFloat(), target.g.toFloat())
                         2 -> type.create(durationNanos, b.toFloat(), target.b.toFloat())
                         3 -> type.create(durationNanos, a.toFloat(), target.a.toFloat())
-                        else -> throw Exception("Invalid index")
+                        else -> throw Exception("Invalid index??")
                     }
                 }
             } else {
@@ -247,9 +247,8 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
                 val centerY: Float = -1f
             ) : Type() {
                 init {
-                    if (innerRadius > outerRadius) {
-                        throw IllegalArgumentException("innerRadius must be smaller than outerRadius! ($innerRadius > $outerRadius)")
-                    } else if (innerRadius + 5 > outerRadius) PolyUI.LOGGER.warn("[Gradient] innerRadius and outerRadius are very close together, you may just get a circle in a box.")
+                    require(innerRadius < outerRadius) { "innerRadius must be smaller than outerRadius! ($innerRadius < $outerRadius)" }
+                    if (innerRadius + 5 > outerRadius) PolyUI.LOGGER.warn("[Gradient] innerRadius and outerRadius are very close together, you may just get a circle in a box.")
                 }
             }
 

@@ -21,6 +21,7 @@ import kotlin.math.min
  * @see VUnits
  */
 abstract class Unit(val type: Type) : Cloneable {
+    /** computed pixel value of this unit. */
     abstract var px: Float
 
     operator fun plus(other: Unit): Float {
@@ -59,7 +60,7 @@ abstract class Unit(val type: Type) : Cloneable {
         private var initialized: Boolean = false
 
         init {
-            if (amount < 0f || amount > 100f) throw IllegalArgumentException("Percent must be between 0 and 100 (inclusive).")
+            require(amount > 0f && amount < 100f) { "Percent must be between 0 and 100 (inclusive)." }
         }
 
         override fun clone(): Percent {
@@ -77,7 +78,7 @@ abstract class Unit(val type: Type) : Cloneable {
         override var px: Float = 0f
 
         init {
-            if (amount < 0 || amount > 100) throw IllegalArgumentException("Percent must be between 0 and 100 (inclusive).")
+            require(amount > 0f && amount < 100f) { "Percent must be between 0 and 100 (inclusive)." }
         }
 
         override fun clone(): VUnits {

@@ -42,9 +42,7 @@ class GridLayout @JvmOverloads constructor(
         var nrows = 0
         var ncols = 0
         items.forEach {
-            if (it.atType != Unit.Type.Grid) {
-                throw Exception("Unit type mismatch: Drawable $it needs to be placed using a Grid unit for a grid layout.")
-            }
+            require(it.atType == Unit.Type.Grid) { "Unit type mismatch: Drawable $it needs to be placed using a Grid unit for a grid layout." }
             val u = it.at.a as Unit.Grid
             nrows = max(nrows, u.row + u.rs)
             ncols = max(ncols, u.column + u.cs)

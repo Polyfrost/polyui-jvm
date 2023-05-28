@@ -15,6 +15,7 @@ import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.event.EventManager.Companion.insertTrueInsn
 import cc.polyfrost.polyui.event.Events.*
+import cc.polyfrost.polyui.input.Mouse
 import java.util.function.Consumer
 import java.util.function.Function
 
@@ -28,6 +29,10 @@ sealed class Events : Event {
         override fun hashCode(): Int {
             return button.hashCode()
         }
+
+        override fun toString(): String {
+            return "MousePressed(($x, $y), ${Mouse.toStringPretty(Mouse.fromValue(button), mods)})"
+        }
     }
 
     /** acceptable by component and layout */
@@ -37,9 +42,17 @@ sealed class Events : Event {
         override fun hashCode(): Int {
             return button.hashCode()
         }
+
+        override fun toString(): String {
+            return "MouseReleased(($x, $y), ${Mouse.toStringPretty(Mouse.fromValue(button), mods)})"
+        }
     }
 
-    data class MouseClicked @JvmOverloads constructor(val button: Int, val amountClicks: Int = 1, val mods: Short = 0) : Events()
+    data class MouseClicked @JvmOverloads constructor(val button: Int, val amountClicks: Int = 1, val mods: Short = 0) : Events() {
+        override fun toString(): String {
+            return "MouseClicked(${Mouse.toStringPretty(Mouse.fromValue(button), mods)})"
+        }
+    }
 
     /** acceptable by component and layout */
     object MouseEntered : Events()
@@ -51,16 +64,14 @@ sealed class Events : Event {
     data class MouseScrolled internal constructor(val amountX: Int, val amountY: Int, val mods: Short = 0) : Events() {
         constructor() : this(0, 0)
 
-        override fun hashCode(): Int {
-            return 0
-        }
+        override fun hashCode() = 0
     }
 
     /** acceptable by component and layout */
-    object Added : Events()
+    data object Added : Events()
 
     /** acceptable by component and layout */
-    object Removed : Events()
+    data object Removed : Events()
 
     /** specify a handler for this event.
      *
