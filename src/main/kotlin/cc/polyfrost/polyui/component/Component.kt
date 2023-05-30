@@ -181,6 +181,7 @@ abstract class Component @JvmOverloads constructor(
         onFinish: (Component.() -> kotlin.Unit)? = null
     ) {
         color.recolor(toColor, animation, durationNanos)
+        wantRedraw()
         finishColorFunc = onFinish
     }
 
@@ -195,7 +196,6 @@ abstract class Component @JvmOverloads constructor(
             }
         }
         doDynamicSize()
-
         boundingBox = Box(at, size!!).expand(properties.padding)
     }
 
@@ -272,13 +272,10 @@ abstract class Component @JvmOverloads constructor(
         }
     }
 
-    override fun canBeRemoved(): Boolean {
-        return animations.size == 0 && operations.size == 0 && !color.updating
-    }
+    override fun canBeRemoved(): Boolean = animations.size == 0 && operations.size == 0 && !color.updating
 
-    override fun toString(): String {
-        return "$simpleName(${trueX}x$trueY, ${size!!.a.px}x${size!!.b.px}${if (autoSized) " (auto)" else ""}${if (animations.isNotEmpty()) ", animating" else ""}${if (operations.isNotEmpty()) ", operating" else ""})"
-    }
+    override fun toString(): String =
+        "$simpleName(${trueX}x$trueY, ${size!!.a.px}x${size!!.b.px}${if (autoSized) " (auto)" else ""}${if (animations.isNotEmpty()) ", animating" else ""}${if (operations.isNotEmpty()) ", operating" else ""})"
 
     override fun isInside(x: Float, y: Float): Boolean {
         return if (atCache == null) {

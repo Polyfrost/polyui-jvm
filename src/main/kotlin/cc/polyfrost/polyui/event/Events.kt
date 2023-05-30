@@ -7,7 +7,7 @@
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  */
 
-@file:Suppress("EqualsOrHashCode", "UNCHECKED_CAST")
+@file:Suppress("UNCHECKED_CAST")
 
 package cc.polyfrost.polyui.event
 
@@ -23,35 +23,58 @@ import java.util.function.Function
 sealed class Events : Event {
     // imagine this is a rust enum okay
     /** acceptable by component and layout */
-    data class MousePressed internal constructor(val button: Int, val x: Float, val y: Float, val mods: Short = 0) : Events() {
+    data class MousePressed internal constructor(val button: Int, val x: Float, val y: Float, val mods: Short = 0) :
+        Events() {
         constructor(button: Int) : this(button, 0f, 0f)
 
         override fun hashCode(): Int {
-            return button.hashCode()
+            var result = button + 500
+            result = 31 * result + mods
+            return result
         }
 
-        override fun toString(): String {
-            return "MousePressed(($x, $y), ${Mouse.toStringPretty(Mouse.fromValue(button), mods)})"
+        override fun toString(): String =
+            "MousePressed(($x, $y), ${Mouse.toStringPretty(Mouse.fromValue(button), mods)})"
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as MousePressed
+
+            if (button != other.button) return false
+            return mods == other.mods
         }
     }
 
     /** acceptable by component and layout */
-    data class MouseReleased internal constructor(val button: Int, val x: Float, val y: Float, val mods: Short = 0) : Events() {
+    data class MouseReleased internal constructor(val button: Int, val x: Float, val y: Float, val mods: Short = 0) :
+        Events() {
         constructor(button: Int) : this(button, 0f, 0f)
 
         override fun hashCode(): Int {
-            return button.hashCode()
+            var result = button + 5000 // avoid conflicts with MousePressed
+            result = 31 * result + mods
+            return result
         }
 
-        override fun toString(): String {
-            return "MouseReleased(($x, $y), ${Mouse.toStringPretty(Mouse.fromValue(button), mods)})"
+        override fun toString(): String =
+            "MouseReleased(($x, $y), ${Mouse.toStringPretty(Mouse.fromValue(button), mods)})"
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as MouseReleased
+
+            if (button != other.button) return false
+            return mods == other.mods
         }
     }
 
-    data class MouseClicked @JvmOverloads constructor(val button: Int, val amountClicks: Int = 1, val mods: Short = 0) : Events() {
-        override fun toString(): String {
-            return "MouseClicked(${Mouse.toStringPretty(Mouse.fromValue(button), mods)})"
-        }
+    data class MouseClicked @JvmOverloads constructor(val button: Int, val amountClicks: Int = 1, val mods: Short = 0) :
+        Events() {
+        override fun toString(): String = "MouseClicked(${Mouse.toStringPretty(Mouse.fromValue(button), mods)})"
     }
 
     /** acceptable by component and layout */

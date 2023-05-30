@@ -7,8 +7,6 @@
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  */
 
-@file:Suppress("EqualsOrHashCode")
-
 package cc.polyfrost.polyui.event
 
 import cc.polyfrost.polyui.input.KeyModifiers
@@ -34,9 +32,19 @@ open class FocusedEvents : Event {
         fun hasModifier(modifier: KeyModifiers): Boolean = (mods and modifier.value) != 0.toShort()
 
         override fun hashCode(): Int {
-            var result = key.hashCode()
+            var result = key.hashCode() + 500
             result = 31 * result + mods
             return result
+        }
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as KeyTyped
+
+            if (key != other.key) return false
+            return mods == other.mods
         }
     }
 
@@ -57,9 +65,19 @@ open class FocusedEvents : Event {
         fun hasModifier(modifier: KeyModifiers): Boolean = (mods and modifier.value) != 0.toShort()
 
         override fun hashCode(): Int {
-            var result = key.hashCode()
+            var result = key.hashCode() + 5000
             result = 31 * result + mods
             return result
+        }
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as KeyPressed
+
+            if (key != other.key) return false
+            return mods == other.mods
         }
     }
 }

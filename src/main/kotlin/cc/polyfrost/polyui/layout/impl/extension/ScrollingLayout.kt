@@ -332,7 +332,7 @@ class ScrollingLayout(
         override val color: Color = Color(0.5f, 0.5f, 0.5f, 0.5f)
         override val hoverColor = Color(0.5f, 0.5f, 0.5f, 0.75f)
         override val cornerRadii: FloatArray = 2f.radii()
-        open val clickColor = Color(0.5f, 0.5f, 0.5f, 0.8f)
+        override val clickColor = Color(0.5f, 0.5f, 0.5f, 0.8f)
         override val padding: Float = 2f
         open val width = 4f
         open val showAnimation: Animations? = Animations.EaseOutExpo

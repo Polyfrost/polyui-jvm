@@ -9,8 +9,11 @@
 
 package cc.polyfrost.polyui.property.impl
 
+import cc.polyfrost.polyui.animate.Animations
 import cc.polyfrost.polyui.color.Color
+import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.property.Properties
+import cc.polyfrost.polyui.unit.seconds
 import cc.polyfrost.polyui.utils.radii
 
 /**
@@ -23,5 +26,31 @@ open class BlockProperties @JvmOverloads constructor(
     open val lineThickness: Float = 0f
 ) : Properties() {
     open val hoverColor = Color(12, 48, 255)
+    open val clickColor = Color(15, 60, 0)
+    open val clickAnimation: Animations? = Animations.EaseOutExpo
+    open val hoverAnimation: Animations? = Animations.EaseOutExpo
+    open val clickAnimationDuration: Long = 0.25.seconds
+    open val hoverAnimationDuration: Long = 0.7.seconds
     override val padding: Float = 0F
+
+    init {
+        addEventHandlers(
+            Events.MousePressed(0) to {
+                recolor(clickColor, clickAnimation, clickAnimationDuration)
+                false
+            },
+            Events.MouseReleased(0) to {
+                recolor(hoverColor, clickAnimation, clickAnimationDuration)
+                false
+            },
+            Events.MouseEntered to {
+                recolor(hoverColor, hoverAnimation, hoverAnimationDuration)
+                false
+            },
+            Events.MouseExited to {
+                recolor(properties.color, hoverAnimation, hoverAnimationDuration)
+                false
+            }
+        )
+    }
 }

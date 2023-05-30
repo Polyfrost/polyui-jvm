@@ -32,20 +32,24 @@ inline val Number.vmin get() = Unit.VUnits(this.toFloat(), Unit.Type.VMin)
 @get:JvmName("vmax")
 inline val Number.vmax get() = Unit.VUnits(this.toFloat(), Unit.Type.VMax)
 
+/** note that the smallest unit of time in PolyUI is 1 nanosecond. */
 @get:JvmName("nanoseconds")
 inline val Number.nanoseconds get() = toLong()
 
+@get:JvmName("microseconds")
+inline val Number.microseconds get() = (toDouble() * 1_000.0).toLong()
+
 @get:JvmName("milliseconds")
-inline val Number.milliseconds get() = (toLong() * 1_000_000L)
+inline val Number.milliseconds get() = (toDouble() * 1_000_000.0).toLong()
 
 @get:JvmName("seconds")
-inline val Number.seconds get() = (toLong() * 1_000_000_000L)
+inline val Number.seconds get() = (toDouble() * 1_000_000_000.0).toLong()
 
 @get:JvmName("minutes")
-inline val Number.minutes get() = (toLong() * 60_000_000_000L)
+inline val Number.minutes get() = (toDouble() * 60_000_000_000.0).toLong()
 
 @get:JvmName("hours")
-inline val Number.hours get() = (toLong() * 3_600_000_000_000L)
+inline val Number.hours get() = (toDouble() * 3_600_000_000_000.0).toLong()
 
 inline val origin get() = (0.px * 0.px).clone()
 inline val fill get() = Unit.Percent(100f).clone()

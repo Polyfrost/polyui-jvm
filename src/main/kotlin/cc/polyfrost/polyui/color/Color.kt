@@ -160,7 +160,9 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
          * @see alwaysUpdates
          */
         open val updating get() = animation != null
-        private var animation: Array<Animation>? = null
+        private var animation: Animation? = null
+        private var to = Array(4) { 0f }
+        private var from = Array(4) { 0f }
 
         /** turn this mutable color into an immutable one. */
         fun toImmutable() = Color(r, g, b, a)
@@ -177,15 +179,15 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
          */
         open fun recolor(target: Color, type: Animation.Type? = null, durationNanos: Long = 1000) {
             if (type != null) {
-                this.animation = Array(4) {
-                    when (it) {
-                        0 -> type.create(durationNanos, r.toFloat(), target.r.toFloat())
-                        1 -> type.create(durationNanos, g.toFloat(), target.g.toFloat())
-                        2 -> type.create(durationNanos, b.toFloat(), target.b.toFloat())
-                        3 -> type.create(durationNanos, a.toFloat(), target.a.toFloat())
-                        else -> throw Exception("Invalid index??")
-                    }
-                }
+                this.animation = type.create(durationNanos, 0f, 1f)
+                from[0] = this.r.toFloat()
+                from[1] = this.g.toFloat()
+                from[2] = this.b.toFloat()
+                from[3] = this.a.toFloat()
+                to[0] = target.r.toFloat() - from[0]
+                to[1] = target.g.toFloat() - from[1]
+                to[2] = target.b.toFloat() - from[2]
+                to[3] = target.a.toFloat() - from[3]
             } else {
                 this.r = target.r
                 this.g = target.g
@@ -202,14 +204,22 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
          * */
         open fun update(deltaTimeNanos: Long): Boolean {
             if (animation != null) {
-                if (animation!![0].isFinished) {
+                val from = this.from
+                val to = this.to
+                if (animation!!.isFinished) {
                     animation = null
+                    // avoid rounding errors for precision
+                    this.r = (from[0] + to[0]).toInt()
+                    this.g = (from[1] + to[1]).toInt()
+                    this.b = (from[2] + to[2]).toInt()
+                    this.a = (from[3] + to[3]).toInt()
                     return true
                 }
-                this.r = animation!![0].update(deltaTimeNanos).toInt()
-                this.g = animation!![1].update(deltaTimeNanos).toInt()
-                this.b = animation!![2].update(deltaTimeNanos).toInt()
-                this.a = animation!![3].update(deltaTimeNanos).toInt()
+                val progress = animation!!.update(deltaTimeNanos)
+                this.r = (from[0] + to[0] * progress).toInt()
+                this.g = (from[1] + to[1] * progress).toInt()
+                this.b = (from[2] + to[2] * progress).toInt()
+                this.a = (from[3] + to[3] * progress).toInt()
                 return false
             }
             return false
@@ -224,10 +234,10 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         val color2 = if (color2 !is Mutable) color2.toMutable() else color2
 
         sealed class Type {
-            object TopToBottom : Type()
-            object LeftToRight : Type()
-            object TopLeftToBottomRight : Type()
-            object BottomLeftToTopRight : Type()
+            data object TopToBottom : Type()
+            data object LeftToRight : Type()
+            data object TopLeftToBottomRight : Type()
+            data object BottomLeftToTopRight : Type()
 
             /**
              * Radial gradient.

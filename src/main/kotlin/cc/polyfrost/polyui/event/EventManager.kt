@@ -99,7 +99,7 @@ class EventManager(private val polyUI: PolyUI) {
             }
         }
         mouseOverDrawables.fastRemoveIf {
-            (!it.isInside(x, y) && it.mouseOver).also { b ->
+            (!it.isInside(x, y)).also { b ->
                 if (b) {
                     it.accept(Events.MouseExited)
                     it.mouseOver = false
