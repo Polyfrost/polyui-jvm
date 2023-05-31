@@ -27,8 +27,12 @@ class Settings(private val renderer: Renderer) {
      * @see debug*/
     var enableDebugKeybind = true
 
-    /** set this to something other than 0 to set a framerate cap for the UI. */
+    /** set this to something other than 0 to set a framerate cap for the UI.
+     * @see unfocusedFPS */
     var maxFPS = 0
+
+    /** set this to something other than 0 to change the framerate from the current [maxFPS] to this value when it is unfocused. */
+    var unfocusedFPS = 10
 
     var useAntialiasing = true
     var enableVSync = false

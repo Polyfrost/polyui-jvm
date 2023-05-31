@@ -88,7 +88,6 @@ class EventManager(private val polyUI: PolyUI) {
         mouseY = y
         if (!mouseDown) {
             onApplicableDrawablesUnsafe(x, y) {
-                // we only need to check acceptsInput here as it controls the mouseOver flag, so if it doesn't accept input, mouseOver is always false
                 if (isInside(x, y) && acceptsInput) {
                     if (!mouseOver) {
                         accept(Events.MouseEntered)

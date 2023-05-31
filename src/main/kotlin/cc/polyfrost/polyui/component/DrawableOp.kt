@@ -51,16 +51,17 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         get() = animation?.isFinished ?: true
 
     /**
-     * Note: if you are making a UI, you should probably be using [scale][cc.polyfrost.polyui.component.Component.resize], [rotate][cc.polyfrost.polyui.component.Component.rotate], or [translate][cc.polyfrost.polyui.component.Component.move] instead of this class.
+     * Note: if you are making a UI, you should probably be using [scale][cc.polyfrost.polyui.component.Component.resize], [rotate][cc.polyfrost.polyui.component.Component.rotateBy], or [translate][cc.polyfrost.polyui.component.Component.moveBy] instead of this class.
      */
     class Move(
         private val to: Vec2<Unit>,
+        add: Boolean = true,
         drawable: Drawable,
         type: Animations? = null,
         durationNanos: Long = 1000L
     ) : DrawableOp(drawable) {
-        override val animation = type?.create(durationNanos, drawable.x, drawable.x + to.x)
-        private val animation2 = type?.create(durationNanos, drawable.y, drawable.y + to.y)
+        override val animation = type?.create(durationNanos, drawable.x, if (add) drawable.x + to.x else to.x)
+        private val animation2 = type?.create(durationNanos, drawable.y, if (add) drawable.y + to.y else to.y)
         override fun apply(renderer: Renderer) {
             if (animation != null) {
                 drawable.at.a.px += animation.value
@@ -77,13 +78,14 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
      */
     class Rotate(
         private val angle: Double,
+        add: Boolean = true,
         override val drawable: Component,
         type: Animations? = null,
         durationNanos: Long = 1000L
     ) :
         DrawableOp(drawable) {
         override val animation =
-            type?.create(durationNanos, drawable.rotation.toFloat(), (drawable.rotation + angle).toFloat())
+            type?.create(durationNanos, drawable.rotation.toFloat(), if (add) (drawable.rotation + angle).toFloat() else angle.toFloat())
 
         override fun apply(renderer: Renderer) {
             if (animation != null) {

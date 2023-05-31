@@ -177,7 +177,7 @@ abstract class Layout(
     /**
      * adds the given component/layout to this layout.
      *
-     * this will add the drawable to the [Layout.components] or [children] list, and invoke its added event function.
+     * this will add the drawable to the [Layout.components] or [children] list, and invoke its [Events.Added] if it is present.
      */
     open fun addComponent(drawable: Drawable) {
         when (drawable) {

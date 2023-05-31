@@ -229,13 +229,13 @@ class ScrollingLayout(
                 field = value
                 if (!value) {
                     if (horizontal) { // todo hiding of scrollbar
-                        this.move(
+                        this.moveTo(
                             (at.a.px + (properties.width + properties.padding) * 2f).px * at.b.clone(),
                             properties.showAnimation,
                             properties.showAnimationDuration
                         )
                     } else {
-                        this.move(
+                        this.moveTo(
                             at.a.clone() * (at.b.px + (properties.width + properties.padding) * 2f).px,
                             properties.showAnimation,
                             properties.showAnimationDuration
@@ -243,13 +243,13 @@ class ScrollingLayout(
                     }
                 } else {
                     if (horizontal) {
-                        this.move(
+                        this.moveTo(
                             (at.a.px - (properties.width + properties.padding) * 2f).px * at.b.clone(),
                             properties.showAnimation,
                             properties.showAnimationDuration
                         )
                     } else {
-                        this.move(
+                        this.moveTo(
                             at.a.clone() * (at.b.px - (properties.width + properties.padding) * 2f).px,
                             properties.showAnimation,
                             properties.showAnimationDuration

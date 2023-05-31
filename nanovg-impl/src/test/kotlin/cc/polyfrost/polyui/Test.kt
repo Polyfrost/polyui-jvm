@@ -10,6 +10,7 @@
 package cc.polyfrost.polyui
 
 import cc.polyfrost.polyui.animate.Animations
+import cc.polyfrost.polyui.animate.keyframes.keyframed
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.component.impl.Block
@@ -44,7 +45,7 @@ fun main() {
             events = events(
                 Events.MouseClicked(0) to {
                     println("Mouse clicked! $it")
-                    rotate(120.0, Animations.EaseInOutCubic)
+                    rotateBy(120.0, Animations.EaseInOutCubic)
                 },
                 Events.MouseClicked(0, 2) to {
                     println("Mouse double-clicked!")
@@ -86,7 +87,20 @@ fun main() {
                         size = 120.px * 120.px,
                         events = events(
                             Events.MouseClicked(0) to {
-                                rotate(120.0, Animations.EaseOutExpo)
+                                keyframed(2.seconds, Animations.EaseOutExpo) {
+                                    20 {
+                                        rotation = 20.0
+                                    }
+                                    32 {
+                                        rotation = 35.0
+                                    }
+                                    50 {
+                                        rotation = 180.0
+                                    }
+                                    100 {
+                                        rotation = 360.0
+                                    }
+                                }
                             }
                         )
                     ),
@@ -96,7 +110,7 @@ fun main() {
                         size = 120.px * 120.px,
                         events = events(
                             Events.MouseClicked(0) to {
-                                rotate(120.0, Animations.EaseInOutCubic)
+                                rotateBy(120.0, Animations.EaseInOutCubic)
                             }
                         )
                     ),
@@ -105,7 +119,7 @@ fun main() {
                         at = 380.px * 30.px,
                         events = events(
                             Events.MouseClicked(0) to {
-                                rotate(120.0, Animations.EaseOutBump)
+                                rotateBy(120.0, Animations.EaseOutBump)
                             }
                         )
                     )

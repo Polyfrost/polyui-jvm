@@ -26,7 +26,7 @@ open class BlockProperties @JvmOverloads constructor(
     open val lineThickness: Float = 0f
 ) : Properties() {
     open val hoverColor = Color(12, 48, 255)
-    open val clickColor = Color(15, 60, 0)
+    open val clickColor = Color(5, 36, 150)
     open val clickAnimation: Animations? = Animations.EaseOutExpo
     open val hoverAnimation: Animations? = Animations.EaseOutExpo
     open val clickAnimationDuration: Long = 0.25.seconds

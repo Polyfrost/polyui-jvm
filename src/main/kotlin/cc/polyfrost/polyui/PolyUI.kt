@@ -69,7 +69,7 @@ class PolyUI(
     val renderer: Renderer,
     vararg items: Drawable
 ) {
-    val master = PixelLayout(Point(0.px, 0.px), Size(renderer.width.px, renderer.height.px), items = items)
+    val master = PixelLayout(Point(0.px, 0.px), Size(renderer.width.px, renderer.height.px), items = items, resizesChildren = true)
     val eventManager = EventManager(this)
     val keyBinder = KeyBinder()
     val translator = PolyTranslator(this, translationDirectory ?: "")
@@ -90,10 +90,16 @@ class PolyUI(
     private val executors: ArrayList<Clock.FixedTimeExecutor> = arrayListOf()
     inline val settings get() = renderer.settings
     var width
-        set(value) { renderer.width = value }
+        set(value) {
+            Unit.VUnits.vWidth = value
+            renderer.width = value
+        }
         inline get() = renderer.width
     var height
-        set(value) { renderer.height = value }
+        set(value) {
+            Unit.VUnits.vHeight = value
+            renderer.height = value
+        }
         inline get() = renderer.height
     private var renderHooks = arrayListOf<Renderer.() -> kotlin.Unit>()
     internal var focused: (Focusable)? = null
@@ -171,21 +177,17 @@ class PolyUI(
         }
         if (settings.debug) LOGGER.info("resize: {} x {}", newWidth, newHeight)
 
-        master.size!!.a.px = newWidth.toFloat()
-        master.size!!.b.px = newHeight.toFloat()
-        Unit.VUnits.vHeight = newHeight.toFloat()
-        Unit.VUnits.vWidth = newWidth.toFloat()
         master.calculateBounds()
         if (settings.masterIsFramebuffer) {
             renderer.deleteFramebuffer(master.fbo!!)
             master.fbo = renderer.createFramebuffer(newWidth.toFloat(), newHeight.toFloat())
         }
+        master.rescale(
+            newWidth.toFloat() / this.width,
+            newHeight.toFloat() / this.height
+        )
 
         master.children.fastEach {
-            it.rescale(
-                newWidth.toFloat() / this.width,
-                newHeight.toFloat() / this.height
-            )
             if (it.fbo != null) {
                 renderer.deleteFramebuffer(it.fbo!!)
                 it.fbo = renderer.createFramebuffer(it.width, it.height)
@@ -222,7 +224,7 @@ class PolyUI(
         } else {
             drew = false
         }
-        executors.fastEach { it.tick(delta) }
+        executors.fastRemoveIf { it.tick(delta) }
     }
 
     /** draw the debug overlay text. It is right-aligned. */
@@ -264,8 +266,8 @@ class PolyUI(
     }
 
     /** add a function that is called every [nanos] nanoseconds. */
-    fun every(nanos: Long, func: () -> kotlin.Unit): PolyUI {
-        executors.add(Clock.FixedTimeExecutor(nanos, func))
+    fun every(nanos: Long, repeats: Int = 0, func: () -> kotlin.Unit): PolyUI {
+        executors.add(Clock.FixedTimeExecutor(nanos, repeats, func))
         return this
     }
 
@@ -278,6 +280,24 @@ class PolyUI(
 
     fun unfocus() = focus(null)
 
+    /**
+     * print this PolyUI instance's components and children in a list, like this:
+     * ```
+     * PolyUI(800.0 x 800.0) with 0 components and 2 layouts:
+     *   PixelLayout@5bcab519 [Draggable](20.0x570.0, 540.0 x 150.0)
+     * 	 Text@6eebc39e(40.0x570.0, 520.0x32.0)
+     * 	 Block@2f686d1f(40.0x600.0, 120.0x120.0)
+     * 	 Block@7085bdee(220.0x600.0, 120.0x120.0)
+     * 	 Image@6fd02e5(400.0x600.0, 120.0x120.0 (auto))
+     * 	 ... 2 more
+     *   FlexLayout@73846619 [Scrollable](20.0x30.0, 693.73267 x 409.47168, buffered, needsRedraw)
+     * 	 Block@32e6e9c3(20.0x30.0, 61.111263x42.21167)
+     * 	 Block@5056dfcb(86.11127x30.0, 40.909004x76.32132)
+     * 	 Block@6574b225(132.02026x30.0, 52.75415x52.59597)
+     * 	 Block@2669b199(189.77441x30.0, 76.59671x45.275665)
+     * ```
+     * The string is also returned.
+     */
     fun debugPrint(): String {
         val sb = StringBuilder()
         sb.append(toString()).append(" with ${master.components.size} components and ${master.children.size} layouts:")
@@ -315,8 +335,6 @@ class PolyUI(
         renderHooks.clear()
         master.children.clear()
         master.components.clear()
-        Unit.VUnits.vHeight = 0f
-        Unit.VUnits.vWidth = 0f
     }
 
     companion object {

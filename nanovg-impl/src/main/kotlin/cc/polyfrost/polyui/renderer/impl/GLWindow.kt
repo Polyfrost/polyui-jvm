@@ -13,12 +13,16 @@ import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.input.KeyModifiers
 import cc.polyfrost.polyui.input.Keys
 import cc.polyfrost.polyui.renderer.Window
+import cc.polyfrost.polyui.utils.getResourceStream
+import cc.polyfrost.polyui.utils.toByteBuffer
 import org.lwjgl.glfw.Callbacks
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWErrorCallback
+import org.lwjgl.glfw.GLFWImage
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL.createCapabilities
 import org.lwjgl.opengl.GL11.*
+import org.lwjgl.stb.STBImage
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.system.Platform
@@ -41,6 +45,10 @@ class GLWindow @JvmOverloads constructor(
         private set
     lateinit var polyUI: PolyUI
         private set
+    var fpsCap: Double = 0.0
+        set(value) {
+            field = if (value == 0.0) 0.0 else 1.0 / value.toInt()
+        }
 
     var title = title
         set(new) {
@@ -67,6 +75,7 @@ class GLWindow @JvmOverloads constructor(
             glfwTerminate()
             throw RuntimeException("Failed to create the window.")
         }
+        setIcon("icon.png")
 
         glfwMakeContextCurrent(handle)
         createCapabilities()
@@ -154,6 +163,20 @@ class GLWindow @JvmOverloads constructor(
         glfwSetScrollCallback(handle) { _, x, y ->
             polyUI.eventManager.onMouseScrolled(x.toInt(), y.toInt())
         }
+
+        // todo glfwGetClipboardString() ?
+
+//        glfwSetDropCallback(handle) { _, count, names ->
+//            val files = Array(count) {
+//                File(GLFWDropCallback.getName(names, it))
+//            }
+//        }
+
+        glfwSetWindowFocusCallback(handle) { _, focused ->
+            if (polyUI.settings.unfocusedFPS != 0) {
+                fpsCap = if (focused) polyUI.settings.maxFPS.toDouble() else polyUI.settings.unfocusedFPS.toDouble()
+            }
+        }
     }
 
     override fun videoSettingsChanged() {
@@ -188,15 +211,15 @@ class GLWindow @JvmOverloads constructor(
         }
 
         var t = glfwGetTime()
-        val frameTime = if (polyUI.renderer.settings.maxFPS == 0) 0.0 else 1.0 / polyUI.renderer.settings.maxFPS
+        fpsCap = polyUI.settings.maxFPS.toDouble()
         while (!glfwWindowShouldClose(handle)) {
             glViewport(0, 0, width, height)
             glClearColor(0.1f, 0.1f, 0.1f, 0f)
             glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
 
             this.polyUI.render()
-            if (frameTime != 0.0) {
-                while (glfwGetTime() - t < frameTime) {
+            if (fpsCap != 0.0) {
+                while (glfwGetTime() - t < fpsCap) {
                     glfwPollEvents()
                 }
                 t = glfwGetTime()
@@ -216,8 +239,19 @@ class GLWindow @JvmOverloads constructor(
 
     override fun close() = glfwSetWindowShouldClose(handle, true)
 
+    /** set the icon of this window according to the given [icon] path. This should be a resource path that can be used by [getResourceStream].
+     *
+     * The icon should be a PNG, BMP or JPG, and in a 2x size (i.e. 16x16, 32x32, 128x128, etc)
+     * @throws java.io.IOException if the image does not exist, or a different IO error occurs.
+     *
+     * [SIGSEGV](https://en.wikipedia.org/wiki/Segmentation_fault) - if something else goes wrong in this method. Your JVM will crash blaming `[libglfw.so+0x211xx]` or something.
+     */
     fun setIcon(icon: String) {
-        TODO("Not yet implemented")
+        val w = IntArray(1)
+        val h = IntArray(1)
+        val data = STBImage.stbi_load_from_memory(getResourceStream(icon).toByteBuffer(), w, h, IntArray(1), 4)
+            ?: throw Exception("error occurred while loading icon!")
+        glfwSetWindowIcon(handle, GLFWImage.malloc(1).put(0, GLFWImage.malloc().set(w[0], h[0], data)))
     }
 
     fun fullscreen() {

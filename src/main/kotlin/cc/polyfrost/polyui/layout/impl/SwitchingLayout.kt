@@ -61,6 +61,7 @@ class SwitchingLayout(
         DeprecationLevel.WARNING
     )
     override fun addComponent(drawable: Drawable) {
+        super.addComponent(drawable)
     }
 
     @Deprecated(
@@ -69,6 +70,7 @@ class SwitchingLayout(
         DeprecationLevel.WARNING
     )
     override fun removeComponent(drawable: Drawable) {
+        super.removeComponent(drawable)
     }
 
     @Deprecated(
@@ -77,6 +79,7 @@ class SwitchingLayout(
         DeprecationLevel.ERROR
     )
     override fun onAll(onChildLayouts: Boolean, function: Component.() -> kotlin.Unit) {
+        super.onAll(onChildLayouts, function)
     }
 
     @Deprecated(
@@ -85,6 +88,7 @@ class SwitchingLayout(
         DeprecationLevel.WARNING
     )
     override fun removeComponentNow(drawable: Drawable) {
+        super.removeComponentNow(drawable)
     }
 
     override fun renderChildren() {
@@ -167,7 +171,7 @@ class SwitchingLayout(
         }
     }
 
-    private fun switch(index: Int) {
+    fun switch(index: Int) {
         val layout = children.getOrNull(index) ?: return
         current?.onAdded?.invoke(current!!)
         next = layout
