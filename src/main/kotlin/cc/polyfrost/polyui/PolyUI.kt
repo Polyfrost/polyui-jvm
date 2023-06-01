@@ -102,6 +102,16 @@ class PolyUI(
         }
         inline get() = renderer.height
     private var renderHooks = arrayListOf<Renderer.() -> kotlin.Unit>()
+
+    /**
+     * the time since the last frame, in nanoseconds. It is used internally a lot for animations, etc.
+     * @see Clock
+     * @see every
+     * @see cc.polyfrost.polyui.component.Component.preRender
+     * @see cc.polyfrost.polyui.animate.Animation
+     */
+    var delta: Long = 0L
+        private set
     internal var focused: (Focusable)? = null
 
     // telemetry
@@ -200,7 +210,7 @@ class PolyUI(
     }
 
     fun render() {
-        val delta = clock.delta
+        delta = clock.delta
         if (master.needsRedraw) {
             master.needsRedraw = false
             val now = clock.now

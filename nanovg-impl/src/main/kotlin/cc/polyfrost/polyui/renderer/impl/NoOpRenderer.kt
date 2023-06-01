@@ -38,6 +38,12 @@ class NoOpRenderer(width: Float, height: Float) : Renderer(width, height) {
     override fun rotate(angleRadians: Double) {
     }
 
+    override fun skewX(angleRadians: Double) {
+    }
+
+    override fun skewY(angleRadians: Double) {
+    }
+
     override fun pushScissor(x: Float, y: Float, width: Float, height: Float) {
     }
 

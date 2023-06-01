@@ -26,7 +26,7 @@ import cc.polyfrost.polyui.unit.seconds
  * for [mouse clicks][cc.polyfrost.polyui.event.Events.MouseClicked]; to in your initialization block; using the extension function [keyframed].
  *
  * Each keyframe can be added using a number between 0 (representing the start or 0%) to 100, representing the end or 100%.
- * Each keyframe can control the color, rotation, position and size of the component (using this [function][cc.polyfrost.polyui.component.Component.animateTo]).
+ * Each keyframe can control the color, rotation, position, skew and size of the component (using this [function][cc.polyfrost.polyui.component.Component.animateTo]).
  * They support different animation curves and durations using the parameters [overNanos] and [animation].
  *
  * The syntax is as follows:
@@ -97,7 +97,7 @@ class KeyFrames @JvmOverloads constructor(private val overNanos: Long, private v
         if (time >= n.time) {
             i++
             val nn = next ?: return true
-            component.animateTo(nn.position, nn.size, nn.rotation, nn.color, animation, nn.time - n.time)
+            component.animateTo(nn.position, nn.size, nn.rotation, nn.skewX, nn.skewY, nn.color, animation, nn.time - n.time)
         }
         return false
     }
@@ -107,10 +107,12 @@ class KeyFrames @JvmOverloads constructor(private val overNanos: Long, private v
 class KeyFrame(val time: Long, prev: KeyFrame?) {
     var rotation: Double = prev?.rotation ?: 0.0
     var position: Vec2<Unit>? = prev?.position
+    var skewX: Double = prev?.skewX ?: 0.0
+    var skewY: Double = prev?.skewY ?: 0.0
     var size: Vec2<Unit>? = prev?.size
     var color: Color? = prev?.color
 
-    override fun toString() = "KeyFrame(toRotate $rotation, to $position, toSize $size, toColor $color)"
+    override fun toString() = "KeyFrame(toRotate $rotation, skews $skewX+$skewY, to $position, toSize $size, toColor $color)"
 }
 
 /** marker class for preventing illegal nesting. */

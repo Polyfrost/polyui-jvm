@@ -83,7 +83,7 @@ class ScrollingLayout(
 
         ptr.removeQueue.fastEach { if (it.canBeRemoved()) removeComponentNow(it) }
         ptr.needsRedraw = false
-        val delta = ptr.clock.delta
+        val delta = polyui.delta
 
         val (anim, anim1) = anims
         if (anim?.isFinished == true) {
@@ -91,7 +91,6 @@ class ScrollingLayout(
         } else {
             anim?.update(delta)?.also {
                 at.a.px = ofsX + anim.value
-
                 ptr.needsRedraw = true
             }
         }
@@ -158,7 +157,6 @@ class ScrollingLayout(
                 )
             }
 
-            ptr.clock.delta
             needsRedraw = true
             return true
         }

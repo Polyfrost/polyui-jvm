@@ -148,7 +148,7 @@ class SwitchingLayout(
 
     override fun render() {
         if (goingSwitchOp != null) {
-            val delta = clock.delta
+            val delta = polyui.delta
             goingSwitchOp!!.update(delta)
             comingSwitchOp!!.update(delta)
         }
@@ -185,8 +185,6 @@ class SwitchingLayout(
         }
         goingSwitchOp = transition.create(current!!, transitionDuration)
         comingSwitchOp = transition.create(next!!, transitionDuration)
-        // update clock so it's not 289381903812
-        clock.delta
     }
 
     fun next() {

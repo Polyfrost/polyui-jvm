@@ -25,7 +25,8 @@ import kotlin.math.min
  * Please make sure to implement all the functions in this class, and you may want to familiarize yourself with how [cc.polyfrost.polyui.PolyUI] works.
  *
  * It is also responsible for loading and caching all images and fonts, but this is down to you as a rendering implementation to implement.
- * for these functions, such as [drawImage] and [drawText], an initialized [Font] or [PolyImage] instance will be given. This class simply contains a filepath to the resource. You will need to load it, and cache it for future use (ideally).
+ * for these functions, such as [drawImage] and [drawText], an initialized [Font] or [PolyImage] instance will be given.
+ * This class simply contains a path to the resource. You will need to load it using [getResourceStream][cc.polyfrost.polyui.utils.getResourceStream], and cache it for future use (ideally).
  */
 abstract class Renderer(width: Float, height: Float) : AutoCloseable {
     var width: Float = width
@@ -44,7 +45,7 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
 
     /** hook into this renderer. */
     @Suppress("UNUSED_EXPRESSION")
-    internal inline fun render(block: Renderer.() -> kotlin.Unit) = block()
+    inline fun render(block: Renderer.() -> kotlin.Unit) = block()
 
     abstract fun beginFrame()
     abstract fun endFrame()
@@ -61,7 +62,7 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
 
     /** set a maximum alpha value for all future draw calls, in the range (0-1), until [reset][resetAlphaCap]. This is useful for fading in/out all of PolyUI, for example.
      *
-     * **Note that this itself will not** set the global alpha, so use [gblAlpha] to do that. */
+     * **Note that this itself will not** set the global alpha, so use [globalAlpha] to do that. */
     fun capAlpha(alpha: Float) {
         alphaCap = alpha
     }
@@ -92,6 +93,24 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
      * **you must** call the inverse of this function ([rotate(-angleRadians)][rotate]) when you are done with this transform!
      */
     abstract fun rotate(angleRadians: Double)
+
+    /**
+     * Skew all future draw calls by the given amount.
+     *
+     * **you must** call the inverse of this function ([skewX(-x)][skewX]) when you are done with this transform!
+     *
+     * @since 0.16.1
+     */
+    abstract fun skewX(angleRadians: Double)
+
+    /**
+     * Skew all future draw calls by the given amount.
+     *
+     * **you must** call the inverse of this function ([skewY(-y)][skewY]) when you are done with this transform!
+     *
+     * @since 0.16.1
+     */
+    abstract fun skewY(angleRadians: Double)
 
     /**
      * begin a scissor rectangle, that will clip rendering to the given rectangle. The scissor is affected by [translate], [scale], and [rotate].
@@ -180,6 +199,12 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
 
     fun drawRect(x: Float, y: Float, width: Float, height: Float, color: Color, radii: FloatArray) =
         drawRect(x, y, width, height, color, radii[0], radii[1], radii[2], radii[3])
+
+    /**
+     * Draw a circle to the screen, as per the given parameters. Note that the x,y is the top left of the circle box, and this is intentional; so it is in-line with the rest of the PolyUI rendering methods.
+     */
+    open fun drawCircle(x: Float, y: Float, radius: Float, color: Color) =
+        drawRect(x, y, radius + radius, radius + radius, color, radius)
 
     fun drawHollowRect(
         x: Float,

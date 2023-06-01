@@ -64,6 +64,11 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     override fun scale(x: Float, y: Float) = nvgScale(vg, x, y)
 
     override fun rotate(angleRadians: Double) = nvgRotate(vg, angleRadians.toFloat())
+
+    override fun skewX(angleRadians: Double) = nvgSkewX(vg, angleRadians.toFloat())
+
+    override fun skewY(angleRadians: Double) = nvgSkewY(vg, angleRadians.toFloat())
+
     override fun pushScissor(x: Float, y: Float, width: Float, height: Float) = nvgScissor(vg, x, y, width, height)
 
     override fun popScissor() = nvgResetScissor(vg)

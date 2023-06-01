@@ -93,15 +93,20 @@ fun main() {
                                 keyframed(2.seconds, Animations.EaseOutExpo) {
                                     20 {
                                         rotation = 20.0
+                                        skewX = 30.0
                                     }
                                     32 {
                                         rotation = 35.0
                                     }
                                     50 {
                                         rotation = 180.0
+                                        skewY = 20.0
+                                        skewX = 20.0
                                     }
                                     100 {
-                                        rotation = 360.0
+                                        rotation = 0.0
+                                        skewX = 0.0
+                                        skewY = 0.0
                                     }
                                 }
                             }

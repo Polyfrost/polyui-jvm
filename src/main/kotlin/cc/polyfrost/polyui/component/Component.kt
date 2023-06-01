@@ -22,7 +22,7 @@ import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.utils.MutablePair
 import cc.polyfrost.polyui.utils.fastEach
 import cc.polyfrost.polyui.utils.fastRemoveIf
-import kotlin.math.PI
+import cc.polyfrost.polyui.utils.toRadians
 
 /**
  * A component is a drawable object that can be interacted with. <br>
@@ -44,6 +44,12 @@ abstract class Component @JvmOverloads constructor(
 
     /** current rotation of this component (radians). */
     var rotation: Double = 0.0
+
+    /** current skew in x dimension of this component (radians). */
+    var skewX: Double = 0.0
+
+    /** current skew in y dimension of this component (radians). */
+    var skewY: Double = 0.0
 
     /** translation cache for rotating */
     internal var atCache: MutablePair<Float, Float>? = null
@@ -110,7 +116,10 @@ abstract class Component @JvmOverloads constructor(
         durationNanos: Long = 1L.seconds,
         onFinish: (Component.() -> kotlin.Unit)? = null
     ) {
-        addOperation(DrawableOp.Rotate((degrees % 360.0) * (PI / 180.0), false, this, animation, durationNanos), onFinish)
+        addOperation(
+            DrawableOp.Rotate(degrees.toRadians(), false, this, animation, durationNanos),
+            onFinish
+        )
         if (atCache != null) return
         atCache = MutablePair(at.a.px, at.b.px)
         at.a.px = -width / 2f
@@ -129,11 +138,34 @@ abstract class Component @JvmOverloads constructor(
         durationNanos: Long = 1L.seconds,
         onFinish: (Component.() -> kotlin.Unit)? = null
     ) {
-        addOperation(DrawableOp.Rotate((degrees % 360.0) * (PI / 180.0), true, this, animation, durationNanos), onFinish)
+        addOperation(
+            DrawableOp.Rotate(degrees.toRadians(), true, this, animation, durationNanos),
+            onFinish
+        )
         if (atCache != null) return
         atCache = MutablePair(at.a.px, at.b.px)
         at.a.px = -width / 2f
         at.b.px = -height / 2f
+    }
+
+    /**
+     * Skew this component to the given amount, in degrees.
+     *
+     * Please note that this ignores all bounds, and will simply scale this component, meaning that it can be clipped by its layout, and overlap nearby component.
+     * @see skewBy
+     */
+    fun skewTo(skewX: Double, skewY: Double, animation: Animation.Type?, durationNanos: Long) {
+        addOperation(DrawableOp.Skew(skewX.toRadians(), skewY.toRadians(), false, this, animation, durationNanos))
+    }
+
+    /**
+     * Skew this component by the given amount, in degrees.
+     *
+     * Please note that this ignores all bounds, and will simply scale this component, meaning that it can be clipped by its layout, and overlap nearby component.
+     * @see skewTo
+     */
+    fun skewBy(skewX: Double, skewY: Double, animation: Animation.Type?, durationNanos: Long) {
+        addOperation(DrawableOp.Skew(skewX.toRadians(), skewY.toRadians(), true, this, animation, durationNanos))
     }
 
     /**
@@ -176,6 +208,7 @@ abstract class Component @JvmOverloads constructor(
      * @see moveTo
      * @see resize
      * @see rotateTo
+     * @see skewTo
      * @see animateBy
      * @see DrawableOp
      */
@@ -183,13 +216,16 @@ abstract class Component @JvmOverloads constructor(
         to: Vec2<Unit>? = null,
         size: Vec2<Unit>? = null,
         degrees: Double = 0.0,
+        skewX: Double = 0.0,
+        skewY: Double = 0.0,
         color: Color? = null,
         animation: Animation.Type? = null,
         durationNanos: Long = 1L.seconds
     ) {
         if (to != null) moveTo(to, animation, durationNanos)
         if (size != null) resize(size, animation, durationNanos)
-        if (degrees != 0.0) rotateTo(degrees, animation, durationNanos)
+        rotateTo(degrees, animation, durationNanos)
+        skewTo(skewX, skewY, animation, durationNanos)
         if (color != null) recolor(color, animation, durationNanos)
     }
 
@@ -198,6 +234,7 @@ abstract class Component @JvmOverloads constructor(
      * @see moveBy
      * @see resize
      * @see rotateBy
+     * @see skewBy
      * @see animateTo
      * @see DrawableOp
      */
@@ -205,12 +242,17 @@ abstract class Component @JvmOverloads constructor(
         to: Vec2<Unit>? = null,
         size: Vec2<Unit>? = null,
         degrees: Double = 0.0,
+        skewX: Double = 0.0,
+        skewY: Double = 0.0,
+        color: Color? = null,
         animation: Animation.Type? = null,
         durationNanos: Long = 1L.seconds
     ) {
         if (to != null) moveBy(to, animation, durationNanos)
         if (size != null) resize(size, animation, durationNanos)
-        if (degrees != 0.0) rotateBy(degrees, animation, durationNanos)
+        rotateBy(degrees, animation, durationNanos)
+        skewBy(skewX, skewY, animation, durationNanos)
+        if (color != null) recolor(color, animation, durationNanos)
     }
 
     /** resize this component to the given size. */
@@ -329,6 +371,8 @@ abstract class Component @JvmOverloads constructor(
             renderer.translate(atCache!!.first + width / 2f, atCache!!.second + height / 2f)
             renderer.rotate(rotation)
         }
+        if (skewX != 0.0) renderer.skewX(skewX)
+        if (skewY != 0.0) renderer.skewY(skewY)
     }
 
     /**
@@ -337,6 +381,8 @@ abstract class Component @JvmOverloads constructor(
      * **make sure to call super [Component.postRender]!**
      */
     open fun postRender() {
+        if (skewY != 0.0) renderer.skewY(-skewY)
+        if (skewX != 0.0) renderer.skewX(-skewX)
         if (rotation != 0.0) {
             renderer.rotate(-rotation)
             renderer.translate(-(atCache!!.first + width / 2f), -(atCache!!.second + height / 2f))

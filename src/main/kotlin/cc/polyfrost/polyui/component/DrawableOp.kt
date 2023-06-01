@@ -15,6 +15,7 @@ import cc.polyfrost.polyui.component.DrawableOp.*
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.unit.Vec2
+import cc.polyfrost.polyui.unit.seconds
 
 /**
  * Class to represent an operation that can be applied on a component that modifies it in some way.
@@ -43,7 +44,7 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
     }
 
     /** update the underlying animation, if present. */
-    fun update(deltaTimeNanos: Long) {
+    open fun update(deltaTimeNanos: Long) {
         animation?.update(deltaTimeNanos)
     }
 
@@ -58,7 +59,7 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         add: Boolean = true,
         drawable: Drawable,
         type: Animations? = null,
-        durationNanos: Long = 1000L
+        durationNanos: Long = 1L.seconds
     ) : DrawableOp(drawable) {
         override val animation = type?.create(durationNanos, drawable.x, if (add) drawable.x + to.x else to.x)
         private val animation2 = type?.create(durationNanos, drawable.y, if (add) drawable.y + to.y else to.y)
@@ -74,18 +75,22 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
     }
 
     /**
-     * Note: if you are making a UI, you should probably be using [scale][cc.polyfrost.polyui.component.Component.resize], [rotate][cc.polyfrost.polyui.component.Component.rotate], or [translate][cc.polyfrost.polyui.component.Component.move] instead of this class.
+     * Note: if you are making a UI, you should probably be using [scale][cc.polyfrost.polyui.component.Component.resize], [rotate][cc.polyfrost.polyui.component.Component.rotateBy], or [translate][cc.polyfrost.polyui.component.Component.moveTo] instead of this class.
      */
     class Rotate(
         private val angle: Double,
         add: Boolean = true,
         override val drawable: Component,
         type: Animations? = null,
-        durationNanos: Long = 1000L
+        durationNanos: Long = 1L.seconds
     ) :
         DrawableOp(drawable) {
         override val animation =
-            type?.create(durationNanos, drawable.rotation.toFloat(), if (add) (drawable.rotation + angle).toFloat() else angle.toFloat())
+            type?.create(
+                durationNanos,
+                drawable.rotation.toFloat(),
+                if (add) (drawable.rotation + angle).toFloat() else angle.toFloat()
+            )
 
         override fun apply(renderer: Renderer) {
             if (animation != null) {
@@ -100,7 +105,7 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         private val toSize: Vec2<Unit>,
         drawable: Drawable,
         animation: Animation.Type?,
-        durationNanos: Long = 1000L
+        durationNanos: Long = 1L.seconds
     ) :
         DrawableOp(drawable) {
         override val animation = animation?.create(durationNanos, drawable.size!!.a.px, toSize.a.px)
@@ -115,5 +120,51 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
                 drawable.size!!.b.px = toSize.b.px
             }
         }
+
+        override fun update(deltaTimeNanos: Long) {
+            animation?.update(deltaTimeNanos)
+            animation2?.update(deltaTimeNanos)
+        }
+
+        override val isFinished: Boolean
+            get() = animation?.isFinished ?: true && animation2?.isFinished ?: true
+    }
+
+    class Skew(
+        private val skewX: Double,
+        private val skewY: Double,
+        add: Boolean = true,
+        override val drawable: Component,
+        animation: Animations? = null,
+        durationNanos: Long = 1L.seconds
+    ) : DrawableOp(drawable) {
+        override val animation = animation?.create(
+            durationNanos,
+            drawable.skewX.toFloat(),
+            if (add) (drawable.skewX + skewX).toFloat() else skewX.toFloat()
+        )
+        private val animation2 = animation?.create(
+            durationNanos,
+            drawable.skewY.toFloat(),
+            if (add) (drawable.skewY + skewY).toFloat() else skewY.toFloat()
+        )
+
+        override fun apply(renderer: Renderer) {
+            if (animation != null) {
+                drawable.skewX = animation.value.toDouble()
+                drawable.skewY = animation2!!.value.toDouble()
+            } else {
+                drawable.skewX = skewX
+                drawable.skewY = skewY
+            }
+        }
+
+        override fun update(deltaTimeNanos: Long) {
+            animation?.update(deltaTimeNanos)
+            animation2?.update(deltaTimeNanos)
+        }
+
+        override val isFinished: Boolean
+            get() = animation?.isFinished ?: true && animation2?.isFinished ?: true
     }
 }

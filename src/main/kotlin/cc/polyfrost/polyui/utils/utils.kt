@@ -17,6 +17,7 @@ import cc.polyfrost.polyui.input.KeyModifiers
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.data.Font
 import cc.polyfrost.polyui.unit.TextAlign
+import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.pow
@@ -123,6 +124,8 @@ fun Float.rounded(places: Int = 2): Float {
     val f = 10.0.pow(places).toFloat()
     return (this * f).toInt() / f
 }
+
+fun Double.toRadians() = (this % 360.0) * (PI / 180.0)
 
 /**
  * Returns the value closer to zero.
