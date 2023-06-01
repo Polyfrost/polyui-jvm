@@ -130,6 +130,29 @@ sealed class Events : Event {
      * @return return true to consume the event/cancel it, false to pass it on to other handlers.
      * */
     @OverloadResolutionByLambdaReturnType
+    operator fun invoke(action: (Component.() -> Boolean)): Handler {
+        return Handler(this, action as Drawable.() -> Boolean)
+    }
+
+    /** specify a handler for this event.
+     *
+     * in the given [action], you can perform things on this component, such as [Component.rotateBy], [Component.recolor], etc.
+     *
+     * @return return true to consume the event/cancel it, false to pass it on to other handlers.
+     * */
+    @OverloadResolutionByLambdaReturnType
+    @JvmName("Invoke")
+    operator fun invoke(action: (Component.() -> Unit)): Handler {
+        return Handler(this, insertTrueInsn(action) as Drawable.() -> Boolean)
+    }
+
+    /** specify a handler for this event.
+     *
+     * in the given [action], you can perform things on this component, such as [Component.rotateBy], [Component.recolor], etc.
+     *
+     * @return return true to consume the event/cancel it, false to pass it on to other handlers.
+     * */
+    @OverloadResolutionByLambdaReturnType
     infix fun to(action: (Component.() -> Boolean)): Handler {
         return Handler(this, action as Drawable.() -> Boolean)
     }

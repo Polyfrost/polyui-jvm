@@ -17,6 +17,7 @@ import java.io.InputStream
 import java.net.URL
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import kotlin.system.measureNanoTime
 
 /**
  * return a stream of the given resource or throws an exception.
@@ -34,19 +35,25 @@ fun getResourceStream(resourcePath: String) =
         )
 
 /**
- * return a stream of the given resource or null.
+ * return a stream of the given resource or null. The time the fetch took is printed to the [PolyUI.LOGGER] at debug level.
  * @param resourcePath the path to the resource. Can either be a valid [URL] (including file URL), or a [resource path][Class.getResourceAsStream].
  * @throws java.io.IOException if an IO error occurs.
  * @see getResourceStream
  */
 fun getResourceStreamNullable(resourcePath: String): InputStream? {
-    return try {
-        URL(resourcePath).openStream()
-    } catch (e: Exception) {
-        PolyUI::class.java.getResourceAsStream(resourcePath)
-            ?: PolyUI::class.java.getResourceAsStream("/$resourcePath")
-            ?: PolyUI::class.java.getResourceAsStream("/resources/$resourcePath")
+    PolyUI.LOGGER.debug("Getting resource {}...", resourcePath)
+    val i: InputStream?
+    val t = measureNanoTime {
+        i = try {
+            URL(resourcePath).openStream()
+        } catch (e: Exception) {
+            PolyUI::class.java.getResourceAsStream(resourcePath)
+                ?: PolyUI::class.java.getResourceAsStream("/$resourcePath")
+                ?: PolyUI::class.java.getResourceAsStream("/resources/$resourcePath")
+        }
     }
+    PolyUI.LOGGER.debug("\t\t> took {}ms", t / 1_000_000f)
+    return i
 }
 
 fun InputStream.toByteBuffer(): ByteBuffer {

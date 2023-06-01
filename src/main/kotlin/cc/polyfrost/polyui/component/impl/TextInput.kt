@@ -281,9 +281,9 @@ class TextInput(
         text = Text(
             properties.text,
             properties.defaultText.clone(),
-            properties.text.fontSize,
             at.clone(),
             size?.clone(),
+            properties.text.fontSize,
             properties.text.alignment,
             false
         )

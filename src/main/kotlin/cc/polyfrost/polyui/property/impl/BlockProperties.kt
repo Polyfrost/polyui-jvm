@@ -43,11 +43,11 @@ open class BlockProperties @JvmOverloads constructor(
                 recolor(hoverColor, clickAnimation, clickAnimationDuration)
                 false
             },
-            Events.MouseEntered to {
+            Events.MouseEntered {
                 recolor(hoverColor, hoverAnimation, hoverAnimationDuration)
                 false
             },
-            Events.MouseExited to {
+            Events.MouseExited {
                 recolor(properties.color, hoverAnimation, hoverAnimationDuration)
                 false
             }

@@ -27,9 +27,9 @@ import kotlin.math.floor
 open class Text @JvmOverloads constructor(
     properties: Properties? = null,
     private val txt: PolyText,
-    fontSize: Unit.Pixel? = null,
     at: Vec2<Unit>,
     val sized: Size<Unit>? = null,
+    fontSize: Unit.Pixel? = null,
     val textAlign: TextAlign = TextAlign.Left,
     acceptInput: Boolean = false,
     vararg events: Events.Handler
@@ -37,17 +37,16 @@ open class Text @JvmOverloads constructor(
     /** Internally [text] is stored as a [PolyText] object, which supports localization and object substitution */
     @JvmOverloads
     constructor(
-        properties: Properties? = null,
         text: String,
-        fontSize: Unit.Pixel? = null,
         at: Vec2<Unit>,
         size: Size<Unit>? = null,
+        fontSize: Unit.Pixel? = null,
         textAlign: TextAlign = TextAlign.Left,
         acceptInput: Boolean = false,
         vararg events: Events.Handler
-    ) : this(properties, text.localised(), fontSize, at, size, textAlign, acceptInput, *events)
+    ) : this(null, text.localised(), at, size, fontSize, textAlign, acceptInput, *events)
 
-    constructor(text: PolyText, fontSize: Unit.Pixel, at: Vec2<Unit>) : this(null, text, fontSize, at)
+    constructor(properties: Properties? = null, text: PolyText, fontSize: Unit.Pixel, at: Vec2<Unit>) : this(properties, text, at, null, fontSize)
 
     final override val properties: TextProperties
         get() = super.properties as TextProperties
