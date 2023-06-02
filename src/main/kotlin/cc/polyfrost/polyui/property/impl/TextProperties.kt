@@ -18,7 +18,7 @@ import cc.polyfrost.polyui.unit.px
 
 open class TextProperties(val font: Font = Font("/Inter-Regular.ttf")) : Properties() {
     val fontSize: Unit.Pixel = 12.px
-    override val color: Color = Color.WHITE
+    override val color: Color get() = colors.text.primary
     override val padding: Float = 0F
     val alignment = TextAlign.Left
 }

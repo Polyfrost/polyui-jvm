@@ -320,7 +320,11 @@ abstract class Component @JvmOverloads constructor(
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {
         super.setup(renderer, polyui)
-        if (p == null) p = polyui.property.get(this)
+        if (p == null) {
+            p = polyui.property.get(this)
+        } else {
+            p!!.colors = polyui.colors
+        }
         color = properties.color.toMutable()
     }
 

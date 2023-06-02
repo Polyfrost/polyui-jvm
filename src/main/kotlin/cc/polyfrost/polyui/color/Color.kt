@@ -64,7 +64,7 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         if (other == null) return false
         if (other === this) return true
         if (other is Color) {
-            return this.r == other.r && this.g == other.g && this.b == other.b && this.a == other.a
+            return argb == other.argb
         }
         return false
     }
@@ -78,20 +78,12 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
     }
 
     companion object {
+        /** Transparent color. This should be used for checking in draw calls to prevent drawing of empty objects, e.g.
+         *
+         * `if (color == TRANSPARENT) return`
+         */
         @JvmField
         val TRANSPARENT = Color(0f, 0f, 0f, 0f)
-
-        @JvmField
-        val WHITE = Color(1f, 1f, 1f, 1f)
-
-        @JvmField
-        val WHITE_90 = Color(0.9f, 0.9f, 0.9f, 1f)
-
-        @JvmField
-        val BLACK = Color(0f, 0f, 0f, 1f)
-
-        @JvmField
-        val GRAYf = Color(0.5f, 0.5f, 0.5f, 0.5f)
 
         /**
          * Turn the given hex string into a color.
@@ -208,11 +200,6 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
                 val to = this.to
                 if (animation!!.isFinished) {
                     animation = null
-                    // avoid rounding errors for precision
-                    this.r = (from[0] + to[0]).toInt()
-                    this.g = (from[1] + to[1]).toInt()
-                    this.b = (from[2] + to[2]).toInt()
-                    this.a = (from[3] + to[3]).toInt()
                     return true
                 }
                 val progress = animation!!.update(deltaTimeNanos)

@@ -29,8 +29,14 @@ class PropertyManager(val polyUI: PolyUI) {
         get(component::class.qualifiedName!!)
 
     @Suppress("UNCHECKED_CAST")
-    fun <T : Properties> get(name: String): T = properties[name] as? T
-        ?: throw Exception("Properties for component $name not found")
+    fun <T : Properties> get(name: String): T {
+        return (
+            properties[name] as? T
+                ?: throw Exception("Properties for component $name not found")
+            ).also {
+            if (!it.initialized) it.colors = polyUI.colors
+        }
+    }
 
     /**
      * Add the given property to the property' registry.

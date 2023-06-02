@@ -25,8 +25,6 @@ import cc.polyfrost.polyui.layout.Layout.Companion.items
 import cc.polyfrost.polyui.layout.impl.FlexLayout
 import cc.polyfrost.polyui.layout.impl.PixelLayout
 import cc.polyfrost.polyui.property.impl.BlockProperties
-import cc.polyfrost.polyui.property.impl.TextProperties
-import cc.polyfrost.polyui.renderer.data.Font
 import cc.polyfrost.polyui.renderer.data.PolyImage
 import cc.polyfrost.polyui.renderer.impl.GLWindow
 import cc.polyfrost.polyui.renderer.impl.NVGRenderer
@@ -74,7 +72,6 @@ fun main() {
                 at = 20.px * 570.px,
                 items = items(
                     Text(
-                        properties = TextProperties(Font.getGoogleFont("poppins", "lightItalic")),
                         text = "polyui.test".localised("rainbow"),
                         fontSize = 32.px,
                         at = 20.px * 0.px

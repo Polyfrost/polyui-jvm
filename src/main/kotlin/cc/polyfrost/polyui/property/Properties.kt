@@ -10,6 +10,7 @@
 package cc.polyfrost.polyui.property
 
 import cc.polyfrost.polyui.color.Color
+import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.event.Events
@@ -32,6 +33,7 @@ import cc.polyfrost.polyui.unit.Unit
  * @see [TextProperties]
  */
 abstract class Properties : Cloneable {
+    lateinit var colors: Colors
 
     abstract val color: Color
 
@@ -68,4 +70,6 @@ abstract class Properties : Cloneable {
     fun addEventHandlers(vararg handlers: Events.Handler) {
         handlers.forEach { addEventHandler(it.event, it.handler) }
     }
+
+    val initialized get() = ::colors.isInitialized
 }

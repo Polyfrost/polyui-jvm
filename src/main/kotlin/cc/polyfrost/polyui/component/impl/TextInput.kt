@@ -10,7 +10,6 @@
 package cc.polyfrost.polyui.component.impl
 
 import cc.polyfrost.polyui.PolyUI
-import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Focusable
 import cc.polyfrost.polyui.event.Events
@@ -55,28 +54,24 @@ class TextInput(
     var selecting = false
     val selection get() = txt.substringSafe(caret, select).stdout()
     override fun render() {
-        if (properties.backgroundColor != null) {
-            renderer.drawRect(
-                at.a.px,
-                at.b.px,
-                size!!.a.px,
-                size!!.b.px,
-                properties.backgroundColor!!,
-                properties.cornerRadii
-            )
-        }
-        if (properties.outlineColor != null) {
-            renderer.drawHollowRect(
-                at.a.px,
-                at.b.px,
-                size!!.a.px,
-                size!!.b.px,
-                properties.outlineColor!!,
-                properties.outlineThickness,
-                properties.cornerRadii
-            )
-        }
-        renderer.drawRect(caretPos.first, caretPos.second, 2f, properties.text.fontSize.px, Color.WHITE_90)
+        renderer.drawRect(
+            at.a.px,
+            at.b.px,
+            size!!.a.px,
+            size!!.b.px,
+            properties.backgroundColor,
+            properties.cornerRadii
+        )
+        renderer.drawHollowRect(
+            at.a.px,
+            at.b.px,
+            size!!.a.px,
+            size!!.b.px,
+            properties.outlineColor,
+            properties.outlineThickness,
+            properties.cornerRadii
+        )
+        renderer.drawRect(caretPos.first, caretPos.second, 2f, properties.text.fontSize.px, polyui.colors.text.primary)
         text.render()
     }
 

@@ -21,26 +21,27 @@ import cc.polyfrost.polyui.utils.radii
  * @param lineThickness The thickness of this component. If you set it to something other than 0, it will become hollow.
  */
 open class BlockProperties @JvmOverloads constructor(
-    override val color: Color = Color.BLACK,
+    val ccolor: Color? = null,
     open val cornerRadii: FloatArray = 0f.radii(),
     open val lineThickness: Float = 0f
 ) : Properties() {
-    open val hoverColor = Color(12, 48, 255)
-    open val clickColor = Color(5, 36, 150)
-    open val clickAnimation: Animations? = Animations.EaseOutExpo
+    override val color get() = ccolor ?: colors.component.bg
+    open val hoverColor get() = colors.component.bgHovered
+    open val pressedColor get() = colors.component.bgPressed
+    open val pressedAnimation: Animations? = Animations.EaseOutExpo
     open val hoverAnimation: Animations? = Animations.EaseOutExpo
-    open val clickAnimationDuration: Long = 0.25.seconds
-    open val hoverAnimationDuration: Long = 0.7.seconds
+    open val pressedAnimationDuration: Long = 0.25.seconds
+    open val hoverAnimationDuration: Long = 0.5.seconds
     override val padding: Float = 0F
 
     init {
         addEventHandlers(
             Events.MousePressed(0) to {
-                recolor(clickColor, clickAnimation, clickAnimationDuration)
+                recolor(pressedColor, pressedAnimation, pressedAnimationDuration)
                 false
             },
             Events.MouseReleased(0) to {
-                recolor(hoverColor, clickAnimation, clickAnimationDuration)
+                recolor(hoverColor, pressedAnimation, pressedAnimationDuration)
                 false
             },
             Events.MouseEntered {

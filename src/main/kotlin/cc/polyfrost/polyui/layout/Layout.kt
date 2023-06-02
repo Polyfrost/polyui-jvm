@@ -10,7 +10,6 @@
 package cc.polyfrost.polyui.layout
 
 import cc.polyfrost.polyui.PolyUI
-import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.event.Events
@@ -314,8 +313,8 @@ abstract class Layout(
     }
 
     override fun debugRender() {
-        renderer.drawHollowRect(at.a.px, at.b.px, size!!.a.px, size!!.b.px, Color.GRAYf, 2f)
-        renderer.drawText(Renderer.DefaultFont, at.a.px + 1f, at.b.px + 1f, simpleName, Color.WHITE, 10f)
+        renderer.drawHollowRect(at.a.px, at.b.px, size!!.a.px, size!!.b.px, polyui.colors.page.border20, 2f)
+        renderer.drawText(Renderer.DefaultFont, at.a.px + 1f, at.b.px + 1f, simpleName, polyui.colors.text.primary, 10f)
         children.fastEach { it.debugRender() }
         components.fastEach { it.debugRender() }
     }

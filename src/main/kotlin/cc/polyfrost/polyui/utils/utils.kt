@@ -27,7 +27,8 @@ fun rgba(r: Float, g: Float, b: Float, a: Float): Color {
 }
 
 /** figma copy-paste accessor */
-fun rgba(r: Int, g: Int, b: Int, a: Float): Color {
+@JvmOverloads
+fun rgba(r: Int, g: Int, b: Int, a: Float = 1f): Color {
     return Color(r, g, b, (a * 255f).toInt())
 }
 

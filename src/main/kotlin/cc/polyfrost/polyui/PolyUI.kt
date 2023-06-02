@@ -9,7 +9,8 @@
 
 package cc.polyfrost.polyui
 
-import cc.polyfrost.polyui.color.Color
+import cc.polyfrost.polyui.color.Colors
+import cc.polyfrost.polyui.color.DarkTheme
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.component.Focusable
 import cc.polyfrost.polyui.event.EventManager
@@ -26,7 +27,6 @@ import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.utils.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import kotlin.collections.ArrayList
 
 /**
  * # PolyUI
@@ -64,11 +64,29 @@ import kotlin.collections.ArrayList
  *
  * PolyUI also supports a variety of [animations][cc.polyfrost.polyui.animate.Animation] and [transitions][cc.polyfrost.polyui.animate.transitions.Transition], which can be used to make your UI more dynamic, along with dynamically [adding][addComponent] and [removing][removeComponent] components.
  */
-class PolyUI(
+class PolyUI @JvmOverloads constructor(
     translationDirectory: String? = null,
     val renderer: Renderer,
+    colors: Colors = DarkTheme(),
     vararg items: Drawable
 ) {
+    /** Colors attached to this PolyUI instance. This contains all the colors needed for the UI.
+     *
+     * **Note that changing this value** can be an expensive operation while the UI is running, as it has to update all the components.
+     * @since 0.17.0
+     */
+    var colors = colors
+        set(value) {
+            LOGGER.info("Colors was changed from $field to $value")
+            field = value
+            master.onAll(true) {
+                properties.colors = field
+            }
+            for ((_, p) in property.properties) {
+                p.colors = field
+            }
+        }
+
     val master = PixelLayout(Point(0.px, 0.px), Size(renderer.width.px, renderer.height.px), items = items, resizesChildren = true)
     val eventManager = EventManager(this)
     val keyBinder = KeyBinder()
@@ -136,7 +154,9 @@ class PolyUI(
             it.layout = master
             if (!it.refuseFramebuffer && settings.minItemsForFramebuffer < it.countDrawables()) {
                 it.fbo = renderer.createFramebuffer(it.width, it.height)
-                if (settings.debug) LOGGER.info("Layout {} ({} items) created with {}", varargs(it.simpleName, it.countDrawables(), it.fbo!!))
+                if (settings.debug) {
+                    LOGGER.info("Layout {} ({} items) created with {}", varargs(it.simpleName, it.countDrawables(), it.fbo!!))
+                }
             }
             if (it.width > width || it.height > height) {
                 LOGGER.warn("Layout {} is larger than the window. This may cause issues.", it.simpleName)
@@ -244,7 +264,7 @@ class PolyUI(
             x,
             y,
             text = perf,
-            color = Color.WHITE_90,
+            color = colors.text.primary,
             fontSize = 10f,
             textAlign = TextAlign.Right
         )

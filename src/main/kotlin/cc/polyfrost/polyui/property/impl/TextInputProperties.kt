@@ -17,13 +17,13 @@ import cc.polyfrost.polyui.utils.radii
 
 class TextInputProperties(val text: TextProperties) : Properties() {
     @Deprecated("use background color instead", ReplaceWith("backgroundColor"), DeprecationLevel.ERROR)
-    override val color: Color = Color.BLACK
+    override val color: Color get() = colors.component.bg
     override val padding: Float = 0f
     val paddingFromTextLateral: Float = 12f
     val paddingFromTextVertical: Float = 8f
     val defaultText: PolyText = "polyui.text.default".localised()
     val cornerRadii: FloatArray = 0f.radii()
-    val backgroundColor: Color? = null
-    val outlineColor: Color? = Color.GRAYf
+    val backgroundColor: Color get() = colors.component.bgDeselected
+    val outlineColor: Color get() = colors.page.border20
     val outlineThickness: Float = 1f
 }

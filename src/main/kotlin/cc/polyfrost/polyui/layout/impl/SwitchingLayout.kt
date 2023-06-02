@@ -12,7 +12,6 @@ package cc.polyfrost.polyui.layout.impl
 import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.animate.transitions.Transition
 import cc.polyfrost.polyui.animate.transitions.Transitions
-import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.event.Events
@@ -132,8 +131,8 @@ class SwitchingLayout(
     }
 
     override fun debugRender() {
-        renderer.drawHollowRect(at.a.px, at.b.px, size!!.a.px, size!!.b.px, Color.GRAYf, 2f)
-        renderer.drawText(Renderer.DefaultFont, at.a.px + 1f, at.b.px + 1f, simpleName, Color.WHITE, 10f)
+        renderer.drawHollowRect(at.a.px, at.b.px, size!!.a.px, size!!.b.px, polyui.colors.page.border20, 2f)
+        renderer.drawText(Renderer.DefaultFont, at.a.px + 1f, at.b.px + 1f, simpleName, polyui.colors.text.primary, 10f)
     }
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {
