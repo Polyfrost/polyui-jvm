@@ -211,13 +211,11 @@ class GLWindow @JvmOverloads constructor(
         }
 
         var t = glfwGetTime()
-        val rBase = polyUI.colors.page.bg.r / 255f
-        val gBase = polyUI.colors.page.bg.g / 255f
-        val bBase = polyUI.colors.page.bg.b / 255f
         fpsCap = polyUI.settings.maxFPS.toDouble()
         while (!glfwWindowShouldClose(handle)) {
             glViewport(0, 0, width, height)
-            glClearColor(rBase, gBase, bBase, 0f)
+            val c = polyUI.colors.page.bg
+            glClearColor(c.r / 255f, c.g / 255f, c.b / 255f, 0f)
             glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
 
             this.polyUI.render()

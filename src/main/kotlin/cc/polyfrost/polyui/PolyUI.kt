@@ -27,6 +27,7 @@ import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.utils.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import kotlin.system.measureNanoTime
 
 /**
  * # PolyUI
@@ -77,14 +78,18 @@ class PolyUI @JvmOverloads constructor(
      */
     var colors = colors
         set(value) {
-            LOGGER.info("Colors was changed from $field to $value")
+            LOGGER.info("Changing colors from {} to {}", field, value)
             field = value
-            master.onAll(true) {
-                properties.colors = field
+            val t = measureNanoTime {
+                master.onAll(true) {
+                    properties.colors = value
+                    recolor(properties.color)
+                }
+                for ((_, p) in property.properties) {
+                    p.colors = value
+                }
             }
-            for ((_, p) in property.properties) {
-                p.colors = field
-            }
+            if (settings.debug) LOGGER.info("\t\t> took {}ms", t / 1_000_000f)
         }
 
     val master = PixelLayout(Point(0.px, 0.px), Size(renderer.width.px, renderer.height.px), items = items, resizesChildren = true)

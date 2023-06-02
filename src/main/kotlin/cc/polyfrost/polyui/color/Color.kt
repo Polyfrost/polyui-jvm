@@ -11,6 +11,7 @@ package cc.polyfrost.polyui.color
 
 import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.animate.Animation
+import cc.polyfrost.polyui.unit.seconds
 import cc.polyfrost.polyui.utils.HSBtoRGB
 
 /**
@@ -169,7 +170,9 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
          * @param type animation type. if it is null, the color will be set to the target color immediately.
          * @see [Gradient]
          */
-        open fun recolor(target: Color, type: Animation.Type? = null, durationNanos: Long = 1000) {
+        open fun recolor(target: Color, type: Animation.Type? = null, durationNanos: Long = 1L.seconds) {
+            // clear old animation
+            animation = null
             if (type != null) {
                 this.animation = type.create(durationNanos, 0f, 1f)
                 from[0] = this.r.toFloat()

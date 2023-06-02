@@ -12,12 +12,15 @@ package cc.polyfrost.polyui
 import cc.polyfrost.polyui.animate.Animations
 import cc.polyfrost.polyui.animate.keyframes.keyframed
 import cc.polyfrost.polyui.color.Color
+import cc.polyfrost.polyui.color.DarkTheme
+import cc.polyfrost.polyui.color.LightTheme
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.component.impl.Block
 import cc.polyfrost.polyui.component.impl.Image
 import cc.polyfrost.polyui.component.impl.Text
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.event.Events.Companion.events
+import cc.polyfrost.polyui.input.Keys
 import cc.polyfrost.polyui.input.Modifiers
 import cc.polyfrost.polyui.input.Mouse
 import cc.polyfrost.polyui.input.PolyTranslator.Companion.localised
@@ -139,6 +142,15 @@ fun main() {
     )
     polyUI.keyBinder.add(Mouse.LEFT_MOUSE, Modifiers.LCONTROL) {
         println("${polyUI.eventManager.mouseX} x ${polyUI.eventManager.mouseY}")
+    }
+    var light = false
+    polyUI.keyBinder.add(Keys.F1) {
+        if (!light) {
+            polyUI.colors = LightTheme()
+        } else {
+            polyUI.colors = DarkTheme()
+        }
+        light = !light
     }
 
     window.open(polyUI)

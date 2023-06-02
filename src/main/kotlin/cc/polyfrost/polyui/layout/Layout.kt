@@ -332,6 +332,17 @@ abstract class Layout(
         children.fastEach { it.reset() }
     }
 
+    /**
+     * add a function that is called every [nanos] nanoseconds.
+     * @since 0.17.1
+     */
+    fun every(nanos: Long, repeats: Int = 0, func: Layout.() -> kotlin.Unit): Layout {
+        polyui.every(nanos, repeats) {
+            func(this)
+        }
+        return this
+    }
+
     /** wraps this layout in a [DraggableLayout] (so you can drag it) */
     fun draggable(): DraggableLayout {
         if (this is DraggableLayout) return this

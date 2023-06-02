@@ -284,7 +284,7 @@ abstract class Component @JvmOverloads constructor(
     open fun recolor(
         toColor: Color,
         animation: Animation.Type? = null,
-        durationNanos: Long,
+        durationNanos: Long = 1L.seconds,
         onFinish: (Component.() -> kotlin.Unit)? = null
     ) {
         color.recolor(toColor, animation, durationNanos)
@@ -336,7 +336,13 @@ abstract class Component @JvmOverloads constructor(
      * **make sure to call super [Component.preRender]!**
      */
     open fun preRender(deltaTimeNanos: Long) {
-        if (keyframes?.update(deltaTimeNanos) == true) keyframes = null
+        if (keyframes != null) {
+            if (keyframes!!.update(deltaTimeNanos)) {
+                keyframes = null
+            } else {
+                wantRedraw()
+            }
+        }
         animations.fastRemoveIf { (it, func) ->
             it.update(deltaTimeNanos)
             return@fastRemoveIf if (!it.isFinished) {
@@ -413,5 +419,17 @@ abstract class Component @JvmOverloads constructor(
 
     fun addKeyframes(k: KeyFrames) {
         keyframes = k
+        wantRedraw()
+    }
+
+    /**
+     * add a function that is called every [nanos] nanoseconds.
+     * @since 0.17.1
+     */
+    fun every(nanos: Long, repeats: Int = 0, func: Component.() -> kotlin.Unit): Component {
+        polyui.every(nanos, repeats) {
+            func(this)
+        }
+        return this
     }
 }
