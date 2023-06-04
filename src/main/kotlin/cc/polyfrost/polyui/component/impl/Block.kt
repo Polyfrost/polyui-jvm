@@ -33,10 +33,9 @@ open class Block @JvmOverloads constructor(
         get() = super.properties as BlockProperties
 
     override fun render() {
-        if (properties.lineThickness == 0f) {
-            renderer.drawRect(at.a.px, at.b.px, size!!.a.px, size!!.b.px, color, properties.cornerRadii)
-        } else {
-            renderer.drawHollowRect(at.a.px, at.b.px, size!!.a.px, size!!.b.px, color, properties.lineThickness, properties.cornerRadii)
+        if (properties.outlineThickness != 0f) {
+            renderer.drawHollowRect(at.a.px, at.b.px, size!!.a.px, size!!.b.px, color, properties.outlineThickness, properties.cornerRadii)
         }
+        renderer.drawRect(at.a.px, at.b.px, size!!.a.px, size!!.b.px, color, properties.cornerRadii)
     }
 }

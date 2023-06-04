@@ -30,7 +30,7 @@ class SwitchingLayout(
     onAdded: (Drawable.() -> kotlin.Unit)? = null,
     onRemoved: (Drawable.() -> kotlin.Unit)? = null,
     val transition: Transitions?,
-    val transitionDuration: Long = 1000L,
+    val transitionDuration: Long = 1L.seconds,
     val defaultIndex: Int = 0,
     vararg layouts: Layout,
     /** this variable also controls for SwitchingLayout how it behaves with a layout that is smaller/larger than this size.

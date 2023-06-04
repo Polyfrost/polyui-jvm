@@ -76,28 +76,28 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
     /**
      * translate the origin of all future draw calls by the given amount.
      *
-     * **you must** call the inverse of this function ([translate(-x,-y)][translate]) when you are done with this transform!
+     * **you must** do all your transforms inside a [push], [pop] pair!
      */
     abstract fun translate(x: Float, y: Float)
 
     /**
      * scales all future draw calls by the given amount.
      *
-     * **you must** call the inverse of this function ([scale(1f/x,1f/y)][scale]) when you are done with this transform!
+     * **you must** do all your transforms inside a [push], [pop] pair!
      */
     abstract fun scale(x: Float, y: Float)
 
     /**
      * rotate all future draw calls by the given amount.
      *
-     * **you must** call the inverse of this function ([rotate(-angleRadians)][rotate]) when you are done with this transform!
+     * **you must** do all your transforms inside a [push], [pop] pair!
      */
     abstract fun rotate(angleRadians: Double)
 
     /**
      * Skew all future draw calls by the given amount.
      *
-     * **you must** call the inverse of this function ([skewX(-x)][skewX]) when you are done with this transform!
+     * **you must** do all your transforms inside a [push], [pop] pair!
      *
      * @since 0.16.1
      */
@@ -106,7 +106,7 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
     /**
      * Skew all future draw calls by the given amount.
      *
-     * **you must** call the inverse of this function ([skewY(-y)][skewY]) when you are done with this transform!
+     * **you must** do all your transforms inside a [push], [pop] pair!
      *
      * @since 0.16.1
      */
@@ -123,6 +123,34 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
      * @see pushScissor
      */
     abstract fun popScissor()
+
+    /**
+     * Push the current state, saving all the current transforms before creating a new one with the same parameters as the current one.
+     *
+     * This is also called `saveState` or `pushMatrix` in many frameworks.
+     *
+     * [pop] - **you must** call this after you are finished!
+     *
+     * @since 0.17.2
+     */
+    abstract fun push()
+
+    /**
+     * pop the current state, reverting all transforms to the previous values.
+     *
+     * This is also called `restoreState` or `popMatrix` in many frameworks.
+     *
+     * [push] - **you must** call this before you are begin!
+     *
+     * @since 0.17.2
+     */
+    abstract fun pop()
+
+    /** @see push */
+    fun save() = push()
+
+    /** @see pop */
+    fun restore() = pop()
 
     /**
      * draw text to the screen, per the given parameters. The string will already be wrapped to the given width, and will be aligned according to the given [textAlign].

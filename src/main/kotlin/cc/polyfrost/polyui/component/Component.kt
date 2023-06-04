@@ -11,6 +11,7 @@ package cc.polyfrost.polyui.component
 
 import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.animate.Animation
+import cc.polyfrost.polyui.animate.Animations
 import cc.polyfrost.polyui.animate.keyframes.KeyFrames
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.event.Events
@@ -19,8 +20,6 @@ import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
-import cc.polyfrost.polyui.utils.MutablePair
-import cc.polyfrost.polyui.utils.fastEach
 import cc.polyfrost.polyui.utils.fastRemoveIf
 import cc.polyfrost.polyui.utils.toRadians
 
@@ -51,11 +50,15 @@ abstract class Component @JvmOverloads constructor(
     /** current skew in y dimension of this component (radians). */
     var skewY: Double = 0.0
 
-    /** translation cache for rotating */
-    internal var atCache: MutablePair<Float, Float>? = null
+    /** X translation cache for rotating */
+    private var acx = 0f
 
-    @PublishedApi // there's gotta be a more elegant way of doing this
+    /** Y translation cache for rotating */
+    private var acy = 0f
+
+    @PublishedApi
     internal var p: Properties? = properties
+        private set
 
     /** properties for the component. This is `open` so you can cast it, like so:
      * ```
@@ -120,10 +123,8 @@ abstract class Component @JvmOverloads constructor(
             DrawableOp.Rotate(degrees.toRadians(), false, this, animation, durationNanos),
             onFinish
         )
-        if (atCache != null) return
-        atCache = MutablePair(at.a.px, at.b.px)
-        at.a.px = -width / 2f
-        at.b.px = -height / 2f
+        acx = at.a.px
+        acy = at.b.px
     }
 
     /**
@@ -142,10 +143,8 @@ abstract class Component @JvmOverloads constructor(
             DrawableOp.Rotate(degrees.toRadians(), true, this, animation, durationNanos),
             onFinish
         )
-        if (atCache != null) return
-        atCache = MutablePair(at.a.px, at.b.px)
-        at.a.px = -width / 2f
-        at.b.px = -height / 2f
+        acx = at.a.px
+        acy = at.b.px
     }
 
     /**
@@ -272,10 +271,8 @@ abstract class Component @JvmOverloads constructor(
 
     override fun rescale(scaleX: Float, scaleY: Float) {
         super.rescale(scaleX, scaleY)
-        if (atCache != null) {
-            atCache!!.first = atCache!!.first * scaleX
-            atCache!!.second = atCache!!.second * scaleY
-        }
+        acx = at.a.px
+        acy = at.b.px
     }
 
     /**
@@ -314,8 +311,11 @@ abstract class Component @JvmOverloads constructor(
      * @see Properties
      */
     fun setProperties(properties: Properties) {
-        PolyUI.LOGGER.info("{}'s properties set to {}", this.simpleName, properties)
+        if (polyui.settings.debug) PolyUI.LOGGER.info("{}'s properties set to {}", this.simpleName, properties)
+        properties.colors = p!!.colors
         p = properties
+        recolor(properties.color, Animations.Linear, 150L.milliseconds)
+        wantRedraw()
     }
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {
@@ -336,6 +336,7 @@ abstract class Component @JvmOverloads constructor(
      * **make sure to call super [Component.preRender]!**
      */
     open fun preRender(deltaTimeNanos: Long) {
+        renderer.push()
         if (keyframes != null) {
             if (keyframes!!.update(deltaTimeNanos)) {
                 keyframes = null
@@ -362,9 +363,6 @@ abstract class Component @JvmOverloads constructor(
             } else {
                 if (it is DrawableOp.Rotate) {
                     if (rotation > 6.28 && rotation < 6.29) { // roughly 360 degrees, resets the rotation
-                        at.a.px = atCache!!.first
-                        at.b.px = atCache!!.second
-                        atCache = null
                         rotation = 0.0
                     }
                 }
@@ -378,8 +376,11 @@ abstract class Component @JvmOverloads constructor(
         }
         if (color.updating || color.alwaysUpdates) wantRedraw()
         if (rotation != 0.0) {
-            renderer.translate(atCache!!.first + width / 2f, atCache!!.second + height / 2f)
+            renderer.translate(at.a.px + size!!.a.px / 2f, at.b.px + size!!.b.px / 2f)
             renderer.rotate(rotation)
+            renderer.translate(-(size!!.a.px / 2f), -(size!!.b.px / 2f))
+            at.a.px = 0f
+            at.b.px = 0f
         }
         if (skewX != 0.0) renderer.skewX(skewX)
         if (skewY != 0.0) renderer.skewY(skewY)
@@ -391,14 +392,10 @@ abstract class Component @JvmOverloads constructor(
      * **make sure to call super [Component.postRender]!**
      */
     open fun postRender() {
-        if (skewY != 0.0) renderer.skewY(-skewY)
-        if (skewX != 0.0) renderer.skewX(-skewX)
+        renderer.pop()
         if (rotation != 0.0) {
-            renderer.rotate(-rotation)
-            renderer.translate(-(atCache!!.first + width / 2f), -(atCache!!.second + height / 2f))
-        }
-        operations.fastEach { (it, _) ->
-            it.unapply(renderer)
+            at.a.px = acx
+            at.b.px = acy
         }
     }
 
@@ -406,16 +403,6 @@ abstract class Component @JvmOverloads constructor(
 
     override fun toString(): String =
         "$simpleName(${trueX}x$trueY, ${size!!.a.px}x${size!!.b.px}${if (autoSized) " (auto)" else ""}${if (animations.isNotEmpty()) ", animating" else ""}${if (operations.isNotEmpty()) ", operating" else ""})"
-
-    override fun isInside(x: Float, y: Float): Boolean {
-        return if (atCache == null) {
-            super.isInside(x, y)
-        } else {
-            val tx = atCache!!.first + layout.at.a.px
-            val ty = atCache!!.second + layout.at.b.px
-            x >= tx && x <= tx + this.size!!.a.px && y >= ty && y <= ty + this.size!!.b.px
-        }
-    }
 
     fun addKeyframes(k: KeyFrames) {
         keyframes = k

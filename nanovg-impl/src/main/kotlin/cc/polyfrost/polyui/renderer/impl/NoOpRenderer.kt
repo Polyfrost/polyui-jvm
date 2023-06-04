@@ -50,6 +50,12 @@ class NoOpRenderer(width: Float, height: Float) : Renderer(width, height) {
     override fun popScissor() {
     }
 
+    override fun push() {
+    }
+
+    override fun pop() {
+    }
+
     override fun drawText(
         font: Font,
         x: Float,

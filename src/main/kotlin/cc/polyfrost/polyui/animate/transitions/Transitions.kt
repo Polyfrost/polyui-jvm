@@ -16,6 +16,7 @@ import cc.polyfrost.polyui.component.DrawableOp
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.SlideDirection
 import cc.polyfrost.polyui.unit.Unit
+import cc.polyfrost.polyui.unit.seconds
 
 /** mother/super class of all transitions. */
 abstract class Transition(drawable: Drawable) : DrawableOp(drawable), Cloneable {
@@ -67,7 +68,7 @@ class Slide(
     drawable: Drawable,
     private val direction: SlideDirection = SlideDirection.FromLeft,
     private val animationType: Animations,
-    durationNanos: Long = 1000L
+    durationNanos: Long = 1L.seconds
 ) :
     Transition(drawable) {
     override val animation: Animation =

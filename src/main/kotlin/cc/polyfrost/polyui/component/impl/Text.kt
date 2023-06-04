@@ -34,19 +34,20 @@ open class Text @JvmOverloads constructor(
     acceptInput: Boolean = false,
     vararg events: Events.Handler
 ) : Component(properties, at, null, acceptInput, *events) {
-    /** Internally [text] is stored as a [PolyText] object, which supports localization and object substitution */
+    /** Internally [txt] is stored as a [PolyText] object, which supports localization and object substitution */
     @JvmOverloads
     constructor(
-        text: String,
+        txt: String,
         at: Vec2<Unit>,
         size: Size<Unit>? = null,
         fontSize: Unit.Pixel? = null,
         textAlign: TextAlign = TextAlign.Left,
         acceptInput: Boolean = false,
         vararg events: Events.Handler
-    ) : this(null, text.localised(), at, size, fontSize, textAlign, acceptInput, *events)
+    ) : this(null, txt.localised(), at, size, fontSize, textAlign, acceptInput, *events)
 
-    constructor(properties: Properties? = null, text: PolyText, fontSize: Unit.Pixel, at: Vec2<Unit>) : this(properties, text, at, null, fontSize)
+    constructor(properties: Properties? = null, text: PolyText, fontSize: Unit.Pixel, at: Vec2<Unit>) :
+        this(properties, text, at, null, fontSize)
 
     final override val properties: TextProperties
         get() = super.properties as TextProperties
@@ -76,13 +77,8 @@ open class Text @JvmOverloads constructor(
         }
 
     override fun render() {
-        if (scaleX != 1f) {
-            renderer.scale(scaleX, 1f)
-            str.render(at.a.px, at.b.px, color)
-            renderer.scale(1f / scaleX, 1f)
-        } else {
-            str.render(at.a.px, at.b.px, color)
-        }
+        if (scaleX != 1f) renderer.scale(scaleX, 1f)
+        str.render(at.a.px, at.b.px, color)
     }
 
     operator fun get(index: Int) = str[index]

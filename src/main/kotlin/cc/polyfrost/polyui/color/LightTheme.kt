@@ -71,7 +71,7 @@ open class LightTheme : Colors {
         override val warningDisabled = rgba(255, 171, 29, 0.5f)
         override val success = rgba(35, 154, 96)
         override val successHovered = rgba(26, 135, 82)
-        override val successPressed = rgba(44, 72, 110)
+        override val successPressed = rgba(44, 172, 110)
         override val successDisabled = rgba(35, 154, 96, 0.5f)
     }
     open class LightComponent : Colors.Component() {

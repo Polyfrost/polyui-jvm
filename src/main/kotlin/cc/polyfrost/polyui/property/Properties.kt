@@ -14,9 +14,7 @@ import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.event.Events
-import cc.polyfrost.polyui.property.impl.BlockProperties
-import cc.polyfrost.polyui.property.impl.ImageProperties
-import cc.polyfrost.polyui.property.impl.TextProperties
+import cc.polyfrost.polyui.property.impl.*
 import cc.polyfrost.polyui.unit.Size
 import cc.polyfrost.polyui.unit.Unit
 
@@ -72,4 +70,18 @@ abstract class Properties : Cloneable {
     }
 
     val initialized get() = ::colors.isInitialized
+
+    companion object {
+        @JvmField
+        val primaryProperties = PrimaryBlockProperties()
+
+        @JvmField
+        val successProperties = StateBlockProperties(State.Success)
+
+        @JvmField
+        val warningProperties = StateBlockProperties(State.Warning)
+
+        @JvmField
+        val dangerProperties = StateBlockProperties(State.Danger)
+    }
 }

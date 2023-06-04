@@ -294,7 +294,7 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
          * [Mutable.recolor] this gradient color.
          * @param whichColor which color to recolor. 1 for the first color, 2 for the second color.
          */
-        fun recolor(whichColor: Int, target: Color, type: Animation.Type? = null, durationNanos: Long = 1000) {
+        fun recolor(whichColor: Int, target: Color, type: Animation.Type? = null, durationNanos: Long = 1L.seconds) {
             when (whichColor) {
                 1 -> super.recolor(target, type, durationNanos)
                 2 -> color2.recolor(target, type, durationNanos)
@@ -305,7 +305,7 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         /** merge the colors of this gradient into one color.
          * @param colorToMergeTo which color to merge to. 1 for the first color, 2 for the second.
          * */
-        fun mergeColors(colorToMergeTo: Int, type: Animation.Type? = null, durationNanos: Long = 1000L) {
+        fun mergeColors(colorToMergeTo: Int, type: Animation.Type? = null, durationNanos: Long = 1L.seconds) {
             when (colorToMergeTo) {
                 1 -> color2.recolor(this, type, durationNanos)
                 2 -> super.recolor(color2, type, durationNanos)
@@ -345,7 +345,7 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         private val saturation: Float = 1f,
         alpha: Int = 255
     ) : Mutable(0, 0, 0, alpha) {
-        private var time: Long = 1000L // don't want to 0div
+        private var time = 0L
 
         @Deprecated("Chroma colors cannot be animated.", level = DeprecationLevel.ERROR)
         override fun recolor(target: Color, type: Animation.Type?, durationNanos: Long) {

@@ -27,17 +27,14 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
 
     /** apply this drawable operation.
      *
-     * the renderer is provided in case you want to do some transformations.
+     * the renderer is provided in case you want to do some transformations. A state will already be [pushed][cc.polyfrost.polyui.renderer.Renderer.push] for you.
      *
      * **please note that this is NOT intended** to be used directly for rendering of objects, and only for transformations.
      */
     abstract fun apply(renderer: Renderer)
 
-    /** optionally de-apply this operation, if required.
-     *
-     * The renderer is provided in case you want to revert any transformations that you did.
-     *
-     * **It is extremely important that any transformations, such as scale, are undone in this method.**
+    /**
+     * de-apply this operation, if required.
      */
     open fun unapply(renderer: Renderer) {
         // no-op

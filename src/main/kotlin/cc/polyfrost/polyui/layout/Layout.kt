@@ -257,11 +257,9 @@ abstract class Layout(
     override fun calculateBounds() {
         if (layout != null) doDynamicSize()
         components.fastEach {
-            it.layout = this
             it.calculateBounds()
         }
         children.fastEach {
-            it.layout = this
             it.calculateBounds()
         }
         if (this.size == null) {
@@ -321,8 +319,14 @@ abstract class Layout(
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {
         super.setup(renderer, polyui)
-        components.fastEach { it.setup(renderer, polyui) }
-        children.fastEach { it.setup(renderer, polyui) }
+        components.fastEach {
+            it.layout = this
+            it.setup(renderer, polyui)
+        }
+        children.fastEach {
+            it.layout = this
+            it.setup(renderer, polyui)
+        }
     }
 
     override fun canBeRemoved() = !needsRedraw
