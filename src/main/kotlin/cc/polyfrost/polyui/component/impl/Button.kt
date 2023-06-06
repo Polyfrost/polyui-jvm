@@ -11,10 +11,10 @@ package cc.polyfrost.polyui.component.impl
 
 import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.component.Component
+import cc.polyfrost.polyui.component.ContainingComponent
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.input.PolyText
 import cc.polyfrost.polyui.property.impl.ButtonProperties
-import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.data.PolyImage
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
@@ -40,18 +40,20 @@ class Button(
     rightIcon: PolyImage? = null,
     acceptsInput: Boolean = true,
     vararg events: Events.Handler
-) : Component(properties, at, null, acceptsInput, *events) {
+) : ContainingComponent(properties, at, null, acceptsInput, arrayOf(null), *events) {
     override val properties get() = super.properties as ButtonProperties
     val leftImage: Image? = if (leftIcon != null) Image(leftIcon, at = origin, acceptInput = false) else null
     val rightImage: Image? = if (rightIcon != null) Image(rightIcon, at = origin, acceptInput = false) else null
-    val text: Text? = if (text != null) Text(txt = text, fontSize = fontSize, at = origin, acceptInput = false) else null
+    val text: Text? =
+        if (text != null) Text(txt = text, fontSize = fontSize, at = origin, acceptInput = false) else null
 
     init {
-        if (this.text == null) {
+        if (text == null) {
             if (leftIcon != null && rightIcon != null) {
                 throw IllegalArgumentException("${this.simpleName} cannot have both left and right icons and no text!")
             } else if (leftIcon == null && rightIcon == null) throw IllegalArgumentException("${this.simpleName} cannot have no text or icons!")
         }
+        addComponents(leftImage, rightImage, this.text)
     }
 
     override fun render() {
@@ -59,9 +61,7 @@ class Button(
             renderer.drawHollowRect(at.a.px, at.b.px, size!!.a.px, size!!.b.px, color, properties.outlineThickness, properties.cornerRadii)
         }
         renderer.drawRect(at.a.px, at.b.px, size!!.a.px, size!!.b.px, color, properties.cornerRadii)
-        leftImage?.render()
-        text?.render()
-        rightImage?.render()
+        super.render()
     }
 
     override fun calculateSize(): Size<Unit> {
@@ -115,26 +115,5 @@ class Button(
         icon.size!!.b.px = maxHeight!!.px
         icon.size!!.a.px /= ratio
         icon.at.b.px = at.b.px + properties.topEdgePadding
-    }
-
-    override fun accept(event: Events): Boolean {
-        // accept these so they can hover as well, etc.
-        leftImage?.accept(event)
-        text?.accept(event)
-        rightImage?.accept(event)
-        return super.accept(event)
-    }
-
-    override fun setup(renderer: Renderer, polyui: PolyUI) {
-        super.setup(renderer, polyui)
-        if (leftImage != null) {
-            layout.addComponent(leftImage)
-        }
-        if (text != null) {
-            layout.addComponent(text)
-        }
-        if (rightImage != null) {
-            layout.addComponent(rightImage)
-        }
     }
 }

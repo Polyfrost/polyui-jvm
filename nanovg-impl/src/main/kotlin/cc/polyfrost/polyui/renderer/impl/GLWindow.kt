@@ -25,7 +25,6 @@ import org.lwjgl.opengl.GL11.*
 import org.lwjgl.stb.STBImage
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
-import org.lwjgl.system.Platform
 import kotlin.math.max
 
 class GLWindow @JvmOverloads constructor(
@@ -59,12 +58,12 @@ class GLWindow @JvmOverloads constructor(
     init {
         GLFWErrorCallback.createPrint().set()
         if (!glfwInit()) throw RuntimeException("Failed to init GLFW")
-        if (Platform.get() == Platform.MACOSX) {
-            glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2)
-            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1)
-            glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE)
-            glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE)
-        }
+
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3)
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2)
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE)
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE)
+
         if (!resizeable) glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE)
         if (!decorated) glfwWindowHint(GLFW_DECORATED, GLFW_FALSE)
 

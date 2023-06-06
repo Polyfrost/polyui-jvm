@@ -58,12 +58,14 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         type: Animations? = null,
         durationNanos: Long = 1L.seconds
     ) : DrawableOp(drawable) {
-        override val animation = type?.create(durationNanos, drawable.x, if (add) drawable.x + to.x else to.x)
-        private val animation2 = type?.create(durationNanos, drawable.y, if (add) drawable.y + to.y else to.y)
+        override val animation = type?.create(durationNanos, 0f, 1f)
+        private val tx = if (add) drawable.at.a.px + to.a.px else to.a.px
+        private val ty = if (add) drawable.at.b.px + to.b.px else to.b.px
         override fun apply(renderer: Renderer) {
             if (animation != null) {
-                drawable.at.a.px += animation.value
-                drawable.at.b.px += animation2!!.value
+                val p = animation.value
+                drawable.at.a.px = tx * p
+                drawable.at.b.px += ty * p
             } else {
                 drawable.at.a.px += to.x
                 drawable.at.b.px += to.y
@@ -105,26 +107,42 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         durationNanos: Long = 1L.seconds
     ) :
         DrawableOp(drawable) {
-        override val animation = animation?.create(durationNanos, drawable.size!!.a.px, toSize.a.px)
-        private val animation2 = animation?.create(durationNanos, drawable.size!!.b.px, toSize.b.px)
+        override val animation = animation?.create(durationNanos, 0f, 1f)
 
         override fun apply(renderer: Renderer) {
             if (animation != null) {
-                drawable.size!!.a.px = animation.value
-                drawable.size!!.b.px = animation2!!.value
+                val p = animation.value
+                drawable.size!!.a.px = toSize.a.px * p
+                drawable.size!!.b.px = toSize.b.px * p
             } else {
                 drawable.size!!.a.px = toSize.a.px
                 drawable.size!!.b.px = toSize.b.px
             }
         }
+    }
 
-        override fun update(deltaTimeNanos: Long) {
-            animation?.update(deltaTimeNanos)
-            animation2?.update(deltaTimeNanos)
+    class Scale(
+        private val scaleX: Float,
+        private val scaleY: Float,
+        add: Boolean = true,
+        override val drawable: Component,
+        animation: Animations? = null,
+        durationNanos: Long = 1L.seconds
+    ) : DrawableOp(drawable) {
+        override val animation = animation?.create(durationNanos, 0f, 1f)
+        private val tx = if (add) drawable.scaleX + scaleX else scaleX
+        private val ty = if (add) drawable.scaleY + scaleY else scaleY
+
+        override fun apply(renderer: Renderer) {
+            if (animation != null) {
+                val p = animation.value
+                drawable.scaleX = tx * p
+                drawable.scaleY = ty * p
+            } else {
+                drawable.scaleX = scaleX
+                drawable.scaleY = scaleY
+            }
         }
-
-        override val isFinished: Boolean
-            get() = animation?.isFinished ?: true && animation2?.isFinished ?: true
     }
 
     class Skew(
@@ -135,33 +153,19 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         animation: Animations? = null,
         durationNanos: Long = 1L.seconds
     ) : DrawableOp(drawable) {
-        override val animation = animation?.create(
-            durationNanos,
-            drawable.skewX.toFloat(),
-            if (add) (drawable.skewX + skewX).toFloat() else skewX.toFloat()
-        )
-        private val animation2 = animation?.create(
-            durationNanos,
-            drawable.skewY.toFloat(),
-            if (add) (drawable.skewY + skewY).toFloat() else skewY.toFloat()
-        )
+        override val animation = animation?.create(durationNanos, 0f, 1f)
+        private val tx = if (add) drawable.skewX + skewX else skewX
+        private val ty = if (add) drawable.skewY + skewY else skewY
 
         override fun apply(renderer: Renderer) {
             if (animation != null) {
-                drawable.skewX = animation.value.toDouble()
-                drawable.skewY = animation2!!.value.toDouble()
+                val p = animation.value.toDouble()
+                drawable.skewX = tx * p
+                drawable.skewY = ty * p
             } else {
                 drawable.skewX = skewX
                 drawable.skewY = skewY
             }
         }
-
-        override fun update(deltaTimeNanos: Long) {
-            animation?.update(deltaTimeNanos)
-            animation2?.update(deltaTimeNanos)
-        }
-
-        override val isFinished: Boolean
-            get() = animation?.isFinished ?: true && animation2?.isFinished ?: true
     }
 }

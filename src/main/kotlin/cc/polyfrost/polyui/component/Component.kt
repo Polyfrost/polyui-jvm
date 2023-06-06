@@ -50,11 +50,17 @@ abstract class Component @JvmOverloads constructor(
     /** current skew in y dimension of this component (radians). */
     var skewY: Double = 0.0
 
-    /** X translation cache for rotating */
-    private var acx = 0f
+    /** current scale in x dimension of this component. */
+    var scaleX: Float = 1f
 
-    /** Y translation cache for rotating */
-    private var acy = 0f
+    /** current scale in y dimension of this component. */
+    var scaleY: Float = 1f
+
+    /** **a**t **c**ache **x** for transformations. */
+    var acx = 0f
+
+    /** **a**t **c**ache **y** for transformations. */
+    var acy = 0f
 
     @PublishedApi
     internal var p: Properties? = properties
@@ -98,14 +104,35 @@ abstract class Component @JvmOverloads constructor(
      * Scale this component by the given amount, in the X and Y dimensions.
      *
      * Please note that this ignores all bounds, and will simply scale this component, meaning that it can be clipped by its layout, and overlap nearby component.
+     *
+     * @since 0.17.4
      */
-    fun scale(
+    fun scaleBy(
         xFactor: Float,
         yFactor: Float,
         animation: Animation.Type? = null,
         durationNanos: Long = 1.seconds,
         onFinish: (Component.() -> kotlin.Unit)? = null
-    ) = resize((width * xFactor).px * (height * yFactor).px, animation, durationNanos, onFinish)
+    ) {
+        addOperation(DrawableOp.Scale(xFactor, yFactor, true, this, animation, durationNanos), onFinish)
+    }
+
+    /**
+     * Scale this component to the given amount, in the X and Y dimensions.
+     *
+     * Please note that this ignores all bounds, and will simply scale this component, meaning that it can be clipped by its layout, and overlap nearby component.
+     *
+     * @since 0.17.4
+     */
+    fun scaleTo(
+        xFactor: Float,
+        yFactor: Float,
+        animation: Animation.Type? = null,
+        durationNanos: Long = 1.seconds,
+        onFinish: (Component.() -> kotlin.Unit)? = null
+    ) {
+        addOperation(DrawableOp.Scale(xFactor, yFactor, false, this, animation, durationNanos), onFinish)
+    }
 
     /**
      * Rotate this component to the given amount, in degrees. The amount is MOD 360 to return a value between 0-360 always.
@@ -331,7 +358,7 @@ abstract class Component @JvmOverloads constructor(
     /**
      * pre-render functions, such as applying transforms.
      * In this method, you should set needsRedraw to true if you have something to redraw for the **next frame**.
-     * @param deltaTimeNanos the time in nanoseconds since the last frame. Use this for animations.
+     * @param deltaTimeNanos the time in nanoseconds since the last frame. Use this for animations. It is the same as [PolyUI.delta].
      *
      * **make sure to call super [Component.preRender]!**
      */
@@ -384,6 +411,7 @@ abstract class Component @JvmOverloads constructor(
         }
         if (skewX != 0.0) renderer.skewX(skewX)
         if (skewY != 0.0) renderer.skewY(skewY)
+        if (scaleX != 1f || scaleY != 1f) renderer.scale(scaleX, scaleY)
     }
 
     /**

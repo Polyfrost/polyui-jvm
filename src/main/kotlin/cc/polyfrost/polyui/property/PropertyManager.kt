@@ -15,12 +15,13 @@ import cc.polyfrost.polyui.component.impl.*
 import cc.polyfrost.polyui.property.impl.*
 
 class PropertyManager(val polyUI: PolyUI) {
-    val properties: MutableMap<String, Properties> = mutableMapOf(
-        TextInput::class.qualifiedName!!to TextInputProperties(TextProperties()),
-        Block::class.qualifiedName!!to BlockProperties(),
-        Divider::class.qualifiedName!!to DividerProperties(),
-        Image::class.qualifiedName!!to ImageProperties(),
-        Text::class.qualifiedName!! to TextProperties()
+    val properties: HashMap<String, Properties> = hashMapOf(
+        TextInput::class.qualifiedName!! to TextInputProperties(TextProperties()),
+        Block::class.qualifiedName!! to BlockProperties(),
+        Divider::class.qualifiedName!! to DividerProperties(),
+        Image::class.qualifiedName!! to ImageProperties(),
+        Text::class.qualifiedName!! to TextProperties(),
+        Button::class.qualifiedName!! to ButtonProperties()
     )
 
     inline fun <reified C : Component> get(): Properties = get(C::class.qualifiedName!!)
@@ -55,14 +56,14 @@ class PropertyManager(val polyUI: PolyUI) {
      *
      * @param map a map of properties, and their accompanying properties to add.
      */
-    fun addPropertyTypes(map: MutableMap<String, Properties>) {
+    fun addPropertyTypes(map: HashMap<String, Properties>) {
         for ((k, v) in map) {
             properties[k] = v
         }
     }
 
     /** @see addPropertyTypes */
-    fun setTheme(map: MutableMap<String, Properties>) = addPropertyTypes(map)
+    fun setTheme(map: HashMap<String, Properties>) = addPropertyTypes(map)
 
     /**
      * Add the given property to the property registry.

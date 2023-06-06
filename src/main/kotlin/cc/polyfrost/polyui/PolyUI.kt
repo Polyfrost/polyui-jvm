@@ -11,6 +11,7 @@ package cc.polyfrost.polyui
 
 import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.color.DarkTheme
+import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.component.Focusable
 import cc.polyfrost.polyui.event.EventManager
@@ -112,6 +113,9 @@ class PolyUI @JvmOverloads constructor(
     private val clock = Clock()
     private val executors: ArrayList<Clock.FixedTimeExecutor> = arrayListOf()
     inline val settings get() = renderer.settings
+    inline val mouseX get() = eventManager.mouseX
+    inline val mouseY get() = eventManager.mouseY
+    inline val mouseDown get() = eventManager.mouseDown
     var width
         set(value) {
             Unit.VUnits.vWidth = value
@@ -304,6 +308,20 @@ class PolyUI @JvmOverloads constructor(
     fun every(nanos: Long, repeats: Int = 0, func: () -> kotlin.Unit): PolyUI {
         executors.add(Clock.FixedTimeExecutor(nanos, repeats, func))
         return this
+    }
+
+    /**
+     * Return all components in the given rectangle.
+     * @since 0.17.4
+     */
+    fun getComponentsIn(x: Float, y: Float, width: Float, height: Float): ArrayList<Component> {
+        val list = ArrayList<Component>()
+        master.onAll(true) {
+            if (x < trueX + this.width && x + width > trueX && y < trueY + this.height && y + height > trueY) {
+                list.add(this)
+            }
+        }
+        return list
     }
 
     fun focus(focusable: Focusable?) {

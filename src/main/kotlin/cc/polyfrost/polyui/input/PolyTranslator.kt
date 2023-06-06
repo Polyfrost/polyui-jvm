@@ -24,6 +24,8 @@ import java.util.Locale
  *
  *  This can also be set with `-Dpolyui.locale="ll_CC"` or using [Settings.defaultLocale][cc.polyfrost.polyui.property.Settings.defaultLocale].
  *
+ *  If the file cannot be found, PolyUI will check for a file named `ll_**.lang` (for example `en_**.lang`) and use that instead if present. If that isn't found, it will return the key. It also will return the key if the file is found but the key is not present.
+ *
  *  The file contains a simple table of `key=value`, with each line meaning a new translation. We recommend using dot notation for your keys:
  *  ```
  *  my.key=hello there!
@@ -63,7 +65,7 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
         /** the translated string. This value is automatically set to the translated value when retrieved. */
         var string: String = key
             get() {
-                if (canTranslate && field == key) {
+                if (canTranslate && field.equals(key)) {
                     field = polyTranslator!!.translate(key, *objects)
                     if (field == key) canTranslate = false // key/file missing
                 }
@@ -108,6 +110,12 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
         ) {
             if (this == null) {
                 PolyUI.LOGGER.warn("No translation for $currentFile!")
+                val path = "${currentFile.substring(0, currentFile.lastIndex - 6)}**.lang"
+                if (getResourceStreamNullable(path) != null) {
+                    PolyUI.LOGGER.warn("\t\t> Global language file found ($path), using that instead. Country-specific language features will be ignored.")
+                    currentFile = path
+                    return translate(key, *objects)
+                }
                 return key
             }
             if (isEmpty()) {

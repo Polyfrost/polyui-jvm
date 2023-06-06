@@ -53,7 +53,6 @@ open class Text @JvmOverloads constructor(
         get() = super.properties as TextProperties
     val fontSize = fontSize ?: this.properties.fontSize
     internal lateinit var str: Text
-    var scaleX: Float = 1f
     val lines get() = str.lines
     val full get() = str.full
     val font get() = this.properties.font
@@ -77,7 +76,6 @@ open class Text @JvmOverloads constructor(
         }
 
     override fun render() {
-        if (scaleX != 1f) renderer.scale(scaleX, 1f)
         str.render(at.a.px, at.b.px, color)
     }
 
@@ -90,7 +88,7 @@ open class Text @JvmOverloads constructor(
     override fun rescale(scaleX: Float, scaleY: Float) {
         super.rescale(scaleX, scaleY)
         str.fontSize *= scaleY
-        this.scaleX *= scaleX - (scaleY - 1f)
+        // this.scaleX *= scaleX - (scaleY - 1f)
     }
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {

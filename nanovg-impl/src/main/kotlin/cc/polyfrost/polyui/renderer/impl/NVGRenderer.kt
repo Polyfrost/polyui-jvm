@@ -38,9 +38,9 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     private val nvgPaint: NVGPaint = NVGPaint.malloc()
     private val nvgColor: NVGColor = NVGColor.malloc()
     private val nvgColor2: NVGColor = NVGColor.malloc()
-    private val fbos: MutableMap<Framebuffer, NVGLUFramebuffer> = mutableMapOf()
-    private val images: MutableMap<PolyImage, NVGImage> = mutableMapOf()
-    private val fonts: MutableMap<Font, NVGFont> = mutableMapOf()
+    private val fbos = HashMap<Framebuffer, NVGLUFramebuffer>()
+    private val images = HashMap<PolyImage, NVGImage>()
+    private val fonts = HashMap<Font, NVGFont>()
     private var vg: Long = -1
 
     init {
@@ -91,7 +91,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         fontSize: Float,
         textAlign: TextAlign
     ) {
-        if (color == Color.TRANSPARENT) return
+        if (color === Color.TRANSPARENT) return
         nvgBeginPath(vg)
         nvgFontSize(vg, fontSize)
         nvgFontFaceId(vg, getFont(font).id)
@@ -208,7 +208,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         bottomLeftRadius: Float,
         bottomRightRadius: Float
     ) {
-        if (color == Color.TRANSPARENT) return
+        if (color === Color.TRANSPARENT) return
         // note: nvg checks params and draws class rec if 0, so we don't need to
         nvgBeginPath(vg)
         nvgRoundedRectVarying(
@@ -242,7 +242,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         bottomLeftRadius: Float,
         bottomRightRadius: Float
     ) {
-        if (color == Color.TRANSPARENT) return
+        if (color === Color.TRANSPARENT) return
         nvgBeginPath(vg)
         nvgRoundedRectVarying(
             vg,

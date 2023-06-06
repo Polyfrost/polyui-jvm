@@ -42,7 +42,7 @@ abstract class Properties : Cloneable {
      */
     open val size: Size<Unit>? = null
     abstract val padding: Float
-    val eventHandlers = mutableMapOf<Events, Component.() -> Boolean>()
+    val eventHandlers = HashMap<Events, Component.() -> Boolean>()
 
     /**
      * Add a universal event handler to this component's property.

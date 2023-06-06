@@ -180,8 +180,14 @@ class ScrollingLayout(
     }
 
     override fun rescale(scaleX: Float, scaleY: Float) {
+        val p = scrollXPercent
+        val p1 = scrollYPercent
         super.rescale(scaleX, scaleY)
         scrollingSize.scale(scaleX, scaleY)
+        scrollXPercent = p
+        scrollYPercent = p1
+        bars.first.update()
+        bars.second.update()
     }
 
     override fun calculateBounds() {

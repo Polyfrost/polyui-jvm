@@ -67,7 +67,7 @@ open class PointerLayout(
             if (!refuseFramebuffer) ptr.fbo = value
         }
     final override inline val removeQueue: ArrayList<Drawable> get() = ptr.removeQueue
-    final override inline val eventHandlers: MutableMap<Events, Drawable.() -> Boolean>
+    final override inline val eventHandlers: HashMap<Events, Drawable.() -> Boolean>
         get() = ptr.eventHandlers
     final override inline val at: Point<Unit> get() = ptr.at
     final override inline var size: Vec2<Unit>?

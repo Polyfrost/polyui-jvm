@@ -37,6 +37,7 @@ import cc.polyfrost.polyui.renderer.impl.NVGRenderer
 import cc.polyfrost.polyui.renderer.impl.NoOpRenderer
 import cc.polyfrost.polyui.renderer.impl.NoOpWindow
 import cc.polyfrost.polyui.unit.*
+import cc.polyfrost.polyui.utils.fastEach
 import kotlin.random.Random
 
 fun main() {
@@ -142,7 +143,12 @@ fun main() {
                         at = 0.px * 160.px,
                         leftIcon = PolyImage("/test.png", 15f, 15f),
                         text = "polyui.button".localised(),
-                        rightIcon = PolyImage("/test.jpg", 15f, 15f)
+                        rightIcon = PolyImage("/test.jpg", 15f, 15f),
+                        events = events(
+                            Events.MouseClicked(0) to {
+                                rotateBy(120.0, Animations.EaseInOutCubic)
+                            }
+                        )
                     )
                 )
             ).draggable(),
@@ -154,7 +160,9 @@ fun main() {
         )
     )
     polyUI.keyBinder.add(Mouse.LEFT_MOUSE, Modifiers.LCONTROL) {
-        println("${polyUI.eventManager.mouseX} x ${polyUI.eventManager.mouseY}")
+        polyUI.getComponentsIn(polyUI.eventManager.mouseX - 25f, polyUI.eventManager.mouseY - 25f, 50f, 50f).fastEach {
+            it.recolor(Color(Random.Default.nextFloat(), Random.Default.nextFloat(), Random.Default.nextFloat(), 1f))
+        }
     }
     var light = false
     polyUI.keyBinder.add(Keys.F1) {

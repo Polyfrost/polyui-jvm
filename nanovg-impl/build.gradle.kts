@@ -12,3 +12,15 @@ dependencies {
         }
     }
 }
+
+tasks.jar {
+    manifest {
+        attributes["Main-Class"] = "cc.polyfrost.polyui.TestKt"
+    }
+    from(sourceSets.test.get().output)
+    from(sourceSets.main.get().output)
+    from(configurations.runtimeClasspath.get().mapNotNull { if(!it.exists()) null else if (it.isDirectory) it else zipTree(it) })
+    from(configurations.testRuntimeClasspath.get().mapNotNull { if(!it.exists()) null else if (it.isDirectory) it else zipTree(it) })
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
