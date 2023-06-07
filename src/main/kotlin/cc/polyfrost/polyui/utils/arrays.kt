@@ -78,7 +78,11 @@ inline fun <L, E> L.anyAre(f: (E) -> Boolean): Boolean where L : List<E>, L : Ra
 
 /** Returns `true` if **no elements** match the given [predicate][f]. */
 inline fun <L, E> L.noneAre(f: (E) -> Boolean): Boolean where L : List<E>, L : RandomAccess {
-    return !anyAre(f)
+    if (this.size == 0) return false
+    for (i in 0 until this.size) {
+        if (f(this[i])) return false
+    }
+    return true
 }
 
 /** Returns `true` if **all elements** match the given [predicate][f]. */

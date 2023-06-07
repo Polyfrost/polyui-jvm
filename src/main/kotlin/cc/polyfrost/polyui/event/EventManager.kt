@@ -18,6 +18,7 @@ import cc.polyfrost.polyui.input.Keys
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.utils.fastEach
 import cc.polyfrost.polyui.utils.fastRemoveIf
+import kotlin.experimental.and
 import kotlin.experimental.or
 import kotlin.experimental.xor
 
@@ -190,8 +191,14 @@ class EventManager(private val polyUI: PolyUI) {
     /** call this function when the mouse is scrolled. */
     @Suppress("NAME_SHADOWING")
     fun onMouseScrolled(amountX: Int, amountY: Int) {
-        val amountX = if (polyUI.settings.naturalScrolling) amountX else -amountX
-        val amountY = if (polyUI.settings.naturalScrolling) amountY else -amountY
+        var amountX = if (polyUI.settings.naturalScrolling) amountX else -amountX
+        var amountY = if (polyUI.settings.naturalScrolling) amountY else -amountY
+        if ((keyModifiers and KeyModifiers.LSHIFT.value) != 0.toShort()) {
+            (amountX to amountY).let {
+                amountX = it.second
+                amountY = it.first
+            }
+        }
         val (sx, sy) = polyUI.settings.scrollMultiplier
         val event = Events.MouseScrolled(amountX * sx, amountY * sy, keyModifiers)
         if (polyUI.keyBinder.accept(event)) return

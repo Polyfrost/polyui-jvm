@@ -109,6 +109,17 @@ sealed class Events : Event {
         constructor() : this(0, 0)
 
         override fun hashCode() = 0
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is MouseScrolled) return false
+
+            if (amountX != other.amountX) return false
+            if (amountY != other.amountY) return false
+            if (mods != other.mods) return false
+
+            return true
+        }
     }
 
     /**
