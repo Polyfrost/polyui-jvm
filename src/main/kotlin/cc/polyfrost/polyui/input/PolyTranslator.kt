@@ -24,9 +24,12 @@ import java.util.Locale
  *
  *  This can also be set with `-Dpolyui.locale="ll_CC"` or using [Settings.defaultLocale][cc.polyfrost.polyui.property.Settings.defaultLocale].
  *
- *  If the file cannot be found, PolyUI will check for a file named `ll_**.lang` (for example `en_**.lang`) and use that instead if present. If that isn't found, it will return the key. It also will return the key if the file is found but the key is not present.
+ *  If the file cannot be found, PolyUI will check for a file named `ll_**.lang` (for example `en_**.lang`) and use that instead if present.
+ *  If that isn't found, it will use the default locale (above), and if that isn't found it will crash.
  *
- *  The file contains a simple table of `key=value`, with each line meaning a new translation. We recommend using dot notation for your keys:
+ *  Keys can also be added using
+ *
+ *  The file contains a simple table of `key=value`, with each line meaning a new translation. It will return the key if the file is found but the key is not present. We recommend using dot notation for your keys:
  *  ```
  *  my.key=hello there!
  *  hello.world=This works well!
@@ -34,8 +37,8 @@ import java.util.Locale
  *  ```
  */
 class PolyTranslator(private val polyUI: PolyUI, private val translationDir: String) {
-    private var currentFile: String = if (polyUI.renderer.settings.defaultLocale != null) {
-        "$translationDir/${polyUI.renderer.settings.defaultLocale}.lang"
+    private var resourcePath: String = if (System.getProperty("polyui.locale") != null) {
+        "$translationDir/${System.getProperty("polyui.locale")}.lang"
     } else {
         "$translationDir/${Locale.getDefault().language}_${Locale.getDefault().country}.lang"
     }
@@ -43,9 +46,59 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
 
     /** set the locale of this translator. All the keys are cleared, and PolyUI is reloaded. */
     fun setLocale(locale: String) {
-        currentFile = "$translationDir/$locale.lang"
+        resourcePath = "$translationDir/$locale.lang"
         map.clear()
         polyUI.master.reset()
+    }
+
+    /**
+     * Load a file of keys.
+     * @see PolyTranslator
+     * @see getResourceStreamNullable
+     * @since 0.17.5
+     */
+    fun loadKeys(resource: String) {
+        PolyUI.LOGGER.info("Loading translation table $resourcePath...")
+        var i = 0
+        getResourceStreamNullable(resource)?.bufferedReader()?.lines()?.forEach {
+            val split = it.split("=")
+            require(split.size == 2) { "Invalid translation table entry (line $i): $it" }
+            map[split[0]] = split[1]
+            i++
+        }
+    }
+
+    /**
+     * Add a map of keys to the translation table.
+     *
+     * @see loadKeys
+     * @see PolyTranslator
+     * @since 0.17.5
+     */
+    fun addKeys(keys: Map<out String, String>) = map.putAll(keys)
+
+    /**
+     * Add a set of keys to the translation table. You can use the Kotlin map syntax here:
+     * ```
+     * addKeys(
+     *   "my.key" to "hello there!",
+     *   "hello.world" to "This works well!",
+     * )
+     * ```
+     * @see loadKeys
+     * @see PolyTranslator
+     * @since 0.17.5
+     */
+    fun addKeys(vararg pairs: Pair<String, String>) = map.putAll(pairs)
+
+    /**
+     * Add a key to the translation table.
+     * @see addKeys
+     * @see loadKeys
+     * @since 0.17.5
+     */
+    fun addKey(key: String, value: String) {
+        map[key] = value
     }
 
     /** Internal representation of a string in PolyUI.
@@ -98,31 +151,35 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
 
     /** translate the provided key, returning the key as per the translation table.
      *
-     * If the key is not present in the table, then the [currentFile] file is checked for the key. The value is then returned.
+     * If the key is not present in the table, then the [resourcePath] file is checked for the key. The value is then returned.
      * Warnings will be issued if the file/key does not exist.
      * @throws IllegalArgumentException if multiple values exist for the same key.
      */
     fun translate(key: String, vararg objects: Any?): String {
         val k = "$key="
         return map[key] ?: with(
-            getResourceStreamNullable(currentFile)?.bufferedReader()?.lines()?.filter { it.startsWith(k) }
+            getResourceStreamNullable(resourcePath)?.bufferedReader()?.lines()?.filter { it.startsWith(k) }
                 ?.toArray { arrayOfNulls<String>(it) }
         ) {
             if (this == null) {
-                PolyUI.LOGGER.warn("No translation for $currentFile!")
-                val path = "${currentFile.substring(0, currentFile.lastIndex - 6)}**.lang"
-                if (getResourceStreamNullable(path) != null) {
-                    PolyUI.LOGGER.warn("\t\t> Global language file found ($path), using that instead. Country-specific language features will be ignored.")
-                    currentFile = path
-                    return translate(key, *objects)
+                PolyUI.LOGGER.warn("No translation for $resourcePath!")
+                val path = "${resourcePath.substring(0, resourcePath.lastIndex - 6)}**.lang"
+                return if (getResourceStreamNullable(path) != null) {
+                    PolyUI.LOGGER.warn("\t\t> Global language file found ($path), using that instead. Country-specific language features will be ignored. Use -Dpolyui.locale to set a locale.")
+                    resourcePath = path
+                    translate(key, *objects)
+                } else {
+                    resourcePath = "$translationDir/${polyUI.settings.defaultLocale}.lang"
+                    if (getResourceStreamNullable(resourcePath) == null) throw IllegalArgumentException("No global language file found ($path) or default language file found ($resourcePath)!")
+                    PolyUI.LOGGER.warn("\t\t> No global language file found ($path) either, using default language instead.")
+                    translate(key, *objects)
                 }
-                return key
             }
             if (isEmpty()) {
-                PolyUI.LOGGER.warn("No value found for key '$key' in translation table $currentFile!")
+                PolyUI.LOGGER.warn("No value found for key '$key' in translation table $resourcePath!")
                 return key
             }
-            if (size > 1) throw IllegalArgumentException("Multiple values found for key '$key' in translation table $currentFile! ${this.contentToString()}")
+            if (size > 1) throw IllegalArgumentException("Multiple values found for key '$key' in translation table $resourcePath! ${this.contentToString()}")
             var s = this[0]!!.substring(k.length)
             var i = 0
             while (s.contains("{}")) {

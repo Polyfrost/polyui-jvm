@@ -107,18 +107,15 @@ class EventManager(private val polyUI: PolyUI) {
         }
     }
 
-    private inline fun onApplicableLayouts(x: Float, y: Float, func: Layout.() -> Unit) {
-        polyUI.master.children.fastEach {
-            if (it.isInside(x, y)) {
-                func(it)
+    private fun onApplicableLayouts(x: Float, y: Float, func: Layout.() -> Unit) {
+        polyUI.master.onAllLayouts {
+            if (isInside(x, y)) {
+                func(this)
             }
-        }
-        if (polyUI.master.isInside(x, y)) {
-            func(polyUI.master)
         }
     }
 
-    private inline fun onApplicableDrawables(x: Float, y: Float, func: Drawable.() -> Unit) {
+    private fun onApplicableDrawables(x: Float, y: Float, func: Drawable.() -> Unit) {
         return onApplicableLayouts(x, y) {
             if (acceptsInput) func()
             components.fastEach { if (it.isInside(x, y)) func(it) }
@@ -126,7 +123,7 @@ class EventManager(private val polyUI: PolyUI) {
     }
 
     // don't check if the drawable is inside the mouse, this is unsafe and should only be used in setMousePosAndUpdate
-    private inline fun onApplicableDrawablesUnsafe(x: Float, y: Float, func: Drawable.() -> Unit) {
+    private fun onApplicableDrawablesUnsafe(x: Float, y: Float, func: Drawable.() -> Unit) {
         return onApplicableLayouts(x, y) {
             components.fastEach { func(it) }
             if (acceptsInput) func()
@@ -141,9 +138,9 @@ class EventManager(private val polyUI: PolyUI) {
             if (mouseOver) {
                 if (button == 0 && this is Focusable) {
                     polyUI.focus(this)
-                    return
+                    return@onApplicableDrawables
                 }
-                if (accept(event)) return
+                if (accept(event)) return@onApplicableDrawables
             }
         }
     }
@@ -200,7 +197,7 @@ class EventManager(private val polyUI: PolyUI) {
         if (polyUI.keyBinder.accept(event)) return
         onApplicableDrawables(mouseX, mouseY) {
             if (mouseOver) {
-                if (accept(event)) return
+                if (accept(event)) return@onApplicableDrawables
             }
         }
     }

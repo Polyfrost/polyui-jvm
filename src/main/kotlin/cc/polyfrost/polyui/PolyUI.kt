@@ -83,8 +83,7 @@ class PolyUI @JvmOverloads constructor(
             field = value
             val t = measureNanoTime {
                 master.onAll(true) {
-                    properties.colors = value
-                    recolor(properties.color)
+                    onColorsChanged(value)
                 }
                 for ((_, p) in property.properties) {
                     p.colors = value
@@ -159,19 +158,24 @@ class PolyUI @JvmOverloads constructor(
         master.setup(renderer, this)
         master.simpleName += " [Master]"
         master.calculateBounds()
+        if (settings.masterIsFramebuffer) {
+            if (settings.debug) LOGGER.info("Master is using framebuffer")
+            master.fbo = renderer.createFramebuffer(width, height)
+        }
         master.children.fastEach {
-            it.layout = master
-            if (!it.refuseFramebuffer && settings.minItemsForFramebuffer < it.countDrawables()) {
-                it.fbo = renderer.createFramebuffer(it.width, it.height)
-                if (settings.debug) {
-                    LOGGER.info("Layout {} ({} items) created with {}", varargs(it.simpleName, it.countDrawables(), it.fbo!!))
+            it.onAllLayouts {
+                val drawables = countDrawables()
+                if (!refuseFramebuffer && settings.minItemsForFramebuffer < drawables) {
+                    fbo = renderer.createFramebuffer(width, height)
+                    if (settings.debug) {
+                        LOGGER.info("Layout {} ({} items) created with {}", varargs(simpleName, drawables, fbo!!))
+                    }
+                }
+                if (width > this@PolyUI.width || height > this@PolyUI.height) {
+                    LOGGER.warn("Layout {} is larger than the window. This may cause issues.", simpleName)
                 }
             }
-            if (it.width > width || it.height > height) {
-                LOGGER.warn("Layout {} is larger than the window. This may cause issues.", it.simpleName)
-            }
         }
-        if (settings.masterIsFramebuffer) master.fbo = renderer.createFramebuffer(width, height)
         Unit.VUnits.vHeight = height
         Unit.VUnits.vWidth = width
         if (settings.enableDebugKeybind) {
@@ -226,12 +230,12 @@ class PolyUI @JvmOverloads constructor(
             newHeight.toFloat() / this.height
         )
 
-        master.children.fastEach {
-            if (it.fbo != null) {
-                renderer.deleteFramebuffer(it.fbo!!)
-                it.fbo = renderer.createFramebuffer(it.width, it.height)
+        master.onAllLayouts {
+            if (fbo != null) {
+                renderer.deleteFramebuffer(fbo!!)
+                fbo = renderer.createFramebuffer(width, height)
             }
-            it.needsRedraw = true // lol that was funny to debug
+            needsRedraw = true // lol that was funny to debug
         }
         this.width = newWidth.toFloat()
         this.height = newHeight.toFloat()
@@ -241,7 +245,6 @@ class PolyUI @JvmOverloads constructor(
     fun render() {
         delta = clock.delta
         if (master.needsRedraw) {
-            master.needsRedraw = false
             val now = clock.now
             renderer.beginFrame()
             master.reRenderIfNecessary()

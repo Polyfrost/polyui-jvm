@@ -50,7 +50,7 @@ data class PolyImage @JvmOverloads constructor(
     companion object {
         @JvmStatic
         fun from(fileName: String): Type {
-            return when (fileName.substringAfterLast(".")) {
+            return when (fileName.substringAfterLast('.')) {
                 "png" -> Type.PNG
                 "svg" -> Type.SVG
                 "jpg", "jpeg", "jpe", "jif", "jfif", "jfi" -> Type.JPEG

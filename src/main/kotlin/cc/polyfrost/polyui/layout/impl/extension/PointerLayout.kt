@@ -80,12 +80,6 @@ open class PointerLayout(
         set(value) {
             ptr.needsRedraw = value
         }
-
-    final override inline var fboTracker: Int
-        get() = ptr.fboTracker
-        set(value) {
-            ptr.fboTracker = value
-        }
     final override inline val children get() = ptr.children
     final override inline val components get() = ptr.components
     final override var layout: Layout?

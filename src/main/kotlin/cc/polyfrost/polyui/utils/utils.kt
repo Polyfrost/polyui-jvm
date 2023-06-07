@@ -355,7 +355,7 @@ fun String.wrap(
             ).width + 1 + wordLength <= maxWidth
         ) {
             // ok!
-            currentLine.append(" ").append(word)
+            currentLine.append(' ').append(word)
         } else {
             // asm: word doesn't fit in current line, wrap it to the next line
             if (addLine(

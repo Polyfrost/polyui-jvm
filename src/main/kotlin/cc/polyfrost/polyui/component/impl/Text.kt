@@ -87,8 +87,7 @@ open class Text @JvmOverloads constructor(
 
     override fun rescale(scaleX: Float, scaleY: Float) {
         super.rescale(scaleX, scaleY)
-        str.fontSize *= scaleY
-        // this.scaleX *= scaleX - (scaleY - 1f)
+        this.scaleX = str.rescale(scaleX, scaleY)
     }
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {

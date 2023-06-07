@@ -100,7 +100,7 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
          */
         @JvmStatic
         fun from(hex: String): Color {
-            var hexColor = hex.replace("#", "")
+            var hexColor = hex.removePrefix("#")
             when (hexColor.length) {
                 1 -> hexColor = hexColor.repeat(6)
                 2 -> hexColor = hexColor.repeat(3)

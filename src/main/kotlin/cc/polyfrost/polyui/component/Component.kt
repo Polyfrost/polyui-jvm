@@ -14,6 +14,7 @@ import cc.polyfrost.polyui.animate.Animation
 import cc.polyfrost.polyui.animate.Animations
 import cc.polyfrost.polyui.animate.keyframes.KeyFrames
 import cc.polyfrost.polyui.color.Color
+import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.property.Properties
@@ -314,6 +315,19 @@ abstract class Component @JvmOverloads constructor(
         color.recolor(toColor, animation, durationNanos)
         wantRedraw()
         finishColorFunc = onFinish
+    }
+
+    /**
+     * Function that is called when the colors attached to this component change.
+     *
+     * **Make sure to call** [super.onColorsChanged()][onColorsChanged] if you override this!
+     * @see Colors
+     * @see recolor
+     * @since 0.17.5
+     */
+    open fun onColorsChanged(colors: Colors) {
+        properties.colors = colors
+        recolor(properties.color)
     }
 
     override fun calculateBounds() {

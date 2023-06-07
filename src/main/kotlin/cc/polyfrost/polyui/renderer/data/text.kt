@@ -66,6 +66,8 @@ internal abstract class Text(
     }
 
     open operator fun get(index: Int): Line = lines[index]
+
+    abstract fun rescale(scaleX: Float, scaleY: Float): Float
 }
 
 /**
@@ -119,6 +121,11 @@ internal class MultilineText(
         } else {
             Triple(lines.last(), lines.last().string.length, lines.size - 1)
         }
+    }
+
+    override fun rescale(scaleX: Float, scaleY: Float): Float {
+        fontSize *= scaleY
+        return 1f
     }
 }
 
@@ -175,6 +182,15 @@ internal class SingleText(
     }
 
     override fun getByCharIndex(index: Int): Triple<Line, Int, Int> = Triple(lines[0], index, 0)
+
+    override fun rescale(scaleX: Float, scaleY: Float): Float {
+        // todo potentially something like this?
+        // val old = if (autoSized) renderer.textBounds(font, text.string, fontSize, textAlign).a.px else size.a.px / scaleX
+        // val new = renderer.textBounds(font, text.string, fontSize * scaleY, textAlign).a.px
+        // val max = size.a.px
+        fontSize *= scaleY
+        return 1f
+    }
 }
 
 /** stores a line of text, its width, and its height. The height in 98% of times is just the font size. */

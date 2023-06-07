@@ -78,6 +78,10 @@ fun main() {
             NoOpRenderer(window.width.toFloat(), window.height.toFloat())
         },
         items = items(
+            Image(
+                at = 20.px * 20.px,
+                image = PolyImage("test.png")
+            ),
             PixelLayout(
                 at = 20.px * 570.px,
                 items = items(
@@ -141,7 +145,7 @@ fun main() {
                     Button(
                         properties = ButtonProperties(),
                         at = 0.px * 160.px,
-                        leftIcon = PolyImage("/test.png", 15f, 15f),
+                        leftIcon = PolyImage("/ta.png", 15f, 15f),
                         text = "polyui.button".localised(),
                         rightIcon = PolyImage("/test.jpg", 15f, 15f),
                         events = events(
@@ -160,7 +164,8 @@ fun main() {
         )
     )
     polyUI.keyBinder.add(Mouse.LEFT_MOUSE, Modifiers.LCONTROL) {
-        polyUI.getComponentsIn(polyUI.eventManager.mouseX - 25f, polyUI.eventManager.mouseY - 25f, 50f, 50f).fastEach {
+        println("${polyUI.mouseX} x ${polyUI.mouseY}")
+        polyUI.getComponentsIn(polyUI.mouseX - 25f, polyUI.mouseY - 25f, 50f, 50f).fastEach {
             it.recolor(Color(Random.Default.nextFloat(), Random.Default.nextFloat(), Random.Default.nextFloat(), 1f))
         }
     }

@@ -61,9 +61,6 @@ abstract class Layout(
             field = value
         }
 
-    /** tracker variable for framebuffer disabling/enabling. don't touch this. */
-    internal open var fboTracker = 0
-
     /** removal queue of drawables.
      * @see removeComponent
      */
@@ -90,34 +87,38 @@ abstract class Layout(
     }
 
     /** this is the function that is called every frame. It decides whether the layout needs to be entirely re-rendered.
-     * If so, the [render] function is called which will redraw all its children and components.
+     * If so, the [render] function is called which will redraw all its' and components, and this function will redraw all its child layouts as well.
      *
-     * If this layout is [using a framebuffer][cc.polyfrost.polyui.property.Settings.minItemsForFramebuffer], it will be drawn to the framebuffer, and then drawn to the screen.
+     * If this layout is [using a framebuffer][cc.polyfrost.polyui.property.Settings.minItemsForFramebuffer], it will be [drawn][rasterize] to the framebuffer, and then drawn to the screen.
      *
      * **Note:** Do not call this function yourself.
      */
     open fun reRenderIfNecessary() {
-        renderChildren()
-        if (fbo != null && fboTracker < 2) {
-            if (needsRedraw) {
-                if (fboTracker < 2) fboTracker++
-                renderer.bindFramebuffer(fbo!!)
-                render()
-                renderer.unbindFramebuffer(fbo!!)
-            }
+        rasterChildren()
+        rasterize()
+        if (fbo != null) {
             renderer.drawFramebuffer(fbo!!, at.a.px, at.b.px, size!!.a.px, size!!.b.px)
+            renderChildren()
         } else {
             val x = at.a.px // fix scrolling issue where objects could move very slightly
             val y = at.b.px
             renderer.pushScissor(x, y, size!!.a.px, size!!.b.px)
             renderer.translate(x, y)
             render()
+            renderChildren()
             renderer.translate(-x, -y)
             renderer.popScissor()
-            if (!needsRedraw && fboTracker > 1) {
-                needsRedraw = true
-                fboTracker = 0
-            }
+        }
+    }
+
+    /**
+     * This function will rasterize the layout to its framebuffer.
+     */
+    protected open fun rasterize() {
+        if (fbo != null && needsRedraw) {
+            renderer.bindFramebuffer(fbo!!)
+            render()
+            renderer.unbindFramebuffer(fbo!!)
         }
     }
 
@@ -127,10 +128,25 @@ abstract class Layout(
         }
     }
 
+    protected open fun rasterChildren() {
+        children.fastEach {
+            it.rasterize()
+        }
+    }
+
     /** perform the given [function] on all this layout's components, and [optionally][onChildLayouts] on all child layouts. */
     open fun onAll(onChildLayouts: Boolean = false, function: Component.() -> kotlin.Unit) {
         components.fastEach { it.function() }
         if (onChildLayouts) children.fastEach { it.onAll(true, function) }
+    }
+
+    /**
+     * perform the given [function] on all this layout's children and itself.
+     * @since 0.18.0
+     */
+    open fun onAllLayouts(function: Layout.() -> kotlin.Unit) {
+        function(this)
+        children.fastEach { it.onAllLayouts(function) }
     }
 
     /**
@@ -280,7 +296,6 @@ abstract class Layout(
     override fun render() {
         removeQueue.fastEach { if (it.canBeRemoved()) removeComponentNow(it) }
         val delta = polyui.delta
-        if (components.isEmpty()) return
         needsRedraw = false
         components.fastEach {
             it.preRender(delta)

@@ -38,13 +38,14 @@ class Settings(private val renderer: Renderer) {
     var enableVSync = false
 
     /** @see cc.polyfrost.polyui.input.PolyTranslator */
-    var defaultLocale = System.getProperty("polyui.locale") ?: null
+    var defaultLocale = "en_**"
 
     /** How to handle resource (image and font) loading errors. */
     var resourcePolicy = ResourcePolicy.WARN
 
     /** If true, the renderer will render all layout and component to a 'master' framebuffer, then every frame, render that.
      * @see minItemsForFramebuffer
+     * @since 0.18.0
      */
     var masterIsFramebuffer = false
 

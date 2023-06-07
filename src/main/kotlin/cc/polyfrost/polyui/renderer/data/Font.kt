@@ -25,8 +25,8 @@ data class Font @JvmOverloads constructor(
     @Transient val letterSpacing: Float = 0f,
     @Transient val lineSpacing: Float = 1f
 ) {
-    val name: String = resourceName.substringAfterLast("/")
-        .substringBeforeLast(".")
+    val name: String = resourceName.substringAfterLast('/')
+        .substringBeforeLast('.')
 
     // improves memory usage so fonts can use the same data object
     override fun hashCode(): Int {

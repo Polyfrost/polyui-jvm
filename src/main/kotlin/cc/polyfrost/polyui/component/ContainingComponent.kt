@@ -10,6 +10,7 @@
 package cc.polyfrost.polyui.component
 
 import cc.polyfrost.polyui.PolyUI
+import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.renderer.Renderer
@@ -97,5 +98,10 @@ abstract class ContainingComponent(
         // children components cannot cancel an event.
         children.fastEach { it.accept(event) }
         return super.accept(event)
+    }
+
+    override fun onColorsChanged(colors: Colors) {
+        super.onColorsChanged(colors)
+        children.fastEach { it.onColorsChanged(colors) }
     }
 }
