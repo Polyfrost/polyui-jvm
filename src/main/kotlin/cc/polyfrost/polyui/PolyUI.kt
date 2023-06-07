@@ -158,21 +158,22 @@ class PolyUI @JvmOverloads constructor(
         master.setup(renderer, this)
         master.simpleName += " [Master]"
         master.calculateBounds()
-        if (settings.masterIsFramebuffer) {
+        if (settings.framebuffersEnabled && settings.masterIsFramebuffer) {
             if (settings.debug) LOGGER.info("Master is using framebuffer")
             master.fbo = renderer.createFramebuffer(width, height)
         }
         master.children.fastEach {
             it.onAllLayouts {
+                if (width > this@PolyUI.width || height > this@PolyUI.height) {
+                    LOGGER.warn("Layout {} is larger than the window. This may cause issues.", simpleName)
+                }
+                if (!settings.framebuffersEnabled) return@onAllLayouts
                 val drawables = countDrawables()
                 if (!refuseFramebuffer && settings.minItemsForFramebuffer < drawables) {
                     fbo = renderer.createFramebuffer(width, height)
                     if (settings.debug) {
                         LOGGER.info("Layout {} ({} items) created with {}", varargs(simpleName, drawables, fbo!!))
                     }
-                }
-                if (width > this@PolyUI.width || height > this@PolyUI.height) {
-                    LOGGER.warn("Layout {} is larger than the window. This may cause issues.", simpleName)
                 }
             }
         }

@@ -58,12 +58,12 @@ class FlexLayout @JvmOverloads constructor(
 
     private val drawables: ArrayList<FlexDrawable>
 
-    private val mainGap = when (flexDirection) {
+    private var mainGap = when (flexDirection) {
         Direction.Row, Direction.RowReverse -> gap.mainGap.px
         Direction.Column, Direction.ColumnReverse -> gap.crossGap.px
     }
 
-    private val crossGap = when (flexDirection) {
+    private var crossGap = when (flexDirection) {
         Direction.Row, Direction.RowReverse -> gap.crossGap.px
         Direction.Column, Direction.ColumnReverse -> gap.mainGap.px
     }
@@ -135,6 +135,12 @@ class FlexLayout @JvmOverloads constructor(
                 Direction.Column, Direction.ColumnReverse -> size!!.b.px = value
             }
         }
+
+    override fun rescale(scaleX: Float, scaleY: Float) {
+        super.rescale(scaleX, scaleY)
+        mainGap *= scaleX
+        crossGap *= scaleY
+    }
 
     override fun calculateBounds() {
         doDynamicSize()

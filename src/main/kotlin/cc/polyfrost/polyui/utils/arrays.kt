@@ -76,18 +76,27 @@ inline fun <L, E> L.anyAre(f: (E) -> Boolean): Boolean where L : List<E>, L : Ra
     return false
 }
 
-/** Returns `true` if **no elements** match the given [predicate][f]. */
+/** Returns `true` if **no elements** match the given [predicate][f].
+ *
+ * **Note this function** will return `true` if the list is empty, according to the principle of [Vacuous truth](https://en.wikipedia.org/wiki/Vacuous_truth),
+ * because there are no elements that match the given predicate.
+ */
 inline fun <L, E> L.noneAre(f: (E) -> Boolean): Boolean where L : List<E>, L : RandomAccess {
-    if (this.size == 0) return false
+    if (this.size == 0) return true
     for (i in 0 until this.size) {
         if (f(this[i])) return false
     }
     return true
 }
 
-/** Returns `true` if **all elements** match the given [predicate][f]. */
+/**
+ * Returns `true` if **all elements** match the given [predicate][f].
+ *
+ * **Note this function** will return `true` if the list is empty, according to the principle of [Vacuous truth](https://en.wikipedia.org/wiki/Vacuous_truth),
+ * and the fact that there are no elements that don't match the given predicate.
+ */
 inline fun <L, E> L.allAre(f: (E) -> Boolean): Boolean where L : List<E>, L : RandomAccess {
-    if (this.size == 0) return false
+    if (this.size == 0) return true
     for (i in 0 until this.size) {
         if (!f(this[i])) return false
     }
@@ -115,7 +124,7 @@ inline fun <L, reified E, R : Comparable<R>> L.sortedByDescending(crossinline se
  */
 inline fun <L, E> L.sumOf(selector: (E) -> Float): Float where L : List<E>, L : RandomAccess {
     if (this.size == 0) return 0f
-    var sum = .0f
+    var sum = 0f
     fastEach {
         sum += selector(it)
     }

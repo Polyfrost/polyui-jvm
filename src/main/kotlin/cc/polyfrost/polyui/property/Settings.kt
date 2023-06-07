@@ -58,6 +58,13 @@ class Settings(private val renderer: Renderer) {
      */
     var minItemsForFramebuffer: Int = 30
 
+    /**
+     * Enable or disable framebuffers. Please note that PolyUI is designed to work with framebuffers, so disabling them may cause performance issues.
+     * @see cc.polyfrost.polyui.PolyUI
+     * @since 0.18.0
+     */
+    var framebuffersEnabled = true
+
     /** the time between clicks for them to be considered as a combo.
      * @see maxComboSize
      * @see clearComboWhenMaxed

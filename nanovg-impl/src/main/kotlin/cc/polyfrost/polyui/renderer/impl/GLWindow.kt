@@ -31,6 +31,7 @@ class GLWindow @JvmOverloads constructor(
     title: String,
     width: Int,
     height: Int,
+    gl2: Boolean = false,
     resizeable: Boolean = true,
     decorated: Boolean = true
 ) :
@@ -59,10 +60,15 @@ class GLWindow @JvmOverloads constructor(
         GLFWErrorCallback.createPrint().set()
         if (!glfwInit()) throw RuntimeException("Failed to init GLFW")
 
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3)
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2)
-        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE)
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE)
+        if (gl2) {
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2)
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1)
+        } else {
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3)
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2)
+            glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE)
+            glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE)
+        }
 
         if (!resizeable) glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE)
         if (!decorated) glfwWindowHint(GLFW_DECORATED, GLFW_FALSE)

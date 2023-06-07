@@ -112,7 +112,8 @@ abstract class Layout(
     }
 
     /**
-     * This function will rasterize the layout to its framebuffer.
+     * This function will rasterize the layout to its framebuffer, if it has one.
+     * @since 0.18.0
      */
     protected open fun rasterize() {
         if (fbo != null && needsRedraw) {
@@ -122,12 +123,20 @@ abstract class Layout(
         }
     }
 
+    /**
+     * perform the [reRenderIfNecessary] function on this layout's children.
+     * @since 0.18.0
+     */
     protected open fun renderChildren() {
         children.fastEach {
             it.reRenderIfNecessary()
         }
     }
 
+    /**
+     * perform the [rasterize] function on this layout's children.
+     * @since 0.18.0
+     */
     protected open fun rasterChildren() {
         children.fastEach {
             it.rasterize()

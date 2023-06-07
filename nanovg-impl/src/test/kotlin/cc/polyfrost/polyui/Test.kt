@@ -30,7 +30,6 @@ import cc.polyfrost.polyui.layout.impl.FlexLayout
 import cc.polyfrost.polyui.layout.impl.PixelLayout
 import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.property.impl.BlockProperties
-import cc.polyfrost.polyui.property.impl.ButtonProperties
 import cc.polyfrost.polyui.renderer.data.PolyImage
 import cc.polyfrost.polyui.renderer.impl.GLWindow
 import cc.polyfrost.polyui.renderer.impl.NVGRenderer
@@ -78,10 +77,6 @@ fun main() {
             NoOpRenderer(window.width.toFloat(), window.height.toFloat())
         },
         items = items(
-            Image(
-                at = 20.px * 20.px,
-                image = PolyImage("test.png")
-            ),
             PixelLayout(
                 at = 20.px * 570.px,
                 items = items(
@@ -143,7 +138,6 @@ fun main() {
                         )
                     ),
                     Button(
-                        properties = ButtonProperties(),
                         at = 0.px * 160.px,
                         leftIcon = PolyImage("/ta.png", 15f, 15f),
                         text = "polyui.button".localised(),
