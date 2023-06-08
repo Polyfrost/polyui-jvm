@@ -20,7 +20,7 @@ During a render cycle, PolyUI will systematically go through every layout, and [
  - [render](src/main/kotlin/cc/polyfrost/polyui/component/Component.kt#render): This is where the actual rendering happens.
  - [postRender](src/main/kotlin/cc/polyfrost/polyui/component/Component.kt#postRender): This will do post-rendering logic, such as cleaning up transformations.
 
-Check out [some components](src/main/kotlin/cc/polyfrost/polyui/component/Component/impl) to see how this works.
+Check out [some components](src/main/kotlin/cc/polyfrost/polyui/component/impl) to see how this works.
 
 ## How it Works
  - [Components](src/main/kotlin/cc/polyfrost/polyui/component/Drawable.kt) are the interactive parts of the UI, such as buttons, text fields, etc.
@@ -31,11 +31,11 @@ Check out [some components](src/main/kotlin/cc/polyfrost/polyui/component/Compon
 
 **Interactions** are driven by [events](src/main/kotlin/cc/polyfrost/polyui/event/EventManager.kt), which thanks to Kotlin's inlining are a zero-overhead way of distributing events, such as [mouse clicks](src/main/kotlin/cc/polyfrost/polyui/event/Events.kt#MouseClicked), or [key presses](src/main/kotlin/cc/polyfrost/polyui/event/FocusedEvents.kt#KeyPressed).
 
-PolyUI also supports a variety of [animations](src/main/kotlin/cc/polyfrost/polyui/animate/Animation.kt) and [transitions](src/main/kotlin/cc/polyfrost/polyui/animate/transitions/Transition.kt), which can be used to make your UI more dynamic, along with dynamically adding and removing components.
+PolyUI also supports a variety of [animations](src/main/kotlin/cc/polyfrost/polyui/animate/Animation.kt) and [transitions](src/main/kotlin/cc/polyfrost/polyui/animate/transitions/Transitions.kt), which can be used to make your UI more dynamic, along with dynamically adding and removing components.
 
 
 ## Examples
-- find some [components here](src/main/kotlin/cc/polyfrost/polyui/component/Component/impl).
-- find some [layouts here](src/main/kotlin/cc/polyfrost/polyui/layout/Layout/impl).
+- find some [components here](src/main/kotlin/cc/polyfrost/polyui/component/impl).
+- find some [layouts here](src/main/kotlin/cc/polyfrost/polyui/layout/impl).
 - find a simple example [here](nanovg-impl/src/test/kotlin/cc/polyfrost/polyui/Test.kt).
 - find a rendering implementation [here](nanovg-impl/src/main/kotlin/cc/polyfrost/polyui/renderer/impl/NVGRenderer.kt).
