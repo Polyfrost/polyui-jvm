@@ -64,7 +64,7 @@ abstract class Layout(
     /** removal queue of drawables.
      * @see removeComponent
      */
-    open val removeQueue = arrayListOf<Drawable>()
+    internal open val removeQueue = arrayListOf<Drawable>()
 
     /** set this to true if you want this layout to never use a framebuffer. Recommended in situations with chroma colors */
     open var refuseFramebuffer: Boolean = false
@@ -73,7 +73,7 @@ abstract class Layout(
      * @see refuseFramebuffer
      * @see cc.polyfrost.polyui.property.Settings.minItemsForFramebuffer
      */
-    open var fbo: Framebuffer? = null // these all have to be open for ptr layout
+    internal open var fbo: Framebuffer? = null // these all have to be open for ptr layout
         set(value) {
             if (!refuseFramebuffer) field = value
         }

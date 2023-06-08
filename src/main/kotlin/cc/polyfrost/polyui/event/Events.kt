@@ -116,9 +116,7 @@ sealed class Events : Event {
 
             if (amountX != other.amountX) return false
             if (amountY != other.amountY) return false
-            if (mods != other.mods) return false
-
-            return true
+            return mods == other.mods
         }
     }
 
@@ -226,8 +224,14 @@ sealed class Events : Event {
     companion object {
         /** wrapper for varargs, when arguments are in the wrong order */
         @JvmStatic
-        fun events(vararg events: Handler): Array<out Handler> = events
+        @EventDSL
+        fun events(vararg events: @EventDSL Handler): Array<out Handler> = events
     }
 
     data class Handler(val event: Events, val handler: Drawable.() -> Boolean)
 }
+
+/** marker class for preventing illegal nesting. */
+@Target(AnnotationTarget.CLASS, AnnotationTarget.TYPE, AnnotationTarget.FUNCTION)
+@DslMarker
+annotation class EventDSL

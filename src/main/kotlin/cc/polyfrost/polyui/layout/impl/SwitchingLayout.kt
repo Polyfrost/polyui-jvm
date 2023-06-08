@@ -16,11 +16,11 @@ import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.layout.Layout
-import cc.polyfrost.polyui.layout.impl.extension.DraggableLayout
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.utils.fastEach
+import java.util.ArrayList
 import kotlin.math.max
 
 /** a switching layout is a layout that can switch between layouts, with cool animations. */
@@ -37,7 +37,9 @@ class SwitchingLayout(
      * If this is true, and this size is not null, it will be scaled accordingly.
      * Else, it will take the size of the largest one, and the smaller ones will be scaled to fit. */
     resizesChildren: Boolean = true
-) : PixelLayout(at, size, onAdded, onRemoved, true, resizesChildren) {
+) : PixelLayout(at, size, onAdded, onRemoved, true, resizesChildren, *layouts) {
+    override val components: ArrayList<Component>
+        get() = current?.components ?: super.components
     private var goingSwitchOp: Transition? = null
     private var comingSwitchOp: Transition? = null
     private var idx: Int = defaultIndex
@@ -45,14 +47,6 @@ class SwitchingLayout(
     private var next: Layout? = null
     private var autoSized = false
     private var init = false
-
-    override var needsRedraw: Boolean
-        get() = current?.needsRedraw == true
-        set(value) { current?.needsRedraw = value }
-
-    override var acceptsInput: Boolean
-        get() = current?.acceptsInput == true
-        set(value) { current?.acceptsInput = value }
 
     @Deprecated(
         "this method should not be used on a SwitchingLayout, as the targeted layout will vary depending on the current layout, and may switch unexpectedly.",
@@ -91,13 +85,15 @@ class SwitchingLayout(
     }
 
     override fun renderChildren() {
-        // don't render children.
+        current!!.reRenderIfNecessary()
     }
 
     override fun accept(event: Events): Boolean {
+        println("accepting event $event")
         return if (current?.accept(event) == true) {
             true // todo finish
         } else {
+            println("didnt accept")
             super.accept(event)
         }
     }
@@ -122,6 +118,9 @@ class SwitchingLayout(
             this.size!!.a.px = width
             this.size!!.b.px = height
         }
+        children.getOrNull(defaultIndex)
+            ?: throw IllegalArgumentException("SwitchingLayout's default index $defaultIndex has no layout present at initialization!")
+        switch(defaultIndex)
     }
 
     override fun calculateSize(): Vec2<Unit> {
@@ -137,53 +136,65 @@ class SwitchingLayout(
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {
         super.setup(renderer, polyui)
-        init = true
         children.fastEach {
-            init(it)
-        }
-        current = children.getOrNull(defaultIndex)
-            ?: throw IllegalArgumentException("SwitchingLayout's default index $defaultIndex has no layout present at initialization!")
-    }
-
-    override fun render() {
-        if (goingSwitchOp != null) {
-            val delta = polyui.delta
-            goingSwitchOp!!.update(delta)
-            comingSwitchOp!!.update(delta)
-        }
-
-        if (goingSwitchOp != null) {
-            goingSwitchOp!!.apply(renderer)
-            current!!.render()
-            goingSwitchOp!!.unapply(renderer)
-            comingSwitchOp!!.apply(renderer)
-            next!!.render()
-            comingSwitchOp!!.unapply(renderer)
-        } else {
-            current!!.render()
-        }
-
-        if (goingSwitchOp?.isFinished == true) {
-            goingSwitchOp = null
-            comingSwitchOp = null
-            needsRedraw = false
+            it.layout = this
+            it.acceptsInput = false
         }
     }
+
+//    override fun reRenderIfNecessary() {
+//        if (goingSwitchOp != null) {
+//            val delta = polyui.delta
+//            goingSwitchOp!!.update(delta)
+//            comingSwitchOp!!.update(delta)
+//        }
+//
+//        if (goingSwitchOp != null) {
+//            goingSwitchOp!!.apply(renderer)
+//            current!!.reRenderIfNecessary()
+//            goingSwitchOp!!.unapply(renderer)
+//            comingSwitchOp!!.apply(renderer)
+//            next!!.reRenderIfNecessary()
+//            comingSwitchOp!!.unapply(renderer)
+//        } else {
+//            current!!.reRenderIfNecessary()
+//        }
+//
+//        if (goingSwitchOp?.isFinished == true) {
+//            goingSwitchOp = null
+//            comingSwitchOp = null
+//            needsRedraw = false
+//        }
+//    }
+
+//    override fun render() {
+//    }
 
     fun switch(index: Int) {
-        val layout = children.getOrNull(index) ?: return
-        current?.onAdded?.invoke(current!!)
-        next = layout
-        next!!.setup(renderer, polyui)
-        next!!.calculateBounds()
-        next!!.onAdded?.invoke(next!!)
+        val layout = children.getOrNull(index) ?: throw IndexOutOfBoundsException("SwitchingLayout has no layout at index $index")
+        println("h")
+        children.fastEach {
+            it.acceptsInput = false
+            components.fastEach {
+                it.mouseOver = false
+                it.acceptsInput = false
+            }
+        }
+        current?.onRemoved?.invoke(current!!)
+
+        layout.acceptsInput = true
+        layout.components.fastEach {
+            it.acceptsInput = true
+        }
+        layout.onAdded?.invoke(layout)
         needsRedraw = true
-        if (transition == null || current == null) {
-            current = next!!
+        if (transition == null) {
+            this.current = layout
             return
         }
-        goingSwitchOp = transition.create(current!!, transitionDuration)
-        comingSwitchOp = transition.create(next!!, transitionDuration)
+        next = layout
+        if (current != null) goingSwitchOp = transition.create(current!!, transitionDuration)
+        comingSwitchOp = transition.create(layout, transitionDuration)
     }
 
     fun next() {
@@ -204,18 +215,12 @@ class SwitchingLayout(
     }
 
     fun addLayouts(vararg layout: Layout) {
-        for (l in layout) {
-            children.add(init(l))
+        layout.forEach {
+            children.add(init(it))
         }
     }
 
     private fun init(layout: Layout): Layout {
-        if (layout is DraggableLayout) throw IllegalArgumentException("SwitchingLayout cannot contain draggable layouts (${layout.simpleName})!")
-        println("setting ${layout.simpleName}'s parent to ${this.layout?.simpleName}")
-        layout.layout = this.layout
-        if (!init) return layout
-        layout.setup(renderer, polyui)
-        layout.calculateBounds()
         return layout
     }
 

@@ -68,7 +68,7 @@ open class PrimaryBlockProperties @JvmOverloads constructor(
 }
 
 open class StateBlockProperties @JvmOverloads constructor(
-    val state: State = State.Success,
+    private val state: State = State.Success,
     cornerRadii: FloatArray = 0f.radii()
 ) : BlockProperties(null, cornerRadii) {
     override val color: Color get() = when (state) {

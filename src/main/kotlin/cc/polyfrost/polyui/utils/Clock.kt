@@ -37,27 +37,53 @@ class Clock {
     inline fun peek(): Long = System.nanoTime() - lastTime
 
     /**
-     * Create a new FixedTimeExecutor.
+     * Create a new Executor.
      * @param executeEveryNanos how often (in nanoseconds) to execute the given [function][func].
-     * @param repeats how many times to repeat before stopping. If it is 0 (default) then it will last forever (see [finished])
      * @param func the function to execute after the given time.
+     * @see FixedTimeExecutor
+     * @see ConditionalExecutor
+     * @see UntilExecutor
+     * @since 0.14.0
      */
-    class FixedTimeExecutor @JvmOverloads constructor(val executeEveryNanos: Long, val repeats: Int = 0, private val func: () -> Unit) {
+    abstract class Executor(val executeEveryNanos: Long, protected val func: () -> Unit) {
+        protected var time = 0L
+
+        /**
+         * Returns true if this Executor has finished, meaning it can be safely removed.
+         */
+        open val finished get() = false
+
+        /**
+         * Update this Executor, and execute it if the given amount of [time][deltaTimeNanos] has passed.
+         * @return the same as [finished]
+         */
+        open fun tick(deltaTimeNanos: Long): Boolean {
+            if (finished) return true
+            time += deltaTimeNanos
+            if (time >= executeEveryNanos) {
+                func()
+                time = 0L
+            }
+            return false
+        }
+    }
+
+    /**
+     * Create a new FixedTimeExecutor.
+     * @param repeats how many times to repeat before stopping. If it is 0 (default) then it will last forever (see [finished])
+     * @since 0.18.1
+     */
+    class FixedTimeExecutor @JvmOverloads constructor(executeEveryNanos: Long, val repeats: Int = 0, func: () -> Unit) : Executor(executeEveryNanos, func) {
         /** amount of times this has executed. Only incremented when [repeats] is not 0 (i.e. it does not last forever) to prevent numerical overflow and keep method short. */
         var cycles: Int = 0
             private set
-        private var time = 0L
 
         /** returns true if this FixedTimeExecutor has finished (it has cycled more than [repeats] times)
          *
          * Returns false if [repeats] is 0 (it lasts forever) */
-        val finished get() = cycles > repeats
+        override val finished get() = cycles > repeats
 
-        /**
-         * Update this FixedTimeExecutor, and execute it if the given amount of [time][deltaTimeNanos] has passed.
-         * @return the same as [finished]
-         */
-        fun tick(deltaTimeNanos: Long): Boolean {
+        override fun tick(deltaTimeNanos: Long): Boolean {
             if (cycles > repeats) return true
             time += deltaTimeNanos
             if (time >= executeEveryNanos) {
@@ -67,5 +93,29 @@ class Clock {
             }
             return false
         }
+    }
+
+    /**
+     * An executor that will do its function until the given amount of time has passed.
+     *
+     * @since 0.18.1
+     */
+    class UntilExecutor(executeEveryNanos: Long, val executeForNanos: Long, func: () -> Unit) : Executor(executeEveryNanos, func) {
+        private var total = 0L
+        override val finished get() = total >= executeForNanos
+
+        override fun tick(deltaTimeNanos: Long): Boolean {
+            total += deltaTimeNanos
+            return super.tick(deltaTimeNanos)
+        }
+    }
+
+    /**
+     * An executor that will do its function until the given condition is true.
+     *
+     * @since 0.18.1
+     */
+    class ConditionalExecutor(executeEveryNanos: Long, private val condition: () -> Boolean, func: () -> Unit) : Executor(executeEveryNanos, func) {
+        override val finished get() = condition()
     }
 }

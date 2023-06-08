@@ -55,6 +55,7 @@ fun rgba(r: Int, g: Int, b: Int, a: Float = 1f): Color {
  * @return the RGB value of the color with the indicated hue,
  *                            saturation, and brightness.
  */
+@Suppress("FunctionName")
 fun HSBtoRGB(hue: Float, saturation: Float, brightness: Float): Int {
     var r = 0
     var g = 0

@@ -39,8 +39,8 @@ abstract class Component @JvmOverloads constructor(
     acceptInput: Boolean = true,
     vararg events: Events.Handler
 ) : Drawable(acceptInput) {
-    protected val animations: ArrayList<Pair<Animation, (Component.() -> kotlin.Unit)?>> = ArrayList()
-    protected val operations: ArrayList<Pair<DrawableOp, (Component.() -> kotlin.Unit)?>> = ArrayList()
+    protected val animations: ArrayList<Pair<Animation, (Component.() -> kotlin.Unit)?>> = ArrayList(5)
+    protected val operations: ArrayList<Pair<DrawableOp, (Component.() -> kotlin.Unit)?>> = ArrayList(5)
 
     /** current rotation of this component (radians). */
     var rotation: Double = 0.0
@@ -81,8 +81,8 @@ abstract class Component @JvmOverloads constructor(
     protected var autoSized = false
     protected var finishColorFunc: (Component.() -> kotlin.Unit)? = null
     final override lateinit var layout: Layout
-    open lateinit var boundingBox: Box<Unit>
-    var keyframes: KeyFrames? = null
+    protected open lateinit var boundingBox: Box<Unit>
+    protected var keyframes: KeyFrames? = null
 
     init {
         events.forEach {
@@ -243,6 +243,8 @@ abstract class Component @JvmOverloads constructor(
         to: Vec2<Unit>? = null,
         size: Vec2<Unit>? = null,
         degrees: Double = 0.0,
+        scaleX: Float = 1f,
+        scaleY: Float = 1f,
         skewX: Double = 0.0,
         skewY: Double = 0.0,
         color: Color? = null,
@@ -251,6 +253,7 @@ abstract class Component @JvmOverloads constructor(
     ) {
         if (to != null) moveTo(to, animation, durationNanos)
         if (size != null) resize(size, animation, durationNanos)
+        if (scaleX != 1f || scaleY != 1f) scaleTo(scaleX, scaleY, animation, durationNanos)
         rotateTo(degrees, animation, durationNanos)
         skewTo(skewX, skewY, animation, durationNanos)
         if (color != null) recolor(color, animation, durationNanos)
@@ -269,6 +272,8 @@ abstract class Component @JvmOverloads constructor(
         to: Vec2<Unit>? = null,
         size: Vec2<Unit>? = null,
         degrees: Double = 0.0,
+        scaleX: Float = 1f,
+        scaleY: Float = 1f,
         skewX: Double = 0.0,
         skewY: Double = 0.0,
         color: Color? = null,
@@ -277,6 +282,7 @@ abstract class Component @JvmOverloads constructor(
     ) {
         if (to != null) moveBy(to, animation, durationNanos)
         if (size != null) resize(size, animation, durationNanos)
+        if (scaleX != 1f || scaleY != 1f) scaleBy(scaleX, scaleY, animation, durationNanos)
         rotateBy(degrees, animation, durationNanos)
         skewBy(skewX, skewY, animation, durationNanos)
         if (color != null) recolor(color, animation, durationNanos)

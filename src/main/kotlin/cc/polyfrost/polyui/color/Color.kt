@@ -154,8 +154,8 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
          */
         open val updating get() = animation != null
         private var animation: Animation? = null
-        private var to = Array(4) { 0f }
-        private var from = Array(4) { 0f }
+        private var to: FloatArray? = null
+        private var from: FloatArray? = null
 
         /** turn this mutable color into an immutable one. */
         fun toImmutable() = Color(r, g, b, a)
@@ -175,14 +175,19 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
             animation = null
             if (type != null) {
                 this.animation = type.create(durationNanos, 0f, 1f)
-                from[0] = this.r.toFloat()
-                from[1] = this.g.toFloat()
-                from[2] = this.b.toFloat()
-                from[3] = this.a.toFloat()
-                to[0] = target.r.toFloat() - from[0]
-                to[1] = target.g.toFloat() - from[1]
-                to[2] = target.b.toFloat() - from[2]
-                to[3] = target.a.toFloat() - from[3]
+                from = floatArrayOf(
+                    this.r.toFloat(),
+                    this.g.toFloat(),
+                    this.b.toFloat(),
+                    this.a.toFloat()
+                )
+                val from = this.from!!
+                to = floatArrayOf(
+                    target.r.toFloat() - from[0],
+                    target.g.toFloat() - from[1],
+                    target.b.toFloat() - from[2],
+                    target.a.toFloat() - from[3]
+                )
             } else {
                 this.r = target.r
                 this.g = target.g
@@ -199,10 +204,12 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
          * */
         open fun update(deltaTimeNanos: Long): Boolean {
             if (animation != null) {
-                val from = this.from
-                val to = this.to
+                val from = this.from!!
+                val to = this.to!!
                 if (animation!!.isFinished) {
                     animation = null
+                    this.from = null
+                    this.to = null
                     return true
                 }
                 val progress = animation!!.update(deltaTimeNanos)

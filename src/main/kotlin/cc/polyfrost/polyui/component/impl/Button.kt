@@ -33,14 +33,14 @@ import kotlin.math.max
 class Button(
     properties: ButtonProperties? = null,
     at: Vec2<Unit>,
-    var maxHeight: Unit? = null,
+    private var maxHeight: Unit? = null,
     leftIcon: PolyImage? = null,
     text: PolyText? = null,
     fontSize: Unit.Pixel = 12.px,
     rightIcon: PolyImage? = null,
     acceptsInput: Boolean = true,
     vararg events: Events.Handler
-) : ContainingComponent(properties, at, null, acceptsInput, arrayOf(null), *events) {
+) : ContainingComponent(properties, at, null, acceptsInput, arrayOf(), *events) {
     override val properties get() = super.properties as ButtonProperties
     val leftImage: Image? = if (leftIcon != null) Image(leftIcon, at = origin, acceptInput = false) else null
     val rightImage: Image? = if (rightIcon != null) Image(rightIcon, at = origin, acceptInput = false) else null

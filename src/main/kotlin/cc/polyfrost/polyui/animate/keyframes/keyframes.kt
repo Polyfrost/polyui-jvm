@@ -51,6 +51,7 @@ import cc.polyfrost.polyui.unit.seconds
  * @param animation the animation curve to use for each keyframe movement
  * @param component the component to apply to.
  */
+@KeyFrameDSL
 class KeyFrames @JvmOverloads constructor(private val overNanos: Long, private val animation: Animations = Animations.Linear, val component: Component) {
     private var time = 0L
     private val keyframes = ArrayList<KeyFrame>()
@@ -74,11 +75,11 @@ class KeyFrames @JvmOverloads constructor(private val overNanos: Long, private v
         keyframes.add(f)
     }
 
-    fun at(percent: Float, frame: (@KeyFrameDSL KeyFrames).() -> kotlin.Unit) {
+    fun at(percent: Float, frame: (@KeyFrameDSL KeyFrame).() -> kotlin.Unit) {
         percent { frame() }
     }
 
-    fun frame(percent: Float, frame: (@KeyFrameDSL KeyFrames).() -> kotlin.Unit) {
+    fun frame(percent: Float, frame: (@KeyFrameDSL KeyFrame).() -> kotlin.Unit) {
         percent { frame() }
     }
 
@@ -97,7 +98,14 @@ class KeyFrames @JvmOverloads constructor(private val overNanos: Long, private v
         if (time >= n.time) {
             i++
             val nn = next ?: return true
-            component.animateTo(nn.position, nn.size, nn.rotation, nn.skewX, nn.skewY, nn.color, animation, nn.time - n.time)
+            component.animateTo(
+                nn.position, nn.size,
+                nn.rotation,
+                nn.scaleX, nn.scaleY,
+                nn.skewX, nn.skewY,
+                nn.color,
+                animation, nn.time - n.time
+            )
         }
         return false
     }
@@ -107,16 +115,18 @@ class KeyFrames @JvmOverloads constructor(private val overNanos: Long, private v
 class KeyFrame(val time: Long, prev: KeyFrame?) {
     var rotation: Double = prev?.rotation ?: 0.0
     var position: Vec2<Unit>? = prev?.position
+    var scaleX: Float = prev?.scaleX ?: 1f
+    var scaleY: Float = prev?.scaleY ?: 1f
     var skewX: Double = prev?.skewX ?: 0.0
     var skewY: Double = prev?.skewY ?: 0.0
     var size: Vec2<Unit>? = prev?.size
     var color: Color? = prev?.color
 
-    override fun toString() = "KeyFrame(toRotate $rotation, skews $skewX+$skewY, to $position, toSize $size, toColor $color)"
+    override fun toString() = "KeyFrame(toRotate $rotation, skews $skewX+$skewY, scales $scaleX+$scaleY, to $position, toSize $size, toColor $color)"
 }
 
 /** marker class for preventing illegal nesting. */
-@Target(AnnotationTarget.CLASS, AnnotationTarget.TYPE)
+@Target(AnnotationTarget.CLASS, AnnotationTarget.TYPE, AnnotationTarget.FUNCTION)
 @DslMarker
 annotation class KeyFrameDSL
 
@@ -125,10 +135,11 @@ annotation class KeyFrameDSL
  * # [click here][KeyFrames]
  */
 @JvmOverloads
+@KeyFrameDSL
 fun Component.keyframed(
     durationNanos: Long = 1L.seconds,
     animation: Animations = Animations.Linear,
-    frames: (@KeyFrameDSL KeyFrames).() -> kotlin.Unit
+    frames: KeyFrames.() -> kotlin.Unit
 ) {
     val k = KeyFrames(durationNanos, animation, this)
     frames(k) // apply
@@ -141,8 +152,9 @@ fun Component.keyframed(
  * # [click here][KeyFrames]
  */
 @JvmOverloads
+@KeyFrameDSL
 fun Component.keyframes(
     durationNanos: Long = 1L.seconds,
     animation: Animations = Animations.Linear,
-    frames: (@KeyFrameDSL KeyFrames).() -> kotlin.Unit
+    frames: KeyFrames.() -> kotlin.Unit
 ) = keyframed(durationNanos, animation, frames)

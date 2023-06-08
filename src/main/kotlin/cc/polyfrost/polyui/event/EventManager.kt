@@ -159,6 +159,8 @@ class EventManager(private val polyUI: PolyUI) {
             if (curr - clickTimer < polyUI.renderer.settings.comboMaxInterval) {
                 if (clickAmount < polyUI.renderer.settings.maxComboSize) {
                     clickAmount++
+                } else if (polyUI.settings.clearComboWhenMaxed) {
+                    clickAmount = 1
                 }
             } else {
                 clickAmount = 1

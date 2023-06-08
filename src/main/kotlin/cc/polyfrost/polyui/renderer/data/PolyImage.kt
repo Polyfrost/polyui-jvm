@@ -31,6 +31,8 @@ data class PolyImage @JvmOverloads constructor(
         return resourcePath.hashCode()
     }
 
+    override fun equals(other: Any?): Boolean = resourcePath.equals(other)
+
     enum class Type {
         PNG, JPEG, BMP, SVG;
     }

@@ -110,7 +110,7 @@ class PolyUI @JvmOverloads constructor(
     var drew = false
         private set
     private val clock = Clock()
-    private val executors: ArrayList<Clock.FixedTimeExecutor> = arrayListOf()
+    private val executors: ArrayList<Clock.Executor> = arrayListOf()
     inline val settings get() = renderer.settings
     inline val mouseX get() = eventManager.mouseX
     inline val mouseY get() = eventManager.mouseY
@@ -311,6 +311,24 @@ class PolyUI @JvmOverloads constructor(
     /** add a function that is called every [nanos] nanoseconds. */
     fun every(nanos: Long, repeats: Int = 0, func: () -> kotlin.Unit): PolyUI {
         executors.add(Clock.FixedTimeExecutor(nanos, repeats, func))
+        return this
+    }
+
+    /**
+     * Add a function that is called every [nanos] nanoseconds until [forNanos] nanoseconds have passed.
+     * @since 0.18.1
+     */
+    fun until(nanos: Long, forNanos: Long, func: () -> kotlin.Unit): PolyUI {
+        executors.add(Clock.UntilExecutor(nanos, forNanos, func))
+        return this
+    }
+
+    /**
+     * Add a function that is called every [everyNanos] nanoseconds until [condition] returns true.
+     * @since 0.18.1
+     */
+    fun doWhile(everyNanos: Long, condition: () -> Boolean, func: () -> kotlin.Unit): PolyUI {
+        executors.add(Clock.ConditionalExecutor(everyNanos, condition, func))
         return this
     }
 
