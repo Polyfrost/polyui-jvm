@@ -19,10 +19,8 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cc.polyfrost.polyui.animate.transitions
+package cc.polyfrost.polyui.animate
 
-import cc.polyfrost.polyui.animate.Animation
-import cc.polyfrost.polyui.animate.Animations
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.component.DrawableOp
 import cc.polyfrost.polyui.renderer.Renderer

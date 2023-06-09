@@ -19,10 +19,9 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cc.polyfrost.polyui.animate.keyframes
+package cc.polyfrost.polyui.animate
 
 import cc.polyfrost.polyui.PolyUI
-import cc.polyfrost.polyui.animate.Animations
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.unit.Unit
@@ -64,7 +63,7 @@ import cc.polyfrost.polyui.unit.seconds
  * @param component the component to apply to.
  */
 @KeyFrameDSL
-class KeyFrames @JvmOverloads constructor(private val overNanos: Long, private val animation: Animations = Animations.Linear, val component: Component) {
+class KeyFrames @JvmOverloads constructor(private val overNanos: Long, private val animation: Animations = Animation.Type.Linear, val component: Component) {
     private var time = 0L
     private val keyframes = ArrayList<KeyFrame>()
     private var i = 0
@@ -150,7 +149,7 @@ annotation class KeyFrameDSL
 @KeyFrameDSL
 fun Component.keyframed(
     durationNanos: Long = 1L.seconds,
-    animation: Animations = Animations.Linear,
+    animation: Animations = Animation.Type.Linear,
     frames: KeyFrames.() -> kotlin.Unit
 ) {
     val k = KeyFrames(durationNanos, animation, this)
@@ -167,6 +166,6 @@ fun Component.keyframed(
 @KeyFrameDSL
 fun Component.keyframes(
     durationNanos: Long = 1L.seconds,
-    animation: Animations = Animations.Linear,
+    animation: Animations = Animation.Type.Linear,
     frames: KeyFrames.() -> kotlin.Unit
 ) = keyframed(durationNanos, animation, frames)

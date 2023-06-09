@@ -22,8 +22,8 @@
 package cc.polyfrost.polyui.layout.impl
 
 import cc.polyfrost.polyui.PolyUI
-import cc.polyfrost.polyui.animate.transitions.Transition
-import cc.polyfrost.polyui.animate.transitions.Transitions
+import cc.polyfrost.polyui.animate.Transition
+import cc.polyfrost.polyui.animate.Transitions
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.event.Events

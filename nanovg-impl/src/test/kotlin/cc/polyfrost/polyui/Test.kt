@@ -22,7 +22,7 @@
 package cc.polyfrost.polyui
 
 import cc.polyfrost.polyui.animate.Animations
-import cc.polyfrost.polyui.animate.keyframes.keyframed
+import cc.polyfrost.polyui.animate.keyframed
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.color.DarkTheme
 import cc.polyfrost.polyui.color.LightTheme

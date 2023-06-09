@@ -24,7 +24,7 @@ package cc.polyfrost.polyui.component
 import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.animate.Animation
 import cc.polyfrost.polyui.animate.Animations
-import cc.polyfrost.polyui.animate.keyframes.KeyFrames
+import cc.polyfrost.polyui.animate.KeyFrames
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.event.Events
