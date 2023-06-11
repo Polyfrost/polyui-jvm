@@ -44,8 +44,8 @@ class GridLayout @JvmOverloads constructor(
     private val contentStretch: ContentStretch = ContentStretch.FillCell,
     private val gap: Gap = Gap.Default,
     resizesChildren: Boolean = true,
-    vararg items: Drawable
-) : Layout(at, origin, onAdded, onRemoved, false, resizesChildren, *items) {
+    vararg drawables: Drawable
+) : Layout(at, origin, onAdded, onRemoved, false, resizesChildren, *drawables) {
 
     /** list of rows */
     private var grid: Array<Array<Drawable?>>
@@ -53,14 +53,14 @@ class GridLayout @JvmOverloads constructor(
     init {
         var nrows = 0
         var ncols = 0
-        items.forEach {
+        drawables.forEach {
             require(it.atType == Unit.Type.Grid) { "Unit type mismatch: Drawable $it needs to be placed using a Grid unit for a grid layout." }
             val u = it.at.a as Unit.Grid
             nrows = max(nrows, u.row + u.rs)
             ncols = max(ncols, u.column + u.cs)
         }
         grid = Array(nrows) { Array(ncols) { null } }
-        items.forEach {
+        drawables.forEach {
             val u = it.at.a as Unit.Grid
             for (row in u.row until u.row + u.rs) {
                 for (col in u.column until u.column + u.cs) {

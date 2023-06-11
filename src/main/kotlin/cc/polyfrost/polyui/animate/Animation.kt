@@ -26,9 +26,9 @@ package cc.polyfrost.polyui.animate
  *
  * An animation used by the PolyUI system.
  *
- * PolyUI comes with many default [animations][cc.polyfrost.polyui.animate.animations], which you can use. To give the user some choice, you can also use the [Animations.create()][Animation.Type.create] to dynamically create them.
+ * PolyUI comes with many default [animations][cc.polyfrost.polyui.animate.Easing], which you can use. To give the user some choice, you can also use the [Animations.create()][Animation.Type.create] to dynamically create them.
  *
- * check out [DrawableOperation][cc.polyfrost.polyui.component.DrawableOp] for more information on how to use animations dynamically; and [transitions][cc.polyfrost.polyui.animate.transitions] for more information on how to use animations with components.
+ * check out [DrawableOperation][cc.polyfrost.polyui.component.DrawableOp] for more information on how to use animations dynamically; and [transitions][cc.polyfrost.polyui.animate.Transition] for more information on how to use animations with components.
  */
 abstract class Animation(val durationNanos: Long, val from: Float, val to: Float) : Cloneable {
     val range = to - from
@@ -72,37 +72,45 @@ abstract class Animation(val durationNanos: Long, val from: Float, val to: Float
             if (start == end) return Linear(1L, start, start) // prevent empty animations
             return when (this) {
                 Linear -> Linear(durationNanos, start, end)
-                EaseOutBack -> Easing.Back(Easing.Type.Out, durationNanos, start, end)
-                EaseOutBump -> Easing.Bump(Easing.Type.Out, durationNanos, start, end)
-                EaseOutQuad -> Easing.Quad(Easing.Type.Out, durationNanos, start, end)
-                EaseOutQuart -> Easing.Quart(Easing.Type.Out, durationNanos, start, end)
-                EaseOutQuint -> Easing.Quint(Easing.Type.Out, durationNanos, start, end)
-                EaseOutCirc -> Easing.Circ(Easing.Type.Out, durationNanos, start, end)
-                EaseOutExpo -> Easing.Expo(Easing.Type.Out, durationNanos, start, end)
-                EaseOutSine -> Easing.Sine(Easing.Type.Out, durationNanos, start, end)
-                EaseOutCubic -> Easing.Cubic(Easing.Type.Out, durationNanos, start, end)
-                EaseOutElastic -> Easing.Elastic(Easing.Type.Out, durationNanos, start, end)
 
                 EaseInBack -> Easing.Back(Easing.Type.In, durationNanos, start, end)
-                EaseInBump -> Easing.Bump(Easing.Type.In, durationNanos, start, end)
-                EaseInQuad -> Easing.Quad(Easing.Type.In, durationNanos, start, end)
-                EaseInQuart -> Easing.Quart(Easing.Type.In, durationNanos, start, end)
-                EaseInQuint -> Easing.Quint(Easing.Type.In, durationNanos, start, end)
-                EaseInCirc -> Easing.Circ(Easing.Type.In, durationNanos, start, end)
-                EaseInExpo -> Easing.Expo(Easing.Type.In, durationNanos, start, end)
-                EaseInSine -> Easing.Sine(Easing.Type.In, durationNanos, start, end)
-                EaseInCubic -> Easing.Cubic(Easing.Type.In, durationNanos, start, end)
-                EaseInElastic -> Easing.Elastic(Easing.Type.In, durationNanos, start, end)
-
+                EaseOutBack -> Easing.Back(Easing.Type.Out, durationNanos, start, end)
                 EaseInOutBack -> Easing.Back(Easing.Type.InOut, durationNanos, start, end)
+
+                EaseInBump -> Easing.Bump(Easing.Type.In, durationNanos, start, end)
+                EaseOutBump -> Easing.Bump(Easing.Type.Out, durationNanos, start, end)
                 EaseInOutBump -> Easing.Bump(Easing.Type.InOut, durationNanos, start, end)
+
+                EaseInQuad -> Easing.Quad(Easing.Type.In, durationNanos, start, end)
+                EaseOutQuad -> Easing.Quad(Easing.Type.Out, durationNanos, start, end)
                 EaseInOutQuad -> Easing.Quad(Easing.Type.InOut, durationNanos, start, end)
+
+                EaseInQuart -> Easing.Quart(Easing.Type.In, durationNanos, start, end)
+                EaseOutQuart -> Easing.Quart(Easing.Type.Out, durationNanos, start, end)
                 EaseInOutQuart -> Easing.Quart(Easing.Type.InOut, durationNanos, start, end)
+
+                EaseInQuint -> Easing.Quint(Easing.Type.In, durationNanos, start, end)
+                EaseOutQuint -> Easing.Quint(Easing.Type.Out, durationNanos, start, end)
                 EaseInOutQuint -> Easing.Quint(Easing.Type.InOut, durationNanos, start, end)
+
+                EaseInCirc -> Easing.Circ(Easing.Type.In, durationNanos, start, end)
+                EaseOutCirc -> Easing.Circ(Easing.Type.Out, durationNanos, start, end)
                 EaseInOutCirc -> Easing.Circ(Easing.Type.InOut, durationNanos, start, end)
+
+                EaseInExpo -> Easing.Expo(Easing.Type.In, durationNanos, start, end)
+                EaseOutExpo -> Easing.Expo(Easing.Type.Out, durationNanos, start, end)
                 EaseInOutExpo -> Easing.Expo(Easing.Type.InOut, durationNanos, start, end)
+
+                EaseInSine -> Easing.Sine(Easing.Type.In, durationNanos, start, end)
+                EaseOutSine -> Easing.Sine(Easing.Type.Out, durationNanos, start, end)
                 EaseInOutSine -> Easing.Sine(Easing.Type.InOut, durationNanos, start, end)
+
+                EaseInCubic -> Easing.Cubic(Easing.Type.In, durationNanos, start, end)
+                EaseOutCubic -> Easing.Cubic(Easing.Type.Out, durationNanos, start, end)
                 EaseInOutCubic -> Easing.Cubic(Easing.Type.InOut, durationNanos, start, end)
+
+                EaseInElastic -> Easing.Elastic(Easing.Type.In, durationNanos, start, end)
+                EaseOutElastic -> Easing.Elastic(Easing.Type.Out, durationNanos, start, end)
                 EaseInOutElastic -> Easing.Elastic(Easing.Type.InOut, durationNanos, start, end)
             }
         }

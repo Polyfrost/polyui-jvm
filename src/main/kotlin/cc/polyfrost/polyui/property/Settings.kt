@@ -56,19 +56,29 @@ class Settings(private val renderer: Renderer) {
     var resourcePolicy = ResourcePolicy.WARN
 
     /** If true, the renderer will render all layout and component to a 'master' framebuffer, then every frame, render that.
-     * @see minItemsForFramebuffer
+     * @see minDrawablesForFramebuffer
      * @since 0.18.0
      */
     var masterIsFramebuffer = false
 
     /**
-     * minimum number of items in a layout (and its children) before it will use a framebuffer.
+     * minimum number of drawables in a layout (and its children) before it will use a framebuffer.
      *
      * This value should be set to something relatively high, as the performance gain from using a framebuffer only works if there is a large amount of draw calls.
      *
      * @see [cc.polyfrost.polyui.layout.Layout.countDrawables]
      */
-    var minItemsForFramebuffer: Int = 30
+    var minDrawablesForFramebuffer: Int = 30
+
+    /**
+     * Weather or not the system should promote [DraggableLayouts][cc.polyfrost.polyui.layout.impl.extension.DraggableLayout]
+     * to the top of the render queue, so they are rendered on top of other layouts (they are rendered last)
+     *
+     * They will still retain their order relative to each other.
+     *
+     * @since 0.18.2
+     */
+    var draggablesOnTop = true
 
     /**
      * Enable or disable framebuffers. Please note that PolyUI is designed to work with framebuffers, so disabling them may cause performance issues.

@@ -30,10 +30,7 @@ import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.property.impl.BlockProperties
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
-import cc.polyfrost.polyui.utils.MutablePair
-import cc.polyfrost.polyui.utils.clz
-import cc.polyfrost.polyui.utils.fastEach
-import cc.polyfrost.polyui.utils.radii
+import cc.polyfrost.polyui.utils.*
 import kotlin.math.min
 
 /**
@@ -150,7 +147,7 @@ class ScrollingLayout(
                     ofsX = ptr.at.a.px
                 }
                 anims.first = Animation.Type.EaseOutExpo.create(
-                    1L.seconds,
+                    .5.seconds,
                     0f,
                     scroll(rem - event.amountX.toFloat(), true)
                 )
@@ -163,7 +160,7 @@ class ScrollingLayout(
                     ofsY = ptr.at.b.px
                 }
                 anims.second = Animation.Type.EaseOutExpo.create(
-                    1L.seconds,
+                    .5.seconds,
                     0f,
                     scroll(rem - event.amountY.toFloat(), false)
                 )
@@ -345,10 +342,10 @@ class ScrollingLayout(
     }
 
     open class ScrollbarProperties : BlockProperties() {
-        override val color: Color = Color(0.5f, 0.5f, 0.5f, 0.5f)
-        override val hoverColor = Color(0.5f, 0.5f, 0.5f, 0.75f)
+        override val color: Color = rgba(0.5f, 0.5f, 0.5f, 0.5f)
+        override val hoverColor = rgba(0.5f, 0.5f, 0.5f, 0.75f)
         override val cornerRadii: FloatArray = 2f.radii()
-        override val pressedColor = Color(0.5f, 0.5f, 0.5f, 0.8f)
+        override val pressedColor = rgba(0.5f, 0.5f, 0.5f, 0.8f)
         override val padding: Float = 2f
         open val width = 4f
         open val showAnimation: Animations? = Animations.EaseOutExpo

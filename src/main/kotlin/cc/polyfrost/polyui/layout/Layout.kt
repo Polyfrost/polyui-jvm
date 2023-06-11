@@ -54,13 +54,13 @@ abstract class Layout(
     /** If this layout can receive events (separate to its children!). */
     acceptInput: Boolean = false,
     val resizesChildren: Boolean = true,
-    vararg items: Drawable
+    vararg drawables: Drawable
 ) : Drawable(acceptInput) {
     /** list of components in this layout. */
-    open val components = items.filterIsInstance<Component>() as ArrayList
+    open val components = drawables.filterIsInstance<Component>() as ArrayList
 
     /** list of child layouts in this layout */
-    open val children = items.filterIsInstance<Layout>() as ArrayList
+    open val children = drawables.filterIsInstance<Layout>() as ArrayList
 
     /**
      * Weather this layout needs redrawing.
@@ -73,6 +73,9 @@ abstract class Layout(
             field = value
         }
 
+    /** tracker variable for framebuffer disabling/enabling. don't touch this. */
+    internal open var fboTracker = 0
+
     /** removal queue of drawables.
      * @see removeComponent
      */
@@ -83,7 +86,7 @@ abstract class Layout(
 
     /** framebuffer attached to this layout.
      * @see refuseFramebuffer
-     * @see cc.polyfrost.polyui.property.Settings.minItemsForFramebuffer
+     * @see cc.polyfrost.polyui.property.Settings.minDrawablesForFramebuffer
      */
     internal open var fbo: Framebuffer? = null // these all have to be open for ptr layout
         set(value) {
@@ -101,16 +104,15 @@ abstract class Layout(
     /** this is the function that is called every frame. It decides whether the layout needs to be entirely re-rendered.
      * If so, the [render] function is called which will redraw all its' and components, and this function will redraw all its child layouts as well.
      *
-     * If this layout is [using a framebuffer][cc.polyfrost.polyui.property.Settings.minItemsForFramebuffer], it will be [drawn][rasterize] to the framebuffer, and then drawn to the screen.
+     * If this layout is [using a framebuffer][cc.polyfrost.polyui.property.Settings.minDrawablesForFramebuffer], it will be [drawn][rasterize] to the framebuffer, and then drawn to the screen.
      *
      * **Note:** Do not call this function yourself.
      */
     open fun reRenderIfNecessary() {
         rasterChildren()
         rasterize()
-        if (fbo != null) {
+        if (fbo != null && fboTracker < 2) {
             renderer.drawFramebuffer(fbo!!, at.a.px, at.b.px, size!!.a.px, size!!.b.px)
-            renderChildren()
         } else {
             val x = at.a.px // fix scrolling issue where objects could move very slightly
             val y = at.b.px
@@ -120,6 +122,10 @@ abstract class Layout(
             renderChildren()
             renderer.translate(-x, -y)
             renderer.popScissor()
+            if (!needsRedraw && fboTracker > 1) {
+                needsRedraw = true
+                fboTracker = 0
+            }
         }
     }
 
@@ -128,9 +134,11 @@ abstract class Layout(
      * @since 0.18.0
      */
     protected open fun rasterize() {
-        if (fbo != null && needsRedraw) {
+        if (fbo != null && needsRedraw && fboTracker < 2) {
+            fboTracker++
             renderer.bindFramebuffer(fbo!!)
             render()
+            renderChildren()
             renderer.unbindFramebuffer(fbo!!)
         }
     }
@@ -404,8 +412,8 @@ abstract class Layout(
     companion object {
         /** wrapper for varargs, when arguments are in the wrong order */
         @JvmStatic
-        fun items(vararg items: Drawable): Array<out Drawable> {
-            return items
+        fun drawables(vararg drawables: Drawable): Array<out Drawable> {
+            return drawables
         }
     }
 }

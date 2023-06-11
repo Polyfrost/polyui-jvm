@@ -40,7 +40,7 @@ import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
 
-class TextInput(
+open class TextInput(
     properties: Properties? = null,
     at: Vec2<Unit>,
     size: Vec2<Unit>,

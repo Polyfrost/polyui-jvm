@@ -57,15 +57,15 @@ class FlexLayout @JvmOverloads constructor(
     private val contentAlign: AlignContent = AlignContent.Start,
     gap: Gap = Gap.Default,
     resizesChildren: Boolean = true,
-    vararg items: Drawable
-) : Layout(at, size, onAdded, onRemoved, false, resizesChildren, *items) {
-    constructor(at: Point<Unit>, wrap: Unit.Percent, vararg items: Drawable) : this(
+    vararg drawables: Drawable
+) : Layout(at, size, onAdded, onRemoved, false, resizesChildren, *drawables) {
+    constructor(at: Point<Unit>, wrap: Unit.Percent, vararg drawables: Drawable) : this(
         at,
         null,
         wrap,
         null,
         null,
-        items = items
+        drawables = drawables
     )
 
     private val drawables: ArrayList<FlexDrawable>
@@ -101,7 +101,7 @@ class FlexLayout @JvmOverloads constructor(
         } else {
             this.wrapDirection = wrapDirection
         }
-        items.forEachIndexed { i, it ->
+        drawables.forEachIndexed { i, it ->
             if (it.atType != Unit.Type.Flex) {
                 throw Exception("Unit type mismatch: Drawable $it needs to be placed using a Flex unit for a flex layout.")
             }
@@ -110,13 +110,13 @@ class FlexLayout @JvmOverloads constructor(
             }
             @Suppress("UNCHECKED_CAST") // already type-checked
             if ((it.at as Point<Unit.Flex>).a.index >= 0) {
-                items.moveElement(i, (it.at.a as Unit.Flex).index)
+                drawables.moveElement(i, (it.at.a as Unit.Flex).index)
             }
             if (it is Component) it.layout = this // why are smart casts so goofy? like I seriously have to do this?
             if (it is Layout) it.layout = this
         }
-        drawables = items.map { FlexDrawable(it, it.at.a as Unit.Flex, it.size) } as ArrayList<FlexDrawable>
-        if (wrapDirection == Wrap.WrapReverse) drawables.reverse()
+        this.drawables = drawables.map { FlexDrawable(it, it.at.a as Unit.Flex, it.size) } as ArrayList<FlexDrawable>
+        if (wrapDirection == Wrap.WrapReverse) this.drawables.reverse()
     }
 
     private var crossSize: Float

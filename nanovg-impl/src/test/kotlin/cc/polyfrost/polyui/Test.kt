@@ -37,7 +37,7 @@ import cc.polyfrost.polyui.input.Keys
 import cc.polyfrost.polyui.input.Modifiers
 import cc.polyfrost.polyui.input.Mouse
 import cc.polyfrost.polyui.input.PolyTranslator.Companion.localised
-import cc.polyfrost.polyui.layout.Layout.Companion.items
+import cc.polyfrost.polyui.layout.Layout.Companion.drawables
 import cc.polyfrost.polyui.layout.impl.FlexLayout
 import cc.polyfrost.polyui.layout.impl.PixelLayout
 import cc.polyfrost.polyui.property.Properties
@@ -49,6 +49,7 @@ import cc.polyfrost.polyui.renderer.impl.NoOpRenderer
 import cc.polyfrost.polyui.renderer.impl.NoOpWindow
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.utils.fastEach
+import cc.polyfrost.polyui.utils.rgba
 import kotlin.random.Random
 
 fun main() {
@@ -65,7 +66,7 @@ fun main() {
                 Events.MouseClicked(0) to {
                     println("Mouse clicked! $it")
                     setProperties(Properties.successProperties)
-                    rotateBy(120.0, Animations.EaseInOutCubic)
+                    rotateBy(120.0, Animations.EaseInOutCubic, .5.seconds)
                 },
                 Events.MouseClicked(0, 2) to {
                     println("Mouse double-clicked!")
@@ -88,10 +89,10 @@ fun main() {
         } else {
             NoOpRenderer(window.width.toFloat(), window.height.toFloat())
         },
-        items = items(
+        drawables = drawables(
             PixelLayout(
                 at = 20.px * 570.px,
-                items = items(
+                drawables = drawables(
                     Text(
                         text = "polyui.test".localised("rainbow"),
                         fontSize = 32.px,
@@ -100,8 +101,8 @@ fun main() {
                     Block(
                         properties = BlockProperties(
                             Color.Gradient(
-                                Color(1f, 0f, 1f, 1f),
-                                Color(0f, 1f, 1f, 1f)
+                                rgba(1f, 0f, 1f, 1f),
+                                rgba(0f, 1f, 1f, 1f)
                             )
                         ),
                         at = 0.px * 30.px,
@@ -136,7 +137,7 @@ fun main() {
                         size = 120.px * 120.px,
                         events = events(
                             Events.MouseClicked(0) to {
-                                rotateBy(120.0, Animations.EaseInOutCubic)
+                                rotateBy(120.0, Animations.EaseInOutCubic, .5.seconds)
                             }
                         )
                     ),
@@ -165,7 +166,7 @@ fun main() {
             FlexLayout(
                 at = 20.px * 30.px,
                 wrap = 80.percent,
-                items = things
+                drawables = things
             ).scrolling(620.px * 300.px)
         )
     )

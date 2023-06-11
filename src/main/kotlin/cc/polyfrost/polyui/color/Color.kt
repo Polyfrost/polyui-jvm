@@ -25,31 +25,38 @@ import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.animate.Animation
 import cc.polyfrost.polyui.unit.seconds
 import cc.polyfrost.polyui.utils.HSBtoRGB
+import cc.polyfrost.polyui.utils.RGBtoHSB
+import cc.polyfrost.polyui.utils.rgba
 
 /**
  * # Color
  *
- * The color used by PolyUI. It stores the color in the ARGB format.
+ * The color used by PolyUI. It stores the color in the HSBA format, and can be converted to ARGB.
  *
  * @see [Color.Mutable]
  * @see [Color.Gradient]
  * @see [Color.Chroma]
  */
-open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: Int) : Cloneable {
-    constructor(r: Int, g: Int, b: Int) : this(r, g, b, 255)
+open class Color @JvmOverloads constructor(open val hue: Float, open val saturation: Float, open val brightness: Float, open val alpha: Float = 1f) : Cloneable {
 
-    constructor(r: Float, g: Float, b: Float) : this(
-        (r * 255).toInt(),
-        (g * 255).toInt(),
-        (b * 255).toInt()
-    )
+    @JvmOverloads
+    constructor(hsb: FloatArray, alpha: Int = 255) : this(hsb[0], hsb[1], hsb[2], alpha)
+    constructor(hsb: FloatArray, alpha: Float = 1f) : this(hsb[0], hsb[1], hsb[2], alpha)
 
-    constructor(r: Float, g: Float, b: Float, a: Float) : this(
-        (r * 255).toInt(),
-        (g * 255).toInt(),
-        (b * 255).toInt(),
-        (a * 255).toInt()
-    )
+    @JvmOverloads
+    constructor(r: Int, g: Int, b: Int, alpha: Int = 255) : this(RGBtoHSB(r, g, b), alpha)
+    constructor(r: Int, g: Int, b: Int, alpha: Float = 1f) : this(RGBtoHSB(r, g, b), alpha)
+
+    constructor(hue: Float, saturation: Float, brightness: Float, alpha: Int = 255) : this(hue, saturation, brightness, alpha.toFloat() / 255f)
+
+    init {
+        @Suppress("LeakingThis")
+        require(saturation in 0f..1f) { "Saturation must be between 0 and 1" }
+        @Suppress("LeakingThis")
+        require(brightness in 0f..1f) { "Brightness must be between 0 and 1" }
+        @Suppress("LeakingThis")
+        require(alpha in 0f..1f) { "Alpha must be between 0 and 1" }
+    }
 
     /** return an integer representation of this color.
      * Utilizes bit-shifts to store the color as one 32-bit integer, like so:
@@ -61,17 +68,34 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
      */
     @Suppress("INAPPLICABLE_JVM_NAME")
     @get:JvmName("getARGB")
-    open val argb: Int
-        get() {
-            return (a shl 24) or (r shl 16) or (g shl 8) or b
+    open val argb: Int = run {
+        HSBtoRGB(hue, saturation, brightness).let { rgb ->
+            if (alpha == 0f) {
+                0
+            } else {
+                (alpha * 255f).toInt().shl(24) or rgb
+            }
         }
+    }
+
+    /** red value of this color, from 0 to 255 */
+    inline val r get() = argb shr 16 and 0xFF
+
+    /** green value of this color, from 0 to 255 */
+    inline val g get() = argb shr 8 and 0xFF
+
+    /** blue value of this color, from 0 to 255 */
+    inline val b get() = argb and 0xFF
+
+    /** alpha value of this color, from 0 to 255 */
+    inline val a get() = (alpha * 255f).toInt()
 
     /**
      * @return a new, [mutable][Mutable] version of this color
      */
-    open fun toMutable() = Mutable(r, g, b, a)
+    open fun toMutable() = Mutable(hue, saturation, brightness, alpha)
 
-    public override fun clone() = Color(r, g, b, a)
+    public override fun clone() = Color(hue, saturation, brightness, alpha)
 
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
@@ -82,11 +106,14 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         return false
     }
 
+    override fun toString(): String =
+        "Color(hue=$hue, saturation=$saturation, brightness=$brightness, alpha=$alpha, argb=#${Integer.toHexString(argb)}"
+
     override fun hashCode(): Int {
-        var result = r
-        result = 31 * result + g
-        result = 31 * result + b
-        result = 31 * result + a
+        var result = hue.toInt()
+        result = 31 * result + saturation.toInt()
+        result = 31 * result + brightness.toInt()
+        result = 31 * result + alpha.toInt()
         return result
     }
 
@@ -96,7 +123,7 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
          * `if (color == TRANSPARENT) return`
          */
         @JvmField
-        val TRANSPARENT = Color(0f, 0f, 0f, 0f)
+        val TRANSPARENT = rgba(0f, 0f, 0f, 0f)
 
         /**
          * Turn the given hex string into a color.
@@ -148,11 +175,31 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
      * A mutable version of [Color], that supports [recoloring][recolor] with animations.
      */
     open class Mutable(
-        override var r: Int,
-        override var g: Int,
-        override var b: Int,
-        override var a: Int
-    ) : Color(r, g, b, a) {
+        hue: Float,
+        saturation: Float,
+        brightness: Float,
+        alpha: Float
+    ) : Color(hue, saturation, brightness, alpha) {
+        override var hue = hue
+            set(value) {
+                field = value
+                dirty = true
+            }
+        override var saturation = saturation
+            set(value) {
+                field = value
+                dirty = true
+            }
+        override var brightness = brightness
+            set(value) {
+                field = value
+                dirty = true
+            }
+        override var alpha = alpha
+            set(value) {
+                field = value
+                dirty = true
+            }
 
         /** Set this in your Color class if it's always updating, but still can be removed while updating, for
          * example a chroma color, which always needs to update, but still can be removed any time.
@@ -168,9 +215,28 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         private var animation: Animation? = null
         private var to: FloatArray? = null
         private var from: FloatArray? = null
+        private var current: FloatArray? = null
+
+        /** Set this to true to update the [argb] value. */
+        var dirty = true
+            protected set
+
+        override var argb: Int = 0
+            get() {
+                return if (dirty) {
+                    HSBtoRGB(hue, saturation, brightness).let { rgb ->
+                        (alpha * 255).toInt().shl(24) or rgb
+                    }.also {
+                        dirty = false
+                        field = it
+                    }
+                } else {
+                    field
+                }
+            }
 
         /** turn this mutable color into an immutable one. */
-        fun toImmutable() = Color(r, g, b, a)
+        fun toImmutable() = Color(hue, saturation, brightness, alpha)
 
         @Deprecated("This would convert a mutable color to a mutable one.", replaceWith = ReplaceWith("clone()"))
         override fun toMutable() = clone()
@@ -191,20 +257,21 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
                     this.r.toFloat(),
                     this.g.toFloat(),
                     this.b.toFloat(),
-                    this.a.toFloat()
+                    this.alpha
                 )
                 val from = this.from!!
+                current = from.clone()
                 to = floatArrayOf(
                     target.r.toFloat() - from[0],
                     target.g.toFloat() - from[1],
                     target.b.toFloat() - from[2],
-                    target.a.toFloat() - from[3]
+                    target.alpha - from[3]
                 )
             } else {
-                this.r = target.r
-                this.g = target.g
-                this.b = target.b
-                this.a = target.a
+                this.hue = target.hue
+                this.saturation = target.saturation
+                this.brightness = target.brightness
+                this.alpha = target.alpha
             }
         }
 
@@ -216,30 +283,38 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
          * */
         open fun update(deltaTimeNanos: Long): Boolean {
             if (animation != null) {
+                dirty = true
                 val from = this.from!!
                 val to = this.to!!
                 if (animation!!.isFinished) {
                     animation = null
                     this.from = null
                     this.to = null
+                    this.current = null
                     return true
                 }
                 val progress = animation!!.update(deltaTimeNanos)
-                this.r = (from[0] + to[0] * progress).toInt()
-                this.g = (from[1] + to[1] * progress).toInt()
-                this.b = (from[2] + to[2] * progress).toInt()
-                this.a = (from[3] + to[3] * progress).toInt()
+                RGBtoHSB(
+                    (from[0] + to[0] * progress).toInt(),
+                    (from[1] + to[1] * progress).toInt(),
+                    (from[2] + to[2] * progress).toInt(),
+                    current
+                )
+                this.hue = current!![0]
+                this.saturation = current!![1]
+                this.brightness = current!![2]
+                this.alpha = (from[3] + to[3] * progress)
                 return false
             }
             return false
         }
 
-        override fun clone() = Mutable(r, g, b, a)
+        override fun clone() = Mutable(hue, saturation, brightness, alpha)
     }
 
     /** A gradient color. */
     class Gradient @JvmOverloads constructor(color1: Color, color2: Color, val type: Type = Type.TopLeftToBottomRight) :
-        Mutable(color1.r, color1.g, color1.b, color1.a) {
+        Mutable(color1.hue, color1.saturation, color1.brightness, color1.alpha) {
         val color2 = if (color2 !is Mutable) color2.toMutable() else color2
 
         sealed class Type {
@@ -280,16 +355,19 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
         )
         @Suppress("INAPPLICABLE_JVM_NAME")
         @get:JvmName("getARGB")
-        override val argb: Int
+        override var argb: Int
             get() {
                 return super.argb
+            }
+            set(value) {
+                super.argb = value
             }
 
         override fun equals(other: Any?): Boolean {
             if (other == null) return false
             if (other === this) return true
             if (other is Gradient) {
-                return this.r == other.r && this.g == other.g && this.b == other.b && this.a == other.a && this.color2 == other.color2 && this.type == other.type
+                return this.argb1 == other.argb1 && this.argb2 == other.argb2 && this.type == other.type
             }
             return false
         }
@@ -359,11 +437,11 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
          * */
         private val speedNanos: Long = 5000L,
         /** brightness of the color range (0.0 - 1.0) */
-        private val brightness: Float = 1f,
+        brightness: Float = 1f,
         /** saturation of the color range (0.0 - 1.0) */
-        private val saturation: Float = 1f,
-        alpha: Int = 255
-    ) : Mutable(0, 0, 0, alpha) {
+        saturation: Float = 1f,
+        alpha: Float = 1f
+    ) : Mutable(0f, saturation, brightness, alpha) {
         private var time = 0L
 
         @Deprecated("Chroma colors cannot be animated.", level = DeprecationLevel.ERROR)
@@ -371,19 +449,11 @@ open class Color(open val r: Int, open val g: Int, open val b: Int, open val a: 
             // no-op
         }
 
-        override fun clone() = Chroma(speedNanos, brightness, saturation, a)
+        override fun clone() = Chroma(speedNanos, brightness, saturation, alpha)
 
         override fun update(deltaTimeNanos: Long): Boolean {
             time += deltaTimeNanos
-            HSBtoRGB(
-                time % speedNanos / speedNanos.toFloat(),
-                saturation,
-                brightness
-            ).let {
-                r = (it shr 16) and 0xFF
-                g = (it shr 8) and 0xFF
-                b = it and 0xFF
-            }
+            hue = (time % speedNanos) / speedNanos.toFloat()
             return false
         }
 

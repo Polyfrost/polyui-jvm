@@ -41,11 +41,11 @@ open class PixelLayout(
     onRemoved: (Drawable.() -> kotlin.Unit)? = null,
     acceptInput: Boolean = true,
     resizesChildren: Boolean = true,
-    vararg items: Drawable
-) : Layout(at, size, onAdded, onRemoved, acceptInput, resizesChildren, *items) {
+    vararg drawables: Drawable
+) : Layout(at, size, onAdded, onRemoved, acceptInput, resizesChildren, *drawables) {
 
     init {
-        items.forEach {
+        drawables.forEach {
             require(it.atType != Unit.Type.Flex && it.atType != Unit.Type.Grid) { "Unit type mismatch: Drawable $it does not have a valid unit type for layout: ${this.simpleName} (using ${it.atType})" }
         }
     }

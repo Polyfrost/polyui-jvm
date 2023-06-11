@@ -35,7 +35,7 @@ import kotlin.math.floor
 import kotlin.math.pow
 
 fun rgba(r: Float, g: Float, b: Float, a: Float): Color {
-    return Color(r, g, b, a)
+    return Color((r * 255f).toInt(), (g * 255f).toInt(), (b * 255f).toInt(), a)
 }
 
 /** figma copy-paste accessor */
@@ -61,9 +61,9 @@ fun rgba(r: Int, g: Int, b: Int, a: Float = 1f): Color {
  * format used by the method [getARGB()][Color.argb]
  * This integer can be supplied as an argument to the
  * [toColor] method that takes a single integer argument to create a [Color].
- * @param hue   the hue component of the color
- * @param saturation   the saturation of the color
- * @param brightness   the brightness of the color
+ * @param hue the hue component of the color
+ * @param saturation the saturation of the color
+ * @param brightness the brightness of the color
  * @return the RGB value of the color with the indicated hue,
  *                            saturation, and brightness.
  */
@@ -123,13 +123,56 @@ fun HSBtoRGB(hue: Float, saturation: Float, brightness: Float): Int {
     return -0x1000000 or (r shl 16) or (g shl 8) or (b shl 0)
 }
 
-fun Int.toColor(): Color {
-    return Color(
-        ((this shr 16) and 0xFF) / 255f,
-        ((this shr 8) and 0xFF) / 255f,
-        (this and 0xFF) / 255f,
-        ((this shr 24) and 0xFF) / 255f
-    )
+/**
+ * Converts the components of a color, as specified by the default RGB
+ * model, to an equivalent set of values for hue, saturation, and
+ * brightness that are the three components of the HSB model.
+ *
+ * If the [out] argument is `null`, then a
+ * new array is allocated to return the result. Otherwise, the method
+ * returns the array [out], with the values put into that array.
+ * @param r the red component of the color
+ * @param g the green component of the color
+ * @param b the blue component of the color
+ * @param out the array used to return the three HSB values, or `null`
+ * @return an array of three elements containing the hue, saturation, and brightness (in that order), of the color with the indicated red, green, and blue components.
+ * @see Color
+ * @since 0.18.2
+ */
+@Suppress("FunctionName", "NAME_SHADOWING")
+fun RGBtoHSB(r: Int, g: Int, b: Int, out: FloatArray? = null): FloatArray {
+    var hue: Float
+    val saturation: Float
+    val brightness: Float
+    val out = out ?: FloatArray(3)
+    var cmax = if (r > g) r else g
+    if (b > cmax) cmax = b
+    var cmin = if (r < g) r else g
+    if (b < cmin) cmin = b
+
+    brightness = cmax.toFloat() / 255.0f
+    saturation = if (cmax != 0) (cmax - cmin).toFloat() / cmax.toFloat() else 0f
+    if (saturation == 0f) {
+        hue = 0f
+    } else {
+        val redc = (cmax - r).toFloat() / (cmax - cmin).toFloat()
+        val greenc = (cmax - g).toFloat() / (cmax - cmin).toFloat()
+        val bluec = (cmax - b).toFloat() / (cmax - cmin).toFloat()
+        hue = if (r == cmax) bluec - greenc else if (g == cmax) 2.0f + redc - bluec else 4.0f + greenc - redc
+        hue /= 6.0f
+        if (hue < 0) hue += 1.0f
+    }
+    out[0] = hue
+    out[1] = saturation
+    out[2] = brightness
+    return out
+}
+
+/**
+ * Takes an ARGB integer color and returns a [Color] object.
+ */
+fun Int.toColor() {
+    Color(RGBtoHSB(this shr 16 and 0xFF, this shr 8 and 0xFF, this and 0xFF), this shr 24 and 0xFF)
 }
 
 fun java.awt.Color.toPolyColor() = Color(this.red, this.green, this.blue, this.alpha)

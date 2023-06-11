@@ -33,6 +33,7 @@ import cc.polyfrost.polyui.input.KeyModifiers
 import cc.polyfrost.polyui.input.PolyTranslator
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.layout.impl.PixelLayout
+import cc.polyfrost.polyui.layout.impl.extension.DraggableLayout
 import cc.polyfrost.polyui.property.PropertyManager
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.*
@@ -55,7 +56,7 @@ import kotlin.system.measureNanoTime
  *
  * ## Rendering Pipeline
  * PolyUI has the policy of ***'render what you need ONLY WHEN you need it'***.
- * Most of the time, PolyUI will be drawing frame buffers to the screen instead of drawing directly to the screen, as long as they are [suitably complex][cc.polyfrost.polyui.property.Settings.minItemsForFramebuffer] for it to be worth it; or [not drawing at all][drew]!
+ * Most of the time, PolyUI will be drawing frame buffers to the screen instead of drawing directly to the screen, as long as they are [suitably complex][cc.polyfrost.polyui.property.Settings.minDrawablesForFramebuffer] for it to be worth it; or [not drawing at all][drew]!
  * This allows us to have a very fast rendering pipeline, and allows us to have a lot of components on screen at once, without a performance hit.
  *
  * Rendering can be [requested][cc.polyfrost.polyui.component.Component.wantRedraw] by components, and if so, it will be rendered during the next frame. This should only be requested if it is necessary, for example to do an animation or something.
@@ -82,7 +83,7 @@ class PolyUI @JvmOverloads constructor(
     translationDirectory: String? = null,
     val renderer: Renderer,
     colors: Colors = DarkTheme(),
-    vararg items: Drawable
+    vararg drawables: Drawable
 ) {
     /** Colors attached to this PolyUI instance. This contains all the colors needed for the UI.
      *
@@ -104,7 +105,7 @@ class PolyUI @JvmOverloads constructor(
             if (settings.debug) LOGGER.info("\t\t> took {}ms", t / 1_000_000f)
         }
 
-    val master = PixelLayout(Point(0.px, 0.px), Size(renderer.width.px, renderer.height.px), items = items, resizesChildren = true)
+    val master = PixelLayout(Point(0.px, 0.px), Size(renderer.width.px, renderer.height.px), drawables = drawables, resizesChildren = true)
     val eventManager = EventManager(this)
     val keyBinder = KeyBinder()
     val translator = PolyTranslator(this, translationDirectory ?: "")
@@ -117,7 +118,7 @@ class PolyUI @JvmOverloads constructor(
      * `if (polyUI.drew) glfwSwapBuffers(handle)`
      *
      * This is very handy as it will *drastically* reduce required system resources. If you are looking for more efficiency optimizations,
-     * see the settings for [max fps][cc.polyfrost.polyui.property.Settings.maxFPS] and [framebuffer settings][cc.polyfrost.polyui.property.Settings.minItemsForFramebuffer].
+     * see the settings for [max fps][cc.polyfrost.polyui.property.Settings.maxFPS] and [framebuffer settings][cc.polyfrost.polyui.property.Settings.minDrawablesForFramebuffer].
      */
     var drew = false
         private set
@@ -181,7 +182,7 @@ class PolyUI @JvmOverloads constructor(
                 }
                 if (!settings.framebuffersEnabled) return@onAllLayouts
                 val drawables = countDrawables()
-                if (!refuseFramebuffer && settings.minItemsForFramebuffer < drawables) {
+                if (!refuseFramebuffer && settings.minDrawablesForFramebuffer < drawables) {
                     fbo = renderer.createFramebuffer(width, height)
                     if (settings.debug) {
                         LOGGER.info("Layout {} ({} items) created with {}", varargs(simpleName, drawables, fbo!!))
@@ -189,6 +190,14 @@ class PolyUI @JvmOverloads constructor(
                 }
             }
         }
+
+        if (settings.draggablesOnTop) {
+            // apparently hashsets are faster than lists for this, thanks intellij
+            val draggables = master.children.filterIsInstanceTo<DraggableLayout, HashSet<DraggableLayout>>(HashSet())
+            master.children.removeAll(draggables)
+            master.children.addAll(draggables)
+        }
+
         Unit.VUnits.vHeight = height
         Unit.VUnits.vWidth = width
         if (settings.enableDebugKeybind) {

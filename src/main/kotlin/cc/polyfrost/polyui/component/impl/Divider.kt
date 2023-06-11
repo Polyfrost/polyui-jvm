@@ -30,7 +30,7 @@ import cc.polyfrost.polyui.unit.Unit
 /**
  * A static divider component.
  */
-class Divider @JvmOverloads constructor(
+open class Divider @JvmOverloads constructor(
     properties: Properties? = null,
     at: Vec2<Unit>,
     val length: Unit,
