@@ -36,7 +36,7 @@ import java.util.Locale
  *
  *  This can also be set with `-Dpolyui.locale="ll_CC"` or using [Settings.defaultLocale][cc.polyfrost.polyui.property.Settings.defaultLocale].
  *
- *  If the file cannot be found, PolyUI will check for a file named `ll_**.lang` (for example `en_**.lang`) and use that instead if present.
+ *  If the file cannot be found, PolyUI will check for a file named `ll_**.lang` (for example `en_default.lang`) and use that instead if present.
  *  If that isn't found, it will use the default locale (above), and if that isn't found it will crash.
  *
  *  Keys can also be added using
