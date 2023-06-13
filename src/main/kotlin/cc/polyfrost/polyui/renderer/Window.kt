@@ -44,4 +44,17 @@ abstract class Window(var width: Int, var height: Int) {
 
     /** this function is called whenever a video setting is changed. Use this to set all settings. It also should be called in the [open] function to initialize the settings. */
     abstract fun videoSettingsChanged()
+
+    /**
+     * Get the clipboard string. This is used for the [cc.polyfrost.polyui.component.impl.TextInput] class.
+     *
+     * If the data is empty or not a string, then null is returned.
+     */
+    abstract fun getClipboard(): String?
+
+    /**
+     * Set the clipboard string. This is used for the [cc.polyfrost.polyui.component.impl.TextInput] class.
+     *
+     */
+    abstract fun setClipboard(text: String?)
 }

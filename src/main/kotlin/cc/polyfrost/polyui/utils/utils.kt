@@ -171,11 +171,15 @@ fun RGBtoHSB(r: Int, g: Int, b: Int, out: FloatArray? = null): FloatArray {
 /**
  * Takes an ARGB integer color and returns a [Color] object.
  */
-fun Int.toColor() {
-    Color(RGBtoHSB(this shr 16 and 0xFF, this shr 8 and 0xFF, this and 0xFF), this shr 24 and 0xFF)
-}
+fun Int.toColor() = Color(RGBtoHSB(this shr 16 and 0xFF, this shr 8 and 0xFF, this and 0xFF), this shr 24 and 0xFF)
 
-fun java.awt.Color.toPolyColor() = Color(this.red, this.green, this.blue, this.alpha)
+inline val Int.red get() = this shr 16 and 0xFF
+
+inline val Int.green get() = this shr 8 and 0xFF
+
+inline val Int.blue get() = this and 0xFF
+
+inline val Int.alpha get() = this shr 24 and 0xFF
 
 fun Float.rounded(places: Int = 2): Float {
     val f = 10.0.pow(places).toFloat()
@@ -201,6 +205,9 @@ inline fun clz(a: Float, b: Float): Float {
 
 /** convert the given float into an array of 4 floats for radii. */
 inline fun Float.radii() = floatArrayOf(this, this, this, this)
+
+/** convert the given floats into an array of 4 floats for radii. */
+inline fun radii(topLeft: Float, topRight: Float, bottomLeft: Float, bottomRight: Float) = floatArrayOf(topLeft, topRight, bottomLeft, bottomRight)
 
 /** varargs wrapper */
 inline fun varargs(vararg any: Any): Array<out Any> {
@@ -244,7 +251,7 @@ fun StringBuilder.append(c: CharSequence, repeats: Int): StringBuilder {
     return this
 }
 
-fun String.dropToLastSpace(maxIndex: Int = length): String {
+fun String.dropToLastSpace(maxIndex: Int = lastIndex): String {
     val lastSpace = lastIndexOf(' ', maxIndex)
     if (lastSpace == -1) {
         return ""
@@ -252,7 +259,7 @@ fun String.dropToLastSpace(maxIndex: Int = length): String {
     return substring(0, lastSpace)
 }
 
-fun String.dropAt(index: Int = length, amount: Int = 1): String {
+fun String.dropAt(index: Int = lastIndex, amount: Int = 1): String {
     if (index - amount < 0) return this
     return substring(0, index - amount) + substring(index)
 }
@@ -262,7 +269,7 @@ fun String.dropAt(index: Int = length, amount: Int = 1): String {
  * - if [toIndex] is greater than the length of the string, or negative, it will be set to the length of the string
  * - if [fromIndex] is greater than [toIndex], they will be swapped, then substring'd as normal
  */
-fun String.substringSafe(fromIndex: Int, toIndex: Int = length): String {
+fun String.substringSafe(fromIndex: Int, toIndex: Int = lastIndex): String {
     if (fromIndex > toIndex) {
         return substringSafe(toIndex, fromIndex)
     }
@@ -337,7 +344,6 @@ fun String.limit(
 
 /**
  * Wrap the given text to the given width, returning a list of lines.
- * if there are too many lines, the last line will be [cut][limit] to fit the width, and "..." will be appended to the end. The method will also return true if the text was cut.
  */
 fun String.wrap(
     maxWidth: Float,
@@ -346,10 +352,9 @@ fun String.wrap(
     font: Font,
     fontSize: Float,
     textAlign: TextAlign = TextAlign.Left
-): Pair<ArrayList<String>, Boolean> {
-    if (maxWidth == 0f) return arrayListOf(this) to false
+): ArrayList<String> {
+    if (maxWidth == 0f) return arrayListOf(this)
     val words = split(" ").toArrayList()
-    val maxLines = floor(maxHeight / fontSize).toInt()
     val lines = arrayListOf<String>()
     var currentLine = StringBuilder()
 
@@ -360,19 +365,7 @@ fun String.wrap(
             // ah. word is longer than the maximum wrap width
             if (currentLine.isNotEmpty()) {
                 // Finish current line and start a new one with the long word
-                if (addLine(
-                        lines,
-                        currentLine.toString(),
-                        maxLines,
-                        renderer,
-                        font,
-                        fontSize,
-                        maxWidth,
-                        textAlign
-                    )
-                ) {
-                    return lines to true
-                }
+                lines.add(currentLine.toString())
                 currentLine.clear()
             }
 
@@ -380,93 +373,25 @@ fun String.wrap(
             var remainingWord = word
             while (remainingWord.isNotEmpty()) {
                 val chunk = remainingWord.substringToWidth(renderer, font, fontSize, maxWidth, textAlign)
-                if (lines.size + 1 >= maxLines) {
-                    // we're at the last line, so we need to cut the word to fit (this looks nicer)
-                    val s = lines.removeLast()
-                    lines.add(s + chunk.first.limit(renderer, font, fontSize, maxWidth, "...", textAlign))
-                    return lines to true
-                }
-                if (addLine(
-                        lines,
-                        chunk.first,
-                        maxLines,
-                        renderer,
-                        font,
-                        fontSize,
-                        maxWidth,
-                        textAlign
-                    )
-                ) {
-                    return lines to true
-                }
+                lines.add(chunk.first)
                 remainingWord = chunk.second
             }
         } else if (currentLine.isEmpty()) {
             currentLine.append(word)
-        } else if (renderer.textBounds(
-                font,
-                currentLine.toString(),
-                fontSize,
-                textAlign
-            ).width + 1 + wordLength <= maxWidth
-        ) {
+        } else if (renderer.textBounds(font, currentLine.toString(), fontSize, textAlign).width + wordLength <= maxWidth) {
             // ok!
             currentLine.append(' ').append(word)
         } else {
             // asm: word doesn't fit in current line, wrap it to the next line
-            if (addLine(
-                    lines,
-                    currentLine.toString(),
-                    maxLines,
-                    renderer,
-                    font,
-                    fontSize,
-                    maxWidth,
-                    textAlign
-                )
-            ) {
-                return lines to true
-            }
+            lines.add(currentLine.toString())
             currentLine = currentLine.clear().append(word)
         }
     }
 
     // Add the last line
     if (currentLine.isNotEmpty()) {
-        if (addLine(
-                lines,
-                currentLine.toString(),
-                maxLines,
-                renderer,
-                font,
-                fontSize,
-                maxWidth,
-                textAlign
-            )
-        ) {
-            return lines to true
-        }
+        lines.add(currentLine.toString())
     }
 
-    return lines to false
-}
-
-internal fun addLine(
-    lines: ArrayList<String>,
-    currentLine: String,
-    maxLines: Int = 0,
-    renderer: Renderer,
-    font: Font,
-    fontSize: Float,
-    maxWidth: Float,
-    textAlign: TextAlign = TextAlign.Left
-): Boolean {
-    if (maxLines != 0) {
-        if (lines.size + 1 >= maxLines) {
-            lines.add(lines.removeLast().limit(renderer, font, fontSize, maxWidth, "...", textAlign))
-            return true
-        }
-    }
-    lines.add(currentLine)
-    return false
+    return lines
 }

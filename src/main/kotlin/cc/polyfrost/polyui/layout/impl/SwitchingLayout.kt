@@ -32,7 +32,6 @@ import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.utils.fastEach
-import java.util.ArrayList
 import kotlin.math.max
 
 /** a switching layout is a layout that can switch between layouts, with cool animations. */

@@ -87,6 +87,15 @@ class ScrollingLayout(
         ptr.acceptsInput = true
     }
 
+    override fun reRenderIfNecessary() {
+        val (barX, barY) = bars
+        barX.hideTime += polyui.delta
+        barY.hideTime += polyui.delta
+        if (barX.hideTime > barX.properties.timeToHide) barX.shown = false
+        if (barY.hideTime > barY.properties.timeToHide) barY.shown = false
+        super.reRenderIfNecessary()
+    }
+
     override fun render() {
         renderer.pushScissor(ox - at.a.px, oy - at.b.px, scrollingSize.a.px, scrollingSize.b.px)
 
@@ -98,6 +107,7 @@ class ScrollingLayout(
         if (anim?.isFinished == true) {
             anims.first = null
         } else {
+            bars.first.hideTime = 0L
             anim?.update(delta)?.also {
                 at.a.px = ofsX + anim.value
                 ptr.needsRedraw = true
@@ -106,19 +116,20 @@ class ScrollingLayout(
         if (anim1?.isFinished == true) {
             anims.second = null
         } else {
+            bars.second.hideTime = 0L
             anim1?.update(delta)?.also {
                 at.b.px = ofsY + anim1.value
                 ptr.needsRedraw = true
             }
         }
-        bars.first.update()
-        bars.second.update()
 
         ptr.components.fastEach {
             it.preRender(delta)
             it.render()
             it.postRender()
         }
+        bars.first.update()
+        bars.second.update()
         renderer.popScissor()
     }
 
@@ -134,12 +145,22 @@ class ScrollingLayout(
     }
 
     override fun isInside(x: Float, y: Float): Boolean {
-        return x >= ox && x <= ox + scrollingSize.a.px && y >= oy && y <= oy + scrollingSize.b.px
+        val w = ox + scrollingSize.a.px
+        val h = oy + scrollingSize.b.px
+        val inside = x in ox..w && y >= oy && y <= h
+        if (inside && x > w - (scrollingSize.a.px / 10f)) bars.second.shown = true
+        if (inside && y > h - (scrollingSize.b.px / 10f)) bars.first.shown = true
+        return inside
     }
 
     override fun accept(event: Events): Boolean {
+        if (event is Events.MouseEntered) {
+            bars.first.shown = true
+            bars.second.shown = true
+        }
         if ((scrollsX || scrollsY) && event is Events.MouseScrolled) {
             if (scrollsX && event.amountX != 0) {
+                bars.first.cancel()
                 val anim = anims.first
                 val rem = anim?.to?.minus(anim.value)?.also {
                     ofsX += anim.value
@@ -149,10 +170,11 @@ class ScrollingLayout(
                 anims.first = Animation.Type.EaseOutExpo.create(
                     .5.seconds,
                     0f,
-                    scroll(rem - event.amountX.toFloat(), true)
+                    calc(rem - event.amountX.toFloat(), true)
                 )
             }
             if (scrollsY && event.amountY != 0) {
+                bars.second.cancel()
                 val anim = anims.second
                 val rem = anim?.to?.minus(anim.value)?.also {
                     ofsY += anim.value
@@ -162,7 +184,7 @@ class ScrollingLayout(
                 anims.second = Animation.Type.EaseOutExpo.create(
                     .5.seconds,
                     0f,
-                    scroll(rem - event.amountY.toFloat(), false)
+                    calc(rem - event.amountY.toFloat(), false)
                 )
             }
 
@@ -172,8 +194,8 @@ class ScrollingLayout(
         return super.accept(event)
     }
 
-    fun scroll(toAdd: Float, sideways: Boolean): Float {
-        return if (sideways) {
+    private fun calc(toAdd: Float, horizontal: Boolean): Float {
+        return if (horizontal) {
             if (toAdd > 0f) { // scroll left
                 min(ox - at.a.px, toAdd)
             } else { // scroll right
@@ -228,6 +250,8 @@ class ScrollingLayout(
         private var mouseClickX = 0f
         private var mouseClickY = 0f
         private var mouseDown = false
+        internal var hideTime = 0L
+        private var hideAmount = properties.width + (properties.padding * 2f)
         override val properties: ScrollbarProperties
             get() = super.properties as ScrollbarProperties
         private inline val contentSize get() = if (horizontal) owner.ptr.size!!.a.px else owner.ptr.size!!.b.px
@@ -237,45 +261,36 @@ class ScrollingLayout(
             set(value) = if (horizontal) size!!.a.px = value else size!!.b.px = value
 
         var shown = true
-            private set(value) {
+            set(value) {
                 if (value == field) return
                 field = value
+                hideTime = 0L
                 if (!value) {
-                    if (horizontal) { // todo hiding of scrollbar
-                        this.moveTo(
-                            (at.a.px + (properties.width + properties.padding) * 2f).px * at.b.clone(),
-                            properties.showAnimation,
-                            properties.showAnimationDuration
-                        )
+                    if (horizontal) {
+                        this.moveBy(0f.px * hideAmount.px, properties.showAnim, properties.showAnimDuration) {
+                            enabled = false
+                        }
                     } else {
-                        this.moveTo(
-                            at.a.clone() * (at.b.px + (properties.width + properties.padding) * 2f).px,
-                            properties.showAnimation,
-                            properties.showAnimationDuration
-                        )
+                        this.moveBy(hideAmount.px * 0f.px, properties.showAnim, properties.showAnimDuration) {
+                            enabled = false
+                        }
                     }
                 } else {
                     if (horizontal) {
-                        this.moveTo(
-                            (at.a.px - (properties.width + properties.padding) * 2f).px * at.b.clone(),
-                            properties.showAnimation,
-                            properties.showAnimationDuration
-                        )
+                        at.b.px =
+                            (owner.scrollingSize.b.px - properties.padding - properties.width) + (owner.oy - owner.ptr.at.b.px) + hideAmount
+                        this.moveBy(0f.px * (-hideAmount).px, properties.showAnim, properties.showAnimDuration)
                     } else {
-                        this.moveTo(
-                            at.a.clone() * (at.b.px - (properties.width + properties.padding) * 2f).px,
-                            properties.showAnimation,
-                            properties.showAnimationDuration
-                        )
+                        at.a.px =
+                            owner.scrollingSize.a.px - properties.padding - properties.width + (owner.ox - owner.ptr.at.a.px) + hideAmount
+                        this.moveBy((-hideAmount).px * 0f.px, properties.showAnim, properties.showAnimDuration)
                     }
+                    enabled = contentSize > scrollingSize
                 }
             }
 
         var enabled = true
-            private set(value) {
-                if (value == field) return
-                field = value
-            }
+            private set
 
         override fun calculateBounds() {
             super.calculateBounds()
@@ -302,20 +317,25 @@ class ScrollingLayout(
                 mouseClickY = polyui.eventManager.mouseY - at.b.px
                 mouseDown = true
                 owner.ptr.needsRedraw = true
-                recolor(properties.pressedColor, properties.showAnimation, 0.2.seconds)
+                recolor(properties.pressedColor, properties.showAnim, 0.2.seconds)
                 return true
             }
             return super.accept(event)
         }
 
         fun update() {
+            if (!enabled) return
             if (horizontal) {
                 at.b.px =
-                    (owner.scrollingSize.b.px - properties.padding - properties.width) + (owner.oy - owner.ptr.at.b.px)
-                at.a.px = (owner.ptr.size!!.a.px - length) * owner.scrollXPercent
+                    (owner.scrollingSize.b.px - properties.padding - properties.width) + (owner.oy - owner.ptr.at.b.px) + if (!shown) hideAmount else 0f
             } else {
                 at.a.px =
-                    owner.scrollingSize.a.px - properties.padding - properties.width + (owner.ox - owner.ptr.at.a.px)
+                    owner.scrollingSize.a.px - properties.padding - properties.width + (owner.ox - owner.ptr.at.a.px) + if (!shown) hideAmount else 0f
+            }
+            if (!shown) return
+            if (horizontal) {
+                at.a.px = (owner.ptr.size!!.a.px - length) * owner.scrollXPercent
+            } else {
                 at.b.px = (owner.ptr.size!!.b.px - length) * owner.scrollYPercent
             }
         }
@@ -324,10 +344,11 @@ class ScrollingLayout(
             if (!enabled) return
             if (mouseDown) {
                 if (!polyui.eventManager.mouseDown) {
-                    recolor(properties.color, properties.showAnimation, .2.seconds)
+                    recolor(properties.color, properties.showAnim, .2.seconds)
                     mouseDown = false
                 } else {
                     owner.ptr.needsRedraw = true
+                    hideTime = 0L
                     if (horizontal) {
                         owner.scrollXPercent =
                             (polyui.eventManager.mouseX - mouseClickX) / (owner.scrollingSize.a.px - length)
@@ -339,6 +360,14 @@ class ScrollingLayout(
             }
             super.render()
         }
+
+        fun cancel() {
+            if (!shown) {
+                hideTime = 0L
+                shown = true
+                operations.clear()
+            }
+        }
     }
 
     open class ScrollbarProperties : BlockProperties() {
@@ -348,7 +377,8 @@ class ScrollingLayout(
         override val pressedColor = rgba(0.5f, 0.5f, 0.5f, 0.8f)
         override val padding: Float = 2f
         open val width = 4f
-        open val showAnimation: Animations? = Animations.EaseOutExpo
-        open val showAnimationDuration: Long = .5.seconds
+        open val showAnim: Animations? = Animations.EaseOutExpo
+        open val showAnimDuration: Long = .5.seconds
+        open val timeToHide = 2L.seconds
     }
 }

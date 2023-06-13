@@ -130,4 +130,22 @@ class Clock {
     class ConditionalExecutor(executeEveryNanos: Long, private val condition: () -> Boolean, func: () -> Unit) : Executor(executeEveryNanos, func) {
         override val finished get() = condition()
     }
+
+    /**
+     * An executor that will do its function after the given amount of time has passed.
+     * @since 0.18.3
+     */
+    class AfterExecutor(timeNanos: Long, func: () -> Unit) : Executor(timeNanos, func) {
+        override val finished get() = time >= executeEveryNanos
+
+        override fun tick(deltaTimeNanos: Long): Boolean {
+            time += deltaTimeNanos
+            return if (time >= executeEveryNanos) {
+                func()
+                true
+            } else {
+                false
+            }
+        }
+    }
 }

@@ -232,6 +232,18 @@ enum class Modifiers(val keyName: String, val value: Short) {
             return merged
         }
 
+        /**
+         * equal to: [merge]
+         */
+        @JvmStatic
+        fun of(vararg modifiers: Modifiers): Short = merge(*modifiers)
+
+        /**
+         * equal to: [merge]
+         */
+        @JvmStatic
+        fun mods(vararg modifiers: Modifiers): Short = merge(*modifiers)
+
         @JvmStatic
         inline fun toString(modifiers: Short) = toString(*fromModifierMerged(modifiers))
 

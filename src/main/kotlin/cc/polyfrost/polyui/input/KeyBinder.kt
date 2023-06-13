@@ -26,7 +26,6 @@ import cc.polyfrost.polyui.event.Event
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.event.FocusedEvents
 import cc.polyfrost.polyui.utils.fastEach
-import cc.polyfrost.polyui.utils.merge
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -66,7 +65,7 @@ class KeyBinder {
      * Remove the given keybind from the listeners.
      */
     @OverloadResolutionByLambdaReturnType
-    @JvmName("Remove")
+    @JvmName("removeListener")
     fun remove(keybind: () -> Unit) {
         val k = { keybind(); true }
         listeners.values.removeIf { it == k }
@@ -75,65 +74,66 @@ class KeyBinder {
     /**
      * Remove all keybindings for the given key and modifiers.
      */
-    fun removeAll(key: Char, vararg modifiers: KeyModifiers) {
-        listeners.remove(FocusedEvents.KeyTyped(key, modifiers.merge(), false))
+    fun removeAll(key: Char, modifiers: Short) {
+        listeners.remove(FocusedEvents.KeyTyped(key, modifiers, false))
     }
 
     /**
      * Remove all keybindings for the given key and modifiers.
      */
-    fun removeAll(key: Keys, vararg modifiers: KeyModifiers) {
-        listeners.remove(FocusedEvents.KeyPressed(key, modifiers.merge(), false))
+    fun removeAll(key: Keys, modifiers: Short) {
+        listeners.remove(FocusedEvents.KeyPressed(key, modifiers, false))
     }
 
-    private fun add0(listeners: ArrayList<() -> Boolean>?, key: Char, mods: Short, keybind: () -> Boolean) {
-        if (listeners != null) {
-            PolyUI.LOGGER.warn("found {} other keybindings for key {}", listeners.size, Keys.toStringPretty(key, mods))
-            listeners.add {
-                keybind()
+    /**
+     * Remove all keybindings for the given key and modifiers.
+     */
+    fun removeAll(mouse: Mouse, amountClicks: Int, modifiers: Short) {
+        listeners.remove(Events.MouseClicked(mouse.value.toInt(), amountClicks, modifiers))
+    }
+
+    private fun add0(listeners: ArrayList<() -> Boolean>?, key: Char, durationNanos: Long, mods: Short, keybind: () -> Boolean) {
+        if (durationNanos == 0L) {
+            if (listeners != null) {
+                PolyUI.LOGGER.warn("found {} other keybindings for key {}", listeners.size, Keys.toStringPretty(key, mods))
+                listeners.add(keybind)
+            } else {
+                this.listeners[FocusedEvents.KeyTyped(key, mods)] = arrayListOf(keybind)
             }
-        } else {
-            this.listeners[FocusedEvents.KeyTyped(key, mods)] = arrayListOf({
-                keybind()
-            })
         }
     }
 
-    private fun add0(listeners: ArrayList<() -> Boolean>?, key: Keys, mods: Short, keybind: () -> Boolean) {
-        if (listeners != null) {
-            PolyUI.LOGGER.warn("found {} other keybindings for key {}", listeners.size, Keys.toStringPretty(key, mods))
-            listeners.add {
-                keybind()
+    private fun add0(listeners: ArrayList<() -> Boolean>?, key: Keys, durationNanos: Long, mods: Short, keybind: () -> Boolean) {
+        if (durationNanos == 0L) {
+            if (listeners != null) {
+                PolyUI.LOGGER.warn("found {} other keybindings for key {}", listeners.size, Keys.toStringPretty(key, mods))
+                listeners.add(keybind)
+            } else {
+                this.listeners[FocusedEvents.KeyPressed(key, mods)] = arrayListOf(keybind)
             }
         } else {
-            this.listeners[FocusedEvents.KeyPressed(key, mods)] = arrayListOf({
-                keybind()
-            })
         }
     }
 
-    private fun add0(listeners: ArrayList<() -> Boolean>?, button: Mouse, mods: Short, keybind: () -> Boolean) {
-        if (listeners != null) {
-            PolyUI.LOGGER.warn("found {} other keybindings for key {}", listeners.size, Mouse.toStringPretty(button, mods))
-            listeners.add {
-                keybind()
+    private fun add0(listeners: ArrayList<() -> Boolean>?, button: Mouse, durationNanos: Long, amountClicks: Int, mods: Short, keybind: () -> Boolean) {
+        if (durationNanos == 0L) {
+            if (listeners != null) {
+                PolyUI.LOGGER.warn("found {} other keybindings for key {}", listeners.size, Mouse.toStringPretty(button, mods))
+                listeners.add(keybind)
+            } else {
+                this.listeners[Events.MouseClicked(button.value.toInt(), amountClicks, mods)] = arrayListOf(keybind)
             }
-        } else {
-            // todo maybe not just 1 click? idk;
-            this.listeners[Events.MouseClicked(button.value.toInt(), 1, mods)] = arrayListOf({
-                keybind()
-            })
         }
     }
 
+    // char //
     /**
      * Add a keybinding for the given key and modifiers.
      * Return true to prevent other keybindings from being called.
      */
     @OverloadResolutionByLambdaReturnType
-    fun add(key: Char, vararg modifiers: KeyModifiers, keybind: () -> Boolean) {
-        val mods = modifiers.merge()
-        add0(listeners[FocusedEvents.KeyTyped(key.uppercaseChar(), mods, false)], key, mods, keybind)
+    fun add(key: Char, durationNanos: Long = 0L, mods: Short = 0, keybind: () -> Boolean) {
+        add0(listeners[FocusedEvents.KeyTyped(key.uppercaseChar(), mods, false)], key, durationNanos, mods, keybind)
     }
 
     /**
@@ -141,51 +141,44 @@ class KeyBinder {
      * Return true to prevent other keybindings from being called.
      */
     @OverloadResolutionByLambdaReturnType
-    @JvmName("AddListener") // The following declarations have the same JVM signature add(C[Lcc/polyfrost/polyui/input/Modifiers;Lkotlin/jvm/functions/Function0;)V
-    fun add(key: Char, vararg modifiers: KeyModifiers, keybind: () -> Unit) {
-        val mods = modifiers.merge()
-        add0(listeners[FocusedEvents.KeyTyped(key.uppercaseChar(), mods, false)], key, mods) { keybind(); true }
+    @JvmName("addListener")
+    fun add(key: Char, durationNanos: Long = 0L, mods: Short = 0, keybind: () -> Unit) {
+        add0(listeners[FocusedEvents.KeyTyped(key.uppercaseChar(), mods, false)], key, durationNanos, mods) { keybind(); true }
     }
+
+    // keys //
+    /**
+     * Add a keybinding for the given key and modifiers.
+     * Return true to prevent other keybindings from being called.
+     */
+    @OverloadResolutionByLambdaReturnType
+    fun add(key: Keys, durationNanos: Long = 0L, mods: Short = 0, keybind: () -> Boolean) =
+        add0(listeners[FocusedEvents.KeyPressed(key, mods, false)], key, durationNanos, mods, keybind)
 
     /**
      * Add a keybinding for the given key and modifiers.
      * Return true to prevent other keybindings from being called.
      */
     @OverloadResolutionByLambdaReturnType
-    @JvmName("AddListener")
-    fun add(key: Keys, vararg modifiers: KeyModifiers, keybind: () -> Unit) {
-        val mods = modifiers.merge()
-        add0(listeners[FocusedEvents.KeyPressed(key, mods, false)], key, mods) { keybind(); true }
-    }
+    @JvmName("addListener")
+    fun add(key: Keys, durationNanos: Long = 0L, mods: Short = 0, keybind: () -> Unit) =
+        add0(listeners[FocusedEvents.KeyPressed(key, mods, false)], key, durationNanos, mods) { keybind(); true }
+
+    // mouse //
+    /**
+     * Add a keybinding for the given key and modifiers.
+     * Return true to prevent other keybindings from being called.
+     */
+    @OverloadResolutionByLambdaReturnType
+    @JvmName("addListener")
+    fun add(button: Mouse, durationNanos: Long = 0L, amountClicks: Int = 1, mods: Short = 0, keybind: () -> Unit) =
+        add0(listeners[Events.MouseClicked(button.value.toInt(), amountClicks, mods)], button, durationNanos, amountClicks, mods) { keybind(); true }
 
     /**
      * Add a keybinding for the given key and modifiers.
      * Return true to prevent other keybindings from being called.
      */
     @OverloadResolutionByLambdaReturnType
-    fun add(key: Keys, vararg modifiers: KeyModifiers, keybind: () -> Boolean) {
-        val mods = modifiers.merge()
-        add0(listeners[FocusedEvents.KeyPressed(key, mods, false)], key, mods, keybind)
-    }
-
-    /**
-     * Add a keybinding for the given key and modifiers.
-     * Return true to prevent other keybindings from being called.
-     */
-    @OverloadResolutionByLambdaReturnType
-    @JvmName("AddListener")
-    fun add(button: Mouse, vararg modifiers: KeyModifiers, keybind: () -> Unit) {
-        val mods = modifiers.merge()
-        add0(listeners[Events.MouseClicked(button.value.toInt(), 1, mods)], button, mods) { keybind(); true }
-    }
-
-    /**
-     * Add a keybinding for the given key and modifiers.
-     * Return true to prevent other keybindings from being called.
-     */
-    @OverloadResolutionByLambdaReturnType
-    fun add(button: Mouse, vararg modifiers: KeyModifiers, keybind: () -> Boolean) {
-        val mods = modifiers.merge()
-        add0(listeners[Events.MouseClicked(button.value.toInt(), 1, mods)], button, mods, keybind)
-    }
+    fun add(button: Mouse, durationNanos: Long = 0L, amountClicks: Int = 1, mods: Short = 0, keybind: () -> Boolean) =
+        add0(listeners[Events.MouseClicked(button.value.toInt(), amountClicks, mods)], button, durationNanos, amountClicks, mods, keybind)
 }

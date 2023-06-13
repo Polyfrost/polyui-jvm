@@ -71,16 +71,19 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         durationNanos: Long = 1L.seconds
     ) : DrawableOp(drawable) {
         override val animation = type?.create(durationNanos, 0f, 1f)
-        private val tx = if (add) drawable.at.a.px + to.a.px else to.a.px
-        private val ty = if (add) drawable.at.b.px + to.b.px else to.b.px
+        private val sx = if (add) drawable.at.a.px else 0f
+        private val sy = if (add) drawable.at.b.px else 0f
+        private val diffx = if (!add) to.x - drawable.at.a.px else to.x
+        private val diffy = if (!add) to.y - drawable.at.b.px else to.y
+
         override fun apply(renderer: Renderer) {
             if (animation != null) {
                 val p = animation.value
-                drawable.at.a.px = tx * p
-                drawable.at.b.px += ty * p
+                if (diffx != 0f) drawable.at.a.px = sx + diffx * p
+                if (diffy != 0f) drawable.at.b.px = sy + diffy * p
             } else {
-                drawable.at.a.px += to.x
-                drawable.at.b.px += to.y
+                drawable.at.a.px = to.x
+                drawable.at.b.px = to.y
             }
         }
     }

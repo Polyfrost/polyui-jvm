@@ -36,9 +36,6 @@ import cc.polyfrost.polyui.unit.Vec2
 import cc.polyfrost.polyui.utils.dropAt
 import cc.polyfrost.polyui.utils.stdout
 import cc.polyfrost.polyui.utils.substringSafe
-import java.awt.Toolkit
-import java.awt.datatransfer.DataFlavor
-import java.awt.datatransfer.StringSelection
 
 open class TextInput(
     properties: Properties? = null,
@@ -62,7 +59,8 @@ open class TextInput(
             if (!selecting) select = value
         }
     private var select: Int = 0
-    private var caretPos = x to y
+    private var cposx = 0f
+    private var cposy = 0f
     var selecting = false
     val selection get() = txt.substringSafe(caret, select).stdout()
     override fun render() {
@@ -83,7 +81,7 @@ open class TextInput(
             properties.outlineThickness,
             properties.cornerRadii
         )
-        renderer.drawRect(caretPos.first, caretPos.second, 2f, properties.text.fontSize.px, polyui.colors.text.primary)
+        renderer.drawRect(cposx, cposy, 2f, properties.text.fontSize.px, polyui.colors.text.primary)
         text.render()
     }
 
@@ -96,8 +94,7 @@ open class TextInput(
                 when (event.key) {
                     'V' -> {
                         try {
-                            txt += Toolkit.getDefaultToolkit().systemClipboard.getContents(null)
-                                ?.getTransferData(DataFlavor.stringFlavor) as? String ?: ""
+                            txt += polyui.clipboard ?: ""
                         } catch (e: Exception) {
                             PolyUI.LOGGER.error("Failed to read clipboard data!", e)
                         }
@@ -106,12 +103,7 @@ open class TextInput(
                     'C' -> {
                         try {
                             if (caret != select) {
-                                Toolkit.getDefaultToolkit().systemClipboard.setContents(
-                                    StringSelection(
-                                        selection
-                                    ),
-                                    null
-                                )
+                                polyui.clipboard = selection
                             }
                         } catch (e: Exception) {
                             PolyUI.LOGGER.error("Failed tole write clipboard data!", e)
@@ -120,7 +112,7 @@ open class TextInput(
 
                     'X' -> {
                         try {
-                            Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(selection), null)
+                            polyui.clipboard = null
                             txt = txt.replace(selection, "")
                         } catch (e: Exception) {
                             PolyUI.LOGGER.error("Failed to write clipboard data!", e)
@@ -129,7 +121,7 @@ open class TextInput(
                     }
 
                     'A' -> {
-                        caret = txt.length
+                        caret = txt.lastIndex
                         select = 0
                     }
                 }
@@ -205,19 +197,25 @@ open class TextInput(
                 else -> {}
             }
         }
-        caretPos = caretPos()
+        caretPos()
     }
 
-    fun caretPos(): Pair<Float, Float> {
+    fun caretPos() {
         val (line, idx, lni) = text.getByCharIndex(caret)
-        return (
-            renderer.textBounds(
-                properties.text.font,
-                txt.substring(0, idx),
-                properties.text.fontSize.px,
-                properties.text.alignment
-            ).width + text.x + text.textOffset to lni * properties.text.fontSize.px + text.y
-            )
+        cposx = renderer.textBounds(
+            properties.text.font,
+            txt.substring(0, idx),
+            properties.text.fontSize.px,
+            properties.text.alignment
+        ).width + text.x
+        cposy = lni * properties.text.fontSize.px + text.y
+    }
+
+    override fun rescale(scaleX: Float, scaleY: Float) {
+        super.rescale(scaleX, scaleY)
+        text.rescale(scaleX, scaleY)
+        cposx *= scaleX
+        cposy *= scaleY
     }
 
     fun toLastSpace() {
@@ -308,6 +306,7 @@ open class TextInput(
             text.size!!.b.px -= properties.paddingFromTextVertical
             init = true
         }
+        caretPos()
     }
 
     override fun calculateSize(): Vec2<Unit> {

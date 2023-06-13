@@ -50,7 +50,7 @@ class Settings(private val renderer: Renderer) {
     var enableVSync = false
 
     /** @see cc.polyfrost.polyui.input.PolyTranslator */
-    var defaultLocale = "en_**"
+    var defaultLocale = "en_xx"
 
     /** How to handle resource (image and font) loading errors. */
     var resourcePolicy = ResourcePolicy.WARN

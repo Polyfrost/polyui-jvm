@@ -181,8 +181,6 @@ class GLWindow @JvmOverloads constructor(
             polyUI.eventManager.onMouseScrolled(x.toInt(), y.toInt())
         }
 
-        // todo glfwGetClipboardString() ?
-
 //        glfwSetDropCallback(handle) { _, count, names ->
 //            val files = Array(count) {
 //                File(GLFWDropCallback.getName(names, it))
@@ -202,6 +200,7 @@ class GLWindow @JvmOverloads constructor(
 
     override fun open(polyUI: PolyUI): Window {
         this.polyUI = polyUI
+        polyUI.window = this
         videoSettingsChanged()
 
         createCallbacks()
@@ -271,6 +270,10 @@ class GLWindow @JvmOverloads constructor(
             ?: throw Exception("error occurred while loading icon!")
         glfwSetWindowIcon(handle, GLFWImage.malloc(1).put(0, GLFWImage.malloc().set(w[0], h[0], data)))
     }
+
+    override fun getClipboard() = glfwGetClipboardString(handle)
+
+    override fun setClipboard(text: String?) = glfwSetClipboardString(handle, text as? CharSequence)
 
     fun fullscreen() {
         glfwGetVideoMode(glfwGetPrimaryMonitor())?.let {

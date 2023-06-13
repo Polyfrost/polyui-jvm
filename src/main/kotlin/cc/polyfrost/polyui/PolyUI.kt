@@ -30,12 +30,14 @@ import cc.polyfrost.polyui.event.EventManager
 import cc.polyfrost.polyui.event.FocusedEvents
 import cc.polyfrost.polyui.input.KeyBinder
 import cc.polyfrost.polyui.input.KeyModifiers
+import cc.polyfrost.polyui.input.Modifiers.Companion.mods
 import cc.polyfrost.polyui.input.PolyTranslator
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.layout.impl.PixelLayout
 import cc.polyfrost.polyui.layout.impl.extension.DraggableLayout
 import cc.polyfrost.polyui.property.PropertyManager
 import cc.polyfrost.polyui.renderer.Renderer
+import cc.polyfrost.polyui.renderer.Window
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.utils.*
@@ -105,6 +107,21 @@ class PolyUI @JvmOverloads constructor(
             if (settings.debug) LOGGER.info("\t\t> took {}ms", t / 1_000_000f)
         }
 
+    /**
+     * The window this polyUI was opened with.
+     *
+     * @since 0.18.3
+     */
+    lateinit var window: Window
+
+    /**
+     * Access the system clipboard as a string.
+     *
+     * @since 0.18.3
+     */
+    var clipboard: String?
+        get() = window.getClipboard()
+        set(value) = window.setClipboard(value)
     val master = PixelLayout(Point(0.px, 0.px), Size(renderer.width.px, renderer.height.px), drawables = drawables, resizesChildren = true)
     val eventManager = EventManager(this)
     val keyBinder = KeyBinder()
@@ -201,7 +218,7 @@ class PolyUI @JvmOverloads constructor(
         Unit.VUnits.vHeight = height
         Unit.VUnits.vWidth = width
         if (settings.enableDebugKeybind) {
-            keyBinder.add('I', KeyModifiers.LCONTROL, KeyModifiers.LSHIFT) {
+            keyBinder.add('I', mods = mods(KeyModifiers.LCONTROL, KeyModifiers.LSHIFT)) {
                 settings.debug = !settings.debug
                 master.needsRedraw = true
                 LOGGER.info(
@@ -214,7 +231,7 @@ class PolyUI @JvmOverloads constructor(
                 )
             }
         }
-        keyBinder.add('R', KeyModifiers.LCONTROL) {
+        keyBinder.add('R', mods = mods(KeyModifiers.LCONTROL)) {
             LOGGER.info("Reloading PolyUI")
             onResize(width.toInt(), height.toInt(), renderer.pixelRatio, true)
             true
@@ -236,11 +253,12 @@ class PolyUI @JvmOverloads constructor(
     }
 
     fun onResize(newWidth: Int, newHeight: Int, pixelRatio: Float, force: Boolean = false) {
+        if (newWidth == 0 || newHeight == 0) LOGGER.warn("Cannot resize to zero size: {}x{}", newWidth, newHeight)
         if (!force && newWidth == width.toInt() && newHeight == height.toInt() && pixelRatio == this.renderer.pixelRatio) {
             LOGGER.warn("PolyUI was resized to the same size. Ignoring.")
             return
         }
-        if (settings.debug) LOGGER.info("resize: {} x {}", newWidth, newHeight)
+        if (settings.debug) LOGGER.info("resize: {}x{}", newWidth, newHeight)
 
         master.calculateBounds()
         if (settings.masterIsFramebuffer) {
@@ -350,6 +368,15 @@ class PolyUI @JvmOverloads constructor(
      */
     fun doWhile(everyNanos: Long, condition: () -> Boolean, func: () -> kotlin.Unit): PolyUI {
         executors.add(Clock.ConditionalExecutor(everyNanos, condition, func))
+        return this
+    }
+
+    /**
+     * Add a function that is called after [timeNanos] nanoseconds.
+     * @since 0.18.3
+     */
+    fun after(timeNanos: Long, func: () -> kotlin.Unit): PolyUI {
+        executors.add(Clock.AfterExecutor(timeNanos, func))
         return this
     }
 

@@ -29,7 +29,6 @@ class NoOpWindow(title: String, width: Int, height: Int) : Window(width, height)
         while (true) {
             polyUI.render()
         }
-        return this
     }
 
     override fun close() {
@@ -39,5 +38,10 @@ class NoOpWindow(title: String, width: Int, height: Int) : Window(width, height)
     }
 
     override fun videoSettingsChanged() {
+    }
+
+    override fun getClipboard(): String? = null
+
+    override fun setClipboard(text: String?) {
     }
 }

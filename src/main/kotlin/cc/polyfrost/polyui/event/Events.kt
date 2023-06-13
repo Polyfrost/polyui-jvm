@@ -54,7 +54,6 @@ sealed class Events : Event {
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
-            if (javaClass != other?.javaClass) return false
 
             other as MousePressed
 
@@ -85,7 +84,6 @@ sealed class Events : Event {
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
-            if (javaClass != other?.javaClass) return false
 
             other as MouseReleased
 

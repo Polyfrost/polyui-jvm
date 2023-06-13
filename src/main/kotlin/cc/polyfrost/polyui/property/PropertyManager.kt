@@ -26,7 +26,7 @@ import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.impl.*
 import cc.polyfrost.polyui.property.impl.*
 
-class PropertyManager(val polyUI: PolyUI) {
+class PropertyManager(private val polyUI: PolyUI) {
     val properties: HashMap<String, Properties> = hashMapOf(
         TextInput::class.qualifiedName!! to TextInputProperties(TextProperties()),
         Block::class.qualifiedName!! to BlockProperties(),
