@@ -26,6 +26,7 @@ import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.property.State
+import cc.polyfrost.polyui.renderer.data.Cursor
 import cc.polyfrost.polyui.unit.seconds
 import cc.polyfrost.polyui.utils.radii
 
@@ -60,10 +61,12 @@ open class BlockProperties @JvmOverloads constructor(
             },
             Events.MouseEntered {
                 recolor(hoverColor, hoverAnimation, hoverAnimationDuration)
+                polyui.cursor = Cursor.Clicker
                 false
             },
             Events.MouseExited {
                 recolor(properties.color, hoverAnimation, hoverAnimationDuration)
+                polyui.cursor = Cursor.Pointer
                 false
             }
         )

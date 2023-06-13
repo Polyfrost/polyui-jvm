@@ -19,33 +19,15 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cc.polyfrost.polyui.renderer.impl
+package cc.polyfrost.polyui.renderer.data
 
-import cc.polyfrost.polyui.PolyUI
-import cc.polyfrost.polyui.renderer.Window
-import cc.polyfrost.polyui.renderer.data.Cursor
+enum class Cursor {
+    /** classic, arrow pointer. */
+    Pointer,
 
-class NoOpWindow(title: String, width: Int, height: Int) : Window(width, height) {
-    override fun open(polyUI: PolyUI): Window {
-        while (true) {
-            polyUI.render()
-        }
-    }
+    /** `I` beam cursor used for text. */
+    Text,
 
-    override fun close() {
-    }
-
-    override fun createCallbacks() {
-    }
-
-    override fun videoSettingsChanged() {
-    }
-
-    override fun getClipboard(): String? = null
-
-    override fun setClipboard(text: String?) {
-    }
-
-    override fun setCursor(cursor: Cursor) {
-    }
+    /** the little hand which can click. */
+    Clicker
 }

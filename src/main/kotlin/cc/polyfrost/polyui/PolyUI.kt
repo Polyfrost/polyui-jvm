@@ -38,6 +38,7 @@ import cc.polyfrost.polyui.layout.impl.extension.DraggableLayout
 import cc.polyfrost.polyui.property.PropertyManager
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.Window
+import cc.polyfrost.polyui.renderer.data.Cursor
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.utils.*
@@ -145,6 +146,16 @@ class PolyUI @JvmOverloads constructor(
     inline val mouseX get() = eventManager.mouseX
     inline val mouseY get() = eventManager.mouseY
     inline val mouseDown get() = eventManager.mouseDown
+
+    /**
+     * The cursor currently being displayed.
+     * @since 0.18.4
+     */
+    var cursor: Cursor = Cursor.Pointer
+        set(value) {
+            field = value
+            window.setCursor(value)
+        }
     var width
         set(value) {
             Unit.VUnits.vWidth = value

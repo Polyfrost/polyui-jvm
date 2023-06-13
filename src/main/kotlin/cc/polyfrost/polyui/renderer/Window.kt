@@ -22,6 +22,7 @@
 package cc.polyfrost.polyui.renderer
 
 import cc.polyfrost.polyui.PolyUI
+import cc.polyfrost.polyui.renderer.data.Cursor
 
 /** # Window
  * This class represents the physical window that PolyUI will render to.
@@ -54,7 +55,12 @@ abstract class Window(var width: Int, var height: Int) {
 
     /**
      * Set the clipboard string. This is used for the [cc.polyfrost.polyui.component.impl.TextInput] class.
-     *
      */
     abstract fun setClipboard(text: String?)
+
+    /**
+     * Set the cursor design.
+     * @since 0.18.4
+     */
+    abstract fun setCursor(cursor: Cursor)
 }

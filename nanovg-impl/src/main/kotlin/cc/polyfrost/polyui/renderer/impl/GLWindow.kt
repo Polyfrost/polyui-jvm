@@ -25,6 +25,7 @@ import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.input.KeyModifiers
 import cc.polyfrost.polyui.input.Keys
 import cc.polyfrost.polyui.renderer.Window
+import cc.polyfrost.polyui.renderer.data.Cursor
 import cc.polyfrost.polyui.utils.getResourceStream
 import cc.polyfrost.polyui.utils.toByteBuffer
 import org.lwjgl.glfw.Callbacks
@@ -278,6 +279,19 @@ class GLWindow @JvmOverloads constructor(
     override fun getClipboard() = glfwGetClipboardString(handle)
 
     override fun setClipboard(text: String?) = glfwSetClipboardString(handle, text as? CharSequence)
+
+    override fun setCursor(cursor: Cursor) {
+        glfwSetCursor(
+            handle,
+            glfwCreateStandardCursor(
+                when (cursor) {
+                    Cursor.Pointer -> GLFW_ARROW_CURSOR
+                    Cursor.Clicker -> GLFW_POINTING_HAND_CURSOR
+                    Cursor.Text -> GLFW_IBEAM_CURSOR
+                }
+            )
+        )
+    }
 
     fun fullscreen() {
         glfwGetVideoMode(glfwGetPrimaryMonitor())?.let {
