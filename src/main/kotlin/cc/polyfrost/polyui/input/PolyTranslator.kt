@@ -36,7 +36,7 @@ import java.util.Locale
  *
  *  This can also be set with `-Dpolyui.locale="ll_CC"` or using [Settings.defaultLocale][cc.polyfrost.polyui.property.Settings.defaultLocale].
  *
- *  If the file cannot be found, PolyUI will check for a 'global' file named `ll_xx.lang` (for example `en_xx.lang`) and use that instead if present.
+ *  If the file cannot be found, PolyUI will check for a file named `ll_**.lang` (for example `en_default.lang`) and use that instead if present.
  *  If that isn't found, it will use the default locale (above), and if that isn't found it will crash.
  *
  *  Keys can also be added using
@@ -155,7 +155,7 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
         inline val initialized get() = string != key
 
         public override fun clone(): Text {
-            return Text(this.key, *objects).also {
+            return Text(this.key, this.objects).also {
                 polyTranslator = this.polyTranslator
             }
         }
@@ -202,7 +202,7 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
                 )
                 i++
             }
-            if (i != objects.size) throw IllegalArgumentException("Found ${objects.size} object(s) for '$s'; but only $i substitutions were present! (objs: {${objects.joinToString(", ")}})")
+            if (i != objects.size) throw IllegalArgumentException("Found ${objects.size} object(s) for '$s'; but only ${i + 1} substitutions were present!")
             map[key] = s
             return s
         }
