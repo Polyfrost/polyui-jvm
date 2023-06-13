@@ -124,6 +124,10 @@ class GLWindow @JvmOverloads constructor(
             }
         }
 
+        val (minW, minH) = polyUI.settings.minimumWindowSize
+        val (maxW, maxH) = polyUI.settings.maximumWindowSize
+        glfwSetWindowSizeLimits(handle, minW, minH, maxW, maxH)
+
         glfwSetCursorPosCallback(handle) { _, x, y ->
             polyUI.eventManager.setMousePosAndUpdate(x.toFloat(), y.toFloat())
         }

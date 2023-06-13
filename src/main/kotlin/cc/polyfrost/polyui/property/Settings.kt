@@ -115,6 +115,24 @@ class Settings(private val renderer: Renderer) {
     /** Weather to invert the scroll direction */
     var naturalScrolling = false
 
+    /**
+     * Set the minimum window size (width by height) that the window can be resized to.
+     *
+     * Set to `-1` to disable an axis.
+     * @see maximumWindowSize
+     * @since 0.18.4
+     */
+    var minimumWindowSize: Pair<Int, Int> = 100 to 100
+
+    /**
+     * Set the maximum window size (width by height) that the window can be resized to.
+     *
+     * Set to `-1` to disable an axis.
+     * @see minimumWindowSize
+     * @since 0.18.4
+     */
+    var maximumWindowSize: Pair<Int, Int> = -1 to -1
+
     /** How to handle resource (image and font) loading errors.
      * @see resourcePolicy
      */

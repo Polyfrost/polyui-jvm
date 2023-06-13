@@ -253,7 +253,20 @@ class PolyUI @JvmOverloads constructor(
     }
 
     fun onResize(newWidth: Int, newHeight: Int, pixelRatio: Float, force: Boolean = false) {
-        if (newWidth == 0 || newHeight == 0) LOGGER.warn("Cannot resize to zero size: {}x{}", newWidth, newHeight)
+        if (newWidth == 0 || newHeight == 0) {
+            LOGGER.warn("Cannot resize to zero size: {}x{}", newWidth, newHeight)
+            return
+        }
+        val (minW, minH) = settings.minimumWindowSize
+        val (maxW, maxH) = settings.maximumWindowSize
+        if ((minW != -1 && newWidth < minW) || (minH != -1 && newHeight < minH)) {
+            LOGGER.warn("Cannot resize to size smaller than minimum: {}x{}", newWidth, newHeight)
+            return
+        }
+        if ((maxW != -1 && newWidth > maxW) || (maxH != -1 && newHeight > maxH)) {
+            LOGGER.warn("Cannot resize to size larger than maximum: {}x{}", newWidth, newHeight)
+            return
+        }
         if (!force && newWidth == width.toInt() && newHeight == height.toInt() && pixelRatio == this.renderer.pixelRatio) {
             LOGGER.warn("PolyUI was resized to the same size. Ignoring.")
             return
