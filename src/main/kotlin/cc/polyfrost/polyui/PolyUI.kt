@@ -266,7 +266,7 @@ class PolyUI @JvmOverloads constructor(
     @Suppress("NAME_SHADOWING")
     fun onResize(newWidth: Int, newHeight: Int, pixelRatio: Float, force: Boolean = false) {
         if (newWidth == 0 || newHeight == 0) {
-            LOGGER.warn("Cannot resize to zero size: {}x{}", newWidth, newHeight)
+            LOGGER.error("Cannot resize to zero size: {}x{}", newWidth, newHeight)
             return
         }
         if (!force && newWidth == width.toInt() && newHeight == height.toInt() && pixelRatio == this.renderer.pixelRatio) {
@@ -274,19 +274,25 @@ class PolyUI @JvmOverloads constructor(
             return
         }
 
+        var newWidth = newWidth
+        var newHeight = newHeight
         val (minW, minH) = settings.minimumWindowSize
         val (maxW, maxH) = settings.maximumWindowSize
         if ((minW != -1 && newWidth < minW) || (minH != -1 && newHeight < minH)) {
             LOGGER.warn("Cannot resize to size smaller than minimum: {}x{}", newWidth, newHeight)
-            return
+            newWidth = minW.coerceAtLeast(newWidth)
+            newHeight = minH.coerceAtLeast(newHeight)
+            window.width = newWidth
+            window.height = newHeight
         }
         if ((maxW != -1 && newWidth > maxW) || (maxH != -1 && newHeight > maxH)) {
             LOGGER.warn("Cannot resize to size larger than maximum: {}x{}", newWidth, newHeight)
-            return
+            newWidth = maxW.coerceAtMost(newWidth)
+            newHeight = maxH.coerceAtMost(newHeight)
+            window.width = newWidth
+            window.height = newHeight
         }
 
-        var newWidth = newWidth
-        var newHeight = newHeight
         val(num, denom) = settings.windowAspectRatio
         if (num != -1 && denom != -1) {
             val aspectRatio = num.toFloat() / denom.toFloat()
@@ -295,11 +301,11 @@ class PolyUI @JvmOverloads constructor(
                 val newAspectRatio = newWidth.toFloat() / newHeight.toFloat()
                 if (newAspectRatio > aspectRatio) {
                     newWidth = (newHeight * aspectRatio).toInt()
-                    window.width = newWidth
                 } else {
                     newHeight = (newWidth / aspectRatio).toInt()
-                    window.height = newHeight
                 }
+                window.height = newHeight
+                window.width = newWidth
             }
         }
 

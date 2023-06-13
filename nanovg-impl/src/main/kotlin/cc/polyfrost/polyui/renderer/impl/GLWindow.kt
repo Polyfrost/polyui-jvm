@@ -50,6 +50,17 @@ class GLWindow @JvmOverloads constructor(
     decorated: Boolean = true
 ) :
     Window(width, height) {
+
+    override var height: Int = width
+        set(value) {
+            val h = IntArray(1)
+            glfwGetFramebufferSize(handle, IntArray(1), h)
+            if (h[0] != value) {
+                offset = h[0] - value
+            }
+            field = value
+        }
+    private var offset = 0
     val handle: Long
     var contentScaleX = 1f
         private set
@@ -232,7 +243,7 @@ class GLWindow @JvmOverloads constructor(
         val (maxW, maxH) = polyUI.settings.maximumWindowSize
         glfwSetWindowSizeLimits(handle, minW, minH, maxW, maxH)
 
-        if (polyUI.settings.windowAspectRatio.first == 0 && polyUI.settings.windowAspectRatio.second == 0) {
+        if (polyUI.settings.windowAspectRatio.first == 0 || polyUI.settings.windowAspectRatio.second == 0) {
             val ratio = (width to height).simplifyRatio()
             PolyUI.LOGGER.info("Inferred aspect ratio: {}:{}", ratio.first, ratio.second)
             polyUI.settings.windowAspectRatio = ratio
@@ -242,7 +253,7 @@ class GLWindow @JvmOverloads constructor(
         var t = glfwGetTime()
         fpsCap = polyUI.settings.maxFPS.toDouble()
         while (!glfwWindowShouldClose(handle)) {
-            glViewport(0, 0, width, height)
+            glViewport(0, offset, width, height)
             val c = polyUI.colors.page.bg
             glClearColor(c.r / 255f, c.g / 255f, c.b / 255f, 0f)
             glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
