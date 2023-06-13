@@ -189,6 +189,31 @@ fun Float.rounded(places: Int = 2): Float {
 fun Double.toRadians() = (this % 360.0) * (PI / 180.0)
 
 /**
+ * Calculate the greatest common denominator of two integers.
+ * @since 0.18.4
+ */
+@Suppress("NAME_SHADOWING")
+fun Int.gcd(b: Int): Int {
+    var a = this
+    var b = b
+    while (b != 0) {
+        val t = b
+        b = a % b
+        a = t
+    }
+    return a
+}
+
+/**
+ * Simplify a ratio of two integers.
+ * @since 0.18.4
+ */
+fun Pair<Int, Int>.simplifyRatio(): Pair<Int, Int> {
+    val gcd = first.gcd(second)
+    return Pair(first / gcd, second / gcd)
+}
+
+/**
  * Returns the value closer to zero.
  *
  * If either value is `NaN`, then the result is `NaN`.

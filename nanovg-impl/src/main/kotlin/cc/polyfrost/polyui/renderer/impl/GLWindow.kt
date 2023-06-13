@@ -27,6 +27,7 @@ import cc.polyfrost.polyui.input.Keys
 import cc.polyfrost.polyui.renderer.Window
 import cc.polyfrost.polyui.renderer.data.Cursor
 import cc.polyfrost.polyui.utils.getResourceStream
+import cc.polyfrost.polyui.utils.simplifyRatio
 import cc.polyfrost.polyui.utils.toByteBuffer
 import org.lwjgl.glfw.Callbacks
 import org.lwjgl.glfw.GLFW.*
@@ -124,10 +125,6 @@ class GLWindow @JvmOverloads constructor(
                 polyUI.eventManager.onMouseReleased(button)
             }
         }
-
-        val (minW, minH) = polyUI.settings.minimumWindowSize
-        val (maxW, maxH) = polyUI.settings.maximumWindowSize
-        glfwSetWindowSizeLimits(handle, minW, minH, maxW, maxH)
 
         glfwSetCursorPosCallback(handle) { _, x, y ->
             polyUI.eventManager.setMousePosAndUpdate(x.toFloat(), y.toFloat())
@@ -230,6 +227,17 @@ class GLWindow @JvmOverloads constructor(
                 max(this.contentScaleX, this.contentScaleY).also { this.pixelRatio = it }
             )
         }
+
+        val (minW, minH) = polyUI.settings.minimumWindowSize
+        val (maxW, maxH) = polyUI.settings.maximumWindowSize
+        glfwSetWindowSizeLimits(handle, minW, minH, maxW, maxH)
+
+        if (polyUI.settings.windowAspectRatio.first == 0 && polyUI.settings.windowAspectRatio.second == 0) {
+            val ratio = (width to height).simplifyRatio()
+            PolyUI.LOGGER.info("Inferred aspect ratio: {}:{}", ratio.first, ratio.second)
+            polyUI.settings.windowAspectRatio = ratio
+        }
+        glfwSetWindowAspectRatio(handle, polyUI.settings.windowAspectRatio.first, polyUI.settings.windowAspectRatio.second)
 
         var t = glfwGetTime()
         fpsCap = polyUI.settings.maxFPS.toDouble()

@@ -133,6 +133,17 @@ class Settings(private val renderer: Renderer) {
      */
     var maximumWindowSize: Pair<Int, Int> = -1 to -1
 
+    /**
+     * Set the window aspect ratio, with the ratio being width:height, e.g. `16 to 9` = `16:9`.
+     *
+     * While PolyUI will resize the content to this aspect ratio, if the window is not at this aspect ratio it may look odd (content smaller than the window).
+     * To prevent this, you must ensure that the window implementation is only allowing resizes to this aspect ratio.
+     *
+     * Set to `-1` to disable, or `0` to infer it automatically. Any other value is the aspect ratio.
+     * @since 0.18.4
+     */
+    var windowAspectRatio: Pair<Int, Int> = -1 to -1
+
     /** How to handle resource (image and font) loading errors.
      * @see resourcePolicy
      */
