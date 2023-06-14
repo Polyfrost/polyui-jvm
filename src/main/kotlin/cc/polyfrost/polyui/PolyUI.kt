@@ -304,8 +304,8 @@ class PolyUI @JvmOverloads constructor(
                 } else {
                     newHeight = (newWidth / aspectRatio).toInt()
                 }
-                window.height = newHeight
                 window.width = newWidth
+                window.height = newHeight
             }
         }
 

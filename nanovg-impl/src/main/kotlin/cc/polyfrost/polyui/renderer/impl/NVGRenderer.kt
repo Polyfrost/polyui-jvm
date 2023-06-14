@@ -201,7 +201,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     override fun unbindFramebuffer(fbo: Framebuffer) {
         nvgEndFrame(vg)
         nvgluBindFramebuffer(vg, null)
-        glViewport(0, 0, width.toInt(), height.toInt())
+        glViewport(0, GLWindow.offset, width.toInt(), height.toInt())
         nvgBeginFrame(vg, width, height, pixelRatio)
     }
 

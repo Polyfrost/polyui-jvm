@@ -48,19 +48,15 @@ class GLWindow @JvmOverloads constructor(
     gl2: Boolean = false,
     resizeable: Boolean = true,
     decorated: Boolean = true
-) :
-    Window(width, height) {
+) : Window(width, height) {
 
     override var height: Int = width
         set(value) {
             val h = IntArray(1)
-            glfwGetFramebufferSize(handle, IntArray(1), h)
-            if (h[0] != value) {
-                offset = h[0] - value
-            }
+            glfwGetFramebufferSize(handle, null, h)
+            offset = h[0] - value
             field = value
         }
-    private var offset = 0
     val handle: Long
     var contentScaleX = 1f
         private set
@@ -138,7 +134,7 @@ class GLWindow @JvmOverloads constructor(
         }
 
         glfwSetCursorPosCallback(handle) { _, x, y ->
-            polyUI.eventManager.setMousePosAndUpdate(x.toFloat(), y.toFloat())
+            polyUI.eventManager.setMousePosAndUpdate(x.toFloat() / pixelRatio, y.toFloat() / pixelRatio)
         }
 
         glfwSetKeyCallback(handle) { _, keyCode, _, action, mods ->
@@ -248,7 +244,7 @@ class GLWindow @JvmOverloads constructor(
             PolyUI.LOGGER.info("Inferred aspect ratio: {}:{}", ratio.first, ratio.second)
             polyUI.settings.windowAspectRatio = ratio
         }
-        glfwSetWindowAspectRatio(handle, polyUI.settings.windowAspectRatio.first, polyUI.settings.windowAspectRatio.second)
+        //glfwSetWindowAspectRatio(handle, polyUI.settings.windowAspectRatio.first, polyUI.settings.windowAspectRatio.second)
 
         var t = glfwGetTime()
         fpsCap = polyUI.settings.maxFPS.toDouble()
@@ -316,5 +312,16 @@ class GLWindow @JvmOverloads constructor(
         glfwGetVideoMode(glfwGetPrimaryMonitor())?.let {
             glfwSetWindowSize(handle, it.width(), it.height())
         }
+    }
+
+    companion object {
+        /**
+         * This value is a fix for OpenGL as it draws from the bottom left, not the bottom right.
+         * It is static because it needs to be accessed by the renderer, who resets the offset after framebuffer drawing.
+         *
+         * It is calculated by doing window size - framebuffer size, and is used by glViewport.
+         */
+        var offset = 0
+            private set
     }
 }

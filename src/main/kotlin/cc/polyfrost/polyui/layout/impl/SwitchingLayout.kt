@@ -49,8 +49,6 @@ class SwitchingLayout(
      * Else, it will take the size of the largest one, and the smaller ones will be scaled to fit. */
     resizesChildren: Boolean = true
 ) : PixelLayout(at, size, onAdded, onRemoved, true, resizesChildren, *layouts) {
-    override val components: ArrayList<Component>
-        get() = current?.components ?: super.components
     private var goingSwitchOp: Transition? = null
     private var comingSwitchOp: Transition? = null
     private var idx: Int = defaultIndex
@@ -149,7 +147,11 @@ class SwitchingLayout(
         super.setup(renderer, polyui)
         children.fastEach {
             it.layout = this
-            it.acceptsInput = false
+            it.onAllLayouts {
+                it.components.fastEach {
+                    it.acceptsInput = false
+                }
+            }
         }
     }
 
@@ -183,19 +185,20 @@ class SwitchingLayout(
 
     fun switch(index: Int) {
         val layout = children.getOrNull(index) ?: throw IndexOutOfBoundsException("SwitchingLayout has no layout at index $index")
-        println("h")
-        children.fastEach {
-            it.acceptsInput = false
+        current?.onAllLayouts {
             components.fastEach {
-                it.mouseOver = false
                 it.acceptsInput = false
             }
+            acceptsInput = false
         }
         current?.onRemoved?.invoke(current!!)
 
         layout.acceptsInput = true
-        layout.components.fastEach {
-            it.acceptsInput = true
+        layout.onAllLayouts {
+            components.fastEach {
+                it.acceptsInput = true
+            }
+            acceptsInput = true
         }
         layout.onAdded?.invoke(layout)
         needsRedraw = true

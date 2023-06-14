@@ -235,7 +235,7 @@ inline fun Float.radii() = floatArrayOf(this, this, this, this)
 inline fun radii(topLeft: Float, topRight: Float, bottomLeft: Float, bottomRight: Float) = floatArrayOf(topLeft, topRight, bottomLeft, bottomRight)
 
 /** varargs wrapper */
-inline fun varargs(vararg any: Any): Array<out Any> {
+inline fun <T> varargs(vararg any: T): Array<out T> {
     return any
 }
 
