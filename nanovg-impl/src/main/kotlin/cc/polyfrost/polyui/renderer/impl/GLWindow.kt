@@ -57,6 +57,14 @@ class GLWindow @JvmOverloads constructor(
             offset = h[0] - value
             field = value
         }
+
+    /**
+     * This value is a fix for OpenGL as it draws from the bottom left, not the bottom right.
+     * It is static because it needs to be accessed by the renderer, who resets the offset after framebuffer drawing.
+     *
+     * It is calculated by doing window size - framebuffer size, and is used by glViewport.
+     */
+    private var offset = 0
     val handle: Long
     var contentScaleX = 1f
         private set
@@ -244,7 +252,7 @@ class GLWindow @JvmOverloads constructor(
             PolyUI.LOGGER.info("Inferred aspect ratio: {}:{}", ratio.first, ratio.second)
             polyUI.settings.windowAspectRatio = ratio
         }
-        //glfwSetWindowAspectRatio(handle, polyUI.settings.windowAspectRatio.first, polyUI.settings.windowAspectRatio.second)
+        // glfwSetWindowAspectRatio(handle, polyUI.settings.windowAspectRatio.first, polyUI.settings.windowAspectRatio.second)
 
         var t = glfwGetTime()
         fpsCap = polyUI.settings.maxFPS.toDouble()
@@ -312,16 +320,5 @@ class GLWindow @JvmOverloads constructor(
         glfwGetVideoMode(glfwGetPrimaryMonitor())?.let {
             glfwSetWindowSize(handle, it.width(), it.height())
         }
-    }
-
-    companion object {
-        /**
-         * This value is a fix for OpenGL as it draws from the bottom left, not the bottom right.
-         * It is static because it needs to be accessed by the renderer, who resets the offset after framebuffer drawing.
-         *
-         * It is calculated by doing window size - framebuffer size, and is used by glViewport.
-         */
-        var offset = 0
-            private set
     }
 }
