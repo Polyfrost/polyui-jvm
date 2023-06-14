@@ -252,7 +252,7 @@ class GLWindow @JvmOverloads constructor(
             PolyUI.LOGGER.info("Inferred aspect ratio: {}:{}", ratio.first, ratio.second)
             polyUI.settings.windowAspectRatio = ratio
         }
-        // glfwSetWindowAspectRatio(handle, polyUI.settings.windowAspectRatio.first, polyUI.settings.windowAspectRatio.second)
+        glfwSetWindowAspectRatio(handle, polyUI.settings.windowAspectRatio.first, polyUI.settings.windowAspectRatio.second)
 
         var t = glfwGetTime()
         fpsCap = polyUI.settings.maxFPS.toDouble()
