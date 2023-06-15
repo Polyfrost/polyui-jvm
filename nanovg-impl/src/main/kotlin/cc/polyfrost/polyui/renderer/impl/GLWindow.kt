@@ -60,7 +60,6 @@ class GLWindow @JvmOverloads constructor(
 
     /**
      * This value is a fix for OpenGL as it draws from the bottom left, not the bottom right.
-     * It is static because it needs to be accessed by the renderer, who resets the offset after framebuffer drawing.
      *
      * It is calculated by doing window size - framebuffer size, and is used by glViewport.
      */

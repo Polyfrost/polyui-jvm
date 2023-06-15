@@ -158,6 +158,10 @@ fun main() {
                                 rotateBy(120.0, Animations.EaseInOutCubic)
                             }
                         )
+                    ),
+                    TextInput(
+                        at = 200.px * 160.px,
+                        size = 300.px * 40.px
                     )
                 )
             ).draggable(),

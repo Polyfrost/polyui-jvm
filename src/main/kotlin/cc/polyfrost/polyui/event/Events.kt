@@ -99,9 +99,29 @@ sealed class Events : Event {
      * @see MouseClicked
      * @see MouseEntered
      */
-    data class MouseClicked @JvmOverloads constructor(val button: Int, val amountClicks: Int = 1, val mods: Short = 0) :
+    data class MouseClicked internal constructor(val button: Int, val mouseX: Float, val mouseY: Float, val amountClicks: Int, val mods: Short) :
         Events() {
-        override fun toString(): String = "MouseClicked(${Mouse.toStringPretty(Mouse.fromValue(button), mods)})"
+
+        @JvmOverloads
+        constructor(button: Int, amountClicks: Int = 1, mods: Short = 0) : this(button, 0f, 0f, amountClicks, mods)
+
+        override fun toString(): String = "MouseClicked($mouseX x $mouseY, ${Mouse.toStringPretty(Mouse.fromValue(button), mods)})"
+        override fun hashCode(): Int {
+            var result = button
+            result = 31 * result + amountClicks
+            result = 31 * result + mods
+            return result
+        }
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+
+            other as MouseClicked
+
+            if (button != other.button) return false
+            if (amountClicks != other.amountClicks) return false
+            return mods == other.mods
+        }
     }
 
     /** acceptable by component and layout, when the mouse enters this drawable.

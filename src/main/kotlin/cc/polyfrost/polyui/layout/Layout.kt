@@ -33,9 +33,11 @@ import cc.polyfrost.polyui.unit.Point
 import cc.polyfrost.polyui.unit.Size
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.utils.fastEach
+import cc.polyfrost.polyui.utils.fastEachReversed
 import org.jetbrains.annotations.ApiStatus
 
-/** # Layout
+/**
+ * # Layout
  * Layout is PolyUI's take on containers. They can contain [components] and other [layouts][children], as children.
  *
  * They can dynamically [add][addComponent] and [remove][removeComponent] their children and components.
@@ -173,9 +175,13 @@ abstract class Layout(
      * perform the given [function] on all this layout's children and itself.
      * @since 0.18.0
      */
-    open fun onAllLayouts(function: Layout.() -> kotlin.Unit) {
+    open fun onAllLayouts(reversed: Boolean = false, function: Layout.() -> kotlin.Unit) {
         function(this)
-        children.fastEach { it.onAllLayouts(function) }
+        if (reversed) {
+            children.fastEachReversed { it.onAllLayouts(true, function) }
+        } else {
+            children.fastEach { it.onAllLayouts(false, function) }
+        }
     }
 
     /**

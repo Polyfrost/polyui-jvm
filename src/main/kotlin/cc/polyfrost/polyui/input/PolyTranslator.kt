@@ -155,7 +155,7 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
         inline val initialized get() = string != key
 
         public override fun clone(): Text {
-            return Text(this.key, this.objects).also {
+            return Text(this.key, *this.objects).also {
                 polyTranslator = this.polyTranslator
             }
         }
@@ -202,7 +202,7 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
                 )
                 i++
             }
-            if (i != objects.size) throw IllegalArgumentException("Found ${objects.size} object(s) for '$s'; but only ${i + 1} substitutions were present!")
+            if (i != objects.size) throw IllegalArgumentException("Found ${objects.size} object(s) for '$s'; but only ${i + 1} substitutions were present! (objs: ${objects.contentToString()})")
             map[key] = s
             return s
         }

@@ -158,7 +158,7 @@ abstract class Drawable(open var acceptsInput: Boolean = true) {
         return x >= tx && x <= tx + this.size!!.a.px && y >= ty && y <= ty + this.size!!.b.px
     }
 
-    protected fun doDynamicSize() {
+    fun doDynamicSize() {
         doDynamicSize(at)
         if (size != null) doDynamicSize(size!!)
     }

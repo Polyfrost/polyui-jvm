@@ -31,11 +31,10 @@ import cc.polyfrost.polyui.input.Keys
 import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.property.impl.TextInputProperties
 import cc.polyfrost.polyui.renderer.Renderer
+import cc.polyfrost.polyui.renderer.data.Line
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.unit.Vec2
-import cc.polyfrost.polyui.utils.dropAt
-import cc.polyfrost.polyui.utils.stdout
-import cc.polyfrost.polyui.utils.substringSafe
+import cc.polyfrost.polyui.utils.*
 
 open class TextInput(
     properties: Properties? = null,
@@ -47,7 +46,7 @@ open class TextInput(
         get() = super.properties as TextInputProperties
     lateinit var text: Text
     var txt
-        get() = text.text.string
+        inline get() = text.text.string
         set(value) {
             text.text.string = value
             text.str.calculate(renderer)
@@ -58,12 +57,21 @@ open class TextInput(
             field = value
             if (!selecting) select = value
         }
+    private val selectBoxes = ArrayList<Pair<Pair<Float, Float>, Pair<Float, Float>>>(5)
     private var select: Int = 0
+    var focused = false
+        private set
     private var cposx = 0f
     private var cposy = 0f
-    var selecting = false
-    val selection get() = txt.substringSafe(caret, select).stdout()
+    private var mouseDown = false
+    private var selecting = false
+    val selection get() = txt.substringSafe(caret, select)
+
     override fun render() {
+        if (!mouseOver) mouseDown = false
+        if (mouseDown) {
+            mouseInput(polyui.mouseX, polyui.mouseY)
+        }
         renderer.drawRect(
             at.a.px,
             at.b.px,
@@ -81,11 +89,42 @@ open class TextInput(
             properties.outlineThickness,
             properties.cornerRadii
         )
-        renderer.drawRect(cposx, cposy, 2f, properties.text.fontSize.px, polyui.colors.text.primary)
+        if (focused) {
+            renderer.drawRect(cposx, cposy, 2f, properties.text.fontSize.px, polyui.colors.text.primary)
+            selectBoxes.fastEach {
+                val (x, y) = it.first
+                val (w, h) = it.second
+                renderer.drawRect(x, y, w, h, polyui.colors.page.border20)
+            }
+        } else {
+            renderer.globalAlpha(0.8f)
+        }
         text.render()
+        renderer.resetGlobalAlpha()
+    }
+
+    override fun accept(event: Events): Boolean {
+        if (event is Events.MousePressed) {
+            mouseDown = true
+        }
+        if (event is Events.MouseReleased) {
+            mouseDown = false
+        }
+        if (event is Events.MouseClicked) {
+            posFromMouse(event.mouseX, event.mouseY)
+            return true
+        }
+        return super.accept(event)
     }
 
     override fun accept(event: FocusedEvents) {
+        if (event is FocusedEvents.FocusGained) {
+            focused = true
+        }
+        if (event is FocusedEvents.FocusLost) {
+            clearSelection()
+            focused = false
+        }
         if (event is FocusedEvents.KeyTyped) {
             if (event.mods < 2 && !text.full) {
                 txt = txt.substring(0, caret) + event.key + txt.substring(caret)
@@ -93,35 +132,25 @@ open class TextInput(
             } else if (event.hasModifier(KeyModifiers.LCONTROL) || event.hasModifier(KeyModifiers.RCONTROL)) {
                 when (event.key) {
                     'V' -> {
-                        try {
-                            txt += polyui.clipboard ?: ""
-                        } catch (e: Exception) {
-                            PolyUI.LOGGER.error("Failed to read clipboard data!", e)
-                        }
+                        txt = txt.substring(0, caret) + (polyui.clipboard ?: "") + txt.substring(caret)
+                        caret += polyui.clipboard?.length ?: 0
+                        clearSelection()
                     }
 
                     'C' -> {
-                        try {
-                            if (caret != select) {
-                                polyui.clipboard = selection
-                            }
-                        } catch (e: Exception) {
-                            PolyUI.LOGGER.error("Failed tole write clipboard data!", e)
+                        if (caret != select) {
+                            polyui.clipboard = selection
                         }
                     }
 
                     'X' -> {
-                        try {
-                            polyui.clipboard = null
-                            txt = txt.replace(selection, "")
-                        } catch (e: Exception) {
-                            PolyUI.LOGGER.error("Failed to write clipboard data!", e)
-                        }
+                        polyui.clipboard = null
+                        txt = txt.replace(selection, "")
                         clearSelection()
                     }
 
                     'A' -> {
-                        caret = txt.lastIndex
+                        caret = txt.lastIndex + 1
                         select = 0
                     }
                 }
@@ -142,9 +171,11 @@ open class TextInput(
                             f = select
                             t = caret
                         }
-                        txt = txt.substring(0, f) + txt.substring(t) // todo finish
-                    }
-                    if (!hasControl) {
+                        txt = txt.substring(0, f) + txt.substring(t)
+                        caret = f
+                        selecting = false
+                        clearSelection()
+                    } else if (!hasControl) {
                         txt = txt.dropAt(caret, 1)
                         if (caret != 0) caret--
                     } else {
@@ -152,16 +183,13 @@ open class TextInput(
                     }
                 }
 
-                Keys.ENTER -> {
-                    println("enter")
-                }
-
                 Keys.TAB -> {
                     txt += "    "
                 }
 
                 Keys.DELETE -> {
-                    txt = txt.drop(1)
+                    if (caret + 1 > txt.length) return
+                    txt = txt.dropAt(caret + 1, 1)
                 }
 
                 Keys.LEFT -> {
@@ -183,11 +211,13 @@ open class TextInput(
                 }
 
                 Keys.UP -> {
-                    println("up")
+                    selecting = hasShift
+                    moveLine(false)
                 }
 
                 Keys.DOWN -> {
-                    println("down")
+                    selecting = hasShift
+                    moveLine(true)
                 }
 
                 Keys.ESCAPE -> {
@@ -198,17 +228,97 @@ open class TextInput(
             }
         }
         caretPos()
+        selections()
     }
 
     fun caretPos() {
-        val (line, idx, lni) = text.getByCharIndex(caret)
+        val (line, idx, lni) = text.getLineByIndex(caret)
         cposx = renderer.textBounds(
             properties.text.font,
-            txt.substring(0, idx),
-            properties.text.fontSize.px,
+            line.text.substring(0, idx),
+            text.str.fontSize,
             properties.text.alignment
         ).width + text.x
-        cposy = lni * properties.text.fontSize.px + text.y
+        cposy = lni * text.str.fontSize + text.y
+    }
+
+    private fun mouseInput(mouseX: Float, mouseY: Float) {
+        // todo
+    }
+
+    private fun selections() {
+        selectBoxes.clear()
+        if (select == caret) return
+        val (sl, si, sli) = if (caret < select) text.getLineByIndex(caret) else text.getLineByIndex(select)
+        val (el, ei, eli) = if (caret < select) text.getLineByIndex(select) else text.getLineByIndex(caret)
+        if (sl === el) {
+            val endIndex = if (caret < select) select else caret
+            val startIndex = if (caret < select) caret else select
+            line(sl, si, endIndex - txt.substring(0, startIndex).length + si, sli)
+            return
+        }
+        for (i in sli + 1 until eli) {
+            val line = text[i]
+            selectBoxes.add((text.x to text.y + (i.toFloat() * text.fontSize.px)) to (line.width to line.height))
+        }
+        line(sl, si, sl.text.length, sli)
+        line(el, 0, ei, eli)
+    }
+
+    private fun line(line: Line, startIndex: Int, endIndex: Int, lineIndex: Int) {
+        val start = renderer.textBounds(text.font, line.text.substring(0, startIndex), text.fontSize.px, text.textAlign).a.px
+        val width = renderer.textBounds(text.font, line.text.substring(startIndex, endIndex), text.fontSize.px, text.textAlign).a.px
+        selectBoxes.add((text.x + start to text.y + (lineIndex * text.fontSize.px)) to (width to line.height))
+    }
+
+    private fun posFromMouse(x: Float, y: Float) {
+        val mouseY = y - text.trueY
+        val mouseX = x - text.trueX
+
+        var i = 0f
+        var idx = 0
+        var l: Line
+        if (text.lines.size == 1) {
+            l = text.lines[0]
+            if (mouseY > l.height) {
+                caret = l.text.length
+                caretPos()
+                return
+            }
+        } else {
+            run {
+                text.lines.fastEach {
+                    i += it.height
+                    if (mouseY < i) {
+                        l = it
+                        if (mouseY > i + it.height) {
+                            caret = idx + it.text.length
+                            caretPos()
+                            return
+                        }
+                        return@run
+                    } else {
+                        idx += it.text.length
+                    }
+                }
+                // best to be safe
+                l = text.lines.last()
+            }
+        }
+
+        caret = if (mouseX < 0) {
+            idx
+        } else if (mouseX > l.width) {
+            idx + l.text.length
+        } else {
+            idx + l.text.closestToPoint(renderer, properties.text.font, text.str.fontSize, properties.text.alignment, mouseX)
+        }
+        caretPos()
+    }
+
+    private fun moveLine(down: Boolean) {
+        val h = text.getLineByIndex(caret).first.height
+        posFromMouse(trueX + cposx, trueY + (cposy - text.y) + properties.paddingFromTextVertical + if (down) h else -h)
     }
 
     override fun rescale(scaleX: Float, scaleY: Float) {
@@ -220,7 +330,7 @@ open class TextInput(
 
     fun toLastSpace() {
         while (caret > 0 && txt[caret - 1] == ' ') caret--
-        txt.lastIndexOf(' ', caret - 1).let {
+        txt.trimEnd().lastIndexOf(' ', caret - 1).let {
             if (selecting && select == caret) select = caret
             caret = if (it != -1) {
                 it
@@ -232,7 +342,7 @@ open class TextInput(
 
     fun dropToLastSpace() {
         val c = caret
-        txt.lastIndexOf(' ', caret).let {
+        txt.trimEnd().lastIndexOf(' ', caret).let {
             caret = if (it != -1) {
                 it
             } else {
@@ -279,6 +389,7 @@ open class TextInput(
 
     fun clearSelection() {
         select = caret
+        selectBoxes.clear()
     }
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {
@@ -302,8 +413,8 @@ open class TextInput(
         if (!init) {
             text.at.a.px += properties.paddingFromTextLateral
             text.at.b.px += properties.paddingFromTextVertical
-            text.size!!.a.px -= properties.paddingFromTextLateral
-            text.size!!.b.px -= properties.paddingFromTextVertical
+            text.size!!.a.px -= properties.paddingFromTextLateral * 2
+            text.size!!.b.px -= properties.paddingFromTextVertical * 2
             init = true
         }
         caretPos()

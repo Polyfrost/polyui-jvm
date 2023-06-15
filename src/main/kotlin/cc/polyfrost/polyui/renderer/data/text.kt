@@ -50,6 +50,8 @@ internal abstract class Text(
 ) {
     protected lateinit var renderer: Renderer
     protected val autoSized = size == origin
+    var textOffsetX = 0f
+    var textOffsetY = 0f
 
     /** weather the text is overflowing the [size] */
     var full = false
@@ -70,8 +72,11 @@ internal abstract class Text(
 
     abstract fun render(x: Float, y: Float, color: Color)
 
-    /** @return the [Line] that encapsulates this character, the index of the character relative to the start of the line, and the index of this line */
-    abstract fun getByCharIndex(index: Int): Triple<Line, Int, Int>
+    /**
+     * @return the [Line] that encapsulates this character, the index of the character relative to the start of the line, and the index of this line
+     * @since 0.18.5
+     */
+    abstract fun getLineByIndex(index: Int): Triple<Line, Int, Int>
 
     open fun calculate(renderer: Renderer) {
         this.renderer = renderer
@@ -118,10 +123,20 @@ internal class MultilineText(
         }
         lines = text.string.wrap(size.width, size.height, renderer, font, fontSize, textAlign).map {
             Line(it, renderer.textBounds(font, it, fontSize, textAlign) as Vec2<Unit>)
-        }.toArrayList()
+        }.toArrayList().also {
+            if (it.isEmpty()) {
+                it.add(Line("", 0f, fontSize))
+            }
+        }
+        // todo this
+        textOffsetY = if (lines.size * fontSize > size.height) {
+            size.height - lines.size * fontSize
+        } else {
+            0f
+        }
     }
 
-    override fun getByCharIndex(index: Int): Triple<Line, Int, Int> {
+    override fun getLineByIndex(index: Int): Triple<Line, Int, Int> {
         var i = 0
         lines.fastEachIndexed { lineIndex, line ->
             if (index < i + line.text.length) {
@@ -129,7 +144,8 @@ internal class MultilineText(
             }
             i += line.text.length
         }
-        return Triple(lines.last(), lines.last().text.lastIndex, lines.lastIndex)
+        val l = lines.last()
+        return Triple(l, l.text.length, lines.lastIndex)
     }
 
     override fun rescale(scaleX: Float, scaleY: Float): Float {
@@ -153,11 +169,10 @@ internal class SingleText(
 ) : Text(text, font, fontSize, textAlign, size) {
     override var lines: ArrayList<Line> = arrayListOf(Line(text.string, size.width, size.height))
     var init = false
-    var textOffset: Float = 0f
     override fun render(x: Float, y: Float, color: Color) {
-        if (textOffset != 0f) {
+        if (textOffsetX != 0f || textOffsetY != 0f) {
             renderer.pushScissor(x, y, size.width, size.height)
-            renderer.drawText(font, x + textOffset, y, text.string, color, fontSize, textAlign)
+            renderer.drawText(font, x + textOffsetX, y + textOffsetY, text.string, color, fontSize, textAlign)
             renderer.popScissor()
         } else {
             renderer.drawText(font, x, y, text.string, color, fontSize, textAlign)
@@ -181,7 +196,7 @@ internal class SingleText(
             } as Vec2<Unit>
         )
 
-        textOffset = if (lines[0].width > size.width) size.width - lines[0].width else 0f
+        textOffsetX = if (lines[0].width > size.width) size.width - lines[0].width else 0f
         init = true
     }
 
@@ -190,7 +205,7 @@ internal class SingleText(
         return lines[0]
     }
 
-    override fun getByCharIndex(index: Int): Triple<Line, Int, Int> = Triple(lines[0], index, 0)
+    override fun getLineByIndex(index: Int): Triple<Line, Int, Int> = Triple(lines[0], index, 0)
 
     override fun rescale(scaleX: Float, scaleY: Float): Float {
         // todo potentially something like this?

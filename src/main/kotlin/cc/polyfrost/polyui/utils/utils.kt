@@ -285,6 +285,7 @@ fun String.dropToLastSpace(maxIndex: Int = lastIndex): String {
 }
 
 fun String.dropAt(index: Int = lastIndex, amount: Int = 1): String {
+    if (index - amount == 0) return ""
     if (index - amount < 0) return this
     return substring(0, index - amount) + substring(index)
 }
@@ -380,6 +381,7 @@ fun String.wrap(
 ): ArrayList<String> {
     if (maxWidth == 0f) return arrayListOf(this)
     val words = split(" ").toArrayList()
+    if (words.size == 0) return arrayListOf("")
     val lines = arrayListOf<String>()
     var currentLine = StringBuilder()
 
@@ -419,4 +421,31 @@ fun String.wrap(
     }
 
     return lines
+}
+
+/**
+ * Returns the closest character index from the given string to the given point.
+ *
+ * @since 0.18.5
+ */
+fun String.closestToPoint(renderer: Renderer, font: Font, fontSize: Float, alignment: TextAlign, x: Float): Int {
+    var prev = 0f
+    for (c in this.indices) {
+        val w = renderer.textBounds(
+            font,
+            this.substring(0, c),
+            fontSize,
+            alignment
+        ).width
+        // get closest char (not necessarily more)
+        if (x < w) {
+            return if (x - prev < w - x) {
+                c - 1
+            } else {
+                c
+            }
+        }
+        prev = w
+    }
+    return -1
 }

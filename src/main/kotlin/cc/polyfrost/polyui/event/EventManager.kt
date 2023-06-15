@@ -28,7 +28,7 @@ import cc.polyfrost.polyui.component.Focusable
 import cc.polyfrost.polyui.input.KeyModifiers
 import cc.polyfrost.polyui.input.Keys
 import cc.polyfrost.polyui.layout.Layout
-import cc.polyfrost.polyui.utils.fastEach
+import cc.polyfrost.polyui.utils.fastEachReversed
 import cc.polyfrost.polyui.utils.fastRemoveIf
 import kotlin.experimental.and
 import kotlin.experimental.or
@@ -121,7 +121,7 @@ class EventManager(private val polyUI: PolyUI) {
     }
 
     private fun onApplicableLayouts(x: Float, y: Float, func: Layout.() -> Unit) {
-        polyUI.master.onAllLayouts {
+        polyUI.master.onAllLayouts(true) {
             if (isInside(x, y)) {
                 func(this)
             }
@@ -131,14 +131,14 @@ class EventManager(private val polyUI: PolyUI) {
     private fun onApplicableDrawables(x: Float, y: Float, func: Drawable.() -> Unit) {
         return onApplicableLayouts(x, y) {
             if (acceptsInput) func()
-            components.fastEach { if (it.isInside(x, y)) func(it) }
+            components.fastEachReversed { if (it.isInside(x, y)) func(it) }
         }
     }
 
     // don't check if the drawable is inside the mouse, this is unsafe and should only be used in setMousePosAndUpdate
     private fun onApplicableDrawablesUnsafe(x: Float, y: Float, func: Drawable.() -> Unit) {
         return onApplicableLayouts(x, y) {
-            components.fastEach { func(it) }
+            components.fastEachReversed(func)
             if (acceptsInput) func()
         }
     }
@@ -149,10 +149,6 @@ class EventManager(private val polyUI: PolyUI) {
         if (polyUI.keyBinder.accept(event)) return
         onApplicableDrawables(mouseX, mouseY) {
             if (mouseOver) {
-                if (button == 0 && this is Focusable) {
-                    polyUI.focus(this)
-                    return@onApplicableDrawables
-                }
                 if (accept(event)) return@onApplicableDrawables
             }
         }
@@ -187,11 +183,17 @@ class EventManager(private val polyUI: PolyUI) {
         val event = Events.MouseReleased(button, mouseX, mouseY, keyModifiers)
         var releaseCancelled = false
         var clickedCancelled = false
-        val event2 = Events.MouseClicked(button, clickAmount, keyModifiers)
+        val event2 = Events.MouseClicked(button, mouseX, mouseY, clickAmount, keyModifiers)
         if (polyUI.keyBinder.accept(event)) return
         if (polyUI.keyBinder.accept(event2)) return
         onApplicableDrawables(mouseX, mouseY) {
             if (mouseOver) {
+                if (button == 0 && this is Focusable) {
+                    polyUI.focus(this)
+                    accept(event2)
+                    clickedCancelled = true
+                    releaseCancelled = true
+                }
                 if (!releaseCancelled) {
                     if (accept(event)) releaseCancelled = true
                 }

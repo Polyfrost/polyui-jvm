@@ -32,11 +32,28 @@ package cc.polyfrost.polyui.utils
  *
  * @param f The function to apply to each element.
  *
- * @see [fastRemoveIf]
+ * @see [fastEachReversed]
  */
 inline fun <L, E> L.fastEach(f: (E) -> Unit) where L : List<E>, L : RandomAccess {
     if (this.size == 0) return
     for (i in 0 until this.size) {
+        f(this[i])
+    }
+}
+
+/**
+ * [forEach] re-implementation that doesn't allocate any memory, but it traverses the list backwards.
+ *
+ * Utilizes the [RandomAccess] trait.
+ *
+ * @param f The function to apply to each element.
+ *
+ * @see [fastEach]
+ * @since 0.18.5
+ */
+inline fun <L, E> L.fastEachReversed(f: (E) -> Unit) where L : List<E>, L : RandomAccess {
+    if (this.size == 0) return
+    for (i in this.size - 1 downTo 0) {
         f(this[i])
     }
 }
@@ -58,11 +75,29 @@ inline fun <L, E> L.fastEachIndexed(f: (Int, E) -> Unit) where L : List<E>, L : 
 }
 
 /**
+ * [forEachIndexed] re-implementation that doesn't allocate any memory, but it traverses the list backwards.
+ *
+ * Utilizes the [RandomAccess] trait.
+ *
+ * @param f The function to apply to each element.
+ *
+ * @see [fastEachIndexed]
+ * @since 0.18.5
+ */
+inline fun <L, E> L.fastEachIndexedReversed(f: (Int, E) -> Unit) where L : List<E>, L : RandomAccess {
+    if (this.size == 0) return
+    for (i in this.size - 1 downTo 0) {
+        f(i, this[i])
+    }
+}
+
+/**
  * [removeIf][kotlin.collections.filterInPlace] re-implementation that doesn't allocate any memory.
  *
  * Utilizes the [RandomAccess] trait.
  *
  * @see [fastEach]
+ * @see [fastEachIndexedReversed]
  * @return false if the list is empty, true otherwise.
  */
 inline fun <L, E> L.fastRemoveIf(f: (E) -> Boolean): Boolean where L : MutableList<E>, L : RandomAccess {

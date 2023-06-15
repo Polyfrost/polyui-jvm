@@ -29,6 +29,7 @@ import cc.polyfrost.polyui.input.PolyTranslator.Companion.localised
 import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.property.impl.TextProperties
 import cc.polyfrost.polyui.renderer.Renderer
+import cc.polyfrost.polyui.renderer.data.Line
 import cc.polyfrost.polyui.renderer.data.MultilineText
 import cc.polyfrost.polyui.renderer.data.SingleText
 import cc.polyfrost.polyui.renderer.data.Text
@@ -69,8 +70,6 @@ open class Text @JvmOverloads constructor(
     val full get() = str.full
     val font get() = this.properties.font
 
-    val textOffset get() = (str as? SingleText)?.textOffset ?: x
-
     override var size: Size<Unit>?
         get() = str.size
         set(value) {
@@ -88,6 +87,7 @@ open class Text @JvmOverloads constructor(
         }
 
     override fun render() {
+        if (text.string === "") return
         str.render(at.a.px, at.b.px, color)
     }
 
@@ -95,7 +95,11 @@ open class Text @JvmOverloads constructor(
 
     override fun reset() = str.text.reset()
 
-    fun getByCharIndex(index: Int) = str.getByCharIndex(index)
+    /**
+     * @return the [Line] that encapsulates this character, the index of the character relative to the start of the line, and the index of this line
+     * @since 0.18.5
+     */
+    fun getLineByIndex(index: Int) = str.getLineByIndex(index)
 
     override fun rescale(scaleX: Float, scaleY: Float) {
         super.rescale(scaleX, scaleY)

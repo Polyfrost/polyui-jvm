@@ -308,7 +308,13 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         nvgFill(vg)
     }
 
+    @Suppress("NAME_SHADOWING")
     override fun textBounds(font: Font, text: String, fontSize: Float, textAlign: TextAlign): Vec2<Unit.Pixel> {
+        // nanovg trims single whitespace, so add an extra one (lol)
+        var text = text
+        if (text.endsWith(' ')) {
+            text += ' '
+        }
         val out = FloatArray(4)
         nvgFontFaceId(vg, getFont(font).id)
         nvgTextAlign(vg, textAlign(textAlign))
