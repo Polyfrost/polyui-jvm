@@ -36,7 +36,7 @@ import java.util.Locale
  *
  *  This can also be set with `-Dpolyui.locale="ll_CC"` or using [Settings.defaultLocale][cc.polyfrost.polyui.property.Settings.defaultLocale].
  *
- *  If the file cannot be found, PolyUI will check for a file named `ll_**.lang` (for example `en_default.lang`) and use that instead if present.
+ *  If the file cannot be found, PolyUI will check for a file named `ll_default.lang` (for example `en_default.lang`) and use that instead if present.
  *  If that isn't found, it will use the default locale (above), and if that isn't found it will crash.
  *
  *  Keys can also be added using
@@ -132,7 +132,7 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
             get() {
                 @Suppress("ReplaceCallWithBinaryOperator")
                 if (canTranslate && field.equals(key)) {
-                    field = polyTranslator!!.translate(key, *objects)
+                    field = polyTranslator!!.translate(key, objects)
                     if (field == key) canTranslate = false // key/file missing
                 }
                 return field
@@ -168,7 +168,7 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
      * Warnings will be issued if the file/key does not exist.
      * @throws IllegalArgumentException if multiple values exist for the same key.
      */
-    fun translate(key: String, vararg objects: Any?): String {
+    fun translate(key: String, objects: Array<out Any?>): String {
         val k = "$key="
         return map[key] ?: with(
             getResourceStreamNullable(resourcePath)?.bufferedReader()?.lines()?.filter { it.startsWith(k) }
@@ -176,16 +176,16 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
         ) {
             if (this == null) {
                 PolyUI.LOGGER.warn("No translation for $resourcePath!")
-                val path = "${resourcePath.substring(0, resourcePath.lastIndex - 6)}**.lang"
+                val path = "${resourcePath.substring(0, resourcePath.lastIndex - 6)}default.lang"
                 return if (getResourceStreamNullable(path) != null) {
                     PolyUI.LOGGER.warn("\t\t> Global language file found ($path), using that instead. Country-specific language features will be ignored. Use -Dpolyui.locale to set a locale.")
                     resourcePath = path
-                    translate(key, *objects)
+                    translate(key, objects)
                 } else {
                     resourcePath = "$translationDir/${polyUI.settings.defaultLocale}.lang"
                     if (getResourceStreamNullable(resourcePath) == null) throw IllegalArgumentException("No global language file found ($path) or default language file found ($resourcePath)!")
-                    PolyUI.LOGGER.warn("\t\t> No global language file found ($path) either, using default language instead.")
-                    translate(key, *objects)
+                    PolyUI.LOGGER.warn("\t\t> No global language file found ($path) either, using default language instead. Use -Dpolyui.locale to set a locale.")
+                    translate(key, objects)
                 }
             }
             if (isEmpty()) {

@@ -138,10 +138,10 @@ abstract class Layout(
     protected open fun rasterize() {
         if (fbo != null && needsRedraw && fboTracker < 2) {
             fboTracker++
-            renderer.bindFramebuffer(fbo!!)
+            renderer.bindFramebuffer(fbo)
             render()
             renderChildren()
-            renderer.unbindFramebuffer(fbo!!)
+            renderer.unbindFramebuffer(fbo)
         }
     }
 

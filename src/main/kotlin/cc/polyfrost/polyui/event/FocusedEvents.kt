@@ -41,7 +41,7 @@ open class FocusedEvents : Event {
 
         inline val modifiers: Array<KeyModifiers> get() = KeyModifiers.fromModifierMerged(mods)
 
-        fun hasModifier(modifier: KeyModifiers): Boolean = (mods and modifier.value) != 0.toShort()
+        fun hasModifier(modifier: KeyModifiers): Boolean = (mods and modifier.value).toInt() != 0
 
         override fun hashCode(): Int {
             var result = key.hashCode() + 500
@@ -73,7 +73,7 @@ open class FocusedEvents : Event {
 
         inline val modifiers get() = KeyModifiers.fromModifierMerged(mods)
 
-        fun hasModifier(modifier: KeyModifiers): Boolean = (mods and modifier.value) != 0.toShort()
+        fun hasModifier(modifier: KeyModifiers): Boolean = (mods and modifier.value).toInt() != 0
 
         override fun hashCode(): Int {
             var result = key.hashCode() + 5000

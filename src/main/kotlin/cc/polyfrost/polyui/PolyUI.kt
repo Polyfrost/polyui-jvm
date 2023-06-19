@@ -211,7 +211,7 @@ class PolyUI @JvmOverloads constructor(
                 if (!refuseFramebuffer && settings.minDrawablesForFramebuffer < drawables) {
                     fbo = renderer.createFramebuffer(width, height)
                     if (settings.debug) {
-                        LOGGER.info("Layout {} ({} items) created with {}", varargs(simpleName, drawables, fbo!!))
+                        LOGGER.info("Layout {} ({} items) created with {}", varargs(simpleName, drawables, fbo))
                     }
                 }
             }
@@ -257,10 +257,15 @@ class PolyUI @JvmOverloads constructor(
                 LOGGER.info(perf)
             }
         }
-        LOGGER.info("PolyUI initialized")
+        LOGGER.info("PolyUI initialized!")
         if (settings.debug) debugPrint()
     }
 
+    /**
+     * Resize this PolyUI instance.
+     *
+     * This function is **NOT thread safe** and must be called from the main thread!
+     */
     @Suppress("NAME_SHADOWING")
     fun onResize(newWidth: Int, newHeight: Int, pixelRatio: Float = renderer.pixelRatio, force: Boolean = false) {
         if (newWidth == 0 || newHeight == 0) {
@@ -311,7 +316,7 @@ class PolyUI @JvmOverloads constructor(
 
         master.calculateBounds()
         if (settings.masterIsFramebuffer) {
-            renderer.deleteFramebuffer(master.fbo!!)
+            renderer.deleteFramebuffer(master.fbo)
             master.fbo = renderer.createFramebuffer(newWidth.toFloat(), newHeight.toFloat())
         }
         master.rescale(
@@ -321,7 +326,7 @@ class PolyUI @JvmOverloads constructor(
 
         master.onAllLayouts {
             if (fbo != null) {
-                renderer.deleteFramebuffer(fbo!!)
+                renderer.deleteFramebuffer(fbo)
                 fbo = renderer.createFramebuffer(width, height)
             }
             needsRedraw = true // lol that was funny to debug

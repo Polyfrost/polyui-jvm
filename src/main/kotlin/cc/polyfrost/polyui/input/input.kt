@@ -88,7 +88,7 @@ enum class Keys(val keyName: String, val value: Short) {
          * */
         @JvmStatic
         fun toString(key: Keys, modifiers: Short = 0): String {
-            return if (modifiers == 0.toShort()) {
+            return if (modifiers.toInt() == 0) {
                 key.name
             } else {
                 "${Modifiers.toString(modifiers)}+${key.name}"
@@ -102,7 +102,7 @@ enum class Keys(val keyName: String, val value: Short) {
          */
         @JvmStatic
         fun toString(key: Char, modifiers: Short = 0): String {
-            return if (modifiers == 0.toShort()) {
+            return if (modifiers.toInt() == 0) {
                 key.toString()
             } else {
                 "${Modifiers.toString(modifiers)}+$key"
@@ -116,7 +116,7 @@ enum class Keys(val keyName: String, val value: Short) {
          */
         @JvmStatic
         fun toStringPretty(key: Keys, modifiers: Short = 0): String {
-            return if (modifiers == 0.toShort()) {
+            return if (modifiers.toInt() == 0) {
                 key.keyName
             } else {
                 "${Modifiers.toStringPretty(modifiers)} + ${key.keyName}"
@@ -130,7 +130,7 @@ enum class Keys(val keyName: String, val value: Short) {
          */
         @JvmStatic
         fun toStringPretty(key: Char, modifiers: Short = 0): String {
-            return if (modifiers == 0.toShort()) {
+            return if (modifiers.toInt() == 0) {
                 key.toString()
             } else {
                 "${Modifiers.toStringPretty(modifiers)} + $key"
@@ -162,7 +162,7 @@ enum class Mouse(val keyName: String, val value: Short) {
 
         @JvmStatic
         fun toString(button: Mouse, modifiers: Short = 0): String {
-            return if (modifiers == 0.toShort()) {
+            return if (modifiers.toInt() == 0) {
                 button.name
             } else {
                 "${Modifiers.toString(modifiers)}+${button.name}"
@@ -171,7 +171,7 @@ enum class Mouse(val keyName: String, val value: Short) {
 
         @JvmStatic
         fun toStringPretty(button: Mouse, modifiers: Short = 0): String {
-            return if (modifiers == 0.toShort()) {
+            return if (modifiers.toInt() == 0) {
                 button.keyName
             } else {
                 "${Modifiers.toStringPretty(modifiers)} + ${button.keyName}"
@@ -209,10 +209,10 @@ enum class Modifiers(val keyName: String, val value: Short) {
          */
         @JvmStatic
         fun fromModifierMerged(modifiers: Short): Array<Modifiers> {
-            if (modifiers == 0.toShort()) return emptyArray()
+            if (modifiers.toInt() == 0) return emptyArray()
             val mods = mutableListOf<Modifiers>()
             for (mod in values()) {
-                if (mod.value and modifiers != 0.toShort()) {
+                if ((mod.value and modifiers).toInt() != 0) {
                     mods.add(mod)
                 }
             }
@@ -225,7 +225,7 @@ enum class Modifiers(val keyName: String, val value: Short) {
          */
         @JvmStatic
         fun merge(vararg modifiers: Modifiers): Short {
-            var merged = 0.toShort()
+            var merged: Short = 0
             for (mod in modifiers) {
                 merged = merged or mod.value
             }

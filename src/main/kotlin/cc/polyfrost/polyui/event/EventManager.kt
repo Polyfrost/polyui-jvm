@@ -209,7 +209,7 @@ class EventManager(private val polyUI: PolyUI) {
     fun onMouseScrolled(amountX: Int, amountY: Int) {
         var amountX = if (polyUI.settings.naturalScrolling) amountX else -amountX
         var amountY = if (polyUI.settings.naturalScrolling) amountY else -amountY
-        if ((keyModifiers and KeyModifiers.LSHIFT.value) != 0.toShort()) {
+        if ((keyModifiers and KeyModifiers.LSHIFT.value).toInt() != 0) {
             (amountX to amountY).let {
                 amountX = it.second
                 amountY = it.first

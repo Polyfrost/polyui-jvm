@@ -180,16 +180,18 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         return f
     }
 
-    override fun deleteFramebuffer(fbo: Framebuffer) {
+    override fun deleteFramebuffer(fbo: Framebuffer?) {
         fbos.remove(fbo).also {
-            nvgluDeleteFramebuffer(
-                vg,
-                it ?: throw IllegalStateException("Framebuffer not found when deleting it, already cleaned?")
-            )
+            if (it == null) {
+                PolyUI.LOGGER.error("Framebuffer not found when deleting it, already cleaned?")
+                return
+            }
+            nvgluDeleteFramebuffer(vg, it)
         }
     }
 
-    override fun bindFramebuffer(fbo: Framebuffer) {
+    override fun bindFramebuffer(fbo: Framebuffer?) {
+        if (fbo == null) return
         nvgEndFrame(vg)
         nvgluBindFramebuffer(vg, fbos[fbo] ?: throw NullPointerException("Cannot bind: $fbo does not exist!"))
         glViewport(0, 0, fbo.width.toInt(), fbo.height.toInt())
@@ -198,7 +200,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         nvgBeginFrame(vg, fbo.width, fbo.height, pixelRatio)
     }
 
-    override fun unbindFramebuffer(fbo: Framebuffer) {
+    override fun unbindFramebuffer(fbo: Framebuffer?) {
         nvgEndFrame(vg)
         nvgluBindFramebuffer(vg, null)
         glViewport(0, 0, width.toInt(), height.toInt())

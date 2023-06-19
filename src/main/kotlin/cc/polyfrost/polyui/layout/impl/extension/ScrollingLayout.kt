@@ -312,7 +312,7 @@ class ScrollingLayout(
         override fun accept(event: Events): Boolean {
             if (!enabled) return super.accept(event)
             if (event is Events.MousePressed) {
-                if (event.mods != 0.toShort()) return super.accept(event)
+                if (event.mods.toInt() != 0) return super.accept(event)
                 mouseClickX = polyui.eventManager.mouseX - at.a.px
                 mouseClickY = polyui.eventManager.mouseY - at.b.px
                 mouseDown = true

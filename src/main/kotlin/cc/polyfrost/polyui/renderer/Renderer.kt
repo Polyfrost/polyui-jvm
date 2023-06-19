@@ -275,11 +275,11 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
     /** Create a new framebuffer. It is down to you (as a rendering implementation) to cache this, and dispose of it as necessary. */
     abstract fun createFramebuffer(width: Float, height: Float): Framebuffer
 
-    abstract fun deleteFramebuffer(fbo: Framebuffer)
+    abstract fun deleteFramebuffer(fbo: Framebuffer?)
 
-    abstract fun bindFramebuffer(fbo: Framebuffer)
+    abstract fun bindFramebuffer(fbo: Framebuffer?)
 
-    abstract fun unbindFramebuffer(fbo: Framebuffer)
+    abstract fun unbindFramebuffer(fbo: Framebuffer?)
 
     /** draw the given framebuffer to the screen. */
     abstract fun drawFramebuffer(

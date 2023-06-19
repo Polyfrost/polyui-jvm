@@ -284,16 +284,19 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
         open fun update(deltaTimeNanos: Long): Boolean {
             if (animation != null) {
                 dirty = true
-                val from = this.from!!
-                val to = this.to!!
-                if (animation!!.isFinished) {
-                    animation = null
+                if (current == null) return false
+                val animation = this.animation ?: return false
+                if (animation.isFinished) {
+                    this.animation = null
                     this.from = null
                     this.to = null
                     this.current = null
                     return true
                 }
-                val progress = animation!!.update(deltaTimeNanos)
+                val from = this.from ?: return false
+                val to = this.to ?: return false
+
+                val progress = animation.update(deltaTimeNanos)
                 RGBtoHSB(
                     (from[0] + to[0] * progress).toInt(),
                     (from[1] + to[1] * progress).toInt(),

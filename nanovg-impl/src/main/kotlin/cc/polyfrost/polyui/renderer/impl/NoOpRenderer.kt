@@ -145,13 +145,13 @@ class NoOpRenderer(width: Float, height: Float) : Renderer(width, height) {
         return Framebuffer(width, height)
     }
 
-    override fun deleteFramebuffer(fbo: Framebuffer) {
+    override fun deleteFramebuffer(fbo: Framebuffer?) {
     }
 
-    override fun bindFramebuffer(fbo: Framebuffer) {
+    override fun bindFramebuffer(fbo: Framebuffer?) {
     }
 
-    override fun unbindFramebuffer(fbo: Framebuffer) {
+    override fun unbindFramebuffer(fbo: Framebuffer?) {
     }
 
     override fun drawFramebuffer(fbo: Framebuffer, x: Float, y: Float, width: Float, height: Float) {
