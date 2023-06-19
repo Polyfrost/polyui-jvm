@@ -276,14 +276,6 @@ fun StringBuilder.append(c: CharSequence, repeats: Int): StringBuilder {
     return this
 }
 
-fun String.dropToLastSpace(maxIndex: Int = lastIndex): String {
-    val lastSpace = lastIndexOf(' ', maxIndex)
-    if (lastSpace == -1) {
-        return ""
-    }
-    return substring(0, lastSpace)
-}
-
 fun String.dropAt(index: Int = lastIndex, amount: Int = 1): String {
     if (index - amount == 0) return ""
     if (index - amount < 0) return this

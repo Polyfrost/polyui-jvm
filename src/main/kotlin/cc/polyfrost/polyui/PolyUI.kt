@@ -44,7 +44,6 @@ import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.utils.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import kotlin.system.measureNanoTime
 
 /**
  * # PolyUI
@@ -80,7 +79,7 @@ import kotlin.system.measureNanoTime
  *
  * **Interactions** are driven by [events][EventManager], which thanks to Kotlin's inlining are a zero-overhead way of distributing events, such as [mouse clicks][cc.polyfrost.polyui.event.Events.MouseClicked], or [key presses][cc.polyfrost.polyui.event.FocusedEvents.KeyPressed].
  *
- * PolyUI also supports a variety of [animations][cc.polyfrost.polyui.animate.Animation] and [transitions][cc.polyfrost.polyui.animate.transitions.Transition], which can be used to make your UI more dynamic, along with dynamically [adding][addComponent] and [removing][removeComponent] components.
+ * PolyUI also supports a variety of [animations][cc.polyfrost.polyui.animate.Animation] and [transitions][cc.polyfrost.polyui.animate.Transition], which can be used to make your UI more dynamic, along with dynamically [adding][addComponent] and [removing][removeComponent] components.
  */
 class PolyUI @JvmOverloads constructor(
     translationDirectory: String? = null,
@@ -95,9 +94,8 @@ class PolyUI @JvmOverloads constructor(
      */
     var colors = colors
         set(value) {
-            LOGGER.info("Changing colors from {} to {}", field, value)
             field = value
-            val t = measureNanoTime {
+            timed("Changing colors from $field to $value") {
                 master.onAll(true) {
                     onColorsChanged(value)
                 }
@@ -105,7 +103,6 @@ class PolyUI @JvmOverloads constructor(
                     p.colors = value
                 }
             }
-            if (settings.debug) LOGGER.info("\t\t> took {}ms", t / 1_000_000f)
         }
 
     /**
@@ -123,7 +120,7 @@ class PolyUI @JvmOverloads constructor(
     var clipboard: String?
         get() = window.getClipboard()
         set(value) = window.setClipboard(value)
-    val master = PixelLayout(Point(0.px, 0.px), Size(renderer.width.px, renderer.height.px), drawables = drawables, resizesChildren = true)
+    val master = PixelLayout(Point(0.px, 0.px), Size(renderer.width.px, renderer.height.px), drawables = drawables, resizesChildren = true, acceptInput = false)
     val eventManager = EventManager(this)
     val keyBinder = KeyBinder()
     val translator = PolyTranslator(this, translationDirectory ?: "")
@@ -209,6 +206,7 @@ class PolyUI @JvmOverloads constructor(
                     LOGGER.warn("Layout {} is larger than the window. This may cause issues.", simpleName)
                 }
                 if (!settings.framebuffersEnabled) return@onAllLayouts
+                @Suppress("NAME_SHADOWING")
                 val drawables = countDrawables()
                 if (!refuseFramebuffer && settings.minDrawablesForFramebuffer < drawables) {
                     fbo = renderer.createFramebuffer(width, height)
@@ -264,7 +262,7 @@ class PolyUI @JvmOverloads constructor(
     }
 
     @Suppress("NAME_SHADOWING")
-    fun onResize(newWidth: Int, newHeight: Int, pixelRatio: Float, force: Boolean = false) {
+    fun onResize(newWidth: Int, newHeight: Int, pixelRatio: Float = renderer.pixelRatio, force: Boolean = false) {
         if (newWidth == 0 || newHeight == 0) {
             LOGGER.error("Cannot resize to zero size: {}x{}", newWidth, newHeight)
             return
@@ -498,6 +496,19 @@ class PolyUI @JvmOverloads constructor(
                 return
             }
         }
+    }
+
+    /**
+     * Time the [block] and return how long it took, as well as logging with the [msg] if [debug][cc.polyfrost.polyui.property.Settings.debug] is active.
+     * @since 0.18.5
+     */
+    fun timed(msg: String? = null, block: () -> kotlin.Unit): Long {
+        if (msg != null && settings.debug) LOGGER.info(msg)
+        val now = System.nanoTime()
+        block()
+        val time = System.nanoTime() - now
+        if (settings.debug) LOGGER.info("${if (msg != null) "\t\t> " else ""}took ${time / 1_000_000.0}ms")
+        return time
     }
 
     override fun toString() = "PolyUI($width x $height)"

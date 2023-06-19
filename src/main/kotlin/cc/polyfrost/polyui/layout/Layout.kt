@@ -99,8 +99,8 @@ abstract class Layout(
     override var layout: Layout? = null
 
     init {
-        if (onAdded != null) addEventHook(Events.Added, onAdded)
-        if (onRemoved != null) addEventHook(Events.Removed, onRemoved)
+        if (onAdded != null) addEventHandler(Events.Added, onAdded)
+        if (onRemoved != null) addEventHandler(Events.Removed, onRemoved)
     }
 
     /** this is the function that is called every frame. It decides whether the layout needs to be entirely re-rendered.
@@ -176,12 +176,12 @@ abstract class Layout(
      * @since 0.18.0
      */
     open fun onAllLayouts(reversed: Boolean = false, function: Layout.() -> kotlin.Unit) {
-        function(this)
         if (reversed) {
             children.fastEachReversed { it.onAllLayouts(true, function) }
         } else {
             children.fastEach { it.onAllLayouts(false, function) }
         }
+        function(this)
     }
 
     /**

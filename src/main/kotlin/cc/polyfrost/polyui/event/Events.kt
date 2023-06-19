@@ -99,7 +99,7 @@ sealed class Events : Event {
      * @see MouseClicked
      * @see MouseEntered
      */
-    data class MouseClicked internal constructor(val button: Int, val mouseX: Float, val mouseY: Float, val amountClicks: Int, val mods: Short) :
+    data class MouseClicked internal constructor(val button: Int, val mouseX: Float, val mouseY: Float, val clicks: Int, val mods: Short) :
         Events() {
 
         @JvmOverloads
@@ -108,7 +108,7 @@ sealed class Events : Event {
         override fun toString(): String = "MouseClicked($mouseX x $mouseY, ${Mouse.toStringPretty(Mouse.fromValue(button), mods)})"
         override fun hashCode(): Int {
             var result = button
-            result = 31 * result + amountClicks
+            result = 31 * result + clicks
             result = 31 * result + mods
             return result
         }
@@ -119,7 +119,7 @@ sealed class Events : Event {
             other as MouseClicked
 
             if (button != other.button) return false
-            if (amountClicks != other.amountClicks) return false
+            if (clicks != other.clicks) return false
             return mods == other.mods
         }
     }
@@ -131,6 +131,13 @@ sealed class Events : Event {
     /** acceptable by component and layout, when the mouse leaves this drawable.
      * @see MouseEntered */
     data object MouseExited : Events()
+
+    /**
+     * acceptable by component and layout, when the mouse is moved on this drawable.
+     *
+     * This does not have any data attached from it so that it is not instanced every time the mouse moves. It can be accessed with [polyUI.mouseX][cc.polyfrost.polyui.PolyUI.mouseX] and [polyUI.mouseY][cc.polyfrost.polyui.PolyUI.mouseY].
+     */
+    data object MouseMoved : Events()
 
     /** Dispatched when the mouse is scrolled on this component/layout.
      *

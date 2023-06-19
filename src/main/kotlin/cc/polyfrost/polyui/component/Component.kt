@@ -98,7 +98,7 @@ abstract class Component @JvmOverloads constructor(
 
     init {
         events.forEach {
-            addEventHook(it.event, it.handler)
+            addEventHandler(it.event, it.handler)
         }
     }
 

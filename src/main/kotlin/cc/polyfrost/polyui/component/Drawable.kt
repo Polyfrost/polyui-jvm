@@ -36,6 +36,12 @@ import cc.polyfrost.polyui.unit.Unit
  */
 abstract class Drawable(open var acceptsInput: Boolean = true) {
     open val eventHandlers = HashMap<Events, Drawable.() -> Boolean>()
+
+    /**
+     * This is the name of this drawable, and it will be consistent over reboots of the program, so you can use it to get components from a layout by ID, e.g:
+     *
+     * `val text = myLayout["Text@4cf777e8"] as Text`
+     */
     open var simpleName = "${this::class.simpleName}@${Integer.toHexString(this.hashCode())}"
 
     /** position **relative** to the [parents][layout] position. */
@@ -116,16 +122,23 @@ abstract class Drawable(open var acceptsInput: Boolean = true) {
         return eventHandlers[event]?.let { it(this) } ?: false
     }
 
-    protected fun addEventHook(event: Events, handler: Drawable.() -> Boolean) {
-        this.eventHandlers[event] = handler
+    /**
+     * Add event handlers to this drawable.
+     * @since 0.18.5
+     */
+    fun addEventHandlers(vararg handlers: Events.Handler) {
+        for (handler in handlers) {
+            eventHandlers[handler.event] = handler.handler
+        }
     }
 
-    @JvmName("addEventhook")
-    protected fun addEventHook(event: Events, handler: Drawable.() -> kotlin.Unit) {
-        this.eventHandlers[event] = {
-            handler(this)
-            true
-        }
+    protected fun addEventHandler(event: Events, handler: Drawable.() -> Boolean) {
+        eventHandlers[event] = handler
+    }
+
+    @JvmName("addEventhandler")
+    protected fun addEventHandler(event: Events, handler: Drawable.() -> kotlin.Unit) {
+        eventHandlers[event] = { handler(); true }
     }
 
     /** Use this function to reset your component's [PolyText][cc.polyfrost.polyui.input.PolyTranslator] if it is using one. */

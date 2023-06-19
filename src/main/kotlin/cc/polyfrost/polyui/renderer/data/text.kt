@@ -31,10 +31,7 @@ import cc.polyfrost.polyui.unit.TextAlign
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.unit.Vec2
 import cc.polyfrost.polyui.unit.origin
-import cc.polyfrost.polyui.utils.fastEach
-import cc.polyfrost.polyui.utils.fastEachIndexed
-import cc.polyfrost.polyui.utils.toArrayList
-import cc.polyfrost.polyui.utils.wrap
+import cc.polyfrost.polyui.utils.*
 
 /**
  * internal superclass that represents text for rendering.
@@ -139,8 +136,8 @@ internal class MultilineText(
     override fun getLineByIndex(index: Int): Triple<Line, Int, Int> {
         var i = 0
         lines.fastEachIndexed { lineIndex, line ->
-            if (index < i + line.text.length) {
-                return Triple(line, index - i, lineIndex)
+            if (index <= i + line.text.length) {
+                return Triple(line, (index - i - lineIndex), lineIndex)
             }
             i += line.text.length
         }

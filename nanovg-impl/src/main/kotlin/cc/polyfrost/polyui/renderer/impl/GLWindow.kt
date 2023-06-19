@@ -69,8 +69,6 @@ class GLWindow @JvmOverloads constructor(
         private set
     var contentScaleY = 1f
         private set
-    var pixelRatio = 1f
-        private set
     lateinit var polyUI: PolyUI
         private set
     var fpsCap: Double = 0.0
@@ -112,6 +110,12 @@ class GLWindow @JvmOverloads constructor(
 
         glfwMakeContextCurrent(handle)
         createCapabilities()
+        println("System Information:")
+        println("\tGPU: ${glGetString(GL_RENDERER)}")
+        println("\tDriver version: ${glGetString(GL_VERSION)}")
+        println("\tOS: ${System.getProperty("os.name")} v${System.getProperty("os.version")}; ${System.getProperty("os.arch")}")
+        println("\tJava version: ${System.getProperty("java.version")}; ${System.getProperty("java.vm.name")} from ${System.getProperty("java.vendor")} (${System.getProperty("java.vendor.url")})")
+
         glfwSetTime(0.0)
     }
 
@@ -120,16 +124,13 @@ class GLWindow @JvmOverloads constructor(
         glfwSetFramebufferSizeCallback(handle) { _, width, height ->
             this.width = width
             this.height = height
-            polyUI.onResize((width / pixelRatio).toInt(), (height / pixelRatio).toInt(), pixelRatio)
-            // decreases the wierd effects
-            polyUI.render()
+            polyUI.onResize((width / polyUI.renderer.pixelRatio).toInt(), (height / polyUI.renderer.pixelRatio).toInt())
         }
 
         glfwSetWindowContentScaleCallback(handle) { _, xScale, yScale ->
-            pixelRatio = max(xScale, yScale)
+            val pixelRatio = max(xScale, yScale)
+            if (polyUI.settings.debug) PolyUI.LOGGER.info("Pixel ratio: $pixelRatio")
             polyUI.onResize((width / pixelRatio).toInt(), (height / pixelRatio).toInt(), pixelRatio)
-            // decreases the wierd effects
-            polyUI.render()
         }
 
         glfwSetMouseButtonCallback(handle) { _, button, action, _ ->
@@ -141,7 +142,7 @@ class GLWindow @JvmOverloads constructor(
         }
 
         glfwSetCursorPosCallback(handle) { _, x, y ->
-            polyUI.eventManager.setMousePosAndUpdate(x.toFloat() / pixelRatio, y.toFloat() / pixelRatio)
+            polyUI.eventManager.setMousePosAndUpdate(x.toFloat() / polyUI.renderer.pixelRatio, y.toFloat() / polyUI.renderer.pixelRatio)
         }
 
         glfwSetKeyCallback(handle) { _, keyCode, _, action, mods ->
@@ -238,7 +239,7 @@ class GLWindow @JvmOverloads constructor(
             polyUI.onResize(
                 (this.width / this.contentScaleX).toInt(),
                 (this.height / this.contentScaleY).toInt(),
-                max(this.contentScaleX, this.contentScaleY).also { this.pixelRatio = it }
+                max(this.contentScaleX, this.contentScaleY)
             )
         }
 

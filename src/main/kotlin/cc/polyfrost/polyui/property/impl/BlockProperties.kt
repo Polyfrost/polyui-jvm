@@ -53,21 +53,21 @@ open class BlockProperties @JvmOverloads constructor(
         addEventHandlers(
             Events.MousePressed(0) to {
                 recolor(pressedColor, pressedAnimation, pressedAnimationDuration)
-                false
+                true
             },
             Events.MouseReleased(0) to {
                 recolor(hoverColor, pressedAnimation, pressedAnimationDuration)
-                false
+                true
             },
-            Events.MouseEntered {
+            Events.MouseEntered to {
                 recolor(hoverColor, hoverAnimation, hoverAnimationDuration)
                 polyui.cursor = Cursor.Clicker
-                false
+                true
             },
-            Events.MouseExited {
+            Events.MouseExited to {
                 recolor(properties.color, hoverAnimation, hoverAnimationDuration)
                 polyui.cursor = Cursor.Pointer
-                false
+                true
             }
         )
     }

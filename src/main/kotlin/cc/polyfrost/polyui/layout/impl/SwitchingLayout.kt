@@ -148,8 +148,8 @@ class SwitchingLayout(
         children.fastEach {
             it.layout = this
             it.onAllLayouts {
-                it.components.fastEach {
-                    it.acceptsInput = false
+                it.components.fastEach { component ->
+                    component.acceptsInput = false
                 }
             }
         }

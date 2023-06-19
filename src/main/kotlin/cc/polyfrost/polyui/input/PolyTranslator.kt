@@ -130,6 +130,7 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
         /** the translated string. This value is automatically set to the translated value when retrieved. */
         var string: String = key
             get() {
+                @Suppress("ReplaceCallWithBinaryOperator")
                 if (canTranslate && field.equals(key)) {
                     field = polyTranslator!!.translate(key, *objects)
                     if (field == key) canTranslate = false // key/file missing

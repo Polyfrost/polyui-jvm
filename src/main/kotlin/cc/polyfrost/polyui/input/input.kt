@@ -259,4 +259,3 @@ enum class Modifiers(val keyName: String, val value: Short) {
 }
 
 typealias KeyModifiers = Modifiers
-typealias MouseButtons = Mouse

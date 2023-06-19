@@ -64,8 +64,9 @@ open class Text @JvmOverloads constructor(
 
     final override val properties: TextProperties
         get() = super.properties as TextProperties
-    val fontSize = fontSize ?: this.properties.fontSize
+    private val fs = fontSize ?: this.properties.fontSize
     internal lateinit var str: Text
+    val fontSize get() = str.fontSize
     val lines get() = str.lines
     val full get() = str.full
     val font get() = this.properties.font
@@ -87,7 +88,8 @@ open class Text @JvmOverloads constructor(
         }
 
     override fun render() {
-        if (text.string === "") return
+        @Suppress("ReplaceSizeZeroCheckWithIsEmpty")
+        if (text.string.length == 0) return
         str.render(at.a.px, at.b.px, color)
     }
 
@@ -108,10 +110,10 @@ open class Text @JvmOverloads constructor(
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {
         super.setup(renderer, polyui)
-        str = if (floor((sized?.height ?: 0f) / this.fontSize.px).toInt() > 1) {
-            MultilineText(txt, this.properties.font, this.fontSize.px, textAlign, sized ?: origin)
+        str = if (floor((sized?.height ?: 0f) / this.fs.px).toInt() > 1) {
+            MultilineText(txt, this.properties.font, this.fs.px, textAlign, sized ?: origin)
         } else {
-            SingleText(txt, this.properties.font, this.fontSize.px, textAlign, sized ?: origin)
+            SingleText(txt, this.properties.font, this.fs.px, textAlign, sized ?: origin)
         }
         str.text.polyTranslator = polyui.translator
         str.calculate(renderer)

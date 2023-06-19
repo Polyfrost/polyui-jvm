@@ -289,5 +289,3 @@ abstract class Easing(val type: Type, durationNanos: Long, start: Float, end: Fl
         override fun clone(): Animation = Elastic(type, durationNanos, from, to)
     }
 }
-
-typealias EasingType = Easing.Type

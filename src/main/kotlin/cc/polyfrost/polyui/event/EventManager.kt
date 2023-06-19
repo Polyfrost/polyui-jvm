@@ -28,7 +28,7 @@ import cc.polyfrost.polyui.component.Focusable
 import cc.polyfrost.polyui.input.KeyModifiers
 import cc.polyfrost.polyui.input.Keys
 import cc.polyfrost.polyui.layout.Layout
-import cc.polyfrost.polyui.utils.fastEachReversed
+import cc.polyfrost.polyui.utils.fastEach
 import cc.polyfrost.polyui.utils.fastRemoveIf
 import kotlin.experimental.and
 import kotlin.experimental.or
@@ -99,11 +99,14 @@ class EventManager(private val polyUI: PolyUI) {
     fun setMousePosAndUpdate(x: Float, y: Float) {
         mouseX = x
         mouseY = y
+        var cancelled = false
         if (!mouseDown) {
-            onApplicableDrawablesUnsafe(x, y) {
+            onApplicableDrawablesUnsafe(x, y) loop@{
+                // e: return is not allowed here
+                if (cancelled) return@loop
                 if (isInside(x, y) && acceptsInput) {
                     if (!mouseOver) {
-                        accept(Events.MouseEntered)
+                        if (accept(Events.MouseEntered)) cancelled = true
                         mouseOverDrawables.add(this)
                         mouseOver = true
                     }
@@ -115,6 +118,8 @@ class EventManager(private val polyUI: PolyUI) {
                 if (b) {
                     it.accept(Events.MouseExited)
                     it.mouseOver = false
+                } else {
+                    it.accept(Events.MouseMoved)
                 }
             }
         }
@@ -130,15 +135,15 @@ class EventManager(private val polyUI: PolyUI) {
 
     private fun onApplicableDrawables(x: Float, y: Float, func: Drawable.() -> Unit) {
         return onApplicableLayouts(x, y) {
+            components.fastEach { if (it.isInside(x, y)) func(it) }
             if (acceptsInput) func()
-            components.fastEachReversed { if (it.isInside(x, y)) func(it) }
         }
     }
 
     // don't check if the drawable is inside the mouse, this is unsafe and should only be used in setMousePosAndUpdate
     private fun onApplicableDrawablesUnsafe(x: Float, y: Float, func: Drawable.() -> Unit) {
         return onApplicableLayouts(x, y) {
-            components.fastEachReversed(func)
+            components.fastEach(func)
             if (acceptsInput) func()
         }
     }
@@ -146,12 +151,7 @@ class EventManager(private val polyUI: PolyUI) {
     fun onMousePressed(button: Int) {
         if (button == 0) mouseDown = true
         val event = Events.MousePressed(button, mouseX, mouseY, keyModifiers)
-        if (polyUI.keyBinder.accept(event)) return
-        onApplicableDrawables(mouseX, mouseY) {
-            if (mouseOver) {
-                if (accept(event)) return@onApplicableDrawables
-            }
-        }
+        dispatch(event)
     }
 
     /** call this function when a mouse button is released. */
@@ -217,10 +217,18 @@ class EventManager(private val polyUI: PolyUI) {
         }
         val (sx, sy) = polyUI.settings.scrollMultiplier
         val event = Events.MouseScrolled(amountX * sx, amountY * sy, keyModifiers)
+        dispatch(event)
+    }
+
+    private fun dispatch(event: Events) {
         if (polyUI.keyBinder.accept(event)) return
-        onApplicableDrawables(mouseX, mouseY) {
+        var cancelled = false
+        onApplicableDrawables(mouseX, mouseY) loop@{
             if (mouseOver) {
-                if (accept(event)) return@onApplicableDrawables
+                if (cancelled) return@loop
+                if (accept(event)) {
+                    cancelled = true
+                }
             }
         }
     }
