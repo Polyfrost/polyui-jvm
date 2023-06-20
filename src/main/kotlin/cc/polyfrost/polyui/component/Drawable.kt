@@ -64,23 +64,41 @@ abstract class Drawable(
     @PublishedApi
     internal abstract val layout: Layout?
 
-    inline val x get() = at.a.px
-    inline val y get() = at.b.px
-    inline val width
-        get() = size!!.a.px // ?: throw IllegalStateException("Drawable $simpleName has no size, but should have a size initialized by this point")
-    inline val height
-        get() = size!!.b.px // ?: throw IllegalStateException("Drawable $simpleName has no size, but should have a size initialized by this point") // note: this hot method kinda needs this not to be here
+    inline var x get() = at.a.px
+        set(value) {
+            at.a.px = value
+        }
+
+    inline var y get() = at.b.px
+        set(value) {
+            at.b.px = value
+        }
+
+    inline var width get() = size!!.a.px
+        set(value) {
+            size!!.a.px = value
+        }
+
+    inline var height get() = size!!.b.px
+        set(value) {
+            size!!.b.px = value
+        }
 
     /** true X value (i.e. not relative to the layout) */
-    inline val trueX get() = this.at.a.px + (layout?.at?.a?.px ?: 0f)
+    inline val trueX get() = this.x + (layout?.at?.a?.px ?: 0f)
 
     /** true Y value (i.e. not relative to the layout) */
-    inline val trueY get() = this.at.b.px + (layout?.at?.b?.px ?: 0f)
+    inline val trueY get() = this.y + (layout?.at?.b?.px ?: 0f)
 
     inline val atType: Unit.Type
         get() = at.type
     inline val sizeType: Unit.Type
         get() = size!!.type
+
+    /**
+     * Returns `true` if this drawable has a dynamic size or position, or if the size is null.
+     */
+    inline val isDynamic get() = at.dynamic || size?.dynamic ?: true
 
     /** draw script for this drawable. */
     abstract fun render()
@@ -169,7 +187,7 @@ abstract class Drawable(
     open fun isInside(x: Float, y: Float): Boolean {
         val tx = trueX
         val ty = trueY
-        return x >= tx && x <= tx + this.size!!.a.px && y >= ty && y <= ty + this.size!!.b.px
+        return x >= tx && x <= tx + this.width && y >= ty && y <= ty + this.height
     }
 
     fun doDynamicSize() {
@@ -181,13 +199,13 @@ abstract class Drawable(
         if (upon.a is Unit.Dynamic) {
             upon.a.set(
                 layout?.size?.a
-                    ?: throw IllegalStateException("Dynamic unit only work on parents with a set size! ($this)")
+                    ?: throw IllegalStateException("Dynamic unit only work on parents with a set size! (${this.simpleName}; parent ${this.layout?.simpleName})")
             )
         }
         if (upon.b is Unit.Dynamic) {
             upon.b.set(
                 layout?.size?.b
-                    ?: throw IllegalStateException("Dynamic unit only work on parents with a set size! ($this)")
+                    ?: throw IllegalStateException("Dynamic unit only work on parents with a set size! (${this.simpleName}; parent ${this.layout?.simpleName})")
             )
         }
     }

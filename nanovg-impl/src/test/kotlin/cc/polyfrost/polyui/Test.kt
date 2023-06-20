@@ -89,12 +89,12 @@ fun main() {
         },
         drawables = drawables(
             PixelLayout(
-                at = 20.px * 570.px,
+                at = 20.px * 50.percent,
                 drawables = drawables(
                     Text(
                         text = "polyui.test".localised("rainbow"),
                         fontSize = 32.px,
-                        at = 0.px * 0.px
+                        at = origin
                     ),
                     Block(
                         properties = BlockProperties(
@@ -132,7 +132,7 @@ fun main() {
                     Block(
                         properties = BlockProperties(Color.Chroma(5.seconds)),
                         at = 180.px * 30.px,
-                        size = 120.px * 120.px,
+                        size = 25.percent * 120.px,
                         events = events(
                             Events.MouseClicked(0) to {
                                 rotateBy(120.0, Animations.EaseInOutCubic, .5.seconds)
@@ -161,12 +161,12 @@ fun main() {
                     ),
                     TextInput(
                         at = 200.px * 160.px,
-                        size = 300.px * 40.px
+                        size = 50.percent * 40.px
                     )
                 )
             ).draggable(),
             FlexLayout(
-                at = 20.px * 30.px,
+                at = 2.percent * 30.px,
                 wrap = 80.percent,
                 drawables = things
             ).scrolling(620.px * 300.px)

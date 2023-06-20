@@ -163,8 +163,8 @@ abstract class Component @JvmOverloads constructor(
             DrawableOp.Rotate(degrees.toRadians(), false, this, animation, durationNanos),
             onFinish
         )
-        acx = at.a.px
-        acy = at.b.px
+        acx = x
+        acy = y
     }
 
     /**
@@ -183,8 +183,8 @@ abstract class Component @JvmOverloads constructor(
             DrawableOp.Rotate(degrees.toRadians(), true, this, animation, durationNanos),
             onFinish
         )
-        acx = at.a.px
-        acy = at.b.px
+        acx = x
+        acy = y
     }
 
     /**
@@ -317,8 +317,8 @@ abstract class Component @JvmOverloads constructor(
 
     override fun rescale(scaleX: Float, scaleY: Float) {
         super.rescale(scaleX, scaleY)
-        acx = at.a.px
-        acy = at.b.px
+        acx = x
+        acy = y
     }
 
     /**
@@ -355,7 +355,7 @@ abstract class Component @JvmOverloads constructor(
             } else {
                 autoSized = true
                 calculateSize()
-                    ?: throw UnsupportedOperationException("calculateSize() not implemented for ${this::class.simpleName}!")
+                    ?: throw UnsupportedOperationException("calculateSize() not implemented for ${this.simpleName}!")
             }
         }
         doDynamicSize()
@@ -435,11 +435,11 @@ abstract class Component @JvmOverloads constructor(
         }
         if (color.updating || color.alwaysUpdates) wantRedraw()
         if (rotation != 0.0) {
-            renderer.translate(at.a.px + size!!.a.px / 2f, at.b.px + size!!.b.px / 2f)
+            renderer.translate(x + width / 2f, y + height / 2f)
             renderer.rotate(rotation)
-            renderer.translate(-(size!!.a.px / 2f), -(size!!.b.px / 2f))
-            at.a.px = 0f
-            at.b.px = 0f
+            renderer.translate(-(width / 2f), -(height / 2f))
+            x = 0f
+            y = 0f
         }
         if (skewX != 0.0) renderer.skewX(skewX)
         if (skewY != 0.0) renderer.skewY(skewY)
@@ -454,15 +454,15 @@ abstract class Component @JvmOverloads constructor(
     open fun postRender() {
         renderer.pop()
         if (rotation != 0.0) {
-            at.a.px = acx
-            at.b.px = acy
+            x = acx
+            y = acy
         }
     }
 
     override fun canBeRemoved(): Boolean = animations.size == 0 && operations.size == 0 && !color.updating
 
     override fun toString(): String =
-        "$simpleName(${trueX}x$trueY, ${size!!.a.px}x${size!!.b.px}${if (autoSized) " (auto)" else ""}${if (animations.isNotEmpty()) ", animating" else ""}${if (operations.isNotEmpty()) ", operating" else ""})"
+        "$simpleName(${trueX}x$trueY, ${width}x${height}${if (autoSized) " (auto)" else ""}${if (animations.isNotEmpty()) ", animating" else ""}${if (operations.isNotEmpty()) ", operating" else ""})"
 
     fun addKeyframes(k: KeyFrames) {
         keyframes = k

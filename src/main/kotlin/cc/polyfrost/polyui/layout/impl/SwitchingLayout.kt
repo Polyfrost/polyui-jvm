@@ -48,7 +48,7 @@ class SwitchingLayout(
      * If this is true, and this size is not null, it will be scaled accordingly.
      * Else, it will take the size of the largest one, and the smaller ones will be scaled to fit. */
     resizesChildren: Boolean = true
-) : PixelLayout(at, size, onAdded, onRemoved, true, resizesChildren, *layouts) {
+) : PixelLayout(at, size, onAdded, onRemoved, true, resizesChildren) {
     private var goingSwitchOp: Transition? = null
     private var comingSwitchOp: Transition? = null
     private var idx: Int = defaultIndex
@@ -57,13 +57,23 @@ class SwitchingLayout(
     private var autoSized = false
     private var init = false
 
+    override var needsRedraw: Boolean
+        get() = current?.needsRedraw == true || goingSwitchOp != null
+        set(value) {
+            current?.needsRedraw = value
+        }
+
+    init {
+        addLayouts(*layouts)
+    }
+
     @Deprecated(
         "this method should not be used on a SwitchingLayout, as the targeted layout will vary depending on the current layout, and may switch unexpectedly.",
         replaceWith = ReplaceWith("targetLayout.addComponent(drawable)"),
         DeprecationLevel.WARNING
     )
-    override fun addComponent(drawable: Drawable) {
-        super.addComponent(drawable)
+    override fun addComponent(drawable: Drawable, lowPriority: Boolean) {
+        super.addComponent(drawable, lowPriority)
     }
 
     @Deprecated(
@@ -93,18 +103,12 @@ class SwitchingLayout(
         super.removeComponentNow(drawable)
     }
 
-    override fun renderChildren() {
-        current!!.reRenderIfNecessary()
+    override fun reRenderIfNecessary() {
+        current?.reRenderIfNecessary()
     }
 
     override fun accept(event: Events): Boolean {
-        println("accepting event $event")
-        return if (current?.accept(event) == true) {
-            true // todo finish
-        } else {
-            println("didnt accept")
-            super.accept(event)
-        }
+        return current?.accept(event) == true
     }
 
     override fun calculateBounds() {
@@ -124,8 +128,8 @@ class SwitchingLayout(
                 val sy = it.height / height
                 it.rescale(sx, sy)
             }
-            this.size!!.a.px = width
-            this.size!!.b.px = height
+            this.width = width
+            this.height = height
         }
         children.getOrNull(defaultIndex)
             ?: throw IllegalArgumentException("SwitchingLayout's default index $defaultIndex has no layout present at initialization!")
@@ -139,20 +143,19 @@ class SwitchingLayout(
     }
 
     override fun debugRender() {
-        renderer.drawHollowRect(at.a.px, at.b.px, size!!.a.px, size!!.b.px, polyui.colors.page.border20, 2f)
-        renderer.drawText(Renderer.DefaultFont, at.a.px + 1f, at.b.px + 1f, simpleName, polyui.colors.text.primary, 10f)
+        renderer.drawHollowRect(x, y, width, height, polyui.colors.page.border20, 2f)
+        renderer.drawText(Renderer.DefaultFont, x + 1f, y + 1f, simpleName, polyui.colors.text.primary, 10f)
     }
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {
         super.setup(renderer, polyui)
-        children.fastEach {
-            it.layout = this
-            it.onAllLayouts {
-                it.components.fastEach { component ->
-                    component.acceptsInput = false
-                }
+        onAllLayouts {
+            components.fastEach {
+                it.layout = this.layout!!
             }
+            layout = this.layout
         }
+        init = true
     }
 
 //    override fun reRenderIfNecessary() {
@@ -235,6 +238,10 @@ class SwitchingLayout(
     }
 
     private fun init(layout: Layout): Layout {
+        layout.layout = this.layout
+        if (init) {
+            layout.setup(renderer, polyui)
+        }
         return layout
     }
 

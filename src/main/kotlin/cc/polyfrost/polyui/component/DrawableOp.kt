@@ -71,19 +71,19 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         durationNanos: Long = 1L.seconds
     ) : DrawableOp(drawable) {
         override val animation = type?.create(durationNanos, 0f, 1f)
-        private val sx = if (add) drawable.at.a.px else 0f
-        private val sy = if (add) drawable.at.b.px else 0f
-        private val diffx = if (!add) to.x - drawable.at.a.px else to.x
-        private val diffy = if (!add) to.y - drawable.at.b.px else to.y
+        private val sx = if (add) drawable.x else 0f
+        private val sy = if (add) drawable.y else 0f
+        private val diffx = if (!add) to.x - drawable.x else to.x
+        private val diffy = if (!add) to.y - drawable.y else to.y
 
         override fun apply(renderer: Renderer) {
             if (animation != null) {
                 val p = animation.value
-                if (diffx != 0f) drawable.at.a.px = sx + diffx * p
-                if (diffy != 0f) drawable.at.b.px = sy + diffy * p
+                if (diffx != 0f) drawable.x = sx + diffx * p
+                if (diffy != 0f) drawable.y = sy + diffy * p
             } else {
-                drawable.at.a.px = to.x
-                drawable.at.b.px = to.y
+                drawable.x = to.x
+                drawable.y = to.y
             }
         }
     }
@@ -127,11 +127,11 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         override fun apply(renderer: Renderer) {
             if (animation != null) {
                 val p = animation.value
-                drawable.size!!.a.px = toSize.a.px * p
-                drawable.size!!.b.px = toSize.b.px * p
+                drawable.width = toSize.a.px * p
+                drawable.height = toSize.b.px * p
             } else {
-                drawable.size!!.a.px = toSize.a.px
-                drawable.size!!.b.px = toSize.b.px
+                drawable.width = toSize.a.px
+                drawable.height = toSize.b.px
             }
         }
     }

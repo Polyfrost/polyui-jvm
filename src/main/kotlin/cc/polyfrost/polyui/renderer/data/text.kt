@@ -27,10 +27,8 @@ import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.input.PolyText
 import cc.polyfrost.polyui.renderer.Renderer
-import cc.polyfrost.polyui.unit.TextAlign
+import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
-import cc.polyfrost.polyui.unit.Vec2
-import cc.polyfrost.polyui.unit.origin
 import cc.polyfrost.polyui.utils.*
 
 /**
@@ -43,10 +41,10 @@ internal abstract class Text(
     val font: Font,
     fontSize: Float,
     val textAlign: TextAlign = TextAlign.Left,
-    val size: Vec2<Unit>
+    var size: Vec2<Unit>
 ) {
-    protected lateinit var renderer: Renderer
-    protected val autoSized = size == origin
+    lateinit var renderer: Renderer
+    protected val autoSized = size.dynamic || size == origin
     var textOffsetX = 0f
     var textOffsetY = 0f
 
@@ -75,9 +73,7 @@ internal abstract class Text(
      */
     abstract fun getLineByIndex(index: Int): Triple<Line, Int, Int>
 
-    open fun calculate(renderer: Renderer) {
-        this.renderer = renderer
-    }
+    abstract fun calculate(renderer: Renderer)
 
     open operator fun get(index: Int): Line = lines[index]
 
@@ -109,9 +105,9 @@ internal class MultilineText(
     }
 
     override fun calculate(renderer: Renderer) {
-        super.calculate(renderer)
         if (autoSized) {
             renderer.textBounds(font, text.string, fontSize, textAlign).also {
+                if (size.dynamic) size = Vec2(it.width.px, it.height.px)
                 size.a.px = it.width
                 size.b.px = it.height
             }
@@ -173,7 +169,6 @@ internal class SingleText(
     }
 
     override fun calculate(renderer: Renderer) {
-        super.calculate(renderer)
         if (autoSized) {
             renderer.textBounds(font, text.string, fontSize, textAlign).also {
                 size.a.px = it.width

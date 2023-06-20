@@ -42,7 +42,7 @@ open class Text @JvmOverloads constructor(
     private val txt: PolyText,
     at: Vec2<Unit>,
     val sized: Size<Unit>? = null,
-    fontSize: Unit.Pixel? = null,
+    fontSize: Unit? = null,
     val textAlign: TextAlign = TextAlign.Left,
     acceptInput: Boolean = false,
     vararg events: Events.Handler
@@ -53,13 +53,13 @@ open class Text @JvmOverloads constructor(
         txt: String,
         at: Vec2<Unit>,
         size: Size<Unit>? = null,
-        fontSize: Unit.Pixel? = null,
+        fontSize: Unit? = null,
         textAlign: TextAlign = TextAlign.Left,
         acceptInput: Boolean = false,
         vararg events: Events.Handler
     ) : this(null, txt.localised(), at, size, fontSize, textAlign, acceptInput, *events)
 
-    constructor(properties: Properties? = null, text: PolyText, fontSize: Unit.Pixel, at: Vec2<Unit>) :
+    constructor(properties: Properties? = null, text: PolyText, fontSize: Unit, at: Vec2<Unit>) :
         this(properties, text, at, null, fontSize)
 
     final override val properties: TextProperties
@@ -72,7 +72,7 @@ open class Text @JvmOverloads constructor(
     val font get() = this.properties.font
 
     override var size: Size<Unit>?
-        get() = str.size
+        get() = if (::str.isInitialized) str.size else null
         set(value) {
             if (value != null) {
                 str.size.a.px = value.a.px
@@ -90,8 +90,8 @@ open class Text @JvmOverloads constructor(
     override fun render() {
         @Suppress("ReplaceSizeZeroCheckWithIsEmpty")
         if (text.string.length == 0) return
-        if (str.textOffsetY != 0f || str.textOffsetX != 0f) renderer.pushScissor(at.a.px, at.b.px, size!!.a.px, size!!.b.px)
-        str.render(at.a.px, at.b.px, color)
+        if (str.textOffsetY != 0f || str.textOffsetX != 0f) renderer.pushScissor(x, y, width, height)
+        str.render(x, y, color)
         if (str.textOffsetY != 0f || str.textOffsetX != 0f) renderer.popScissor()
     }
 
@@ -112,18 +112,27 @@ open class Text @JvmOverloads constructor(
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {
         super.setup(renderer, polyui)
+        if (fs is Unit.Dynamic) fs.set(sized?.b ?: throw IllegalArgumentException("${this.simpleName} has a dynamic font size, but it has no height"))
         str = if (floor((sized?.height ?: 0f) / this.fs.px).toInt() > 1) {
             MultilineText(txt, this.properties.font, this.fs.px, textAlign, sized ?: origin)
         } else {
             SingleText(txt, this.properties.font, this.fs.px, textAlign, sized ?: origin)
         }
+        str.renderer = renderer
         str.text.polyTranslator = polyui.translator
+
+        if (layout.size != null) doDynamicSize(str.size)
         str.calculate(renderer)
         size = str.size
     }
 
+    override fun calculateBounds() {
+        doDynamicSize(str.size)
+        calculateSize()
+    }
+
     override fun calculateSize(): Vec2<Unit>? {
-        str.calculate(renderer)
+        doDynamicSize(str.size)
         return size
     }
 }

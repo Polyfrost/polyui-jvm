@@ -103,7 +103,7 @@ open class PointerLayout(
     // asm: don't override reRenderIfNecessary as it is essentially a pointer method anyway
     override fun render() = ptr.render()
 
-    override fun addComponent(drawable: Drawable) = ptr.addComponent(drawable)
+    override fun addComponent(drawable: Drawable, lowPriority: Boolean) = ptr.addComponent(drawable, lowPriority)
     override fun removeComponentNow(drawable: Drawable) = ptr.removeComponentNow(drawable)
     override fun removeComponent(drawable: Drawable) = ptr.removeComponent(drawable)
 

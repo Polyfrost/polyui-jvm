@@ -152,16 +152,16 @@ class GridLayout @JvmOverloads constructor(
     }
 
     private fun placeItem(atX: Float, atY: Float, cellw: Float, cellh: Float, it: Drawable) {
-        it.at.a.px = atX
-        it.at.b.px = atY
+        it.x = atX
+        it.y = atY
         if (it.size == null) {
             it.size = Size(cellw.px, cellh.px)
             return
         }
         when (contentStretch) {
             ContentStretch.FillCell -> {
-                it.size!!.a.px = cellw
-                it.size!!.b.px = cellh
+                it.width = cellw
+                it.height = cellh
             }
 
             ContentStretch.DontStretch -> {
@@ -171,11 +171,11 @@ class GridLayout @JvmOverloads constructor(
             ContentStretch.FillRespectAspectRatio -> {
                 val ratio = it.width / it.height
                 if (ratio > 1) {
-                    it.size!!.a.px = cellw
-                    it.size!!.b.px = cellw / ratio
+                    it.width = cellw
+                    it.height = cellw / ratio
                 } else {
-                    it.size!!.a.px = cellh * ratio
-                    it.size!!.b.px = cellh
+                    it.width = cellh * ratio
+                    it.height = cellh
                 }
             }
         }

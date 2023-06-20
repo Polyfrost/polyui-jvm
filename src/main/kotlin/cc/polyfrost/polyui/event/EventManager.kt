@@ -28,8 +28,9 @@ import cc.polyfrost.polyui.component.Focusable
 import cc.polyfrost.polyui.input.KeyModifiers
 import cc.polyfrost.polyui.input.Keys
 import cc.polyfrost.polyui.layout.Layout
-import cc.polyfrost.polyui.utils.fastEach
+import cc.polyfrost.polyui.utils.fastEachReversed
 import cc.polyfrost.polyui.utils.fastRemoveIf
+import org.jetbrains.annotations.ApiStatus
 import kotlin.experimental.and
 import kotlin.experimental.or
 import kotlin.experimental.xor
@@ -80,6 +81,15 @@ class EventManager(private val polyUI: PolyUI) {
     }
 
     /**
+     * Internal function that will force the mouse position to be updated.
+     * @since 0.18.5
+     */
+    @ApiStatus.Internal
+    fun recalculateMousePos() {
+        setMousePosAndUpdate(mouseX, mouseY)
+    }
+
+    /**
      * add a modifier to the current keyModifiers.
      * @see KeyModifiers
      */
@@ -106,9 +116,12 @@ class EventManager(private val polyUI: PolyUI) {
                 if (cancelled) return@loop
                 if (isInside(x, y) && acceptsInput) {
                     if (!mouseOver) {
-                        if (accept(Events.MouseEntered)) cancelled = true
                         mouseOverDrawables.add(this)
                         mouseOver = true
+                        if (accept(Events.MouseEntered)) {
+                            cancelled = true
+                            return@loop
+                        }
                     }
                 }
             }
@@ -135,7 +148,7 @@ class EventManager(private val polyUI: PolyUI) {
 
     private fun onApplicableDrawables(x: Float, y: Float, func: Drawable.() -> Unit) {
         return onApplicableLayouts(x, y) {
-            components.fastEach { if (it.isInside(x, y)) func(it) }
+            components.fastEachReversed { if (it.isInside(x, y)) func(it) }
             if (acceptsInput) func()
         }
     }
@@ -143,7 +156,7 @@ class EventManager(private val polyUI: PolyUI) {
     // don't check if the drawable is inside the mouse, this is unsafe and should only be used in setMousePosAndUpdate
     private fun onApplicableDrawablesUnsafe(x: Float, y: Float, func: Drawable.() -> Unit) {
         return onApplicableLayouts(x, y) {
-            components.fastEach(func)
+            components.fastEachReversed(func)
             if (acceptsInput) func()
         }
     }

@@ -21,10 +21,12 @@
 
 package cc.polyfrost.polyui.layout.impl
 
+import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
+import cc.polyfrost.polyui.utils.anyAre
 import cc.polyfrost.polyui.utils.fastEach
 import kotlin.math.max
 
@@ -43,6 +45,7 @@ open class PixelLayout(
     resizesChildren: Boolean = true,
     vararg drawables: Drawable
 ) : Layout(at, size, onAdded, onRemoved, acceptInput, resizesChildren, *drawables) {
+    var dyn = false
 
     init {
         drawables.forEach {
@@ -51,6 +54,9 @@ open class PixelLayout(
     }
 
     override fun calculateBounds() {
+        if (this.size == null) {
+            size = calculateSize()
+        }
         if (layout != null) doDynamicSize()
         components.fastEach {
             it.layout = this
@@ -60,18 +66,20 @@ open class PixelLayout(
             it.layout = this
             it.calculateBounds()
         }
-        if (this.size == null) {
+        if (dyn) {
             size = calculateSize()
         }
     }
 
     override fun calculateSize(): Vec2<Unit> {
-        var width = children.maxOfOrNull { it.x + it.width } ?: 0f
-        width = max(width, components.maxOfOrNull { it.x + it.width } ?: 0f)
-        var height = children.maxOfOrNull { it.y + it.height } ?: 0f
-        height = max(height, components.maxOfOrNull { it.y + it.height } ?: 0f)
-        if (width == 0f) throw Exception("unable to infer width of ${this.simpleName}: no sized children or components, please specify a size")
-        if (height == 0f) throw Exception("unable to infer height of ${this.simpleName}: no sized children or components, please specify a size")
+        var width = children.maxOfOrNull { if (!dyn && it.isDynamic) 0f else it.x + it.width } ?: 0f
+        width = max(width, components.maxOfOrNull { if (!dyn && it.isDynamic) 0f else it.x + it.width } ?: 0f)
+        var height = children.maxOfOrNull { if (!dyn && it.isDynamic) 0f else it.y + it.height } ?: 0f
+        height = max(height, components.maxOfOrNull { if (!dyn && it.isDynamic) 0f else it.y + it.height } ?: 0f)
+        dyn = !dyn && children.anyAre { it.isDynamic } || components.anyAre { it.isDynamic }
+        if (dyn) PolyUI.LOGGER.warn("${this.simpleName} has dynamically sized children, but it does not have a size itself. It will have its units inferred based on its concrete sized children.")
+        if (width == 0f) throw Exception("unable to infer width of ${this.simpleName}: no concrete sized children or components, please specify a size")
+        if (height == 0f) throw Exception("unable to infer height of ${this.simpleName}: no concrete sized children or components, please specify a size")
         return width.px * height.px
     }
 }

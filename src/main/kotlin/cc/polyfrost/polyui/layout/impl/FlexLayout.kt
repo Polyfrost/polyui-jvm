@@ -122,29 +122,29 @@ class FlexLayout @JvmOverloads constructor(
     private var crossSize: Float
         get() {
             return when (flexDirection) {
-                Direction.Row, Direction.RowReverse -> size!!.b.px
-                Direction.Column, Direction.ColumnReverse -> size!!.a.px
+                Direction.Row, Direction.RowReverse -> height
+                Direction.Column, Direction.ColumnReverse -> width
             }
         }
         set(value) {
             if (strictSize) return
             when (flexDirection) {
-                Direction.Row, Direction.RowReverse -> size!!.b.px = value
-                Direction.Column, Direction.ColumnReverse -> size!!.a.px = value
+                Direction.Row, Direction.RowReverse -> height = value
+                Direction.Column, Direction.ColumnReverse -> width = value
             }
         }
     private var mainSize: Float
         get() {
             return when (flexDirection) {
-                Direction.Row, Direction.RowReverse -> size!!.a.px
-                Direction.Column, Direction.ColumnReverse -> size!!.b.px
+                Direction.Row, Direction.RowReverse -> width
+                Direction.Column, Direction.ColumnReverse -> height
             }
         }
         set(value) {
             if (strictSize) return
             when (flexDirection) {
-                Direction.Row, Direction.RowReverse -> size!!.a.px = value
-                Direction.Column, Direction.ColumnReverse -> size!!.b.px = value
+                Direction.Row, Direction.RowReverse -> width = value
+                Direction.Column, Direction.ColumnReverse -> height = value
             }
         }
 
@@ -253,26 +253,26 @@ class FlexLayout @JvmOverloads constructor(
         var mainPos: Float
             get() {
                 return when (flexDirection) {
-                    Direction.Row, Direction.RowReverse -> drawable.at.a.px
-                    Direction.Column, Direction.ColumnReverse -> drawable.at.b.px
+                    Direction.Row, Direction.RowReverse -> drawable.x
+                    Direction.Column, Direction.ColumnReverse -> drawable.y
                 }
             }
             set(value) = when (flexDirection) {
-                Direction.Row, Direction.RowReverse -> drawable.at.a.px = value
-                Direction.Column, Direction.ColumnReverse -> drawable.at.b.px = value
+                Direction.Row, Direction.RowReverse -> drawable.x = value
+                Direction.Column, Direction.ColumnReverse -> drawable.y = value
             }
 
         /** y */
         var crossPos: Float
             get() {
                 return when (flexDirection) {
-                    Direction.Row, Direction.RowReverse -> drawable.at.b.px
-                    Direction.Column, Direction.ColumnReverse -> drawable.at.a.px
+                    Direction.Row, Direction.RowReverse -> drawable.y
+                    Direction.Column, Direction.ColumnReverse -> drawable.x
                 }
             }
             set(value) = when (flexDirection) {
-                Direction.Row, Direction.RowReverse -> drawable.at.b.px = value
-                Direction.Column, Direction.ColumnReverse -> drawable.at.a.px = value
+                Direction.Row, Direction.RowReverse -> drawable.y = value
+                Direction.Column, Direction.ColumnReverse -> drawable.x = value
             }
 
         /** height */

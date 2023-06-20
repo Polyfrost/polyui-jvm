@@ -72,13 +72,13 @@ abstract class ContainingComponent(
         if (rotation != 0.0) {
             children.fastEach {
                 // this will move it so that it renders around the middle of the main component.
-                it.at.a.px -= acx
-                it.at.b.px -= acy
+                it.x -= acx
+                it.y -= acy
                 it.preRender(polyui.delta)
                 it.render()
                 it.postRender()
-                it.at.a.px += acx
-                it.at.b.px += acy
+                it.x += acx
+                it.y += acy
             }
         } else {
             children.fastEach {

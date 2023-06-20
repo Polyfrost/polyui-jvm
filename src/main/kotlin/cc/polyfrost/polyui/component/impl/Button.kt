@@ -70,9 +70,9 @@ class Button(
 
     override fun render() {
         if (properties.outlineThickness != 0f) {
-            renderer.drawHollowRect(at.a.px, at.b.px, size!!.a.px, size!!.b.px, color, properties.outlineThickness, properties.cornerRadii)
+            renderer.drawHollowRect(x, y, width, height, color, properties.outlineThickness, properties.cornerRadii)
         }
-        renderer.drawRect(at.a.px, at.b.px, size!!.a.px, size!!.b.px, color, properties.cornerRadii)
+        renderer.drawRect(x, y, width, height, color, properties.cornerRadii)
         super.render()
     }
 
@@ -87,8 +87,8 @@ class Button(
         } else {
             maxHeight = getLargestComponent(text, leftImage, rightImage).also {
                 if (text != null) {
-                    if (text.size!!.b.px != it) {
-                        text.size!!.b.px = it
+                    if (text.height != it) {
+                        text.height = it
                         text.str.fontSize = it
                     }
                 }
@@ -103,17 +103,17 @@ class Button(
         if (text != null) {
             if (leftImage != null) contentWidth += properties.iconTextSpacing
             if (rightImage != null) contentWidth += properties.iconTextSpacing
-            text.at.b.px = at.b.px + properties.topEdgePadding
+            text.y = y + properties.topEdgePadding
         }
-        leftImage?.at?.a?.px = at.a.px + properties.edgePadding
-        text?.at?.a?.px = at.a.px + properties.edgePadding + if (leftImage != null) leftImage.size!!.a.px + properties.iconTextSpacing else 0f
-        rightImage?.at?.a?.px = at.a.px - properties.edgePadding + contentWidth - rightImage!!.size!!.a.px
+        leftImage?.at?.a?.px = x + properties.edgePadding
+        text?.at?.a?.px = x + properties.edgePadding + if (leftImage != null) leftImage.width + properties.iconTextSpacing else 0f
+        rightImage?.at?.a?.px = x - properties.edgePadding + contentWidth - rightImage!!.width
         return Size(contentWidth.px, (maxHeight!!.px + properties.topEdgePadding * 2f).px)
     }
 
     private fun getLargestComponent(vararg cs: Component?): Float {
         var largest = 0f
-        cs.forEach { if (it == null) return@forEach else largest = max(largest, it.size!!.b.px) }
+        cs.forEach { if (it == null) return@forEach else largest = max(largest, it.height) }
         return largest
     }
 
@@ -122,10 +122,10 @@ class Button(
      */
     private fun img(icon: Image?) {
         if (icon == null) return
-        val ratio = icon.size!!.b.px / (maxHeight?.px ?: return)
+        val ratio = icon.height / (maxHeight?.px ?: return)
         if (ratio != 1f) PolyUI.LOGGER.warn("${this.simpleName} icon heights are not the same! The icon has been resized, but it may look blurry or distorted!")
-        icon.size!!.b.px = maxHeight!!.px
-        icon.size!!.a.px /= ratio
-        icon.at.b.px = at.b.px + properties.topEdgePadding
+        icon.height = maxHeight!!.px
+        icon.width /= ratio
+        icon.y = y + properties.topEdgePadding
     }
 }

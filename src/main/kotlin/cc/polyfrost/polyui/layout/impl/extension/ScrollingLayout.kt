@@ -45,16 +45,16 @@ class ScrollingLayout(
     val scrollingSize: Size<Unit>
 ) : PointerLayout(layout) {
     private val anims: MutablePair<Animation?, Animation?> = MutablePair(null, null)
-    private var ofsX = at.a.px
-    private var ofsY = at.b.px
 
     /** origin x (in wider coordinate space) */
-    var ox = at.a.px
+    var ox = if (size?.dynamic == true) 0f else x
         private set
 
     /** origin y (in wider coordinate space) */
-    var oy = at.b.px
+    var oy = if (size?.dynamic == true) 0f else y
         private set
+    private var ofsX = ox
+    private var ofsY = oy
     private var added = false
     var scrollsX = true
         private set
@@ -65,21 +65,21 @@ class ScrollingLayout(
 
     /** float in the range 0-1 to represent the percentage that this layout is scrolled (i.e. 0=no scrolling, 1=fully scrolled) */
     inline var scrollYPercent
-        get() = (oy - ptr.at.b.px) / (ptr.size!!.b.px - scrollingSize.b.px)
+        get() = (oy - ptr.y) / (ptr.height - scrollingSize.b.px)
         private set(value) {
             // given the equation: v = (o - x) / (c - s)
             // solve for x (gcse maths coming in handy here) [3 marks]
             // v * (c - s) = o - x
             // v * (c - s) - o = -x
             // -(v * (c - s) - o) = x
-            at.b.px = -(value.coerceIn(0f, 1f) * (ptr.size!!.b.px - scrollingSize.b.px) - oy)
+            y = -(value.coerceIn(0f, 1f) * (ptr.height - scrollingSize.b.px) - oy)
         }
 
     /** float in the range 0-1 to represent the percentage that this layout is scrolled (i.e. 0=no scrolling, 1=fully scrolled) */
     inline var scrollXPercent
-        get() = (ox - ptr.at.a.px) / (ptr.size!!.a.px - scrollingSize.a.px)
+        get() = (ox - ptr.x) / (ptr.width - scrollingSize.a.px)
         private set(value) {
-            at.a.px = -(value.coerceIn(0f, 1f) * (ptr.size!!.a.px - scrollingSize.a.px) - ox)
+            x = -(value.coerceIn(0f, 1f) * (ptr.width - scrollingSize.a.px) - ox)
         }
 
     init {
@@ -97,7 +97,7 @@ class ScrollingLayout(
     }
 
     override fun render() {
-        renderer.pushScissor(ox - at.a.px, oy - at.b.px, scrollingSize.a.px, scrollingSize.b.px)
+        renderer.pushScissor(ox - x, oy - y, scrollingSize.a.px, scrollingSize.b.px)
 
         ptr.removeQueue.fastEach { if (it.canBeRemoved()) removeComponentNow(it) }
         ptr.needsRedraw = false
@@ -109,18 +109,20 @@ class ScrollingLayout(
         } else {
             bars.first.hideTime = 0L
             anim?.update(delta)?.also {
-                at.a.px = ofsX + anim.value
+                x = ofsX + anim.value
                 ptr.needsRedraw = true
             }
+            polyui.eventManager.recalculateMousePos()
         }
         if (anim1?.isFinished == true) {
             anims.second = null
         } else {
             bars.second.hideTime = 0L
             anim1?.update(delta)?.also {
-                at.b.px = ofsY + anim1.value
+                y = ofsY + anim1.value
                 ptr.needsRedraw = true
             }
+            polyui.eventManager.recalculateMousePos()
         }
 
         ptr.components.fastEach {
@@ -165,7 +167,7 @@ class ScrollingLayout(
                 val rem = anim?.to?.minus(anim.value)?.also {
                     ofsX += anim.value
                 } ?: 0f.also {
-                    ofsX = ptr.at.a.px
+                    ofsX = ptr.x
                 }
                 anims.first = Animation.Type.EaseOutExpo.create(
                     .5.seconds,
@@ -179,7 +181,7 @@ class ScrollingLayout(
                 val rem = anim?.to?.minus(anim.value)?.also {
                     ofsY += anim.value
                 } ?: 0f.also {
-                    ofsY = ptr.at.b.px
+                    ofsY = ptr.y
                 }
                 anims.second = Animation.Type.EaseOutExpo.create(
                     .5.seconds,
@@ -197,15 +199,15 @@ class ScrollingLayout(
     private fun calc(toAdd: Float, horizontal: Boolean): Float {
         return if (horizontal) {
             if (toAdd > 0f) { // scroll left
-                min(ox - at.a.px, toAdd)
+                min(ox - x, toAdd)
             } else { // scroll right
-                clz(-(ptr.size!!.a.px - scrollingSize.a.px - (ox - at.a.px)), toAdd)
+                clz(-(ptr.width - scrollingSize.a.px - (ox - x)), toAdd)
             }
         } else {
             if (toAdd > 0f) { // scroll up
-                min(oy - ptr.at.b.px, toAdd)
+                min(oy - ptr.y, toAdd)
             } else { // scroll down
-                clz(-(ptr.size!!.b.px - scrollingSize.b.px - (oy - ptr.at.b.px)), toAdd)
+                clz(-(ptr.height - scrollingSize.b.px - (oy - ptr.y)), toAdd)
             }
         }
     }
@@ -228,12 +230,12 @@ class ScrollingLayout(
             ptr.addComponent(bars.second)
             added = true
         }
-        if (scrollingSize.a.px == 0f || scrollingSize.a.px > ptr.size!!.a.px) scrollingSize.a.px = ptr.size!!.a.px
-        if (scrollingSize.b.px == 0f || scrollingSize.b.px > ptr.size!!.b.px) scrollingSize.b.px = ptr.size!!.b.px
-        if (ptr.size!!.a.px < scrollingSize.a.px) scrollsX = false
-        if (ptr.size!!.b.px < scrollingSize.b.px) scrollsY = false
-        ox = at.a.px
-        oy = at.b.px
+        if (scrollingSize.a.px == 0f || scrollingSize.a.px > ptr.width) scrollingSize.a.px = ptr.width
+        if (scrollingSize.b.px == 0f || scrollingSize.b.px > ptr.height) scrollingSize.b.px = ptr.height
+        if (ptr.width < scrollingSize.a.px) scrollsX = false
+        if (ptr.height < scrollingSize.b.px) scrollsY = false
+        ox = x
+        oy = y
         bars.first.calculateBounds()
         bars.second.calculateBounds()
     }
@@ -254,11 +256,11 @@ class ScrollingLayout(
         private var hideAmount = properties.width + (properties.padding * 2f)
         override val properties: ScrollbarProperties
             get() = super.properties as ScrollbarProperties
-        private inline val contentSize get() = if (horizontal) owner.ptr.size!!.a.px else owner.ptr.size!!.b.px
+        private inline val contentSize get() = if (horizontal) owner.ptr.width else owner.ptr.height
         private inline val scrollingSize get() = if (horizontal) owner.scrollingSize.a.px else owner.scrollingSize.b.px
         private inline var length
-            get() = if (horizontal) size!!.a.px else size!!.b.px
-            set(value) = if (horizontal) size!!.a.px = value else size!!.b.px = value
+            get() = if (horizontal) width else height
+            set(value) = if (horizontal) width = value else height = value
 
         var shown = true
             set(value) {
@@ -277,12 +279,12 @@ class ScrollingLayout(
                     }
                 } else {
                     if (horizontal) {
-                        at.b.px =
-                            (owner.scrollingSize.b.px - properties.padding - properties.width) + (owner.oy - owner.ptr.at.b.px) + hideAmount
+                        y =
+                            (owner.scrollingSize.b.px - properties.padding - properties.width) + (owner.oy - owner.ptr.y) + hideAmount
                         this.moveBy(0f.px * (-hideAmount).px, properties.showAnim, properties.showAnimDuration)
                     } else {
-                        at.a.px =
-                            owner.scrollingSize.a.px - properties.padding - properties.width + (owner.ox - owner.ptr.at.a.px) + hideAmount
+                        x =
+                            owner.scrollingSize.a.px - properties.padding - properties.width + (owner.ox - owner.ptr.x) + hideAmount
                         this.moveBy((-hideAmount).px * 0f.px, properties.showAnim, properties.showAnimDuration)
                     }
                     enabled = contentSize > scrollingSize
@@ -299,13 +301,13 @@ class ScrollingLayout(
                 return
             }
             if (horizontal) {
-                at.b.px = owner.scrollingSize.b.px - properties.padding - properties.width
-                at.a.px = 0f
-                length = owner.scrollingSize.a.px * (owner.scrollingSize.a.px / owner.ptr.size!!.a.px)
+                y = owner.scrollingSize.b.px - properties.padding - properties.width
+                x = 0f
+                length = owner.scrollingSize.a.px * (owner.scrollingSize.a.px / owner.ptr.width)
             } else {
-                at.a.px = owner.scrollingSize.a.px - properties.padding - properties.width
-                at.b.px = 0f
-                length = owner.scrollingSize.b.px * (owner.scrollingSize.b.px / owner.ptr.size!!.b.px)
+                x = owner.scrollingSize.a.px - properties.padding - properties.width
+                y = 0f
+                length = owner.scrollingSize.b.px * (owner.scrollingSize.b.px / owner.ptr.height)
             }
         }
 
@@ -313,8 +315,8 @@ class ScrollingLayout(
             if (!enabled) return super.accept(event)
             if (event is Events.MousePressed) {
                 if (event.mods.toInt() != 0) return super.accept(event)
-                mouseClickX = polyui.eventManager.mouseX - at.a.px
-                mouseClickY = polyui.eventManager.mouseY - at.b.px
+                mouseClickX = polyui.eventManager.mouseX - x
+                mouseClickY = polyui.eventManager.mouseY - y
                 mouseDown = true
                 owner.ptr.needsRedraw = true
                 recolor(properties.pressedColor, properties.showAnim, 0.2.seconds)
@@ -326,17 +328,17 @@ class ScrollingLayout(
         fun update() {
             if (!enabled) return
             if (horizontal) {
-                at.b.px =
-                    (owner.scrollingSize.b.px - properties.padding - properties.width) + (owner.oy - owner.ptr.at.b.px) + if (!shown) hideAmount else 0f
+                y =
+                    (owner.scrollingSize.b.px - properties.padding - properties.width) + (owner.oy - owner.ptr.y) + if (!shown) hideAmount else 0f
             } else {
-                at.a.px =
-                    owner.scrollingSize.a.px - properties.padding - properties.width + (owner.ox - owner.ptr.at.a.px) + if (!shown) hideAmount else 0f
+                x =
+                    owner.scrollingSize.a.px - properties.padding - properties.width + (owner.ox - owner.ptr.x) + if (!shown) hideAmount else 0f
             }
             if (!shown) return
             if (horizontal) {
-                at.a.px = (owner.ptr.size!!.a.px - length) * owner.scrollXPercent
+                x = (owner.ptr.width - length) * owner.scrollXPercent
             } else {
-                at.b.px = (owner.ptr.size!!.b.px - length) * owner.scrollYPercent
+                y = (owner.ptr.height - length) * owner.scrollYPercent
             }
         }
 

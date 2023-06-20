@@ -41,6 +41,8 @@ data class Vec2<T : Unit>(
 
     inline val type get() = a.type
 
+    inline val dynamic get() = a is Unit.Dynamic || b is Unit.Dynamic
+
     operator fun get(index: Int): T {
         return when (index) {
             0 -> a

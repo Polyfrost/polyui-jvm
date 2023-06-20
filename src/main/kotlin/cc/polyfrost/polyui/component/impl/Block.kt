@@ -46,8 +46,8 @@ open class Block @JvmOverloads constructor(
 
     override fun render() {
         if (properties.outlineThickness != 0f) {
-            renderer.drawHollowRect(at.a.px, at.b.px, size!!.a.px, size!!.b.px, color, properties.outlineThickness, properties.cornerRadii)
+            renderer.drawHollowRect(x, y, width, height, color, properties.outlineThickness, properties.cornerRadii)
         }
-        renderer.drawRect(at.a.px, at.b.px, size!!.a.px, size!!.b.px, color, properties.cornerRadii)
+        renderer.drawRect(x, y, width, height, color, properties.cornerRadii)
     }
 }

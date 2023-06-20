@@ -72,11 +72,11 @@ abstract class Unit(val type: Type) : Cloneable {
         private var initialized: Boolean = false
 
         init {
-            require(amount > 0f && amount < 100f) { "Percent must be between 0 and 100 (inclusive)." }
+            require(amount in 0f..100f) { "Percent must be between 0 and 100 (inclusive)." }
         }
 
         override fun clone(): Percent {
-            return Percent(amount).also { it.px = px }
+            return Percent(amount).also { if (initialized) it.px = px }
         }
 
         override fun set(parent: Unit) {
@@ -90,7 +90,7 @@ abstract class Unit(val type: Type) : Cloneable {
         override var px: Float = 0f
 
         init {
-            require(amount > 0f && amount < 100f) { "Percent must be between 0 and 100 (inclusive)." }
+            require(amount in 0f..100f) { "Percent must be between 0 and 100 (inclusive)." }
         }
 
         override fun clone(): VUnits {
@@ -153,14 +153,10 @@ abstract class Unit(val type: Type) : Cloneable {
     }
 
     /** specify a unit as an always present value that does not change. */
-    interface Concrete {
-        fun clone(): Concrete
-    }
+    interface Concrete
 
     /** specify a unit as something that is dependent on another value. */
     interface Dynamic {
-        fun clone(): Dynamic
-
         fun set(parent: Unit)
     }
 }

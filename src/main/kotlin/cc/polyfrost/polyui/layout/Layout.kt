@@ -114,11 +114,11 @@ abstract class Layout(
         rasterChildren()
         rasterize()
         if (fbo != null && fboTracker < 2) {
-            renderer.drawFramebuffer(fbo!!, at.a.px, at.b.px, size!!.a.px, size!!.b.px)
+            renderer.drawFramebuffer(fbo!!, x, y, width, height)
         } else {
-            val x = at.a.px // fix scrolling issue where objects could move very slightly
-            val y = at.b.px
-            renderer.pushScissor(x, y, size!!.a.px, size!!.b.px)
+            val x = x // fix scrolling issue where objects could move very slightly
+            val y = y
+            renderer.pushScissor(x, y, width, height)
             renderer.translate(x, y)
             render()
             renderChildren()
@@ -223,16 +223,26 @@ abstract class Layout(
      * adds the given component/layout to this layout.
      *
      * this will add the drawable to the [Layout.components] or [children] list, and invoke its [Events.Added] if it is present.
+     *
+     * @param lowPriority if this is `true`, the component will be added to the front of the list, meaning it is drawn last, and receives events last.
      */
-    open fun addComponent(drawable: Drawable) {
+    open fun addComponent(drawable: Drawable, lowPriority: Boolean = false) {
         when (drawable) {
             is Component -> {
-                components.add(drawable)
+                if (lowPriority) {
+                    components.add(0, drawable)
+                } else {
+                    components.add(drawable)
+                }
                 drawable.layout = this
             }
 
             is Layout -> {
-                children.add(drawable)
+                if (lowPriority) {
+                    children.add(0, drawable)
+                } else {
+                    children.add(drawable)
+                }
                 drawable.layout = this
             }
 
@@ -361,8 +371,8 @@ abstract class Layout(
     }
 
     override fun debugRender() {
-        renderer.drawHollowRect(at.a.px, at.b.px, size!!.a.px, size!!.b.px, polyui.colors.page.border20, 2f)
-        renderer.drawText(Renderer.DefaultFont, at.a.px + 1f, at.b.px + 1f, simpleName, polyui.colors.text.primary, 10f)
+        renderer.drawHollowRect(x, y, width, height, polyui.colors.page.border20, 2f)
+        renderer.drawText(Renderer.DefaultFont, x + 1f, y + 1f, simpleName, polyui.colors.text.primary, 10f)
         children.fastEach { it.debugRender() }
         components.fastEach { it.debugRender() }
     }
@@ -412,7 +422,7 @@ abstract class Layout(
     }
 
     override fun toString(): String {
-        return "$simpleName(${trueX}x$trueY, ${size!!.a.px} x ${size!!.b.px}${if (fbo != null) ", buffered" else ""}${if (fbo != null && needsRedraw) ", needsRedraw" else ""})"
+        return "$simpleName(${trueX}x$trueY, $width x ${height}${if (fbo != null) ", buffered" else ""}${if (fbo != null && needsRedraw) ", needsRedraw" else ""})"
     }
 
     companion object {

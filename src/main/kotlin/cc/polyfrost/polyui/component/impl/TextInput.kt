@@ -71,23 +71,8 @@ open class TextInput(
 
     override fun render() {
         if (!mouseOver) mouseDown = false
-        renderer.drawRect(
-            at.a.px,
-            at.b.px,
-            size!!.a.px,
-            size!!.b.px,
-            properties.backgroundColor,
-            properties.cornerRadii
-        )
-        renderer.drawHollowRect(
-            at.a.px,
-            at.b.px,
-            size!!.a.px,
-            size!!.b.px,
-            properties.outlineColor,
-            properties.outlineThickness,
-            properties.cornerRadii
-        )
+        renderer.drawRect(x, y, width, height, properties.backgroundColor, properties.cornerRadii)
+        renderer.drawHollowRect(x, y, width, height, properties.outlineColor, properties.outlineThickness, properties.cornerRadii)
         if (focused) {
             renderer.drawRect(cposx, cposy, 2f, text.fontSize, polyui.colors.text.primary)
             selectBoxes.fastEach {
@@ -465,6 +450,7 @@ open class TextInput(
             properties.text.alignment,
             false
         )
+        text.layout = this.layout
         text.setup(renderer, polyui)
     }
 
@@ -473,10 +459,10 @@ open class TextInput(
         text.calculateBounds()
         super.calculateBounds()
         if (!init) {
-            text.at.a.px += properties.paddingFromTextLateral
-            text.at.b.px += properties.paddingFromTextVertical
-            text.size!!.a.px -= properties.paddingFromTextLateral * 2
-            text.size!!.b.px -= properties.paddingFromTextVertical * 2
+            text.x += properties.paddingFromTextLateral
+            text.y += properties.paddingFromTextVertical
+            text.width -= properties.paddingFromTextLateral * 2
+            text.height -= properties.paddingFromTextVertical * 2
             init = true
         }
         caretPos()
