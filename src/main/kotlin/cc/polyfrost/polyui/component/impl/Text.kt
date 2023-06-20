@@ -90,7 +90,9 @@ open class Text @JvmOverloads constructor(
     override fun render() {
         @Suppress("ReplaceSizeZeroCheckWithIsEmpty")
         if (text.string.length == 0) return
+        if (str.textOffsetY != 0f || str.textOffsetX != 0f) renderer.pushScissor(at.a.px, at.b.px, size!!.a.px, size!!.b.px)
         str.render(at.a.px, at.b.px, color)
+        if (str.textOffsetY != 0f || str.textOffsetX != 0f) renderer.popScissor()
     }
 
     operator fun get(index: Int) = str[index]

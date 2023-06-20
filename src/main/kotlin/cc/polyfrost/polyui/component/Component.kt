@@ -46,11 +46,11 @@ import cc.polyfrost.polyui.utils.toRadians
 abstract class Component @JvmOverloads constructor(
     properties: Properties? = null,
     /** position relative to this layout. */
-    override val at: Point<Unit>,
+    at: Point<Unit>,
     override var size: Size<Unit>? = null,
     acceptInput: Boolean = true,
     vararg events: Events.Handler
-) : Drawable(acceptInput) {
+) : Drawable(at, acceptInput) {
     protected val animations: ArrayList<Pair<Animation, (Component.() -> kotlin.Unit)?>> = ArrayList(5)
     protected val operations: ArrayList<Pair<DrawableOp, (Component.() -> kotlin.Unit)?>> = ArrayList(5)
 

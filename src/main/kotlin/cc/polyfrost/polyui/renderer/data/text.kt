@@ -101,7 +101,7 @@ internal class MultilineText(
     override lateinit var lines: ArrayList<Line>
 
     override fun render(x: Float, y: Float, color: Color) {
-        var y = y
+        var y = y + textOffsetY
         lines.fastEach { (text, _, h) ->
             renderer.drawText(font, x, y, text, color, fontSize, textAlign)
             y += h
@@ -127,8 +127,10 @@ internal class MultilineText(
         }
         // todo this
         textOffsetY = if (lines.size * fontSize > size.height) {
+            full = true
             size.height - lines.size * fontSize
         } else {
+            full = false
             0f
         }
     }
@@ -137,7 +139,7 @@ internal class MultilineText(
         var i = 0
         lines.fastEachIndexed { lineIndex, line ->
             if (index <= i + line.text.length) {
-                return Triple(line, (index - i - lineIndex), lineIndex)
+                return Triple(line, index - i - lineIndex, lineIndex)
             }
             i += line.text.length
         }
@@ -167,13 +169,7 @@ internal class SingleText(
     override var lines: ArrayList<Line> = arrayListOf(Line(text.string, size.width, size.height))
     var init = false
     override fun render(x: Float, y: Float, color: Color) {
-        if (textOffsetX != 0f || textOffsetY != 0f) {
-            renderer.pushScissor(x, y, size.width, size.height)
-            renderer.drawText(font, x + textOffsetX, y + textOffsetY, text.string, color, fontSize, textAlign)
-            renderer.popScissor()
-        } else {
-            renderer.drawText(font, x, y, text.string, color, fontSize, textAlign)
-        }
+        renderer.drawText(font, x + textOffsetX, y + textOffsetY, text.string, color, fontSize, textAlign)
     }
 
     override fun calculate(renderer: Renderer) {

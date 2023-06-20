@@ -149,7 +149,7 @@ open class TextInput(
             focused = false
         }
         if (event is FocusedEvents.KeyTyped) {
-            if (event.mods < 2 && !text.full) {
+            if (event.mods < 2) {
                 txt = txt.substring(0, caret) + event.key + txt.substring(caret)
                 caret++
             } else if (event.hasModifier(KeyModifiers.LCONTROL) || event.hasModifier(KeyModifiers.RCONTROL)) {
@@ -261,7 +261,7 @@ open class TextInput(
             text.str.fontSize,
             properties.text.alignment
         ).width + text.x
-        cposy = lni * text.str.fontSize + text.y
+        cposy = lni * text.str.fontSize + text.y + text.str.textOffsetY
     }
 
     private fun mouseInput(mouseX: Float, mouseY: Float) {
@@ -300,7 +300,7 @@ open class TextInput(
         }
         for (i in sli + 1 until eli) {
             val line = text[i]
-            selectBoxes.add((text.x - 1f to text.y + (i.toFloat() * text.fontSize)) to (line.width to line.height))
+            selectBoxes.add((text.x - 1f to text.y + (i.toFloat() * text.fontSize) + text.str.textOffsetY) to (line.width to line.height))
         }
         line(sl, si, sl.text.length, sli)
         line(el, 0, ei, eli)
@@ -309,11 +309,11 @@ open class TextInput(
     private fun line(line: Line, startIndex: Int, endIndex: Int, lineIndex: Int) {
         val start = renderer.textBounds(text.font, line.text.substring(0, startIndex), text.fontSize, text.textAlign).a.px
         val width = renderer.textBounds(text.font, line.text.substring(startIndex, endIndex), text.fontSize, text.textAlign).a.px
-        selectBoxes.add((text.x + start - 1f to text.y + (lineIndex * text.fontSize)) to (width to line.height))
+        selectBoxes.add((text.x + start - 1f to text.y + (lineIndex * text.fontSize) + text.str.textOffsetY) to (width to line.height))
     }
 
     private fun posFromMouse(x: Float, y: Float) {
-        val mouseY = y - text.trueY
+        val mouseY = y - text.trueY - text.str.textOffsetY
         val mouseX = x - text.trueX
 
         var i = 0f
@@ -369,6 +369,12 @@ open class TextInput(
             text.trueY + (cposy - text.y) +
                 if (down) h else -h
         )
+        if (text.full) {
+            if (!down && text.str.textOffsetY >= 0f) return
+            if (down && text.str.textOffsetY <= -text.height) return
+            text.str.textOffsetY += if (down) -h else h
+            cposy += if (down) -h else h
+        }
     }
 
     override fun rescale(scaleX: Float, scaleY: Float) {

@@ -49,7 +49,7 @@ import org.jetbrains.annotations.ApiStatus
  * @see cc.polyfrost.polyui.layout.impl.SwitchingLayout
  */
 abstract class Layout(
-    override val at: Point<Unit>,
+    at: Point<Unit>,
     override var size: Size<Unit>? = null,
     internal val onAdded: (Drawable.() -> kotlin.Unit)? = null,
     internal val onRemoved: (Drawable.() -> kotlin.Unit)? = null,
@@ -57,7 +57,7 @@ abstract class Layout(
     acceptInput: Boolean = false,
     val resizesChildren: Boolean = true,
     vararg drawables: Drawable
-) : Drawable(acceptInput) {
+) : Drawable(at, acceptInput) {
     /** list of components in this layout. */
     open val components = drawables.filterIsInstance<Component>() as ArrayList
 
@@ -167,7 +167,7 @@ abstract class Layout(
 
     /** perform the given [function] on all this layout's components, and [optionally][onChildLayouts] on all child layouts. */
     open fun onAll(onChildLayouts: Boolean = false, function: Component.() -> kotlin.Unit) {
-        components.fastEach { it.function() }
+        components.fastEach(function)
         if (onChildLayouts) children.fastEach { it.onAll(true, function) }
     }
 

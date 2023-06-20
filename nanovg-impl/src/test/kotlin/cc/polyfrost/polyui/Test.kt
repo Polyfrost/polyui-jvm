@@ -172,6 +172,10 @@ fun main() {
             ).scrolling(620.px * 300.px)
         )
     )
+    polyUI.keyBinder.add(key = 'P', mods = mods(Modifiers.LCONTROL)) {
+        polyUI.debugPrint()
+        return@add
+    }
     polyUI.keyBinder.add(Mouse.LEFT_MOUSE, amountClicks = 2, mods = mods(Modifiers.LCONTROL)) {
         println("${polyUI.mouseX} x ${polyUI.mouseY}")
         polyUI.getComponentsIn(polyUI.mouseX - 25f, polyUI.mouseY - 25f, 50f, 50f).fastEach {

@@ -44,6 +44,7 @@ import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.utils.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
  * # PolyUI
@@ -165,7 +166,7 @@ class PolyUI @JvmOverloads constructor(
             renderer.height = value
         }
         inline get() = renderer.height
-    private var renderHooks = arrayListOf<Renderer.() -> kotlin.Unit>()
+    private var hooks = ConcurrentLinkedQueue<Renderer.() -> kotlin.Unit>()
 
     /**
      * the time since the last frame, in nanoseconds. It is used internally a lot for animations, etc.
@@ -263,8 +264,6 @@ class PolyUI @JvmOverloads constructor(
 
     /**
      * Resize this PolyUI instance.
-     *
-     * This function is **NOT thread safe** and must be called from the main thread!
      */
     @Suppress("NAME_SHADOWING")
     fun onResize(newWidth: Int, newHeight: Int, pixelRatio: Float = renderer.pixelRatio, force: Boolean = false) {
@@ -342,7 +341,11 @@ class PolyUI @JvmOverloads constructor(
             val now = clock.now
             renderer.beginFrame()
             master.reRenderIfNecessary()
-            renderHooks.fastEach { it(renderer) }
+
+            var s: (Renderer.() -> kotlin.Unit)?
+            while (hooks.poll().also { s = it } != null) {
+                s!!(renderer)
+            }
 
             // telemetry
             if (settings.debug) {
@@ -376,9 +379,12 @@ class PolyUI @JvmOverloads constructor(
         )
     }
 
-    /** add something to be rendered after each frame. */
-    fun addRenderHook(func: Renderer.() -> kotlin.Unit) {
-        renderHooks.add(func)
+    /**
+     * add a function to be executed on the main thread, after rendering the UI. a renderer is provided if you want to do any rendering.
+     * @since 0.18.5
+     */
+    fun addHook(func: Renderer.() -> kotlin.Unit) {
+        hooks.add(func)
     }
 
     fun removeComponent(drawable: Drawable): PolyUI {
@@ -522,7 +528,7 @@ class PolyUI @JvmOverloads constructor(
     fun cleanup() {
         renderer.cleanup()
         focused = null
-        renderHooks.clear()
+        hooks.clear()
         master.children.clear()
         master.components.clear()
     }

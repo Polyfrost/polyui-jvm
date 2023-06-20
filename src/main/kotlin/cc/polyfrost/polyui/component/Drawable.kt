@@ -34,7 +34,11 @@ import cc.polyfrost.polyui.unit.Unit
  *
  * This class is implemented for both [Layout] and [Drawable], and you should use them as bases if you are creating a UI in most cases.
  */
-abstract class Drawable(open var acceptsInput: Boolean = true) {
+abstract class Drawable(
+    /** position **relative** to the [parents][layout] position. */
+    open val at: Point<Unit>,
+    open var acceptsInput: Boolean = true
+) {
     open val eventHandlers = HashMap<Events, Drawable.() -> Boolean>()
 
     /**
@@ -43,9 +47,6 @@ abstract class Drawable(open var acceptsInput: Boolean = true) {
      * `val text = myLayout["Text@4cf777e8"] as Text`
      */
     open var simpleName = "${this::class.simpleName}@${Integer.toHexString(this.hashCode())}"
-
-    /** position **relative** to the [parents][layout] position. */
-    abstract val at: Point<Unit>
 
     /** size of this drawable. */
     abstract var size: Size<Unit>?

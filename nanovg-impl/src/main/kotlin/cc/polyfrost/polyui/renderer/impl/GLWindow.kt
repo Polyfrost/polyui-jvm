@@ -39,7 +39,7 @@ import org.lwjgl.opengl.GL11.*
 import org.lwjgl.stb.STBImage
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
-import java.util.concurrent.ArrayBlockingQueue
+import org.lwjgl.system.Platform
 import kotlin.math.max
 
 class GLWindow @JvmOverloads constructor(
@@ -76,7 +76,6 @@ class GLWindow @JvmOverloads constructor(
         set(value) {
             field = if (value == 0.0) 0.0 else 1.0 / value.toInt()
         }
-    val resizeQueue = ArrayBlockingQueue<Triple<Int, Int, Float>>(5)
 
     var title = title
         set(new) {
@@ -126,13 +125,13 @@ class GLWindow @JvmOverloads constructor(
         glfwSetFramebufferSizeCallback(handle) { _, width, height ->
             this.width = width
             this.height = height
-            resizeQueue.offer(Triple((width / polyUI.renderer.pixelRatio).toInt(), (height / polyUI.renderer.pixelRatio).toInt(), polyUI.renderer.pixelRatio))
+            polyUI.onResize((width / polyUI.renderer.pixelRatio).toInt(), (height / polyUI.renderer.pixelRatio).toInt(), polyUI.renderer.pixelRatio)
         }
 
         glfwSetWindowContentScaleCallback(handle) { _, xScale, yScale ->
             val pixelRatio = max(xScale, yScale)
             if (polyUI.settings.debug) PolyUI.LOGGER.info("Pixel ratio: $pixelRatio")
-            resizeQueue.offer(Triple((width / pixelRatio).toInt(), (height / pixelRatio).toInt(), pixelRatio))
+            polyUI.onResize((width / pixelRatio).toInt(), (height / pixelRatio).toInt(), pixelRatio)
         }
 
         glfwSetMouseButtonCallback(handle) { _, button, action, _ ->
@@ -144,7 +143,15 @@ class GLWindow @JvmOverloads constructor(
         }
 
         glfwSetCursorPosCallback(handle) { _, x, y ->
-            polyUI.eventManager.setMousePosAndUpdate(x.toFloat() / polyUI.renderer.pixelRatio, y.toFloat() / polyUI.renderer.pixelRatio)
+            var x = x.toFloat()
+            var y = y.toFloat()
+            if (polyUI.renderer.pixelRatio != 1f) {
+                if (Platform.get() == Platform.WINDOWS) {
+                    x /= polyUI.renderer.pixelRatio
+                    y /= polyUI.renderer.pixelRatio
+                }
+            }
+            polyUI.eventManager.setMousePosAndUpdate(x, y)
         }
 
         glfwSetKeyCallback(handle) { _, keyCode, _, action, mods ->
@@ -210,6 +217,14 @@ class GLWindow @JvmOverloads constructor(
             if (polyUI.settings.unfocusedFPS != 0) {
                 fpsCap = if (focused) polyUI.settings.maxFPS.toDouble() else polyUI.settings.unfocusedFPS.toDouble()
             }
+            glfwSetWindowSize(handle, width, height)
+        }
+
+        // fix macOS windows being small when focus is lost
+        glfwSetWindowIconifyCallback(handle) { _, iconified ->
+            if (iconified) {
+                glfwSetWindowSize(handle, width, height)
+            }
         }
     }
 
@@ -256,21 +271,9 @@ class GLWindow @JvmOverloads constructor(
         }
         glfwSetWindowAspectRatio(handle, polyUI.settings.windowAspectRatio.first, polyUI.settings.windowAspectRatio.second)
 
-        val eventThread = Thread {
-            while (!Thread.currentThread().isInterrupted) {
-                glfwPollEvents()
-            }
-            return@Thread
-        }
-        eventThread.start()
-
         var t = glfwGetTime()
         fpsCap = polyUI.settings.maxFPS.toDouble()
         while (!glfwWindowShouldClose(handle)) {
-            val p = resizeQueue.poll()
-            if (p != null) {
-                polyUI.onResize(p.first, p.second, p.third)
-            }
             glViewport(0, offset, width, height)
             val c = polyUI.colors.page.bg
             glClearColor(c.r / 255f, c.g / 255f, c.b / 255f, 0f)
@@ -279,14 +282,15 @@ class GLWindow @JvmOverloads constructor(
             this.polyUI.render()
             if (fpsCap != 0.0) {
                 while (glfwGetTime() - t < fpsCap) {
-                    // nop
+                    glfwPollEvents()
                 }
                 t = glfwGetTime()
+            } else {
+                glfwPollEvents()
             }
             if (polyUI.drew) glfwSwapBuffers(handle)
         }
 
-        eventThread.interrupt()
         polyUI.cleanup()
         GL.setCapabilities(null)
         Callbacks.glfwFreeCallbacks(handle)
