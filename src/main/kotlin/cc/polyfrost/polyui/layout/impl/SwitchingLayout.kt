@@ -48,7 +48,7 @@ class SwitchingLayout(
      * If this is true, and this size is not null, it will be scaled accordingly.
      * Else, it will take the size of the largest one, and the smaller ones will be scaled to fit. */
     resizesChildren: Boolean = true
-) : PixelLayout(at, size, onAdded, onRemoved, true, resizesChildren) {
+) : PixelLayout(at, size, onAdded, onRemoved, true, false, resizesChildren) {
     private var goingSwitchOp: Transition? = null
     private var comingSwitchOp: Transition? = null
     private var idx: Int = defaultIndex

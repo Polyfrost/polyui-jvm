@@ -31,10 +31,11 @@ import cc.polyfrost.polyui.unit.Unit
 open class Image @JvmOverloads constructor(
     private val image: PolyImage,
     properties: ImageProperties? = null,
+    rawResize: Boolean = false,
     acceptInput: Boolean = true,
     at: Vec2<Unit>,
     vararg events: Events.Handler
-) : Component(properties, at, null, acceptInput, *events) {
+) : Component(properties, at, null, rawResize, acceptInput, *events) {
     final override val properties: ImageProperties
         get() = super.properties as ImageProperties
 

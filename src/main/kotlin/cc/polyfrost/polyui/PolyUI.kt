@@ -121,7 +121,7 @@ class PolyUI @JvmOverloads constructor(
     var clipboard: String?
         get() = window.getClipboard()
         set(value) = window.setClipboard(value)
-    val master = PixelLayout(Point(0.px, 0.px), Size(renderer.width.px, renderer.height.px), drawables = drawables, resizesChildren = true, acceptInput = false)
+    val master = PixelLayout(Point(0.px, 0.px), Size(renderer.width.px, renderer.height.px), drawables = drawables, rawResize = true, acceptInput = false)
     val eventManager = EventManager(this)
     val keyBinder = KeyBinder()
     val translator = PolyTranslator(this, translationDirectory ?: "")

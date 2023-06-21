@@ -35,6 +35,7 @@ import cc.polyfrost.polyui.renderer.data.SingleText
 import cc.polyfrost.polyui.renderer.data.Text
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
+import cc.polyfrost.polyui.utils.cl1
 import kotlin.math.floor
 
 open class Text @JvmOverloads constructor(
@@ -44,9 +45,10 @@ open class Text @JvmOverloads constructor(
     val sized: Size<Unit>? = null,
     fontSize: Unit? = null,
     val textAlign: TextAlign = TextAlign.Left,
+    rawResize: Boolean = false,
     acceptInput: Boolean = false,
     vararg events: Events.Handler
-) : Component(properties, at, null, acceptInput, *events) {
+) : Component(properties, at, null, rawResize, acceptInput, *events) {
     /** Internally [txt] is stored as a [PolyText] object, which supports localization and object substitution */
     @JvmOverloads
     constructor(
@@ -55,9 +57,10 @@ open class Text @JvmOverloads constructor(
         size: Size<Unit>? = null,
         fontSize: Unit? = null,
         textAlign: TextAlign = TextAlign.Left,
+        rawResize: Boolean = false,
         acceptInput: Boolean = false,
         vararg events: Events.Handler
-    ) : this(null, txt.localised(), at, size, fontSize, textAlign, acceptInput, *events)
+    ) : this(null, txt.localised(), at, size, fontSize, textAlign, rawResize, acceptInput, *events)
 
     constructor(properties: Properties? = null, text: PolyText, fontSize: Unit, at: Vec2<Unit>) :
         this(properties, text, at, null, fontSize)
@@ -107,7 +110,12 @@ open class Text @JvmOverloads constructor(
 
     override fun rescale(scaleX: Float, scaleY: Float) {
         super.rescale(scaleX, scaleY)
-        this.scaleX = str.rescale(scaleX, scaleY)
+        if (rawResize) {
+            this.scaleX = str.rescale(scaleX, scaleY)
+        } else {
+            val scale = cl1(scaleX, scaleY)
+            this.scaleX = str.rescale(scale, scale)
+        }
     }
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {

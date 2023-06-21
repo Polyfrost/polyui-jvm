@@ -182,7 +182,6 @@ fun main() {
             it.recolor(Color(Random.Default.nextFloat(), Random.Default.nextFloat(), Random.Default.nextFloat(), 1f))
         }
     }
-    polyUI.settings.windowAspectRatio = 1 to 1
     var light = false
     polyUI.keyBinder.add(Keys.F1) {
         if (!light) {

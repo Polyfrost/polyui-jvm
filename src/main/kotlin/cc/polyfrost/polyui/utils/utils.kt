@@ -29,10 +29,7 @@ import cc.polyfrost.polyui.input.KeyModifiers
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.data.Font
 import cc.polyfrost.polyui.unit.TextAlign
-import kotlin.math.PI
-import kotlin.math.abs
-import kotlin.math.floor
-import kotlin.math.pow
+import kotlin.math.*
 
 fun rgba(r: Float, g: Float, b: Float, a: Float): Color {
     return Color((r * 255f).toInt(), (g * 255f).toInt(), (b * 255f).toInt(), a)
@@ -220,8 +217,23 @@ fun Pair<Int, Int>.simplifyRatio(): Pair<Int, Int> {
  *
  * If `a == b`, then the result is `a`.
  */
-inline fun clz(a: Float, b: Float): Float {
+inline fun cl0(a: Float, b: Float): Float {
     return if (abs(a) <= abs(b)) {
+        a
+    } else {
+        b
+    }
+}
+
+/**
+ * Returns the value closer to one.
+ *
+ * If either value is `NaN`, then the result is `NaN`.
+ *
+ * If `a == b`, then the result is `a`.
+ */
+inline fun cl1(a: Float, b: Float): Float {
+    return if (abs(a - 1f) <= abs(b - 1f)) {
         a
     } else {
         b

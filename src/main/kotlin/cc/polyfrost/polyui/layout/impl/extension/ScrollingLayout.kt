@@ -201,13 +201,13 @@ class ScrollingLayout(
             if (toAdd > 0f) { // scroll left
                 min(ox - x, toAdd)
             } else { // scroll right
-                clz(-(ptr.width - scrollingSize.a.px - (ox - x)), toAdd)
+                cl0(-(ptr.width - scrollingSize.a.px - (ox - x)), toAdd)
             }
         } else {
             if (toAdd > 0f) { // scroll up
                 min(oy - ptr.y, toAdd)
             } else { // scroll down
-                clz(-(ptr.height - scrollingSize.b.px - (oy - ptr.y)), toAdd)
+                cl0(-(ptr.height - scrollingSize.b.px - (oy - ptr.y)), toAdd)
             }
         }
     }
@@ -217,10 +217,20 @@ class ScrollingLayout(
         val p1 = scrollYPercent
         super.rescale(scaleX, scaleY)
         scrollingSize.scale(scaleX, scaleY)
-        scrollXPercent = p
-        scrollYPercent = p1
-        bars.first.update()
-        bars.second.update()
+        if (p.isNaN()) {
+            scrollXPercent = 0f
+            bars.first.enabled = false
+        } else {
+            scrollXPercent = p
+            bars.first.update()
+        }
+        if (p1.isNaN()) {
+            scrollYPercent = 0f
+            bars.second.enabled = false
+        } else {
+            scrollYPercent = p1
+            bars.second.update()
+        }
     }
 
     override fun calculateBounds() {
@@ -292,7 +302,6 @@ class ScrollingLayout(
             }
 
         var enabled = true
-            private set
 
         override fun calculateBounds() {
             super.calculateBounds()
@@ -326,6 +335,7 @@ class ScrollingLayout(
         }
 
         fun update() {
+            enabled = contentSize >= scrollingSize
             if (!enabled) return
             if (horizontal) {
                 y =
@@ -343,6 +353,7 @@ class ScrollingLayout(
         }
 
         override fun render() {
+            enabled = contentSize >= scrollingSize
             if (!enabled) return
             if (mouseDown) {
                 if (!polyui.eventManager.mouseDown) {

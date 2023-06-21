@@ -45,7 +45,7 @@ class GridLayout @JvmOverloads constructor(
     private val gap: Gap = Gap.Default,
     resizesChildren: Boolean = true,
     vararg drawables: Drawable
-) : Layout(at, origin, onAdded, onRemoved, false, resizesChildren, *drawables) {
+) : Layout(at, origin, onAdded, onRemoved, false, resizesChildren, false, *drawables) {
 
     /** list of rows */
     private var grid: Array<Array<Drawable?>>

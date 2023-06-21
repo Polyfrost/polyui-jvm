@@ -48,9 +48,10 @@ abstract class Component @JvmOverloads constructor(
     /** position relative to this layout. */
     at: Point<Unit>,
     override var size: Size<Unit>? = null,
+    rawResize: Boolean = false,
     acceptInput: Boolean = true,
     vararg events: Events.Handler
-) : Drawable(at, acceptInput) {
+) : Drawable(at, rawResize, acceptInput) {
     protected val animations: ArrayList<Pair<Animation, (Component.() -> kotlin.Unit)?>> = ArrayList(5)
     protected val operations: ArrayList<Pair<DrawableOp, (Component.() -> kotlin.Unit)?>> = ArrayList(5)
 

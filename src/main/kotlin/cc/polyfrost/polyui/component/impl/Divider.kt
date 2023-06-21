@@ -35,7 +35,7 @@ open class Divider @JvmOverloads constructor(
     at: Vec2<Unit>,
     val length: Unit,
     val direction: Direction = Direction.Horizontal
-) : Component(properties, at, null, false) {
+) : Component(properties, at, null, true, false) {
     override fun render() {
         renderer.drawLine(x, y, x + width, y + height, properties.color, (properties as DividerProperties).thickness)
     }

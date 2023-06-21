@@ -41,8 +41,9 @@ open class PointerLayout(
     layout.size,
     layout.onAdded,
     layout.onRemoved,
-    layout.acceptsInput,
+    layout.rawResize,
     layout.resizesChildren,
+    layout.acceptsInput,
     layout
 ) {
     val ptr = layout

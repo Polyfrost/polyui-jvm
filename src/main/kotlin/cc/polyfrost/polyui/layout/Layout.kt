@@ -53,11 +53,16 @@ abstract class Layout(
     override var size: Size<Unit>? = null,
     internal val onAdded: (Drawable.() -> kotlin.Unit)? = null,
     internal val onRemoved: (Drawable.() -> kotlin.Unit)? = null,
+    rawResize: Boolean = false,
+    /**
+     * If this layout resizes its children (**components and layouts!**) when it is resized.
+     * @since 0.19.0
+     */
+    val resizesChildren: Boolean = true,
     /** If this layout can receive events (separate to its children!). */
     acceptInput: Boolean = false,
-    val resizesChildren: Boolean = true,
     vararg drawables: Drawable
-) : Drawable(at, acceptInput) {
+) : Drawable(at, rawResize, acceptInput) {
     /** list of components in this layout. */
     open val components = drawables.filterIsInstance<Component>() as ArrayList
 

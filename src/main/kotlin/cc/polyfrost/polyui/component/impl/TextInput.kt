@@ -43,7 +43,7 @@ open class TextInput(
     at: Vec2<Unit>,
     size: Vec2<Unit>,
     vararg events: Events.Handler
-) : Component(properties, at, size, true, *events), Focusable {
+) : Component(properties, at, size, false, true, *events), Focusable {
     override val properties: TextInputProperties
         get() = super.properties as TextInputProperties
     lateinit var text: Text

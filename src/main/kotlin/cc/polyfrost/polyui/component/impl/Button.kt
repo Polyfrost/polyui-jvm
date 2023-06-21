@@ -52,7 +52,7 @@ class Button(
     rightIcon: PolyImage? = null,
     acceptsInput: Boolean = true,
     vararg events: Events.Handler
-) : ContainingComponent(properties, at, null, acceptsInput, arrayOf(), *events) {
+) : ContainingComponent(properties, at, null, false, acceptsInput, arrayOf(), *events) {
     override val properties get() = super.properties as ButtonProperties
     val leftImage: Image? = if (leftIcon != null) Image(leftIcon, at = origin, acceptInput = false) else null
     val rightImage: Image? = if (rightIcon != null) Image(rightIcon, at = origin, acceptInput = false) else null

@@ -56,9 +56,8 @@ class FlexLayout @JvmOverloads constructor(
     private val itemAlign: AlignItems = AlignItems.Start,
     private val contentAlign: AlignContent = AlignContent.Start,
     gap: Gap = Gap.Default,
-    resizesChildren: Boolean = true,
     vararg drawables: Drawable
-) : Layout(at, size, onAdded, onRemoved, false, resizesChildren, *drawables) {
+) : Layout(at, size, onAdded, onRemoved, false, false, false, *drawables) {
     constructor(at: Point<Unit>, wrap: Unit.Percent, vararg drawables: Drawable) : this(
         at,
         null,

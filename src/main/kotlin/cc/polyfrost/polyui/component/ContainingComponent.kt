@@ -47,10 +47,11 @@ abstract class ContainingComponent(
     /** position relative to this layout. */
     at: Point<Unit>,
     size: Size<Unit>? = null,
+    rawResize: Boolean = false,
     acceptInput: Boolean = true,
     children: Array<out Component?>,
     vararg events: Events.Handler
-) : Component(properties, at, size, acceptInput, *events) {
+) : Component(properties, at, size, rawResize, acceptInput, *events) {
     val children: ArrayList<Component> = children.filterNotNull() as ArrayList<Component>
     init {
         this.children.fastEach { it.acceptsInput = false }

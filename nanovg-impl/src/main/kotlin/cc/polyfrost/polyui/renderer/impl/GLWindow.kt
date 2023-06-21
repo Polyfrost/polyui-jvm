@@ -143,7 +143,10 @@ class GLWindow @JvmOverloads constructor(
         }
 
         glfwSetCursorPosCallback(handle) { _, x, y ->
+            @Suppress("NAME_SHADOWING")
             var x = x.toFloat()
+
+            @Suppress("NAME_SHADOWING")
             var y = y.toFloat()
             if (polyUI.renderer.pixelRatio != 1f) {
                 if (Platform.get() == Platform.WINDOWS) {
@@ -318,7 +321,7 @@ class GLWindow @JvmOverloads constructor(
 
     override fun getClipboard() = glfwGetClipboardString(handle)
 
-    override fun setClipboard(text: String?) = glfwSetClipboardString(handle, text as? CharSequence)
+    override fun setClipboard(text: String?) = if (text != null) glfwSetClipboardString(handle, text as CharSequence) else Unit
 
     override fun setCursor(cursor: Cursor) {
         glfwSetCursor(

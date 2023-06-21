@@ -42,10 +42,12 @@ open class PixelLayout(
     onAdded: (Drawable.() -> kotlin.Unit)? = null,
     onRemoved: (Drawable.() -> kotlin.Unit)? = null,
     acceptInput: Boolean = true,
+    rawResize: Boolean = false,
     resizesChildren: Boolean = true,
     vararg drawables: Drawable
-) : Layout(at, size, onAdded, onRemoved, acceptInput, resizesChildren, *drawables) {
-    var dyn = false
+) : Layout(at, size, onAdded, onRemoved, rawResize, resizesChildren, acceptInput, *drawables) {
+    private var dyn = false
+    private var warned = false
 
     init {
         drawables.forEach {
@@ -77,7 +79,10 @@ open class PixelLayout(
         var height = children.maxOfOrNull { if (!dyn && it.isDynamic) 0f else it.y + it.height } ?: 0f
         height = max(height, components.maxOfOrNull { if (!dyn && it.isDynamic) 0f else it.y + it.height } ?: 0f)
         dyn = !dyn && children.anyAre { it.isDynamic } || components.anyAre { it.isDynamic }
-        if (dyn) PolyUI.LOGGER.warn("${this.simpleName} has dynamically sized children, but it does not have a size itself. It will have its units inferred based on its concrete sized children.")
+        if (!warned && dyn) {
+            PolyUI.LOGGER.warn("${this.simpleName} has dynamically sized children, but it does not have a size itself. It will have its units inferred based on its concrete sized children.")
+            warned = true
+        }
         if (width == 0f) throw Exception("unable to infer width of ${this.simpleName}: no concrete sized children or components, please specify a size")
         if (height == 0f) throw Exception("unable to infer height of ${this.simpleName}: no concrete sized children or components, please specify a size")
         return width.px * height.px

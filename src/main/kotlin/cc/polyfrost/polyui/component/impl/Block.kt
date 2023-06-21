@@ -38,9 +38,10 @@ open class Block @JvmOverloads constructor(
     properties: Properties? = null,
     at: Vec2<Unit>,
     size: Size<Unit>,
+    rawResize: Boolean = false,
     acceptInput: Boolean = true,
     vararg events: Events.Handler
-) : Component(properties, at, size, acceptInput, *events) {
+) : Component(properties, at, size, rawResize, acceptInput, *events) {
     override val properties: BlockProperties
         get() = super.properties as BlockProperties
 

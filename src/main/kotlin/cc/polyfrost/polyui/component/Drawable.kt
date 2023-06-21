@@ -27,6 +27,7 @@ import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
+import cc.polyfrost.polyui.utils.cl1
 
 /**
  * # Drawable
@@ -37,6 +38,15 @@ import cc.polyfrost.polyui.unit.Unit
 abstract class Drawable(
     /** position **relative** to the [parents][layout] position. */
     open val at: Point<Unit>,
+    /**
+     * This property controls weather this drawable resizes "raw", meaning it will **not** respect the aspect ratio.
+     *
+     * By default, it is `false`, so when resized, the smallest increase is used for both width and height. This means that it will stay at the same aspect ratio.
+     *
+     * @see cc.polyfrost.polyui.layout.impl.FlexLayout - It uses this functionality to make itself larger without respect to the aspect ratio, but its children will.
+     * @since 0.19.0
+     */
+    val rawResize: Boolean = false,
     open var acceptsInput: Boolean = true
 ) {
     open val eventHandlers = HashMap<Events, Drawable.() -> Boolean>()
@@ -116,8 +126,14 @@ abstract class Drawable(
      * Method that is called when the physical size of the total window area changes.
      */
     open fun rescale(scaleX: Float, scaleY: Float) {
-        at.scale(scaleX, scaleY)
-        size!!.scale(scaleX, scaleY)
+        if (rawResize) {
+            at.scale(scaleX, scaleY)
+            size!!.scale(scaleX, scaleY)
+        } else {
+            val scale = cl1(scaleX, scaleY)
+            at.scale(scale, scale)
+            size!!.scale(scale, scale)
+        }
     }
 
     /** function that should return true if it is ready to be removed from its parent.
