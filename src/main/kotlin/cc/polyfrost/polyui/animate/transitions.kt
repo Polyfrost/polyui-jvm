@@ -31,7 +31,6 @@ import cc.polyfrost.polyui.unit.seconds
 /** mother/super class of all transitions. */
 abstract class Transition(drawable: Drawable) : DrawableOp(drawable), Cloneable {
 
-    // why, kotlin, why?
     public abstract override fun clone(): Transition
 
     enum class Type {

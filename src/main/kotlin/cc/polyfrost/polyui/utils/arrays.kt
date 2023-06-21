@@ -228,6 +228,16 @@ fun <T> Iterable<T>.toArrayList(): ArrayList<T> {
 fun <T> Array<T>.toArrayList(): ArrayList<T> = this.toMutableList() as ArrayList<T>
 
 /**
+ * Returns the index of the [element] in the list or runs the [or] parameter if the element is not found.
+ *
+ * This returns [Nothing], and is used by default to throw an exception; hence why it's called "or die".
+ */
+fun <E> List<E>.indexOfOrDie(element: E, or: () -> Nothing = throw IllegalArgumentException("Element $element not found in list $this!")): Int {
+    val index = this.indexOf(element)
+    return if (index == -1) or() else index
+}
+
+/**
  * Represents a generic pair of two values.
  *
  * There is no meaning attached to values in this class, it can be used for any purpose.

@@ -37,7 +37,7 @@ import kotlin.math.max
  *
  */
 open class PixelLayout(
-    at: Point<Unit>,
+    at: Point<Unit> = origin,
     size: Size<Unit>? = null,
     onAdded: (Drawable.() -> kotlin.Unit)? = null,
     onRemoved: (Drawable.() -> kotlin.Unit)? = null,

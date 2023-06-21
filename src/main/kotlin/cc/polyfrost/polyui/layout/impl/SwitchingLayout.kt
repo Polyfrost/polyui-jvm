@@ -32,6 +32,8 @@ import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.utils.fastEach
+import cc.polyfrost.polyui.utils.indexOfOrDie
+import java.lang.NullPointerException
 import kotlin.math.max
 
 /** a switching layout is a layout that can switch between layouts, with cool animations. */
@@ -44,9 +46,6 @@ class SwitchingLayout(
     val transitionDuration: Long = 1L.seconds,
     val defaultIndex: Int = 0,
     vararg layouts: Layout,
-    /** this variable also controls for SwitchingLayout how it behaves with a layout that is smaller/larger than this size.
-     * If this is true, and this size is not null, it will be scaled accordingly.
-     * Else, it will take the size of the largest one, and the smaller ones will be scaled to fit. */
     resizesChildren: Boolean = true
 ) : PixelLayout(at, size, onAdded, onRemoved, true, false, resizesChildren) {
     private var goingSwitchOp: Transition? = null
@@ -57,10 +56,13 @@ class SwitchingLayout(
     private var autoSized = false
     private var init = false
 
+    // children still can have framebuffers, but the layout itself doesn't
+    override var refuseFramebuffer = true
+
     override var needsRedraw: Boolean
         get() = current?.needsRedraw == true || goingSwitchOp != null
         set(value) {
-            current?.needsRedraw = value
+            super.needsRedraw = value
         }
 
     init {
@@ -104,7 +106,7 @@ class SwitchingLayout(
     }
 
     override fun reRenderIfNecessary() {
-        current?.reRenderIfNecessary()
+        current?.reRenderIfNecessary() ?: throw NullPointerException("${this.simpleName}'s current layout is null!")
     }
 
     override fun accept(event: Events): Boolean {
@@ -149,12 +151,6 @@ class SwitchingLayout(
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {
         super.setup(renderer, polyui)
-        onAllLayouts {
-            components.fastEach {
-                it.layout = this.layout!!
-            }
-            layout = this.layout
-        }
         init = true
     }
 
@@ -214,13 +210,15 @@ class SwitchingLayout(
         comingSwitchOp = transition.create(layout, transitionDuration)
     }
 
+    fun switch(layout: Layout) = switch(children.indexOfOrDie(layout))
+
     fun next() {
         idx++
         if (idx > children.lastIndex) idx = 0
         switch(idx)
     }
 
-    fun back() {
+    fun previous() {
         idx--
         if (idx < 0) idx = children.lastIndex
         switch(idx)
@@ -234,11 +232,16 @@ class SwitchingLayout(
     fun addLayouts(vararg layout: Layout) {
         layout.forEach {
             children.add(init(it))
+            it.onAllLayouts {
+                it.components.fastEach { cmp ->
+                    cmp.layout = this
+                }
+            }
         }
     }
 
     private fun init(layout: Layout): Layout {
-        layout.layout = this.layout
+        layout.layout = this
         if (init) {
             layout.setup(renderer, polyui)
         }

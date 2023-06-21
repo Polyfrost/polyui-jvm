@@ -111,7 +111,7 @@ class FlexLayout @JvmOverloads constructor(
             if ((it.at as Point<Unit.Flex>).a.index >= 0) {
                 drawables.moveElement(i, (it.at.a as Unit.Flex).index)
             }
-            if (it is Component) it.layout = this // why are smart casts so goofy? like I seriously have to do this?
+            if (it is Component) it.layout = this
             if (it is Layout) it.layout = this
         }
         this.drawables = drawables.map { FlexDrawable(it, it.at.a as Unit.Flex, it.size) } as ArrayList<FlexDrawable>
@@ -209,7 +209,7 @@ class FlexLayout @JvmOverloads constructor(
                             maxCrossSizeNoGaps
                         )
                         err = true
-                        return@run // break https://kotlinlang.org/docs/returns.html#return-to-labels
+                        return@run
                     }
                 }
             }

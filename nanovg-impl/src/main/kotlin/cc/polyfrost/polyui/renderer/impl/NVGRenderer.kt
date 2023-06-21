@@ -223,7 +223,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         bottomRightRadius: Float
     ) {
         if (color === Color.TRANSPARENT) return
-        // note: nvg checks params and draws class rec if 0, so we don't need to
+        // note: nvg checks params and draws classic rect if 0, so we don't need to
         nvgBeginPath(vg)
         nvgRoundedRectVarying(
             vg,

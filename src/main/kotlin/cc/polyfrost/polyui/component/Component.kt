@@ -29,6 +29,7 @@ import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.layout.Layout
+import cc.polyfrost.polyui.layout.impl.SwitchingLayout
 import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.*
@@ -459,6 +460,33 @@ abstract class Component @JvmOverloads constructor(
             y = acy
         }
     }
+
+    /**
+     * Switch the layout currently being presented by the [SwitchingLayout] to the provided [layout].
+     *
+     * If the switching layout does not contain this layout (this layout is not in a switching layout), it will throw a [IllegalStateException].
+     *
+     * This is an accessor method for a nicer end-user syntax. You should call [SwitchingLayout.switch] directly if you can.
+     *
+     * @since 0.19.0
+     * @see SwitchingLayout.switch
+     * @see switch
+     */
+    @JvmOverloads
+    fun switch(layout: Layout = this.layout) = (this.layout.layout as? SwitchingLayout)?.switch(layout) ?: throw IllegalStateException("switch(layout) can only be called on a layout inside a SwitchingLayout! (${this.simpleName})")
+
+    /**
+     * Switch the layout currently being presented by the [SwitchingLayout] to the provided [index].
+     *
+     * If the switching layout does not contain this layout (this layout is not in a switching layout), it will throw a [IllegalStateException].
+     *
+     * This is an accessor method for a nicer end-user syntax. You should call [SwitchingLayout.switch] directly if you can.
+     *
+     * @since 0.19.0
+     * @see SwitchingLayout.switch
+     * @see switch
+     */
+    fun switch(index: Int) = (this.layout.layout as? SwitchingLayout)?.switch(index) ?: throw IllegalStateException("switch(index) can only be called on a layout inside a SwitchingLayout! (${this.simpleName})")
 
     override fun canBeRemoved(): Boolean = animations.size == 0 && operations.size == 0 && !color.updating
 

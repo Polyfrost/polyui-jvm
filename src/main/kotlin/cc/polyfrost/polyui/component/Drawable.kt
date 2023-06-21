@@ -95,10 +95,39 @@ abstract class Drawable(
         }
 
     /** true X value (i.e. not relative to the layout) */
-    inline val trueX get() = this.x + (layout?.at?.a?.px ?: 0f)
+    val trueX get() = trueX()
 
     /** true Y value (i.e. not relative to the layout) */
-    inline val trueY get() = this.y + (layout?.at?.b?.px ?: 0f)
+    val trueY get() = trueY()
+
+    /**
+     * Calculate the true X value (i.e. not relative to the layout)
+     * @since 0.19.0
+     */
+    private fun trueX(): Float {
+        var x = this.x
+        var parent = this.layout
+        while (parent != null) {
+            x += parent.x
+            parent = parent.layout
+        }
+        return x
+    }
+
+    /**
+     * Calculate the true Y value (i.e. not relative to the layout)
+     * @since 0.19.0
+     */
+    // the JVM should branch-predict this, so we can do it like this
+    private fun trueY(): Float {
+        var y = this.y
+        var parent = this.layout
+        while (parent != null) {
+            y += parent.y
+            parent = parent.layout
+        }
+        return y
+    }
 
     inline val atType: Unit.Type
         get() = at.type

@@ -153,7 +153,7 @@ class EventManager(private val polyUI: PolyUI) {
         }
     }
 
-    // don't check if the drawable is inside the mouse, this is unsafe and should only be used in setMousePosAndUpdate
+    /** This method doesn't check if the drawable is inside the mouse, this is unsafe and should only be used in [setMousePosAndUpdate] */
     private fun onApplicableDrawablesUnsafe(x: Float, y: Float, func: Drawable.() -> Unit) {
         return onApplicableLayouts(x, y) {
             components.fastEachReversed(func)

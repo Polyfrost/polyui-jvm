@@ -419,7 +419,7 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
             DeprecationLevel.ERROR
         )
         override fun recolor(target: Color, type: Animation.Type?, durationNanos: Long) {
-            // noop
+            // nop
         }
     }
 
@@ -449,7 +449,7 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
 
         @Deprecated("Chroma colors cannot be animated.", level = DeprecationLevel.ERROR)
         override fun recolor(target: Color, type: Animation.Type?, durationNanos: Long) {
-            // no-op
+            // nop
         }
 
         override fun clone() = Chroma(speedNanos, brightness, saturation, alpha)

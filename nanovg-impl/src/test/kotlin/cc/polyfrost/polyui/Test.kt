@@ -91,6 +91,35 @@ fun main() {
             PixelLayout(
                 at = 20.px * 50.percent,
                 drawables = drawables(
+                    PixelLayout(
+                        at = 500.px * 40.px,
+                        drawables = drawables(
+                            PixelLayout(
+                                at = 50.percent * 10.percent,
+                                drawables = drawables(
+                                    PixelLayout(
+                                        at = 50.percent * 10.percent,
+                                        drawables = drawables(
+                                            Block(
+                                                Properties.successProperties,
+                                                at = origin,
+                                                size = 60.px * 60.px
+                                            )
+                                        )
+                                    ),
+                                    Block(
+                                        at = origin,
+                                        size = 120.px * 120.px
+                                    )
+                                )
+                            ),
+                            Block(
+                                Properties.primaryProperties,
+                                at = origin,
+                                size = 240.px * 240.px
+                            )
+                        )
+                    ),
                     Text(
                         text = "polyui.test".localised("rainbow"),
                         fontSize = 32.px,

@@ -121,7 +121,7 @@ abstract class Layout(
         if (fbo != null && fboTracker < 2) {
             renderer.drawFramebuffer(fbo!!, x, y, width, height)
         } else {
-            val x = x // fix scrolling issue where objects could move very slightly
+            val x = x
             val y = y
             renderer.pushScissor(x, y, width, height)
             renderer.translate(x, y)
@@ -376,8 +376,8 @@ abstract class Layout(
     }
 
     override fun debugRender() {
-        renderer.drawHollowRect(x, y, width, height, polyui.colors.page.border20, 2f)
-        renderer.drawText(Renderer.DefaultFont, x + 1f, y + 1f, simpleName, polyui.colors.text.primary, 10f)
+        renderer.drawHollowRect(trueX, trueY, width, height, polyui.colors.page.border20, 2f)
+        renderer.drawText(Renderer.DefaultFont, trueX + 1f, trueY + 1f, simpleName, polyui.colors.text.primary, 10f)
         children.fastEach { it.debugRender() }
         components.fastEach { it.debugRender() }
     }

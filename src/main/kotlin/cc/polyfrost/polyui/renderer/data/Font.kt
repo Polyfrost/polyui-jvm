@@ -49,9 +49,7 @@ data class Font @JvmOverloads constructor(
         if (this === other) return true
 
         other as Font
-        if (resourceName != other.resourceName) return false
-        if (letterSpacing != other.letterSpacing) return false
-        return lineSpacing == other.lineSpacing
+        return resourceName == other.resourceName
     }
 
     companion object {

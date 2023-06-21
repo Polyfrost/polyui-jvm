@@ -153,7 +153,7 @@ fun Component.keyframed(
     frames: KeyFrames.() -> kotlin.Unit
 ) {
     val k = KeyFrames(durationNanos, animation, this)
-    frames(k) // apply
+    k.apply(frames)
     k.setup()
     this.addKeyframes(k)
 }
