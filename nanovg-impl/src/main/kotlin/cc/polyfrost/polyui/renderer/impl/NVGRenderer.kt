@@ -279,7 +279,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     }
 
     override fun drawLine(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float) {
-        if (color == Color.TRANSPARENT) return
+        if (color === Color.TRANSPARENT) return
         nvgBeginPath(vg)
         nvgMoveTo(vg, x1, y1)
         nvgLineTo(vg, x2, y2)

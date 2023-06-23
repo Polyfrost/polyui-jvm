@@ -98,7 +98,6 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
     public override fun clone() = Color(hue, saturation, brightness, alpha)
 
     override fun equals(other: Any?): Boolean {
-        if (other == null) return false
         if (other === this) return true
         if (other is Color) {
             return argb == other.argb
@@ -120,7 +119,7 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
     companion object {
         /** Transparent color. This should be used for checking in draw calls to prevent drawing of empty objects, e.g.
          *
-         * `if (color == TRANSPARENT) return`
+         * `if (color === TRANSPARENT) return`
          */
         @JvmField
         val TRANSPARENT = rgba(0f, 0f, 0f, 0f)
@@ -249,6 +248,7 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
          * @see [Gradient]
          */
         open fun recolor(target: Color, type: Animation.Type? = null, durationNanos: Long = 1L.seconds) {
+            if (target == this) return
             // clear old animation
             animation = null
             if (type != null) {
@@ -367,7 +367,6 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
             }
 
         override fun equals(other: Any?): Boolean {
-            if (other == null) return false
             if (other === this) return true
             if (other is Gradient) {
                 return this.argb1 == other.argb1 && this.argb2 == other.argb2 && this.type == other.type

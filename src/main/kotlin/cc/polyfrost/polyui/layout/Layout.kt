@@ -22,6 +22,9 @@
 package cc.polyfrost.polyui.layout
 
 import cc.polyfrost.polyui.PolyUI
+import cc.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
+import cc.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
+import cc.polyfrost.polyui.PolyUI.Companion.INIT_SETUP
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.event.Events
@@ -32,8 +35,7 @@ import cc.polyfrost.polyui.renderer.data.Framebuffer
 import cc.polyfrost.polyui.unit.Point
 import cc.polyfrost.polyui.unit.Size
 import cc.polyfrost.polyui.unit.Unit
-import cc.polyfrost.polyui.utils.fastEach
-import cc.polyfrost.polyui.utils.fastEachReversed
+import cc.polyfrost.polyui.utils.*
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -65,9 +67,11 @@ abstract class Layout(
 ) : Drawable(at, rawResize, acceptInput) {
     /** list of components in this layout. */
     open val components = drawables.filterIsInstance<Component>() as ArrayList
+        get() = if (enabled) field else EMPTY_CMPLIST
 
     /** list of child layouts in this layout */
     open val children = drawables.filterIsInstance<Layout>() as ArrayList
+        get() = if (enabled) field else EMPTY_CHLDLIST
 
     /**
      * Weather this layout needs redrawing.
@@ -103,6 +107,25 @@ abstract class Layout(
     /** reference to parent */
     override var layout: Layout? = null
 
+    /**
+     * This function is executed just before it renders its components and children.
+     * @since 0.19.0
+     */
+    var preRender: (Layout.() -> kotlin.Unit)? = null
+
+    /**
+     * This function is executed just after it renders its components and children.
+     * @since 0.19.0
+     */
+    var postRender: (Layout.() -> kotlin.Unit)? = null
+
+    /**
+     * This flag simply controls whether the layout exists. If it is false, it will not be rendered, and will report having 0 components.
+     *
+     * @since 0.19.0
+     */
+    var enabled = true
+
     init {
         if (onAdded != null) addEventHandler(Events.Added, onAdded)
         if (onRemoved != null) addEventHandler(Events.Removed, onRemoved)
@@ -116,6 +139,8 @@ abstract class Layout(
      * **Note:** Do not call this function yourself.
      */
     open fun reRenderIfNecessary() {
+        if (initStage != INIT_COMPLETE) throw IllegalStateException("${this.simpleName} was attempted to be rendered before it was fully initialized (stage $initStage)")
+        if (!enabled) return
         rasterChildren()
         rasterize()
         if (fbo != null && fboTracker < 2) {
@@ -125,8 +150,10 @@ abstract class Layout(
             val y = y
             renderer.pushScissor(x, y, width, height)
             renderer.translate(x, y)
+            preRender?.invoke(this)
             render()
             renderChildren()
+            postRender?.invoke(this)
             renderer.translate(-x, -y)
             renderer.popScissor()
             if (!needsRedraw && fboTracker > 1) {
@@ -228,36 +255,28 @@ abstract class Layout(
      * adds the given component/layout to this layout.
      *
      * this will add the drawable to the [Layout.components] or [children] list, and invoke its [Events.Added] if it is present.
-     *
-     * @param lowPriority if this is `true`, the component will be added to the front of the list, meaning it is drawn last, and receives events last.
      */
-    open fun addComponent(drawable: Drawable, lowPriority: Boolean = false) {
+    open fun addComponent(drawable: Drawable) {
         when (drawable) {
             is Component -> {
-                if (lowPriority) {
-                    components.add(0, drawable)
-                } else {
-                    components.add(drawable)
-                }
-                drawable.layout = this
+                if (components.addOrReplace(drawable) != null) PolyUI.LOGGER.warn("${drawable.simpleName} was attempted to be added to layout ${this.simpleName} multiple times!")
+                if (initStage > INIT_NOT_STARTED) drawable.layout = this
             }
 
             is Layout -> {
-                if (lowPriority) {
-                    children.add(0, drawable)
-                } else {
-                    children.add(drawable)
-                }
-                drawable.layout = this
+                if (children.addOrReplace(drawable) != null) PolyUI.LOGGER.warn("${drawable.simpleName} was attempted to be added to layout ${this.simpleName} multiple times!")
+                if (initStage > INIT_NOT_STARTED) drawable.layout = this
             }
 
             else -> {
                 throw Exception("Drawable $drawable is not a component or layout!")
             }
         }
-        drawable.setup(renderer, polyui)
-        drawable.calculateBounds()
-        drawable.accept(Events.Added)
+        if (initStage > INIT_NOT_STARTED) drawable.setup(renderer, polyui)
+        if (initStage == INIT_COMPLETE) {
+            drawable.calculateBounds()
+            drawable.accept(Events.Added)
+        }
         needsRedraw = true
     }
 
@@ -290,7 +309,8 @@ abstract class Layout(
      * This is marked as internal because you should be using [removeComponent] for most cases to remove a component, as it waits for it to finish and play any removal animations.
      */
     @ApiStatus.Internal
-    open fun removeComponentNow(drawable: Drawable) {
+    open fun removeComponentNow(drawable: Drawable?) {
+        if (drawable == null) return
         removeQueue.remove(drawable)
         when (drawable) {
             is Component -> {
@@ -321,6 +341,7 @@ abstract class Layout(
     }
 
     override fun calculateBounds() {
+        if (initStage == INIT_NOT_STARTED) throw IllegalStateException("${this.simpleName} has not been setup, but calculateBounds() was called!")
         if (layout != null) doDynamicSize()
         components.fastEach {
             it.calculateBounds()
@@ -332,6 +353,10 @@ abstract class Layout(
             this.size = calculateSize()
                 ?: throw UnsupportedOperationException("getSize() not implemented for ${this::class.simpleName}!")
         }
+        if (initStage != INIT_COMPLETE) {
+            initStage = INIT_COMPLETE
+            onInitComplete()
+        }
     }
 
     override fun rescale(scaleX: Float, scaleY: Float) {
@@ -339,6 +364,9 @@ abstract class Layout(
         if (resizesChildren) {
             children.fastEach { it.rescale(scaleX, scaleY) }
             components.fastEach { it.rescale(scaleX, scaleY) }
+        } else {
+            children.fastEach { it.rescale(1f, 1f) }
+            components.fastEach { it.rescale(1f, 1f) }
         }
     }
 
@@ -376,6 +404,7 @@ abstract class Layout(
     }
 
     override fun debugRender() {
+        if (!enabled) return
         renderer.drawHollowRect(trueX, trueY, width, height, polyui.colors.page.border20, 2f)
         renderer.drawText(Renderer.DefaultFont, trueX + 1f, trueY + 1f, simpleName, polyui.colors.text.primary, 10f)
         children.fastEach { it.debugRender() }
@@ -392,6 +421,7 @@ abstract class Layout(
             it.layout = this
             it.setup(renderer, polyui)
         }
+        initStage = INIT_SETUP
     }
 
     override fun canBeRemoved() = !needsRedraw
@@ -427,7 +457,7 @@ abstract class Layout(
     }
 
     override fun toString(): String {
-        return "$simpleName(${trueX}x$trueY, $width x ${height}${if (fbo != null) ", buffered" else ""}${if (fbo != null && needsRedraw) ", needsRedraw" else ""})"
+        return "$simpleName(${trueX}x$trueY, ${width}x${height}${if (fbo != null) ", buffered" else ""}${if (fbo != null && needsRedraw) ", needsRedraw" else ""})"
     }
 
     companion object {
@@ -436,5 +466,11 @@ abstract class Layout(
         fun drawables(vararg drawables: Drawable): Array<out Drawable> {
             return drawables
         }
+
+        @JvmField
+        val EMPTY_CMPLIST = ArrayList<Component>(0)
+
+        @JvmField
+        val EMPTY_CHLDLIST = ArrayList<Layout>(0)
     }
 }

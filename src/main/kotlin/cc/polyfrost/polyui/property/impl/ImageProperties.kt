@@ -25,5 +25,4 @@ import cc.polyfrost.polyui.color.Color
 
 open class ImageProperties : BlockProperties() {
     override val color: Color = Color.TRANSPARENT
-    override val padding: Float = 0F
 }

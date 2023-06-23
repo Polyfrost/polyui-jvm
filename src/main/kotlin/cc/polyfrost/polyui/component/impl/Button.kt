@@ -54,8 +54,8 @@ class Button(
     vararg events: Events.Handler
 ) : ContainingComponent(properties, at, null, false, acceptsInput, arrayOf(), *events) {
     override val properties get() = super.properties as ButtonProperties
-    val leftImage: Image? = if (leftIcon != null) Image(leftIcon, at = origin, acceptInput = false) else null
-    val rightImage: Image? = if (rightIcon != null) Image(rightIcon, at = origin, acceptInput = false) else null
+    val leftImage: Image? = if (leftIcon != null) Image(image = leftIcon, at = origin, acceptInput = false) else null
+    val rightImage: Image? = if (rightIcon != null) Image(image = rightIcon, at = origin, acceptInput = false) else null
     val text: Text? =
         if (text != null) Text(txt = text, fontSize = fontSize, at = origin, acceptInput = false) else null
 

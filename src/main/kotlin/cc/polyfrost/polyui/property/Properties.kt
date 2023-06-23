@@ -34,7 +34,7 @@ import cc.polyfrost.polyui.unit.Unit
  *
  * Properties are PolyUI's take on styling through tokens, or shared states. They are used as default values for [components][Drawable], if component-specific values are not set. Every component will have an accompanying property.
  *
- * They contain many values that style a component, such as [color], [padding], [size], and even [eventHandlers].
+ * They contain many values that style a component, such as [color], [size], and even [eventHandlers].
  *
  * They are used to eliminate repeated code on components, and to make styling easier.
  *
@@ -53,7 +53,6 @@ abstract class Properties : Cloneable {
      * Else, if this is not null and the component's size is null, the component's size will be set to this.
      */
     open val size: Size<Unit>? = null
-    abstract val padding: Float
     val eventHandlers = HashMap<Events, Component.() -> Boolean>()
 
     /**

@@ -51,8 +51,7 @@ open class FocusedEvents : Event {
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
-
-            other as KeyTyped
+            if (other !is KeyTyped) return false
 
             if (key != other.key) return false
             return mods == other.mods
@@ -83,8 +82,7 @@ open class FocusedEvents : Event {
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
-
-            other as KeyPressed
+            if (other !is KeyPressed) return false
 
             if (key != other.key) return false
             return mods == other.mods

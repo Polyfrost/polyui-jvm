@@ -141,7 +141,7 @@ abstract class Unit(val type: Type) : Cloneable {
      *
      * @since 0.10.0
      */
-    class Grid @JvmOverloads constructor(val row: Int, val column: Int, val rs: Int = 1, val cs: Int = 1) :
+    class Grid @JvmOverloads constructor(var row: Int, var column: Int, val rs: Int = 1, val cs: Int = 1) :
         Unit(Units.Grid) {
         override var px: Float = 0f
 

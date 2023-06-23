@@ -39,7 +39,11 @@ abstract class Animation(val durationNanos: Long, val from: Float, val to: Float
 
     val value: Float
         get() {
-            return getValue(passedTime / durationNanos) * range + from
+            return if (isFinished) {
+                to
+            } else {
+                getValue(passedTime / durationNanos) * range + from
+            }
         }
 
     fun update(deltaTimeNanos: Long): Float {

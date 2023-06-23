@@ -536,5 +536,29 @@ class PolyUI @JvmOverloads constructor(
     companion object {
         @JvmField
         val LOGGER: Logger = LoggerFactory.getLogger("PolyUI")
+
+        /**
+         * State 0 of initialization. Nothing has been done yet.
+         * @since 0.19.0
+         * @see INIT_SETUP
+         * @see INIT_COMPLETE
+         */
+        const val INIT_NOT_STARTED = 0
+
+        /**
+         * Stage 1 of initialization, where the component has access to a [PolyUI] and [Renderer], and its [Properties][cc.polyfrost.polyui.property.Properties] if it is a component, but has not been calculated.
+         * @since 0.19.0
+         * @see INIT_NOT_STARTED
+         * @see INIT_COMPLETE
+         */
+        const val INIT_SETUP = 1
+
+        /**
+         * Stage 2 of initialization, where the component has been calculated, and is ready to be drawn.
+         * @since 0.19.0
+         * @see INIT_NOT_STARTED
+         * @see INIT_SETUP
+         */
+        const val INIT_COMPLETE = 2
     }
 }

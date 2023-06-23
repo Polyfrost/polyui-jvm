@@ -93,6 +93,17 @@ open class PointerLayout(
         set(value) {
             ptr.needsRedraw = value
         }
+    final override inline var fboTracker: Int
+        get() = ptr.fboTracker
+        set(value) {
+            ptr.fboTracker = value
+        }
+
+    final override inline var initStage: Int
+        get() = ptr.initStage
+        set(value) {
+            ptr.initStage = value
+        }
     final override inline val children get() = ptr.children
     final override inline val components get() = ptr.components
     final override var layout: Layout?
@@ -103,11 +114,10 @@ open class PointerLayout(
 
     // asm: don't override reRenderIfNecessary as it is essentially a pointer method anyway
     override fun render() = ptr.render()
-
-    override fun addComponent(drawable: Drawable, lowPriority: Boolean) = ptr.addComponent(drawable, lowPriority)
-    override fun removeComponentNow(drawable: Drawable) = ptr.removeComponentNow(drawable)
+    override fun setup(renderer: Renderer, polyui: PolyUI) = ptr.setup(renderer, polyui)
+    override fun addComponent(drawable: Drawable) = ptr.addComponent(drawable)
+    override fun removeComponentNow(drawable: Drawable?) = ptr.removeComponentNow(drawable)
     override fun removeComponent(drawable: Drawable) = ptr.removeComponent(drawable)
-
     override fun calculateBounds() = ptr.calculateBounds()
     override fun debugRender() = ptr.debugRender()
     override fun rescale(scaleX: Float, scaleY: Float) = ptr.rescale(scaleX, scaleY)
@@ -119,6 +129,4 @@ open class PointerLayout(
 
     override fun isInside(x: Float, y: Float): Boolean = ptr.isInside(x, y)
     override fun calculateSize(): Vec2<Unit>? = ptr.calculateSize()
-
-    override fun setup(renderer: Renderer, polyui: PolyUI) = ptr.setup(renderer, polyui)
 }

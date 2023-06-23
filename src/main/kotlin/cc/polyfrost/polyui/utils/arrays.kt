@@ -25,6 +25,9 @@
 
 package cc.polyfrost.polyui.utils
 
+import cc.polyfrost.polyui.unit.Vec2
+import cc.polyfrost.polyui.unit.origin
+
 /**
  * [forEach] re-implementation that doesn't allocate any memory.
  *
@@ -176,6 +179,37 @@ inline fun <L, E> L.sumOf(selector: (E) -> Float): Float where L : List<E>, L : 
         sum += selector(it)
     }
     return sum
+}
+
+/**
+ * Returns the largest [Vec2] produced by [selector] function applied to each element in the collection.
+ */
+inline fun <L, E> L.maxOf(selector: (E) -> Vec2<cc.polyfrost.polyui.unit.Unit>): Vec2<cc.polyfrost.polyui.unit.Unit> where L : MutableList<E>, L : RandomAccess {
+    if (this.size == 0) return origin
+    val max = origin
+    fastEach {
+        val v = selector(it)
+        if (v.x > max.x) max.a.px = v.x
+        if (v.y > max.y) max.b.px = v.y
+    }
+    return max
+}
+
+/**
+ * This function will add the given [item] to the end of the list if it doesn't exist, or replace it if it does.
+ *
+ * @return the old value if it was replaced, or `null` if it was added.
+ */
+fun <E> ArrayList<E>.addOrReplace(item: E): E? {
+    val index = this.indexOf(item)
+    return if (index == -1) {
+        this.add(item)
+        null
+    } else {
+        val old = this[index]
+        this[index] = item
+        old
+    }
 }
 
 /**

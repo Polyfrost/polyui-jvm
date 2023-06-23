@@ -22,6 +22,9 @@
 package cc.polyfrost.polyui.component
 
 import cc.polyfrost.polyui.PolyUI
+import cc.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
+import cc.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
+import cc.polyfrost.polyui.PolyUI.Companion.INIT_SETUP
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.renderer.Renderer
@@ -48,7 +51,7 @@ abstract class Drawable(
      */
     val rawResize: Boolean = false,
     open var acceptsInput: Boolean = true
-) {
+) : Cloneable {
     open val eventHandlers = HashMap<Events, Drawable.() -> Boolean>()
 
     /**
@@ -62,6 +65,16 @@ abstract class Drawable(
     abstract var size: Size<Unit>?
     internal open lateinit var renderer: Renderer
     internal open lateinit var polyui: PolyUI
+
+    /**
+     * This is the initialization stage of this drawable.
+     * @see PolyUI.INIT_COMPLETE
+     * @see PolyUI.INIT_NOT_STARTED
+     * @see PolyUI.INIT_SETUP
+     * @since 0.19.0
+     */
+    open var initStage = INIT_NOT_STARTED
+        internal set
 
     /** weather or not the mouse is currently over this component. DO NOT modify this value. It is managed automatically by [cc.polyfrost.polyui.event.EventManager]. */
     var mouseOver = false
@@ -215,8 +228,13 @@ abstract class Drawable(
      * You can also use this method to do some calculations (such as text widths) that are not dependent on other sizes.
      *
      * If you need a method that has access to component's sizes, see [here][calculateBounds] or [here][calculateSize] (if you are operating on yourself only).
+     *
+     * this method is called once, and only once.
+     *
+     * @see INIT_SETUP
      */
     internal open fun setup(renderer: Renderer, polyui: PolyUI) {
+        if (initStage != INIT_NOT_STARTED) throw IllegalStateException("${this.simpleName} has already been setup!")
         this.renderer = renderer
         this.polyui = polyui
     }
@@ -227,12 +245,22 @@ abstract class Drawable(
     }
 
     /**
+     * This function is called when initialization of a component is complete, so it has been fully calculated.
+     *
+     * This function is called once, and only once.
+     * @see INIT_COMPLETE
+     * @since 0.19.0
+     */
+    open fun onInitComplete() {
+    }
+
+    /**
      * returns true if the given coordinates are inside this drawable.
      */
     open fun isInside(x: Float, y: Float): Boolean {
         val tx = trueX
         val ty = trueY
-        return x >= tx && x <= tx + this.width && y >= ty && y <= ty + this.height
+        return x in tx..tx + width && y in ty..ty + height
     }
 
     fun doDynamicSize() {
@@ -254,6 +282,15 @@ abstract class Drawable(
             )
         }
     }
+
+    /**
+     * Implement this function to enable cloning of your Drawable.
+     *
+     * If this function is not implemented, attempts to clone the drawable will not compile due to type erasure, but if this is ignored a [CloneNotSupportedException] will be thrown.
+     *
+     * @since 0.19.0
+     */
+    public override fun clone(): Drawable = super.clone() as Drawable
 
     /**
      * Implement this function to return the size of this drawable, if no size is specified during construction.

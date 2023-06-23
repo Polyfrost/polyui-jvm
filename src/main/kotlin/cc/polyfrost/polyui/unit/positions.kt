@@ -33,6 +33,10 @@ enum class Direction {
     Horizontal, Vertical
 }
 
+enum class Side {
+    Left, Right
+}
+
 /**
  * Represents a fixed-size gap between rows or columns, used in flex and grid layouts.
  *

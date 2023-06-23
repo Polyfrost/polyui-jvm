@@ -22,6 +22,9 @@
 package cc.polyfrost.polyui.component
 
 import cc.polyfrost.polyui.PolyUI
+import cc.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
+import cc.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
+import cc.polyfrost.polyui.PolyUI.Companion.INIT_SETUP
 import cc.polyfrost.polyui.animate.Animation
 import cc.polyfrost.polyui.animate.Animations
 import cc.polyfrost.polyui.animate.KeyFrames
@@ -83,7 +86,7 @@ abstract class Component @JvmOverloads constructor(
 
     /** properties for the component. This is `open` so you can cast it, like so:
      * ```
-     * final override val properties: YourProperties
+     * final override val properties
      *     get() = super.properties as YourProperties
      * ```
      * @see Properties
@@ -94,8 +97,7 @@ abstract class Component @JvmOverloads constructor(
     lateinit var color: Color.Mutable
     protected var autoSized = false
     protected var finishColorFunc: (Component.() -> kotlin.Unit)? = null
-    final override lateinit var layout: Layout
-    protected open lateinit var boundingBox: Box<Unit>
+    override lateinit var layout: Layout
     protected var keyframes: KeyFrames? = null
 
     init {
@@ -351,6 +353,7 @@ abstract class Component @JvmOverloads constructor(
     }
 
     override fun calculateBounds() {
+        if (initStage == INIT_NOT_STARTED) throw IllegalStateException("${this.simpleName} has not been setup, but calculateBounds() was called!")
         if (size == null) {
             size = if (properties.size != null) {
                 properties.size!!.clone()
@@ -361,7 +364,10 @@ abstract class Component @JvmOverloads constructor(
             }
         }
         doDynamicSize()
-        boundingBox = Box(at, size!!).expand(properties.padding)
+        if (initStage != INIT_COMPLETE) {
+            initStage = INIT_COMPLETE
+            onInitComplete()
+        }
     }
 
     fun wantRedraw() {
@@ -387,6 +393,7 @@ abstract class Component @JvmOverloads constructor(
             p!!.colors = polyui.colors
         }
         color = properties.color.toMutable()
+        initStage = INIT_SETUP
     }
 
     /**
@@ -397,6 +404,7 @@ abstract class Component @JvmOverloads constructor(
      * **make sure to call super [Component.preRender]!**
      */
     open fun preRender(deltaTimeNanos: Long) {
+        if (initStage != INIT_COMPLETE) throw IllegalStateException("${this.simpleName} was attempted to be rendered before it was fully initialized (parent ${this.layout.simpleName}; stage $initStage)")
         renderer.push()
         if (keyframes != null) {
             if (keyframes!!.update(deltaTimeNanos)) {

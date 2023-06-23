@@ -33,7 +33,6 @@ import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.utils.fastEach
 import cc.polyfrost.polyui.utils.indexOfOrDie
-import java.lang.NullPointerException
 import kotlin.math.max
 
 /** a switching layout is a layout that can switch between layouts, with cool animations. */
@@ -54,7 +53,7 @@ class SwitchingLayout(
     private var current: Layout? = null
     private var next: Layout? = null
     private var autoSized = false
-    private var init = false
+    private var cinit = false
 
     // children still can have framebuffers, but the layout itself doesn't
     override var refuseFramebuffer = true
@@ -74,8 +73,8 @@ class SwitchingLayout(
         replaceWith = ReplaceWith("targetLayout.addComponent(drawable)"),
         DeprecationLevel.WARNING
     )
-    override fun addComponent(drawable: Drawable, lowPriority: Boolean) {
-        super.addComponent(drawable, lowPriority)
+    override fun addComponent(drawable: Drawable) {
+        super.addComponent(drawable)
     }
 
     @Deprecated(
@@ -101,7 +100,7 @@ class SwitchingLayout(
         ReplaceWith("targetLayout.removeComponentNow(drawable)"),
         DeprecationLevel.WARNING
     )
-    override fun removeComponentNow(drawable: Drawable) {
+    override fun removeComponentNow(drawable: Drawable?) {
         super.removeComponentNow(drawable)
     }
 
@@ -151,7 +150,7 @@ class SwitchingLayout(
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {
         super.setup(renderer, polyui)
-        init = true
+        cinit = true
     }
 
 //    override fun reRenderIfNecessary() {
@@ -242,7 +241,7 @@ class SwitchingLayout(
 
     private fun init(layout: Layout): Layout {
         layout.layout = this
-        if (init) {
+        if (cinit) {
             layout.setup(renderer, polyui)
         }
         return layout

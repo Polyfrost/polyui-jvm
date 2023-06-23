@@ -47,7 +47,6 @@ open class BlockProperties @JvmOverloads constructor(
     open val hoverAnimation: Animations? = Animations.EaseOutExpo
     open val pressedAnimationDuration: Long = 0.25.seconds
     open val hoverAnimationDuration: Long = 0.5.seconds
-    override val padding: Float = 0F
 
     init {
         addEventHandlers(

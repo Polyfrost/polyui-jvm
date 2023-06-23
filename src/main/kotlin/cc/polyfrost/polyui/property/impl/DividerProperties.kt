@@ -26,5 +26,4 @@ import cc.polyfrost.polyui.property.Properties
 
 class DividerProperties(val thickness: Float = 1f) : Properties() {
     override val color: Color get() = colors.onBrand.fg
-    override val padding: Float = 0F
 }

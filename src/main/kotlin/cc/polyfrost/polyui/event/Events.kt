@@ -54,8 +54,7 @@ sealed class Events : Event {
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
-
-            other as MousePressed
+            if (other !is MousePressed) return false
 
             if (button != other.button) return false
             return mods == other.mods
@@ -84,8 +83,7 @@ sealed class Events : Event {
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
-
-            other as MouseReleased
+            if (other !is MouseReleased) return false
 
             if (button != other.button) return false
             return mods == other.mods
@@ -115,8 +113,7 @@ sealed class Events : Event {
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
-
-            other as MouseClicked
+            if (other !is MouseClicked) return false
 
             if (button != other.button) return false
             if (clicks != other.clicks) return false

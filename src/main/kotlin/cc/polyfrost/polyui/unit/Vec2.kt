@@ -93,8 +93,8 @@ data class Vec2<T : Unit>(
     }
 
     override fun equals(other: Any?): Boolean {
-        if (other !is Vec2<*>) return false
         if (this === other) return true
+        if (other !is Vec2<*>) return false
         return this.a.px == other.a.px && this.b.px == other.b.px
     }
 

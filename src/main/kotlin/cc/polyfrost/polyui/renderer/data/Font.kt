@@ -47,8 +47,8 @@ data class Font @JvmOverloads constructor(
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
+        if (other !is Font) return false
 
-        other as Font
         return resourceName == other.resourceName
     }
 

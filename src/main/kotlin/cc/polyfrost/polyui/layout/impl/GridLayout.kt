@@ -21,8 +21,12 @@
 
 package cc.polyfrost.polyui.layout.impl
 
+import cc.polyfrost.polyui.PolyUI
+import cc.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
+import cc.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.layout.Layout
+import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.utils.fastEach
@@ -44,13 +48,14 @@ class GridLayout @JvmOverloads constructor(
     private val contentStretch: ContentStretch = ContentStretch.FillCell,
     private val gap: Gap = Gap.Default,
     resizesChildren: Boolean = true,
-    vararg drawables: Drawable
+    private vararg val drawables: Drawable
 ) : Layout(at, origin, onAdded, onRemoved, false, resizesChildren, false, *drawables) {
 
     /** list of rows */
-    private var grid: Array<Array<Drawable?>>
+    private var grid: Array<Array<Drawable?>> = emptyArray()
 
-    init {
+    override fun setup(renderer: Renderer, polyui: PolyUI) {
+        super.setup(renderer, polyui)
         var nrows = 0
         var ncols = 0
         drawables.forEach {
@@ -75,6 +80,7 @@ class GridLayout @JvmOverloads constructor(
     }
 
     override fun calculateBounds() {
+        if (initStage == INIT_NOT_STARTED) throw IllegalStateException("${this.simpleName} has not been setup, but calculateBounds() was called!")
         doDynamicSize()
         components.fastEach {
             it.layout = this
@@ -147,8 +153,11 @@ class GridLayout @JvmOverloads constructor(
                 width = atX
             }
         }
-
         this.size = Size(width.px, height.px)
+        if (initStage != INIT_COMPLETE) {
+            initStage = INIT_COMPLETE
+            onInitComplete()
+        }
     }
 
     private fun placeItem(atX: Float, atY: Float, cellw: Float, cellh: Float, it: Drawable) {

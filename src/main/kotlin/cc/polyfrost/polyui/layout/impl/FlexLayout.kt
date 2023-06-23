@@ -22,6 +22,8 @@
 package cc.polyfrost.polyui.layout.impl
 
 import cc.polyfrost.polyui.PolyUI
+import cc.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
+import cc.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.layout.Layout
@@ -149,11 +151,14 @@ class FlexLayout @JvmOverloads constructor(
 
     override fun rescale(scaleX: Float, scaleY: Float) {
         super.rescale(scaleX, scaleY)
-        mainGap *= scaleX
-        crossGap *= scaleY
+        if (resizesChildren) {
+            mainGap *= scaleX
+            crossGap *= scaleY
+        }
     }
 
     override fun calculateBounds() {
+        if (initStage == INIT_NOT_STARTED) throw IllegalStateException("${this.simpleName} has not been setup, but calculateBounds() was called!")
         doDynamicSize()
         var mainAxis = 0F
         val rows = arrayListOf<FlexRow>()
@@ -235,6 +240,13 @@ class FlexLayout @JvmOverloads constructor(
             }
         }
         rows.clear()
+        drawables.fastEach {
+            it.drawable.calculateBounds()
+        }
+        if (initStage != INIT_COMPLETE) {
+            initStage = INIT_COMPLETE
+            onInitComplete()
+        }
     }
 
     fun trySetMainSize(new: Float) {

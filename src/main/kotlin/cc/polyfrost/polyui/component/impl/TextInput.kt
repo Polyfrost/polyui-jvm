@@ -53,7 +53,6 @@ open class TextInput(
             text.text.string = value
             text.str.calculate(renderer)
         }
-    private var init = false
     private var caret = 0
         set(value) {
             field = value
@@ -455,23 +454,22 @@ open class TextInput(
     }
 
     override fun calculateBounds() {
-        text.layout = layout
         text.calculateBounds()
         super.calculateBounds()
-        if (!init) {
-            text.x += properties.paddingFromTextLateral
-            text.y += properties.paddingFromTextVertical
-            text.width -= properties.paddingFromTextLateral * 2
-            text.height -= properties.paddingFromTextVertical * 2
-            init = true
-        }
         caretPos()
+    }
+
+    override fun onInitComplete() {
+        text.x += properties.paddingFromTextLateral
+        text.y += properties.paddingFromTextVertical
+        text.width -= properties.paddingFromTextLateral * 2f
+        text.height -= properties.paddingFromTextVertical * 2f
     }
 
     override fun calculateSize(): Vec2<Unit> {
         return text.size!!.clone().also {
-            it.a.px += properties.paddingFromTextLateral * 2
-            it.b.px += properties.paddingFromTextVertical * 2
+            it.a.px += properties.paddingFromTextLateral * 2f
+            it.b.px += properties.paddingFromTextVertical * 2f
         }
     }
 }

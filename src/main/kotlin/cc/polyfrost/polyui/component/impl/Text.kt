@@ -134,11 +134,6 @@ open class Text @JvmOverloads constructor(
         size = str.size
     }
 
-    override fun calculateBounds() {
-        doDynamicSize(str.size)
-        calculateSize()
-    }
-
     override fun calculateSize(): Vec2<Unit>? {
         doDynamicSize(str.size)
         return size

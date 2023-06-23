@@ -123,6 +123,7 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
 
         var polyTranslator: PolyTranslator? = null
             set(value) {
+                if (value === field) return
                 canTranslate = true
                 field = value
             }

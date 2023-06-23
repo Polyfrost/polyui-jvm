@@ -169,7 +169,7 @@ fun main() {
                         )
                     ),
                     Image(
-                        PolyImage("/a.png", 120f, 120f),
+                        image = PolyImage("/a.png", 120f, 120f),
                         at = 360.px * 30.px,
                         events = events(
                             Events.MouseClicked(0) to {
@@ -191,6 +191,10 @@ fun main() {
                     TextInput(
                         at = 200.px * 160.px,
                         size = 50.percent * 40.px
+                    ),
+                    Dropdown(
+                        at = 0.px * 220.px,
+                        entries = Dropdown.from(SlideDirection::class.java)
                     )
                 )
             ).draggable(),

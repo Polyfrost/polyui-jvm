@@ -22,6 +22,8 @@
 package cc.polyfrost.polyui.component
 
 import cc.polyfrost.polyui.PolyUI
+import cc.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
+import cc.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
 import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.property.Properties
@@ -29,6 +31,7 @@ import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.Point
 import cc.polyfrost.polyui.unit.Size
 import cc.polyfrost.polyui.unit.Unit
+import cc.polyfrost.polyui.utils.addOrReplace
 import cc.polyfrost.polyui.utils.fastEach
 
 /**
@@ -53,14 +56,24 @@ abstract class ContainingComponent(
     vararg events: Events.Handler
 ) : Component(properties, at, size, rawResize, acceptInput, *events) {
     val children: ArrayList<Component> = children.filterNotNull() as ArrayList<Component>
+
     init {
         this.children.fastEach { it.acceptsInput = false }
     }
 
-    /** Add components to this containing component. Please note that this should only be called in a constructor or `init` block. */
+    /** Add components to this containing component.
+     * @since 0.19.0
+     */
     fun addComponents(vararg component: Component?) {
         component.forEach {
-            if (it != null) children.add(it)
+            if (it != null) {
+                children.addOrReplace(it)
+                if (initStage > INIT_NOT_STARTED) {
+                    it.layout = this.layout
+                    it.setup(renderer, polyui)
+                }
+                if (initStage == INIT_COMPLETE) it.calculateBounds()
+            }
         }
     }
 
@@ -105,6 +118,13 @@ abstract class ContainingComponent(
     override fun rescale(scaleX: Float, scaleY: Float) {
         super.rescale(scaleX, scaleY)
         children.fastEach { it.rescale(scaleX, scaleY) }
+    }
+
+    override fun calculateBounds() {
+        children.fastEach {
+            it.calculateBounds()
+        }
+        super.calculateBounds()
     }
 
     override fun accept(event: Events): Boolean {
