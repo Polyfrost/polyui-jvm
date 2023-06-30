@@ -23,6 +23,7 @@ package cc.polyfrost.polyui.component.impl
 
 import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.color.Color
+import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.property.Properties
@@ -93,6 +94,12 @@ class Slider(
         if (bitX != x) renderer.drawRect(x + hHeight, barY, bitX, barThickness, usedBarColor, barRadius)
         renderer.drawRect(x + bitX + hHeight, barY, width - bitX - height, barThickness, barColor, barRadius)
         renderer.drawRect(bitX, y, height, height, color, height)
+    }
+
+    override fun onColorsChanged(colors: Colors) {
+        super.onColorsChanged(colors)
+        barColor = properties.barColor.toMutable()
+        usedBarColor = properties.usedBarColor.toMutable()
     }
 
     override fun rescale(scaleX: Float, scaleY: Float) {
