@@ -33,6 +33,7 @@ import cc.polyfrost.polyui.layout.Layout.Companion.drawables
 import cc.polyfrost.polyui.layout.impl.GridLayout
 import cc.polyfrost.polyui.property.impl.DropdownProperties
 import cc.polyfrost.polyui.renderer.Renderer
+import cc.polyfrost.polyui.renderer.data.Cursor
 import cc.polyfrost.polyui.renderer.data.PolyImage
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
@@ -70,7 +71,6 @@ class Dropdown(
             layout.addComponent(field!!)
             field!!.calculateBounds()
             field!!.y += properties.verticalPadding
-            field!!.place()
         }
     var i = 0
         get() = field++
@@ -80,7 +80,7 @@ class Dropdown(
         drawables = drawables(
             *entries
         )
-    ) // .scrolling(0.px * heightBeforeScrolls) todo this, chevron icon, do properties, test,
+    ) // .scrolling(0.px * heightBeforeScrolls) // todo this (broken lol)
     init {
         dropdown.refuseFramebuffer = true
         dropdown.preRender = {
@@ -107,7 +107,16 @@ class Dropdown(
     }
 
     override fun accept(event: Events): Boolean {
+        if (event is Events.MouseEntered) {
+            polyui.cursor = Cursor.Clicker
+            return true
+        }
+        if (event is Events.MouseExited) {
+            polyui.cursor = Cursor.Pointer
+            return true
+        }
         if (event is Events.MouseClicked) {
+            if (event.button != 0) return false
             active = !active
             if (active) {
                 open()
@@ -142,12 +151,13 @@ class Dropdown(
             }
         }
         dropdown.enabled = (openAnimation?.value ?: 0f) != 0f
+        if (active) selected?.recolorAll(properties.hoveredColor)
         renderer.drawRect(x, y, width, height, color, properties.cornerRadius)
         renderer.drawHollowRect(x, y, width, height, borderColor, properties.borderThickness, properties.cornerRadius)
     }
 
     override fun calculateSize(): Size<Unit> {
-        val largest = dropdown.components.maxOf { it.calculateSize()!! }
+        val largest = dropdown.components.maxOf { it.calculateSize() }
         dropdown.components.fastEach {
             it.size = largest.clone()
         }
@@ -165,9 +175,6 @@ class Dropdown(
     override fun onInitComplete() {
         x += properties.borderThickness
         dropdown.x += properties.borderThickness
-        dropdown.components.fastEach {
-            (it as Entry).place()
-        }
         selected = dropdown.components[default] as Entry
         dropdown.enabled = false
         chevron.layout = layout
@@ -205,17 +212,17 @@ class Dropdown(
             text = Text(this.properties.textProperties, txt, origin)
             image = if (icon != null) Image(this.properties.iconProperties, icon, origin) else null
             addComponents(text, image)
+            recolorAll(properties.contentColor)
+            super.onInitComplete()
         }
 
         override fun accept(event: Events): Boolean {
             if (event is Events.MouseExited) {
-                text.recolor(properties.contentColor, properties.hoverAnimation, properties.hoverAnimationDuration)
-                image?.recolor(properties.contentColor, properties.hoverAnimation, properties.hoverAnimationDuration)
+                recolorAll(properties.contentColor, properties.hoverAnimation, properties.hoverAnimationDuration)
                 return true
             }
             if (event is Events.MouseEntered) {
-                text.recolor(properties.contentHoverColor, properties.hoverAnimation, properties.hoverAnimationDuration)
-                image?.recolor(properties.contentHoverColor, properties.hoverAnimation, properties.hoverAnimationDuration)
+                recolorAll(properties.contentHoverColor, properties.hoverAnimation, properties.hoverAnimationDuration)
                 return true
             }
             if (event is Events.MousePressed) {
@@ -225,6 +232,7 @@ class Dropdown(
                 return true
             }
             if (event is Events.MouseClicked) {
+                if (event.button != 0) return false
                 if (!show) {
                     dropdown.active = false
                     dropdown.close()
@@ -236,13 +244,16 @@ class Dropdown(
             return super.accept(event)
         }
 
-        fun place() {
-            text.x = x
-            text.y = y
+        override fun onParentInitComplete() {
+            text.x += x
+            text.y += y
             if (image != null) {
-                image!!.x = x
-                image!!.y = y
+                image!!.x += x
+                image!!.y += y
             }
+        }
+
+        override fun placeChildren() {
             if (image != null) {
                 if (iconSide == Side.Right) {
                     image!!.x += width - image!!.width - properties.lateralPadding
@@ -303,5 +314,12 @@ class Dropdown(
                 Entry(it::class.java.fields[0].get(it) as? String ?: it.name)
             }.toTypedArray()
         }
+
+        /**
+         * Constructs a dropdown from an array of values. This method will call [Any.toString] on each value to get the name.
+         * @since 0.19.0
+         */
+        @JvmStatic
+        fun from(values: Array<out Any>): Array<out Entry> = values.map { Entry(it.toString()) }.toTypedArray()
     }
 }

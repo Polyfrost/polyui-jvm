@@ -63,8 +63,8 @@ abstract class Drawable(
 
     /** size of this drawable. */
     abstract var size: Size<Unit>?
-    internal open lateinit var renderer: Renderer
-    internal open lateinit var polyui: PolyUI
+    open lateinit var renderer: Renderer
+    open lateinit var polyui: PolyUI
 
     /**
      * This is the initialization stage of this drawable.
@@ -248,10 +248,22 @@ abstract class Drawable(
      * This function is called when initialization of a component is complete, so it has been fully calculated.
      *
      * This function is called once, and only once.
+     * @see onParentInitComplete
      * @see INIT_COMPLETE
      * @since 0.19.0
      */
     open fun onInitComplete() {
+    }
+
+    /**
+     * This function is called when initialization of this parent is complete.
+     *
+     * This function is called once, and only once.
+     * @see onInitComplete
+     * @see INIT_COMPLETE
+     * @since 0.19.0
+     */
+    open fun onParentInitComplete() {
     }
 
     /**

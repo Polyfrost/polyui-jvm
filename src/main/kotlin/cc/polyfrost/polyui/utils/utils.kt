@@ -240,6 +240,16 @@ inline fun cl1(a: Float, b: Float): Float {
     }
 }
 
+/**
+ * Returns the minimum value among three given ints.
+ *
+ * @param a the first value
+ * @param b the second value
+ * @param c the third value
+ * @return the minimum value among a, b, and c
+ */
+inline fun min(a: Int, b: Int, c: Int): Int = min(min(a, b), c)
+
 /** convert the given float into an array of 4 floats for radii. */
 inline fun Float.radii() = floatArrayOf(this, this, this, this)
 
@@ -370,6 +380,39 @@ fun String.limit(
     }
     t += limitText
     return t
+}
+
+/**
+ * calculate the levenshtein distance between this string and the other string.
+ * @see <a href="https://en.wikipedia.org/wiki/Levenshtein_distance">Levenshtein distance</a>
+ * @since 0.19.1
+ */
+fun String.levenshteinDistance(other: String): Int {
+    val d = Array(length + 1) { IntArray(other.length + 1) }
+
+    for (i in 0..length) {
+        d[i][0] = i
+    }
+
+    for (j in 0..other.length) {
+        d[0][j] = j
+    }
+
+    for (j in 1..other.length) {
+        for (i in 1..length) {
+            if (this[i - 1] == other[j - 1]) {
+                d[i][j] = d[i - 1][j - 1]
+            } else {
+                d[i][j] = min(
+                    d[i - 1][j] + 1, // deletion
+                    d[i][j - 1] + 1, // insertion
+                    d[i - 1][j - 1] + 1 // substitution
+                )
+            }
+        }
+    }
+
+    return d[length][other.length]
 }
 
 /**

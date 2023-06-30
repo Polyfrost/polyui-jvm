@@ -184,11 +184,11 @@ inline fun <L, E> L.sumOf(selector: (E) -> Float): Float where L : List<E>, L : 
 /**
  * Returns the largest [Vec2] produced by [selector] function applied to each element in the collection.
  */
-inline fun <L, E> L.maxOf(selector: (E) -> Vec2<cc.polyfrost.polyui.unit.Unit>): Vec2<cc.polyfrost.polyui.unit.Unit> where L : MutableList<E>, L : RandomAccess {
+inline fun <L, E> L.maxOf(selector: (E) -> Vec2<cc.polyfrost.polyui.unit.Unit>?): Vec2<cc.polyfrost.polyui.unit.Unit> where L : MutableList<E>, L : RandomAccess {
     if (this.size == 0) return origin
     val max = origin
     fastEach {
-        val v = selector(it)
+        val v = selector(it) ?: return@fastEach
         if (v.x > max.x) max.a.px = v.x
         if (v.y > max.y) max.b.px = v.y
     }

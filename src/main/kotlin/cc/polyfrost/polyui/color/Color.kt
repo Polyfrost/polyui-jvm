@@ -374,6 +374,16 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
             return false
         }
 
+        operator fun get(index: Int): Color {
+            return when (index) {
+                0 -> this
+                1 -> color2
+                else -> throw IndexOutOfBoundsException("index must be 0 or 1")
+            }
+        }
+
+        operator fun set(index: Int, color: Color) = recolor(index, color)
+
         @get:JvmName("getARGB1")
         val argb1 get() = super.argb
 
@@ -391,30 +401,27 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
 
         /**
          * [Mutable.recolor] this gradient color.
-         * @param whichColor which color to recolor. 1 for the first color, 2 for the second color.
+         * @param whichColor which color to recolor. 0 for the first color, 1 for the second color.
          */
         fun recolor(whichColor: Int, target: Color, type: Animation.Type? = null, durationNanos: Long = 1L.seconds) {
             when (whichColor) {
-                1 -> super.recolor(target, type, durationNanos)
-                2 -> color2.recolor(target, type, durationNanos)
+                0 -> super.recolor(target, type, durationNanos)
+                1 -> color2.recolor(target, type, durationNanos)
                 else -> throw IllegalArgumentException("Invalid color index")
             }
         }
 
-        /** merge the colors of this gradient into one color.
-         * @param colorToMergeTo which color to merge to. 1 for the first color, 2 for the second.
-         * */
-        fun mergeColors(colorToMergeTo: Int, type: Animation.Type? = null, durationNanos: Long = 1L.seconds) {
-            when (colorToMergeTo) {
-                1 -> color2.recolor(this, type, durationNanos)
-                2 -> super.recolor(color2, type, durationNanos)
-                else -> throw IllegalArgumentException("Invalid color index")
-            }
+        override fun update(deltaTimeNanos: Long): Boolean {
+            color2.update(deltaTimeNanos)
+            return super.update(deltaTimeNanos)
         }
 
+        /**
+         * Deprecated, see [Component.recolor][cc.polyfrost.polyui.component.Component.recolor] for how to animate gradients.
+         */
         @Deprecated(
-            "Gradient colors cannot be animated in this way.",
-            ReplaceWith("recolor(1, target, type, durationNanos"),
+            "Gradient colors cannot be animated in this way. They can be animated separately using the given method.",
+            ReplaceWith("recolor(0, target, type, durationNanos)"),
             DeprecationLevel.ERROR
         )
         override fun recolor(target: Color, type: Animation.Type?, durationNanos: Long) {
@@ -430,6 +437,8 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
      * `brightness = 0.2f, saturation = 0.8f` -> dark chroma
      *
      * `brightness = 0.8f, saturation = 0.8f` -> less offensive chroma tone
+     *
+     * @param initialHue the initial hue of the color, being any float value. the value is mod 360, so 360 is the same as 0.
      */
     class Chroma @JvmOverloads constructor(
         /**
@@ -437,14 +446,15 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
          *
          * The speed refers to the amount of time it takes for this color to complete one cycle, e.g. from red, through to blue, through to green, then back to red.
          * */
-        private val speedNanos: Long = 5000L,
+        var speedNanos: Long = 5L.seconds,
         /** brightness of the color range (0.0 - 1.0) */
         brightness: Float = 1f,
         /** saturation of the color range (0.0 - 1.0) */
         saturation: Float = 1f,
-        alpha: Float = 1f
+        alpha: Float = 1f,
+        initialHue: Float = 0f
     ) : Mutable(0f, saturation, brightness, alpha) {
-        private var time = 0L
+        private var time = (initialHue % 360f).toLong()
 
         @Deprecated("Chroma colors cannot be animated.", level = DeprecationLevel.ERROR)
         override fun recolor(target: Color, type: Animation.Type?, durationNanos: Long) {
@@ -452,6 +462,13 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
         }
 
         override fun clone() = Chroma(speedNanos, brightness, saturation, alpha)
+
+        /**
+         * Convert this chroma color to a mutable color, which is a snapshot of this color at the time of calling this method.
+         * @since 0.19.1
+         */
+        @Suppress("OVERRIDE_DEPRECATION")
+        override fun toMutable() = Mutable(hue, saturation, brightness, alpha)
 
         override fun update(deltaTimeNanos: Long): Boolean {
             time += deltaTimeNanos

@@ -54,6 +54,9 @@ open class DropdownProperties : Properties() {
     open val activeColor: Color
         get() = colors.brand.accent
 
+    open val hoveredColor: Color
+        get() = colors.text.primaryHovered
+
     open val borderColor: Color
         get() = colors.page.border5
     open val activeBorderColor: Color

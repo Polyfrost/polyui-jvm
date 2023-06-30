@@ -21,15 +21,16 @@
 
 package cc.polyfrost.polyui.property.impl
 
-import cc.polyfrost.polyui.color.Color
-import cc.polyfrost.polyui.property.Properties
-import cc.polyfrost.polyui.renderer.data.Font
-import cc.polyfrost.polyui.unit.TextAlign
-import cc.polyfrost.polyui.unit.Unit
-import cc.polyfrost.polyui.unit.px
+open class SliderProperties : BlockProperties() {
+    open val barColor get() = colors.component.bg
+    open val usedBarColor get() = colors.brand.fg
 
-open class TextProperties(val font: Font = Font("/Poppins-Regular.ttf")) : Properties() {
-    open val fontSize: Unit.Pixel = 12.px
-    override val color: Color get() = colors.text.primary
-    open val alignment = TextAlign.Left
+    /**
+     * This value controls the ratio of the thickness of the bar to the size of the slider head.
+     *
+     * The size of the slider head is the same as the size of the slider, and this is used to calculate the thickness of the bar.
+     *
+     * Smaller values mean thicker bars, and larger values mean thinner bars.
+     */
+    open val thicknessRatio = 3f
 }

@@ -104,6 +104,22 @@ open class PointerLayout(
         set(value) {
             ptr.initStage = value
         }
+    final override inline var preRender
+        get() = ptr.preRender
+        set(value) {
+            ptr.preRender = value
+        }
+    final override inline var postRender
+        get() = ptr.postRender
+        set(value) {
+            ptr.postRender = value
+        }
+
+    override var enabled: Boolean
+        get() = ptr.enabled
+        set(value) {
+            ptr.enabled = value
+        }
     final override inline val children get() = ptr.children
     final override inline val components get() = ptr.components
     final override var layout: Layout?
@@ -111,6 +127,8 @@ open class PointerLayout(
         set(value) {
             ptr.layout = value
         }
+
+    override fun onInitComplete() = ptr.onInitComplete()
 
     // asm: don't override reRenderIfNecessary as it is essentially a pointer method anyway
     override fun render() = ptr.render()

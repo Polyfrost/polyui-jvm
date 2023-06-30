@@ -111,20 +111,20 @@ abstract class Layout(
      * This function is executed just before it renders its components and children.
      * @since 0.19.0
      */
-    var preRender: (Layout.() -> kotlin.Unit)? = null
+    open var preRender: (Layout.() -> kotlin.Unit)? = null
 
     /**
      * This function is executed just after it renders its components and children.
      * @since 0.19.0
      */
-    var postRender: (Layout.() -> kotlin.Unit)? = null
+    open var postRender: (Layout.() -> kotlin.Unit)? = null
 
     /**
      * This flag simply controls whether the layout exists. If it is false, it will not be rendered, and will report having 0 components.
      *
      * @since 0.19.0
      */
-    var enabled = true
+    open var enabled = true
 
     init {
         if (onAdded != null) addEventHandler(Events.Added, onAdded)
@@ -275,6 +275,7 @@ abstract class Layout(
         if (initStage > INIT_NOT_STARTED) drawable.setup(renderer, polyui)
         if (initStage == INIT_COMPLETE) {
             drawable.calculateBounds()
+            drawable.onParentInitComplete()
             drawable.accept(Events.Added)
         }
         needsRedraw = true

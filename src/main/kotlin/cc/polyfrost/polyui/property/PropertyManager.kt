@@ -35,7 +35,8 @@ class PropertyManager(private val polyUI: PolyUI) {
         Text::class.qualifiedName!! to TextProperties(),
         Button::class.qualifiedName!! to ButtonProperties(),
         Dropdown::class.qualifiedName!! to DropdownProperties(),
-        Dropdown.Entry::class.qualifiedName!! to DropdownProperties.Entry()
+        Dropdown.Entry::class.qualifiedName!! to DropdownProperties.Entry(),
+        Slider::class.qualifiedName!! to SliderProperties()
     )
 
     inline fun <reified C : Component> get(): Properties = get(C::class.qualifiedName!!)

@@ -64,8 +64,11 @@ class ScrollingLayout(
         MutablePair(Scrollbar(this, ScrollbarProperties(), true), Scrollbar(this, ScrollbarProperties(), false))
 
     /** float in the range 0-1 to represent the percentage that this layout is scrolled (i.e. 0=no scrolling, 1=fully scrolled) */
-    inline var scrollYPercent
-        get() = (oy - ptr.y) / (ptr.height - scrollingSize.b.px)
+    inline var scrollYPercent: Float
+        get() {
+            val p = (oy - ptr.y) / (ptr.height - scrollingSize.b.px)
+            return if (p.isNaN()) 0f else p
+        }
         private set(value) {
             // given the equation: v = (o - x) / (c - s)
             // solve for x (gcse maths coming in handy here) [3 marks]
@@ -76,8 +79,11 @@ class ScrollingLayout(
         }
 
     /** float in the range 0-1 to represent the percentage that this layout is scrolled (i.e. 0=no scrolling, 1=fully scrolled) */
-    inline var scrollXPercent
-        get() = (ox - ptr.x) / (ptr.width - scrollingSize.a.px)
+    inline var scrollXPercent: Float
+        get() {
+            val p = (ox - ptr.x) / (ptr.width - scrollingSize.a.px)
+            return if (p.isNaN()) 0f else p
+        }
         private set(value) {
             x = -(value.coerceIn(0f, 1f) * (ptr.width - scrollingSize.a.px) - ox)
         }
@@ -217,22 +223,8 @@ class ScrollingLayout(
         val p1 = scrollYPercent
         super.rescale(scaleX, scaleY)
         scrollingSize.scale(scaleX, scaleY)
-        if (p.isNaN()) {
-            scrollXPercent = 0f
-            bars.first.enabled = false
-            scrollsX = false
-        } else {
-            scrollXPercent = p
-            scrollsX = true
-        }
-        if (p1.isNaN()) {
-            scrollYPercent = 0f
-            bars.second.enabled = false
-            scrollsY = false
-        } else {
-            scrollYPercent = p1
-            scrollsY = true
-        }
+        scrollXPercent = p
+        scrollYPercent = p1
         bars.first.update()
         bars.second.update()
     }

@@ -32,7 +32,7 @@ import java.util.function.Consumer
 import java.util.function.Function
 
 /** Events that components can receive, for example [MouseClicked], [Added], [Removed], and more. */
-sealed class Events : Event {
+open class Events : Event {
     // imagine this is a rust enum okay
     /** acceptable by component and layout, when the mouse goes down on this drawable.
      * @see MouseReleased

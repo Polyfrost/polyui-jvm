@@ -326,7 +326,19 @@ abstract class Component @JvmOverloads constructor(
     }
 
     /**
-     * recolor this component's color.
+     * Changes the color of the component to the specified color.
+     * Supports animation and callback function on finish.
+     *
+     * If the color is a [Color.Gradient], this component's color will be changed to a gradient between the current color and the specified color.
+     *
+     * If the color is a [Color.Chroma], this component's color will be changed to a chroma color, keeping its current hue for consistency.
+     * **Note:** This will look wierd if the current color is a gradient, and the brightness, saturation and alpha are NOT animated, so will change instantly.
+     *
+     * @param toColor The color to change the component to.
+     * @param animation The type of animation to use.
+     * @param durationNanos The duration of the animation in nanoseconds.
+     * @param onFinish The callback function to execute when the color change animation finishes.
+     * @since 0.19.1
      */
     open fun recolor(
         toColor: Color,
@@ -334,9 +346,42 @@ abstract class Component @JvmOverloads constructor(
         durationNanos: Long = 1L.seconds,
         onFinish: (Component.() -> kotlin.Unit)? = null
     ) {
-        color.recolor(toColor, animation, durationNanos)
+        var finishFunc = onFinish
+        when (toColor) {
+            is Color.Gradient -> {
+                if (color !is Color.Gradient) {
+                    color = Color.Gradient(color, color.clone())
+                }
+                (color as Color.Gradient).recolor(0, toColor[0], animation, durationNanos)
+                (color as Color.Gradient).recolor(1, toColor[1], animation, durationNanos)
+            }
+            is Color.Chroma -> {
+                if (color !is Color.Chroma) {
+                    color = Color.Chroma(toColor.speedNanos, toColor.brightness, toColor.saturation, toColor.alpha, color.hue)
+                } else {
+                    (color as Color.Chroma).speedNanos = toColor.speedNanos
+                    (color as Color.Chroma).brightness = toColor.brightness
+                    (color as Color.Chroma).saturation = toColor.saturation
+                    (color as Color.Chroma).alpha = toColor.alpha
+                }
+            }
+            else -> {
+                if (color is Color.Gradient) {
+                    (color as Color.Gradient).recolor(0, toColor, animation, durationNanos)
+                    (color as Color.Gradient).recolor(1, toColor, animation, durationNanos)
+                    finishFunc = {
+                        color = toColor.toMutable()
+                    }
+                } else {
+                    if (color is Color.Chroma) {
+                        color = (color as Color.Chroma).toMutable()
+                    }
+                    color.recolor(toColor, animation, durationNanos)
+                }
+            }
+        }
         wantRedraw()
-        finishColorFunc = onFinish
+        finishColorFunc = finishFunc
     }
 
     /**
@@ -498,8 +543,12 @@ abstract class Component @JvmOverloads constructor(
 
     override fun canBeRemoved(): Boolean = animations.size == 0 && operations.size == 0 && !color.updating
 
-    override fun toString(): String =
-        "$simpleName(${trueX}x$trueY, ${width}x${height}${if (autoSized) " (auto)" else ""}${if (animations.isNotEmpty()) ", animating" else ""}${if (operations.isNotEmpty()) ", operating" else ""})"
+    override fun toString(): String {
+        return when (initStage) {
+            INIT_COMPLETE -> "$simpleName(${trueX}x$trueY, ${width}x${height}${if (autoSized) " (auto)" else ""}${if (animations.isNotEmpty()) ", animating" else ""}${if (operations.isNotEmpty()) ", operating" else ""})"
+            else -> simpleName
+        }
+    }
 
     fun addKeyframes(k: KeyFrames) {
         keyframes = k

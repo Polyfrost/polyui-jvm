@@ -103,7 +103,22 @@ fun main() {
                                             Block(
                                                 Properties.successProperties,
                                                 at = origin,
-                                                size = 60.px * 60.px
+                                                size = 60.px * 60.px,
+                                                events = events(
+                                                    Events.MouseClicked(0) to {
+                                                        recolor(
+                                                            Color.Gradient(
+                                                                rgba(1f, 0f, 1f, 1f),
+                                                                rgba(0f, 1f, 1f, 1f)
+                                                            ),
+                                                            Animations.EaseOutExpo,
+                                                            2.seconds
+                                                        )
+                                                    },
+                                                    Events.MouseClicked(1) to {
+                                                        recolor(rgba(1f, 0f, 1f, 1f), Animations.EaseOutExpo, 2.seconds)
+                                                    }
+                                                )
                                             )
                                         )
                                     ),
@@ -192,9 +207,13 @@ fun main() {
                         at = 200.px * 160.px,
                         size = 50.percent * 40.px
                     ),
-                    Dropdown(
+                    Slider(
                         at = 0.px * 220.px,
-                        entries = Dropdown.from(SlideDirection::class.java)
+                        size = 50.percent * 30.px
+                    ),
+                    Dropdown(
+                        at = 55.percent * 220.px,
+                        entries = Dropdown.from(SlideDirection.values())
                     )
                 )
             ).draggable(),

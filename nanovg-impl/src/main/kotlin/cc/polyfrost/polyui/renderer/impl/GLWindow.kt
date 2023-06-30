@@ -307,7 +307,7 @@ class GLWindow @JvmOverloads constructor(
     /** set the icon of this window according to the given [icon] path. This should be a resource path that can be used by [getResourceStream].
      *
      * The icon should be a PNG, BMP or JPG, and in a 2x size (i.e. 16x16, 32x32, 128x128, etc)
-     * @throws java.io.IOException if the image does not exist, or a different IO error occurs.
+     * @throws Exception if the image does not exist, or a different IO error occurs.
      *
      * [SIGSEGV](https://en.wikipedia.org/wiki/Segmentation_fault) - if something else goes wrong in this method. Your JVM will crash blaming `[libglfw.so+0x211xx]` or something.
      */

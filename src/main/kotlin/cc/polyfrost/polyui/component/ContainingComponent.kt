@@ -24,6 +24,8 @@ package cc.polyfrost.polyui.component
 import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
+import cc.polyfrost.polyui.animate.Animation
+import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.property.Properties
@@ -31,6 +33,7 @@ import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.Point
 import cc.polyfrost.polyui.unit.Size
 import cc.polyfrost.polyui.unit.Unit
+import cc.polyfrost.polyui.unit.seconds
 import cc.polyfrost.polyui.utils.addOrReplace
 import cc.polyfrost.polyui.utils.fastEach
 
@@ -61,7 +64,8 @@ abstract class ContainingComponent(
         this.children.fastEach { it.acceptsInput = false }
     }
 
-    /** Add components to this containing component.
+    /**
+     * Add components to this containing component.
      * @since 0.19.0
      */
     fun addComponents(vararg component: Component?) {
@@ -120,12 +124,30 @@ abstract class ContainingComponent(
         children.fastEach { it.rescale(scaleX, scaleY) }
     }
 
+    fun recolorAll(toColor: Color, animation: Animation.Type? = null, durationNanos: Long = 1L.seconds, onFinish: (Component.() -> kotlin.Unit)? = null) {
+        super.recolor(toColor, animation, durationNanos, onFinish)
+        children.fastEach { it.recolor(toColor, animation, durationNanos, onFinish) }
+    }
+
     override fun calculateBounds() {
         children.fastEach {
             it.calculateBounds()
         }
         super.calculateBounds()
     }
+
+    /**
+     * ## Make sure to call `super.`[onParentInitComplete]`()`!
+     */
+    override fun onInitComplete() {
+        placeChildren()
+    }
+
+    /**
+     * Use this function to place the children components of this component.
+     * @since 0.19.0
+     */
+    abstract fun placeChildren()
 
     override fun accept(event: Events): Boolean {
         // children components cannot cancel an event.

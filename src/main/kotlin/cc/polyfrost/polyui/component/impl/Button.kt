@@ -103,12 +103,25 @@ class Button(
         if (text != null) {
             if (leftImage != null) contentWidth += properties.iconTextSpacing
             if (rightImage != null) contentWidth += properties.iconTextSpacing
-            text.y = y + properties.topEdgePadding
         }
-        leftImage?.at?.a?.px = x + properties.edgePadding
-        text?.at?.a?.px = x + properties.edgePadding + if (leftImage != null) leftImage.width + properties.iconTextSpacing else 0f
         rightImage?.at?.a?.px = x - properties.edgePadding + contentWidth - rightImage!!.width
         return Size(contentWidth.px, (maxHeight!!.px + properties.topEdgePadding * 2f).px)
+    }
+
+    override fun placeChildren() {
+        text?.y = y + properties.topEdgePadding
+        if (leftImage != null) {
+            leftImage.x = x + properties.edgePadding
+            leftImage.y = y + properties.topEdgePadding
+            text?.x = leftImage.width + properties.iconTextSpacing
+        }
+        if (rightImage != null) {
+            rightImage.y = y + properties.topEdgePadding
+        }
+        if (text != null) {
+            text.x += x + properties.edgePadding
+            text.y = y + properties.topEdgePadding
+        }
     }
 
     private fun getLargestComponent(vararg cs: Component?): Float {
@@ -126,6 +139,5 @@ class Button(
         if (ratio != 1f) PolyUI.LOGGER.warn("${this.simpleName} icon heights are not the same! The icon has been resized, but it may look blurry or distorted!")
         icon.height = maxHeight!!.px
         icon.width /= ratio
-        icon.y = y + properties.topEdgePadding
     }
 }
