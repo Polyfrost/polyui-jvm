@@ -22,7 +22,6 @@
 package cc.polyfrost.polyui.component.impl
 
 import cc.polyfrost.polyui.component.Component
-import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.property.impl.DividerProperties
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
@@ -31,13 +30,13 @@ import cc.polyfrost.polyui.unit.Unit
  * A static divider component.
  */
 open class Divider @JvmOverloads constructor(
-    properties: Properties? = null,
+    properties: DividerProperties? = null,
     at: Vec2<Unit>,
     val length: Unit,
     val direction: Direction = Direction.Horizontal
 ) : Component(properties, at, null, true, false) {
     override fun render() {
-        renderer.drawLine(x, y, x + width, y + height, properties.color, (properties as DividerProperties).thickness)
+        renderer.line(x, y, x + width, y + height, properties.color, (properties as DividerProperties).thickness)
     }
 
     override fun calculateBounds() {

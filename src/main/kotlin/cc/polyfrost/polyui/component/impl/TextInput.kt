@@ -29,7 +29,6 @@ import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.event.FocusedEvents
 import cc.polyfrost.polyui.input.KeyModifiers
 import cc.polyfrost.polyui.input.Keys
-import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.property.impl.TextInputProperties
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.data.Cursor
@@ -39,7 +38,7 @@ import cc.polyfrost.polyui.unit.Vec2
 import cc.polyfrost.polyui.utils.*
 
 open class TextInput(
-    properties: Properties? = null,
+    properties: TextInputProperties? = null,
     at: Vec2<Unit>,
     size: Vec2<Unit>,
     vararg events: Events.Handler
@@ -70,14 +69,14 @@ open class TextInput(
 
     override fun render() {
         if (!mouseOver) mouseDown = false
-        renderer.drawRect(x, y, width, height, properties.backgroundColor, properties.cornerRadii)
-        renderer.drawHollowRect(x, y, width, height, properties.outlineColor, properties.outlineThickness, properties.cornerRadii)
+        renderer.rect(x, y, width, height, properties.backgroundColor, properties.cornerRadii)
+        renderer.hollowRect(x, y, width, height, properties.outlineColor, properties.outlineThickness, properties.cornerRadii)
         if (focused) {
-            renderer.drawRect(cposx, cposy, 2f, text.fontSize, polyui.colors.text.primary)
+            renderer.rect(cposx, cposy, 2f, text.fontSize, polyui.colors.text.primary)
             selectBoxes.fastEach {
                 val (x, y) = it.first
                 val (w, h) = it.second
-                renderer.drawRect(x, y, w, h, polyui.colors.page.border20)
+                renderer.rect(x, y, w, h, polyui.colors.page.border20)
             }
         } else {
             renderer.globalAlpha(0.8f)
@@ -460,6 +459,7 @@ open class TextInput(
     }
 
     override fun onInitComplete() {
+        super.onInitComplete()
         text.x += properties.paddingFromTextLateral
         text.y += properties.paddingFromTextVertical
         text.width -= properties.paddingFromTextLateral * 2f

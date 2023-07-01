@@ -70,9 +70,9 @@ class Button(
 
     override fun render() {
         if (properties.outlineThickness != 0f) {
-            renderer.drawHollowRect(x, y, width, height, color, properties.outlineThickness, properties.cornerRadii)
+            renderer.hollowRect(x, y, width, height, color, properties.outlineThickness, properties.cornerRadii)
         }
-        renderer.drawRect(x, y, width, height, color, properties.cornerRadii)
+        renderer.rect(x, y, width, height, color, properties.cornerRadii)
         super.render()
     }
 

@@ -94,7 +94,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         drawImage(framebuffer.image(), x, y, width, height, 0)
     }
 
-    override fun drawText(
+    override fun text(
         font: Font,
         x: Float,
         y: Float,
@@ -113,7 +113,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         nvgText(vg, x, y, text)
     }
 
-    override fun drawImage(
+    override fun image(
         image: PolyImage,
         x: Float,
         y: Float,
@@ -211,7 +211,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         getImage(image)
     }
 
-    override fun drawRect(
+    override fun rect(
         x: Float,
         y: Float,
         width: Float,
@@ -244,7 +244,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         nvgFill(vg)
     }
 
-    override fun drawHollowRect(
+    override fun hollowRect(
         x: Float,
         y: Float,
         width: Float,
@@ -278,7 +278,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         nvgStroke(vg)
     }
 
-    override fun drawLine(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float) {
+    override fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float) {
         if (color === Color.TRANSPARENT) return
         nvgBeginPath(vg)
         nvgMoveTo(vg, x1, y1)
@@ -292,7 +292,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         nvgStroke(vg)
     }
 
-    override fun drawDropShadow(
+    override fun dropShadow(
         x: Float,
         y: Float,
         width: Float,

@@ -21,48 +21,50 @@
 
 package cc.polyfrost.polyui.component.impl
 
-import cc.polyfrost.polyui.PolyUI
-import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.color.Colors
-import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.event.Events
-import cc.polyfrost.polyui.property.impl.BlockProperties
-import cc.polyfrost.polyui.renderer.Renderer
+import cc.polyfrost.polyui.property.impl.CheckboxProperties
+import cc.polyfrost.polyui.unit.Point
 import cc.polyfrost.polyui.unit.Size
 import cc.polyfrost.polyui.unit.Unit
-import cc.polyfrost.polyui.unit.Vec2
 
 /**
- * # Block
- *
- * A simple block component, supporting the full PolyUI API.
+ * A simple checkbox component, which can be checked or unchecked.
+ * @since 0.19.3
  */
-open class Block @JvmOverloads constructor(
-    properties: BlockProperties? = null,
-    at: Vec2<Unit>,
-    size: Size<Unit>,
-    rawResize: Boolean = false,
-    acceptInput: Boolean = true,
-    vararg events: Events.Handler
-) : Component(properties, at, size, rawResize, acceptInput, *events) {
+open class Checkbox(properties: CheckboxProperties? = null, at: Point<Unit>, size: Size<Unit>, private val onCheck: ((Checkbox, Boolean) -> kotlin.Unit)? = null) : Block(properties, at, size) {
     override val properties
-        get() = super.properties as BlockProperties
-    protected lateinit var outlineColor: Color.Mutable
+        get() = super.properties as CheckboxProperties
 
-    override fun render() {
-        if (properties.outlineThickness != 0f) {
-            renderer.hollowRect(x, y, width, height, outlineColor, properties.outlineThickness, properties.cornerRadii)
+    @set:JvmName("check")
+    @get:JvmName("isChecked")
+    var checked = false
+        set(value) {
+            if (value == field) return
+            field = value
+            onCheck?.invoke(this, value)
+            if (value) {
+                properties.check(this)
+            } else {
+                properties.uncheck(this)
+            }
         }
-        renderer.rect(x, y, width, height, color, properties.cornerRadii)
+    override fun accept(event: Events): Boolean {
+        if (event is Events.MouseClicked) {
+            if (event.button == 0) {
+                checked = !checked
+            }
+        }
+        return super.accept(event)
     }
 
-    override fun setup(renderer: Renderer, polyui: PolyUI) {
-        super.setup(renderer, polyui)
-        outlineColor = properties.outlineColor.toMutable()
+    override fun render() {
+        super.render()
+        properties.renderCheck(this)
     }
 
     override fun onColorsChanged(colors: Colors) {
         super.onColorsChanged(colors)
-        outlineColor = properties.outlineColor.toMutable()
+        if (checked) color = properties.checkedColor.toMutable()
     }
 }

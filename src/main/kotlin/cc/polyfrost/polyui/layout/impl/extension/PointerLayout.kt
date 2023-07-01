@@ -128,6 +128,9 @@ open class PointerLayout(
             ptr.layout = value
         }
 
+    override fun trueX() = ptr.trueX()
+    override fun trueY() = ptr.trueY()
+
     override fun onInitComplete() = ptr.onInitComplete()
 
     // asm: don't override reRenderIfNecessary as it is essentially a pointer method anyway

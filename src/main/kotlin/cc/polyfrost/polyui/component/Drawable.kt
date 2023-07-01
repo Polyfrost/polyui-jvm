@@ -90,11 +90,13 @@ abstract class Drawable(
     inline var x get() = at.a.px
         set(value) {
             at.a.px = value
+            trueX = trueX()
         }
 
     inline var y get() = at.b.px
         set(value) {
             at.b.px = value
+            trueY = trueY()
         }
 
     inline var width get() = size!!.a.px
@@ -108,16 +110,18 @@ abstract class Drawable(
         }
 
     /** true X value (i.e. not relative to the layout) */
-    val trueX get() = trueX()
+    var trueX = 0f
 
     /** true Y value (i.e. not relative to the layout) */
-    val trueY get() = trueY()
+    var trueY = 0f
 
     /**
      * Calculate the true X value (i.e. not relative to the layout)
+     *
+     * This method will NOT assign the value to the [trueX] field.
      * @since 0.19.0
      */
-    private fun trueX(): Float {
+    open fun trueX(): Float {
         var x = this.x
         var parent = this.layout
         while (parent != null) {
@@ -129,10 +133,11 @@ abstract class Drawable(
 
     /**
      * Calculate the true Y value (i.e. not relative to the layout)
+     *
+     * This method will NOT assign the value to the [trueY] field.
      * @since 0.19.0
      */
-    // the JVM should branch-predict this, so we can do it like this
-    private fun trueY(): Float {
+    open fun trueY(): Float {
         var y = this.y
         var parent = this.layout
         while (parent != null) {
@@ -176,6 +181,8 @@ abstract class Drawable(
             at.scale(scale, scale)
             size!!.scale(scale, scale)
         }
+        trueX = trueX()
+        trueY = trueY()
     }
 
     /** function that should return true if it is ready to be removed from its parent.
@@ -253,6 +260,8 @@ abstract class Drawable(
      * @since 0.19.0
      */
     open fun onInitComplete() {
+        trueX = trueX()
+        trueY = trueY()
     }
 
     /**

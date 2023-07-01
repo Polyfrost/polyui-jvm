@@ -95,10 +95,45 @@ abstract class Component @JvmOverloads constructor(
 
     /** the color of this component. */
     lateinit var color: Color.Mutable
+
+    /**
+     * represents the hue value to return to when a chroma color is animated to something else, and is set back.
+     */
+    private var hueToReturnTo = 0f
     protected var autoSized = false
     protected var finishColorFunc: (Component.() -> kotlin.Unit)? = null
     override lateinit var layout: Layout
     protected var keyframes: KeyFrames? = null
+
+    /**
+     * Note that this method will return the [x] if this method is called before the component is added to a layout.
+     * @see [Drawable.trueX]
+     */
+    override fun trueX(): Float {
+        var x = this.x
+        if (!::layout.isInitialized) return x
+        var parent: Layout? = this.layout
+        while (parent != null) {
+            x += parent.x
+            parent = parent.layout
+        }
+        return x
+    }
+
+    /**
+     * Note that this method will return the [y] if this method is called before the component is added to a layout.
+     * @see [Drawable.trueY]
+     */
+    override fun trueY(): Float {
+        var y = this.y
+        if (!::layout.isInitialized) return y
+        var parent: Layout? = this.layout
+        while (parent != null) {
+            y += parent.y
+            parent = parent.layout
+        }
+        return y
+    }
 
     init {
         events.forEach {
@@ -349,32 +384,37 @@ abstract class Component @JvmOverloads constructor(
         var finishFunc = onFinish
         when (toColor) {
             is Color.Gradient -> {
-                if (color !is Color.Gradient) {
-                    color = Color.Gradient(color, color.clone())
+                if (color !is Color.Gradient || (color as Color.Gradient).type != toColor.type) {
+                    color = Color.Gradient(color, color.clone(), toColor.type)
                 }
-                (color as Color.Gradient).recolor(0, toColor[0], animation, durationNanos)
-                (color as Color.Gradient).recolor(1, toColor[1], animation, durationNanos)
+                val c = color as Color.Gradient
+                c.recolor(0, toColor[0], animation, durationNanos)
+                c.recolor(1, toColor[1], animation, durationNanos)
             }
             is Color.Chroma -> {
                 if (color !is Color.Chroma) {
                     color = Color.Chroma(toColor.speedNanos, toColor.brightness, toColor.saturation, toColor.alpha, color.hue)
                 } else {
-                    (color as Color.Chroma).speedNanos = toColor.speedNanos
-                    (color as Color.Chroma).brightness = toColor.brightness
-                    (color as Color.Chroma).saturation = toColor.saturation
-                    (color as Color.Chroma).alpha = toColor.alpha
+                    val c = color as Color.Chroma
+                    c.speedNanos = toColor.speedNanos
+                    c.brightness = toColor.brightness
+                    c.saturation = toColor.saturation
+                    c.alpha = toColor.alpha
                 }
+                color.hue = hueToReturnTo
             }
             else -> {
                 if (color is Color.Gradient) {
-                    (color as Color.Gradient).recolor(0, toColor, animation, durationNanos)
-                    (color as Color.Gradient).recolor(1, toColor, animation, durationNanos)
+                    val c = color as Color.Gradient
+                    c.recolor(0, toColor, animation, durationNanos)
+                    c.recolor(1, toColor, animation, durationNanos)
                     finishFunc = {
                         color = toColor.toMutable()
                     }
                 } else {
                     if (color is Color.Chroma) {
-                        color = (color as Color.Chroma).toMutable()
+                        color = (color as Color.Chroma).freeze()
+                        hueToReturnTo = color.hue
                     }
                     color.recolor(toColor, animation, durationNanos)
                 }

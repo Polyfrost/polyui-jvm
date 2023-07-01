@@ -84,6 +84,20 @@ abstract class Layout(
             field = value
         }
 
+    override fun trueX(): Float {
+        trueX = super.trueX()
+        children.fastEach { it.trueX = it.trueX() }
+        components.fastEach { it.trueX = it.trueX() }
+        return trueX
+    }
+
+    override fun trueY(): Float {
+        trueY = super.trueY()
+        children.fastEach { it.trueY = it.trueY() }
+        components.fastEach { it.trueY = it.trueY() }
+        return trueY
+    }
+
     /** tracker variable for framebuffer disabling/enabling. don't touch this. */
     internal open var fboTracker = 0
 
@@ -406,8 +420,8 @@ abstract class Layout(
 
     override fun debugRender() {
         if (!enabled) return
-        renderer.drawHollowRect(trueX, trueY, width, height, polyui.colors.page.border20, 2f)
-        renderer.drawText(Renderer.DefaultFont, trueX + 1f, trueY + 1f, simpleName, polyui.colors.text.primary, 10f)
+        renderer.hollowRect(trueX, trueY, width, height, polyui.colors.page.border20, 2f)
+        renderer.text(Renderer.DefaultFont, trueX + 1f, trueY + 1f, simpleName, polyui.colors.text.primary, 10f)
         children.fastEach { it.debugRender() }
         components.fastEach { it.debugRender() }
     }

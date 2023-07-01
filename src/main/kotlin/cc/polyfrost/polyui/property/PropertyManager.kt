@@ -29,14 +29,15 @@ import cc.polyfrost.polyui.property.impl.*
 class PropertyManager(private val polyUI: PolyUI) {
     val properties: HashMap<String, Properties> = hashMapOf(
         TextInput::class.qualifiedName!! to TextInputProperties(TextProperties()),
-        Block::class.qualifiedName!! to BlockProperties(),
+        Block::class.qualifiedName!! to DefaultBlockProperties(),
         Divider::class.qualifiedName!! to DividerProperties(),
         Image::class.qualifiedName!! to ImageProperties(),
         Text::class.qualifiedName!! to TextProperties(),
         Button::class.qualifiedName!! to ButtonProperties(),
         Dropdown::class.qualifiedName!! to DropdownProperties(),
         Dropdown.Entry::class.qualifiedName!! to DropdownProperties.Entry(),
-        Slider::class.qualifiedName!! to SliderProperties()
+        Slider::class.qualifiedName!! to SliderProperties(),
+        Checkbox::class.qualifiedName!! to CheckboxProperties()
     )
 
     inline fun <reified C : Component> get(): Properties = get(C::class.qualifiedName!!)

@@ -85,7 +85,7 @@ class Dropdown(
         dropdown.refuseFramebuffer = true
         dropdown.preRender = {
             if (openAnimation != null) renderer.pushScissor(0f, 0f, width, height * openAnimation!!.value)
-            renderer.drawRect(0f, 0f, width, height, this@Dropdown.properties.color, 0f, 0f, this@Dropdown.properties.cornerRadius, this@Dropdown.properties.cornerRadius)
+            renderer.rect(0f, 0f, width, height, this@Dropdown.properties.color, 0f, 0f, this@Dropdown.properties.cornerRadius, this@Dropdown.properties.cornerRadius)
         }
         dropdown.postRender = {
             renderer.popScissor()
@@ -152,8 +152,8 @@ class Dropdown(
         }
         dropdown.enabled = (openAnimation?.value ?: 0f) != 0f
         if (active) selected?.recolorAll(properties.hoveredColor)
-        renderer.drawRect(x, y, width, height, color, properties.cornerRadius)
-        renderer.drawHollowRect(x, y, width, height, borderColor, properties.borderThickness, properties.cornerRadius)
+        renderer.rect(x, y, width, height, color, properties.cornerRadius)
+        renderer.hollowRect(x, y, width, height, borderColor, properties.borderThickness, properties.cornerRadius)
     }
 
     override fun calculateSize(): Size<Unit> {

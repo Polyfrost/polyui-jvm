@@ -37,7 +37,7 @@ import kotlin.math.min
  * Please make sure to implement all the functions in this class, and you may want to familiarize yourself with how [cc.polyfrost.polyui.PolyUI] works.
  *
  * It is also responsible for loading and caching all images and fonts, but this is down to you as a rendering implementation to implement.
- * for these functions, such as [drawImage] and [drawText], an initialized [Font] or [PolyImage] instance will be given.
+ * for these functions, such as [image] and [text], an initialized [Font] or [PolyImage] instance will be given.
  * This class simply contains a path to the resource. You will need to load it using [getResourceStream][cc.polyfrost.polyui.utils.getResourceStream], and cache it for future use (ideally).
  */
 abstract class Renderer(width: Float, height: Float) : AutoCloseable {
@@ -167,7 +167,7 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
     /**
      * draw text to the screen, per the given parameters. The string will already be wrapped to the given width, and will be aligned according to the given [textAlign].
      */
-    abstract fun drawText(
+    abstract fun text(
         font: Font,
         x: Float,
         y: Float,
@@ -185,7 +185,7 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
     /** Function that can be called to explicitly initialize an image. This is used mainly for getting the size of an image, or to ensure an SVG has been rasterized. */
     abstract fun initImage(image: PolyImage)
 
-    abstract fun drawImage(
+    abstract fun image(
         image: PolyImage,
         x: Float,
         y: Float,
@@ -203,7 +203,7 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
      *
      * If the radii are 0, this will just draw a normal rectangle. If they are not 0, it will draw a rounded rectangle.
      */
-    abstract fun drawRect(
+    abstract fun rect(
         x: Float,
         y: Float,
         width: Float,
@@ -215,7 +215,7 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
         bottomRightRadius: Float
     )
 
-    abstract fun drawHollowRect(
+    abstract fun hollowRect(
         x: Float,
         y: Float,
         width: Float,
@@ -228,25 +228,25 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
         bottomRightRadius: Float
     )
 
-    fun drawImage(image: PolyImage, x: Float, y: Float, width: Float = image.width, height: Float = image.height, radius: Float = 0f, colorMask: Int = 0) =
-        drawImage(image, x, y, width, height, colorMask, radius, radius, radius, radius)
+    fun image(image: PolyImage, x: Float, y: Float, width: Float = image.width, height: Float = image.height, radius: Float = 0f, colorMask: Int = 0) =
+        image(image, x, y, width, height, colorMask, radius, radius, radius, radius)
 
-    fun drawImage(image: PolyImage, x: Float, y: Float, width: Float = image.width, height: Float = image.height, radii: FloatArray, colorMask: Int = 0) =
-        drawImage(image, x, y, width, height, colorMask, radii[0], radii[1], radii[2], radii[3])
+    fun image(image: PolyImage, x: Float, y: Float, width: Float = image.width, height: Float = image.height, radii: FloatArray, colorMask: Int = 0) =
+        image(image, x, y, width, height, colorMask, radii[0], radii[1], radii[2], radii[3])
 
-    fun drawRect(x: Float, y: Float, width: Float, height: Float, color: Color, radius: Float = 0f) =
-        drawRect(x, y, width, height, color, radius, radius, radius, radius)
+    fun rect(x: Float, y: Float, width: Float, height: Float, color: Color, radius: Float = 0f) =
+        rect(x, y, width, height, color, radius, radius, radius, radius)
 
-    fun drawRect(x: Float, y: Float, width: Float, height: Float, color: Color, radii: FloatArray) =
-        drawRect(x, y, width, height, color, radii[0], radii[1], radii[2], radii[3])
+    fun rect(x: Float, y: Float, width: Float, height: Float, color: Color, radii: FloatArray) =
+        rect(x, y, width, height, color, radii[0], radii[1], radii[2], radii[3])
 
     /**
      * Draw a circle to the screen, as per the given parameters. Note that the x,y is the top left of the circle box, and this is intentional; so it is in-line with the rest of the PolyUI rendering methods.
      */
-    open fun drawCircle(x: Float, y: Float, radius: Float, color: Color) =
-        drawRect(x, y, radius + radius, radius + radius, color, radius)
+    open fun circle(x: Float, y: Float, radius: Float, color: Color) =
+        rect(x, y, radius + radius, radius + radius, color, radius)
 
-    fun drawHollowRect(
+    fun hollowRect(
         x: Float,
         y: Float,
         width: Float,
@@ -255,9 +255,9 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
         lineWidth: Float,
         radius: Float = 0f
     ) =
-        drawHollowRect(x, y, width, height, color, lineWidth, radius, radius, radius, radius)
+        hollowRect(x, y, width, height, color, lineWidth, radius, radius, radius, radius)
 
-    fun drawHollowRect(
+    fun hollowRect(
         x: Float,
         y: Float,
         width: Float,
@@ -266,11 +266,11 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
         lineWidth: Float,
         radii: FloatArray
     ) =
-        drawHollowRect(x, y, width, height, color, lineWidth, radii[0], radii[1], radii[2], radii[3])
+        hollowRect(x, y, width, height, color, lineWidth, radii[0], radii[1], radii[2], radii[3])
 
-    abstract fun drawLine(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float)
+    abstract fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float)
 
-    abstract fun drawDropShadow(x: Float, y: Float, width: Float, height: Float, blur: Float, spread: Float, radius: Float)
+    abstract fun dropShadow(x: Float, y: Float, width: Float, height: Float, blur: Float, spread: Float, radius: Float)
 
     /** Create a new framebuffer. It is down to you (as a rendering implementation) to cache this, and dispose of it as necessary. */
     abstract fun createFramebuffer(width: Float, height: Float): Framebuffer

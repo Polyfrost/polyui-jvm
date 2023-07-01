@@ -39,6 +39,7 @@ open class BlockProperties @JvmOverloads constructor(
     open val cornerRadii: FloatArray = 0f.radii(),
     open val outlineThickness: Float = 0f
 ) : Properties() {
+    val outlineColor get() = colors.page.border10
     override val color get() = ccolor ?: colors.component.bg
     open val hoverColor get() = colors.component.bgHovered
     open val pressedColor get() = colors.component.bgPressed
@@ -47,7 +48,14 @@ open class BlockProperties @JvmOverloads constructor(
     open val hoverAnimation: Animations? = Animations.EaseOutExpo
     open val pressedAnimationDuration: Long = 0.25.seconds
     open val hoverAnimationDuration: Long = 0.5.seconds
+}
 
+/**
+ * Basic block properties with hover and pressed animations.
+ */
+open class DefaultBlockProperties @JvmOverloads constructor(
+    cornerRadii: FloatArray = 0f.radii()
+) : BlockProperties(null, cornerRadii) {
     init {
         addEventHandlers(
             Events.MousePressed(0) to {
@@ -74,7 +82,7 @@ open class BlockProperties @JvmOverloads constructor(
 
 open class PrimaryBlockProperties @JvmOverloads constructor(
     cornerRadii: FloatArray = 0f.radii()
-) : BlockProperties(null, cornerRadii) {
+) : DefaultBlockProperties(cornerRadii) {
     override val color: Color get() = colors.brand.fg
     override val hoverColor: Color get() = colors.brand.fgHovered
     override val pressedColor: Color get() = colors.brand.fgPressed
@@ -84,7 +92,7 @@ open class PrimaryBlockProperties @JvmOverloads constructor(
 open class StateBlockProperties @JvmOverloads constructor(
     private val state: State = State.Success,
     cornerRadii: FloatArray = 0f.radii()
-) : BlockProperties(null, cornerRadii) {
+) : DefaultBlockProperties(cornerRadii) {
     override val color: Color get() = when (state) {
         State.Success -> colors.state.success
         State.Warning -> colors.state.warning

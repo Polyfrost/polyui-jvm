@@ -68,7 +68,7 @@ class NoOpRenderer(width: Float, height: Float) : Renderer(width, height) {
     override fun pop() {
     }
 
-    override fun drawText(
+    override fun text(
         font: Font,
         x: Float,
         y: Float,
@@ -86,7 +86,7 @@ class NoOpRenderer(width: Float, height: Float) : Renderer(width, height) {
     override fun initImage(image: PolyImage) {
     }
 
-    override fun drawImage(
+    override fun image(
         image: PolyImage,
         x: Float,
         y: Float,
@@ -100,7 +100,7 @@ class NoOpRenderer(width: Float, height: Float) : Renderer(width, height) {
     ) {
     }
 
-    override fun drawRect(
+    override fun rect(
         x: Float,
         y: Float,
         width: Float,
@@ -113,7 +113,7 @@ class NoOpRenderer(width: Float, height: Float) : Renderer(width, height) {
     ) {
     }
 
-    override fun drawHollowRect(
+    override fun hollowRect(
         x: Float,
         y: Float,
         width: Float,
@@ -127,10 +127,10 @@ class NoOpRenderer(width: Float, height: Float) : Renderer(width, height) {
     ) {
     }
 
-    override fun drawLine(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float) {
+    override fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float) {
     }
 
-    override fun drawDropShadow(
+    override fun dropShadow(
         x: Float,
         y: Float,
         width: Float,

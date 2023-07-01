@@ -26,7 +26,6 @@ import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.event.Events
-import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.property.impl.SliderProperties
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.Point
@@ -38,7 +37,7 @@ import cc.polyfrost.polyui.unit.Unit
  * @since 0.19.0
  */
 class Slider(
-    properties: Properties? = null,
+    properties: SliderProperties? = null,
     at: Point<Unit>,
     size: Size<Unit>,
     val min: Float = 0f,
@@ -91,9 +90,9 @@ class Slider(
         val height = height
         val hHeight = height / 2f
         val barRadius = barThickness / 2f
-        if (bitX != x) renderer.drawRect(x + hHeight, barY, bitX, barThickness, usedBarColor, barRadius)
-        renderer.drawRect(x + bitX + hHeight, barY, width - bitX - height, barThickness, barColor, barRadius)
-        renderer.drawRect(bitX, y, height, height, color, height)
+        if (bitX != x) renderer.rect(x + hHeight, barY, bitX, barThickness, usedBarColor, barRadius)
+        renderer.rect(x + bitX + hHeight, barY, width - bitX - height, barThickness, barColor, barRadius)
+        renderer.rect(bitX, y, height, height, color, height)
     }
 
     override fun onColorsChanged(colors: Colors) {

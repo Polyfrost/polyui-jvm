@@ -57,6 +57,10 @@ open class PixelLayout(
     override fun calculateBounds() {
         if (this.size == null) size = calculateSize()
         super.calculateBounds()
+    }
+
+    override fun onInitComplete() {
+        super.onInitComplete()
         if (dynamicInference) {
             size = calculateSize()
         }

@@ -26,7 +26,6 @@ import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.input.PolyText
 import cc.polyfrost.polyui.input.PolyTranslator.Companion.localised
-import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.property.impl.TextProperties
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.data.Line
@@ -39,7 +38,7 @@ import cc.polyfrost.polyui.utils.cl1
 import kotlin.math.floor
 
 open class Text @JvmOverloads constructor(
-    properties: Properties? = null,
+    properties: TextProperties? = null,
     private val txt: PolyText,
     at: Vec2<Unit>,
     val sized: Size<Unit>? = null,
@@ -62,7 +61,7 @@ open class Text @JvmOverloads constructor(
         vararg events: Events.Handler
     ) : this(null, txt.localised(), at, size, fontSize, textAlign, rawResize, acceptInput, *events)
 
-    constructor(properties: Properties? = null, text: PolyText, fontSize: Unit, at: Vec2<Unit>) :
+    constructor(properties: TextProperties? = null, text: PolyText, fontSize: Unit, at: Vec2<Unit>) :
         this(properties, text, at, null, fontSize)
 
     final override val properties: TextProperties

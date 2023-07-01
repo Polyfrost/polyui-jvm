@@ -248,7 +248,7 @@ class PolyUI @JvmOverloads constructor(
         }
         every(1.seconds) {
             if (settings.debug && drew) {
-                perf = "fps: $fps, avg/max/min: ${avgFrame.rounded(4)}ms; ${longestFrame.rounded(4)}ms; ${shortestFrame.rounded(4)}ms"
+                perf = "fps: $fps, avg/max/min: ${"%.4f".format(avgFrame)}ms; ${"%.4f".format(longestFrame)}ms; ${"%.4f".format(shortestFrame)}ms"
                 longestFrame = 0f
                 shortestFrame = 100f
                 avgFrame = timeInFrames / fps
@@ -368,7 +368,7 @@ class PolyUI @JvmOverloads constructor(
 
     /** draw the debug overlay text. It is right-aligned. */
     fun drawDebugOverlay(x: Float, y: Float) {
-        renderer.drawText(
+        renderer.text(
             Renderer.DefaultFont,
             x,
             y,

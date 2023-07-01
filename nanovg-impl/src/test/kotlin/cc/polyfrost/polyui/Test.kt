@@ -205,11 +205,15 @@ fun main() {
                     ),
                     TextInput(
                         at = 200.px * 160.px,
-                        size = 50.percent * 40.px
+                        size = 270.px * 40.px
                     ),
                     Slider(
                         at = 0.px * 220.px,
                         size = 50.percent * 30.px
+                    ),
+                    Checkbox(
+                        at = 0.px * 260.px,
+                        size = 30.px * 30.px
                     ),
                     Dropdown(
                         at = 55.percent * 220.px,

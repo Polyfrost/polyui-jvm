@@ -454,7 +454,7 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
         alpha: Float = 1f,
         initialHue: Float = 0f
     ) : Mutable(0f, saturation, brightness, alpha) {
-        private var time = (initialHue % 360f).toLong()
+        private var time: Long = ((initialHue % 360f) * speedNanos.toFloat()).toLong()
 
         @Deprecated("Chroma colors cannot be animated.", level = DeprecationLevel.ERROR)
         override fun recolor(target: Color, type: Animation.Type?, durationNanos: Long) {
@@ -467,8 +467,7 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
          * Convert this chroma color to a mutable color, which is a snapshot of this color at the time of calling this method.
          * @since 0.19.1
          */
-        @Suppress("OVERRIDE_DEPRECATION")
-        override fun toMutable() = Mutable(hue, saturation, brightness, alpha)
+        fun freeze() = Mutable(hue, saturation, brightness, alpha)
 
         override fun update(deltaTimeNanos: Long): Boolean {
             time += deltaTimeNanos

@@ -140,6 +140,7 @@ abstract class ContainingComponent(
      * ## Make sure to call `super.`[onParentInitComplete]`()`!
      */
     override fun onInitComplete() {
+        super.onInitComplete()
         placeChildren()
     }
 

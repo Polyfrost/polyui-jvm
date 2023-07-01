@@ -99,7 +99,7 @@ internal class MultilineText(
     override fun render(x: Float, y: Float, color: Color) {
         var y = y + textOffsetY
         lines.fastEach { (text, _, h) ->
-            renderer.drawText(font, x, y, text, color, fontSize, textAlign)
+            renderer.text(font, x, y, text, color, fontSize, textAlign)
             y += h
         }
     }
@@ -133,8 +133,8 @@ internal class MultilineText(
     override fun getLineByIndex(index: Int): Triple<Line, Int, Int> {
         var i = 0
         lines.fastEachIndexed { lineIndex, line ->
-            if (index <= i + line.text.length) {
-                return Triple(line, index - i - lineIndex, lineIndex)
+            if (index < i + line.text.length) {
+                return Triple(line, index - i, lineIndex)
             }
             i += line.text.length
         }
@@ -164,7 +164,7 @@ internal class SingleText(
     override var lines: ArrayList<Line> = arrayListOf(Line(text.string, size.width, size.height))
     var init = false
     override fun render(x: Float, y: Float, color: Color) {
-        renderer.drawText(font, x + textOffsetX, y + textOffsetY, text.string, color, fontSize, textAlign)
+        renderer.text(font, x + textOffsetX, y + textOffsetY, text.string, color, fontSize, textAlign)
     }
 
     override fun calculate(renderer: Renderer) {

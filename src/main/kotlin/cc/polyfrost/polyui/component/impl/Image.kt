@@ -40,7 +40,7 @@ open class Image @JvmOverloads constructor(
         get() = super.properties as ImageProperties
 
     override fun render() {
-        renderer.drawImage(image, x, y, width, height, properties.cornerRadii, properties.color.argb)
+        renderer.image(image, x, y, width, height, properties.cornerRadii, properties.color.argb)
     }
 
     override fun calculateSize(): Vec2<Unit> {
