@@ -63,9 +63,8 @@ inline val Number.minutes get() = (toDouble() * 60_000_000_000.0).toLong()
 @get:JvmName("hours")
 inline val Number.hours get() = (toDouble() * 3_600_000_000_000.0).toLong()
 
-inline val origin get() = (0.px * 0.px).clone()
-inline val fill get() = Unit.Percent(100f).clone()
-inline val fillv get() = (Unit.Percent(100f) * Unit.Percent(100f)).clone()
+inline val origin get() = (Unit.Pixel(0f) * Unit.Pixel(0f)).clone()
+inline val fill get() = (Unit.Percent(100f) * Unit.Percent(100f)).clone()
 
 fun index(index: Int) = Unit.Flex(index)
 

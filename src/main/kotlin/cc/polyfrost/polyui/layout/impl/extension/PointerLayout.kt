@@ -26,6 +26,7 @@ import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.layout.Layout
+import cc.polyfrost.polyui.property.PropertyManager
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.data.Framebuffer
 import cc.polyfrost.polyui.unit.Point
@@ -41,6 +42,7 @@ open class PointerLayout(
     layout.size,
     layout.onAdded,
     layout.onRemoved,
+    null,
     layout.rawResize,
     layout.resizesChildren,
     layout.acceptsInput,
@@ -57,6 +59,11 @@ open class PointerLayout(
         get() = ptr.renderer
         set(value) {
             ptr.renderer = value
+        }
+    override var propertyManager: PropertyManager
+        get() = ptr.propertyManager
+        set(value) {
+            ptr.propertyManager = value
         }
     final override inline var simpleName: String
         get() = ptr.simpleName

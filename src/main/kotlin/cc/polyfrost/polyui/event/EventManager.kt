@@ -202,10 +202,10 @@ class EventManager(private val polyUI: PolyUI) {
         onApplicableDrawables(mouseX, mouseY) {
             if (mouseOver) {
                 if (button == 0 && this is Focusable) {
-                    polyUI.focus(this)
-                    accept(event2)
-                    clickedCancelled = true
-                    releaseCancelled = true
+                    if (polyUI.focus(this)) {
+                        clickedCancelled = true
+                        releaseCancelled = true
+                    }
                 }
                 if (!releaseCancelled) {
                     if (accept(event)) releaseCancelled = true

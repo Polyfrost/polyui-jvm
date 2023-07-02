@@ -26,7 +26,9 @@ import cc.polyfrost.polyui.animate.Animation
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.ContainingComponent
+import cc.polyfrost.polyui.component.Focusable
 import cc.polyfrost.polyui.event.Events
+import cc.polyfrost.polyui.event.FocusedEvents
 import cc.polyfrost.polyui.input.PolyText
 import cc.polyfrost.polyui.input.PolyTranslator.Companion.localised
 import cc.polyfrost.polyui.layout.Layout.Companion.drawables
@@ -49,7 +51,7 @@ class Dropdown(
     heightBeforeScrolls: Unit.Pixel = 300.px,
     val default: Int = 0,
     vararg entries: Entry
-) : Component(properties, at, size, false, true) {
+) : Component(properties, at, size, false, true), Focusable {
     lateinit var borderColor: Color.Mutable
     private val chevron = Image(image = PolyImage("/dropdown-arrow.svg", 16f, 16f), at = origin)
 
@@ -57,6 +59,17 @@ class Dropdown(
         entries.forEach {
             it.dropdown = this
             if (size != null) it.size = size.clone()
+        }
+    }
+
+    override fun accept(event: FocusedEvents) {
+        if (event is FocusedEvents.FocusGained) {
+            active = true
+            open()
+        }
+        if (event is FocusedEvents.FocusLost) {
+            active = false
+            close()
         }
     }
 
@@ -116,14 +129,10 @@ class Dropdown(
             return true
         }
         if (event is Events.MouseClicked) {
-            if (event.button != 0) return false
-            active = !active
-            if (active) {
-                open()
-            } else {
-                close()
+            if (event.button == 0 && active) {
+                polyui.unfocus()
+                return true
             }
-            return true
         }
         return super.accept(event)
     }

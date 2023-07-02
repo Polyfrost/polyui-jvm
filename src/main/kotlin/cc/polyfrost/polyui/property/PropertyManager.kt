@@ -22,11 +22,16 @@
 package cc.polyfrost.polyui.property
 
 import cc.polyfrost.polyui.PolyUI
+import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.impl.*
 import cc.polyfrost.polyui.property.impl.*
 
-class PropertyManager(private val polyUI: PolyUI) {
+class PropertyManager(private val polyUI: PolyUI, colors: Colors? = null) {
+    /**
+     * This is the colors object associated with this property manager.
+     */
+    val colors: Colors = colors ?: polyUI.colors
     val properties: HashMap<String, Properties> = hashMapOf(
         TextInput::class.qualifiedName!! to TextInputProperties(TextProperties()),
         Block::class.qualifiedName!! to DefaultBlockProperties(),

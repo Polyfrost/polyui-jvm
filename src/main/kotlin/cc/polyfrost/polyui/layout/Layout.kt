@@ -25,15 +25,19 @@ import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_SETUP
+import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
+import cc.polyfrost.polyui.component.impl.Block
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.layout.impl.extension.DraggableLayout
+import cc.polyfrost.polyui.layout.impl.extension.PointerLayout
 import cc.polyfrost.polyui.layout.impl.extension.ScrollingLayout
+import cc.polyfrost.polyui.property.PropertyManager
+import cc.polyfrost.polyui.property.impl.BackgroundBlockProperties
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.data.Framebuffer
-import cc.polyfrost.polyui.unit.Point
-import cc.polyfrost.polyui.unit.Size
+import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.utils.*
 import org.jetbrains.annotations.ApiStatus
@@ -55,6 +59,7 @@ abstract class Layout(
     override var size: Size<Unit>? = null,
     internal val onAdded: (Drawable.() -> kotlin.Unit)? = null,
     internal val onRemoved: (Drawable.() -> kotlin.Unit)? = null,
+    propertyManager: PropertyManager? = null,
     rawResize: Boolean = false,
     /**
      * If this layout resizes its children (**components and layouts!**) when it is resized.
@@ -65,6 +70,17 @@ abstract class Layout(
     acceptInput: Boolean = false,
     vararg drawables: Drawable
 ) : Drawable(at, rawResize, acceptInput) {
+    open lateinit var propertyManager: PropertyManager
+        internal set
+    init {
+        if (propertyManager != null) {
+            @Suppress("LeakingThis")
+            this.propertyManager = propertyManager
+        }
+    }
+    lateinit var colors: Colors
+        internal set
+
     /** list of components in this layout. */
     open val components = drawables.filterIsInstance<Component>() as ArrayList
         get() = if (enabled) field else EMPTY_CMPLIST
@@ -235,15 +251,27 @@ abstract class Layout(
      * @throws IllegalArgumentException if the component does not exist
      * @see getOrNull
      */
-    inline operator fun get(simpleName: String) = getOrNull(simpleName) ?: throw IllegalArgumentException("No component found in ${this.simpleName} with ID $simpleName!")
+    inline operator fun <reified T : Drawable> get(simpleName: String): T = getOrNull(simpleName) ?: throw IllegalArgumentException("No drawable found in ${this.simpleName} with ID $simpleName!")
 
     /**
      * return a component in this layout, by its simple name. This can be accessed using [debugPrint][cc.polyfrost.polyui.PolyUI.debugPrint] or using the [field][cc.polyfrost.polyui.component.Component.simpleName].
      * Returns null if not found.
      * @see get
      */
-    fun getOrNull(simpleName: String): Component? {
-        components.fastEach { if (it.simpleName == simpleName) return it }
+    @Suppress("UNCHECKED_CAST")
+    fun <T : Drawable?> getOrNull(simpleName: String): T? { // <T : Drawable?> as it removes useless null checks (null cannot be cast to not-null type T)
+        components.fastEach { if (it.simpleName == simpleName) return it as T }
+        children.fastEach {
+            return if (it.simpleName == simpleName) {
+                return if (it is PointerLayout) {
+                    it.ptr as T
+                } else {
+                    it as T
+                }
+            } else {
+                it.getOrNull(simpleName)
+            }
+        }
         return null
     }
 
@@ -374,6 +402,12 @@ abstract class Layout(
         }
     }
 
+    override fun onInitComplete() {
+        super.onInitComplete()
+        components.fastEach { it.onParentInitComplete() }
+        children.fastEach { it.onParentInitComplete() }
+    }
+
     override fun rescale(scaleX: Float, scaleY: Float) {
         super.rescale(scaleX, scaleY)
         if (resizesChildren) {
@@ -428,6 +462,8 @@ abstract class Layout(
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {
         super.setup(renderer, polyui)
+        if (!::propertyManager.isInitialized) propertyManager = PropertyManager(polyui)
+        colors = propertyManager.colors
         components.fastEach {
             it.layout = this
             it.setup(renderer, polyui)
@@ -437,6 +473,18 @@ abstract class Layout(
             it.setup(renderer, polyui)
         }
         initStage = INIT_SETUP
+    }
+
+    /** @see onColorsChanged */
+    fun changeColors(colors: Colors) = onColorsChanged(colors)
+
+    override fun onColorsChanged(colors: Colors) {
+        this.colors = colors
+        for ((_, p) in propertyManager.properties) {
+            p.colors = colors
+        }
+        components.fastEach { it.onColorsChanged(colors) }
+        children.fastEach { it.onColorsChanged(colors) }
     }
 
     override fun canBeRemoved() = !needsRedraw
@@ -473,6 +521,19 @@ abstract class Layout(
 
     override fun toString(): String {
         return "$simpleName(${trueX}x$trueY, ${width}x${height}${if (fbo != null) ", buffered" else ""}${if (fbo != null && needsRedraw) ", needsRedraw" else ""})"
+    }
+
+    /**
+     * Adds a background block to the layout.
+     *
+     * @return `this`
+     * @throws IllegalArgumentException if the method is called outside the initialization block.
+     * @since 0.19.2
+     */
+    fun background(cornerRadii: FloatArray = 8f.radii()): Layout {
+        require(initStage == INIT_NOT_STARTED) { "background() can only be called in initialization block" }
+        this.components.add(0, Block(BackgroundBlockProperties(cornerRadii), origin, fill, acceptInput = false, rawResize = true))
+        return this
     }
 
     companion object {

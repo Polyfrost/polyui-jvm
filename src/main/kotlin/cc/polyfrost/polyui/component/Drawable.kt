@@ -25,6 +25,7 @@ import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_SETUP
+import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.renderer.Renderer
@@ -84,8 +85,7 @@ abstract class Drawable(
      * Reference to the layout encapsulating this drawable.
      * For components, this is never null, but for layout, it can be null (meaning its parent is the polyui)
      */
-    @PublishedApi
-    internal abstract val layout: Layout?
+    abstract val layout: Layout?
 
     inline var x get() = at.a.px
         set(value) {
@@ -323,4 +323,16 @@ abstract class Drawable(
      * Otherwise, the size parameter in the constructor must be specified.
      * @throws UnsupportedOperationException if this method is not implemented, and the size parameter in the constructor is not specified. */
     open fun calculateSize(): Size<Unit>? = null
+
+    /**
+     * Function that is called when the colors attached to this drawable change.
+     *
+     * If this is a layout, the colors will change, and all its children and components will be notified and updated accordingly.
+     *
+     * **Make sure to call** [super.onColorsChanged()][onColorsChanged] if you override this!
+     * @see Colors
+     * @see Component.recolor
+     * @since 0.17.5
+     */
+    abstract fun onColorsChanged(colors: Colors)
 }

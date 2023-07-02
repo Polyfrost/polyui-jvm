@@ -246,6 +246,7 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
     open fun circle(x: Float, y: Float, radius: Float, color: Color) =
         rect(x, y, radius + radius, radius + radius, color, radius)
 
+
     fun hollowRect(
         x: Float,
         y: Float,
@@ -268,6 +269,16 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
     ) =
         hollowRect(x, y, width, height, color, lineWidth, radii[0], radii[1], radii[2], radii[3])
 
+    /**
+     * Draws a line between two points with the specified color and width.
+     *
+     * @param x1 The x-coordinate of the starting point.
+     * @param y1 The y-coordinate of the starting point.
+     * @param x2 The x-coordinate of the ending point.
+     * @param y2 The y-coordinate of the ending point.
+     * @param color The color of the line.
+     * @param width The width of the line.
+     */
     abstract fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float)
 
     abstract fun dropShadow(x: Float, y: Float, width: Float, height: Float, blur: Float, spread: Float, radius: Float)

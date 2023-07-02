@@ -299,7 +299,7 @@ data class MutablePair<A, B>(
     /**
      * Converts this pair into a list.
      */
-    fun toList() = mutableListOf(first, second)
+    fun toList() = arrayListOf(first, second)
 
     /**
      * Converts this mutable pair into an immutable [Pair].
@@ -336,7 +336,7 @@ data class MutableTriple<A, B, C>(
     /**
      * Converts this triple into a list.
      */
-    fun toList() = mutableListOf(first, second, third)
+    fun toList() = arrayListOf(first, second, third)
 
     /**
      * Converts this mutable pair into an immutable [Triple].

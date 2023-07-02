@@ -210,7 +210,7 @@ enum class Modifiers(val keyName: String, val value: Short) {
         @JvmStatic
         fun fromModifierMerged(modifiers: Short): Array<Modifiers> {
             if (modifiers.toInt() == 0) return emptyArray()
-            val mods = mutableListOf<Modifiers>()
+            val mods = arrayListOf<Modifiers>()
             for (mod in values()) {
                 if ((mod.value and modifiers).toInt() != 0) {
                     mods.add(mod)

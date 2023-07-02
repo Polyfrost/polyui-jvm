@@ -35,7 +35,6 @@ import cc.polyfrost.polyui.input.PolyTranslator
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.layout.impl.PixelLayout
 import cc.polyfrost.polyui.layout.impl.extension.DraggableLayout
-import cc.polyfrost.polyui.property.PropertyManager
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.Window
 import cc.polyfrost.polyui.renderer.data.Cursor
@@ -97,11 +96,8 @@ class PolyUI @JvmOverloads constructor(
         set(value) {
             field = value
             timed("Changing colors from $field to $value") {
-                master.onAll(true) {
+                master.onAllLayouts {
                     onColorsChanged(value)
-                }
-                for ((_, p) in property.properties) {
-                    p.colors = value
                 }
             }
         }
@@ -125,7 +121,6 @@ class PolyUI @JvmOverloads constructor(
     val eventManager = EventManager(this)
     val keyBinder = KeyBinder()
     val translator = PolyTranslator(this, translationDirectory ?: "")
-    val property = PropertyManager(this)
 
     /** weather this PolyUI instance drew on this frame.
      *
@@ -454,11 +449,18 @@ class PolyUI @JvmOverloads constructor(
         return list
     }
 
-    fun focus(focusable: Focusable?) {
-        if (focusable == focused) return
+    /**
+     * Sets the focus to the specified focusable element.
+     *
+     * @param focusable the element to set focus on
+     * @return true if focus was successfully set, false if the provided focusable is already focused
+     */
+    fun focus(focusable: Focusable?): Boolean {
+        if (focusable === focused) return false
         focused?.accept(FocusedEvents.FocusLost)
         focused = focusable
         focused?.accept(FocusedEvents.FocusGained)
+        return true
     }
 
     fun unfocus() = focus(null)

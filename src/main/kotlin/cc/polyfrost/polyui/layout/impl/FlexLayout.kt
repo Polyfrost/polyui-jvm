@@ -27,6 +27,7 @@ import cc.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.layout.Layout
+import cc.polyfrost.polyui.property.PropertyManager
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.utils.fastEach
@@ -52,6 +53,7 @@ class FlexLayout @JvmOverloads constructor(
     wrap: Unit? = null,
     onAdded: (Drawable.() -> kotlin.Unit)? = null,
     onRemoved: (Drawable.() -> kotlin.Unit)? = null,
+    propertyManager: PropertyManager? = null,
     private val flexDirection: Direction = Direction.Row,
     wrapDirection: Wrap = Wrap.Wrap,
     private val contentJustify: JustifyContent = JustifyContent.Start,
@@ -59,7 +61,7 @@ class FlexLayout @JvmOverloads constructor(
     private val contentAlign: AlignContent = AlignContent.Start,
     gap: Gap = Gap.Default,
     vararg drawables: Drawable
-) : Layout(at, size, onAdded, onRemoved, false, false, false, *drawables) {
+) : Layout(at, size, onAdded, onRemoved, propertyManager, false, false, false, *drawables) {
     constructor(at: Point<Unit>, wrap: Unit.Percent, vararg drawables: Drawable) : this(
         at,
         null,
@@ -155,6 +157,19 @@ class FlexLayout @JvmOverloads constructor(
             mainGap *= scaleX
             crossGap *= scaleY
         }
+    }
+
+    /**
+     * Shuffles the drawables in this layout.
+     */
+    fun shuffle() {
+        drawables.shuffle()
+        calculateBounds()
+        if (fbo != null) {
+            renderer.deleteFramebuffer(fbo)
+            fbo = renderer.createFramebuffer(width, height)
+        }
+        needsRedraw = true
     }
 
     override fun calculateBounds() {

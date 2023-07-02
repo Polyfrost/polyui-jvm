@@ -25,6 +25,7 @@ import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.layout.Layout
+import cc.polyfrost.polyui.property.PropertyManager
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.utils.anyAre
@@ -41,11 +42,20 @@ open class PixelLayout(
     size: Size<Unit>? = null,
     onAdded: (Drawable.() -> kotlin.Unit)? = null,
     onRemoved: (Drawable.() -> kotlin.Unit)? = null,
+    propertyManager: PropertyManager? = null,
     acceptInput: Boolean = true,
     rawResize: Boolean = false,
     resizesChildren: Boolean = true,
     vararg drawables: Drawable
-) : Layout(at, size, onAdded, onRemoved, rawResize, resizesChildren, acceptInput, *drawables) {
+) : Layout(at, size, onAdded, onRemoved, propertyManager, rawResize, resizesChildren, acceptInput, *drawables) {
+    /**
+     * This variable represents weather this layout was created with 'dynamic inference', meaning it has no size specified, but has dynamically sized children.
+     *
+     * This of course is a recursive issue, as these children depend on the size of this layout, but this layout depends on the size of its children.
+     *
+     * To avoid this, we calculate the size of this layout based on the size of its concrete children (not dynamic), and then calculate the size of its children based on the size produced by this.
+     * This means that percentages are not 100% accurate, but it is better than nothing as the situation is not really ideal and should not be used in the first place.
+     */
     private var dynamicInference = false
 
     init {
@@ -63,6 +73,7 @@ open class PixelLayout(
         super.onInitComplete()
         if (dynamicInference) {
             size = calculateSize()
+            calculateBounds()
         }
     }
 
@@ -73,7 +84,7 @@ open class PixelLayout(
         height = max(height, components.maxOfOrNull { if (!dynamicInference && it.isDynamic) 0f else it.y + it.height } ?: 0f)
         dynamicInference = !dynamicInference && children.anyAre { it.isDynamic } || components.anyAre { it.isDynamic }
         if (initStage != INIT_COMPLETE && dynamicInference) {
-            PolyUI.LOGGER.warn("${this.simpleName} has dynamically sized children, but it does not have a size itself. It will have its units inferred based on its concrete sized children.")
+            PolyUI.LOGGER.warn("${this.simpleName} has dynamically sized children, but it does not have a size itself. This is not ideal and may lead to visual issues. Please set a size. See PixelLayout#dynamicInference")
         }
         if (width == 0f) throw Exception("unable to infer width of ${this.simpleName}: no concrete sized children or components, please specify a size")
         if (height == 0f) throw Exception("unable to infer height of ${this.simpleName}: no concrete sized children or components, please specify a size")

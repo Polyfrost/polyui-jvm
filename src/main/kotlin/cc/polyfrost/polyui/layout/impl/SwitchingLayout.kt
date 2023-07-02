@@ -28,6 +28,7 @@ import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.layout.Layout
+import cc.polyfrost.polyui.property.PropertyManager
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
@@ -41,12 +42,13 @@ class SwitchingLayout(
     size: Size<Unit>? = null,
     onAdded: (Drawable.() -> kotlin.Unit)? = null,
     onRemoved: (Drawable.() -> kotlin.Unit)? = null,
+    propertyManager: PropertyManager? = null,
     val transition: Transitions?,
     val transitionDuration: Long = 1L.seconds,
     val defaultIndex: Int = 0,
     vararg layouts: Layout,
     resizesChildren: Boolean = true
-) : PixelLayout(at, size, onAdded, onRemoved, true, false, resizesChildren) {
+) : PixelLayout(at, size, onAdded, onRemoved, propertyManager, true, false, resizesChildren) {
     private var goingSwitchOp: Transition? = null
     private var comingSwitchOp: Transition? = null
     private var idx: Int = defaultIndex

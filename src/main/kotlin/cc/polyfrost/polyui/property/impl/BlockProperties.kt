@@ -50,6 +50,12 @@ open class BlockProperties @JvmOverloads constructor(
     open val hoverAnimationDuration: Long = 0.5.seconds
 }
 
+open class BackgroundBlockProperties @JvmOverloads constructor(
+    cornerRadii: FloatArray = 0f.radii()
+) : BlockProperties(null, cornerRadii) {
+    override val color: Color get() = colors.page.bg
+}
+
 /**
  * Basic block properties with hover and pressed animations.
  */

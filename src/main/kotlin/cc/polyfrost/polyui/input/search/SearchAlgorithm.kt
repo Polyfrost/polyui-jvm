@@ -21,6 +21,7 @@
 
 package cc.polyfrost.polyui.input.search
 
+import cc.polyfrost.polyui.utils.fastEach
 import cc.polyfrost.polyui.utils.levenshteinDistance
 
 /**
@@ -35,7 +36,7 @@ fun interface SearchAlgorithm {
      * @param objs The objects to search through.
      * @param output The list to output the results to. It will be empty.
      */
-    fun search(query: String, objs: List<Any>, output: MutableList<Any>)
+    fun search(query: String, objs: ArrayList<Any>, output: ArrayList<Any>)
 
     companion object {
         /**
@@ -43,9 +44,9 @@ fun interface SearchAlgorithm {
          */
         @JvmField
         val contains = SearchAlgorithm { query, objs, output ->
-            for (obj in objs) {
-                if (obj.toString().contains(query, true)) {
-                    output.add(obj)
+            objs.fastEach {
+                if (it.toString().contains(query, true)) {
+                    output.add(it)
                 }
             }
         }
@@ -55,9 +56,9 @@ fun interface SearchAlgorithm {
          */
         @JvmField
         val equals = SearchAlgorithm { query, objs, output ->
-            for (obj in objs) {
-                if (obj.toString().equals(query, true)) {
-                    output.add(obj)
+            objs.fastEach {
+                if (it.toString().equals(query, true)) {
+                    output.add(it)
                 }
             }
         }
@@ -67,10 +68,9 @@ fun interface SearchAlgorithm {
          */
         @JvmField
         val levenshtein = SearchAlgorithm { query, objs, output ->
-            for (obj in objs) {
-                val distance = query.levenshteinDistance(obj.toString())
-                if (distance <= 3) {
-                    output.add(obj)
+            objs.fastEach {
+                if (it.toString().levenshteinDistance(query) <= 3) {
+                    output.add(it)
                 }
             }
         }

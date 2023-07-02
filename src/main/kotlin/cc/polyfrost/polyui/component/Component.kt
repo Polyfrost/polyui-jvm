@@ -103,6 +103,7 @@ abstract class Component @JvmOverloads constructor(
     protected var autoSized = false
     protected var finishColorFunc: (Component.() -> kotlin.Unit)? = null
     override lateinit var layout: Layout
+        internal set
     protected var keyframes: KeyFrames? = null
 
     /**
@@ -202,8 +203,6 @@ abstract class Component @JvmOverloads constructor(
             DrawableOp.Rotate(degrees.toRadians(), false, this, animation, durationNanos),
             onFinish
         )
-        acx = x
-        acy = y
     }
 
     /**
@@ -222,8 +221,6 @@ abstract class Component @JvmOverloads constructor(
             DrawableOp.Rotate(degrees.toRadians(), true, this, animation, durationNanos),
             onFinish
         )
-        acx = x
-        acy = y
     }
 
     /**
@@ -354,12 +351,6 @@ abstract class Component @JvmOverloads constructor(
         animations.add(animation to onFinish)
     }
 
-    override fun rescale(scaleX: Float, scaleY: Float) {
-        super.rescale(scaleX, scaleY)
-        acx = x
-        acy = y
-    }
-
     /**
      * Changes the color of the component to the specified color.
      * Supports animation and callback function on finish.
@@ -424,15 +415,7 @@ abstract class Component @JvmOverloads constructor(
         finishColorFunc = finishFunc
     }
 
-    /**
-     * Function that is called when the colors attached to this component change.
-     *
-     * **Make sure to call** [super.onColorsChanged()][onColorsChanged] if you override this!
-     * @see Colors
-     * @see recolor
-     * @since 0.17.5
-     */
-    open fun onColorsChanged(colors: Colors) {
+    override fun onColorsChanged(colors: Colors) {
         properties.colors = colors
         recolor(properties.color)
     }
@@ -473,7 +456,7 @@ abstract class Component @JvmOverloads constructor(
     override fun setup(renderer: Renderer, polyui: PolyUI) {
         super.setup(renderer, polyui)
         if (p == null) {
-            p = polyui.property.get(this)
+            p = layout.propertyManager.get(this)
         } else {
             p!!.colors = polyui.colors
         }
@@ -533,6 +516,8 @@ abstract class Component @JvmOverloads constructor(
             renderer.translate(x + width / 2f, y + height / 2f)
             renderer.rotate(rotation)
             renderer.translate(-(width / 2f), -(height / 2f))
+            acx = x
+            acy = y
             x = 0f
             y = 0f
         }

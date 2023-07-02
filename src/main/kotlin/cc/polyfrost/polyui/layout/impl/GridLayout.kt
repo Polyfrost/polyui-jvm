@@ -26,6 +26,7 @@ import cc.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.layout.Layout
+import cc.polyfrost.polyui.property.PropertyManager
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
@@ -44,12 +45,13 @@ class GridLayout @JvmOverloads constructor(
     at: Point<Unit>,
     onAdded: (Drawable.() -> kotlin.Unit)? = null,
     onRemoved: (Drawable.() -> kotlin.Unit)? = null,
+    propertyManager: PropertyManager? = null,
     private val cellSize: CellSize = CellSize.AllSame,
     private val contentStretch: ContentStretch = ContentStretch.FillCell,
     private val gap: Gap = Gap.Default,
     resizesChildren: Boolean = true,
     private vararg val drawables: Drawable
-) : Layout(at, origin, onAdded, onRemoved, false, resizesChildren, false, *drawables) {
+) : Layout(at, origin, onAdded, onRemoved, propertyManager, false, resizesChildren, false, *drawables) {
 
     /** list of rows */
     private var grid: Array<Array<Drawable?>> = emptyArray()
