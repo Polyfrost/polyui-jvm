@@ -458,7 +458,7 @@ abstract class Component @JvmOverloads constructor(
         if (p == null) {
             p = layout.propertyManager.get(this)
         } else {
-            p!!.colors = polyui.colors
+            p!!.colors = layout.colors
         }
         color = properties.color.toMutable()
         initStage = INIT_SETUP

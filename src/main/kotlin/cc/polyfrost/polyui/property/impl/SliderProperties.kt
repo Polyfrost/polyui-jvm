@@ -21,7 +21,7 @@
 
 package cc.polyfrost.polyui.property.impl
 
-open class SliderProperties : BlockProperties() {
+open class SliderProperties : DefaultBlockProperties() {
     open val barColor get() = colors.component.bg
     open val usedBarColor get() = colors.brand.fg
 

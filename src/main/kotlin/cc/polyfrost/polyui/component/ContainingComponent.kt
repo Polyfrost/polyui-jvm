@@ -146,9 +146,20 @@ abstract class ContainingComponent(
 
     /**
      * Use this function to place the children components of this component.
+     *
+     * In this function, only use `+=` and `-=` to move the children components, as their X and Y values are set by this method to the top left corner of this component ([x], [y]).
+     *
+     * This function is called once, and only once.
+     *
+     * ### **Make sure to call `super.`[placeChildren]`()`!**
      * @since 0.19.0
      */
-    abstract fun placeChildren()
+    open fun placeChildren() {
+        children.fastEach {
+            it.x += x
+            it.y += y
+        }
+    }
 
     override fun accept(event: Events): Boolean {
         // children components cannot cancel an event.

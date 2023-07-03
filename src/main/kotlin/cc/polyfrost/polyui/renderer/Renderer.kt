@@ -246,7 +246,6 @@ abstract class Renderer(width: Float, height: Float) : AutoCloseable {
     open fun circle(x: Float, y: Float, radius: Float, color: Color) =
         rect(x, y, radius + radius, radius + radius, color, radius)
 
-
     fun hollowRect(
         x: Float,
         y: Float,

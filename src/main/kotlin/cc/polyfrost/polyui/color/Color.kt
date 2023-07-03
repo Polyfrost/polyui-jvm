@@ -70,11 +70,7 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
     @get:JvmName("getARGB")
     open val argb: Int = run {
         HSBtoRGB(hue, saturation, brightness).let { rgb ->
-            if (alpha == 0f) {
-                0
-            } else {
-                (alpha * 255f).toInt().shl(24) or rgb
-            }
+            (rgb and 0x00FFFFFF) or ((alpha * 255).toInt() shl 24)
         }
     }
 
@@ -88,7 +84,7 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
     inline val b get() = argb and 0xFF
 
     /** alpha value of this color, from 0 to 255 */
-    inline val a get() = (alpha * 255f).toInt()
+    inline val a get() = argb shr 24 and 0xFF
 
     /**
      * @return a new, [mutable][Mutable] version of this color
@@ -106,7 +102,7 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
     }
 
     override fun toString(): String =
-        "Color(hue=$hue, saturation=$saturation, brightness=$brightness, alpha=$alpha, argb=#${Integer.toHexString(argb)}"
+        "Color(hue=$hue, saturation=$saturation, brightness=$brightness, alpha=$alpha, argb=#${Integer.toHexString(argb)})"
 
     override fun hashCode(): Int {
         var result = hue.toInt()
@@ -224,7 +220,7 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
             get() {
                 return if (dirty) {
                     HSBtoRGB(hue, saturation, brightness).let { rgb ->
-                        (alpha * 255).toInt().shl(24) or rgb
+                        (rgb and 0x00FFFFFF) or ((alpha * 255).toInt() shl 24)
                     }.also {
                         dirty = false
                         field = it

@@ -77,7 +77,7 @@ data class PolyImage @JvmOverloads constructor(
         }
 
         /**
-         * Get a font from the [Google Material Icons repository](https://github.com/google/material-design-icons) on GitHub.
+         * Get an SVG icon from the [Google Material Icons repository](https://github.com/google/material-design-icons) on GitHub.
          *
          * Note that these icons are licensed under the [Apache 2.0 License](https://github.com/google/material-design-icons/blob/master/LICENSE).
          * @param icon the name of the icon, as a path as it is on the repo, using either dots or slashes, for example `camera.11mp` or `actions.abc`.

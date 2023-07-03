@@ -221,6 +221,9 @@ class GLWindow @JvmOverloads constructor(
                 fpsCap = if (focused) polyUI.settings.maxFPS.toDouble() else polyUI.settings.unfocusedFPS.toDouble()
             }
             glfwSetWindowSize(handle, width, height)
+            if (focused) {
+                polyUI.master.needsRedraw = true
+            }
         }
 
         // fix macOS windows being small when focus is lost

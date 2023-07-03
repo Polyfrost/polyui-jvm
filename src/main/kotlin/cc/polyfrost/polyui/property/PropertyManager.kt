@@ -27,7 +27,7 @@ import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.impl.*
 import cc.polyfrost.polyui.property.impl.*
 
-class PropertyManager(private val polyUI: PolyUI, colors: Colors? = null) {
+class PropertyManager(polyUI: PolyUI, colors: Colors? = null) {
     /**
      * This is the colors object associated with this property manager.
      */
@@ -56,7 +56,7 @@ class PropertyManager(private val polyUI: PolyUI, colors: Colors? = null) {
             properties[name] as? T
                 ?: throw Exception("Properties for component $name not found")
             ).also {
-            if (!it.initialized) it.colors = polyUI.colors
+            if (!it.initialized) it.colors = colors
         }
     }
 

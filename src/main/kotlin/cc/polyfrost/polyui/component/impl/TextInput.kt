@@ -72,11 +72,11 @@ open class TextInput(
         renderer.rect(x, y, width, height, properties.backgroundColor, properties.cornerRadii)
         renderer.hollowRect(x, y, width, height, properties.outlineColor, properties.outlineThickness, properties.cornerRadii)
         if (focused) {
-            renderer.rect(cposx, cposy, 2f, text.fontSize, polyui.colors.text.primary)
+            renderer.rect(cposx, cposy, 2f, text.fontSize, layout.colors.text.primary)
             selectBoxes.fastEach {
                 val (x, y) = it.first
                 val (w, h) = it.second
-                renderer.rect(x, y, w, h, polyui.colors.page.border20)
+                renderer.rect(x, y, w, h, layout.colors.page.border20)
             }
         } else {
             renderer.globalAlpha(0.8f)

@@ -146,8 +146,8 @@ class SwitchingLayout(
     }
 
     override fun debugRender() {
-        renderer.hollowRect(x, y, width, height, polyui.colors.page.border20, 2f)
-        renderer.text(Renderer.DefaultFont, x + 1f, y + 1f, simpleName, polyui.colors.text.primary, 10f)
+        renderer.hollowRect(x, y, width, height, colors.page.border20, 2f)
+        renderer.text(Renderer.DefaultFont, x + 1f, y + 1f, simpleName, colors.text.primary, 10f)
     }
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {

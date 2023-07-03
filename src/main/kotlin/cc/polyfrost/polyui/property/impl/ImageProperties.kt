@@ -25,4 +25,11 @@ import cc.polyfrost.polyui.color.Color
 
 open class ImageProperties : BlockProperties() {
     override val color: Color = Color.TRANSPARENT
+
+    /**
+     * This is the color used for SVG images.
+     * Many SVG images are black and white, so this color is used to colorize them according to the theme.
+     * @since 0.19.2
+     */
+    open val svgColor get() = colors.text.primary
 }

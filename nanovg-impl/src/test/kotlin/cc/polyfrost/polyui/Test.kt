@@ -176,7 +176,7 @@ fun main() {
                     Block(
                         properties = BlockProperties(Color.Chroma(5.seconds)),
                         at = 180.px * 30.px,
-                        size = 25.percent * 120.px,
+                        size = 18.percent * 120.px,
                         events = events(
                             Events.MouseClicked(0) to {
                                 rotateBy(120.0, Animations.EaseInOutCubic, .5.seconds)
@@ -200,7 +200,7 @@ fun main() {
                         events = events(
                             Events.MouseClicked(0) to {
                                 rotateBy(120.0, Animations.EaseInOutCubic)
-                                polyui.master.get<FlexLayout>("FlexLayout@eec5a4a [Scrollable]").shuffle()
+                                polyui.master.getLayout<FlexLayout>(0).shuffle()
                             }
                         )
                     ),

@@ -83,7 +83,9 @@ abstract class Drawable(
 
     /**
      * Reference to the layout encapsulating this drawable.
-     * For components, this is never null, but for layout, it can be null (meaning its parent is the polyui)
+     * For components, this is never null, but for layout, it can be null (meaning its parent is the polyui).
+     *
+     * In pretty much every situation it is safe to `!!` this, as any layout you create will have parent of [PolyUI.master]. If you are doing `this.layout.layout` or deeper, you should null-check.
      */
     abstract val layout: Layout?
 

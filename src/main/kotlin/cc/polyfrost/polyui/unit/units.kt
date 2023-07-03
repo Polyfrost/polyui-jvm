@@ -74,8 +74,8 @@ fun index(index: Int) = Unit.Flex(index)
  * @see cc.polyfrost.polyui.layout.impl.FlexLayout
  */
 @JvmOverloads
-fun flex(index: Int = -1, flexShrink: Int = 0, flexGrow: Int = 0, endRowAfter: Boolean = false): Vec2<Unit> {
-    val u = Unit.Flex(index, flexShrink, flexGrow, endRowAfter)
+fun flex(flexShrink: Int = 0, flexGrow: Int = 0, endRowAfter: Boolean = false): Vec2<Unit> {
+    val u = Unit.Flex(flexShrink, flexGrow, endRowAfter)
     return Vec2(u, u.clone())
 }
 

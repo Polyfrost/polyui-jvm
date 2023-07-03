@@ -24,7 +24,6 @@ package cc.polyfrost.polyui.layout.impl
 import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
-import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.property.PropertyManager
@@ -32,7 +31,6 @@ import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.utils.fastEach
 import cc.polyfrost.polyui.utils.fastEachIndexed
-import cc.polyfrost.polyui.utils.moveElement
 import cc.polyfrost.polyui.utils.sortedByDescending
 import kotlin.math.max
 
@@ -71,8 +69,6 @@ class FlexLayout @JvmOverloads constructor(
         drawables = drawables
     )
 
-    private val drawables: ArrayList<FlexDrawable>
-
     private var mainGap = when (flexDirection) {
         Direction.Row, Direction.RowReverse -> gap.mainGap.px
         Direction.Column, Direction.ColumnReverse -> gap.crossGap.px
@@ -104,22 +100,14 @@ class FlexLayout @JvmOverloads constructor(
         } else {
             this.wrapDirection = wrapDirection
         }
-        drawables.forEachIndexed { i, it ->
+        drawables.forEach {
             if (it.atType != Unit.Type.Flex) {
                 throw Exception("Unit type mismatch: Drawable $it needs to be placed using a Flex unit for a flex layout.")
             }
             if (it.sizeType == Units.Flex) {
                 throw Exception("A flex layout's size property is used to specify the minimum size of the component, please use the at property for your flex data.")
             }
-            @Suppress("UNCHECKED_CAST") // already type-checked
-            if ((it.at as Point<Unit.Flex>).a.index >= 0) {
-                drawables.moveElement(i, (it.at.a as Unit.Flex).index)
-            }
-            if (it is Component) it.layout = this
-            if (it is Layout) it.layout = this
         }
-        this.drawables = drawables.map { FlexDrawable(it, it.at.a as Unit.Flex, it.size) } as ArrayList<FlexDrawable>
-        if (wrapDirection == Wrap.WrapReverse) this.drawables.reverse()
     }
 
     private var crossSize: Float
@@ -163,7 +151,8 @@ class FlexLayout @JvmOverloads constructor(
      * Shuffles the drawables in this layout.
      */
     fun shuffle() {
-        drawables.shuffle()
+        components.shuffle()
+        children.shuffle()
         calculateBounds()
         if (fbo != null) {
             renderer.deleteFramebuffer(fbo)
@@ -172,10 +161,34 @@ class FlexLayout @JvmOverloads constructor(
         needsRedraw = true
     }
 
+    override fun addComponent(drawable: Drawable) {
+        super.addComponent(drawable)
+        calculateBounds()
+    }
+
+    override fun removeComponent(index: Int) {
+        val c = components[index]
+        if (c.at.a is Unit.Flex) {
+            removeComponent(c)
+            calculateBounds()
+        }
+    }
+
+    override fun removeComponentNow(index: Int) {
+        val c = components[index]
+        if (c.at.a is Unit.Flex) {
+            removeComponentNow(c)
+            calculateBounds()
+        }
+    }
+
     override fun calculateBounds() {
         if (initStage == INIT_NOT_STARTED) throw IllegalStateException("${this.simpleName} has not been setup, but calculateBounds() was called!")
         doDynamicSize()
         var mainAxis = 0F
+        val drawables = ArrayList<FlexDrawable>(components.size + children.size)
+        components.fastEach { if (it.at.a is Unit.Flex) drawables.add(FlexDrawable(it, it.at.a as Unit.Flex)) }
+        children.fastEach { if (it.at.a is Unit.Flex) drawables.add(FlexDrawable(it, it.at.a as Unit.Flex)) }
         val rows = arrayListOf<FlexRow>()
 
         if (wrapDirection != Wrap.NoWrap) {

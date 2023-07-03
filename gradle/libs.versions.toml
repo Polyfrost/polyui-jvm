@@ -24,7 +24,7 @@ lwjgl-glfw = { module = "org.lwjgl:lwjgl-glfw", version.ref = "lwjgl" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 
-kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }
+kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
 kotlin-annotations = { module = "org.jetbrains:annotations", version.ref = "annotations" }
 dokka_base = { module = "org.jetbrains.dokka:dokka-base", version.ref = "dokka" }
 

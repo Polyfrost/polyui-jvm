@@ -99,8 +99,19 @@ class PolyUI @JvmOverloads constructor(
                 master.onAllLayouts {
                     onColorsChanged(value)
                 }
+                colorChangeListener?.invoke(this)
             }
         }
+
+    /**
+     * A listener for color changes PolyUI instance.
+     *
+     * This lambda function is invoked when the [colors] field is changed on this PolyUI instance, which updates **every** color on the UI.
+     *
+     * @see PolyUI
+     * @since 0.19.2
+     */
+    var colorChangeListener: (PolyUI.() -> kotlin.Unit)? = null
 
     /**
      * The window this polyUI was opened with.
@@ -117,6 +128,10 @@ class PolyUI @JvmOverloads constructor(
     var clipboard: String?
         get() = window.getClipboard()
         set(value) = window.setClipboard(value)
+
+    /**
+     * This is the root layout of the UI. It is the parent of all other layouts.
+     */
     val master = PixelLayout(Point(0.px, 0.px), Size(renderer.width.px, renderer.height.px), drawables = drawables, rawResize = true, acceptInput = false)
     val eventManager = EventManager(this)
     val keyBinder = KeyBinder()

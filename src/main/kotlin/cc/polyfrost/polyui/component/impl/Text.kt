@@ -39,7 +39,7 @@ import kotlin.math.floor
 
 open class Text @JvmOverloads constructor(
     properties: TextProperties? = null,
-    private val txt: PolyText,
+    var initialText: PolyText,
     at: Vec2<Unit>,
     val sized: Size<Unit>? = null,
     fontSize: Unit? = null,
@@ -84,6 +84,9 @@ open class Text @JvmOverloads constructor(
     var text
         get() = str.text
         set(value) {
+            value.polyTranslator = polyui.translator
+            // <init>
+            value.string
             str.text = value
             str.calculate(renderer)
             if (autoSized) size = str.size
@@ -121,9 +124,9 @@ open class Text @JvmOverloads constructor(
         super.setup(renderer, polyui)
         if (fs is Unit.Dynamic) fs.set(sized?.b ?: throw IllegalArgumentException("${this.simpleName} has a dynamic font size, but it has no height"))
         str = if (floor((sized?.height ?: 0f) / this.fs.px).toInt() > 1) {
-            MultilineText(txt, this.properties.font, this.fs.px, textAlign, sized ?: origin)
+            MultilineText(initialText, this.properties.font, this.fs.px, textAlign, sized ?: origin)
         } else {
-            SingleText(txt, this.properties.font, this.fs.px, textAlign, sized ?: origin)
+            SingleText(initialText, this.properties.font, this.fs.px, textAlign, sized ?: origin)
         }
         str.renderer = renderer
         str.text.polyTranslator = polyui.translator

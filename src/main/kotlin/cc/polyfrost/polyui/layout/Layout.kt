@@ -71,7 +71,7 @@ abstract class Layout(
     vararg drawables: Drawable
 ) : Drawable(at, rawResize, acceptInput) {
     open lateinit var propertyManager: PropertyManager
-        internal set
+
     init {
         if (propertyManager != null) {
             @Suppress("LeakingThis")
@@ -92,7 +92,7 @@ abstract class Layout(
     /**
      * Weather this layout needs redrawing.
      */
-    internal open var needsRedraw = true
+    open var needsRedraw = true
         set(value) {
             if (value && !field) {
                 layout?.needsRedraw = true
@@ -247,14 +247,43 @@ abstract class Layout(
     }
 
     /**
-     * return a component in this layout, by its simple name. This can be accessed using [debugPrint][cc.polyfrost.polyui.PolyUI.debugPrint] or using the [field][cc.polyfrost.polyui.component.Component.simpleName].
+     * return a component in this layout, by its simple name. This can be accessed using [debugPrint][cc.polyfrost.polyui.PolyUI.debugPrint] or using the [field][cc.polyfrost.polyui.component.Drawable.simpleName].
+     *
+     * **Note that** the [simpleName] is **NOT** consistent between updates to PolyUI, or changes to the content of the layout.
      * @throws IllegalArgumentException if the component does not exist
      * @see getOrNull
      */
     inline operator fun <reified T : Drawable> get(simpleName: String): T = getOrNull(simpleName) ?: throw IllegalArgumentException("No drawable found in ${this.simpleName} with ID $simpleName!")
 
     /**
-     * return a component in this layout, by its simple name. This can be accessed using [debugPrint][cc.polyfrost.polyui.PolyUI.debugPrint] or using the [field][cc.polyfrost.polyui.component.Component.simpleName].
+     * Returns the component at the specified index.
+     *
+     * @param index The index of the component to retrieve.
+     * @return The component at the specified index.
+     * @throws IndexOutOfBoundsException If the index is out of range (index < 0 || index >= size()).
+     * @throws ClassCastException If the component type cannot be cast to the specified type.
+     * @since 0.19.2
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <T : Component> getComponent(index: Int): T = components[index] as T
+
+    /**
+     * Retrieves a layout from the children at the specified index.
+     *
+     * @param index The index of the layout to retrieve.
+     * @param T The type of layout to retrieve. Must be a subtype of Layout.
+     * @return The requested layout at the specified index.
+     * @throws IndexOutOfBoundsException if the index is out of range (index < 0 || index >= children.size).
+     * @throws ClassCastException if the layout at the specified index is not of type T.
+     * @since 0.19.2
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <T : Layout> getLayout(index: Int): T = children[index].let { if (it is PointerLayout) it.ptr else it } as T
+
+    /**
+     * return a component in this layout, by its simple name. This can be accessed using [debugPrint][cc.polyfrost.polyui.PolyUI.debugPrint] or using the [field][cc.polyfrost.polyui.component.Drawable.simpleName].
+     *
+     * **Note that** the [simpleName] is **NOT** consistent between updates to PolyUI, or changes to the content of the layout.
      * Returns null if not found.
      * @see get
      */
@@ -345,6 +374,28 @@ abstract class Layout(
             }
         }
         drawable.accept(Events.Removed)
+    }
+
+    /**
+     * Removes a component from this layout at the specified index.
+     *
+     * @param index The index of the component to be removed.
+     * @see removeComponent
+     * @since 0.19.2
+     */
+    open fun removeComponent(index: Int) {
+        removeComponent(components[index])
+    }
+
+    /**
+     * Removes a component from this layout immediately.
+     *
+     * @param index The index of the component to be removed.
+     * @see removeComponentNow
+     * @since 0.19.2
+     */
+    open fun removeComponentNow(index: Int) {
+        removeComponentNow(components[index])
     }
 
     /** removes a component immediately, without waiting for it to finish up.
@@ -454,8 +505,8 @@ abstract class Layout(
 
     override fun debugRender() {
         if (!enabled) return
-        renderer.hollowRect(trueX, trueY, width, height, polyui.colors.page.border20, 2f)
-        renderer.text(Renderer.DefaultFont, trueX + 1f, trueY + 1f, simpleName, polyui.colors.text.primary, 10f)
+        renderer.hollowRect(trueX, trueY, width, height, colors.page.border20, 2f)
+        renderer.text(Renderer.DefaultFont, trueX + 1f, trueY + 1f, simpleName, colors.text.primary, 10f)
         children.fastEach { it.debugRender() }
         components.fastEach { it.debugRender() }
     }

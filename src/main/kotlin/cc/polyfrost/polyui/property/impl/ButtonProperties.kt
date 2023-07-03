@@ -21,12 +21,16 @@
 
 package cc.polyfrost.polyui.property.impl
 
+import cc.polyfrost.polyui.utils.radii
+
 /**
  * Button properties.
  *
  * @since 0.17.3
  */
-class ButtonProperties : BlockProperties() {
+class ButtonProperties : DefaultBlockProperties() {
+    override val cornerRadii: FloatArray = 8f.radii()
+
     /** This is the padding from the top to the items. */
     val topEdgePadding: Float = 10f
 

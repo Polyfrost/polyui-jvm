@@ -57,7 +57,7 @@ class Button(
     val leftImage: Image? = if (leftIcon != null) Image(image = leftIcon, at = origin, acceptInput = false) else null
     val rightImage: Image? = if (rightIcon != null) Image(image = rightIcon, at = origin, acceptInput = false) else null
     val text: Text? =
-        if (text != null) Text(txt = text, fontSize = fontSize, at = origin, acceptInput = false) else null
+        if (text != null) Text(initialText = text, fontSize = fontSize, at = origin, acceptInput = false) else null
 
     init {
         if (text == null) {
@@ -109,18 +109,18 @@ class Button(
     }
 
     override fun placeChildren() {
-        text?.y = y + properties.topEdgePadding
+        super.placeChildren()
         if (leftImage != null) {
-            leftImage.x = x + properties.edgePadding
-            leftImage.y = y + properties.topEdgePadding
-            text?.x = leftImage.width + properties.iconTextSpacing
+            leftImage.x += properties.edgePadding
+            leftImage.y += properties.topEdgePadding
+            if (text != null) text.x += leftImage.width + properties.iconTextSpacing
         }
         if (rightImage != null) {
-            rightImage.y = y + properties.topEdgePadding
+            rightImage.y += properties.topEdgePadding
         }
         if (text != null) {
-            text.x += x + properties.edgePadding
-            text.y = y + properties.topEdgePadding
+            text.x += properties.edgePadding
+            text.y += height / 2f - text.height / 2f
         }
     }
 

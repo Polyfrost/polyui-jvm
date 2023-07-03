@@ -28,7 +28,7 @@ import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.component.impl.Block
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.layout.Layout
-import cc.polyfrost.polyui.property.impl.BlockProperties
+import cc.polyfrost.polyui.property.impl.DefaultBlockProperties
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.utils.*
@@ -384,7 +384,7 @@ class ScrollingLayout(
         }
     }
 
-    open class ScrollbarProperties : BlockProperties() {
+    open class ScrollbarProperties : DefaultBlockProperties() {
         override val color: Color = rgba(0.5f, 0.5f, 0.5f, 0.5f)
         override val hoverColor = rgba(0.5f, 0.5f, 0.5f, 0.75f)
         override val cornerRadii: FloatArray = 2f.radii()
