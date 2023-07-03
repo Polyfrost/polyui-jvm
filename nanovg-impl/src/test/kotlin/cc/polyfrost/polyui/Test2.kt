@@ -183,7 +183,8 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                 at = 355.px * 380.px,
                 events = events(
                     Events.MouseClicked(0) to {
-                        this.layout.getLayout<FlexLayout>(0).removeComponentNow(this.layout.components.lastIndex)
+                        val l = this.layout.getLayout<FlexLayout>(0)
+                        l.removeComponentNow(l.components.last())
                     }
                 )
             ),

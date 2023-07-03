@@ -24,6 +24,7 @@ package cc.polyfrost.polyui.layout.impl
 import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
+import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.property.PropertyManager
@@ -170,7 +171,6 @@ class FlexLayout @JvmOverloads constructor(
         val c = components[index]
         if (c.at.a is Unit.Flex) {
             removeComponent(c)
-            calculateBounds()
         }
     }
 
@@ -178,8 +178,17 @@ class FlexLayout @JvmOverloads constructor(
         val c = components[index]
         if (c.at.a is Unit.Flex) {
             removeComponentNow(c)
-            calculateBounds()
         }
+    }
+
+    override fun removeComponent(drawable: Drawable) {
+        super.removeComponent(drawable)
+        calculateBounds()
+    }
+
+    override fun removeComponentNow(drawable: Drawable?) {
+        super.removeComponentNow(drawable)
+        calculateBounds()
     }
 
     override fun calculateBounds() {
@@ -249,7 +258,12 @@ class FlexLayout @JvmOverloads constructor(
         }
         if (err) {
             for (i in minIndex until drawables.size) {
-                removeComponentNow(drawables[i].drawable)
+                val d = drawables[i].drawable
+                if(d is Component) {
+                    components.remove(d)
+                } else {
+                    children.remove(d)
+                }
             }
         }
         crossSize = maxCrossSizeNoGaps + (rows.size - 1) * crossGap
