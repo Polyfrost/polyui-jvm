@@ -71,15 +71,13 @@ fun main() {
                         at = 24.px * 24.px
                     )
                 )
+            },
+            create(400.px * 0.px, true).also {
+                it.propertyManager = PropertyManager(DarkTheme())
+                it.getComponent<Button>(2).leftImage!!.image = sun
+                it.getComponent<Text>(1).initialText = "text.dark".localised()
             }
         )
-    )
-    polyUI.addComponent(
-        create(400.px * 0.px, true).also {
-            it.propertyManager = PropertyManager(polyUI, DarkTheme())
-            it.getComponent<Button>(2).leftImage!!.image = sun
-            it.getComponent<Text>(1).initialText = "text.dark".localised()
-        }
     )
 
     polyUI.keyBinder.add(key = 'P', mods = Modifiers.mods(Modifiers.LCONTROL)) {
@@ -159,8 +157,8 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
             FlexLayout(
                 at = 24.px * 247.px,
                 drawables = blocks(),
-                size = 348.px * 500.px
-            ).scrolling(0.px * 181.px),
+                size = 348.px * 117.px
+            ), // .scrolling(0.px * 181.px),
             Button(
                 leftIcon = PolyImage("shuffle.svg"),
                 text = "button.randomize".localised(),

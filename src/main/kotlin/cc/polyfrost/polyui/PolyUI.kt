@@ -217,12 +217,10 @@ class PolyUI @JvmOverloads constructor(
                     LOGGER.warn("Layout {} is larger than the window. This may cause issues.", simpleName)
                 }
                 if (!settings.framebuffersEnabled) return@onAllLayouts
-                @Suppress("NAME_SHADOWING")
-                val drawables = countDrawables()
-                if (!refuseFramebuffer && settings.minDrawablesForFramebuffer < drawables) {
+                if (!refuseFramebuffer && settings.minDrawablesForFramebuffer < components.size) {
                     fbo = renderer.createFramebuffer(width, height)
                     if (settings.debug) {
-                        LOGGER.info("Layout {} ({} items) created with {}", varargs(simpleName, drawables, fbo))
+                        LOGGER.info("Layout {} ({} items) created with {}", varargs(simpleName, components.size, fbo))
                     }
                 }
             }
