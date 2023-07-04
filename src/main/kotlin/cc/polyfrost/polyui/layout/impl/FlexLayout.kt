@@ -82,6 +82,8 @@ class FlexLayout @JvmOverloads constructor(
     private val wrapDirection: Wrap
     private val strictSize = size != null && wrap == null
 
+    private val isSizedCross get() = crossSize != 0f
+
     init {
         if (this.size == null) this.size = origin
         if (wrapDirection != Wrap.NoWrap) {
@@ -119,7 +121,7 @@ class FlexLayout @JvmOverloads constructor(
             }
         }
         set(value) {
-            if (strictSize) return
+            if (strictSize && isSizedCross) return
             when (flexDirection) {
                 Direction.Row, Direction.RowReverse -> height = value
                 Direction.Column, Direction.ColumnReverse -> width = value
@@ -204,17 +206,7 @@ class FlexLayout @JvmOverloads constructor(
             var row = arrayListOf<FlexDrawable>()
             drawables.fastEachIndexed { i, it ->
                 mainAxis += it.mainSize + mainGap
-                if (it.flex.endRowAfter ||
-                    (
-                        mainAxis + (
-                            if (strictSize) {
-                                (drawables.getOrNull(i + 1)?.mainSize ?: 0F)
-                            } else {
-                                0F
-                            }
-                            ) >= this.width
-                        )
-                ) { // means we need to wrap
+                if (it.flex.endRowAfter || (mainAxis + ((drawables.getOrNull(i + 1)?.mainSize ?: 0F)) >= mainSize)) { // means we need to wrap
                     rows.add(FlexRow(row))
                     mainAxis = 0F
                     row = arrayListOf()
@@ -243,7 +235,7 @@ class FlexLayout @JvmOverloads constructor(
             rows.fastEach {
                 maxCrossSizeNoGaps += it.maxCrossSize
                 minIndex += it.drawables.size
-                if (strictSize) {
+                if (strictSize && isSizedCross) {
                     if (maxCrossSizeNoGaps > crossSize) {
                         PolyUI.LOGGER.warn(
                             "[Flex] Cross size is too small for the content. (Cross size: {}, content size: {}). Excess removed.",
@@ -259,7 +251,7 @@ class FlexLayout @JvmOverloads constructor(
         if (err) {
             for (i in minIndex until drawables.size) {
                 val d = drawables[i].drawable
-                if(d is Component) {
+                if (d is Component) {
                     components.remove(d)
                 } else {
                     children.remove(d)
@@ -365,7 +357,6 @@ class FlexLayout @JvmOverloads constructor(
             }
             false
         }
-        val isSizedCross = crossSize != 0F
     }
 
     private inner class FlexRow(

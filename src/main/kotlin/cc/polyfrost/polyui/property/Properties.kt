@@ -53,31 +53,34 @@ abstract class Properties : Cloneable {
      * Else, if this is not null and the component's size is null, the component's size will be set to this.
      */
     open val size: Size<Unit>? = null
-    val eventHandlers = HashMap<Events, Component.() -> Boolean>()
+    val eventHandlers = HashMap<Events, (Events, Component) -> Boolean>()
 
     /**
      * Add a universal event handler to this component's property.
      *
      * This means that every component using this property will have this event handler.
      */
-    fun addEventHandler(type: Events, function: Component.() -> Boolean) {
-        eventHandlers[type] = function
+    fun addEventHandler(event: Events, handler: (Events, Component) -> Boolean) {
+        eventHandlers[event] = handler
     }
 
-    @JvmName("addEventhandler")
-    fun addEventHandler(event: Events, handler: Component.() -> kotlin.Unit) {
-        this.eventHandlers[event] = {
-            handler(this)
-            true
-        }
+    /**
+     * Add a universal event handler to this component's property.
+     *
+     * This means that every component using this property will have this event handler.
+     */
+    fun addEventHandler(handler: Events.EventHandler) {
+        eventHandlers[handler.event] = handler.handler
     }
 
     /** add a universal event handler to this component's property.
      *
      * This means that every component using this property will have this event handler.
      */
-    fun addEventHandlers(vararg handlers: Events.Handler) {
-        handlers.forEach { addEventHandler(it.event, it.handler) }
+    fun addEventHandlers(vararg handlers: Events.EventHandler) {
+        for (handler in handlers) {
+            eventHandlers[handler.event] = handler.handler
+        }
     }
 
     val initialized get() = ::colors.isInitialized

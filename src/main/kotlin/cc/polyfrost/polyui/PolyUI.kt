@@ -34,7 +34,6 @@ import cc.polyfrost.polyui.input.Modifiers.Companion.mods
 import cc.polyfrost.polyui.input.PolyTranslator
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.layout.impl.PixelLayout
-import cc.polyfrost.polyui.layout.impl.extension.DraggableLayout
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.Window
 import cc.polyfrost.polyui.renderer.data.Cursor
@@ -228,7 +227,7 @@ class PolyUI @JvmOverloads constructor(
 
         if (settings.draggablesOnTop) {
             // apparently hashsets are faster than lists for this, thanks intellij
-            val draggables = master.children.filterIsInstanceTo<DraggableLayout, HashSet<DraggableLayout>>(HashSet())
+            val draggables = master.children.filterTo(HashSet()) { it.draggable }
             master.children.removeAll(draggables)
             master.children.addAll(draggables)
         }

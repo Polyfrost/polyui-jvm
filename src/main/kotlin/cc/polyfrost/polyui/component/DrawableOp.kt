@@ -35,7 +35,7 @@ import cc.polyfrost.polyui.unit.seconds
  * It is applied before and after rendering, for example a [Move], [Resize], or [Rotate] operation, or a transition.
  */
 abstract class DrawableOp(protected open val drawable: Drawable) {
-    abstract val animation: Animation?
+    open val animation: Animation? = null
 
     /** apply this drawable operation.
      *
@@ -89,12 +89,31 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
     }
 
     /**
+     * A scissor operation that can be applied to a Drawable.
+     *
+     * @param drawable The Drawable to which the scissor operation will be applied.
+     * @param size The size of the scissor operation. If not provided, the size of the drawable will be used.
+     * @since 0.19.2
+     */
+    class Scissor(
+        drawable: Drawable,
+        size: Vec2<Unit>? = null
+    ) : DrawableOp(drawable) {
+        val size = size ?: drawable.size!!
+        override fun apply(renderer: Renderer) = renderer.pushScissor(0f, 0f, size.a.px, size.b.px)
+
+        override fun unapply(renderer: Renderer) = renderer.popScissor()
+
+        override val isFinished get() = false
+    }
+
+    /**
      * Note: if you are making a UI, you should probably be using [scale][cc.polyfrost.polyui.component.Component.resize], [rotate][cc.polyfrost.polyui.component.Component.rotateBy], or [translate][cc.polyfrost.polyui.component.Component.moveTo] instead of this class.
      */
     class Rotate(
         private val angle: Double,
         add: Boolean = true,
-        override val drawable: Component,
+        drawable: Drawable,
         type: Animations? = null,
         durationNanos: Long = 1L.seconds
     ) :
@@ -140,7 +159,7 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         private val scaleX: Float,
         private val scaleY: Float,
         add: Boolean = true,
-        override val drawable: Component,
+        drawable: Drawable,
         animation: Animations? = null,
         durationNanos: Long = 1L.seconds
     ) : DrawableOp(drawable) {
@@ -164,7 +183,7 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         private val skewX: Double,
         private val skewY: Double,
         add: Boolean = true,
-        override val drawable: Component,
+        drawable: Drawable,
         animation: Animations? = null,
         durationNanos: Long = 1L.seconds
     ) : DrawableOp(drawable) {

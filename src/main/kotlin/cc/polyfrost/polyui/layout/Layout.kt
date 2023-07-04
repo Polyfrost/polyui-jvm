@@ -25,16 +25,16 @@ import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_SETUP
+import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
+import cc.polyfrost.polyui.component.DrawableOp
 import cc.polyfrost.polyui.component.impl.Block
 import cc.polyfrost.polyui.event.Events
-import cc.polyfrost.polyui.layout.impl.extension.DraggableLayout
-import cc.polyfrost.polyui.layout.impl.extension.PointerLayout
-import cc.polyfrost.polyui.layout.impl.extension.ScrollingLayout
 import cc.polyfrost.polyui.property.PropertyManager
 import cc.polyfrost.polyui.property.impl.BackgroundBlockProperties
+import cc.polyfrost.polyui.property.impl.BlockProperties
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.data.Framebuffer
 import cc.polyfrost.polyui.unit.*
@@ -82,11 +82,11 @@ abstract class Layout(
         internal set
 
     /** list of components in this layout. */
-    open val components = drawables.filterIsInstance<Component>() as ArrayList
+    val components = drawables.filterIsInstance<Component>() as ArrayList
         get() = if (enabled) field else EMPTY_CMPLIST
 
     /** list of child layouts in this layout */
-    open val children = drawables.filterIsInstance<Layout>() as ArrayList
+    val children = drawables.filterIsInstance<Layout>() as ArrayList
         get() = if (enabled) field else EMPTY_CHLDLIST
 
     /**
@@ -115,12 +115,12 @@ abstract class Layout(
     }
 
     /** tracker variable for framebuffer disabling/enabling. don't touch this. */
-    internal open var fboTracker = 0
+    protected var fboTracker = 0
 
     /** removal queue of drawables.
      * @see removeComponent
      */
-    internal open val removeQueue = arrayListOf<Drawable>()
+    protected val removeQueue = arrayListOf<Drawable>()
 
     /** set this to true if you want this layout to never use a framebuffer. Recommended in situations with chroma colors */
     open var refuseFramebuffer: Boolean = false
@@ -129,7 +129,7 @@ abstract class Layout(
      * @see refuseFramebuffer
      * @see cc.polyfrost.polyui.property.Settings.minDrawablesForFramebuffer
      */
-    internal open var fbo: Framebuffer? = null // these all have to be open for ptr layout
+    internal var fbo: Framebuffer? = null
         set(value) {
             if (!refuseFramebuffer) field = value
         }
@@ -154,11 +154,20 @@ abstract class Layout(
      *
      * @since 0.19.0
      */
-    open var enabled = true
+    var enabled = true
+
+    /**
+     * Flag that is true if the layout can be dragged around.
+     * @see draggable
+     * @see background
+     * @since 0.19.2
+     */
+    var draggable = false
+        private set
 
     init {
-        if (onAdded != null) addEventHandler(Events.Added, onAdded)
-        if (onRemoved != null) addEventHandler(Events.Removed, onRemoved)
+        if (onAdded != null) addHandler(Events.Added, onAdded)
+        if (onRemoved != null) addHandler(Events.Removed, onRemoved)
     }
 
     /** this is the function that is called every frame. It decides whether the layout needs to be entirely re-rendered.
@@ -197,7 +206,7 @@ abstract class Layout(
      * This function will rasterize the layout to its framebuffer, if it has one.
      * @since 0.18.0
      */
-    protected open fun rasterize() {
+    protected fun rasterize() {
         if (fbo != null && needsRedraw && fboTracker < 2) {
             fboTracker++
             renderer.bindFramebuffer(fbo)
@@ -228,7 +237,7 @@ abstract class Layout(
     }
 
     /** perform the given [function] on all this layout's components, and [optionally][onChildLayouts] on all child layouts. */
-    open fun onAll(onChildLayouts: Boolean = false, function: Component.() -> kotlin.Unit) {
+    fun onAll(onChildLayouts: Boolean = false, function: Component.() -> kotlin.Unit) {
         components.fastEach(function)
         if (onChildLayouts) children.fastEach { it.onAll(true, function) }
     }
@@ -237,7 +246,7 @@ abstract class Layout(
      * perform the given [function] on all this layout's children and itself.
      * @since 0.18.0
      */
-    open fun onAllLayouts(reversed: Boolean = false, function: Layout.() -> kotlin.Unit) {
+    fun onAllLayouts(reversed: Boolean = false, function: Layout.() -> kotlin.Unit) {
         if (reversed) {
             children.fastEachReversed { it.onAllLayouts(true, function) }
         } else {
@@ -278,7 +287,7 @@ abstract class Layout(
      * @since 0.19.2
      */
     @Suppress("UNCHECKED_CAST")
-    fun <T : Layout> getLayout(index: Int): T = children[index].let { if (it is PointerLayout) it.ptr else it } as T
+    fun <T : Layout> getLayout(index: Int): T = children[index] as T
 
     /**
      * return a component in this layout, by its simple name. This can be accessed using [debugPrint][cc.polyfrost.polyui.PolyUI.debugPrint] or using the [field][cc.polyfrost.polyui.component.Drawable.simpleName].
@@ -291,13 +300,7 @@ abstract class Layout(
     fun <T : Drawable?> getOrNull(simpleName: String): T? { // <T : Drawable?> as it removes useless null checks (null cannot be cast to not-null type T)
         components.fastEach { if (it.simpleName == simpleName) return it as T }
         children.fastEach {
-            return if (it.simpleName == simpleName) {
-                return if (it is PointerLayout) {
-                    it.ptr as T
-                } else {
-                    it as T
-                }
-            } else {
+            return if (it.simpleName == simpleName) { it as T } else {
                 it.getOrNull(simpleName)
             }
         }
@@ -475,11 +478,13 @@ abstract class Layout(
         removeQueue.fastEach { if (it.canBeRemoved()) removeComponentNow(it) }
         val delta = polyui.delta
         needsRedraw = false
+        preRender(delta)
         components.fastEach {
             it.preRender(delta)
             it.render()
             it.postRender()
         }
+        postRender()
     }
 
     /** count the amount of drawables this contains, including the drawables its children have */
@@ -556,18 +561,28 @@ abstract class Layout(
         return this
     }
 
-    /** wraps this layout in a [DraggableLayout] (so you can drag it) */
-    fun draggable(): DraggableLayout {
-        if (this is DraggableLayout) return this
-        return DraggableLayout(this)
-    }
+    /**
+     * Makes the layout draggable.
+     *
+     * When the layout is made draggable, it can be moved around by dragging it with the mouse.
+     * This method adds an internal block component to the layout that handles the dragging functionality.
+     *
+     * This function should only be called in the initialization of your layout, and not programmatically.
+     *
+     * @see background
+     * @since 0.19.2
+     */
+    fun draggable() = background(transparent = true, drags = true)
 
-    /** wraps this layout in a [ScrollingLayout] (so you can scroll it)
+    /**
+     * add scrolling functionality to the layout and optionally [scrollbars][withScrollbars].
      * @param size the scrollable area to set. This is the physical size of the layout on the screen. Set either to `0` for it to be set to the same as the layout size. If either is larger than the content size, it will be trimmed.
      */
-    fun scrolling(size: Size<Unit>): ScrollingLayout {
-        if (this is ScrollingLayout) return this
-        return ScrollingLayout(this, size)
+    @Deprecated("not currently implemented")
+    fun scrolling(size: Size<Unit>, withScrollbars: Boolean = true): Layout {
+        // todo
+        this.addOperation(DrawableOp.Scissor(this, size))
+        return this
     }
 
     override fun toString(): String {
@@ -577,13 +592,57 @@ abstract class Layout(
     /**
      * Adds a background block to the layout.
      *
+     * While there is nothing stopping you adding a background more than once, don't do it. It will cause problems.
+     *
+     * @param transparent whether the background should be transparent or not. This is only used if [drags] is `true`.
+     * @param drags whether this background should handle dragging the layout around.
+     *
      * @return `this`
+     * @see draggable
      * @throws IllegalArgumentException if the method is called outside the initialization block.
      * @since 0.19.2
      */
-    fun background(cornerRadii: FloatArray = 8f.radii()): Layout {
+    fun background(transparent: Boolean = false, drags: Boolean = false, cornerRadii: FloatArray = 8f.radii()): Layout {
         require(initStage == INIT_NOT_STARTED) { "background() can only be called in initialization block" }
-        this.components.add(0, Block(BackgroundBlockProperties(cornerRadii), origin, fill, acceptInput = false, rawResize = true))
+        if (!drags) {
+            this.components.add(
+                0,
+                Block(BackgroundBlockProperties(cornerRadii), origin, fill, acceptInput = false, rawResize = true).also {
+                    it.simpleName = "Background" + it.simpleName
+                }
+            )
+        } else {
+            draggable = true
+            var mx = 0f
+            var my = 0f
+            var dragging = false
+            components.add(
+                0,
+                Block(
+                    properties = if (transparent) BlockProperties(Color.TRANSPARENT) else BackgroundBlockProperties(cornerRadii),
+                    origin,
+                    fill,
+                    true,
+                    true,
+                    Events.MousePressed(0) to {
+                        dragging = true
+                        mx = this@Layout.x - polyui.mouseX
+                        my = this@Layout.y - polyui.mouseY
+                    },
+                    Events.MouseReleased(0) to {
+                        dragging = false
+                    },
+                    Events.MouseMoved to {
+                        if (dragging) {
+                            this@Layout.x = polyui.mouseX + mx
+                            this@Layout.y = polyui.mouseY + my
+                        }
+                    }
+                ).also {
+                    it.simpleName = "Drag" + it.simpleName
+                }
+            )
+        }
         return this
     }
 

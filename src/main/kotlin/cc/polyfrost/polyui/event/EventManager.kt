@@ -22,7 +22,6 @@
 package cc.polyfrost.polyui.event
 
 import cc.polyfrost.polyui.PolyUI
-import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.component.Focusable
 import cc.polyfrost.polyui.input.KeyModifiers
@@ -242,17 +241,6 @@ class EventManager(private val polyUI: PolyUI) {
                 if (accept(event)) {
                     cancelled = true
                 }
-            }
-        }
-    }
-
-    companion object {
-        /** insert true return instruction on the end of the method */
-        @JvmStatic
-        fun insertTrueInsn(action: (Component.() -> Unit)): (Component.() -> Boolean) {
-            return {
-                action(this)
-                true
             }
         }
     }

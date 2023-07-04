@@ -114,9 +114,9 @@ class KeyFrames @JvmOverloads constructor(private val overNanos: Long, private v
                 nn.rotation,
                 nn.scaleX, nn.scaleY,
                 nn.skewX, nn.skewY,
-                nn.color,
                 animation, nn.time - n.time
             )
+            if (nn.color != null) component.recolor(nn.color!!, animation, nn.time - n.time)
         }
         return false
     }

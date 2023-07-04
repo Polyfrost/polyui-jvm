@@ -37,8 +37,6 @@ import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
-import cc.polyfrost.polyui.utils.fastRemoveIf
-import cc.polyfrost.polyui.utils.toRadians
 
 /**
  * A component is a drawable object that can be interacted with. <br>
@@ -54,31 +52,8 @@ abstract class Component @JvmOverloads constructor(
     override var size: Size<Unit>? = null,
     rawResize: Boolean = false,
     acceptInput: Boolean = true,
-    vararg events: Events.Handler
+    vararg events: Events.EventHandler
 ) : Drawable(at, rawResize, acceptInput) {
-    protected val animations: ArrayList<Pair<Animation, (Component.() -> kotlin.Unit)?>> = ArrayList(5)
-    protected val operations: ArrayList<Pair<DrawableOp, (Component.() -> kotlin.Unit)?>> = ArrayList(5)
-
-    /** current rotation of this component (radians). */
-    var rotation: Double = 0.0
-
-    /** current skew in x dimension of this component (radians). */
-    var skewX: Double = 0.0
-
-    /** current skew in y dimension of this component (radians). */
-    var skewY: Double = 0.0
-
-    /** current scale in x dimension of this component. */
-    var scaleX: Float = 1f
-
-    /** current scale in y dimension of this component. */
-    var scaleY: Float = 1f
-
-    /** **a**t **c**ache **x** for transformations. */
-    var acx = 0f
-
-    /** **a**t **c**ache **y** for transformations. */
-    var acy = 0f
 
     @PublishedApi
     internal var p: Properties? = properties
@@ -137,218 +112,22 @@ abstract class Component @JvmOverloads constructor(
     }
 
     init {
-        events.forEach {
-            addEventHandler(it.event, it.handler)
-        }
+        addEventHandlers(*events)
     }
 
     override fun accept(event: Events): Boolean {
         if (super.accept(event)) return true
-        return properties.eventHandlers[event]?.let { it(this) } == true
-    }
-
-    /** Add a [DrawableOp] to this component. */
-    open fun addOperation(drawableOp: DrawableOp, onFinish: (Component.() -> kotlin.Unit)? = null) {
-        wantRedraw()
-        operations.add(drawableOp to onFinish)
+        return properties.eventHandlers[event]?.let { it(event, this) } == true
     }
 
     /**
-     * Scale this component by the given amount, in the X and Y dimensions.
-     *
-     * Please note that this ignores all bounds, and will simply scale this component, meaning that it can be clipped by its layout, and overlap nearby component.
-     *
-     * @since 0.17.4
+     * Add event handlers to this drawable.
+     * @since 0.18.5
      */
-    fun scaleBy(
-        xFactor: Float,
-        yFactor: Float,
-        animation: Animation.Type? = null,
-        durationNanos: Long = 1.seconds,
-        onFinish: (Component.() -> kotlin.Unit)? = null
-    ) {
-        addOperation(DrawableOp.Scale(xFactor, yFactor, true, this, animation, durationNanos), onFinish)
-    }
-
-    /**
-     * Scale this component to the given amount, in the X and Y dimensions.
-     *
-     * Please note that this ignores all bounds, and will simply scale this component, meaning that it can be clipped by its layout, and overlap nearby component.
-     *
-     * @since 0.17.4
-     */
-    fun scaleTo(
-        xFactor: Float,
-        yFactor: Float,
-        animation: Animation.Type? = null,
-        durationNanos: Long = 1.seconds,
-        onFinish: (Component.() -> kotlin.Unit)? = null
-    ) {
-        addOperation(DrawableOp.Scale(xFactor, yFactor, false, this, animation, durationNanos), onFinish)
-    }
-
-    /**
-     * Rotate this component to the given amount, in degrees. The amount is MOD 360 to return a value between 0-360 always.
-     *
-     * Please note that this ignores all bounds, and will simply scale this component, meaning that it can be clipped by its layout, and overlap nearby component.
-     * @see rotateBy
-     */
-    fun rotateTo(
-        degrees: Double,
-        animation: Animation.Type? = null,
-        durationNanos: Long = 1L.seconds,
-        onFinish: (Component.() -> kotlin.Unit)? = null
-    ) {
-        addOperation(
-            DrawableOp.Rotate(degrees.toRadians(), false, this, animation, durationNanos),
-            onFinish
-        )
-    }
-
-    /**
-     * Rotate this component by the given amount, in degrees.
-     *
-     * Please note that this ignores all bounds, and will simply scale this component, meaning that it can be clipped by its layout, and overlap nearby component.
-     * @see rotateTo
-     */
-    fun rotateBy(
-        degrees: Double,
-        animation: Animation.Type? = null,
-        durationNanos: Long = 1L.seconds,
-        onFinish: (Component.() -> kotlin.Unit)? = null
-    ) {
-        addOperation(
-            DrawableOp.Rotate(degrees.toRadians(), true, this, animation, durationNanos),
-            onFinish
-        )
-    }
-
-    /**
-     * Skew this component to the given amount, in degrees.
-     *
-     * Please note that this ignores all bounds, and will simply scale this component, meaning that it can be clipped by its layout, and overlap nearby component.
-     * @see skewBy
-     */
-    fun skewTo(skewX: Double, skewY: Double, animation: Animation.Type?, durationNanos: Long) {
-        addOperation(DrawableOp.Skew(skewX.toRadians(), skewY.toRadians(), false, this, animation, durationNanos))
-    }
-
-    /**
-     * Skew this component by the given amount, in degrees.
-     *
-     * Please note that this ignores all bounds, and will simply scale this component, meaning that it can be clipped by its layout, and overlap nearby component.
-     * @see skewTo
-     */
-    fun skewBy(skewX: Double, skewY: Double, animation: Animation.Type?, durationNanos: Long) {
-        addOperation(DrawableOp.Skew(skewX.toRadians(), skewY.toRadians(), true, this, animation, durationNanos))
-    }
-
-    /**
-     * move this component to the provided [point][to].
-     *
-     * Please note that this ignores all bounds, and will simply scale this component, meaning that it can be clipped by its layout, and overlap nearby component.
-     *
-     * @see moveBy
-     */
-// todo this might change ^
-    fun moveTo(
-        to: Vec2<Unit>,
-        animation: Animation.Type? = null,
-        durationNanos: Long = 1L.seconds,
-        onFinish: (Component.() -> kotlin.Unit)? = null
-    ) {
-        doDynamicSize(to)
-        addOperation(DrawableOp.Move(to, false, this, animation, durationNanos), onFinish)
-    }
-
-    /**
-     * move this component by the given amount.
-     *
-     * Please note that this ignores all bounds, and will simply scale this component, meaning that it can be clipped by its layout, and overlap nearby component.
-     *
-     * @see moveTo
-     */
-    fun moveBy(
-        by: Vec2<Unit>,
-        animation: Animation.Type? = null,
-        durationNanos: Long = 1L.seconds,
-        onFinish: (Component.() -> kotlin.Unit)? = null
-    ) {
-        doDynamicSize(by)
-        addOperation(DrawableOp.Move(by, true, this, animation, durationNanos), onFinish)
-    }
-
-    /**
-     * Bulk-add drawable operations to this component.
-     * @see moveTo
-     * @see resize
-     * @see rotateTo
-     * @see skewTo
-     * @see animateBy
-     * @see DrawableOp
-     */
-    fun animateTo(
-        to: Vec2<Unit>? = null,
-        size: Vec2<Unit>? = null,
-        degrees: Double = 0.0,
-        scaleX: Float = 1f,
-        scaleY: Float = 1f,
-        skewX: Double = 0.0,
-        skewY: Double = 0.0,
-        color: Color? = null,
-        animation: Animation.Type? = null,
-        durationNanos: Long = 1L.seconds
-    ) {
-        if (to != null) moveTo(to, animation, durationNanos)
-        if (size != null) resize(size, animation, durationNanos)
-        if (scaleX != 1f || scaleY != 1f) scaleTo(scaleX, scaleY, animation, durationNanos)
-        rotateTo(degrees, animation, durationNanos)
-        skewTo(skewX, skewY, animation, durationNanos)
-        if (color != null) recolor(color, animation, durationNanos)
-    }
-
-    /**
-     * Bulk-add drawable operations to this component.
-     * @see moveBy
-     * @see resize
-     * @see rotateBy
-     * @see skewBy
-     * @see animateTo
-     * @see DrawableOp
-     */
-    fun animateBy(
-        to: Vec2<Unit>? = null,
-        size: Vec2<Unit>? = null,
-        degrees: Double = 0.0,
-        scaleX: Float = 1f,
-        scaleY: Float = 1f,
-        skewX: Double = 0.0,
-        skewY: Double = 0.0,
-        color: Color? = null,
-        animation: Animation.Type? = null,
-        durationNanos: Long = 1L.seconds
-    ) {
-        if (to != null) moveBy(to, animation, durationNanos)
-        if (size != null) resize(size, animation, durationNanos)
-        if (scaleX != 1f || scaleY != 1f) scaleBy(scaleX, scaleY, animation, durationNanos)
-        rotateBy(degrees, animation, durationNanos)
-        skewBy(skewX, skewY, animation, durationNanos)
-        if (color != null) recolor(color, animation, durationNanos)
-    }
-
-    /** resize this component to the given size. */
-    fun resize(
-        toSize: Size<Unit>,
-        animation: Animation.Type? = null,
-        durationNanos: Long = 1L.seconds,
-        onFinish: (Component.() -> kotlin.Unit)? = null
-    ) {
-        doDynamicSize(toSize)
-        addOperation(DrawableOp.Resize(toSize, this, animation, durationNanos), onFinish)
-    }
-
-    open fun addAnimation(animation: Animation, onFinish: (Component.() -> kotlin.Unit)? = null) {
-        animations.add(animation to onFinish)
+    fun addEventHandlers(vararg handlers: Events.EventHandler) {
+        for (handler in handlers) {
+            eventHandlers[handler.event] = handler.handler
+        }
     }
 
     /**
@@ -438,10 +217,6 @@ abstract class Component @JvmOverloads constructor(
         }
     }
 
-    fun wantRedraw() {
-        layout.needsRedraw = true
-    }
-
     /** change the properties attached to this component.
      * @see Properties
      */
@@ -464,16 +239,8 @@ abstract class Component @JvmOverloads constructor(
         initStage = INIT_SETUP
     }
 
-    /**
-     * pre-render functions, such as applying transforms.
-     * In this method, you should set needsRedraw to true if you have something to redraw for the **next frame**.
-     * @param deltaTimeNanos the time in nanoseconds since the last frame. Use this for animations. It is the same as [PolyUI.delta].
-     *
-     * **make sure to call super [Component.preRender]!**
-     */
-    open fun preRender(deltaTimeNanos: Long) {
-        if (initStage != INIT_COMPLETE) throw IllegalStateException("${this.simpleName} was attempted to be rendered before it was fully initialized (parent ${this.layout.simpleName}; stage $initStage)")
-        renderer.push()
+    override fun preRender(deltaTimeNanos: Long) {
+        super.preRender(deltaTimeNanos)
         if (keyframes != null) {
             if (keyframes!!.update(deltaTimeNanos)) {
                 keyframes = null
@@ -481,62 +248,12 @@ abstract class Component @JvmOverloads constructor(
                 wantRedraw()
             }
         }
-        animations.fastRemoveIf { (it, func) ->
-            it.update(deltaTimeNanos)
-            return@fastRemoveIf if (!it.isFinished) {
-                wantRedraw()
-                false
-            } else {
-                func?.invoke(this)
-                true
-            }
-        }
-        operations.fastRemoveIf { (it, func) ->
-            it.update(deltaTimeNanos)
-            return@fastRemoveIf if (!it.isFinished) {
-                wantRedraw()
-                it.apply(renderer)
-                false
-            } else {
-                if (it is DrawableOp.Rotate) {
-                    if (rotation > 6.28 && rotation < 6.29) { // roughly 360 degrees, resets the rotation
-                        rotation = 0.0
-                    }
-                }
-                func?.invoke(this)
-                true
-            }
-        }
+
         if (color.update(deltaTimeNanos)) {
             finishColorFunc?.invoke(this)
             finishColorFunc = null
         }
         if (color.updating || color.alwaysUpdates) wantRedraw()
-        if (rotation != 0.0) {
-            renderer.translate(x + width / 2f, y + height / 2f)
-            renderer.rotate(rotation)
-            renderer.translate(-(width / 2f), -(height / 2f))
-            acx = x
-            acy = y
-            x = 0f
-            y = 0f
-        }
-        if (skewX != 0.0) renderer.skewX(skewX)
-        if (skewY != 0.0) renderer.skewY(skewY)
-        if (scaleX != 1f || scaleY != 1f) renderer.scale(scaleX, scaleY)
-    }
-
-    /**
-     * Called after rendering, for functions such as removing transformations.
-     *
-     * **make sure to call super [Component.postRender]!**
-     */
-    open fun postRender() {
-        renderer.pop()
-        if (rotation != 0.0) {
-            x = acx
-            y = acy
-        }
     }
 
     /**
@@ -566,11 +283,11 @@ abstract class Component @JvmOverloads constructor(
      */
     fun switch(index: Int) = (this.layout.layout as? SwitchingLayout)?.switch(index) ?: throw IllegalStateException("switch(index) can only be called on a layout inside a SwitchingLayout! (${this.simpleName})")
 
-    override fun canBeRemoved(): Boolean = animations.size == 0 && operations.size == 0 && !color.updating
+    override fun canBeRemoved(): Boolean = operations.size == 0 && !color.updating
 
     override fun toString(): String {
         return when (initStage) {
-            INIT_COMPLETE -> "$simpleName(${trueX}x$trueY, ${width}x${height}${if (autoSized) " (auto)" else ""}${if (animations.isNotEmpty()) ", animating" else ""}${if (operations.isNotEmpty()) ", operating" else ""})"
+            INIT_COMPLETE -> "$simpleName(${trueX}x$trueY, ${width}x${height}${if (autoSized) " (auto)" else ""}${if (operations.isNotEmpty()) ", operating" else ""})"
             else -> simpleName
         }
     }

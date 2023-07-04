@@ -100,7 +100,7 @@ fun block() = Block(
     size = (Random.nextFloat() * 100f + 32f).px * 32.px
 )
 
-fun prop() = when (Random.Default.nextInt(0, 4)) {
+fun prop() = when (Random.Default.nextInt(4)) {
     0 -> PrimaryBlockProperties(4f.radii())
     1 -> StateBlockProperties(State.Success, 4f.radii())
     2 -> StateBlockProperties(State.Warning, 4f.radii())
@@ -110,12 +110,14 @@ fun prop() = when (Random.Default.nextInt(0, 4)) {
 fun create(at: Point<Unit>, default: Boolean): PixelLayout {
     var t = default
     return PixelLayout(
+        acceptInput = false,
         at = at,
         drawables = drawables(
             Block(
                 properties = BackgroundBlockProperties(),
                 at = origin,
-                size = 400.px * 500.px
+                size = 400.px * 500.px,
+                acceptInput = false
             ),
             Text(
                 properties = TextProperties(Font("Poppins-SemiBold.ttf")),
@@ -157,8 +159,9 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
             FlexLayout(
                 at = 24.px * 247.px,
                 drawables = blocks(),
-                size = 348.px * 117.px
-            ), // .scrolling(0.px * 181.px),
+                wrap = 348.px
+                // size = 348.px * 0.px
+            ).scrolling(348.px * 181.px),
             Button(
                 leftIcon = PolyImage("shuffle.svg"),
                 text = "button.randomize".localised(),

@@ -25,9 +25,10 @@ package cc.polyfrost.polyui.event
 
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
-import cc.polyfrost.polyui.event.EventManager.Companion.insertTrueInsn
 import cc.polyfrost.polyui.event.Events.*
 import cc.polyfrost.polyui.input.Mouse
+import java.util.function.BiConsumer
+import java.util.function.BiFunction
 import java.util.function.Consumer
 import java.util.function.Function
 
@@ -170,29 +171,7 @@ open class Events : Event {
      *
      * in the given [action], you can perform things on this component, such as [Component.rotateBy], [Component.recolor], etc.
      *
-     * @return return true to consume the event/cancel it, false to pass it on to other handlers.
-     * */
-    @OverloadResolutionByLambdaReturnType
-    operator fun invoke(action: (Component.() -> Boolean)): Handler {
-        return Handler(this, action as Drawable.() -> Boolean)
-    }
-
-    /** specify a handler for this event.
-     *
-     * in the given [action], you can perform things on this component, such as [Component.rotateBy], [Component.recolor], etc.
-     *
-     * @return return true to consume the event/cancel it, false to pass it on to other handlers.
-     * */
-    @OverloadResolutionByLambdaReturnType
-    @JvmName("Invoke")
-    operator fun invoke(action: (Component.() -> Unit)): Handler {
-        return Handler(this, insertTrueInsn(action) as Drawable.() -> Boolean)
-    }
-
-    /** specify a handler for this event.
-     *
-     * in the given [action], you can perform things on this component, such as [Component.rotateBy], [Component.recolor], etc.
-     *
+     * @see then
      * @return return true to consume the event/cancel it, false to pass it on to other handlers.
      * */
     @OverloadResolutionByLambdaReturnType
@@ -204,6 +183,7 @@ open class Events : Event {
      *
      * in the given [action], you can perform things on this component, such as [Component.rotateBy], [Component.recolor], etc.
      *
+     * @see then
      * @return returns a [Handler] for the event, which will return true when called, meaning it will **consume** the event. Return false to not consume this event.
      * */
     @OverloadResolutionByLambdaReturnType
@@ -216,11 +196,13 @@ open class Events : Event {
      *
      * in the given [action], you can perform things on this component, such as [Component.rotateBy], [Component.recolor], etc.
      *
-     * @return returns a [Handler] for the event, which will return true when called, meaning it will **consume** the event. Return false to not consume this event.
+     * @return return true to consume the event/cancel it, false to pass it on to other handlers.
+     * @see to
+     * @since 0.19.2
      * */
     @OverloadResolutionByLambdaReturnType
-    infix fun then(action: (Component.() -> Boolean)): Handler {
-        return Handler(this, action as Drawable.() -> Boolean)
+    infix fun then(action: (Event, Component) -> Boolean): EventHandler {
+        return EventHandler(this, (action as (Event, Drawable) -> Boolean))
     }
 
     /** specify a handler for this event.
@@ -228,17 +210,14 @@ open class Events : Event {
      * in the given [action], you can perform things on this component, such as [Component.rotateBy], [Component.recolor], etc.
      *
      * @return returns a [Handler] for the event, which will return true when called, meaning it will **consume** the event. Return false to not consume this event.
+     * @see to
+     * @since 0.19.2
      * */
     @OverloadResolutionByLambdaReturnType
     @JvmName("Then")
-    infix fun then(action: (Component.() -> Unit)): Handler {
-        return Handler(this, insertTrueInsn(action) as Drawable.() -> Boolean)
+    infix fun then(action: (Event, Component) -> Unit): Handler {
+        return Handler(this, insertTrueInsnWithRef(action) as Drawable.() -> Boolean)
     }
-
-    /**
-     * Java compat version of [then]
-     */
-    fun then(action: Consumer<Component>): Handler = then { action.accept(this); true }
 
     /**
      * Java compat version of [to]
@@ -253,7 +232,12 @@ open class Events : Event {
     /**
      * Java compat version of [then]
      */
-    fun then(action: Function<Component, Boolean>): Handler = then { action.apply(this) }
+    fun then(action: BiConsumer<Event, Component>): EventHandler = then { event, component -> action.accept(event, component); true }
+
+    /**
+     * Java compat version of [then]
+     */
+    fun then(action: BiFunction<Event, Component, Boolean>): EventHandler = then { event, component -> action.apply(event, component) }
 
     companion object {
         /** wrapper for varargs, when arguments are in the wrong order */
@@ -262,7 +246,26 @@ open class Events : Event {
         fun events(vararg events: @EventDSL Handler): Array<out Handler> = events
     }
 
-    data class Handler(val event: Events, val handler: Drawable.() -> Boolean)
+    class Handler(event: Events, handler: Drawable.() -> Boolean) : EventHandler(event, convert(handler))
+    open class EventHandler(val event: Events, val handler: (Event, Drawable) -> Boolean)
+}
+
+private fun convert(func: Drawable.() -> Boolean): (Event, Drawable) -> Boolean {
+    return { _, drawable -> drawable.func() }
+}
+
+private fun insertTrueInsn(action: (Component.() -> Unit)): (Component.() -> Boolean) {
+    return {
+        action(this)
+        true
+    }
+}
+
+private fun insertTrueInsnWithRef(action: (Event, Component) -> Unit): (Event, Component) -> Boolean {
+    return { event, drawable ->
+        action(event, drawable)
+        true
+    }
 }
 
 /** marker class for preventing illegal nesting. */

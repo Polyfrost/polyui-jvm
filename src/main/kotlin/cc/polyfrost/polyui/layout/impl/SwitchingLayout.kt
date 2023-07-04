@@ -24,7 +24,6 @@ package cc.polyfrost.polyui.layout.impl
 import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.animate.Transition
 import cc.polyfrost.polyui.animate.Transitions
-import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.layout.Layout
@@ -86,15 +85,6 @@ class SwitchingLayout(
     )
     override fun removeComponent(drawable: Drawable) {
         super.removeComponent(drawable)
-    }
-
-    @Deprecated(
-        "this method should not be used on a SwitchingLayout, as the targeted layout will vary depending on the current layout, and may switch unexpectedly.",
-        ReplaceWith("targetLayout.onAll(onChildLayouts, function)"),
-        DeprecationLevel.ERROR
-    )
-    override fun onAll(onChildLayouts: Boolean, function: Component.() -> kotlin.Unit) {
-        super.onAll(onChildLayouts, function)
     }
 
     @Deprecated(
