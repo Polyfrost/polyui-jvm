@@ -193,7 +193,7 @@ abstract class Layout(
         rasterChildren()
         rasterize()
         if (fbo != null && fboTracker < 2) {
-            renderer.drawFramebuffer(fbo!!, x, y, width, height)
+            renderer.drawFramebuffer(fbo!!, x, y)
         } else {
             val x = x
             val y = y
@@ -591,9 +591,7 @@ abstract class Layout(
         return this
     }
 
-    override fun toString(): String {
-        return "$simpleName(${trueX}x$trueY, ${width}x${height}${if (fbo != null) ", buffered" else ""}${if (fbo != null && needsRedraw) ", needsRedraw" else ""})"
-    }
+    override fun toString(): String = "$simpleName(${trueX}x$trueY, ${width}x${height}${if (fbo != null) ", buffered" else ""}${if (fbo != null && needsRedraw) ", needsRedraw" else ""})"
 
     /**
      * Makes the layout draggable.
