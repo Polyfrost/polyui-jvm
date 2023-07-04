@@ -620,9 +620,18 @@ abstract class Layout(
         var ofsX = ox
         var ofsY = oy
         this.visibleSize = size
+        var horizontalBar: Scrollbar? = null
+        var verticalBar: Scrollbar? = null
 
         if (withScrollbars) {
-            addComponents(Scrollbar(false), Scrollbar(true))
+            horizontalBar = Scrollbar(true)
+            verticalBar = Scrollbar(false)
+            addComponents(horizontalBar, verticalBar)
+            addHandler(Events.MouseEntered) {
+                horizontalBar.show()
+                verticalBar.show()
+                false
+            }
         }
 
         addEventHandler(Events.MouseScrolled()) { e: Events, _ ->
@@ -639,6 +648,7 @@ abstract class Layout(
                     0f,
                     scrollCalc(rem - e.amountX.toFloat(), ox, trueX, size.width, width)
                 )
+                horizontalBar?.cancelHide()
             }
             if ((visibleSize!!.height < height) && e.amountY != 0) {
                 val anim = anims.second
@@ -652,6 +662,7 @@ abstract class Layout(
                     0f,
                     scrollCalc(rem - e.amountY.toFloat(), oy, trueY, size.height, height)
                 )
+                verticalBar?.cancelHide()
             }
 
             needsRedraw = true
@@ -661,6 +672,8 @@ abstract class Layout(
             override fun apply(renderer: Renderer) {
                 renderer.pushScissor(ox - trueX, oy - trueY, size.width, size.height)
                 val delta = polyui.delta
+                verticalBar?.tryHide(delta)
+                horizontalBar?.tryHide(delta)
                 val (anim, anim1) = anims
                 if (anim?.isFinished == true) {
                     anims.first = null
@@ -691,6 +704,13 @@ abstract class Layout(
             oy = trueY
             ofsX = x
             ofsY = y
+            if (withScrollbars) {
+                polyui.doWhile(0.2.seconds, { false }) {
+                    val d = 200_000_000L
+                    verticalBar!!.tryHide(d)
+                    horizontalBar!!.tryHide(d)
+                }
+            }
         }
         return this
     }

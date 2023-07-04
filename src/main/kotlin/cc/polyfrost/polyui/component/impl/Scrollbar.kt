@@ -21,6 +21,7 @@
 
 package cc.polyfrost.polyui.component.impl
 
+import cc.polyfrost.polyui.animate.Animation
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.property.impl.ScrollbarProperties
 import cc.polyfrost.polyui.unit.origin
@@ -50,23 +51,28 @@ class Scrollbar(private val horizontal: Boolean) : Block(null, origin, origin, f
                 layout.y = -(value.coerceIn(0f, 1f) * (layout.height - layout.visibleSize!!.height) - layout.oy)
             }
         }
+    private val hideOffset get() = thickness + properties.padding
     private val scrolls get() = scrollingSize < contentSize
     private var m = 0f
+    private var offset: Animation? = null
+    private var hideTime = 0L
     private var dragging = false
 
     override fun render() {
-        if (!scrolls) return
+        if (!scrolls || (offset?.value ?: 0f) == hideOffset) return
+        if (offset?.isFinished == false) wantRedraw()
         if (horizontal) {
             x = (layout.width - length) * scrollPercent
-            y = layout.visibleSize!!.height - thickness - (layout.trueY - layout.oy) - properties.padding
+            y = layout.visibleSize!!.height - thickness - (layout.trueY - layout.oy) - properties.padding + (offset?.value ?: 0f)
         } else {
             y = (layout.height - length) * scrollPercent
-            x = layout.visibleSize!!.width - thickness - (layout.trueX - layout.ox) - properties.padding
+            x = layout.visibleSize!!.width - thickness - (layout.trueX - layout.ox) - properties.padding + (offset?.value ?: 0f)
         }
         if (dragging) {
             if (!polyui.mouseDown) {
                 dragging = false
             } else {
+                cancelHide()
                 wantRedraw()
                 val mouse = if (horizontal) polyui.mouseX else polyui.mouseY
                 scrollPercent = (mouse - m) / (scrollingSize - length)
@@ -74,6 +80,29 @@ class Scrollbar(private val horizontal: Boolean) : Block(null, origin, origin, f
         }
         super.render()
     }
+
+    fun cancelHide() {
+        hideTime = 0L
+        if (offset != null) {
+            offset = properties.showAnim!!.create(properties.showAnimDuration, offset!!.value, 0f)
+            wantRedraw()
+        }
+    }
+
+    fun tryHide(delta: Long) {
+        offset?.update(delta)
+        hideTime += delta
+        if (offset == null) {
+            if (hideTime > properties.timeToHide && properties.showAnim != null) {
+                offset = properties.showAnim!!.create(properties.showAnimDuration, 0f, hideOffset)
+                wantRedraw()
+            }
+        } else if (offset!!.value == 0f) {
+            offset = null
+        }
+    }
+
+    fun show() = cancelHide()
 
     override fun calculateBounds() {
         thickness = properties.thickness
