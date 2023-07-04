@@ -283,7 +283,7 @@ abstract class Component @JvmOverloads constructor(
      */
     fun switch(index: Int) = (this.layout.layout as? SwitchingLayout)?.switch(index) ?: throw IllegalStateException("switch(index) can only be called on a layout inside a SwitchingLayout! (${this.simpleName})")
 
-    override fun canBeRemoved(): Boolean = operations.size == 0 && !color.updating
+    override fun canBeRemoved(): Boolean = super.canBeRemoved() && !color.updating
 
     override fun toString(): String {
         return when (initStage) {

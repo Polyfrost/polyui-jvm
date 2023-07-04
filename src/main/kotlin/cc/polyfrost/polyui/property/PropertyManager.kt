@@ -41,7 +41,8 @@ class PropertyManager(val colors: Colors) {
         Dropdown::class.qualifiedName!! to DropdownProperties(),
         Dropdown.Entry::class.qualifiedName!! to DropdownProperties.Entry(),
         Slider::class.qualifiedName!! to SliderProperties(),
-        Checkbox::class.qualifiedName!! to CheckboxProperties()
+        Checkbox::class.qualifiedName!! to CheckboxProperties(),
+        Scrollbar::class.qualifiedName!! to ScrollbarProperties()
     )
 
     inline fun <reified C : Component> get(): Properties = get(C::class.qualifiedName!!)

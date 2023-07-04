@@ -51,7 +51,7 @@ class GLWindow @JvmOverloads constructor(
     decorated: Boolean = true
 ) : Window(width, height) {
 
-    override var height: Int = width
+    override var height: Int = height
         set(value) {
             val h = IntArray(1)
             glfwGetFramebufferSize(handle, null, h)

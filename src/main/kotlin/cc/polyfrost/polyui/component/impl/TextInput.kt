@@ -120,6 +120,7 @@ open class TextInput(
                 }
             }
         }
+        wantRedraw()
         return super.accept(event)
     }
 
@@ -234,6 +235,7 @@ open class TextInput(
         }
         caretPos()
         selections()
+        wantRedraw()
     }
 
     fun caretPos() {

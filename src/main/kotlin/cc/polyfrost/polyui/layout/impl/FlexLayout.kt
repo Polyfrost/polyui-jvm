@@ -166,7 +166,7 @@ class FlexLayout @JvmOverloads constructor(
 
     override fun addComponent(drawable: Drawable) {
         super.addComponent(drawable)
-        calculateBounds()
+        if (initStage != INIT_NOT_STARTED) calculateBounds()
     }
 
     override fun removeComponent(index: Int) {
@@ -274,8 +274,11 @@ class FlexLayout @JvmOverloads constructor(
             }
         }
         rows.clear()
-        drawables.fastEach {
-            it.drawable.calculateBounds()
+        components.fastEach {
+            it.calculateBounds()
+        }
+        children.fastEach {
+            it.calculateBounds()
         }
         if (initStage != INIT_COMPLETE) {
             initStage = INIT_COMPLETE

@@ -89,6 +89,23 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
     }
 
     /**
+     * Abstract class representing a persistent drawable operation.
+     *
+     * A persistent operation is one that remains active indefinitely and does not finish.
+     *
+     * These are special as they are not taken into account during removal of a drawable.
+     *
+     * @param drawable The drawable object to apply the operation on.
+     * @since 0.19.2
+     */
+    abstract class Persistent(drawable: Drawable) : DrawableOp(drawable) {
+        override fun update(deltaTimeNanos: Long) {
+            // nop
+        }
+        override val isFinished get() = false
+    }
+
+    /**
      * A scissor operation that can be applied to a Drawable.
      *
      * @param drawable The Drawable to which the scissor operation will be applied.
@@ -98,13 +115,11 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
     class Scissor(
         drawable: Drawable,
         size: Vec2<Unit>? = null
-    ) : DrawableOp(drawable) {
+    ) : Persistent(drawable) {
         val size = size ?: drawable.size!!
         override fun apply(renderer: Renderer) = renderer.pushScissor(0f, 0f, size.a.px, size.b.px)
 
         override fun unapply(renderer: Renderer) = renderer.popScissor()
-
-        override val isFinished get() = false
     }
 
     /**

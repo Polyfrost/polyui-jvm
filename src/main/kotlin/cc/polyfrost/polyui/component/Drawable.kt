@@ -32,6 +32,7 @@ import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
+import cc.polyfrost.polyui.utils.allAre
 import cc.polyfrost.polyui.utils.cl1
 import cc.polyfrost.polyui.utils.fastRemoveIf
 import cc.polyfrost.polyui.utils.toRadians
@@ -270,7 +271,8 @@ abstract class Drawable(
      *
      * This is used for drawables that need to wait for an animation to finish before being removed.
      */
-    abstract fun canBeRemoved(): Boolean
+    // asm: don't check size == 0 as it checked in allAre
+    open fun canBeRemoved(): Boolean = operations.allAre { it.first is DrawableOp.Persistent }
 
     /** add a debug render overlay for this drawable. This is always rendered regardless of the layout re-rendering if debug mode is on. */
     open fun debugRender() {

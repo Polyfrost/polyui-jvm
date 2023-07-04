@@ -32,6 +32,7 @@ import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.component.DrawableOp
 import cc.polyfrost.polyui.component.impl.Block
+import cc.polyfrost.polyui.component.impl.Scrollbar
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.property.PropertyManager
 import cc.polyfrost.polyui.property.impl.BackgroundBlockProperties
@@ -159,6 +160,20 @@ abstract class Layout(
      */
     var draggable = false
         private set
+
+    /**
+     * The visible area of this layout. If this is set, it is used for [isInside] checks.
+     *
+     * If this layout is a [scrolling layout][scrolling], this is the size of the scrollable area.
+     * @since 0.19.2
+     */
+    var visibleSize: Size<Unit>? = null
+
+    /** used by [scrolling] */
+    internal var ox = 0f
+
+    /** used by [scrolling] */
+    internal var oy = 0f
 
     init {
         if (onAdded != null) addHandler(Events.Added, onAdded)
@@ -458,6 +473,16 @@ abstract class Layout(
 
     override fun rescale(scaleX: Float, scaleY: Float) {
         super.rescale(scaleX, scaleY)
+        if (rawResize) {
+            ox *= scaleX
+            oy *= scaleY
+            visibleSize?.scale(scaleX, scaleY)
+        } else {
+            val m = kotlin.math.min(scaleX, scaleY)
+            ox *= m
+            oy *= m
+            visibleSize?.scale(m, m)
+        }
         if (resizesChildren) {
             children.fastEach { it.rescale(scaleX, scaleY) }
             components.fastEach { it.rescale(scaleX, scaleY) }
@@ -525,6 +550,17 @@ abstract class Layout(
         initStage = INIT_SETUP
     }
 
+    override fun isInside(x: Float, y: Float): Boolean {
+        return if (visibleSize != null) {
+            val s = visibleSize!!
+            val tx = ox
+            val ty = oy
+            x in tx..(tx + s.width) && y in ty..(ty + s.height)
+        } else {
+            super.isInside(x, y)
+        }
+    }
+
     /** @see onColorsChanged */
     fun changeColors(colors: Colors) = onColorsChanged(colors)
 
@@ -537,7 +573,7 @@ abstract class Layout(
         children.fastEach { it.onColorsChanged(colors) }
     }
 
-    override fun canBeRemoved() = !needsRedraw
+    override fun canBeRemoved() = super.canBeRemoved() && !needsRedraw
 
     final override fun reset() {
         components.fastEach { it.reset() }
@@ -578,16 +614,20 @@ abstract class Layout(
      */
     @Deprecated("not currently implemented")
     fun scrolling(size: Size<Unit>, withScrollbars: Boolean = true): Layout {
+        require(visibleSize == null) { "${this.simpleName} is already scrolling!" }
         this.acceptsInput = true
         val anims = MutablePair<Animation?, Animation?>(null, null)
-        var ox = 0f
-        var oy = 0f
         var ofsX = ox
         var ofsY = oy
+        this.visibleSize = size
+
+        if (withScrollbars) {
+            addComponents(Scrollbar(false), Scrollbar(true))
+        }
 
         addEventHandler(Events.MouseScrolled()) { e: Events, _ ->
             e as Events.MouseScrolled // this is annoying...
-            if (e.amountX != 0) {
+            if ((visibleSize!!.width < width) && e.amountX != 0) {
                 val anim = anims.first
                 val rem = anim?.to?.minus(anim.value)?.also {
                     ofsX += anim.value
@@ -597,10 +637,10 @@ abstract class Layout(
                 anims.first = Animation.Type.EaseOutExpo.create(
                     .5.seconds,
                     0f,
-                    scrollCalc(rem - e.amountX.toFloat(), ox, x, size.width, width)
+                    scrollCalc(rem - e.amountX.toFloat(), ox, trueX, size.width, width)
                 )
             }
-            if (e.amountY != 0) {
+            if ((visibleSize!!.height < height) && e.amountY != 0) {
                 val anim = anims.second
                 val rem = anim?.to?.minus(anim.value)?.also {
                     ofsY += anim.value
@@ -610,14 +650,14 @@ abstract class Layout(
                 anims.second = Animation.Type.EaseOutExpo.create(
                     .5.seconds,
                     0f,
-                    scrollCalc(rem - e.amountY.toFloat(), oy, y, size.height, height)
+                    scrollCalc(rem - e.amountY.toFloat(), oy, trueY, size.height, height)
                 )
             }
 
             needsRedraw = true
             true
         }
-        addOperation(object : DrawableOp(this) {
+        addOperation(object : DrawableOp.Persistent(this) {
             override fun apply(renderer: Renderer) {
                 renderer.pushScissor(ox - trueX, oy - trueY, size.width, size.height)
                 val delta = polyui.delta
@@ -645,18 +685,12 @@ abstract class Layout(
             override fun unapply(renderer: Renderer) {
                 renderer.popScissor()
             }
-
-            override val isFinished get() = false
         })
         initCompleteHooks.add {
             ox = trueX
             oy = trueY
-            ofsX = ox
-            ofsY = oy
-        }
-
-        if (withScrollbars) {
-            // todo
+            ofsX = x
+            ofsY = y
         }
         return this
     }
