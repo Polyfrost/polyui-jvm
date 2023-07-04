@@ -51,7 +51,6 @@ val sun = PolyImage("sun.svg")
 
 fun main() {
     // todo dropdown, implement designs for textbox etc
-    // todo scrolling layout is not respecting at properly (you scroll left the right one scrolls), whole pointerlayout system is broken i guess...
 
     val window = GLWindow("Test", 800, 500)
 
@@ -160,7 +159,6 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                 at = 24.px * 247.px,
                 drawables = blocks(),
                 wrap = 348.px
-                // size = 348.px * 0.px
             ).scrolling(348.px * 117.px),
             Button(
                 leftIcon = PolyImage("shuffle.svg"),

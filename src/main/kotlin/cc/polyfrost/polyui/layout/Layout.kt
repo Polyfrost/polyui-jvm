@@ -611,8 +611,8 @@ abstract class Layout(
     /**
      * add scrolling functionality to the layout and optionally [scrollbars][withScrollbars].
      * @param size the scrollable area to set. This is the physical size of the layout on the screen.
+     * @since 0.19.2
      */
-    @Deprecated("not currently implemented")
     fun scrolling(size: Size<Unit>, withScrollbars: Boolean = true): Layout {
         require(visibleSize == null) { "${this.simpleName} is already scrolling!" }
         this.acceptsInput = true
@@ -705,8 +705,8 @@ abstract class Layout(
             ofsX = x
             ofsY = y
             if (withScrollbars) {
-                polyui.doWhile(0.2.seconds, { false }) {
-                    val d = 200_000_000L
+                polyui.every(50.milliseconds) {
+                    val d = 50_000_000L
                     verticalBar!!.tryHide(d)
                     horizontalBar!!.tryHide(d)
                 }
