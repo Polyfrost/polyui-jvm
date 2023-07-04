@@ -96,13 +96,13 @@ class Dropdown(
     ) // .scrolling(0.px * heightBeforeScrolls) // todo this (broken lol)
     init {
         dropdown.refuseFramebuffer = true
-        dropdown.preRender = {
-            if (openAnimation != null) renderer.pushScissor(0f, 0f, width, height * openAnimation!!.value)
-            renderer.rect(0f, 0f, width, height, this@Dropdown.properties.color, 0f, 0f, this@Dropdown.properties.cornerRadius, this@Dropdown.properties.cornerRadius)
-        }
-        dropdown.postRender = {
-            renderer.popScissor()
-        }
+//        dropdown.preRender = { todo
+//            if (openAnimation != null) renderer.pushScissor(0f, 0f, width, height * openAnimation!!.value)
+//            renderer.rect(0f, 0f, width, height, this@Dropdown.properties.color, 0f, 0f, this@Dropdown.properties.cornerRadius, this@Dropdown.properties.cornerRadius)
+//        }
+//        dropdown.postRender = {
+//            renderer.popScissor()
+//        }
         dropdown.simpleName = "Dropdown@${Integer.toHexString(this.hashCode())}"
     }
     var active = false

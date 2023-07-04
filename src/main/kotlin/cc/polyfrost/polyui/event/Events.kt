@@ -147,11 +147,7 @@ open class Events : Event {
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
-            if (other !is MouseScrolled) return false
-
-            if (amountX != other.amountX) return false
-            if (amountY != other.amountY) return false
-            return mods == other.mods
+            return other is MouseScrolled
         }
     }
 

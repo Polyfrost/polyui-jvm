@@ -306,6 +306,11 @@ abstract class Drawable(
         eventHandlers[event] = lambda
     }
 
+    @OverloadResolutionByLambdaReturnType
+    protected fun addEventHandler(event: Events, handler: (Events, Drawable) -> Boolean) {
+        eventHandlers[event] = handler
+    }
+
     @JvmName("addEventhandler")
     @OverloadResolutionByLambdaReturnType
     protected fun addEventHandler(event: Events, handler: (Events, Drawable) -> kotlin.Unit) {
@@ -314,11 +319,6 @@ abstract class Drawable(
             true
         }
         eventHandlers[event] = lambda
-    }
-
-    @OverloadResolutionByLambdaReturnType
-    protected fun addEventHandler(event: Events, handler: (Events, Drawable) -> Boolean) {
-        eventHandlers[event] = handler
     }
 
     /** Use this function to reset your drawable's [PolyText][cc.polyfrost.polyui.input.PolyTranslator] if it is using one. */

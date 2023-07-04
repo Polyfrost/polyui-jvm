@@ -161,7 +161,7 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                 drawables = blocks(),
                 wrap = 348.px
                 // size = 348.px * 0.px
-            ).scrolling(348.px * 181.px),
+            ).scrolling(348.px * 117.px),
             Button(
                 leftIcon = PolyImage("shuffle.svg"),
                 text = "button.randomize".localised(),

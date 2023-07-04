@@ -25,6 +25,7 @@ import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_SETUP
+import cc.polyfrost.polyui.animate.Animation
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.component.Component
@@ -138,16 +139,10 @@ abstract class Layout(
     override var layout: Layout? = null
 
     /**
-     * This function is executed just before it renders its components and children.
-     * @since 0.19.0
+     * These hooks are ran when the [onInitComplete] function is called.
+     * @since 0.19.2
      */
-    open var preRender: (Layout.() -> kotlin.Unit)? = null
-
-    /**
-     * This function is executed just after it renders its components and children.
-     * @since 0.19.0
-     */
-    open var postRender: (Layout.() -> kotlin.Unit)? = null
+    val initCompleteHooks = ArrayList<Layout.() -> kotlin.Unit>(5)
 
     /**
      * This flag simply controls whether the layout exists. If it is false, it will not be rendered, and will report having 0 components.
@@ -189,10 +184,8 @@ abstract class Layout(
             val y = y
             renderer.pushScissor(x, y, width, height)
             renderer.translate(x, y)
-            preRender?.invoke(this)
             render()
             renderChildren()
-            postRender?.invoke(this)
             renderer.translate(-x, -y)
             renderer.popScissor()
             if (!needsRedraw && fboTracker > 1) {
@@ -458,6 +451,7 @@ abstract class Layout(
 
     override fun onInitComplete() {
         super.onInitComplete()
+        initCompleteHooks.fastEach { it(this) }
         components.fastEach { it.onParentInitComplete() }
         children.fastEach { it.onParentInitComplete() }
     }
@@ -561,6 +555,10 @@ abstract class Layout(
         return this
     }
 
+    override fun toString(): String {
+        return "$simpleName(${trueX}x$trueY, ${width}x${height}${if (fbo != null) ", buffered" else ""}${if (fbo != null && needsRedraw) ", needsRedraw" else ""})"
+    }
+
     /**
      * Makes the layout draggable.
      *
@@ -576,17 +574,99 @@ abstract class Layout(
 
     /**
      * add scrolling functionality to the layout and optionally [scrollbars][withScrollbars].
-     * @param size the scrollable area to set. This is the physical size of the layout on the screen. Set either to `0` for it to be set to the same as the layout size. If either is larger than the content size, it will be trimmed.
+     * @param size the scrollable area to set. This is the physical size of the layout on the screen.
      */
     @Deprecated("not currently implemented")
     fun scrolling(size: Size<Unit>, withScrollbars: Boolean = true): Layout {
-        // todo
-        this.addOperation(DrawableOp.Scissor(this, size))
+        this.acceptsInput = true
+        val anims = MutablePair<Animation?, Animation?>(null, null)
+        var ox = 0f
+        var oy = 0f
+        var ofsX = ox
+        var ofsY = oy
+
+        addEventHandler(Events.MouseScrolled()) { e: Events, _ ->
+            e as Events.MouseScrolled // this is annoying...
+            if (e.amountX != 0) {
+                val anim = anims.first
+                val rem = anim?.to?.minus(anim.value)?.also {
+                    ofsX += anim.value
+                } ?: 0f.also {
+                    ofsX = x
+                }
+                anims.first = Animation.Type.EaseOutExpo.create(
+                    .5.seconds,
+                    0f,
+                    scrollCalc(rem - e.amountX.toFloat(), ox, x, size.width, width)
+                )
+            }
+            if (e.amountY != 0) {
+                val anim = anims.second
+                val rem = anim?.to?.minus(anim.value)?.also {
+                    ofsY += anim.value
+                } ?: 0f.also {
+                    ofsY = y
+                }
+                anims.second = Animation.Type.EaseOutExpo.create(
+                    .5.seconds,
+                    0f,
+                    scrollCalc(rem - e.amountY.toFloat(), oy, y, size.height, height)
+                )
+            }
+
+            needsRedraw = true
+            true
+        }
+        addOperation(object : DrawableOp(this) {
+            override fun apply(renderer: Renderer) {
+                renderer.pushScissor(ox - trueX, oy - trueY, size.width, size.height)
+                val delta = polyui.delta
+                val (anim, anim1) = anims
+                if (anim?.isFinished == true) {
+                    anims.first = null
+                } else {
+                    anim?.update(delta)?.also {
+                        x = ofsX + anim.value
+                        needsRedraw = true
+                    }
+                    polyui.eventManager.recalculateMousePos()
+                }
+                if (anim1?.isFinished == true) {
+                    anims.second = null
+                } else {
+                    anim1?.update(delta)?.also {
+                        y = ofsY + anim1.value
+                        needsRedraw = true
+                    }
+                    polyui.eventManager.recalculateMousePos()
+                }
+            }
+
+            override fun unapply(renderer: Renderer) {
+                renderer.popScissor()
+            }
+
+            override val isFinished get() = false
+        })
+        initCompleteHooks.add {
+            ox = trueX
+            oy = trueY
+            ofsX = ox
+            ofsY = oy
+        }
+
+        if (withScrollbars) {
+            // todo
+        }
         return this
     }
 
-    override fun toString(): String {
-        return "$simpleName(${trueX}x$trueY, ${width}x${height}${if (fbo != null) ", buffered" else ""}${if (fbo != null && needsRedraw) ", needsRedraw" else ""})"
+    private fun scrollCalc(toAdd: Float, origin: Float, pos: Float, size: Float, totalSize: Float): Float {
+        return if (toAdd > 0f) {
+            kotlin.math.min(origin - pos, toAdd)
+        } else {
+            cl0(-(totalSize - size - (origin - pos)), toAdd)
+        }
     }
 
     /**
