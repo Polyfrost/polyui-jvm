@@ -59,8 +59,8 @@ import org.jetbrains.annotations.ApiStatus
 abstract class Layout(
     at: Point<Unit>,
     override var size: Size<Unit>? = null,
-    internal val onAdded: (Drawable.() -> kotlin.Unit)? = null,
-    internal val onRemoved: (Drawable.() -> kotlin.Unit)? = null,
+    internal val onAdded: (Drawable.(Events.Added) -> kotlin.Unit)? = null,
+    internal val onRemoved: (Drawable.(Events.Removed) -> kotlin.Unit)? = null,
     propertyManager: PropertyManager? = null,
     rawResize: Boolean = false,
     /**
@@ -182,8 +182,18 @@ abstract class Layout(
     internal var oy = 0f
 
     init {
-        if (onAdded != null) addHandler(Events.Added, onAdded)
-        if (onRemoved != null) addHandler(Events.Removed, onRemoved)
+        if (onAdded != null) {
+            addEventHandler(Events.Added) {
+                onAdded.invoke(this, it as Events.Added)
+                true
+            }
+        }
+        if (onRemoved != null) {
+            addEventHandler(Events.Removed) {
+                onRemoved.invoke(this, it as Events.Removed)
+                true
+            }
+        }
     }
 
     /** this is the function that is called every frame. It decides whether the layout needs to be entirely re-rendered.
@@ -544,7 +554,7 @@ abstract class Layout(
         val width = visibleSize?.width ?: this.width
         val height = visibleSize?.height ?: this.height
         renderer.hollowRect(trueX, trueY, width, height, colors.page.border20, 2f)
-        renderer.text(Renderer.DefaultFont, trueX + 1f, trueY + 1f, simpleName, colors.text.primary, 10f)
+        renderer.text(Renderer.DefaultFont, trueX + 1f, trueY + 1f, simpleName, colors.text.primary.normal, 10f)
         children.fastEach { it.debugRender() }
         components.fastEach { it.debugRender() }
     }
@@ -640,16 +650,16 @@ abstract class Layout(
             horizontalBar = Scrollbar(true)
             verticalBar = Scrollbar(false)
             addComponents(horizontalBar, verticalBar)
-            addHandler(Events.MouseEntered) {
+            addEventHandler(Events.MouseEntered) {
                 horizontalBar.show()
                 verticalBar.show()
                 false
             }
         }
 
-        addEventHandler(Events.MouseScrolled()) { e: Events, _ ->
-            e as Events.MouseScrolled // this is annoying...
-            if ((visibleSize!!.width < width) && e.amountX != 0) {
+        addEventHandler(Events.MouseScrolled()) { event ->
+            event as Events.MouseScrolled // this is annoying...
+            if ((visibleSize!!.width < width) && event.amountX != 0) {
                 val anim = anims.first
                 val rem = anim?.to?.minus(anim.value)?.also {
                     ofsX += anim.value
@@ -659,11 +669,11 @@ abstract class Layout(
                 anims.first = Animation.Type.EaseOutExpo.create(
                     .5.seconds,
                     0f,
-                    scrollCalc(rem - e.amountX.toFloat(), ox, trueX, size.width, width)
+                    scrollCalc(rem - event.amountX.toFloat(), ox, trueX, size.width, width)
                 )
                 horizontalBar?.cancelHide()
             }
-            if ((visibleSize!!.height < height) && e.amountY != 0) {
+            if ((visibleSize!!.height < height) && event.amountY != 0) {
                 val anim = anims.second
                 val rem = anim?.to?.minus(anim.value)?.also {
                     ofsY += anim.value
@@ -673,7 +683,7 @@ abstract class Layout(
                 anims.second = Animation.Type.EaseOutExpo.create(
                     .5.seconds,
                     0f,
-                    scrollCalc(rem - e.amountY.toFloat(), oy, trueY, size.height, height)
+                    scrollCalc(rem - event.amountY.toFloat(), oy, trueY, size.height, height)
                 )
                 verticalBar?.cancelHide()
             }
@@ -766,7 +776,7 @@ abstract class Layout(
             components.add(
                 0,
                 Block(
-                    properties = if (transparent) BlockProperties(Color.TRANSPARENT) else BackgroundProperties(cornerRadii),
+                    properties = if (transparent) BlockProperties(Color.TRANSPARENT_PALETTE) else BackgroundProperties(cornerRadii),
                     origin,
                     fill,
                     true,

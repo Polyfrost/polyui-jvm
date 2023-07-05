@@ -21,9 +21,8 @@
 
 package cc.polyfrost.polyui.property.impl
 
-import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.property.Properties
 
 class DividerProperties(val thickness: Float = 1f) : Properties() {
-    override val color: Color get() = colors.onBrand.fg
+    override val palette get() = colors.onBrand.fg
 }

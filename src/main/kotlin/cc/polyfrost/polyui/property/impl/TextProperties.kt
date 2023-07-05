@@ -21,7 +21,7 @@
 
 package cc.polyfrost.polyui.property.impl
 
-import cc.polyfrost.polyui.color.Color
+import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.renderer.data.Font
 import cc.polyfrost.polyui.unit.TextAlign
@@ -30,6 +30,6 @@ import cc.polyfrost.polyui.unit.px
 
 open class TextProperties(val font: Font = Font("/Poppins-Regular.ttf")) : Properties() {
     open val fontSize: Unit.Pixel = 12.px
-    override val color: Color get() = colors.text.primary
+    override val palette: Colors.Palette get() = colors.text.primary
     open val alignment = TextAlign.Left
 }

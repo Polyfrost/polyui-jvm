@@ -380,7 +380,7 @@ class PolyUI @JvmOverloads constructor(
             x,
             y,
             text = perf,
-            color = colors.text.primary,
+            color = colors.text.primary.normal,
             fontSize = 10f,
             textAlign = TextAlign.Right
         )

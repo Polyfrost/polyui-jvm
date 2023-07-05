@@ -22,30 +22,29 @@
 package cc.polyfrost.polyui.component.impl
 
 import cc.polyfrost.polyui.component.StateBlock
-import cc.polyfrost.polyui.property.impl.CheckboxProperties
+import cc.polyfrost.polyui.event.Events
+import cc.polyfrost.polyui.property.impl.StatedProperties
 import cc.polyfrost.polyui.unit.Point
 import cc.polyfrost.polyui.unit.Size
 import cc.polyfrost.polyui.unit.Unit
 
 /**
- * A simple checkbox component, which can be checked or unchecked.
- * @since 0.19.3
+ * # Switch
+ *
+ * A simple switch component, which can be on or off.
+ *
+ * @param size the size of the switch. Note that this value has to have a width that is at least twice as large as its height. Due to this, only one of the parameters has to be set, and the other one will be inferred.
  */
 @Suppress("UNCHECKED_CAST")
-open class Checkbox(
-    properties: CheckboxProperties? = null,
+class Switch(
+    properties: StatedProperties? = null,
     at: Point<Unit>,
     size: Size<Unit>,
     enabled: Boolean = false,
-    onCheck: (Checkbox.(Boolean) -> kotlin.Unit)? = null
-) : StateBlock(properties, at, size, defaultState = enabled, onStateChange = onCheck as (StateBlock.(Boolean) -> kotlin.Unit)?) {
-    override val properties
-        get() = super.properties as CheckboxProperties
-
-    var checked by ::active
-
+    onEnable: (Switch.(Boolean) -> kotlin.Unit)? = null,
+    vararg events: Events.Handler
+) : StateBlock(properties, at, size, defaultState = enabled, onStateChange = onEnable as StateBlock.(Boolean) -> kotlin.Unit, events = events) {
     override fun render() {
-        super.render()
-        properties.renderCheck(this)
+        TODO("Not yet implemented")
     }
 }

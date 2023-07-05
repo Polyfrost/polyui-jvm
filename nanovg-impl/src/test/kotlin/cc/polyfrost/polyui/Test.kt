@@ -215,11 +215,11 @@ fun main() {
                     Checkbox(
                         at = 0.px * 260.px,
                         size = 30.px * 30.px,
-                        onCheck = { self, checked ->
+                        onCheck = {
                             if (checked) {
-                                self.layout.changeColors(LightTheme())
+                                layout.changeColors(LightTheme())
                             } else {
-                                self.layout.changeColors(DarkTheme())
+                                layout.changeColors(DarkTheme())
                             }
                         }
                     )

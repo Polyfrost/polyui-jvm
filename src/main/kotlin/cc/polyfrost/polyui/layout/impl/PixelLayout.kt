@@ -24,6 +24,7 @@ package cc.polyfrost.polyui.layout.impl
 import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
 import cc.polyfrost.polyui.component.Drawable
+import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.property.PropertyManager
 import cc.polyfrost.polyui.unit.*
@@ -40,8 +41,8 @@ import kotlin.math.max
 open class PixelLayout(
     at: Point<Unit> = origin,
     size: Size<Unit>? = null,
-    onAdded: (Drawable.() -> kotlin.Unit)? = null,
-    onRemoved: (Drawable.() -> kotlin.Unit)? = null,
+    onAdded: (Drawable.(Events.Added) -> kotlin.Unit)? = null,
+    onRemoved: (Drawable.(Events.Removed) -> kotlin.Unit)? = null,
     propertyManager: PropertyManager? = null,
     acceptInput: Boolean = true,
     rawResize: Boolean = false,

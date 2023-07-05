@@ -72,7 +72,7 @@ open class TextInput(
         renderer.rect(x, y, width, height, properties.backgroundColor, properties.cornerRadii)
         renderer.hollowRect(x, y, width, height, properties.outlineColor, properties.outlineThickness, properties.cornerRadii)
         if (focused) {
-            renderer.rect(cposx, cposy, 2f, text.fontSize, layout.colors.text.primary)
+            renderer.rect(cposx, cposy, 2f, text.fontSize, layout.colors.text.primary.normal)
             selectBoxes.fastEach {
                 val (x, y) = it.first
                 val (w, h) = it.second

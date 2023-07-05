@@ -61,8 +61,8 @@ class Slider(
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {
         super.setup(renderer, polyui)
-        barColor = properties.barColor.toMutable()
-        usedBarColor = properties.usedBarColor.toMutable()
+        barColor = properties.barColor.normal.toMutable()
+        usedBarColor = properties.usedBarColor.normal.toMutable()
     }
 
     override fun accept(event: Events): Boolean {
@@ -97,8 +97,8 @@ class Slider(
 
     override fun onColorsChanged(colors: Colors) {
         super.onColorsChanged(colors)
-        barColor = properties.barColor.toMutable()
-        usedBarColor = properties.usedBarColor.toMutable()
+        barColor = properties.barColor.normal.toMutable()
+        usedBarColor = properties.usedBarColor.normal.toMutable()
     }
 
     override fun rescale(scaleX: Float, scaleY: Float) {

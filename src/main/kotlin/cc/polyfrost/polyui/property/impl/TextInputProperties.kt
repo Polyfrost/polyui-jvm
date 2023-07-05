@@ -22,14 +22,14 @@
 package cc.polyfrost.polyui.property.impl
 
 import cc.polyfrost.polyui.color.Color
+import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.input.PolyText
 import cc.polyfrost.polyui.input.PolyTranslator.Companion.localised
 import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.utils.radii
 
 class TextInputProperties(val text: TextProperties) : Properties() {
-    @Deprecated("use background color instead", ReplaceWith("backgroundColor"), DeprecationLevel.ERROR)
-    override val color: Color get() = colors.component.bg
+    override val palette: Colors.Palette get() = colors.component.bg
     val paddingFromTextLateral: Float = 12f
     val paddingFromTextVertical: Float = 8f
     val defaultText: PolyText = "polyui.text.default".localised()

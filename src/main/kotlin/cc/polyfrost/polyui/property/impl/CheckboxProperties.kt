@@ -22,38 +22,31 @@
 package cc.polyfrost.polyui.property.impl
 
 import cc.polyfrost.polyui.animate.Animation
+import cc.polyfrost.polyui.component.StateBlock
 import cc.polyfrost.polyui.component.impl.Checkbox
-import cc.polyfrost.polyui.event.Events
-import cc.polyfrost.polyui.renderer.data.Cursor
 import cc.polyfrost.polyui.utils.radii
 import cc.polyfrost.polyui.utils.rgba
 
-open class CheckboxProperties : BlockProperties(null) {
+open class CheckboxProperties : StatedProperties() {
     override val cornerRadii: FloatArray = 6f.radii()
     override val outlineThickness: Float = 2f
-    open val checkedColor get() = colors.brand.fg
-    open val checkedHoverColor get() = colors.brand.fgHovered
-    open val checkedPressedColor get() = colors.brand.fgPressed
-    open val checkedDisabledColor get() = colors.brand.fgDisabled
 
-    open val checkmarkColor = rgba(255, 255, 255, 1f)
+    open val checkmarkColor = rgba(255, 255, 255)
 
     protected open var anim: Animation? = null
 
     /**
      * This function is called when the checkbox is checked.
      */
-    open val check: Checkbox.() -> Unit = {
-        recolor(checkedColor, pressedAnimation, pressedAnimationDuration)
-        anim = pressedAnimation?.create(pressedAnimationDuration, 0f, 1f)
+    override val onActivate: StateBlock.() -> Unit = {
+        anim = activateAnimation?.create(activateAnimationDuration, 0f, 1f)
     }
 
     /**
      * This function is called when the checkbox is unchecked.
      */
-    open val uncheck: Checkbox.() -> Unit = {
-        recolor(properties.color, pressedAnimation, pressedAnimationDuration)
-        anim = pressedAnimation?.create(pressedAnimationDuration, 1f, 0f)
+    override val onDeactivate: StateBlock.() -> Unit = {
+        anim = activateAnimation?.create(activateAnimationDuration, 1f, 0f)
     }
 
     /**
@@ -88,44 +81,5 @@ open class CheckboxProperties : BlockProperties(null) {
                 renderer.translate(-x, -y)
             }
         }
-    }
-
-    init {
-        addEventHandlers(
-            Events.MousePressed(0) to {
-                if (!(this as Checkbox).checked) {
-                    recolor(pressedColor, pressedAnimation, pressedAnimationDuration)
-                } else {
-                    recolor(checkedPressedColor, pressedAnimation, pressedAnimationDuration)
-                }
-                true
-            },
-            Events.MouseReleased(0) to {
-                if (!(this as Checkbox).checked) {
-                    recolor(hoverColor, pressedAnimation, pressedAnimationDuration)
-                } else {
-                    recolor(checkedHoverColor, pressedAnimation, pressedAnimationDuration)
-                }
-                true
-            },
-            Events.MouseEntered to {
-                if (!(this as Checkbox).checked) {
-                    recolor(hoverColor, hoverAnimation, hoverAnimationDuration)
-                } else {
-                    recolor(checkedHoverColor, hoverAnimation, hoverAnimationDuration)
-                }
-                polyui.cursor = Cursor.Clicker
-                true
-            },
-            Events.MouseExited to {
-                if (!(this as Checkbox).checked) {
-                    recolor(properties.color, hoverAnimation, hoverAnimationDuration)
-                } else {
-                    recolor(checkedColor, hoverAnimation, hoverAnimationDuration)
-                }
-                polyui.cursor = Cursor.Pointer
-                true
-            }
-        )
     }
 }

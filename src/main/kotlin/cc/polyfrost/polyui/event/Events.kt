@@ -171,8 +171,8 @@ open class Events : Event {
      * @return return true to consume the event/cancel it, false to pass it on to other handlers.
      * */
     @OverloadResolutionByLambdaReturnType
-    infix fun to(action: (Component.() -> Boolean)): Handler {
-        return Handler(this, action as Drawable.() -> Boolean)
+    infix fun to(action: (Component.(Event) -> Boolean)): Handler {
+        return Handler(this, action as Drawable.(Event) -> Boolean)
     }
 
     /** specify a handler for this event.
@@ -184,8 +184,8 @@ open class Events : Event {
      * */
     @OverloadResolutionByLambdaReturnType
     @JvmName("To")
-    infix fun to(action: (Component.() -> Unit)): Handler {
-        return Handler(this, insertTrueInsn(action) as Drawable.() -> Boolean)
+    infix fun to(action: (Component.(Event) -> Unit)): Handler {
+        return Handler(this, insertTrueInsn(action) as Drawable.(Event) -> Boolean)
     }
 
     /** specify a handler for this event.
@@ -197,8 +197,8 @@ open class Events : Event {
      * @since 0.19.2
      * */
     @OverloadResolutionByLambdaReturnType
-    infix fun then(action: (Event, Component) -> Boolean): EventHandler {
-        return EventHandler(this, (action as (Event, Drawable) -> Boolean))
+    infix fun then(action: (Component.(Event) -> Boolean)): Handler {
+        return Handler(this, action as Drawable.(Event) -> Boolean)
     }
 
     /** specify a handler for this event.
@@ -211,8 +211,8 @@ open class Events : Event {
      * */
     @OverloadResolutionByLambdaReturnType
     @JvmName("Then")
-    infix fun then(action: (Event, Component) -> Unit): Handler {
-        return Handler(this, insertTrueInsnWithRef(action) as Drawable.() -> Boolean)
+    infix fun then(action: (Component.(Event) -> Unit)): Handler {
+        return Handler(this, insertTrueInsn(action) as Drawable.(Event) -> Boolean)
     }
 
     /**
@@ -228,12 +228,12 @@ open class Events : Event {
     /**
      * Java compat version of [then]
      */
-    fun then(action: BiConsumer<Event, Component>): EventHandler = then { event, component -> action.accept(event, component); true }
+    fun then(action: BiConsumer<Component, Event>): Handler = then { action.accept(this, it); true }
 
     /**
      * Java compat version of [then]
      */
-    fun then(action: BiFunction<Event, Component, Boolean>): EventHandler = then { event, component -> action.apply(event, component) }
+    fun then(action: BiFunction<Component, Event, Boolean>): Handler = then { action.apply(this, it) }
 
     companion object {
         /** wrapper for varargs, when arguments are in the wrong order */
@@ -242,24 +242,12 @@ open class Events : Event {
         fun events(vararg events: @EventDSL Handler): Array<out Handler> = events
     }
 
-    class Handler(event: Events, handler: Drawable.() -> Boolean) : EventHandler(event, convert(handler))
-    open class EventHandler(val event: Events, val handler: (Event, Drawable) -> Boolean)
+    class Handler(val event: Events, val handler: (Drawable.(Event) -> Boolean))
 }
 
-private fun convert(func: Drawable.() -> Boolean): (Event, Drawable) -> Boolean {
-    return { _, drawable -> drawable.func() }
-}
-
-private fun insertTrueInsn(action: (Component.() -> Unit)): (Component.() -> Boolean) {
+private fun insertTrueInsn(action: (Component.(Event) -> Unit)): (Component.(Event) -> Boolean) {
     return {
-        action(this)
-        true
-    }
-}
-
-private fun insertTrueInsnWithRef(action: (Event, Component) -> Unit): (Event, Component) -> Boolean {
-    return { event, drawable ->
-        action(event, drawable)
+        action(this, it)
         true
     }
 }

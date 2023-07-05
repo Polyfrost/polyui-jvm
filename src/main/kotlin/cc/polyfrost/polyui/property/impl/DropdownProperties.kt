@@ -31,13 +31,11 @@ open class DropdownProperties : Properties() {
     open class Entry : Properties() {
         val textProperties = TextProperties()
         val iconProperties = ImageProperties()
-        override val color: Color
+        override val palette
             get() = colors.component.bg
 
-        open val contentColor: Color
+        open val contentColor
             get() = colors.text.secondary
-        open val contentHoverColor: Color
-            get() = colors.text.primaryHovered
 
         open val hoverAnimation = Animations.EaseOutExpo
         open val hoverAnimationDuration = 0.5.seconds
@@ -45,22 +43,22 @@ open class DropdownProperties : Properties() {
         open val verticalPadding = 4f
         open val lateralPadding = 12f
     }
-    override val color: Color
+    override val palette
         get() = colors.component.bg
 
     open val minWidth = 120f
     open val verticalPadding = 2f
 
     open val activeColor: Color
-        get() = colors.brand.accent
+        get() = colors.brand.accent.normal
 
     open val hoveredColor: Color
-        get() = colors.text.primaryHovered
+        get() = colors.text.primary.hovered
 
     open val borderColor: Color
         get() = colors.page.border5
     open val activeBorderColor: Color
-        get() = colors.brand.fg
+        get() = colors.brand.fg.normal
 
     open val openAnimation = Animations.EaseOutExpo
     open val openDuration = 0.5.seconds

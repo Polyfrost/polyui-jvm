@@ -40,11 +40,7 @@ import kotlin.math.min
  * for these functions, such as [image] and [text], an initialized [Font] or [PolyImage] instance will be given.
  * This class simply contains a path to the resource. You will need to load it using [getResourceStream][cc.polyfrost.polyui.utils.getResourceStream], and cache it for future use (ideally).
  */
-abstract class Renderer(width: Float, height: Float) : AutoCloseable {
-    var width: Float = width
-        internal set
-    var height: Float = height
-        internal set
+abstract class Renderer(open var width: Float, open var height: Float) : AutoCloseable {
     var alphaCap: Float = 1f
 
     /** settings instance for this renderer. */

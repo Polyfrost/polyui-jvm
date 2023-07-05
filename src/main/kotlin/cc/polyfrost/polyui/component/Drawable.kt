@@ -27,6 +27,7 @@ import cc.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_SETUP
 import cc.polyfrost.polyui.animate.Animation
 import cc.polyfrost.polyui.color.Colors
+import cc.polyfrost.polyui.event.Event
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.renderer.Renderer
@@ -57,7 +58,7 @@ abstract class Drawable(
     val rawResize: Boolean = false,
     open var acceptsInput: Boolean = true
 ) : Cloneable {
-    val eventHandlers = HashMap<Events, ((Events, Drawable) -> Boolean)>()
+    val eventHandlers = HashMap<Events, (Drawable.(Event) -> Boolean)>()
 
     /**
      * This is the name of this drawable, and it will be consistent over reboots of the program, so you can use it to get drawables from a layout by ID, e.g:
@@ -286,41 +287,21 @@ abstract class Drawable(
      * @return true if the event should be consumed (cancelled so no more handlers are called), false otherwise.
      * */
     open fun accept(event: Events): Boolean {
-        return eventHandlers[event]?.let { it(event, this) } ?: false
+        return eventHandlers[event]?.let { it(this, event) } ?: false
     }
 
     @OverloadResolutionByLambdaReturnType
-    protected fun addHandler(event: Events, handler: Drawable.() -> Boolean) {
-        val lambda = { _: Events, drawable: Drawable ->
-            drawable.handler()
-            true
-        }
-        eventHandlers[event] = lambda
-    }
-
-    @JvmName("addhandler")
-    @OverloadResolutionByLambdaReturnType
-    protected fun addHandler(event: Events, handler: Drawable.() -> kotlin.Unit) {
-        val lambda = { _: Events, drawable: Drawable ->
-            drawable.handler()
-            true
-        }
-        eventHandlers[event] = lambda
-    }
-
-    @OverloadResolutionByLambdaReturnType
-    protected fun addEventHandler(event: Events, handler: (Events, Drawable) -> Boolean) {
+    protected fun addEventHandler(event: Events, handler: (Drawable.(Event) -> Boolean)) {
         eventHandlers[event] = handler
     }
 
     @JvmName("addEventhandler")
     @OverloadResolutionByLambdaReturnType
-    protected fun addEventHandler(event: Events, handler: (Events, Drawable) -> kotlin.Unit) {
-        val lambda = { e: Events, drawable: Drawable ->
-            handler(e, drawable)
+    protected fun addEventHandler(event: Events, handler: Drawable.(Event) -> kotlin.Unit) {
+        eventHandlers[event] = {
+            handler(this, it)
             true
         }
-        eventHandlers[event] = lambda
     }
 
     /** Use this function to reset your drawable's [PolyText][cc.polyfrost.polyui.input.PolyTranslator] if it is using one. */

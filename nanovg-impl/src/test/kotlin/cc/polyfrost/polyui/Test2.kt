@@ -33,10 +33,7 @@ import cc.polyfrost.polyui.layout.impl.FlexLayout
 import cc.polyfrost.polyui.layout.impl.PixelLayout
 import cc.polyfrost.polyui.property.PropertyManager
 import cc.polyfrost.polyui.property.State
-import cc.polyfrost.polyui.property.impl.BackgroundProperties
-import cc.polyfrost.polyui.property.impl.BrandBlockProperties
-import cc.polyfrost.polyui.property.impl.StateBlockProperties
-import cc.polyfrost.polyui.property.impl.TextProperties
+import cc.polyfrost.polyui.property.impl.*
 import cc.polyfrost.polyui.renderer.data.Font
 import cc.polyfrost.polyui.renderer.data.PolyImage
 import cc.polyfrost.polyui.renderer.impl.GLWindow

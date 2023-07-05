@@ -143,7 +143,7 @@ class Dropdown(
     fun close() {
         openAnimation = properties.openAnimation.create(properties.openDuration, openAnimation?.value ?: 1f, 0f)
         chevron.rotateTo(0.0, properties.openAnimation, properties.openDuration)
-        color.recolor(properties.color)
+        color.recolor(properties.palette.normal)
         borderColor.recolor(properties.borderColor)
     }
 
@@ -229,17 +229,17 @@ class Dropdown(
             text = Text(this.properties.textProperties, txt, origin)
             image = if (icon != null) Image(this.properties.iconProperties, icon, origin) else null
             addComponents(text, image)
-            recolorAll(properties.contentColor)
+            recolorAll(properties.contentColor.normal)
             super.onInitComplete()
         }
 
         override fun accept(event: Events): Boolean {
             if (event is Events.MouseExited) {
-                recolorAll(properties.contentColor, properties.hoverAnimation, properties.hoverAnimationDuration)
+                recolorAll(properties.contentColor.normal, properties.hoverAnimation, properties.hoverAnimationDuration)
                 return true
             }
             if (event is Events.MouseEntered) {
-                recolorAll(properties.contentHoverColor, properties.hoverAnimation, properties.hoverAnimationDuration)
+                recolorAll(properties.contentColor.hovered, properties.hoverAnimation, properties.hoverAnimationDuration)
                 return true
             }
             if (event is Events.MousePressed) {

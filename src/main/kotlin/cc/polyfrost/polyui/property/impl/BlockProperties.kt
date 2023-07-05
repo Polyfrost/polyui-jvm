@@ -23,6 +23,7 @@ package cc.polyfrost.polyui.property.impl
 
 import cc.polyfrost.polyui.animate.Animations
 import cc.polyfrost.polyui.color.Color
+import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.property.State
@@ -35,15 +36,13 @@ import cc.polyfrost.polyui.utils.radii
  * @param outlineThickness The thickness of this component. If you set it to something other than 0, it will become hollow.
  */
 open class BlockProperties @JvmOverloads constructor(
-    val ccolor: Color? = null,
+    val colorPalette: Colors.Palette? = null,
     open val cornerRadii: FloatArray = 0f.radii(),
     open val outlineThickness: Float = 0f
 ) : Properties() {
+    @JvmOverloads constructor(color: Color, cornerRadii: FloatArray = 0f.radii(), outlineThickness: Float = 0f) : this(Colors.Palette(color, color, color, color), cornerRadii, outlineThickness)
     val outlineColor get() = colors.page.border10
-    override val color get() = ccolor ?: colors.component.bg
-    open val hoverColor get() = colors.component.bgHovered
-    open val pressedColor get() = colors.component.bgPressed
-    open val disabledColor get() = colors.component.bgDisabled
+    override val palette get() = colorPalette ?: colors.component.bg
     open val pressedAnimation: Animations? = Animations.EaseOutExpo
     open val hoverAnimation: Animations? = Animations.EaseOutExpo
     open val pressedAnimationDuration: Long = 0.25.seconds
@@ -53,32 +52,33 @@ open class BlockProperties @JvmOverloads constructor(
 open class BackgroundProperties @JvmOverloads constructor(
     cornerRadii: FloatArray = 0f.radii()
 ) : BlockProperties(null, cornerRadii) {
-    override val color: Color get() = colors.page.bg
+    override val palette: Colors.Palette get() = colors.page.bg
 }
 
 /**
  * Basic block properties with hover and pressed animations.
  */
 open class DefaultBlockProperties @JvmOverloads constructor(
+    colorPalette: Colors.Palette? = null,
     cornerRadii: FloatArray = 0f.radii()
-) : BlockProperties(null, cornerRadii) {
+) : BlockProperties(colorPalette, cornerRadii) {
     init {
         addEventHandlers(
             Events.MousePressed(0) to {
-                recolor(pressedColor, pressedAnimation, pressedAnimationDuration)
+                recolor(palette.pressed, pressedAnimation, pressedAnimationDuration)
                 true
             },
             Events.MouseReleased(0) to {
-                recolor(hoverColor, pressedAnimation, pressedAnimationDuration)
+                recolor(palette.hovered, pressedAnimation, pressedAnimationDuration)
                 true
             },
             Events.MouseEntered to {
-                recolor(hoverColor, hoverAnimation, hoverAnimationDuration)
+                recolor(palette.hovered, hoverAnimation, hoverAnimationDuration)
                 polyui.cursor = Cursor.Clicker
                 true
             },
             Events.MouseExited to {
-                recolor(properties.color, hoverAnimation, hoverAnimationDuration)
+                recolor(palette.normal, hoverAnimation, hoverAnimationDuration)
                 polyui.cursor = Cursor.Pointer
                 true
             }
@@ -88,35 +88,17 @@ open class DefaultBlockProperties @JvmOverloads constructor(
 
 open class BrandBlockProperties @JvmOverloads constructor(
     cornerRadii: FloatArray = 0f.radii()
-) : DefaultBlockProperties(cornerRadii) {
-    override val color: Color get() = colors.brand.fg
-    override val hoverColor: Color get() = colors.brand.fgHovered
-    override val pressedColor: Color get() = colors.brand.fgPressed
-    override val disabledColor: Color get() = colors.brand.fgDisabled
+) : DefaultBlockProperties(null, cornerRadii) {
+    override val palette: Colors.Palette get() = colors.brand.fg
 }
 
 open class StateBlockProperties @JvmOverloads constructor(
     private val state: State = State.Success,
     cornerRadii: FloatArray = 0f.radii()
-) : DefaultBlockProperties(cornerRadii) {
-    override val color: Color get() = when (state) {
+) : DefaultBlockProperties(null, cornerRadii) {
+    override val palette: Colors.Palette get() = when (state) {
         State.Success -> colors.state.success
         State.Warning -> colors.state.warning
         State.Danger -> colors.state.danger
-    }
-    override val hoverColor: Color get() = when (state) {
-        State.Success -> colors.state.successHovered
-        State.Warning -> colors.state.warningHovered
-        State.Danger -> colors.state.dangerHovered
-    }
-    override val pressedColor: Color get() = when (state) {
-        State.Success -> colors.state.successPressed
-        State.Warning -> colors.state.warningPressed
-        State.Danger -> colors.state.dangerPressed
-    }
-    override val disabledColor: Color get() = when (state) {
-        State.Success -> colors.state.successDisabled
-        State.Warning -> colors.state.warningDisabled
-        State.Danger -> colors.state.dangerDisabled
     }
 }

@@ -52,7 +52,7 @@ abstract class Component @JvmOverloads constructor(
     override var size: Size<Unit>? = null,
     rawResize: Boolean = false,
     acceptInput: Boolean = true,
-    vararg events: Events.EventHandler
+    vararg events: Events.Handler
 ) : Drawable(at, rawResize, acceptInput) {
 
     @PublishedApi
@@ -117,14 +117,14 @@ abstract class Component @JvmOverloads constructor(
 
     override fun accept(event: Events): Boolean {
         if (super.accept(event)) return true
-        return properties.eventHandlers[event]?.let { it(event, this) } == true
+        return properties.eventHandlers[event]?.let { it(this, event) } == true
     }
 
     /**
      * Add event handlers to this drawable.
      * @since 0.18.5
      */
-    fun addEventHandlers(vararg handlers: Events.EventHandler) {
+    fun addEventHandlers(vararg handlers: Events.Handler) {
         for (handler in handlers) {
             eventHandlers[handler.event] = handler.handler
         }
@@ -196,7 +196,7 @@ abstract class Component @JvmOverloads constructor(
 
     override fun onColorsChanged(colors: Colors) {
         properties.colors = colors
-        recolor(properties.color)
+        recolor(properties.palette.normal)
     }
 
     override fun calculateBounds() {
@@ -224,7 +224,7 @@ abstract class Component @JvmOverloads constructor(
         if (polyui.settings.debug) PolyUI.LOGGER.info("{}'s properties set to {}", this.simpleName, properties)
         properties.colors = p!!.colors
         p = properties
-        recolor(properties.color, Animations.Linear, 150L.milliseconds)
+        recolor(properties.palette.normal, Animations.Linear, 150L.milliseconds)
         wantRedraw()
     }
 
@@ -235,7 +235,7 @@ abstract class Component @JvmOverloads constructor(
         } else {
             p!!.colors = layout.colors
         }
-        color = properties.color.toMutable()
+        color = properties.palette.normal.toMutable()
         initStage = INIT_SETUP
     }
 

@@ -178,11 +178,6 @@ inline val Int.blue get() = this and 0xFF
 
 inline val Int.alpha get() = this shr 24 and 0xFF
 
-fun Float.rounded(places: Int = 2): Float {
-    val f = 10.0.pow(places).toFloat()
-    return (this * f).toInt() / f
-}
-
 fun Double.toRadians() = (this % 360.0) * (PI / 180.0)
 
 /**
@@ -362,26 +357,6 @@ fun String.substringToWidth(
     return result to this.substring(result.length)
 }
 
-/** Limit the given string to a width. If the string is too long, it will be cut to the width, and [limitText] will be appended to the end. */
-fun String.limit(
-    renderer: Renderer,
-    font: Font,
-    fontSize: Float,
-    width: Float,
-    limitText: String = "...",
-    textAlign: TextAlign = TextAlign.Left
-): String {
-    val delimiterWidth = renderer.textBounds(font, limitText, fontSize, textAlign).width
-    var resultWidth = renderer.textBounds(font, this, fontSize, textAlign).width
-    var t = this
-    while (resultWidth + delimiterWidth > width) {
-        resultWidth = renderer.textBounds(font, t, fontSize, textAlign).width
-        t = t.substring(0, t.length - 1)
-    }
-    t += limitText
-    return t
-}
-
 /**
  * calculate the levenshtein distance between this string and the other string.
  * @see <a href="https://en.wikipedia.org/wiki/Levenshtein_distance">Levenshtein distance</a>
@@ -471,7 +446,9 @@ fun String.wrap(
 }
 
 /**
- * Returns the closest character index from the given string to the given point.
+ * Returns the closest character index from the given string to the given point [x].
+ *
+ * @return the index of the character closest to the given point [x], or `-1` if it could not be found.
  *
  * @since 0.18.5
  */

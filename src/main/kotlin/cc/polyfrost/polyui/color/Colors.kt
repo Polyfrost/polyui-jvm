@@ -42,14 +42,10 @@ interface Colors {
     val text: Text
 
     abstract class Page {
-        abstract val bg: Color
-        abstract val bgElevated: Color
-        abstract val bgDepressed: Color
+        abstract val bg: Palette
         abstract val bgOverlay: Color
 
-        abstract val fg: Color
-        abstract val fgElevated: Color
-        abstract val fgDepressed: Color
+        abstract val fg: Palette
         abstract val fgOverlay: Color
 
         abstract val border20: Color
@@ -57,59 +53,33 @@ interface Colors {
         abstract val border5: Color
     }
     abstract class Brand {
-        abstract val fg: Color
-        abstract val fgHovered: Color
-        abstract val fgPressed: Color
-        abstract val fgDisabled: Color
-
-        abstract val accent: Color
-        abstract val accentHovered: Color
-        abstract val accentPressed: Color
-        abstract val accentDisabled: Color
+        abstract val fg: Palette
+        abstract val accent: Palette
     }
     abstract class OnBrand {
-        abstract val fg: Color
-        abstract val fgHovered: Color
-        abstract val fgPressed: Color
-        abstract val fgDisabled: Color
-
-        abstract val accent: Color
-        abstract val accentHovered: Color
-        abstract val accentPressed: Color
-        abstract val accentDisabled: Color
+        abstract val fg: Palette
+        abstract val accent: Palette
     }
     abstract class State {
-        abstract val danger: Color
-        abstract val dangerHovered: Color
-        abstract val dangerPressed: Color
-        abstract val dangerDisabled: Color
-
-        abstract val warning: Color
-        abstract val warningHovered: Color
-        abstract val warningPressed: Color
-        abstract val warningDisabled: Color
-
-        abstract val success: Color
-        abstract val successHovered: Color
-        abstract val successPressed: Color
-        abstract val successDisabled: Color
+        abstract val danger: Palette
+        abstract val warning: Palette
+        abstract val success: Palette
     }
     abstract class Component {
-        abstract val bg: Color
-        abstract val bgHovered: Color
-        abstract val bgPressed: Color
+        abstract val bg: Palette
         abstract val bgDeselected: Color
-        abstract val bgDisabled: Color
     }
     abstract class Text {
-        abstract val primary: Color
-        abstract val primaryHovered: Color
-        abstract val primaryPressed: Color
-        abstract val primaryDisabled: Color
-
-        abstract val secondary: Color
-        abstract val secondaryHovered: Color
-        abstract val secondaryPressed: Color
-        abstract val secondaryDisabled: Color
+        abstract val primary: Palette
+        abstract val secondary: Palette
     }
+
+    /**
+     * # Colors.Palette
+     *
+     * A color palette represents a set of four colors in PolyUI representing the four key states that a component can have. They are used widely by [Properties][cc.polyfrost.polyui.property.Properties] for states of components.
+     *
+     * @since 0.20.0
+     */
+    open class Palette(open val normal: Color, open val hovered: Color, open val pressed: Color, open val disabled: Color)
 }

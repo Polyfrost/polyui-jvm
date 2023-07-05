@@ -120,6 +120,9 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
         @JvmField
         val TRANSPARENT = rgba(0f, 0f, 0f, 0f)
 
+        @JvmField
+        val TRANSPARENT_PALETTE = Colors.Palette(TRANSPARENT, TRANSPARENT, TRANSPARENT, TRANSPARENT)
+
         /**
          * Turn the given hex string into a color.
          *

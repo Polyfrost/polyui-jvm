@@ -69,10 +69,21 @@ fun getResourceStreamNullable(resourcePath: String): InputStream? {
 }
 
 fun InputStream.toByteBuffer(): ByteBuffer {
-    val bytes = this.readBytes()
-    this.close()
+    val bytes = this.toByteArray()
     return ByteBuffer.allocateDirect(bytes.size)
         .order(ByteOrder.nativeOrder())
         .put(bytes)
         .also { it.flip() }
+}
+
+/**
+ * Converts the InputStream into a byte array and close it.
+ *
+ * @return The byte array of the InputStream.
+ */
+@Suppress("NOTHING_TO_INLINE")
+inline fun InputStream.toByteArray(): ByteArray {
+    val bytes = this.readBytes()
+    this.close()
+    return bytes
 }

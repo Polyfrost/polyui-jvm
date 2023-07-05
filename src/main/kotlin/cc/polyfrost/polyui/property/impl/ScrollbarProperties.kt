@@ -22,16 +22,19 @@
 package cc.polyfrost.polyui.property.impl
 
 import cc.polyfrost.polyui.animate.Animations
-import cc.polyfrost.polyui.color.Color
+import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.unit.seconds
 import cc.polyfrost.polyui.utils.radii
 import cc.polyfrost.polyui.utils.rgba
 
 open class ScrollbarProperties : DefaultBlockProperties() {
-    override val color: Color = rgba(0.5f, 0.5f, 0.5f, 0.5f)
-    override val hoverColor = rgba(0.5f, 0.5f, 0.5f, 0.75f)
+    override val palette = Colors.Palette(
+        rgba(0.5f, 0.5f, 0.5f, 0.5f),
+        rgba(0.5f, 0.5f, 0.5f, 0.75f),
+        rgba(0.5f, 0.5f, 0.5f, 0.8f),
+        rgba(0.5f, 0.5f, 0.5f, 0.2f)
+    )
     override val cornerRadii: FloatArray = 2f.radii()
-    override val pressedColor = rgba(0.5f, 0.5f, 0.5f, 0.8f)
     open val padding = 2f
     open val thickness = 4f
     open val showAnim: Animations? = Animations.EaseOutExpo

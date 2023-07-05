@@ -26,6 +26,7 @@ import cc.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
+import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.property.PropertyManager
 import cc.polyfrost.polyui.unit.*
@@ -50,8 +51,8 @@ class FlexLayout @JvmOverloads constructor(
     at: Point<Unit>,
     size: Size<Unit>? = null,
     wrap: Unit? = null,
-    onAdded: (Drawable.() -> kotlin.Unit)? = null,
-    onRemoved: (Drawable.() -> kotlin.Unit)? = null,
+    onAdded: (Drawable.(Events.Added) -> kotlin.Unit)? = null,
+    onRemoved: (Drawable.(Events.Removed) -> kotlin.Unit)? = null,
     propertyManager: PropertyManager? = null,
     private val flexDirection: Direction = Direction.Row,
     wrapDirection: Wrap = Wrap.Wrap,

@@ -39,8 +39,8 @@ import kotlin.math.max
 class SwitchingLayout(
     at: Point<Unit>,
     size: Size<Unit>? = null,
-    onAdded: (Drawable.() -> kotlin.Unit)? = null,
-    onRemoved: (Drawable.() -> kotlin.Unit)? = null,
+    onAdded: (Drawable.(Events.Added) -> kotlin.Unit)? = null,
+    onRemoved: (Drawable.(Events.Removed) -> kotlin.Unit)? = null,
     propertyManager: PropertyManager? = null,
     val transition: Transitions?,
     val transitionDuration: Long = 1L.seconds,
@@ -136,7 +136,7 @@ class SwitchingLayout(
 
     override fun debugRender() {
         renderer.hollowRect(x, y, width, height, colors.page.border20, 2f)
-        renderer.text(Renderer.DefaultFont, x + 1f, y + 1f, simpleName, colors.text.primary, 10f)
+        renderer.text(Renderer.DefaultFont, x + 1f, y + 1f, simpleName, colors.text.primary.normal, 10f)
     }
 
 //    override fun reRenderIfNecessary() {
@@ -175,7 +175,7 @@ class SwitchingLayout(
             }
             acceptsInput = false
         }
-        current?.onRemoved?.invoke(current!!)
+        current?.onRemoved?.invoke(current!!, Events.Removed)
 
         layout.acceptsInput = true
         layout.onAllLayouts {
@@ -184,7 +184,7 @@ class SwitchingLayout(
             }
             acceptsInput = true
         }
-        layout.onAdded?.invoke(layout)
+        layout.onAdded?.invoke(layout, Events.Added)
         needsRedraw = true
         if (transition == null) {
             this.current = layout
