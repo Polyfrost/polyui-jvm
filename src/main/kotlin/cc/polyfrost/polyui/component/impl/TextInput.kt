@@ -134,6 +134,11 @@ open class TextInput(
         }
         if (event is FocusedEvents.KeyTyped) {
             if (event.mods < 2) {
+                if (caret != select) {
+                    txt = txt.replace(selection, "")
+                    caret = if (select > caret) caret else select
+                    clearSelection()
+                }
                 txt = txt.substring(0, caret) + event.key + txt.substring(caret)
                 caret++
             } else if (event.hasModifier(KeyModifiers.LCONTROL) || event.hasModifier(KeyModifiers.RCONTROL)) {

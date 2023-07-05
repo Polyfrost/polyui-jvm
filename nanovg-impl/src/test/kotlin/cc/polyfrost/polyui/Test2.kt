@@ -33,8 +33,8 @@ import cc.polyfrost.polyui.layout.impl.FlexLayout
 import cc.polyfrost.polyui.layout.impl.PixelLayout
 import cc.polyfrost.polyui.property.PropertyManager
 import cc.polyfrost.polyui.property.State
-import cc.polyfrost.polyui.property.impl.BackgroundBlockProperties
-import cc.polyfrost.polyui.property.impl.PrimaryBlockProperties
+import cc.polyfrost.polyui.property.impl.BackgroundProperties
+import cc.polyfrost.polyui.property.impl.BrandBlockProperties
 import cc.polyfrost.polyui.property.impl.StateBlockProperties
 import cc.polyfrost.polyui.property.impl.TextProperties
 import cc.polyfrost.polyui.renderer.data.Font
@@ -50,7 +50,7 @@ val moon = PolyImage("moon.svg")
 val sun = PolyImage("sun.svg")
 
 fun main() {
-    // todo dropdown, implement designs for textbox etc
+    // todo implement designs for textbox etc
 
     val window = GLWindow("Test", 800, 500)
 
@@ -100,7 +100,7 @@ fun block() = Block(
 )
 
 fun prop() = when (Random.Default.nextInt(4)) {
-    0 -> PrimaryBlockProperties(4f.radii())
+    0 -> BrandBlockProperties(4f.radii())
     1 -> StateBlockProperties(State.Success, 4f.radii())
     2 -> StateBlockProperties(State.Warning, 4f.radii())
     else -> StateBlockProperties(State.Danger, 4f.radii())
@@ -113,7 +113,7 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
         at = at,
         drawables = drawables(
             Block(
-                properties = BackgroundBlockProperties(),
+                properties = BackgroundProperties(),
                 at = origin,
                 size = 400.px * 500.px,
                 acceptInput = false
@@ -148,9 +148,11 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                 leftIcon = PolyImage("face-wink.svg"),
                 at = 68.px * 111.px
             ),
-//            Dropdown( todo
-//                at = 24.px * 159.px
-//            ),
+            Dropdown(
+                at = 24.px * 159.px,
+                size = 352.px * 32.px,
+                entries = Dropdown.from(SlideDirection.values())
+            ),
             TextInput(
                 at = 24.px * 203.px,
                 size = 352.px * 32.px
@@ -190,7 +192,7 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                 )
             ),
             Block(
-                properties = PrimaryBlockProperties(),
+                properties = BrandBlockProperties(),
                 at = 24.px * 430.px,
                 size = 85.px * 32.px
             ),

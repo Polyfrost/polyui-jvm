@@ -35,7 +35,7 @@ import cc.polyfrost.polyui.component.impl.Block
 import cc.polyfrost.polyui.component.impl.Scrollbar
 import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.property.PropertyManager
-import cc.polyfrost.polyui.property.impl.BackgroundBlockProperties
+import cc.polyfrost.polyui.property.impl.BackgroundProperties
 import cc.polyfrost.polyui.property.impl.BlockProperties
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.data.Framebuffer
@@ -90,6 +90,12 @@ abstract class Layout(
     /** list of child layouts in this layout */
     val children = drawables.filterIsInstance<Layout>() as ArrayList
         get() = if (enabled) field else EMPTY_CHLDLIST
+
+    override var acceptsInput: Boolean
+        get() = enabled && super.acceptsInput
+        set(value) {
+            super.acceptsInput = value
+        }
 
     /**
      * Weather this layout needs redrawing.
@@ -214,7 +220,7 @@ abstract class Layout(
      * This function will rasterize the layout to its framebuffer, if it has one.
      * @since 0.18.0
      */
-    protected fun rasterize() {
+    protected open fun rasterize() {
         if (fbo != null && needsRedraw && fboTracker < 2) {
             fboTracker++
             renderer.bindFramebuffer(fbo)
@@ -290,7 +296,7 @@ abstract class Layout(
      * @param index The index of the layout to retrieve.
      * @param T The type of layout to retrieve. Must be a subtype of Layout.
      * @return The requested layout at the specified index.
-     * @throws IndexOutOfBoundsException if the index is out of range (index < 0 || index >= children.size).
+     * @throws IndexOutOfBoundsException if the index is out of range
      * @throws ClassCastException if the layout at the specified index is not of type T.
      * @since 0.19.2
      */
@@ -473,6 +479,11 @@ abstract class Layout(
 
     override fun rescale(scaleX: Float, scaleY: Float) {
         super.rescale(scaleX, scaleY)
+        // asm: enable temporarily so the children and component fields actually exist
+        val wasEnabled = enabled
+        if (!wasEnabled) {
+            enabled = true
+        }
         if (rawResize) {
             ox *= scaleX
             oy *= scaleY
@@ -490,6 +501,7 @@ abstract class Layout(
             children.fastEach { it.rescale(1f, 1f) }
             components.fastEach { it.rescale(1f, 1f) }
         }
+        enabled = wasEnabled
     }
 
     /** render this layout's components, and remove them if they are ready to be removed. */
@@ -529,6 +541,8 @@ abstract class Layout(
 
     override fun debugRender() {
         if (!enabled) return
+        val width = visibleSize?.width ?: this.width
+        val height = visibleSize?.height ?: this.height
         renderer.hollowRect(trueX, trueY, width, height, colors.page.border20, 2f)
         renderer.text(Renderer.DefaultFont, trueX + 1f, trueY + 1f, simpleName, colors.text.primary, 10f)
         children.fastEach { it.debugRender() }
@@ -613,6 +627,7 @@ abstract class Layout(
      */
     fun scrolling(size: Size<Unit>, withScrollbars: Boolean = true): Layout {
         require(visibleSize == null) { "${this.simpleName} is already scrolling!" }
+        require(initStage != INIT_SETUP) { "${this.simpleName} can only be scrollable()'d when it is being setup!" }
         this.acceptsInput = true
         val anims = MutablePair<Animation?, Animation?>(null, null)
         var ofsX = ox
@@ -739,7 +754,7 @@ abstract class Layout(
         if (!drags) {
             this.components.add(
                 0,
-                Block(BackgroundBlockProperties(cornerRadii), origin, fill, acceptInput = false, rawResize = true).also {
+                Block(BackgroundProperties(cornerRadii), origin, fill, acceptInput = false, rawResize = true).also {
                     it.simpleName = "Background" + it.simpleName
                 }
             )
@@ -751,7 +766,7 @@ abstract class Layout(
             components.add(
                 0,
                 Block(
-                    properties = if (transparent) BlockProperties(Color.TRANSPARENT) else BackgroundBlockProperties(cornerRadii),
+                    properties = if (transparent) BlockProperties(Color.TRANSPARENT) else BackgroundProperties(cornerRadii),
                     origin,
                     fill,
                     true,

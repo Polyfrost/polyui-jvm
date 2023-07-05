@@ -55,7 +55,7 @@ abstract class Drawable(
      * @since 0.19.0
      */
     val rawResize: Boolean = false,
-    var acceptsInput: Boolean = true
+    open var acceptsInput: Boolean = true
 ) : Cloneable {
     val eventHandlers = HashMap<Events, ((Events, Drawable) -> Boolean)>()
 

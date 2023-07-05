@@ -115,7 +115,7 @@ class GridLayout @JvmOverloads constructor(
                         atX += cellw + gap.mainGap.px
                     }
                     width = max(width, atX)
-                    atX = at.x
+                    atX = 0f
                     atY += cellh + gap.crossGap.px
                 }
                 height = atY
@@ -125,14 +125,14 @@ class GridLayout @JvmOverloads constructor(
                 grid.forEachIndexed { i, row ->
                     val cellw = row.maxOfOrNull { it?.width ?: 0f } ?: 0f
                     val cellh = row.maxOfOrNull { it?.height ?: 0f } ?: 0f
-                    if (cellw == 0f) throw Exception("Row $i has no sized items in it. Please specify at least one's width.")
-                    if (cellh == 0f) throw Exception("Row $i has no sized items in it. Please specify at least one's height.")
+                    if (cellw == 0f) throw Exception("Row $i has no sized items in it. Please specify at least one width.")
+                    if (cellh == 0f) throw Exception("Row $i has no sized items in it. Please specify at least one height.")
                     row.forEach {
                         if (it != null) placeItem(atX, atY, cellw, cellh, it)
                         atX += cellw + gap.mainGap.px
                     }
                     width = max(width, atX)
-                    atX = at.x
+                    atX = 0f
                     atY += cellh + gap.crossGap.px
                 }
                 height = atY
@@ -142,8 +142,8 @@ class GridLayout @JvmOverloads constructor(
                 getColumns().forEachIndexed { i, col ->
                     val cellw = col.maxOfOrNull { it?.width ?: 0f } ?: 0f
                     val cellh = col.maxOfOrNull { it?.height ?: 0f } ?: 0f
-                    if (cellw == 0f) throw Exception("Column $i has no sized items in it. Please specify at least one's sized width.")
-                    if (cellh == 0f) throw Exception("Column $i has no sized items in it. Please specify at least one's sized height.")
+                    if (cellw == 0f) throw Exception("Column $i has no sized items in it. Please specify at least one width.")
+                    if (cellh == 0f) throw Exception("Column $i has no sized items in it. Please specify at least one height.")
                     col.forEach {
                         if (it != null) placeItem(atX, atY, cellw, cellh, it)
                         atY += cellh + gap.mainGap.px

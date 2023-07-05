@@ -101,20 +101,19 @@ inline fun <L, E> L.fastEachIndexedReversed(f: (Int, E) -> Unit) where L : List<
  *
  * @see [fastEach]
  * @see [fastEachIndexedReversed]
- * @return false if the list is empty, true otherwise.
  */
-inline fun <L, E> L.fastRemoveIf(f: (E) -> Boolean): Boolean where L : MutableList<E>, L : RandomAccess {
-    if (this.size == 0) return false
+inline fun <L, E> L.fastRemoveIf(f: (E) -> Boolean) where L : MutableList<E>, L : RandomAccess {
+    if (this.size == 0) return
     var max = this.size
     var i = 0
     while (i < max) {
         if (f(this[i])) {
             this.removeAt(i)
             max--
+            i--
         }
         i++
     }
-    return true
 }
 
 /** Returns `true` if **at least one element** matches the given [predicate][f]. */

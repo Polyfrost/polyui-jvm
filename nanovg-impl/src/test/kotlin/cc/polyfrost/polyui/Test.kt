@@ -57,7 +57,7 @@ fun main() {
     val window = if (!useNoOp) GLWindow("Test", 800, 800) else NoOpWindow("Test", 800, 800)
     val things = Array<Drawable>(50) { // creates 50 rectangles with random sizes
         Block(
-            properties = Properties.primaryProperties,
+            properties = Properties.brandProperties,
             at = flex(),
             size = Size((Random.Default.nextFloat() * 40f + 40f).px, (Random.Default.nextFloat() * 40f + 40f).px),
             events = events(
@@ -129,7 +129,7 @@ fun main() {
                                 )
                             ),
                             Block(
-                                Properties.primaryProperties,
+                                Properties.brandProperties,
                                 at = origin,
                                 size = 240.px * 240.px
                             )

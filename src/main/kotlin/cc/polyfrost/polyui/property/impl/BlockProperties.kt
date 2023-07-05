@@ -50,7 +50,7 @@ open class BlockProperties @JvmOverloads constructor(
     open val hoverAnimationDuration: Long = 0.5.seconds
 }
 
-open class BackgroundBlockProperties @JvmOverloads constructor(
+open class BackgroundProperties @JvmOverloads constructor(
     cornerRadii: FloatArray = 0f.radii()
 ) : BlockProperties(null, cornerRadii) {
     override val color: Color get() = colors.page.bg
@@ -86,7 +86,7 @@ open class DefaultBlockProperties @JvmOverloads constructor(
     }
 }
 
-open class PrimaryBlockProperties @JvmOverloads constructor(
+open class BrandBlockProperties @JvmOverloads constructor(
     cornerRadii: FloatArray = 0f.radii()
 ) : DefaultBlockProperties(cornerRadii) {
     override val color: Color get() = colors.brand.fg

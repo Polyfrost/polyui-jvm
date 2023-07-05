@@ -21,7 +21,7 @@
 
 package cc.polyfrost.polyui.layout.impl
 
-import cc.polyfrost.polyui.PolyUI
+import cc.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
 import cc.polyfrost.polyui.animate.Transition
 import cc.polyfrost.polyui.animate.Transitions
 import cc.polyfrost.polyui.component.Drawable
@@ -54,7 +54,6 @@ class SwitchingLayout(
     private var current: Layout? = null
     private var next: Layout? = null
     private var autoSized = false
-    private var cinit = false
 
     // children still can have framebuffers, but the layout itself doesn't
     override var refuseFramebuffer = true
@@ -138,11 +137,6 @@ class SwitchingLayout(
     override fun debugRender() {
         renderer.hollowRect(x, y, width, height, colors.page.border20, 2f)
         renderer.text(Renderer.DefaultFont, x + 1f, y + 1f, simpleName, colors.text.primary, 10f)
-    }
-
-    override fun setup(renderer: Renderer, polyui: PolyUI) {
-        super.setup(renderer, polyui)
-        cinit = true
     }
 
 //    override fun reRenderIfNecessary() {
@@ -233,7 +227,7 @@ class SwitchingLayout(
 
     private fun init(layout: Layout): Layout {
         layout.layout = this
-        if (cinit) {
+        if (initStage != INIT_NOT_STARTED) {
             layout.setup(renderer, polyui)
         }
         return layout

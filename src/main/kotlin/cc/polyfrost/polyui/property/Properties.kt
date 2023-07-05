@@ -87,7 +87,7 @@ abstract class Properties : Cloneable {
 
     companion object {
         @JvmField
-        val primaryProperties = PrimaryBlockProperties()
+        val brandProperties = BrandBlockProperties()
 
         @JvmField
         val successProperties = StateBlockProperties(State.Success)
