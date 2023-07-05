@@ -29,10 +29,13 @@ import cc.polyfrost.polyui.unit.origin
 class Scrollbar(private val horizontal: Boolean) : Block(null, origin, origin, false, true) {
     override val properties
         get() = super.properties as ScrollbarProperties
-    private var thickness by if (horizontal) ::height else ::width
-    private var length by if (horizontal) ::width else ::height
+    private var thickness
+        get() = if (horizontal) height else width
+        set(value) = if (horizontal) height = value else width = value
+    private var length
+        get() = if (horizontal) width else height
+        set(value) = if (horizontal) width = value else height = value
 
-    // no delegates on lateinit :(
     private val scrollingSize get() = if (horizontal) layout.visibleSize!!.width else layout.visibleSize!!.height
     private val contentSize get() = if (horizontal) layout.width else layout.height
     private var scrollPercent: Float

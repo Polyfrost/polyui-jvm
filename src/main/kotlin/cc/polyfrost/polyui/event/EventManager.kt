@@ -57,6 +57,11 @@ class EventManager(private val polyUI: PolyUI) {
     /** tracker for the combo */
     private var clickedButton: Int = 0
 
+    /**
+     * acts as a BooleanRef to avoid malloc() during event dispatch
+     */
+    private var cancelled = false
+
     /** weather or not the left button/primary click is DOWN (aka repeating) */
     var mouseDown = false
         private set
@@ -84,9 +89,8 @@ class EventManager(private val polyUI: PolyUI) {
      * @since 0.18.5
      */
     @ApiStatus.Internal
-    fun recalculateMousePos() {
-        setMousePosAndUpdate(mouseX, mouseY)
-    }
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun recalculateMousePos() = setMousePosAndUpdate(mouseX, mouseY)
 
     /**
      * add a modifier to the current keyModifiers.
@@ -108,7 +112,7 @@ class EventManager(private val polyUI: PolyUI) {
     fun setMousePosAndUpdate(x: Float, y: Float) {
         mouseX = x
         mouseY = y
-        var cancelled = false
+        cancelled = false
         if (!mouseDown) {
             onApplicableDrawablesUnsafe(x, y) loop@{
                 // e: return is not allowed here
@@ -137,7 +141,7 @@ class EventManager(private val polyUI: PolyUI) {
         }
     }
 
-    private fun onApplicableLayouts(x: Float, y: Float, func: Layout.() -> Unit) {
+    private inline fun onApplicableLayouts(x: Float, y: Float, crossinline func: Layout.() -> Unit) {
         polyUI.master.onAllLayouts(true) {
             if (isInside(x, y)) {
                 func(this)
@@ -145,18 +149,18 @@ class EventManager(private val polyUI: PolyUI) {
         }
     }
 
-    private fun onApplicableDrawables(x: Float, y: Float, func: Drawable.() -> Unit) {
-        return onApplicableLayouts(x, y) {
+    private inline fun onApplicableDrawables(x: Float, y: Float, crossinline func: Drawable.() -> Unit) {
+        onApplicableLayouts(x, y) {
             components.fastEachReversed { if (it.isInside(x, y)) func(it) }
-            if (acceptsInput) func()
+            if (acceptsInput) func(this)
         }
     }
 
     /** This method doesn't check if the drawable is inside the mouse, this is unsafe and should only be used in [setMousePosAndUpdate] */
-    private fun onApplicableDrawablesUnsafe(x: Float, y: Float, func: Drawable.() -> Unit) {
-        return onApplicableLayouts(x, y) {
-            components.fastEachReversed(func)
-            if (acceptsInput) func()
+    private inline fun onApplicableDrawablesUnsafe(x: Float, y: Float, crossinline func: Drawable.() -> Unit) {
+        onApplicableLayouts(x, y) {
+            components.fastEachReversed { func(it) }
+            if (acceptsInput) func(this)
         }
     }
 
@@ -234,7 +238,7 @@ class EventManager(private val polyUI: PolyUI) {
 
     private fun dispatch(event: Events) {
         if (polyUI.keyBinder.accept(event)) return
-        var cancelled = false
+        cancelled = false
         onApplicableDrawables(mouseX, mouseY) loop@{
             if (mouseOver) {
                 if (cancelled) return@loop

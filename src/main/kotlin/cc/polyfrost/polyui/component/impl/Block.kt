@@ -63,6 +63,6 @@ open class Block @JvmOverloads constructor(
 
     override fun onColorsChanged(colors: Colors) {
         super.onColorsChanged(colors)
-        outlineColor = properties.outlineColor.toMutable()
+        outlineColor.recolor(properties.outlineColor)
     }
 }

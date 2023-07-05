@@ -58,11 +58,13 @@ open class Image @JvmOverloads constructor(
     }
 
     protected open fun updateColor() {
-        color = if (image.type == PolyImage.Type.SVG) {
-            properties.svgPalette.normal.toMutable()
-        } else {
-            properties.palette.normal.toMutable()
-        }
+        color.recolor(
+            if (image.type == PolyImage.Type.SVG) {
+                properties.svgPalette.normal
+            } else {
+                properties.palette.normal
+            }
+        )
     }
 
     override fun onColorsChanged(colors: Colors) {

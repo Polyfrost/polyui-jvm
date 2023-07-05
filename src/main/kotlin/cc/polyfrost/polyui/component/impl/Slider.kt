@@ -97,8 +97,8 @@ class Slider(
 
     override fun onColorsChanged(colors: Colors) {
         super.onColorsChanged(colors)
-        barColor = properties.barColor.normal.toMutable()
-        usedBarColor = properties.usedBarColor.normal.toMutable()
+        barColor.recolor(properties.barColor.normal)
+        usedBarColor.recolor(properties.usedBarColor.normal)
     }
 
     override fun rescale(scaleX: Float, scaleY: Float) {
