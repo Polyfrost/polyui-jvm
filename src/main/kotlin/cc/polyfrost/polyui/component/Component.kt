@@ -279,4 +279,8 @@ abstract class Component @JvmOverloads constructor(
         }
         return this
     }
+
+    fun wantRedraw() {
+        layout.needsRedraw = true
+    }
 }

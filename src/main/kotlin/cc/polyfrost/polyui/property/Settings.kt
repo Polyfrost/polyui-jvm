@@ -47,7 +47,7 @@ class Settings(private val renderer: Renderer) {
     var unfocusedFPS = 10
 
     var useAntialiasing = true
-    var enableVSync = false
+    var enableVSync = true
 
     /** @see cc.polyfrost.polyui.input.PolyTranslator */
     var defaultLocale = "en_default"

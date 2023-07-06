@@ -375,8 +375,8 @@ abstract class Layout(
         }
         if (initStage > INIT_NOT_STARTED && drawable.initStage == INIT_NOT_STARTED) drawable.setup(renderer, polyui)
         if (initStage == INIT_COMPLETE) {
-            if (drawable.initStage == INIT_SETUP) drawable.onParentInitComplete()
             drawable.calculateBounds()
+            drawable.onParentInitComplete()
             drawable.accept(Events.Added)
         }
         needsRedraw = true
@@ -487,6 +487,8 @@ abstract class Layout(
     override fun onInitComplete() {
         super.onInitComplete()
         initCompleteHooks.fastEach { it(this) }
+        initCompleteHooks.clear()
+        initCompleteHooks.trimToSize()
         components.fastEach { it.onParentInitComplete() }
         children.fastEach { it.onParentInitComplete() }
     }
@@ -600,12 +602,17 @@ abstract class Layout(
     fun changeColors(colors: Colors) = onColorsChanged(colors)
 
     override fun onColorsChanged(colors: Colors) {
+        val wasEnabled = enabled
+        if (!wasEnabled) {
+            enabled = true
+        }
         this.colors = colors
         for ((_, p) in propertyManager.properties) {
             p.colors = colors
         }
         components.fastEach { it.onColorsChanged(colors) }
         children.fastEach { it.onColorsChanged(colors) }
+        enabled = wasEnabled
     }
 
     final override fun reset() {
@@ -711,8 +718,8 @@ abstract class Layout(
                 } else {
                     anim?.update(delta)?.also {
                         x = ofsX + anim.value
-                        needsRedraw = true
                     }
+                    needsRedraw = true
                     polyui.eventManager.recalculateMousePos()
                 }
                 if (anim1?.isFinished == true) {
@@ -720,8 +727,8 @@ abstract class Layout(
                 } else {
                     anim1?.update(delta)?.also {
                         y = ofsY + anim1.value
-                        needsRedraw = true
                     }
+                    needsRedraw = true
                     polyui.eventManager.recalculateMousePos()
                 }
             }
@@ -736,8 +743,8 @@ abstract class Layout(
             ofsX = x
             ofsY = y
             if (withScrollbars) {
-                polyui.every(50.milliseconds) {
-                    val d = 50_000_000L
+                polyui.every(0L) {
+                    val d = polyui.delta
                     verticalBar!!.tryHide(d)
                     horizontalBar!!.tryHide(d)
                 }

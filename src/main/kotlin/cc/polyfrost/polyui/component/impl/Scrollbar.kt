@@ -66,10 +66,8 @@ class Scrollbar(private val horizontal: Boolean) : Block(null, origin, origin, f
         if (offset?.isFinished == false) wantRedraw()
         if (horizontal) {
             x = (layout.width - length) * scrollPercent
-            y = layout.visibleSize!!.height - thickness - (layout.trueY - layout.oy) - properties.padding + (offset?.value ?: 0f)
         } else {
             y = (layout.height - length) * scrollPercent
-            x = layout.visibleSize!!.width - thickness - (layout.trueX - layout.ox) - properties.padding + (offset?.value ?: 0f)
         }
         if (dragging) {
             if (!polyui.mouseDown) {
@@ -102,6 +100,11 @@ class Scrollbar(private val horizontal: Boolean) : Block(null, origin, origin, f
             }
         } else if (offset!!.value == 0f) {
             offset = null
+        }
+        if(horizontal) {
+            y = layout.visibleSize!!.height - thickness - (layout.trueY - layout.oy) - properties.padding + (offset?.value ?: 0f)
+        } else {
+            x = layout.visibleSize!!.width - thickness - (layout.trueX - layout.ox) - properties.padding + (offset?.value ?: 0f)
         }
     }
 

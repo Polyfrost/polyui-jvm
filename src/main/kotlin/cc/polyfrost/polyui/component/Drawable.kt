@@ -206,7 +206,7 @@ abstract class Drawable(
         operations.fastRemoveIf { (it, func) ->
             it.update(deltaTimeNanos)
             return@fastRemoveIf if (!it.isFinished) {
-                wantRedraw()
+                layout?.needsRedraw = true
                 it.apply(renderer)
                 false
             } else {
@@ -424,7 +424,7 @@ abstract class Drawable(
 
     /** Add a [DrawableOp] to this drawable. */
     open fun addOperation(drawableOp: DrawableOp, onFinish: (Drawable.() -> kotlin.Unit)? = null) {
-        wantRedraw()
+        layout?.needsRedraw = true
         operations.add(drawableOp to onFinish)
     }
 
@@ -642,9 +642,5 @@ abstract class Drawable(
     ) {
         doDynamicSize(toSize)
         addOperation(DrawableOp.Resize(toSize, this, animation, durationNanos), onFinish)
-    }
-
-    fun wantRedraw() {
-        layout?.needsRedraw = true
     }
 }

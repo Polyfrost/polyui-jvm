@@ -158,11 +158,6 @@ class FlexLayout @JvmOverloads constructor(
         components.shuffle()
         children.shuffle()
         calculateBounds()
-        if (fbo != null) {
-            renderer.deleteFramebuffer(fbo)
-            fbo = renderer.createFramebuffer(width, height)
-        }
-        needsRedraw = true
     }
 
     override fun addComponent(drawable: Drawable) {
@@ -285,6 +280,11 @@ class FlexLayout @JvmOverloads constructor(
             initStage = INIT_COMPLETE
             onInitComplete()
         }
+        if (fbo != null) {
+            renderer.deleteFramebuffer(fbo)
+            fbo = renderer.createFramebuffer(width, height)
+        }
+        needsRedraw = true
     }
 
     fun trySetMainSize(new: Float) {

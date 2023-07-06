@@ -321,10 +321,6 @@ class PolyUI @JvmOverloads constructor(
         if (settings.debug) LOGGER.info("resize: {}x{}", newWidth, newHeight)
 
         master.calculateBounds()
-        if (settings.masterIsFramebuffer) {
-            renderer.deleteFramebuffer(master.fbo)
-            master.fbo = renderer.createFramebuffer(newWidth.toFloat(), newHeight.toFloat())
-        }
         master.rescale(
             newWidth.toFloat() / this.width,
             newHeight.toFloat() / this.height
