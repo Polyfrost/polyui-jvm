@@ -19,40 +19,22 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cc.polyfrost.polyui.unit
+package cc.polyfrost.polyui.property.impl
 
-enum class SlideDirection {
-    FromLeft, FromRight, FromTop, FromBottom
-}
+import cc.polyfrost.polyui.unit.Unit
+import cc.polyfrost.polyui.unit.px
+import cc.polyfrost.polyui.utils.rgba
 
-/** enum representing the type of animation to be used. */
-sealed class Transitions {
-    data object Fade : Transitions()
-    data class Slide(val direction: SlideDirection) : Transitions()
-}
+open class SwitchProperties : StatedProperties() {
+    @Deprecated("Switches do not support corner radii in this way. As they are round, the corner radii is inferred based on the size. See bitPadding for more info.", ReplaceWith("bitPadding"))
+    override val cornerRadii: FloatArray
+        get() = super.cornerRadii
 
-enum class TextAlign {
-    Left, Right, Center
-}
+    /**
+     * This is the padding between the switch background and the switch 'bit' (the bit that moves)
+     */
+    open val bitPadding: Unit = 3.px
 
-enum class Direction {
-    Horizontal, Vertical
-}
-
-enum class Side {
-    Left, Right
-}
-
-/**
- * Represents a fixed-size gap between rows or columns, used in flex and grid layouts.
- *
- * @see [cc.polyfrost.polyui.layout.impl.FlexLayout]
- * @see [cc.polyfrost.polyui.layout.impl.GridLayout]
- */
-data class Gap(val mainGap: Unit.Pixel, val crossGap: Unit.Pixel) {
-
-    companion object {
-        @JvmField
-        val Default = Gap(5.px, 5.px)
-    }
+    // create a cool white
+    open val bitColor = rgba(233, 236, 239, 1f)
 }

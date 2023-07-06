@@ -19,40 +19,19 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cc.polyfrost.polyui.unit
+package cc.polyfrost.polyui.property.impl
 
-enum class SlideDirection {
-    FromLeft, FromRight, FromTop, FromBottom
-}
+import cc.polyfrost.polyui.animate.Animations
+import cc.polyfrost.polyui.color.Color
+import cc.polyfrost.polyui.property.Properties
+import cc.polyfrost.polyui.unit.SlideDirection
+import cc.polyfrost.polyui.unit.Transitions
+import cc.polyfrost.polyui.unit.seconds
 
-/** enum representing the type of animation to be used. */
-sealed class Transitions {
-    data object Fade : Transitions()
-    data class Slide(val direction: SlideDirection) : Transitions()
-}
+open class SwitchingLayoutProperties : Properties() {
+    final override val palette = Color.TRANSPARENT_PALETTE
 
-enum class TextAlign {
-    Left, Right, Center
-}
-
-enum class Direction {
-    Horizontal, Vertical
-}
-
-enum class Side {
-    Left, Right
-}
-
-/**
- * Represents a fixed-size gap between rows or columns, used in flex and grid layouts.
- *
- * @see [cc.polyfrost.polyui.layout.impl.FlexLayout]
- * @see [cc.polyfrost.polyui.layout.impl.GridLayout]
- */
-data class Gap(val mainGap: Unit.Pixel, val crossGap: Unit.Pixel) {
-
-    companion object {
-        @JvmField
-        val Default = Gap(5.px, 5.px)
-    }
+    open val transition: Transitions? = Transitions.Slide(SlideDirection.FromRight)
+    open val transitionCurve: Animations? = Animations.EaseOutQuad
+    open val transitionDuration = 1.seconds
 }

@@ -79,6 +79,7 @@ class NoOpRenderer(width: Float, height: Float) : Renderer(width, height) {
     ) {
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun textBounds(font: Font, text: String, fontSize: Float, textAlign: TextAlign): Vec2<Unit.Pixel> {
         return origin as Vec2<Unit.Pixel>
     }

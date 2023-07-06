@@ -448,7 +448,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
                     } else {
                         throw ExceptionInInitializerError("Failed to get font: ${font.resourceName}")
                     }
-            val ft = nvgCreateFontMem(vg, font.name, data, 0)
+            val ft = nvgCreateFontMem(vg, font.name, data, false)
             NVGFont(ft, data).also { fonts[font] = it }
         }
     }

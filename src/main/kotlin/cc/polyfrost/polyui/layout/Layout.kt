@@ -80,6 +80,7 @@ abstract class Layout(
             this.propertyManager = propertyManager
         }
     }
+
     lateinit var colors: Colors
         internal set
 
@@ -324,7 +325,9 @@ abstract class Layout(
     fun <T : Drawable?> getOrNull(simpleName: String): T? { // <T : Drawable?> as it removes useless null checks (null cannot be cast to not-null type T)
         components.fastEach { if (it.simpleName == simpleName) return it as T }
         children.fastEach {
-            return if (it.simpleName == simpleName) { it as T } else {
+            return if (it.simpleName == simpleName) {
+                it as T
+            } else {
                 it.getOrNull(simpleName)
             }
         }
@@ -370,10 +373,10 @@ abstract class Layout(
                 throw Exception("Drawable $drawable is not a component or layout!")
             }
         }
-        if (initStage > INIT_NOT_STARTED) drawable.setup(renderer, polyui)
+        if (initStage > INIT_NOT_STARTED && drawable.initStage == INIT_NOT_STARTED) drawable.setup(renderer, polyui)
         if (initStage == INIT_COMPLETE) {
+            if (drawable.initStage == INIT_SETUP) drawable.onParentInitComplete()
             drawable.calculateBounds()
-            drawable.onParentInitComplete()
             drawable.accept(Events.Added)
         }
         needsRedraw = true
@@ -387,6 +390,7 @@ abstract class Layout(
      * This removal queue is used so that component can finish up any animations they're doing before being removed.
      */
     open fun removeComponent(drawable: Drawable) {
+        if (polyui.settings.debug) PolyUI.LOGGER.info("Preparing to removing drawable ${drawable.simpleName} from layout ${this.simpleName}")
         when (drawable) {
             is Component -> {
                 removeQueue.add(components[components.indexOf(drawable)])
@@ -432,7 +436,7 @@ abstract class Layout(
     @ApiStatus.Internal
     open fun removeComponentNow(drawable: Drawable?) {
         if (drawable == null) return
-        removeQueue.remove(drawable)
+        if (polyui.settings.debug) PolyUI.LOGGER.info("Removing drawable ${drawable.simpleName} from layout ${this.simpleName}")
         when (drawable) {
             is Component -> {
                 if (!components.remove(drawable)) {
@@ -516,7 +520,14 @@ abstract class Layout(
 
     /** render this layout's components, and remove them if they are ready to be removed. */
     override fun render() {
-        removeQueue.fastEach { if (it.canBeRemoved()) removeComponentNow(it) }
+        removeQueue.fastRemoveIf {
+            if (it.canBeRemoved()) {
+                removeComponentNow(it)
+                true
+            } else {
+                false
+            }
+        }
         val delta = polyui.delta
         needsRedraw = false
         preRender(delta)
@@ -597,8 +608,6 @@ abstract class Layout(
         children.fastEach { it.onColorsChanged(colors) }
     }
 
-    override fun canBeRemoved() = super.canBeRemoved() && !needsRedraw
-
     final override fun reset() {
         components.fastEach { it.reset() }
         children.fastEach { it.reset() }
@@ -637,7 +646,6 @@ abstract class Layout(
      */
     fun scrolling(size: Size<Unit>, withScrollbars: Boolean = true): Layout {
         require(visibleSize == null) { "${this.simpleName} is already scrolling!" }
-        require(initStage != INIT_SETUP) { "${this.simpleName} can only be scrollable()'d when it is being setup!" }
         this.acceptsInput = true
         val anims = MutablePair<Animation?, Animation?>(null, null)
         var ofsX = ox
@@ -722,7 +730,7 @@ abstract class Layout(
                 renderer.popScissor()
             }
         })
-        initCompleteHooks.add {
+        val f: Layout.() -> kotlin.Unit = {
             ox = trueX
             oy = trueY
             ofsX = x
@@ -734,6 +742,11 @@ abstract class Layout(
                     horizontalBar!!.tryHide(d)
                 }
             }
+        }
+        if (initStage == INIT_NOT_STARTED) {
+            initCompleteHooks.add(f)
+        } else {
+            f(this)
         }
         return this
     }

@@ -21,230 +21,178 @@
 
 package cc.polyfrost.polyui.layout.impl
 
+import cc.polyfrost.polyui.PolyUI
+import cc.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
-import cc.polyfrost.polyui.animate.Transition
-import cc.polyfrost.polyui.animate.Transitions
+import cc.polyfrost.polyui.PolyUI.Companion.INIT_SETUP
+import cc.polyfrost.polyui.animate.Animation
+import cc.polyfrost.polyui.color.Color
+import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
-import cc.polyfrost.polyui.event.Events
+import cc.polyfrost.polyui.component.DrawableOp
 import cc.polyfrost.polyui.layout.Layout
-import cc.polyfrost.polyui.property.PropertyManager
-import cc.polyfrost.polyui.renderer.Renderer
+import cc.polyfrost.polyui.property.impl.SwitchingLayoutProperties
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
-import cc.polyfrost.polyui.utils.fastEach
-import cc.polyfrost.polyui.utils.indexOfOrDie
-import kotlin.math.max
 
-/** a switching layout is a layout that can switch between layouts, with cool animations. */
+/**
+ * # SwitchingLayout
+ *
+ * A layout that is completely empty, but acts as a "handler", which moves layouts in and out of its position.
+ *
+ * @param size the visible size of this layout. If `null`, it will take the size of the first layout switched into this.
+ * @param makesScrolling if `true`, any layout that is switched into this will be able to scroll and not resized, otherwise, the layout will be resized to this size.
+ *
+ */
 class SwitchingLayout(
+    properties: SwitchingLayoutProperties? = null,
     at: Point<Unit>,
     size: Size<Unit>? = null,
-    onAdded: (Drawable.(Events.Added) -> kotlin.Unit)? = null,
-    onRemoved: (Drawable.(Events.Removed) -> kotlin.Unit)? = null,
-    propertyManager: PropertyManager? = null,
-    val transition: Transitions?,
-    val transitionDuration: Long = 1L.seconds,
-    val defaultIndex: Int = 0,
-    vararg layouts: Layout,
-    resizesChildren: Boolean = true
-) : PixelLayout(at, size, onAdded, onRemoved, propertyManager, true, false, resizesChildren) {
-    private var goingSwitchOp: Transition? = null
-    private var comingSwitchOp: Transition? = null
-    private var idx: Int = defaultIndex
-    private var current: Layout? = null
-    private var next: Layout? = null
-    private var autoSized = false
+    private val makesScrolling: Boolean = false
+) : Component(properties, at, size, false, false) {
+    // don't tell anyone it's actually a component ;)
+    private var old: Layout? = null
+    private var oldOwner: Layout? = null
+    private var cache = FloatArray(4)
+    private var cacheNew = FloatArray(4)
 
-    // children still can have framebuffers, but the layout itself doesn't
-    override var refuseFramebuffer = true
+    override val properties
+        get() = super.properties as SwitchingLayoutProperties
 
-    override var needsRedraw: Boolean
-        get() = current?.needsRedraw == true || goingSwitchOp != null
-        set(value) {
-            super.needsRedraw = value
+    /**
+     * Switches the given layout into this layout.
+     * @param layout the layout to switch into this.
+     */
+    @JvmName("switchLayout")
+    fun switch(layout: Layout) {
+        require(initStage == INIT_COMPLETE) { "Cannot switch layouts before initialization is complete!" }
+
+        if (layout.initStage == INIT_NOT_STARTED) {
+            layout.layout = this.layout
+            layout.setup(renderer, polyui)
+            layout.calculateBounds()
+            this.layout.addComponent(layout)
+        } else if (layout.initStage == INIT_SETUP) {
+            PolyUI.LOGGER.warn("[SwitchingLayout] received partially initialized layout: $layout, this is wierd")
+            layout.calculateBounds()
+            this.layout.addComponent(layout)
+        }
+        cacheNew.apply {
+            set(0, layout.x)
+            set(1, layout.y)
+            set(2, layout.width)
+            set(3, layout.height)
         }
 
-    init {
-        addLayouts(*layouts)
-    }
-
-    @Deprecated(
-        "this method should not be used on a SwitchingLayout, as the targeted layout will vary depending on the current layout, and may switch unexpectedly.",
-        replaceWith = ReplaceWith("targetLayout.addComponent(drawable)"),
-        DeprecationLevel.WARNING
-    )
-    override fun addComponent(drawable: Drawable) {
-        super.addComponent(drawable)
-    }
-
-    @Deprecated(
-        "this method should not be used on a SwitchingLayout, as the targeted layout will vary depending on the current layout, and may switch unexpectedly.",
-        ReplaceWith("targetLayout.removeComponent(drawable)"),
-        DeprecationLevel.WARNING
-    )
-    override fun removeComponent(drawable: Drawable) {
-        super.removeComponent(drawable)
-    }
-
-    @Deprecated(
-        "this method should not be used on a SwitchingLayout, as the targeted layout will vary depending on the current layout, and may switch unexpectedly.",
-        ReplaceWith("targetLayout.removeComponentNow(drawable)"),
-        DeprecationLevel.WARNING
-    )
-    override fun removeComponentNow(drawable: Drawable?) {
-        super.removeComponentNow(drawable)
-    }
-
-    override fun reRenderIfNecessary() {
-        current?.reRenderIfNecessary() ?: throw NullPointerException("${this.simpleName}'s current layout is null!")
-    }
-
-    override fun accept(event: Events): Boolean {
-        return current?.accept(event) == true
-    }
-
-    override fun calculateBounds() {
-        children.fastEach {
-            it.calculateBounds()
+        if (layout.layout != this.layout) {
+            PolyUI.LOGGER.warn("[SwitchingLayout] $layout is not a child of this, moving!")
+            oldOwner = layout.layout
+            layout.layout?.removeComponent(layout)
+            layout.layout = layout
+            this.layout.addComponent(layout)
+        } else {
+            oldOwner = null
         }
-        super.calculateBounds()
-        if (autoSized) {
-            var width: Float = width
-            var height: Float = height
-            children.fastEach {
-                width = max(width, it.width)
-                height = max(height, it.height)
+        if (autoSized && width == 0f && height == 0f) {
+            PolyUI.LOGGER.warn("SwitchingLayout has no size; setting to first given layout: (${layout.width}x${layout.height})")
+            width = layout.width
+            height = layout.height
+        }
+        if (makesScrolling) {
+            if (layout.width > width || layout.height > height) {
+                layout.scrolling(width.px * height.px)
             }
-            children.fastEach {
-                val sx = it.width / width
-                val sy = it.height / height
-                it.rescale(sx, sy)
+        } else {
+            layout.rescale(layout.width / width, layout.height / height)
+        }
+
+        val func: Drawable.() -> kotlin.Unit = {
+            x = cache[0]
+            y = cache[1]
+            rescale(cache[2] / width, cache[3] / height)
+            this@SwitchingLayout.layout.removeComponent(this)
+            if (oldOwner != null) {
+                oldOwner!!.addComponent(this)
             }
-            this.width = width
-            this.height = height
+            old = null
+            oldOwner = null
         }
-        children.getOrNull(defaultIndex)
-            ?: throw IllegalArgumentException("SwitchingLayout's default index $defaultIndex has no layout present at initialization!")
-        switch(defaultIndex)
-    }
 
-    override fun calculateSize(): Vec2<Unit> {
-        autoSized = true
-        // so I can reuse the logic
-        return origin
-    }
+        // todo broken
 
-    override fun debugRender() {
-        renderer.hollowRect(x, y, width, height, colors.page.border20, 2f)
-        renderer.text(Renderer.DefaultFont, x + 1f, y + 1f, simpleName, colors.text.primary.normal, 10f)
-    }
-
-//    override fun reRenderIfNecessary() {
-//        if (goingSwitchOp != null) {
-//            val delta = polyui.delta
-//            goingSwitchOp!!.update(delta)
-//            comingSwitchOp!!.update(delta)
-//        }
-//
-//        if (goingSwitchOp != null) {
-//            goingSwitchOp!!.apply(renderer)
-//            current!!.reRenderIfNecessary()
-//            goingSwitchOp!!.unapply(renderer)
-//            comingSwitchOp!!.apply(renderer)
-//            next!!.reRenderIfNecessary()
-//            comingSwitchOp!!.unapply(renderer)
-//        } else {
-//            current!!.reRenderIfNecessary()
-//        }
-//
-//        if (goingSwitchOp?.isFinished == true) {
-//            goingSwitchOp = null
-//            comingSwitchOp = null
-//            needsRedraw = false
-//        }
-//    }
-
-//    override fun render() {
-//    }
-
-    fun switch(index: Int) {
-        val layout = children.getOrNull(index) ?: throw IndexOutOfBoundsException("SwitchingLayout has no layout at index $index")
-        current?.onAllLayouts {
-            components.fastEach {
-                it.acceptsInput = false
-            }
-            acceptsInput = false
-        }
-        current?.onRemoved?.invoke(current!!, Events.Removed)
-
-        layout.acceptsInput = true
-        layout.onAllLayouts {
-            components.fastEach {
-                it.acceptsInput = true
-            }
-            acceptsInput = true
-        }
-        layout.onAdded?.invoke(layout, Events.Added)
-        needsRedraw = true
-        if (transition == null) {
-            this.current = layout
-            return
-        }
-        next = layout
-        if (current != null) goingSwitchOp = transition.create(current!!, transitionDuration)
-        comingSwitchOp = transition.create(layout, transitionDuration)
-    }
-
-    fun switch(layout: Layout) = switch(children.indexOfOrDie(layout))
-
-    fun next() {
-        idx++
-        if (idx > children.lastIndex) idx = 0
-        switch(idx)
-    }
-
-    fun previous() {
-        idx--
-        if (idx < 0) idx = children.lastIndex
-        switch(idx)
-    }
-
-    fun default() {
-        idx = defaultIndex
-        switch(idx)
-    }
-
-    fun addLayouts(vararg layout: Layout) {
-        layout.forEach {
-            children.add(init(it))
-            it.onAllLayouts {
-                it.components.fastEach { cmp ->
-                    cmp.layout = this
+        when (val transition = properties.transition) {
+            is Transitions.Slide -> {
+                when (transition.direction) {
+                    SlideDirection.FromLeft -> {
+                        old?.moveTo((this.x + this.width).px * this.y.px, properties.transitionCurve, properties.transitionDuration, func)
+                        layout.x = this.x - this.width
+                        layout.y = this.y
+                        layout.moveTo(this.x.px * this.y.px, properties.transitionCurve, properties.transitionDuration)
+                        layout.addOperation(op(layout))
+                    }
+                    SlideDirection.FromRight -> {
+                        old?.moveTo((this.x - this.width).px * this.y.px, properties.transitionCurve, properties.transitionDuration, func)
+                        layout.x = this.x + this.width
+                        layout.y = this.y
+                        layout.moveTo(this.x.px * this.y.px, properties.transitionCurve, properties.transitionDuration)
+                        layout.addOperation(op(layout))
+                    }
+                    SlideDirection.FromBottom -> {
+                        old?.moveTo(this.x.px * (this.y - this.height).px, properties.transitionCurve, properties.transitionDuration, func)
+                        layout.x = this.x
+                        layout.y = this.y + this.height
+                        layout.moveTo(this.x.px * this.y.px, properties.transitionCurve, properties.transitionDuration)
+                        layout.addOperation(op(layout))
+                    }
+                    SlideDirection.FromTop -> {
+                        old?.moveTo(this.x.px * (this.y + this.height).px, properties.transitionCurve, properties.transitionDuration, func)
+                        layout.x = this.x
+                        layout.y = this.y - this.height
+                        layout.moveTo(this.x.px * this.y.px, properties.transitionCurve, properties.transitionDuration)
+                        layout.addOperation(op(layout))
+                    }
                 }
             }
+            Transitions.Fade -> {
+                if (old != null) {
+                    old?.fadeTo(0f, properties.transitionCurve, properties.transitionDuration / 2L) {
+                        layout.x = this.x
+                        layout.y = this.y
+                        layout.fadeTo(1f, properties.transitionCurve, properties.transitionDuration / 2L)
+                        func(this)
+                    }
+                } else {
+                    layout.x = this.x
+                    layout.y = this.y
+                    layout.fadeTo(1f, properties.transitionCurve, properties.transitionDuration)
+                }
+            }
+            null -> {
+                if (old != null) func(old!!)
+                layout.x = this.x
+                layout.y = this.y
+            }
         }
+        cache = cacheNew
+        if (old == null) old = layout
     }
 
-    private fun init(layout: Layout): Layout {
-        layout.layout = this
-        if (initStage != INIT_NOT_STARTED) {
-            layout.setup(renderer, polyui)
-        }
-        return layout
+    private fun op(layout: Layout): DrawableOp.Scissor = DrawableOp.Scissor(layout, origin, size)
+
+    override fun preRender(deltaTimeNanos: Long) {
+    }
+    override fun render() {
     }
 
-    operator fun get(index: Int) = children[index]
-    operator fun set(index: Int, it: Layout) = addAt(index, it)
+    override fun postRender() {
+    }
 
-    fun append(layout: Layout) = children.add(init(layout))
+    @Deprecated("SwitchingLayouts cannot be drawn, animated, or colored")
+    override fun recolor(toColor: Color, animation: Animation.Type?, durationNanos: Long, onFinish: (Component.() -> kotlin.Unit)?) {
+    }
 
-    fun addAt(index: Int, layout: Layout) = children.add(index, init(layout))
+    override fun reset() {
+    }
 
-    fun addNext(layout: Layout) = children.add(idx + 1, init(layout))
-
-    @Suppress("DEPRECATION")
-    fun remove(layout: Layout) = removeComponent(layout)
-
-    @Suppress("DEPRECATION")
-    fun removeAt(index: Int) = removeComponent(children[index])
+    override fun calculateSize() = origin
 }

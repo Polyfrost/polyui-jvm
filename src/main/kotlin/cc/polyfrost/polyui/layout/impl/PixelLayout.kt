@@ -79,9 +79,9 @@ open class PixelLayout(
     }
 
     override fun calculateSize(): Vec2<Unit> {
-        var width = children.maxOfOrNull { if (!dynamicInference && it.isDynamic) 0f else it.x + it.width } ?: 0f
+        var width = children.maxOfOrNull { cx(it) } ?: 0f
         width = max(width, components.maxOfOrNull { if (!dynamicInference && it.isDynamic) 0f else it.x + it.width } ?: 0f)
-        var height = children.maxOfOrNull { if (!dynamicInference && it.isDynamic) 0f else it.y + it.height } ?: 0f
+        var height = children.maxOfOrNull { cy(it) } ?: 0f
         height = max(height, components.maxOfOrNull { if (!dynamicInference && it.isDynamic) 0f else it.y + it.height } ?: 0f)
         dynamicInference = !dynamicInference && children.anyAre { it.isDynamic } || components.anyAre { it.isDynamic }
         if (initStage != INIT_COMPLETE && dynamicInference) {
@@ -91,4 +91,7 @@ open class PixelLayout(
         if (height == 0f) throw Exception("unable to infer height of ${this.simpleName}: no concrete sized children or components, please specify a size")
         return width.px * height.px
     }
+
+    protected fun cx(it: Layout) = if (!dynamicInference && it.isDynamic) 0f else it.x + (it.visibleSize?.width ?: it.width)
+    protected fun cy(it: Layout) = if (!dynamicInference && it.isDynamic) 0f else it.y + (it.visibleSize?.height ?: it.height)
 }

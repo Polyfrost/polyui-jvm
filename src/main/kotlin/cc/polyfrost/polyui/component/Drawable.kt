@@ -181,6 +181,12 @@ abstract class Drawable(
     /** current scale in y dimension of this drawable. */
     var scaleY: Float = 1f
 
+    /**
+     * The alpha value of this drawable.
+     * @since 0.20.0
+     */
+    var alpha = 1f
+
     /** **a**t **c**ache **x** for transformations. */
     var acx = 0f
 
@@ -222,6 +228,7 @@ abstract class Drawable(
             x = 0f
             y = 0f
         }
+        if (alpha != 1f) renderer.globalAlpha(1f)
         if (skewX != 0.0) renderer.skewX(skewX)
         if (skewY != 0.0) renderer.skewY(skewY)
         if (scaleX != 1f || scaleY != 1f) renderer.scale(scaleX, scaleY)
@@ -544,6 +551,32 @@ abstract class Drawable(
     ) {
         doDynamicSize(by)
         addOperation(DrawableOp.Move(by, true, this, animation, durationNanos), onFinish)
+    }
+
+    /**
+     * Fade this drawable to the given alpha.
+     * @see fadeBy
+     */
+    fun fadeTo(
+        alpha: Float,
+        animation: Animation.Type? = null,
+        durationNanos: Long = 1L.seconds,
+        onFinish: (Drawable.() -> kotlin.Unit)? = null
+    ) {
+        addOperation(DrawableOp.Fade(alpha, false, this, animation, durationNanos), onFinish)
+    }
+
+    /**
+     * Fade this drawable by the given amount.
+     * @see fadeTo
+     */
+    fun fadeBy(
+        alpha: Float,
+        animation: Animation.Type? = null,
+        durationNanos: Long = 1L.seconds,
+        onFinish: (Drawable.() -> kotlin.Unit)? = null
+    ) {
+        addOperation(DrawableOp.Fade(alpha, true, this, animation, durationNanos), onFinish)
     }
 
     /**

@@ -64,26 +64,30 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
      * Note: if you are making a UI, you should probably be using [scale][cc.polyfrost.polyui.component.Component.resize], [rotate][cc.polyfrost.polyui.component.Component.rotateBy], or [translate][cc.polyfrost.polyui.component.Component.moveBy] instead of this class.
      */
     class Move(
-        private val to: Vec2<Unit>,
-        add: Boolean = true,
+        to: Vec2<Unit>,
+        private val add: Boolean = true,
         drawable: Drawable,
         type: Animations? = null,
         durationNanos: Long = 1L.seconds
     ) : DrawableOp(drawable) {
         override val animation = type?.create(durationNanos, 0f, 1f)
-        private val sx = if (add) drawable.x else 0f
-        private val sy = if (add) drawable.y else 0f
-        private val diffx = if (!add) to.x - drawable.x else to.x
-        private val diffy = if (!add) to.y - drawable.y else to.y
+
+        // targets are the amounts to move by, so if add is false the resultant coord is `to`, if it is true then it is current + to. they are done using x = x + targetx
+        private val targetx = if (add) to.a.px - drawable.x else to.a.px
+        private val targety = if (add) to.b.px - drawable.y else to.b.px
 
         override fun apply(renderer: Renderer) {
             if (animation != null) {
-                val p = animation.value
-                if (diffx != 0f) drawable.x = sx + diffx * p
-                if (diffy != 0f) drawable.y = sy + diffy * p
+                if (add) {
+                    drawable.x += animation.value * targetx
+                    drawable.y += animation.value * targety
+                } else {
+                    drawable.x = animation.value * targetx
+                    drawable.y = animation.value * targety
+                }
             } else {
-                drawable.x = to.x
-                drawable.y = to.y
+                drawable.x = targetx
+                drawable.y = targety
             }
         }
     }
@@ -114,12 +118,30 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
      */
     class Scissor(
         drawable: Drawable,
+        private val at: Vec2<Unit>,
         size: Vec2<Unit>? = null
     ) : Persistent(drawable) {
-        val size = size ?: drawable.size!!
-        override fun apply(renderer: Renderer) = renderer.pushScissor(0f, 0f, size.a.px, size.b.px)
+        private val size = size ?: drawable.size!!
+        override fun apply(renderer: Renderer) = renderer.pushScissor(at.a.px, at.b.px, size.a.px, size.b.px)
 
         override fun unapply(renderer: Renderer) = renderer.popScissor()
+    }
+
+    class Fade(
+        private val amount: Float,
+        add: Boolean = true,
+        drawable: Drawable,
+        type: Animations? = null,
+        durationNanos: Long = 1L.seconds
+    ) : DrawableOp(drawable) {
+        override val animation = type?.create(durationNanos, drawable.alpha, if (add) drawable.alpha + amount else amount)
+        override fun apply(renderer: Renderer) {
+            if (animation != null) {
+                drawable.alpha = animation.value
+            } else {
+                drawable.alpha = amount
+            }
+        }
     }
 
     /**

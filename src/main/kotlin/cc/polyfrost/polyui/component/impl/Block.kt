@@ -48,21 +48,24 @@ open class Block @JvmOverloads constructor(
     override val properties
         get() = super.properties as BlockProperties
     protected lateinit var outlineColor: Color.Mutable
+    protected lateinit var cornerRadii: FloatArray
 
     override fun render() {
         if (properties.outlineThickness != 0f) {
-            renderer.hollowRect(x, y, width, height, outlineColor, properties.outlineThickness, properties.cornerRadii)
+            renderer.hollowRect(x, y, width, height, outlineColor, properties.outlineThickness, cornerRadii)
         }
-        renderer.rect(x, y, width, height, color, properties.cornerRadii)
+        renderer.rect(x, y, width, height, color, cornerRadii)
     }
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {
         super.setup(renderer, polyui)
         outlineColor = properties.outlineColor.toMutable()
+        cornerRadii = properties.cornerRadii
     }
 
     override fun onColorsChanged(colors: Colors) {
         super.onColorsChanged(colors)
         outlineColor.recolor(properties.outlineColor)
+        cornerRadii = properties.cornerRadii
     }
 }

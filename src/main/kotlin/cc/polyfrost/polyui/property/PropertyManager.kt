@@ -25,6 +25,7 @@ import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.impl.*
+import cc.polyfrost.polyui.layout.impl.SwitchingLayout
 import cc.polyfrost.polyui.property.impl.*
 
 class PropertyManager(val colors: Colors) {
@@ -42,7 +43,9 @@ class PropertyManager(val colors: Colors) {
         Dropdown.Entry::class.qualifiedName!! to DropdownProperties.Entry(),
         Slider::class.qualifiedName!! to SliderProperties(),
         Checkbox::class.qualifiedName!! to CheckboxProperties(),
-        Scrollbar::class.qualifiedName!! to ScrollbarProperties()
+        Scrollbar::class.qualifiedName!! to ScrollbarProperties(),
+        Switch::class.qualifiedName!! to SwitchProperties(),
+        SwitchingLayout::class.qualifiedName!! to SwitchingLayoutProperties()
     )
 
     inline fun <reified C : Component> get(): Properties = get(C::class.qualifiedName!!)
