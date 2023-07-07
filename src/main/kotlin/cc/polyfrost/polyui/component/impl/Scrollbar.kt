@@ -101,10 +101,12 @@ class Scrollbar(private val horizontal: Boolean) : Block(null, origin, origin, f
         } else if (offset!!.value == 0f) {
             offset = null
         }
-        if(horizontal) {
-            y = layout.visibleSize!!.height - thickness - (layout.trueY - layout.oy) - properties.padding + (offset?.value ?: 0f)
-        } else {
-            x = layout.visibleSize!!.width - thickness - (layout.trueX - layout.ox) - properties.padding + (offset?.value ?: 0f)
+        if (hideTime < properties.timeToHide || offset != null) {
+            if (horizontal) {
+                y = layout.visibleSize!!.height - thickness - (layout.trueY - layout.oy) - properties.padding + (offset?.value ?: 0f)
+            } else {
+                x = layout.visibleSize!!.width - thickness - (layout.trueX - layout.ox) - properties.padding + (offset?.value ?: 0f)
+            }
         }
     }
 

@@ -31,7 +31,6 @@ import cc.polyfrost.polyui.input.PolyTranslator.Companion.localised
 import cc.polyfrost.polyui.layout.Layout.Companion.drawables
 import cc.polyfrost.polyui.layout.impl.FlexLayout
 import cc.polyfrost.polyui.layout.impl.PixelLayout
-import cc.polyfrost.polyui.layout.impl.SwitchingLayout
 import cc.polyfrost.polyui.property.PropertyManager
 import cc.polyfrost.polyui.property.State
 import cc.polyfrost.polyui.property.impl.*
@@ -46,9 +45,6 @@ import kotlin.random.Random
 
 val moon = PolyImage("moon.svg")
 val sun = PolyImage("sun.svg")
-val switcher = SwitchingLayout(
-    at = 400.px * 0.px
-)
 
 fun main() {
     // todo implement designs for textbox etc
@@ -77,7 +73,6 @@ fun main() {
                 it.getComponent<Button>(2).leftImage!!.image = sun
                 it.getComponent<Text>(1).initialText = "text.dark".localised()
             }
-//            switcher
         )
     )
 
@@ -208,12 +203,15 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
             ),
             Block(
                 at = 113.px * 430.px,
-                size = 85.px * 32.px,
-                events = events(
-                    Events.MouseClicked(0) to {
-                        switcher.switch(create(0.px * 0.px, false))
-                    }
-                )
+                size = 85.px * 32.px
+            ),
+            Block(
+                at = 202.px * 430.px,
+                size = 85.px * 32.px
+            ),
+            Block(
+                at = 291.px * 430.px,
+                size = 85.px * 32.px
             )
         )
     )

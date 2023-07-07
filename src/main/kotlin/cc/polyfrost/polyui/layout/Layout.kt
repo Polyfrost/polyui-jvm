@@ -144,7 +144,13 @@ abstract class Layout(
         }
 
     /** reference to parent */
-    override var layout: Layout? = null
+    final override var layout: Layout? = null
+        set(value) {
+            if (value === this) {
+                throw IllegalArgumentException("Layout cannot be its own parent!")
+            }
+            field = value
+        }
 
     /**
      * These hooks are ran when the [onInitComplete] function is called.
@@ -505,7 +511,7 @@ abstract class Layout(
             oy *= scaleY
             visibleSize?.scale(scaleX, scaleY)
         } else {
-            val m = kotlin.math.min(scaleX, scaleY)
+            val m = cl1(scaleX, scaleY)
             ox *= m
             oy *= m
             visibleSize?.scale(m, m)
@@ -718,8 +724,8 @@ abstract class Layout(
                 } else {
                     anim?.update(delta)?.also {
                         x = ofsX + anim.value
+                        needsRedraw = true
                     }
-                    needsRedraw = true
                     polyui.eventManager.recalculateMousePos()
                 }
                 if (anim1?.isFinished == true) {
@@ -727,8 +733,8 @@ abstract class Layout(
                 } else {
                     anim1?.update(delta)?.also {
                         y = ofsY + anim1.value
+                        needsRedraw = true
                     }
-                    needsRedraw = true
                     polyui.eventManager.recalculateMousePos()
                 }
             }

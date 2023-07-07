@@ -287,13 +287,13 @@ class GLWindow @JvmOverloads constructor(
 
             this.polyUI.render()
             if (fpsCap != 0.0) {
-                while (glfwGetTime() - t < fpsCap) {
-                    glfwPollEvents()
+                val e = glfwGetTime() - t
+                if (e < fpsCap) {
+                    Thread.sleep(((fpsCap - e) * 1_000.0).toLong())
                 }
                 t = glfwGetTime()
-            } else {
-                glfwPollEvents()
             }
+            glfwPollEvents()
             if (polyUI.drew) glfwSwapBuffers(handle)
         }
 

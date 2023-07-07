@@ -29,7 +29,6 @@ import cc.polyfrost.polyui.animate.Animation
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
-import cc.polyfrost.polyui.component.DrawableOp
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.property.impl.SwitchingLayoutProperties
 import cc.polyfrost.polyui.unit.*
@@ -44,6 +43,7 @@ import cc.polyfrost.polyui.unit.Unit
  * @param makesScrolling if `true`, any layout that is switched into this will be able to scroll and not resized, otherwise, the layout will be resized to this size.
  *
  */
+@Deprecated("Not currently implemented.")
 class SwitchingLayout(
     properties: SwitchingLayoutProperties? = null,
     at: Point<Unit>,
@@ -51,133 +51,110 @@ class SwitchingLayout(
     private val makesScrolling: Boolean = false
 ) : Component(properties, at, size, false, false) {
     // don't tell anyone it's actually a component ;)
-    private var old: Layout? = null
-    private var oldOwner: Layout? = null
-    private var cache = FloatArray(4)
-    private var cacheNew = FloatArray(4)
+
+    private var current: Layout? = null
 
     override val properties
         get() = super.properties as SwitchingLayoutProperties
 
     /**
      * Switches the given layout into this layout.
-     * @param layout the layout to switch into this.
+     * @param new the layout to switch into this.
      */
     @JvmName("switchLayout")
-    fun switch(layout: Layout) {
+    fun switch(new: Layout) {
         require(initStage == INIT_COMPLETE) { "Cannot switch layouts before initialization is complete!" }
 
-        if (layout.initStage == INIT_NOT_STARTED) {
-            layout.layout = this.layout
-            layout.setup(renderer, polyui)
-            layout.calculateBounds()
-            this.layout.addComponent(layout)
-        } else if (layout.initStage == INIT_SETUP) {
-            PolyUI.LOGGER.warn("[SwitchingLayout] received partially initialized layout: $layout, this is wierd")
-            layout.calculateBounds()
-            this.layout.addComponent(layout)
-        }
-        cacheNew.apply {
-            set(0, layout.x)
-            set(1, layout.y)
-            set(2, layout.width)
-            set(3, layout.height)
+        if (new.initStage == INIT_NOT_STARTED) {
+            new.layout = this.layout
+            new.setup(renderer, polyui)
+            new.calculateBounds()
+            this.layout.addComponent(new)
+        } else if (new.initStage == INIT_SETUP) {
+            PolyUI.LOGGER.warn("[SwitchingLayout] received partially initialized layout: $new, this is wierd")
+            new.calculateBounds()
+            this.layout.addComponent(new)
         }
 
-        if (layout.layout != this.layout) {
-            PolyUI.LOGGER.warn("[SwitchingLayout] $layout is not a child of this, moving!")
-            oldOwner = layout.layout
-            layout.layout?.removeComponent(layout)
-            layout.layout = layout
-            this.layout.addComponent(layout)
-        } else {
-            oldOwner = null
-        }
         if (autoSized && width == 0f && height == 0f) {
-            PolyUI.LOGGER.warn("SwitchingLayout has no size; setting to first given layout: (${layout.width}x${layout.height})")
-            width = layout.width
-            height = layout.height
+            PolyUI.LOGGER.warn("SwitchingLayout has no size; setting to first given layout: (${new.width}x${new.height})")
+            width = new.width
+            height = new.height
         }
         if (makesScrolling) {
-            if (layout.width > width || layout.height > height) {
-                layout.scrolling(width.px * height.px)
+            if (new.width > width || new.height > height) {
+                new.scrolling(width.px * height.px)
             }
         } else {
-            layout.rescale(layout.width / width, layout.height / height)
+            new.rescale(new.width / width, new.height / height)
         }
 
-        val func: Drawable.() -> kotlin.Unit = {
-            x = cache[0]
-            y = cache[1]
-            rescale(cache[2] / width, cache[3] / height)
-            this@SwitchingLayout.layout.removeComponent(this)
-            if (oldOwner != null) {
-                oldOwner!!.addComponent(this)
+        @Suppress("UNCHECKED_CAST")
+        current?.let { old ->
+            val oldx = old.x
+            val oldy = old.y
+            val oldl = old.layout
+            val reset: Layout.() -> kotlin.Unit = {
+                this.x = oldx
+                this.y = oldy
+                this.layout?.removeComponentNow(this)
+                this.layout = oldl
+                this.layout?.addComponent(this)
             }
-            old = null
-            oldOwner = null
-        }
+            if (new.layout != this@SwitchingLayout.layout) {
+                PolyUI.LOGGER.warn("[SwitchingLayout] $new is not a child of this, moving!")
+                new.layout?.removeComponentNow(new)
+                new.layout = this@SwitchingLayout.layout
+                this@SwitchingLayout.layout.addComponent(new)
+            }
 
-        // todo broken
-
-        when (val transition = properties.transition) {
-            is Transitions.Slide -> {
-                when (transition.direction) {
-                    SlideDirection.FromLeft -> {
-                        old?.moveTo((this.x + this.width).px * this.y.px, properties.transitionCurve, properties.transitionDuration, func)
-                        layout.x = this.x - this.width
-                        layout.y = this.y
-                        layout.moveTo(this.x.px * this.y.px, properties.transitionCurve, properties.transitionDuration)
-                        layout.addOperation(op(layout))
-                    }
-                    SlideDirection.FromRight -> {
-                        old?.moveTo((this.x - this.width).px * this.y.px, properties.transitionCurve, properties.transitionDuration, func)
-                        layout.x = this.x + this.width
-                        layout.y = this.y
-                        layout.moveTo(this.x.px * this.y.px, properties.transitionCurve, properties.transitionDuration)
-                        layout.addOperation(op(layout))
-                    }
-                    SlideDirection.FromBottom -> {
-                        old?.moveTo(this.x.px * (this.y - this.height).px, properties.transitionCurve, properties.transitionDuration, func)
-                        layout.x = this.x
-                        layout.y = this.y + this.height
-                        layout.moveTo(this.x.px * this.y.px, properties.transitionCurve, properties.transitionDuration)
-                        layout.addOperation(op(layout))
-                    }
-                    SlideDirection.FromTop -> {
-                        old?.moveTo(this.x.px * (this.y + this.height).px, properties.transitionCurve, properties.transitionDuration, func)
-                        layout.x = this.x
-                        layout.y = this.y - this.height
-                        layout.moveTo(this.x.px * this.y.px, properties.transitionCurve, properties.transitionDuration)
-                        layout.addOperation(op(layout))
+            reset as Drawable.() -> kotlin.Unit
+            when (val transition = properties.transition) {
+                is Transitions.Slide -> {
+                    when (transition.direction) {
+                        SlideDirection.FromLeft -> {
+                            old.moveTo((this.x + this.width).px * this.y.px, properties.transitionCurve, properties.transitionDuration, reset)
+                            new.x = this.x - this.width
+                            new.y = this.y
+                            new.moveTo(this.x.px * this.y.px, properties.transitionCurve, properties.transitionDuration)
+                        }
+                        SlideDirection.FromRight -> {
+                            old.moveTo((this.x - this.width).px * this.y.px, properties.transitionCurve, properties.transitionDuration, reset)
+                            new.x = this.x + this.width
+                            new.y = this.y
+                            new.moveTo(this.x.px * this.y.px, properties.transitionCurve, properties.transitionDuration)
+                        }
+                        SlideDirection.FromBottom -> {
+                            old.moveTo(this.x.px * (this.y - this.height).px, properties.transitionCurve, properties.transitionDuration, reset)
+                            new.x = this.x
+                            new.y = this.y + this.height
+                            new.moveTo(this.x.px * this.y.px, properties.transitionCurve, properties.transitionDuration)
+                        }
+                        SlideDirection.FromTop -> {
+                            old.moveTo(this.x.px * (this.y + this.height).px, properties.transitionCurve, properties.transitionDuration, reset)
+                            new.x = this.x
+                            new.y = this.y - this.height
+                            new.moveTo(this.x.px * this.y.px, properties.transitionCurve, properties.transitionDuration)
+                        }
                     }
                 }
-            }
-            Transitions.Fade -> {
-                if (old != null) {
-                    old?.fadeTo(0f, properties.transitionCurve, properties.transitionDuration / 2L) {
-                        layout.x = this.x
-                        layout.y = this.y
-                        layout.fadeTo(1f, properties.transitionCurve, properties.transitionDuration / 2L)
-                        func(this)
+                Transitions.Fade -> {
+                    old.fadeTo(0f, properties.transitionCurve, properties.transitionDuration / 2L) {
+                        reset(this)
+                        new.x = this.x
+                        new.y = this.y
+                        new.fadeTo(1f, properties.transitionCurve, properties.transitionDuration)
                     }
-                } else {
-                    layout.x = this.x
-                    layout.y = this.y
-                    layout.fadeTo(1f, properties.transitionCurve, properties.transitionDuration)
+                }
+                null -> {
+                    reset(old)
+                    new.x = this.x
+                    new.y = this.y
                 }
             }
-            null -> {
-                if (old != null) func(old!!)
-                layout.x = this.x
-                layout.y = this.y
-            }
         }
-        cache = cacheNew
-        if (old == null) old = layout
+        current = new
     }
-
-    private fun op(layout: Layout): DrawableOp.Scissor = DrawableOp.Scissor(layout, origin, size)
 
     override fun preRender(deltaTimeNanos: Long) {
     }
