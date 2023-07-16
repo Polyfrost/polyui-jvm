@@ -435,18 +435,18 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     private fun getFont(font: Font): NVGFont {
         return fonts[font] ?: run {
             val data =
-                getResourceStreamNullable(font.resourceName)?.toByteBuffer()
+                getResourceStreamNullable(font.resourcePath)?.toByteBuffer()
                     ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) {
                         getResourceStream(
-                            DefaultFont.resourceName
+                            DefaultFont.resourcePath
                         ).also {
                             PolyUI.LOGGER.warn(
                                 "Failed to get font: {}, falling back to default font!",
-                                font.resourceName
+                                font.resourcePath
                             )
                         }.toByteBuffer()
                     } else {
-                        throw ExceptionInInitializerError("Failed to get font: ${font.resourceName}")
+                        throw ExceptionInInitializerError("Failed to get font: ${font.resourcePath}")
                     }
             val ft = nvgCreateFontMem(vg, font.name, data, false)
             NVGFont(ft, data).also { fonts[font] = it }

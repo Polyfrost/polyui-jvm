@@ -54,7 +54,7 @@ class Switch(
     private var bitSize = 0f
     private var bitRadius = 0f
     private var dist = 0f
-    private lateinit var bitColor: Color.Mutable
+    private lateinit var bitColor: Color.Animated
 
     override val properties
         get() = super.properties as SwitchProperties
@@ -85,7 +85,7 @@ class Switch(
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {
         super.setup(renderer, polyui)
-        bitColor = properties.bitColor.toMutable()
+        bitColor = properties.bitColor.toAnimatable()
     }
 
     override fun calculateBounds() {

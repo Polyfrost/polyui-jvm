@@ -68,7 +68,7 @@ abstract class Component @JvmOverloads constructor(
     open val properties get() = p!!
 
     /** the color of this component. */
-    lateinit var color: Color.Mutable
+    lateinit var color: Color.Animated
 
     /**
      * represents the hue value to return to when a chroma color is animated to something else, and is set back.
@@ -178,7 +178,7 @@ abstract class Component @JvmOverloads constructor(
                     c.recolor(0, toColor, animation, durationNanos)
                     c.recolor(1, toColor, animation, durationNanos)
                     finishFunc = {
-                        color = toColor.toMutable()
+                        color = toColor.toAnimatable()
                     }
                 } else {
                     if (color is Color.Chroma) {
@@ -216,6 +216,13 @@ abstract class Component @JvmOverloads constructor(
         }
     }
 
+    override fun addOperation(drawableOp: DrawableOp, onFinish: (Drawable.() -> kotlin.Unit)?) {
+        if (::layout.isInitialized) {
+            wantRedraw()
+        }
+        operations.add(drawableOp to onFinish)
+    }
+
     /** change the properties attached to this component.
      * @see Properties
      */
@@ -234,7 +241,7 @@ abstract class Component @JvmOverloads constructor(
         } else {
             p!!.colors = layout.colors
         }
-        color = properties.palette.normal.toMutable()
+        color = properties.palette.normal.toAnimatable()
         initStage = INIT_SETUP
     }
 
@@ -262,6 +269,41 @@ abstract class Component @JvmOverloads constructor(
             INIT_COMPLETE -> "$simpleName(${trueX}x$trueY, ${width}x${height}${if (autoSized) " (auto)" else ""}${if (operations.isNotEmpty()) ", operating" else ""})"
             else -> simpleName
         }
+    }
+
+    /**
+     * Make this component draggable.
+     * @param consumesEvent weather beginning/ending dragging should cancel the corresponding mouse event
+     */
+    fun draggable(consumesEvent: Boolean = false): Component {
+        var hovered = false
+        var mx = 0f
+        var my = 0f
+        addEventHandlers(
+            Events.MousePressed(0) to {
+                hovered = true
+                mx = polyui.eventManager.mouseX - x
+                my = polyui.eventManager.mouseY - y
+                consumesEvent
+            },
+            Events.MouseReleased(0) to {
+                hovered = false
+                consumesEvent
+            }
+        )
+        addOperation(object : DrawableOp.Persistent(this) {
+            override fun apply(renderer: Renderer) {
+                if (hovered) {
+                    if (!polyui.eventManager.mouseDown) {
+                        hovered = false
+                        return
+                    }
+                    x = polyui.eventManager.mouseX - mx
+                    y = polyui.eventManager.mouseY - my
+                }
+            }
+        })
+        return this
     }
 
     fun addKeyframes(k: KeyFrames) {

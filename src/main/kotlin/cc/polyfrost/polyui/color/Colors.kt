@@ -41,38 +41,12 @@ interface Colors {
     val component: Component
     val text: Text
 
-    abstract class Page {
-        abstract val bg: Palette
-        abstract val bgOverlay: Color
-
-        abstract val fg: Palette
-        abstract val fgOverlay: Color
-
-        abstract val border20: Color
-        abstract val border10: Color
-        abstract val border5: Color
-    }
-    abstract class Brand {
-        abstract val fg: Palette
-        abstract val accent: Palette
-    }
-    abstract class OnBrand {
-        abstract val fg: Palette
-        abstract val accent: Palette
-    }
-    abstract class State {
-        abstract val danger: Palette
-        abstract val warning: Palette
-        abstract val success: Palette
-    }
-    abstract class Component {
-        abstract val bg: Palette
-        abstract val bgDeselected: Color
-    }
-    abstract class Text {
-        abstract val primary: Palette
-        abstract val secondary: Palette
-    }
+    class Page(val bg: Palette, val bgOverlay: Color, val fg: Palette, val fgOverlay: Color, val border20: Color, val border10: Color, val border5: Color)
+    class Brand(val fg: Palette, val accent: Palette)
+    class OnBrand(val fg: Palette, val accent: Palette)
+    class State(val danger: Palette, val warning: Palette, val success: Palette)
+    class Component(val bg: Palette, val bgDeselected: Color)
+    class Text(val primary: Palette, val secondary: Palette)
 
     /**
      * # Colors.Palette

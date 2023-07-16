@@ -335,7 +335,7 @@ fun String.substringToWidth(
             textAlign
         ).width > width
     ) { // this is enabled only on debug mode for performance in prod
-        throw RuntimeException("Text box maximum width is too small for the given font size! (string: $this, font: ${font.resourceName}, fontSize: $fontSize, width: $width)")
+        throw RuntimeException("Text box maximum width is too small for the given font size! (string: $this, font: ${font.resourcePath}, fontSize: $fontSize, width: $width)")
     }
     if (renderer.textBounds(font, this, fontSize, textAlign).width <= width) {
         return this to ""

@@ -21,6 +21,12 @@
 
 package cc.polyfrost.polyui.renderer.data
 
+/**
+ * # Cursor
+ *
+ * This enum represents the different cursors that can be used in PolyUI.
+ *
+ */
 enum class Cursor {
     /** classic, arrow pointer. */
     Pointer,

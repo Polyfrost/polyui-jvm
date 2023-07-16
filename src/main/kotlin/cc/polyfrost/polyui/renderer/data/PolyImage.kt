@@ -22,7 +22,7 @@
 package cc.polyfrost.polyui.renderer.data
 
 /**
- * Image representation in PolyUI.
+ * Image representation in PolyUI. The image is lazily-loaded from the [resourcePath].
  * @param resourcePath the path to the [resource][cc.polyfrost.polyui.utils.getResourceStream]
  * @param width the width of the image. Specify one to respect the aspect ratio of the image.
  * @param height the width of the image. Specify one to respect the aspect ratio of the image.

@@ -48,8 +48,8 @@ class Slider(
     private var barThickness = 0f
     private var bitX = 0f
     private var barY = 0f
-    lateinit var barColor: Color.Mutable
-    lateinit var usedBarColor: Color.Mutable
+    lateinit var barColor: Color.Animated
+    lateinit var usedBarColor: Color.Animated
 
     var value: Float = min
         set(value) {
@@ -61,8 +61,8 @@ class Slider(
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {
         super.setup(renderer, polyui)
-        barColor = properties.barColor.normal.toMutable()
-        usedBarColor = properties.usedBarColor.normal.toMutable()
+        barColor = properties.barColor.normal.toAnimatable()
+        usedBarColor = properties.usedBarColor.normal.toAnimatable()
     }
 
     override fun accept(event: Events): Boolean {

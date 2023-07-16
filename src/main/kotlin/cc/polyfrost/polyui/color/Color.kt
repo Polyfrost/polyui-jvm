@@ -33,11 +33,59 @@ import cc.polyfrost.polyui.utils.rgba
  *
  * The color used by PolyUI. It stores the color in the HSBA format, and can be converted to ARGB.
  *
- * @see [Color.Mutable]
+ * @see [Color.Animated]
  * @see [Color.Gradient]
  * @see [Color.Chroma]
  */
-open class Color @JvmOverloads constructor(open val hue: Float, open val saturation: Float, open val brightness: Float, open val alpha: Float = 1f) : Cloneable {
+open class Color @JvmOverloads constructor(hue: Float, saturation: Float, brightness: Float, alpha: Float = 1f) : Cloneable {
+
+    var hue = hue
+        set(value) {
+            field = value
+            dirty = true
+        }
+    var saturation = saturation
+        set(value) {
+            field = value
+            dirty = true
+        }
+    var brightness = brightness
+        set(value) {
+            field = value
+            dirty = true
+        }
+    var alpha = alpha
+        set(value) {
+            field = value
+            dirty = true
+        }
+
+    /** Set this to true to update the [argb] value. */
+    var dirty = true
+        protected set
+
+    /** return an integer representation of this color.
+     * Utilizes bit-shifts to store the color as one 32-bit integer, like so:
+     *
+     * `0bAAAAAAAARRRRRRRRGGGGGGGGBBBBBBBB`
+     * aka `0xAARRGGBB`
+     *
+     * @see cc.polyfrost.polyui.utils.toColor
+     */
+    @get:JvmName("getARGB")
+    var argb: Int = 0
+        get() {
+            return if (dirty) {
+                HSBtoRGB(hue, saturation, brightness).let { rgb ->
+                    (rgb and 0x00FFFFFF) or ((alpha * 255).toInt() shl 24)
+                }.also {
+                    dirty = false
+                    field = it
+                }
+            } else {
+                field
+            }
+        }
 
     @JvmOverloads
     constructor(hsb: FloatArray, alpha: Int = 255) : this(hsb[0], hsb[1], hsb[2], alpha)
@@ -50,28 +98,9 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
     constructor(hue: Float, saturation: Float, brightness: Float, alpha: Int = 255) : this(hue, saturation, brightness, alpha.toFloat() / 255f)
 
     init {
-        @Suppress("LeakingThis")
         require(saturation in 0f..1f) { "Saturation must be between 0 and 1" }
-        @Suppress("LeakingThis")
         require(brightness in 0f..1f) { "Brightness must be between 0 and 1" }
-        @Suppress("LeakingThis")
         require(alpha in 0f..1f) { "Alpha must be between 0 and 1" }
-    }
-
-    /** return an integer representation of this color.
-     * Utilizes bit-shifts to store the color as one 32-bit integer, like so:
-     *
-     * `0bAAAAAAAARRRRRRRRGGGGGGGGBBBBBBBB`
-     * aka `0xAARRGGBB`
-     *
-     * @see cc.polyfrost.polyui.utils.toColor
-     */
-    @Suppress("INAPPLICABLE_JVM_NAME")
-    @get:JvmName("getARGB")
-    open val argb: Int = run {
-        HSBtoRGB(hue, saturation, brightness).let { rgb ->
-            (rgb and 0x00FFFFFF) or ((alpha * 255).toInt() shl 24)
-        }
     }
 
     /** red value of this color, from 0 to 255 */
@@ -87,9 +116,9 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
     inline val a get() = argb shr 24 and 0xFF
 
     /**
-     * @return a new, [mutable][Mutable] version of this color
+     * @return a new, [animatable][Animated] version of this color
      */
-    open fun toMutable() = Mutable(hue, saturation, brightness, alpha)
+    open fun toAnimatable() = Animated(hue, saturation, brightness, alpha)
 
     public override fun clone() = Color(hue, saturation, brightness, alpha)
 
@@ -170,34 +199,14 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
     }
 
     /**
-     * A mutable version of [Color], that supports [recoloring][recolor] with animations.
+     * An animatable version of [Color], that supports [recoloring][recolor] with animations.
      */
-    open class Mutable(
+    open class Animated(
         hue: Float,
         saturation: Float,
         brightness: Float,
         alpha: Float
     ) : Color(hue, saturation, brightness, alpha) {
-        override var hue = hue
-            set(value) {
-                field = value
-                dirty = true
-            }
-        override var saturation = saturation
-            set(value) {
-                field = value
-                dirty = true
-            }
-        override var brightness = brightness
-            set(value) {
-                field = value
-                dirty = true
-            }
-        override var alpha = alpha
-            set(value) {
-                field = value
-                dirty = true
-            }
 
         /** Set this in your Color class if it's always updating, but still can be removed while updating, for
          * example a chroma color, which always needs to update, but still can be removed any time.
@@ -215,29 +224,8 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
         private var from: FloatArray? = null
         private var current: FloatArray? = null
 
-        /** Set this to true to update the [argb] value. */
-        var dirty = true
-            protected set
-
-        override var argb: Int = 0
-            get() {
-                return if (dirty) {
-                    HSBtoRGB(hue, saturation, brightness).let { rgb ->
-                        (rgb and 0x00FFFFFF) or ((alpha * 255).toInt() shl 24)
-                    }.also {
-                        dirty = false
-                        field = it
-                    }
-                } else {
-                    field
-                }
-            }
-
-        /** turn this mutable color into an immutable one. */
-        fun toImmutable() = Color(hue, saturation, brightness, alpha)
-
-        @Deprecated("This would convert a mutable color to a mutable one.", replaceWith = ReplaceWith("clone()"))
-        override fun toMutable() = clone()
+        @Deprecated("This would convert an animatable color to an animatable one.", replaceWith = ReplaceWith("clone()"))
+        override fun toAnimatable() = clone()
 
         /**
          * recolor this color to the target color, with the given animation type and duration.
@@ -311,13 +299,13 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
             return false
         }
 
-        override fun clone() = Mutable(hue, saturation, brightness, alpha)
+        override fun clone() = Animated(hue, saturation, brightness, alpha)
     }
 
     /** A gradient color. */
     class Gradient @JvmOverloads constructor(color1: Color, color2: Color, val type: Type = Type.TopLeftToBottomRight) :
-        Mutable(color1.hue, color1.saturation, color1.brightness, color1.alpha) {
-        val color2 = if (color2 !is Mutable) color2.toMutable() else color2
+        Animated(color1.hue, color1.saturation, color1.brightness, color1.alpha) {
+        val color2 = if (color2 !is Animated) color2.toAnimatable() else color2
 
         sealed class Type {
             data object TopToBottom : Type()
@@ -350,20 +338,6 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
 
             data class Box(val radius: Float, val feather: Float) : Type()
         }
-
-        @Deprecated(
-            "Use [getARGB1] or [getARGB2] instead for gradient colors, as to not to confuse the end user.",
-            ReplaceWith("getARGB1()")
-        )
-        @Suppress("INAPPLICABLE_JVM_NAME")
-        @get:JvmName("getARGB")
-        override var argb: Int
-            get() {
-                return super.argb
-            }
-            set(value) {
-                super.argb = value
-            }
 
         override fun equals(other: Any?): Boolean {
             if (other === this) return true
@@ -399,7 +373,7 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
         override fun clone() = Gradient(this, color2, type)
 
         /**
-         * [Mutable.recolor] this gradient color.
+         * [Animated.recolor] this gradient color.
          * @param whichColor which color to recolor. 0 for the first color, 1 for the second color.
          */
         fun recolor(whichColor: Int, target: Color, type: Animation.Type? = null, durationNanos: Long = 1L.seconds) {
@@ -452,7 +426,7 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
         saturation: Float = 1f,
         alpha: Float = 1f,
         initialHue: Float = 0f
-    ) : Mutable(0f, saturation, brightness, alpha) {
+    ) : Animated(0f, saturation, brightness, alpha) {
         private var time: Long = ((initialHue % 360f) * speedNanos.toFloat()).toLong()
 
         @Deprecated("Chroma colors cannot be animated.", level = DeprecationLevel.ERROR)
@@ -466,7 +440,7 @@ open class Color @JvmOverloads constructor(open val hue: Float, open val saturat
          * Convert this chroma color to a mutable color, which is a snapshot of this color at the time of calling this method.
          * @since 0.19.1
          */
-        fun freeze() = Mutable(hue, saturation, brightness, alpha)
+        fun freeze() = Animated(hue, saturation, brightness, alpha)
 
         override fun update(deltaTimeNanos: Long): Boolean {
             time += deltaTimeNanos

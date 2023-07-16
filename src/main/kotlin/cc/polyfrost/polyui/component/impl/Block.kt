@@ -47,7 +47,7 @@ open class Block @JvmOverloads constructor(
 ) : Component(properties, at, size, rawResize, acceptInput, *events) {
     override val properties
         get() = super.properties as BlockProperties
-    protected lateinit var outlineColor: Color.Mutable
+    protected lateinit var outlineColor: Color.Animated
     protected lateinit var cornerRadii: FloatArray
 
     override fun render() {
@@ -59,7 +59,7 @@ open class Block @JvmOverloads constructor(
 
     override fun setup(renderer: Renderer, polyui: PolyUI) {
         super.setup(renderer, polyui)
-        outlineColor = properties.outlineColor.toMutable()
+        outlineColor = properties.outlineColor.toAnimatable()
         cornerRadii = properties.cornerRadii
     }
 

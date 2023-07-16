@@ -186,7 +186,7 @@ class SkijaRenderer(width: Float, height: Float) : Renderer(width, height) {
     }
 
     private fun get(font: Font) = fonts[font] ?: run {
-        Typeface.makeFromData(Data.makeFromBytes(getResourceStream(font.resourceName).toByteArray())).also {
+        Typeface.makeFromData(Data.makeFromBytes(getResourceStream(font.resourcePath).toByteArray())).also {
             fonts[font] = it
         }
     }

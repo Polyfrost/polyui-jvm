@@ -52,7 +52,7 @@ class Dropdown(
     val default: Int = 0,
     vararg entries: Entry
 ) : Component(properties, at, size, false, true), Focusable {
-    private lateinit var borderColor: Color.Mutable
+    private lateinit var borderColor: Color.Animated
     private val chevron = Image(image = PolyImage("/chevron-down.svg", 16f, 16f), at = origin)
 
     init {
@@ -119,7 +119,7 @@ class Dropdown(
         dropdown.y += if (size != null) size!!.height else 0f
         super.setup(renderer, polyui)
         layout.addComponents(chevron, dropdown)
-        borderColor = properties.borderColor.toMutable()
+        borderColor = properties.borderColor.toAnimatable()
     }
 
     override fun accept(event: Events): Boolean {

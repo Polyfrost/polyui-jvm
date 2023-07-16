@@ -73,6 +73,7 @@ enum class Keys(val keyName: String, val value: Short) {
         @JvmStatic
         fun fromValue(value: Int): Keys {
             val v = value.toShort()
+            @Suppress("EnumValuesSoftDeprecate")
             for (key in values()) {
                 if (key.value == v) {
                     return key
@@ -152,6 +153,7 @@ enum class Mouse(val keyName: String, val value: Short) {
         @JvmStatic
         fun fromValue(value: Int): Mouse {
             val v = value.toShort()
+            @Suppress("EnumValuesSoftDeprecate")
             for (btn in Mouse.values()) {
                 if (btn.value == v) {
                     return btn
@@ -211,6 +213,7 @@ enum class Modifiers(val keyName: String, val value: Short) {
         fun fromModifierMerged(modifiers: Short): Array<Modifiers> {
             if (modifiers.toInt() == 0) return emptyArray()
             val mods = arrayListOf<Modifiers>()
+            @Suppress("EnumValuesSoftDeprecate")
             for (mod in values()) {
                 if ((mod.value and modifiers).toInt() != 0) {
                     mods.add(mod)
@@ -245,9 +248,11 @@ enum class Modifiers(val keyName: String, val value: Short) {
         fun mods(vararg modifiers: Modifiers): Short = merge(*modifiers)
 
         @JvmStatic
+        @Suppress("NOTHING_TO_INLINE")
         inline fun toString(modifiers: Short) = toString(*fromModifierMerged(modifiers))
 
         @JvmStatic
+        @Suppress("NOTHING_TO_INLINE")
         inline fun toStringPretty(modifiers: Short) = toStringPretty(*fromModifierMerged(modifiers))
 
         @JvmStatic

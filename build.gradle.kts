@@ -1,5 +1,4 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.archivesName
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.dokka.base.DokkaBase
 import org.jetbrains.dokka.base.DokkaBaseConfiguration
 import org.jetbrains.dokka.gradle.AbstractDokkaTask
@@ -57,6 +56,14 @@ allprojects {
                 apiVersion = targetKotlinVersion
             }
         }
+        compilerOptions {
+            freeCompilerArgs = listOf(
+                "-Xjvm-default=all-compatibility",
+                "-Xno-call-assertions",
+                "-Xno-receiver-assertions",
+                "-Xno-param-assertions",
+            )
+        }
         jvmToolchain(jvmToolchainVersion)
     }
 
@@ -73,21 +80,10 @@ allprojects {
     }
 
     tasks {
-        withType(KotlinCompile::class).all {
-            kotlinOptions {
-                freeCompilerArgs = listOf(
-                    "-Xjvm-default=all-compatibility",
-                    "-Xno-call-assertions",
-                    "-Xno-receiver-assertions",
-                    "-Xno-param-assertions",
-                )
-            }
-        }
-
         withType<AbstractDokkaTask> {
             pluginConfiguration<DokkaBase, DokkaBaseConfiguration> {
                 val rootPath = "${rootProject.projectDir.absolutePath}/format/dokka"
-                customStyleSheets = file("$rootPath/styles").listFiles()!!.toList()
+                customStyleSheets = file("$rootPath/styles").listFiles()?.toList() ?: throw IllegalStateException("Please add git submodule https://github.com/Polyfrost/BuildFormat to /format")
                 customAssets = file("$rootPath/assets").listFiles()!!.toList()
                 templatesDir = file("$rootPath/templates")
 

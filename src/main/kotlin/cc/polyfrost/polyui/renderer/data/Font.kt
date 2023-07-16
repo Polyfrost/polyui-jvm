@@ -26,30 +26,30 @@ import java.net.URL
 /**
  * # Font
  *
- * A font used by the rendering implementation.
+ * A font used by the rendering implementation. The font is lazily loaded by the renderer.
  *
- * @param resourceName The resource of the font, can be a URL (see [here][cc.polyfrost.polyui.utils.getResourceStream], you should use this or an equivalent method)
+ * @param resourcePath The resource of the font, can be a URL (see [here][cc.polyfrost.polyui.utils.getResourceStream], you should use this or an equivalent method)
  * @param letterSpacing The letter spacing of the font, in pixels (e.g. 1 pixel = 1 empty pixel between each letter).
  * @param lineSpacing The line spacing of the font, in proportion to the font size (e.g. 2 means 1 empty line between each line, 1.5 = half a line between...)
  */
 data class Font @JvmOverloads constructor(
-    val resourceName: String,
-    @Transient val letterSpacing: Float = 0f,
-    @Transient val lineSpacing: Float = 1f
+    val resourcePath: String,
+    val letterSpacing: Float = 0f,
+    val lineSpacing: Float = 1f
 ) {
-    val name: String = resourceName.substringAfterLast('/')
+    val name: String = resourcePath.substringAfterLast('/')
         .substringBeforeLast('.')
 
     // improves memory usage so fonts can use the same data object
     override fun hashCode(): Int {
-        return resourceName.hashCode()
+        return resourcePath.hashCode()
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is Font) return false
 
-        return resourceName == other.resourceName
+        return resourcePath == other.resourcePath
     }
 
     companion object {

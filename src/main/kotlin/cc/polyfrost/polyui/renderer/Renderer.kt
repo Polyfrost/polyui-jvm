@@ -41,6 +41,11 @@ import kotlin.math.min
  * This class simply contains a path to the resource. You will need to load it using [getResourceStream][cc.polyfrost.polyui.utils.getResourceStream], and cache it for future use (ideally).
  */
 abstract class Renderer(open var width: Float, open var height: Float) : AutoCloseable {
+    /**
+     * set a maximum alpha value for all future draw calls, in the range (0-1), until [reset][resetAlphaCap]. This is useful for fading in/out all of PolyUI, for example.
+     *
+     * **Note that this itself will not** set the global alpha, so use [globalAlpha] to do that.
+     */
     var alphaCap: Float = 1f
 
     /** settings instance for this renderer. */
@@ -55,30 +60,37 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
     @Suppress("UNUSED_EXPRESSION")
     inline fun render(block: Renderer.() -> kotlin.Unit) = block()
 
+    /**
+     * Begin a frame. this is called before all drawing calls.
+     */
     abstract fun beginFrame()
+
+    /**
+     * End a frame. this is called after all drawing calls.
+     */
     abstract fun endFrame()
 
-    /** @see globalAlpha */
+    /** implementation for [globalAlpha] */
     protected abstract fun gblAlpha(alpha: Float)
 
     /** Set the alpha for all future draw calls, in the range (0-1), until [reset][resetGlobalAlpha].
      *
-     * Note that this call is capped by [capAlpha], so if a value higher than [capAlpha]'s value is set, it will just set it to that.
-     * @see capAlpha
+     * Note that this call is capped by [alphaCap], so if a value higher than [alphaCap]'s value is set, it will just set it to that.
+     * @see alphaCap
      * */
     fun globalAlpha(alpha: Float) = gblAlpha(min(alphaCap, alpha))
 
-    /** set a maximum alpha value for all future draw calls, in the range (0-1), until [reset][resetAlphaCap]. This is useful for fading in/out all of PolyUI, for example.
-     *
-     * **Note that this itself will not** set the global alpha, so use [globalAlpha] to do that. */
-    fun capAlpha(alpha: Float) {
-        alphaCap = alpha
+    /** reset the [alphaCap]. This is the same as doing [alphaCap]` = 1f`. */
+    fun resetAlphaCap() {
+        alphaCap = 1f
     }
 
-    /** reset the alpha cap. */
-    fun resetAlphaCap() = capAlpha(1f)
-
-    /** reset the global alpha to normal. */
+    /** reset the global alpha to normal.
+     *
+     * Respects the [alphaCap], so may not actually reset fully if the [alphaCap] is set to a value lower than 1.
+     * @see globalAlpha
+     * @see resetAlphaCap
+     */
     fun resetGlobalAlpha() = gblAlpha(1f)
 
     /**
@@ -181,6 +193,9 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
     /** Function that can be called to explicitly initialize an image. This is used mainly for getting the size of an image, or to ensure an SVG has been rasterized. */
     abstract fun initImage(image: PolyImage)
 
+    /**
+     * Draw an image to the screen, per the given parameters.
+     */
     abstract fun image(
         image: PolyImage,
         x: Float,
@@ -211,6 +226,9 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
         bottomRightRadius: Float
     )
 
+    /**
+     * draw a hollow rectangle to the screen, per the given parameters.
+     */
     abstract fun hollowRect(
         x: Float,
         y: Float,
@@ -224,15 +242,19 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
         bottomRightRadius: Float
     )
 
+    /** @see image */
     fun image(image: PolyImage, x: Float, y: Float, width: Float = image.width, height: Float = image.height, radius: Float = 0f, colorMask: Int = 0) =
         image(image, x, y, width, height, colorMask, radius, radius, radius, radius)
 
+    /** @see image */
     fun image(image: PolyImage, x: Float, y: Float, width: Float = image.width, height: Float = image.height, radii: FloatArray, colorMask: Int = 0) =
         image(image, x, y, width, height, colorMask, radii[0], radii[1], radii[2], radii[3])
 
+    /** @see rect */
     fun rect(x: Float, y: Float, width: Float, height: Float, color: Color, radius: Float = 0f) =
         rect(x, y, width, height, color, radius, radius, radius, radius)
 
+    /** @see rect */
     fun rect(x: Float, y: Float, width: Float, height: Float, color: Color, radii: FloatArray) =
         rect(x, y, width, height, color, radii[0], radii[1], radii[2], radii[3])
 
@@ -242,6 +264,7 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
     open fun circle(x: Float, y: Float, radius: Float, color: Color) =
         rect(x, y, radius + radius, radius + radius, color, radius)
 
+    /** @see hollowRect */
     fun hollowRect(
         x: Float,
         y: Float,
@@ -253,6 +276,7 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
     ) =
         hollowRect(x, y, width, height, color, lineWidth, radius, radius, radius, radius)
 
+    /** @see hollowRect */
     fun hollowRect(
         x: Float,
         y: Float,
@@ -276,15 +300,23 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
      */
     abstract fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float)
 
+    /**
+     * Draw a drop shadow to the screen, per the given parameters.
+     */
     abstract fun dropShadow(x: Float, y: Float, width: Float, height: Float, blur: Float, spread: Float, radius: Float)
 
-    /** Create a new framebuffer. It is down to you (as a rendering implementation) to cache this, and dispose of it as necessary. */
+    /** Create a new framebuffer. It is down to you (as a rendering implementation) to cache this, and dispose of it as necessary.
+     * @return a PolyUI framebuffer object using the width and height passed to this method. This is used by PolyUI to identify it.
+     */
     abstract fun createFramebuffer(width: Float, height: Float): Framebuffer
 
+    /** Delete the given framebuffer. Ignore if null. */
     abstract fun deleteFramebuffer(fbo: Framebuffer?)
 
+    /** Bind the given framebuffer. Ignore if null. */
     abstract fun bindFramebuffer(fbo: Framebuffer?)
 
+    /** Unbind the given framebuffer. if it is null, unbind everything. */
     abstract fun unbindFramebuffer(fbo: Framebuffer?)
 
     /** draw the given framebuffer to the screen. */
@@ -302,6 +334,7 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
      */
     abstract fun cleanup()
 
+    /** @see cleanup */
     override fun close() {
         cleanup()
     }

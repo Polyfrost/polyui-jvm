@@ -153,6 +153,7 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                 at = 336.px * 113.px,
                 size = 32.px * 32.px
             ),
+            @Suppress("EnumValuesSoftDeprecate")
             Dropdown(
                 at = 24.px * 159.px,
                 size = 352.px * 32.px,
@@ -200,7 +201,7 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                 properties = BrandBlockProperties(),
                 at = 24.px * 430.px,
                 size = 85.px * 32.px
-            ),
+            ).draggable(),
             Block(
                 at = 113.px * 430.px,
                 size = 85.px * 32.px
