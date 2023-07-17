@@ -28,8 +28,7 @@ import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.ContainingComponent
 import cc.polyfrost.polyui.component.DrawableOp
 import cc.polyfrost.polyui.component.Focusable
-import cc.polyfrost.polyui.event.Events
-import cc.polyfrost.polyui.event.FocusedEvents
+import cc.polyfrost.polyui.event.*
 import cc.polyfrost.polyui.input.PolyText
 import cc.polyfrost.polyui.input.PolyTranslator.Companion.localised
 import cc.polyfrost.polyui.layout.Layout.Companion.drawables
@@ -62,12 +61,12 @@ class Dropdown(
         }
     }
 
-    override fun accept(event: FocusedEvents) {
-        if (event is FocusedEvents.FocusGained) {
+    override fun accept(event: FocusedEvent) {
+        if (event is FocusedEvent.Gained) {
             active = true
             open()
         }
-        if (event is FocusedEvents.FocusLost) {
+        if (event is FocusedEvent.Lost) {
             active = false
             close()
         }
@@ -122,16 +121,16 @@ class Dropdown(
         borderColor = properties.borderColor.toAnimatable()
     }
 
-    override fun accept(event: Events): Boolean {
-        if (event is Events.MouseEntered) {
+    override fun accept(event: Event): Boolean {
+        if (event is MouseEntered) {
             polyui.cursor = Cursor.Clicker
             return true
         }
-        if (event is Events.MouseExited) {
+        if (event is MouseExited) {
             polyui.cursor = Cursor.Pointer
             return true
         }
-        if (event is Events.MouseClicked) {
+        if (event is MouseClicked) {
             if (event.button == 0 && active) {
                 polyui.unfocus()
                 return true
@@ -233,22 +232,22 @@ class Dropdown(
             super.onInitComplete()
         }
 
-        override fun accept(event: Events): Boolean {
-            if (event is Events.MouseExited) {
+        override fun accept(event: Event): Boolean {
+            if (event is MouseExited) {
                 recolorAll(properties.contentColor.normal, properties.hoverAnimation, properties.hoverAnimationDuration)
                 return true
             }
-            if (event is Events.MouseEntered) {
+            if (event is MouseEntered) {
                 recolorAll(properties.contentColor.hovered, properties.hoverAnimation, properties.hoverAnimationDuration)
                 return true
             }
-            if (event is Events.MousePressed) {
+            if (event is MousePressed) {
                 return true
             }
-            if (event is Events.MouseReleased) {
+            if (event is MouseReleased) {
                 return true
             }
-            if (event is Events.MouseClicked) {
+            if (event is MouseClicked) {
                 if (event.button != 0) return false
                 if (!show) {
                     dropdown.active = false

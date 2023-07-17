@@ -23,7 +23,8 @@ package cc.polyfrost.polyui.component
 
 import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.component.impl.Block
-import cc.polyfrost.polyui.event.Events
+import cc.polyfrost.polyui.event.Event
+import cc.polyfrost.polyui.event.MouseClicked
 import cc.polyfrost.polyui.property.impl.StatedProperties
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.unit.Vec2
@@ -39,7 +40,7 @@ abstract class StateBlock(
     rawResize: Boolean = false,
     defaultState: Boolean = false,
     protected open val onStateChange: (StateBlock.(Boolean) -> kotlin.Unit)? = null,
-    vararg events: Events.Handler
+    vararg events: Event.Handler
 ) : Block(properties, at, size, rawResize, true, *events) {
     override val properties
         get() = super.properties as StatedProperties
@@ -56,8 +57,8 @@ abstract class StateBlock(
             onStateChanged(value)
         }
 
-    override fun accept(event: Events): Boolean {
-        if (event is Events.MouseClicked && event.button == 0) {
+    override fun accept(event: Event): Boolean {
+        if (event is MouseClicked && event.button == 0) {
             active = !active
             return true
         }

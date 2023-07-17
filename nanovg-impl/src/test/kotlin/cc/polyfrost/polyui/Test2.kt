@@ -24,13 +24,14 @@ package cc.polyfrost.polyui
 import cc.polyfrost.polyui.color.DarkTheme
 import cc.polyfrost.polyui.color.LightTheme
 import cc.polyfrost.polyui.component.impl.*
-import cc.polyfrost.polyui.event.Events
-import cc.polyfrost.polyui.event.Events.Companion.events
+import cc.polyfrost.polyui.event.Event.Companion.events
+import cc.polyfrost.polyui.event.MouseClicked
 import cc.polyfrost.polyui.input.Modifiers
 import cc.polyfrost.polyui.input.PolyTranslator.Companion.localised
 import cc.polyfrost.polyui.layout.Layout.Companion.drawables
 import cc.polyfrost.polyui.layout.impl.FlexLayout
 import cc.polyfrost.polyui.layout.impl.PixelLayout
+import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.property.PropertyManager
 import cc.polyfrost.polyui.property.State
 import cc.polyfrost.polyui.property.impl.*
@@ -45,6 +46,11 @@ import kotlin.random.Random
 
 val moon = PolyImage("moon.svg")
 val sun = PolyImage("sun.svg")
+val brand = BrandBlockProperties(4f.radii())
+val success = StateBlockProperties(State.Success, 4f.radii())
+val warning = StateBlockProperties(State.Warning, 4f.radii())
+val danger = StateBlockProperties(State.Danger, 4f.radii())
+val text = TextProperties(Font("Poppins-SemiBold.ttf"))
 
 fun main() {
     // todo implement designs for textbox etc
@@ -97,10 +103,10 @@ fun block() = Block(
 )
 
 fun prop() = when (Random.Default.nextInt(4)) {
-    0 -> BrandBlockProperties(4f.radii())
-    1 -> StateBlockProperties(State.Success, 4f.radii())
-    2 -> StateBlockProperties(State.Warning, 4f.radii())
-    else -> StateBlockProperties(State.Danger, 4f.radii())
+    0 -> brand
+    1 -> success
+    2 -> warning
+    else -> danger
 }
 
 fun create(at: Point<Unit>, default: Boolean): PixelLayout {
@@ -110,13 +116,13 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
         at = at,
         drawables = drawables(
             Block(
-                properties = BackgroundProperties(),
+                properties = Properties.backgroundBlock,
                 at = origin,
                 size = 400.px * 500.px,
                 acceptInput = false
             ),
             Text(
-                properties = TextProperties(Font("Poppins-SemiBold.ttf")),
+                properties = text,
                 text = "text.light".localised(),
                 fontSize = 20.px,
                 at = 24.px * 65.px
@@ -125,7 +131,7 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                 leftIcon = moon,
                 at = 24.px * 111.px,
                 events = events(
-                    Events.MouseClicked(0) to {
+                    MouseClicked(0) to {
                         if (t) {
                             this.layout.changeColors(LightTheme())
                             this.layout.getComponent<Text>(1).text = "text.light".localised()
@@ -173,7 +179,7 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                 text = "button.randomize".localised(),
                 at = 24.px * 380.px,
                 events = events(
-                    Events.MouseClicked(0) to {
+                    MouseClicked(0) to {
                         this.layout.getLayout<FlexLayout>(0).shuffle()
                     }
                 )
@@ -182,7 +188,7 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                 leftIcon = PolyImage("plus.svg"),
                 at = 320.px * 380.px,
                 events = events(
-                    Events.MouseClicked(0) to {
+                    MouseClicked(0) to {
                         this.layout.getLayout<FlexLayout>(0).addComponent(block())
                     }
                 )
@@ -191,14 +197,14 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                 leftIcon = PolyImage("minus.svg"),
                 at = 355.px * 380.px,
                 events = events(
-                    Events.MouseClicked(0) to {
+                    MouseClicked(0) to {
                         val l = this.layout.getLayout<FlexLayout>(0)
                         l.removeComponentNow(l.components.last())
                     }
                 )
             ),
             Block(
-                properties = BrandBlockProperties(),
+                properties = Properties.brandBlock,
                 at = 24.px * 430.px,
                 size = 85.px * 32.px
             ).draggable(),

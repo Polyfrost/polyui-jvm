@@ -71,12 +71,13 @@ class Settings(private val renderer: Renderer) {
     var minDrawablesForFramebuffer: Int = 30
 
     /**
-     * Weather or not the system should promote [DraggableLayouts][cc.polyfrost.polyui.layout.impl.extension.DraggableLayout]
-     * to the top of the render queue, so they are rendered on top of other layouts (they are rendered last)
+     * Weather or not the system should promote dragging drawables to the top of the render queue. This means they are rendered last so look correct.
      *
      * They will still retain their order relative to each other.
      *
      * @since 0.18.2
+     * @see cc.polyfrost.polyui.layout.Layout.draggable
+     * @see cc.polyfrost.polyui.component.Component.draggable
      */
     var draggablesOnTop = true
 
@@ -143,6 +144,14 @@ class Settings(private val renderer: Renderer) {
      * @since 0.18.4
      */
     var windowAspectRatio: Pair<Int, Int> = -1 to -1
+
+    /**
+     * This property will explicitly clean up after the initialization of PolyUI,
+     * calling the garbage collector to free up temporary objects created during initialization.
+     *
+     * This option will usually halve or more the memory usage, but takes time (~10ms). It is recommended for memory limited scenarios and in production.
+     */
+    var cleanupAfterInit = true
 
     /** How to handle resource (image and font) loading errors.
      * @see resourcePolicy

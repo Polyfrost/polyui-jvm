@@ -26,7 +26,7 @@ import cc.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
 import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.component.Component
-import cc.polyfrost.polyui.event.Events
+import cc.polyfrost.polyui.event.Event
 import cc.polyfrost.polyui.property.impl.ImageProperties
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.data.PolyImage
@@ -40,7 +40,7 @@ open class Image @JvmOverloads constructor(
     at: Vec2<Unit>,
     rawResize: Boolean = false,
     acceptInput: Boolean = true,
-    vararg events: Events.Handler
+    vararg events: Event.Handler
 ) : Component(properties, at, null, rawResize, acceptInput, *events) {
     var image = image
         set(value) {

@@ -25,7 +25,8 @@ import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
 import cc.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
 import cc.polyfrost.polyui.component.Drawable
-import cc.polyfrost.polyui.event.Events
+import cc.polyfrost.polyui.event.Added
+import cc.polyfrost.polyui.event.Removed
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.property.PropertyManager
 import cc.polyfrost.polyui.renderer.Renderer
@@ -44,8 +45,8 @@ import kotlin.math.max
  */
 class GridLayout @JvmOverloads constructor(
     at: Point<Unit>,
-    onAdded: (Drawable.(Events.Added) -> kotlin.Unit)? = null,
-    onRemoved: (Drawable.(Events.Removed) -> kotlin.Unit)? = null,
+    onAdded: (Drawable.(Added) -> kotlin.Unit)? = null,
+    onRemoved: (Drawable.(Removed) -> kotlin.Unit)? = null,
     propertyManager: PropertyManager? = null,
     private val cellSize: CellSize = CellSize.AllSame,
     private val contentStretch: ContentStretch = ContentStretch.FillCell,

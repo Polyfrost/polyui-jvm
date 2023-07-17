@@ -26,7 +26,7 @@ import cc.polyfrost.polyui.animate.Animation
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.component.StateBlock
-import cc.polyfrost.polyui.event.Events
+import cc.polyfrost.polyui.event.Event
 import cc.polyfrost.polyui.property.impl.SwitchProperties
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.Point
@@ -48,7 +48,7 @@ class Switch(
     size: Size<Unit>,
     enabled: Boolean = false,
     onEnable: (Switch.(Boolean) -> kotlin.Unit)? = null,
-    vararg events: Events.Handler
+    vararg events: Event.Handler
 ) : StateBlock(properties, at, size, defaultState = enabled, onStateChange = onEnable as (StateBlock.(Boolean) -> kotlin.Unit)?, events = events) {
     private var anim: Animation? = null
     private var bitSize = 0f

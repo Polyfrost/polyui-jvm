@@ -23,7 +23,7 @@ package cc.polyfrost.polyui.component.impl
 
 import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.component.Component
-import cc.polyfrost.polyui.event.Events
+import cc.polyfrost.polyui.event.Event
 import cc.polyfrost.polyui.input.PolyText
 import cc.polyfrost.polyui.input.PolyTranslator.Companion.localised
 import cc.polyfrost.polyui.property.impl.TextProperties
@@ -46,7 +46,7 @@ open class Text @JvmOverloads constructor(
     val textAlign: TextAlign = TextAlign.Left,
     rawResize: Boolean = false,
     acceptInput: Boolean = false,
-    vararg events: Events.Handler
+    vararg events: Event.Handler
 ) : Component(properties, at, null, rawResize, acceptInput, *events) {
     /** Internally [txt] is stored as a [PolyText] object, which supports localization and object substitution */
     @JvmOverloads
@@ -58,7 +58,7 @@ open class Text @JvmOverloads constructor(
         textAlign: TextAlign = TextAlign.Left,
         rawResize: Boolean = false,
         acceptInput: Boolean = false,
-        vararg events: Events.Handler
+        vararg events: Event.Handler
     ) : this(null, txt.localised(), at, size, fontSize, textAlign, rawResize, acceptInput, *events)
 
     constructor(properties: TextProperties? = null, text: PolyText, fontSize: Unit, at: Vec2<Unit>) :

@@ -310,9 +310,6 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
      */
     abstract fun createFramebuffer(width: Float, height: Float): Framebuffer
 
-    /** Delete the given framebuffer. Ignore if null. */
-    abstract fun deleteFramebuffer(fbo: Framebuffer?)
-
     /** Bind the given framebuffer. Ignore if null. */
     abstract fun bindFramebuffer(fbo: Framebuffer?)
 
@@ -327,6 +324,19 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
         width: Float = fbo.width,
         height: Float = fbo.height
     )
+
+    /** Delete the given framebuffer. Ignore if null. */
+    abstract fun delete(fbo: Framebuffer?)
+
+    /** Delete the given font. Use this to free any native resources.
+     * @since 0.20.1
+     */
+    abstract fun delete(font: Font?)
+
+    /** Delete the given image. Use this to free any native resources.
+     * @since 0.20.1
+     */
+    abstract fun delete(image: PolyImage?)
 
     /**
      * Cleanup the PolyUI instance.

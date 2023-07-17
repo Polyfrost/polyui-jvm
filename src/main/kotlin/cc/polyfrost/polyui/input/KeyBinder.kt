@@ -23,8 +23,8 @@ package cc.polyfrost.polyui.input
 
 import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.event.Event
-import cc.polyfrost.polyui.event.Events
-import cc.polyfrost.polyui.event.FocusedEvents
+import cc.polyfrost.polyui.event.FocusedEvent
+import cc.polyfrost.polyui.event.MouseClicked
 import cc.polyfrost.polyui.utils.fastEach
 import org.jetbrains.annotations.ApiStatus
 
@@ -75,21 +75,21 @@ class KeyBinder {
      * Remove all keybindings for the given key and modifiers.
      */
     fun removeAll(key: Char, modifiers: Short) {
-        listeners.remove(FocusedEvents.KeyTyped(key, modifiers, false))
+        listeners.remove(FocusedEvent.KeyTyped(key, modifiers, false))
     }
 
     /**
      * Remove all keybindings for the given key and modifiers.
      */
     fun removeAll(key: Keys, modifiers: Short) {
-        listeners.remove(FocusedEvents.KeyPressed(key, modifiers, false))
+        listeners.remove(FocusedEvent.KeyPressed(key, modifiers, false))
     }
 
     /**
      * Remove all keybindings for the given key and modifiers.
      */
     fun removeAll(mouse: Mouse, amountClicks: Int, modifiers: Short) {
-        listeners.remove(Events.MouseClicked(mouse.value.toInt(), amountClicks, modifiers))
+        listeners.remove(MouseClicked(mouse.value.toInt(), amountClicks, modifiers))
     }
 
     private fun add0(listeners: ArrayList<() -> Boolean>?, key: Char, durationNanos: Long, mods: Short, keybind: () -> Boolean) {
@@ -98,7 +98,7 @@ class KeyBinder {
                 PolyUI.LOGGER.warn("found {} other keybindings for key {}", listeners.size, Keys.toStringPretty(key, mods))
                 listeners.add(keybind)
             } else {
-                this.listeners[FocusedEvents.KeyTyped(key, mods)] = arrayListOf(keybind)
+                this.listeners[FocusedEvent.KeyTyped(key, mods)] = arrayListOf(keybind)
             }
         }
     }
@@ -109,7 +109,7 @@ class KeyBinder {
                 PolyUI.LOGGER.warn("found {} other keybindings for key {}", listeners.size, Keys.toStringPretty(key, mods))
                 listeners.add(keybind)
             } else {
-                this.listeners[FocusedEvents.KeyPressed(key, mods)] = arrayListOf(keybind)
+                this.listeners[FocusedEvent.KeyPressed(key, mods)] = arrayListOf(keybind)
             }
         } else {
         }
@@ -121,7 +121,7 @@ class KeyBinder {
                 PolyUI.LOGGER.warn("found {} other keybindings for key {}", listeners.size, Mouse.toStringPretty(button, mods))
                 listeners.add(keybind)
             } else {
-                this.listeners[Events.MouseClicked(button.value.toInt(), amountClicks, mods)] = arrayListOf(keybind)
+                this.listeners[MouseClicked(button.value.toInt(), amountClicks, mods)] = arrayListOf(keybind)
             }
         }
     }
@@ -133,7 +133,7 @@ class KeyBinder {
      */
     @OverloadResolutionByLambdaReturnType
     fun add(key: Char, durationNanos: Long = 0L, mods: Short = 0, keybind: () -> Boolean) {
-        add0(listeners[FocusedEvents.KeyTyped(key.uppercaseChar(), mods, false)], key, durationNanos, mods, keybind)
+        add0(listeners[FocusedEvent.KeyTyped(key.uppercaseChar(), mods, false)], key, durationNanos, mods, keybind)
     }
 
     /**
@@ -143,7 +143,7 @@ class KeyBinder {
     @OverloadResolutionByLambdaReturnType
     @JvmName("addListener")
     fun add(key: Char, durationNanos: Long = 0L, mods: Short = 0, keybind: () -> Unit) {
-        add0(listeners[FocusedEvents.KeyTyped(key.uppercaseChar(), mods, false)], key, durationNanos, mods) { keybind(); true }
+        add0(listeners[FocusedEvent.KeyTyped(key.uppercaseChar(), mods, false)], key, durationNanos, mods) { keybind(); true }
     }
 
     // keys //
@@ -153,7 +153,7 @@ class KeyBinder {
      */
     @OverloadResolutionByLambdaReturnType
     fun add(key: Keys, durationNanos: Long = 0L, mods: Short = 0, keybind: () -> Boolean) =
-        add0(listeners[FocusedEvents.KeyPressed(key, mods, false)], key, durationNanos, mods, keybind)
+        add0(listeners[FocusedEvent.KeyPressed(key, mods, false)], key, durationNanos, mods, keybind)
 
     /**
      * Add a keybinding for the given key and modifiers.
@@ -162,7 +162,7 @@ class KeyBinder {
     @OverloadResolutionByLambdaReturnType
     @JvmName("addListener")
     fun add(key: Keys, durationNanos: Long = 0L, mods: Short = 0, keybind: () -> Unit) =
-        add0(listeners[FocusedEvents.KeyPressed(key, mods, false)], key, durationNanos, mods) { keybind(); true }
+        add0(listeners[FocusedEvent.KeyPressed(key, mods, false)], key, durationNanos, mods) { keybind(); true }
 
     // mouse //
     /**
@@ -172,7 +172,7 @@ class KeyBinder {
     @OverloadResolutionByLambdaReturnType
     @JvmName("addListener")
     fun add(button: Mouse, durationNanos: Long = 0L, amountClicks: Int = 1, mods: Short = 0, keybind: () -> Unit) =
-        add0(listeners[Events.MouseClicked(button.value.toInt(), amountClicks, mods)], button, durationNanos, amountClicks, mods) { keybind(); true }
+        add0(listeners[MouseClicked(button.value.toInt(), amountClicks, mods)], button, durationNanos, amountClicks, mods) { keybind(); true }
 
     /**
      * Add a keybinding for the given key and modifiers.
@@ -180,5 +180,5 @@ class KeyBinder {
      */
     @OverloadResolutionByLambdaReturnType
     fun add(button: Mouse, durationNanos: Long = 0L, amountClicks: Int = 1, mods: Short = 0, keybind: () -> Boolean) =
-        add0(listeners[Events.MouseClicked(button.value.toInt(), amountClicks, mods)], button, durationNanos, amountClicks, mods, keybind)
+        add0(listeners[MouseClicked(button.value.toInt(), amountClicks, mods)], button, durationNanos, amountClicks, mods, keybind)
 }

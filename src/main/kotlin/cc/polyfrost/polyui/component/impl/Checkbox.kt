@@ -42,7 +42,11 @@ open class Checkbox(
     override val properties
         get() = super.properties as CheckboxProperties
 
-    var checked by ::active
+    inline var checked: Boolean
+        get() = active
+        set(value) {
+            active = value
+        }
 
     override fun render() {
         super.render()

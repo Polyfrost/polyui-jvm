@@ -66,7 +66,7 @@ class EventManager(private val polyUI: PolyUI) {
 
     /** This method should be called when a printable key is typed. This key should be **mapped to the user's keyboard layout!** */
     fun onKeyTyped(key: Char, isRepeat: Boolean) {
-        val event = FocusedEvents.KeyTyped(key, keyModifiers, isRepeat)
+        val event = FocusedEvent.KeyTyped(key, keyModifiers, isRepeat)
         if (!isRepeat) {
             if (polyUI.keyBinder.accept(event)) return
         }
@@ -75,7 +75,7 @@ class EventManager(private val polyUI: PolyUI) {
 
     /** This method should be called when a non-printable key is pressed. */
     fun onUnprintableKeyTyped(key: Keys, isRepeat: Boolean) {
-        val event = FocusedEvents.KeyPressed(key, keyModifiers, isRepeat)
+        val event = FocusedEvent.KeyPressed(key, keyModifiers, isRepeat)
         if (!isRepeat) {
             if (polyUI.keyBinder.accept(event)) return
         }
@@ -116,29 +116,29 @@ class EventManager(private val polyUI: PolyUI) {
         keyModifiers = 0
     }
 
-    private val _mouseCalculator: Drawable.(Float, Float) -> Boolean = self@{ x, y ->
-        if (acceptsInput && isInside(x, y)) {
-            if (!mouseOver) {
-                mouseOverDrawables.add(this)
-                mouseOver = true
-                if (accept(Events.MouseEntered)) {
-                    return@self true
+    private fun mouseCalculate(drawable: Drawable, x: Float, y: Float): Boolean {
+        if (drawable.acceptsInput && drawable.isInside(x, y)) {
+            if (!drawable.mouseOver) {
+                mouseOverDrawables.add(drawable)
+                drawable.mouseOver = true
+                if (drawable.accept(MouseEntered)) {
+                    return true
                 }
             }
         }
-        false
+        return false
     }
 
     private fun calcMouse(layout: Layout, x: Float, y: Float) {
         for (i in layout.components.size - 1 downTo 0) {
-            if (_mouseCalculator(layout.components[i], x, y)) {
+            if (mouseCalculate(layout.components[i], x, y)) {
                 return
             }
         }
         for (i in layout.children.size - 1 downTo 0) {
             calcMouse(layout.children[i], x, y)
         }
-        _mouseCalculator(layout, x, y)
+        mouseCalculate(layout, x, y)
     }
 
     /** call this function to update the mouse position. It also will update all necessary mouse over flags. */
@@ -151,10 +151,10 @@ class EventManager(private val polyUI: PolyUI) {
         mouseOverDrawables.fastRemoveIf {
             (!it.isInside(x, y)).also { b ->
                 if (b) {
-                    it.accept(Events.MouseExited)
+                    it.accept(MouseExited)
                     it.mouseOver = false
                 } else {
-                    it.accept(Events.MouseMoved)
+                    it.accept(MouseMoved)
                 }
             }
         }
@@ -162,7 +162,7 @@ class EventManager(private val polyUI: PolyUI) {
 
     fun onMousePressed(button: Int) {
         if (button == 0) mouseDown = true
-        val event = Events.MousePressed(button, mouseX, mouseY, keyModifiers)
+        val event = MousePressed(button, mouseX, mouseY, keyModifiers)
         dispatch(event)
     }
 
@@ -192,10 +192,10 @@ class EventManager(private val polyUI: PolyUI) {
                 }
             }
         }
-        val event = Events.MouseReleased(button, mouseX, mouseY, keyModifiers)
+        val event = MouseReleased(button, mouseX, mouseY, keyModifiers)
         releaseCancelled = false
         clickedCancelled = false
-        val event2 = Events.MouseClicked(button, mouseX, mouseY, clickAmount, keyModifiers)
+        val event2 = MouseClicked(button, mouseX, mouseY, clickAmount, keyModifiers)
         if (polyUI.keyBinder.accept(event)) return
         if (polyUI.keyBinder.accept(event2)) return
         polyUI.master.onAllLayouts(true) {
@@ -231,44 +231,33 @@ class EventManager(private val polyUI: PolyUI) {
             }
         }
         val (sx, sy) = polyUI.settings.scrollMultiplier
-        val event = Events.MouseScrolled(amountX * sx, amountY * sy, keyModifiers)
+        val event = MouseScrolled(amountX * sx, amountY * sy, keyModifiers)
         dispatch(event)
     }
 
     /**
      * Dispatch an event to this PolyUI instance, and it will be given to any drawable that has mouseOver true.
      */
-    fun dispatch(vararg event: Events) {
-        for (e in event) {
-            if (polyUI.keyBinder.accept(e)) return
-        }
-        dispatchLoop(polyUI.master, event)
+    fun dispatch(event: Event) {
+        if (polyUI.keyBinder.accept(event)) return
+        dispatchTo(polyUI.master, event)
     }
 
-    private fun dispatchLoop(layout: Layout, events: Array<out Events>) {
+    /**
+     * Dispatch an event to a specific layout, and its children.
+     *
+     * **Note:** [dispatch] is almost every case should be used instead, as it gives it to all drawables; hence why it is marked as internal.
+     * @see dispatch
+     */
+    @ApiStatus.Internal
+    fun dispatchTo(layout: Layout, event: Event) {
         for (i in layout.components.size - 1 downTo 0) {
-            for (event in events) {
-                if (_dispatch(layout.components[i], event, mouseX, mouseY)) {
-                    return
-                }
-            }
+            val it = layout.components[i]
+            if (it.mouseOver && it.accept(event)) return
         }
         for (i in layout.children.size - 1 downTo 0) {
-            dispatchLoop(layout.children[i], events)
+            dispatchTo(layout.children[i], event)
         }
-        for (event in events) {
-            if (_dispatch(layout, event, mouseX, mouseY)) {
-                return
-            }
-        }
-    }
-
-    private val _dispatch: Drawable.(Events, Float, Float) -> Boolean = self@{ event, x, y ->
-        if (isInside(x, y)) {
-            if (mouseOver) {
-                if (accept(event)) return@self true
-            }
-        }
-        false
+        if (layout.mouseOver && layout.accept(event)) return
     }
 }

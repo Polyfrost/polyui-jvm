@@ -146,7 +146,13 @@ class NoOpRenderer(width: Float, height: Float) : Renderer(width, height) {
         return Framebuffer(width, height)
     }
 
-    override fun deleteFramebuffer(fbo: Framebuffer?) {
+    override fun delete(fbo: Framebuffer?) {
+    }
+
+    override fun delete(font: Font?) {
+    }
+
+    override fun delete(image: PolyImage?) {
     }
 
     override fun bindFramebuffer(fbo: Framebuffer?) {

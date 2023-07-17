@@ -25,8 +25,7 @@ import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Focusable
-import cc.polyfrost.polyui.event.Events
-import cc.polyfrost.polyui.event.FocusedEvents
+import cc.polyfrost.polyui.event.*
 import cc.polyfrost.polyui.input.KeyModifiers
 import cc.polyfrost.polyui.input.Keys
 import cc.polyfrost.polyui.property.impl.TextInputProperties
@@ -41,7 +40,7 @@ open class TextInput(
     properties: TextInputProperties? = null,
     at: Vec2<Unit>,
     size: Vec2<Unit>,
-    vararg events: Events.Handler
+    vararg events: Event.Handler
 ) : Component(properties, at, size, false, true, *events), Focusable {
     override val properties: TextInputProperties
         get() = super.properties as TextInputProperties
@@ -85,22 +84,22 @@ open class TextInput(
         renderer.resetGlobalAlpha()
     }
 
-    override fun accept(event: Events): Boolean {
-        if (event is Events.MouseEntered) {
+    override fun accept(event: Event): Boolean {
+        if (event is MouseEntered) {
             polyui.cursor = Cursor.Text
         }
-        if (event is Events.MouseExited) {
+        if (event is MouseExited) {
             polyui.cursor = Cursor.Pointer
         }
-        if (event is Events.MousePressed) {
+        if (event is MousePressed) {
             mouseDown = true
             return true
         }
-        if (event is Events.MouseReleased) {
+        if (event is MouseReleased) {
             mouseDown = false
             return true
         }
-        if (event is Events.MouseClicked) {
+        if (event is MouseClicked) {
             clearSelection()
             if (event.clicks == 1) {
                 posFromMouse(event.mouseX, event.mouseY)
@@ -110,7 +109,7 @@ open class TextInput(
                 return true
             }
         }
-        if (event is Events.MouseMoved) {
+        if (event is MouseMoved) {
             if (mouseDown) {
                 if (!polyui.mouseDown) {
                     selecting = false
@@ -124,15 +123,15 @@ open class TextInput(
         return super.accept(event)
     }
 
-    override fun accept(event: FocusedEvents) {
-        if (event is FocusedEvents.FocusGained) {
+    override fun accept(event: FocusedEvent) {
+        if (event is FocusedEvent.Gained) {
             focused = true
         }
-        if (event is FocusedEvents.FocusLost) {
+        if (event is FocusedEvent.Lost) {
             clearSelection()
             focused = false
         }
-        if (event is FocusedEvents.KeyTyped) {
+        if (event is FocusedEvent.KeyTyped) {
             if (event.mods < 2) {
                 if (caret != select) {
                     txt = txt.replace(selection, "")
@@ -168,7 +167,7 @@ open class TextInput(
                 }
             }
         }
-        if (event is FocusedEvents.KeyPressed) {
+        if (event is FocusedEvent.KeyPressed) {
             val hasControl = event.hasModifier(KeyModifiers.LCONTROL) || event.hasModifier(KeyModifiers.RCONTROL)
             val hasShift = event.hasModifier(KeyModifiers.LSHIFT) || event.hasModifier(KeyModifiers.RSHIFT)
             when (event.key) {

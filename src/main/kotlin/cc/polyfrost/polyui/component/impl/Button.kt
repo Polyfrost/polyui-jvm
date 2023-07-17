@@ -24,7 +24,7 @@ package cc.polyfrost.polyui.component.impl
 import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.ContainingComponent
-import cc.polyfrost.polyui.event.Events
+import cc.polyfrost.polyui.event.Event
 import cc.polyfrost.polyui.input.PolyText
 import cc.polyfrost.polyui.property.impl.ButtonProperties
 import cc.polyfrost.polyui.renderer.data.PolyImage
@@ -51,7 +51,7 @@ class Button(
     fontSize: Unit.Pixel = 12.px,
     rightIcon: PolyImage? = null,
     acceptsInput: Boolean = true,
-    vararg events: Events.Handler
+    vararg events: Event.Handler
 ) : ContainingComponent(properties, at, null, false, acceptsInput, arrayOf(), *events) {
     override val properties get() = super.properties as ButtonProperties
     val leftImage: Image? = if (leftIcon != null) Image(image = leftIcon, at = origin, acceptInput = false) else null

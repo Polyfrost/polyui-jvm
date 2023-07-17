@@ -22,7 +22,8 @@
 package cc.polyfrost.polyui.component.impl
 
 import cc.polyfrost.polyui.animate.Animation
-import cc.polyfrost.polyui.event.Events
+import cc.polyfrost.polyui.event.Event
+import cc.polyfrost.polyui.event.MousePressed
 import cc.polyfrost.polyui.property.impl.ScrollbarProperties
 import cc.polyfrost.polyui.unit.origin
 
@@ -118,9 +119,9 @@ class Scrollbar(private val horizontal: Boolean) : Block(null, origin, origin, f
         super.calculateBounds()
     }
 
-    override fun accept(event: Events): Boolean {
+    override fun accept(event: Event): Boolean {
         if (!scrolls) return super.accept(event)
-        if (event is Events.MousePressed) {
+        if (event is MousePressed) {
             if (event.button == 0 && event.mods.toInt() == 0) {
                 dragging = true
                 m = if (horizontal) polyui.mouseX - x - (layout.trueX - layout.ox) else polyui.mouseY - y - (layout.trueY - layout.oy)

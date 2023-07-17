@@ -30,7 +30,9 @@ import cc.polyfrost.polyui.animate.Animations
 import cc.polyfrost.polyui.animate.KeyFrames
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.color.Colors
-import cc.polyfrost.polyui.event.Events
+import cc.polyfrost.polyui.event.Event
+import cc.polyfrost.polyui.event.MousePressed
+import cc.polyfrost.polyui.event.MouseReleased
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.renderer.Renderer
@@ -51,7 +53,7 @@ abstract class Component @JvmOverloads constructor(
     override var size: Size<Unit>? = null,
     rawResize: Boolean = false,
     acceptInput: Boolean = true,
-    vararg events: Events.Handler
+    vararg events: Event.Handler
 ) : Drawable(at, rawResize, acceptInput) {
 
     @PublishedApi
@@ -114,7 +116,7 @@ abstract class Component @JvmOverloads constructor(
         addEventHandlers(*events)
     }
 
-    override fun accept(event: Events): Boolean {
+    override fun accept(event: Event): Boolean {
         if (super.accept(event)) return true
         return properties.eventHandlers[event]?.let { it(this, event) } == true
     }
@@ -123,7 +125,7 @@ abstract class Component @JvmOverloads constructor(
      * Add event handlers to this drawable.
      * @since 0.18.5
      */
-    fun addEventHandlers(vararg handlers: Events.Handler) {
+    fun addEventHandlers(vararg handlers: Event.Handler) {
         for (handler in handlers) {
             eventHandlers[handler.event] = handler.handler
         }
@@ -280,13 +282,13 @@ abstract class Component @JvmOverloads constructor(
         var mx = 0f
         var my = 0f
         addEventHandlers(
-            Events.MousePressed(0) to {
+            MousePressed(0) to {
                 hovered = true
                 mx = polyui.eventManager.mouseX - x
                 my = polyui.eventManager.mouseY - y
                 consumesEvent
             },
-            Events.MouseReleased(0) to {
+            MouseReleased(0) to {
                 hovered = false
                 consumesEvent
             }

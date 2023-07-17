@@ -28,8 +28,8 @@ import cc.polyfrost.polyui.color.DarkTheme
 import cc.polyfrost.polyui.color.LightTheme
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.component.impl.*
-import cc.polyfrost.polyui.event.Events
-import cc.polyfrost.polyui.event.Events.Companion.events
+import cc.polyfrost.polyui.event.Event.Companion.events
+import cc.polyfrost.polyui.event.MouseClicked
 import cc.polyfrost.polyui.input.Keys
 import cc.polyfrost.polyui.input.Modifiers
 import cc.polyfrost.polyui.input.Modifiers.Companion.mods
@@ -56,27 +56,28 @@ fun main() {
 
     val window = if (!useNoOp) GLWindow("Test", 800, 800) else NoOpWindow("Test", 800, 800)
     val things = Array<Drawable>(50) { // creates 50 rectangles with random sizes
-        Block(
-            properties = Properties.brandProperties,
+        val block = Block(
+            properties = Properties.brandBlock,
             at = flex(),
             size = Size((Random.Default.nextFloat() * 40f + 40f).px, (Random.Default.nextFloat() * 40f + 40f).px),
             events = events(
-                Events.MouseClicked(0) to {
+                MouseClicked(0) to {
                     println("Mouse clicked! $it")
-                    setProperties(Properties.successProperties)
+                    setProperties(Properties.successBlock)
                     rotateBy(120.0, Animations.EaseInOutCubic, .5.seconds)
                 },
-                Events.MouseClicked(0, 2) to {
+                MouseClicked(0, 2) to {
                     println("Mouse double-clicked!")
-                    setProperties(Properties.warningProperties)
+                    setProperties(Properties.warningBlock)
                 },
-                Events.MouseClicked(1) to {
+                MouseClicked(1) to {
                     println("Mouse right-clicked!")
-                    setProperties(Properties.dangerProperties)
+                    setProperties(Properties.dangerBlock)
                     true
                 }
             )
         )
+        block
     }
     val polyUI = PolyUI(
         renderer = if (!useNoOp) {
@@ -101,11 +102,11 @@ fun main() {
                                         at = 50.percent * 10.percent,
                                         drawables = drawables(
                                             Block(
-                                                Properties.successProperties,
+                                                Properties.successBlock,
                                                 at = origin,
                                                 size = 60.px * 60.px,
                                                 events = events(
-                                                    Events.MouseClicked(0) to {
+                                                    MouseClicked(0) to {
                                                         recolor(
                                                             Color.Gradient(
                                                                 rgba(1f, 0f, 1f, 1f),
@@ -115,7 +116,7 @@ fun main() {
                                                             2.seconds
                                                         )
                                                     },
-                                                    Events.MouseClicked(1) to {
+                                                    MouseClicked(1) to {
                                                         recolor(rgba(1f, 0f, 1f, 1f), Animations.EaseOutExpo, 2.seconds)
                                                     }
                                                 )
@@ -129,7 +130,7 @@ fun main() {
                                 )
                             ),
                             Block(
-                                Properties.brandProperties,
+                                Properties.brandBlock,
                                 at = origin,
                                 size = 240.px * 240.px
                             )
@@ -150,7 +151,7 @@ fun main() {
                         at = 0.px * 30.px,
                         size = 120.px * 120.px,
                         events = events(
-                            Events.MouseClicked(0) to {
+                            MouseClicked(0) to {
                                 keyframed(2.seconds, Animations.EaseOutExpo) {
                                     20 {
                                         rotation = 20.0
@@ -178,7 +179,7 @@ fun main() {
                         at = 180.px * 30.px,
                         size = 18.percent * 120.px,
                         events = events(
-                            Events.MouseClicked(0) to {
+                            MouseClicked(0) to {
                                 rotateBy(120.0, Animations.EaseInOutCubic, .5.seconds)
                             }
                         )
@@ -187,7 +188,7 @@ fun main() {
                         image = PolyImage("/a.png", 120f, 120f),
                         at = 360.px * 30.px,
                         events = events(
-                            Events.MouseClicked(0) to {
+                            MouseClicked(0) to {
                                 rotateBy(120.0, Animations.EaseOutBump)
                             }
                         )
@@ -198,7 +199,7 @@ fun main() {
                         text = "polyui.button".localised(),
                         rightIcon = PolyImage("/test.jpg", 15f, 15f),
                         events = events(
-                            Events.MouseClicked(0) to {
+                            MouseClicked(0) to {
                                 rotateBy(120.0, Animations.EaseInOutCubic)
                                 polyui.master.getLayout<FlexLayout>(0).shuffle()
                             }

@@ -28,7 +28,6 @@ import cc.polyfrost.polyui.PolyUI.Companion.INIT_SETUP
 import cc.polyfrost.polyui.animate.Animation
 import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.event.Event
-import cc.polyfrost.polyui.event.Events
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.*
@@ -58,7 +57,7 @@ abstract class Drawable(
     val rawResize: Boolean = false,
     open var acceptsInput: Boolean = true
 ) : Cloneable {
-    val eventHandlers = HashMap<Events, (Drawable.(Event) -> Boolean)>()
+    val eventHandlers = HashMap<Event, (Drawable.(Event) -> Boolean)>()
 
     /**
      * This is the name of this drawable, and it will be consistent over reboots of the program, so you can use it to get drawables from a layout by ID, e.g:
@@ -293,18 +292,18 @@ abstract class Drawable(
      *
      * @return true if the event should be consumed (cancelled so no more handlers are called), false otherwise.
      * */
-    open fun accept(event: Events): Boolean {
+    open fun accept(event: Event): Boolean {
         return eventHandlers[event]?.let { it(this, event) } ?: false
     }
 
     @OverloadResolutionByLambdaReturnType
-    protected fun addEventHandler(event: Events, handler: (Drawable.(Event) -> Boolean)) {
+    protected fun addEventHandler(event: Event, handler: (Drawable.(Event) -> Boolean)) {
         eventHandlers[event] = handler
     }
 
     @JvmName("addEventhandler")
     @OverloadResolutionByLambdaReturnType
-    protected fun addEventHandler(event: Events, handler: Drawable.(Event) -> kotlin.Unit) {
+    protected fun addEventHandler(event: Event, handler: Drawable.(Event) -> kotlin.Unit) {
         eventHandlers[event] = {
             handler(this, it)
             true

@@ -33,7 +33,7 @@ import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.component.DrawableOp
 import cc.polyfrost.polyui.component.impl.Block
 import cc.polyfrost.polyui.component.impl.Scrollbar
-import cc.polyfrost.polyui.event.Events
+import cc.polyfrost.polyui.event.*
 import cc.polyfrost.polyui.property.PropertyManager
 import cc.polyfrost.polyui.property.impl.BackgroundProperties
 import cc.polyfrost.polyui.property.impl.BlockProperties
@@ -59,8 +59,8 @@ import org.jetbrains.annotations.ApiStatus
 abstract class Layout(
     at: Point<Unit>,
     override var size: Size<Unit>? = null,
-    internal val onAdded: (Drawable.(Events.Added) -> kotlin.Unit)? = null,
-    internal val onRemoved: (Drawable.(Events.Removed) -> kotlin.Unit)? = null,
+    internal val onAdded: (Drawable.(Added) -> kotlin.Unit)? = null,
+    internal val onRemoved: (Drawable.(Removed) -> kotlin.Unit)? = null,
     propertyManager: PropertyManager? = null,
     rawResize: Boolean = false,
     /**
@@ -190,14 +190,14 @@ abstract class Layout(
 
     init {
         if (onAdded != null) {
-            addEventHandler(Events.Added) {
-                onAdded.invoke(this, it as Events.Added)
+            addEventHandler(Added) {
+                onAdded.invoke(this, it as Added)
                 true
             }
         }
         if (onRemoved != null) {
-            addEventHandler(Events.Removed) {
-                onRemoved.invoke(this, it as Events.Removed)
+            addEventHandler(Removed) {
+                onRemoved.invoke(this, it as Removed)
                 true
             }
         }
@@ -361,7 +361,7 @@ abstract class Layout(
     /**
      * adds the given component/layout to this layout.
      *
-     * this will add the drawable to the [Layout.components] or [children] list, and invoke its [Events.Added] if it is present.
+     * this will add the drawable to the [Layout.components] or [children] list, and invoke its [Added] if it is present.
      */
     open fun addComponent(drawable: Drawable) {
         when (drawable) {
@@ -383,7 +383,7 @@ abstract class Layout(
         if (initStage == INIT_COMPLETE) {
             drawable.calculateBounds()
             drawable.onParentInitComplete()
-            drawable.accept(Events.Added)
+            drawable.accept(Added)
         }
         needsRedraw = true
     }
@@ -410,7 +410,7 @@ abstract class Layout(
                 throw Exception("Drawable $drawable is not a component or layout!")
             }
         }
-        drawable.accept(Events.Removed)
+        drawable.accept(Removed)
     }
 
     /**
@@ -671,15 +671,15 @@ abstract class Layout(
             horizontalBar = Scrollbar(true)
             verticalBar = Scrollbar(false)
             addComponents(horizontalBar, verticalBar)
-            addEventHandler(Events.MouseEntered) {
+            addEventHandler(MouseEntered) {
                 horizontalBar.show()
                 verticalBar.show()
                 false
             }
         }
 
-        addEventHandler(Events.MouseScrolled()) { event ->
-            event as Events.MouseScrolled // this is annoying...
+        addEventHandler(MouseScrolled()) { event ->
+            event as MouseScrolled // this is annoying...
             if ((visibleSize!!.width < width) && event.amountX != 0) {
                 val anim = anims.first
                 val rem = anim?.to?.minus(anim.value)?.also {
@@ -807,15 +807,15 @@ abstract class Layout(
                     fill,
                     true,
                     true,
-                    Events.MousePressed(0) to {
+                    MousePressed(0) to {
                         dragging = true
                         mx = this@Layout.x - polyui.mouseX
                         my = this@Layout.y - polyui.mouseY
                     },
-                    Events.MouseReleased(0) to {
+                    MouseReleased(0) to {
                         dragging = false
                     },
-                    Events.MouseMoved to {
+                    MouseMoved to {
                         if (dragging) {
                             this@Layout.x = polyui.mouseX + mx
                             this@Layout.y = polyui.mouseY + my

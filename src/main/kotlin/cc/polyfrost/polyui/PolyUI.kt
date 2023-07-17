@@ -27,7 +27,7 @@ import cc.polyfrost.polyui.component.Component
 import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.component.Focusable
 import cc.polyfrost.polyui.event.EventManager
-import cc.polyfrost.polyui.event.FocusedEvents
+import cc.polyfrost.polyui.event.FocusedEvent
 import cc.polyfrost.polyui.input.KeyBinder
 import cc.polyfrost.polyui.input.KeyModifiers
 import cc.polyfrost.polyui.input.Modifiers.Companion.mods
@@ -76,7 +76,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
  *
  * [Properties][cc.polyfrost.polyui.property.Properties] are the shared states or tokens for the components. They describe default values, and can be overridden by the components.
  *
- * **Interactions** are driven by [events][EventManager], which thanks to Kotlin's inlining are a zero-overhead way of distributing events, such as [mouse clicks][cc.polyfrost.polyui.event.Events.MouseClicked], or [key presses][cc.polyfrost.polyui.event.FocusedEvents.KeyPressed].
+ * **Interactions** are driven by [events][EventManager], which thanks to Kotlin's inlining are a zero-overhead way of distributing events, such as [mouse clicks][cc.polyfrost.polyui.event.MouseClicked], or [key presses][cc.polyfrost.polyui.event.FocusedEvent.KeyPressed].
  *
  * PolyUI also supports a variety of [animations][cc.polyfrost.polyui.animate.Animation] and transitions, which can be used to make your UI more dynamic, along with dynamically [adding][addComponent] and [removing][removeComponent] components.
  */
@@ -212,7 +212,7 @@ class PolyUI @JvmOverloads constructor(
         }
         master.children.fastEach {
             it.onAllLayouts {
-                if (width > this@PolyUI.width || height > this@PolyUI.height) {
+                if (visibleSize == null && (width > this@PolyUI.width || height > this@PolyUI.height)) {
                     LOGGER.warn("Layout {} is larger than the window. This may cause issues.", simpleName)
                 }
                 if (!settings.framebuffersEnabled) return@onAllLayouts
@@ -265,8 +265,13 @@ class PolyUI @JvmOverloads constructor(
                 LOGGER.info(perf)
             }
         }
-        LOGGER.info("PolyUI initialized!")
         if (settings.debug) debugPrint()
+        if (settings.cleanupAfterInit) {
+            timed("Running Post-init Cleanup...") {
+                System.gc()
+            }
+        }
+        LOGGER.info("PolyUI initialized!")
     }
 
     /**
@@ -328,7 +333,7 @@ class PolyUI @JvmOverloads constructor(
 
         master.onAllLayouts {
             if (fbo != null) {
-                renderer.deleteFramebuffer(fbo)
+                renderer.delete(fbo)
                 fbo = renderer.createFramebuffer(width, height)
             }
             needsRedraw = true // lol that was funny to debug
@@ -465,9 +470,9 @@ class PolyUI @JvmOverloads constructor(
      */
     fun focus(focusable: Focusable?): Boolean {
         if (focusable === focused) return false
-        focused?.accept(FocusedEvents.FocusLost)
+        focused?.accept(FocusedEvent.Lost)
         focused = focusable
-        focused?.accept(FocusedEvents.FocusGained)
+        focused?.accept(FocusedEvent.Gained)
         return true
     }
 

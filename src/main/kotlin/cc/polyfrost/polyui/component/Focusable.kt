@@ -21,9 +21,9 @@
 
 package cc.polyfrost.polyui.component
 
-import cc.polyfrost.polyui.event.FocusedEvents
+import cc.polyfrost.polyui.event.FocusedEvent
 
 /** implement this in order to receive focus event, such as key presses */
 interface Focusable {
-    fun accept(event: FocusedEvents)
+    fun accept(event: FocusedEvent)
 }

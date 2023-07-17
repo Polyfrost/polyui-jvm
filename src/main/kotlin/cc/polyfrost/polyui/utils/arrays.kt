@@ -250,6 +250,9 @@ fun <E> Array<E>.append(element: E, stillPutOnFail: Boolean = false): Array<E> {
     }
 }
 
+/**
+ * Return this iterable as an ArrayList. **Note:** if it is already an ArrayList, it will be returned as-is.
+ */
 fun <T> Iterable<T>.toArrayList(): ArrayList<T> {
     return if (this is ArrayList) {
         this
@@ -258,7 +261,22 @@ fun <T> Iterable<T>.toArrayList(): ArrayList<T> {
     }
 }
 
-fun <T> Array<T>.toArrayList(): ArrayList<T> = this.toMutableList() as ArrayList<T>
+/**
+ * Clears the collection using the [action], avoiding [ConcurrentModificationException].
+ *
+ * This works by allocating a new list and iterating over it, removing each element from the original collection.
+ * @param action should be used to directly remove itself from the collection.
+ */
+fun <E> MutableCollection<E>.clearUsing(action: (E) -> Unit) {
+    val it = this.toMutableList().iterator()
+    while (it.hasNext()) {
+        action(it.next())
+        it.remove()
+    }
+}
+
+@Suppress("NOTHING_TO_INLINE")
+inline fun <T> Array<T>.toArrayList(): ArrayList<T> = this.toMutableList() as ArrayList<T>
 
 /**
  * Returns the index of the [element] in the list or runs the [or] parameter if the element is not found.

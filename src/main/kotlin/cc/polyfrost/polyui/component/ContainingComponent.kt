@@ -27,7 +27,7 @@ import cc.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
 import cc.polyfrost.polyui.animate.Animation
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.color.Colors
-import cc.polyfrost.polyui.event.Events
+import cc.polyfrost.polyui.event.Event
 import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.Point
@@ -56,7 +56,7 @@ abstract class ContainingComponent(
     rawResize: Boolean = false,
     acceptInput: Boolean = true,
     children: Array<out Component?>,
-    vararg events: Events.Handler
+    vararg events: Event.Handler
 ) : Component(properties, at, size, rawResize, acceptInput, *events) {
     val children: ArrayList<Component> = children.filterNotNull() as ArrayList<Component>
 
@@ -161,7 +161,7 @@ abstract class ContainingComponent(
         }
     }
 
-    override fun accept(event: Events): Boolean {
+    override fun accept(event: Event): Boolean {
         // children components cannot cancel an event.
         children.fastEach { it.accept(event) }
         return super.accept(event)

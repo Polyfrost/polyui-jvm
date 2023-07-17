@@ -72,7 +72,7 @@ abstract class Unit(val type: Type) : Cloneable {
         private var initialized: Boolean = false
 
         init {
-            require(amount in 0f..100f) { "Percent must be between 0 and 100 (inclusive)." }
+            require(amount > 0f) { "Percent must be more than 0%!" }
         }
 
         override fun clone(): Percent {
@@ -90,7 +90,7 @@ abstract class Unit(val type: Type) : Cloneable {
         override var px: Float = 0f
 
         init {
-            require(amount in 0f..100f) { "Percent must be between 0 and 100 (inclusive)." }
+            require(amount > 0f) { "Percent must be more than 0%!" }
         }
 
         override fun clone(): VUnits {

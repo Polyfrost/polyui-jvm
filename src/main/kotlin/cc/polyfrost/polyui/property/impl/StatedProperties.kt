@@ -23,7 +23,7 @@ package cc.polyfrost.polyui.property.impl
 
 import cc.polyfrost.polyui.animate.Animations
 import cc.polyfrost.polyui.component.StateBlock
-import cc.polyfrost.polyui.event.Events
+import cc.polyfrost.polyui.event.*
 import cc.polyfrost.polyui.renderer.data.Cursor
 import cc.polyfrost.polyui.unit.seconds
 
@@ -51,7 +51,7 @@ open class StatedProperties : BlockProperties() {
 
     init {
         addEventHandlers(
-            Events.MousePressed(0) to {
+            MousePressed(0) to {
                 if (!(this as StateBlock).active) {
                     recolor(palette.pressed, pressedAnimation, pressedAnimationDuration)
                 } else {
@@ -59,7 +59,7 @@ open class StatedProperties : BlockProperties() {
                 }
                 true
             },
-            Events.MouseReleased(0) to {
+            MouseReleased(0) to {
                 if (!(this as StateBlock).active) {
                     recolor(palette.hovered, pressedAnimation, pressedAnimationDuration)
                 } else {
@@ -67,7 +67,7 @@ open class StatedProperties : BlockProperties() {
                 }
                 true
             },
-            Events.MouseEntered to {
+            MouseEntered to {
                 if (!(this as StateBlock).active) {
                     recolor(palette.hovered, hoverAnimation, hoverAnimationDuration)
                 } else {
@@ -76,7 +76,7 @@ open class StatedProperties : BlockProperties() {
                 polyui.cursor = Cursor.Clicker
                 true
             },
-            Events.MouseExited to {
+            MouseExited to {
                 if (!(this as StateBlock).active) {
                     recolor(palette.normal, hoverAnimation, hoverAnimationDuration)
                 } else {

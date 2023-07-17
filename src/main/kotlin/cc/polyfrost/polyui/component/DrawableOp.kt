@@ -71,8 +71,6 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         durationNanos: Long = 1L.seconds
     ) : DrawableOp(drawable) {
         override val animation = type?.create(durationNanos, 0f, 1f)
-
-        // targets are the amounts to move by, so if add is false the resultant coord is `to`, if it is true then it is current + to. they are done using x = x + targetx
         private val targetx = if (add) to.a.px - drawable.x else to.a.px
         private val targety = if (add) to.b.px - drawable.y else to.b.px
 

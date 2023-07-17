@@ -33,8 +33,8 @@ import cc.polyfrost.polyui.unit.seconds
  *
  * Keyframes are an easy way to create animations on components. PolyUI uses a [Kotlin DSL](https://kotlinlang.org/docs/type-safe-builders.html) to create them in an easy and concise way.
  *
- * They can be created wherever a [Component] is in scope, so everything from [events][cc.polyfrost.polyui.event.Events.Handler]
- * for [mouse clicks][cc.polyfrost.polyui.event.Events.MouseClicked]; to in your initialization block; using the extension function [keyframed].
+ * They can be created wherever a [Component] is in scope, so everything from [events][cc.polyfrost.polyui.event.Event.Handler]
+ * for [mouse clicks][cc.polyfrost.polyui.event.MouseClicked]; to in your initialization block; using the extension function [keyframed].
  *
  * Each keyframe can be added using a number between 0 (representing the start or 0%) to 100, representing the end or 100%.
  * Each keyframe can control the color, rotation, position, skew and size of the component (using this [function][cc.polyfrost.polyui.component.Component.animateTo]).

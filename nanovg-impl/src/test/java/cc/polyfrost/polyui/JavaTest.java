@@ -13,7 +13,7 @@ import cc.polyfrost.polyui.color.Color;
 import cc.polyfrost.polyui.component.Drawable;
 import cc.polyfrost.polyui.component.impl.Block;
 import cc.polyfrost.polyui.component.impl.Image;
-import cc.polyfrost.polyui.event.Events;
+import cc.polyfrost.polyui.event.MouseClicked;
 import cc.polyfrost.polyui.layout.Layout;
 import cc.polyfrost.polyui.layout.impl.FlexLayout;
 import cc.polyfrost.polyui.property.impl.BlockProperties;
@@ -31,11 +31,11 @@ public class JavaTest {
         ArrayList<Drawable> things = new ArrayList<>(50);
         for (int i = 0; i < 51; i++) { // creates 50 rectangles with random sizes
             int finalI = i;
-            things.add(new Block(Units.flex(), new Vec2<>(Units.pixels(Math.random() * 40 + 40), Units.pixels(Math.random() * 40 + 40)), new Events.MouseClicked(0).to(component -> {
+            things.add(new Block(Units.flex(), new Vec2<>(Units.pixels(Math.random() * 40 + 40), Units.pixels(Math.random() * 40 + 40)), new MouseClicked(0).to(component -> {
                 System.out.println("Mouse clicked! " + finalI);
-            }), new Events.MouseClicked(0, 2).to(component -> {
+            }), new MouseClicked(0, 2).to(component -> {
                 System.out.println("Mouse double-clicked! " + finalI);
-            }), new Events.MouseClicked(1).to(component -> {
+            }), new MouseClicked(1).to(component -> {
                 System.out.println("Mouse right clicked! " + finalI);
             })));
         }

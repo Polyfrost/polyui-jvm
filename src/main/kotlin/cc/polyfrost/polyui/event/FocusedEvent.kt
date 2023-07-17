@@ -25,9 +25,9 @@ import cc.polyfrost.polyui.input.KeyModifiers
 import cc.polyfrost.polyui.input.Keys
 import kotlin.experimental.and
 
-open class FocusedEvents : Event {
-    object FocusGained : FocusedEvents()
-    object FocusLost : FocusedEvents()
+open class FocusedEvent : Event {
+    object Gained : FocusedEvent()
+    object Lost : FocusedEvent()
 
     /**
      * called when a key is typed (and modifiers) is pressed.
@@ -36,7 +36,7 @@ open class FocusedEvents : Event {
      * @see [KeyModifiers]
      * @see [cc.polyfrost.polyui.utils.fromModifierMerged]
      */
-    data class KeyTyped(val key: Char, val mods: Short = 0, val isRepeat: Boolean = false) : FocusedEvents() {
+    data class KeyTyped(val key: Char, val mods: Short = 0, val isRepeat: Boolean = false) : FocusedEvent() {
         override fun toString() = "KeyTyped(${Keys.toStringPretty(key, mods)})"
 
         inline val modifiers: Array<KeyModifiers> get() = KeyModifiers.fromModifierMerged(mods)
@@ -65,7 +65,7 @@ open class FocusedEvents : Event {
      * @see [KeyModifiers]
      * @see [cc.polyfrost.polyui.input.Modifiers.fromModifierMerged]
      */
-    data class KeyPressed(val key: Keys, val mods: Short = 0, val isRepeat: Boolean = false) : FocusedEvents() {
+    data class KeyPressed(val key: Keys, val mods: Short = 0, val isRepeat: Boolean = false) : FocusedEvent() {
         override fun toString(): String = "KeyPressed(${Keys.toString(key, mods)})"
 
         fun toStringPretty(): String = "KeyPressed(${Keys.toStringPretty(key, mods)})"

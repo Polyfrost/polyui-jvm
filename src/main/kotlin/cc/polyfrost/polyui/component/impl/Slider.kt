@@ -25,7 +25,8 @@ import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.component.Component
-import cc.polyfrost.polyui.event.Events
+import cc.polyfrost.polyui.event.Event
+import cc.polyfrost.polyui.event.MousePressed
 import cc.polyfrost.polyui.property.impl.SliderProperties
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.Point
@@ -65,8 +66,8 @@ class Slider(
         usedBarColor = properties.usedBarColor.normal.toAnimatable()
     }
 
-    override fun accept(event: Events): Boolean {
-        if (event is Events.MousePressed) {
+    override fun accept(event: Event): Boolean {
+        if (event is MousePressed) {
             if (event.button == 0) {
                 if (!isOnBit(event.x - trueX, event.y - trueY)) {
                     set(event.x - height)

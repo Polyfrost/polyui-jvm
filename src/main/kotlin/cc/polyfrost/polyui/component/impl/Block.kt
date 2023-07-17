@@ -25,7 +25,7 @@ import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.color.Colors
 import cc.polyfrost.polyui.component.Component
-import cc.polyfrost.polyui.event.Events
+import cc.polyfrost.polyui.event.Event
 import cc.polyfrost.polyui.property.impl.BlockProperties
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.Size
@@ -43,7 +43,7 @@ open class Block @JvmOverloads constructor(
     size: Size<Unit>,
     rawResize: Boolean = false,
     acceptInput: Boolean = true,
-    vararg events: Events.Handler
+    vararg events: Event.Handler
 ) : Component(properties, at, size, rawResize, acceptInput, *events) {
     override val properties
         get() = super.properties as BlockProperties

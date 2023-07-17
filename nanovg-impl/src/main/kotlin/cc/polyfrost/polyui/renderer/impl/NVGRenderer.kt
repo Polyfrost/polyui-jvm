@@ -32,6 +32,7 @@ import cc.polyfrost.polyui.unit.TextAlign
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.unit.Vec2
 import cc.polyfrost.polyui.unit.px
+import cc.polyfrost.polyui.utils.clearUsing
 import cc.polyfrost.polyui.utils.getResourceStream
 import cc.polyfrost.polyui.utils.getResourceStreamNullable
 import cc.polyfrost.polyui.utils.toByteBuffer
@@ -180,13 +181,26 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         return f
     }
 
-    override fun deleteFramebuffer(fbo: Framebuffer?) {
+    override fun delete(fbo: Framebuffer?) {
         fbos.remove(fbo).also {
             if (it == null) {
                 PolyUI.LOGGER.error("Framebuffer not found when deleting it, already cleaned?")
                 return
             }
             nvgluDeleteFramebuffer(vg, it)
+        }
+    }
+
+    override fun delete(font: Font?) {
+        fonts.remove(font)
+    }
+
+    override fun delete(image: PolyImage?) {
+        images.remove(image).also {
+            if (it != null) {
+                nvgDeleteImage(vg, it.id)
+                MemoryUtil.memFree(it.data)
+            }
         }
     }
 
@@ -541,11 +555,9 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     }
 
     override fun cleanup() {
-        fonts.clear()
-        images.values.forEach { nvgDeleteImage(vg, it.id) }
-        images.clear()
-        fbos.values.forEach { nvgluDeleteFramebuffer(vg, it) }
-        fbos.clear()
+        fbos.keys.clearUsing { delete(it) }
+        images.keys.clearUsing { delete(it) }
+        fonts.keys.clearUsing { delete(it) }
         nvgColor.free()
         nvgPaint.free()
         vg = -1
