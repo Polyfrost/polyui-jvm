@@ -48,7 +48,7 @@ open class TextInput(
     var txt
         inline get() = text.text.string
         set(value) {
-            text.text.string = value
+            text.str.text.string = value
             text.str.calculate(renderer)
         }
     private var caret = 0
@@ -354,7 +354,7 @@ open class TextInput(
     private fun moveLine(down: Boolean) {
         val h = text.getLineByIndex(caret).first.height
         posFromMouse(
-            text.trueX + (cposx - text.x) + 3f,
+            text.trueX + (cposx - text.x),
             text.trueY + (cposy - text.y) +
                 if (down) h else -h
         )

@@ -89,7 +89,7 @@ data class MouseClicked internal constructor(val button: Int, val mouseX: Float,
     @JvmOverloads
     constructor(button: Int, amountClicks: Int = 1, mods: Short = 0) : this(button, 0f, 0f, amountClicks, mods)
 
-    override fun toString(): String = "MouseClicked($mouseX x $mouseY, ${Mouse.toStringPretty(Mouse.fromValue(button), mods)})"
+    override fun toString(): String = "MouseClicked x$clicks($mouseX x $mouseY, ${Mouse.toStringPretty(Mouse.fromValue(button), mods)})"
     override fun hashCode(): Int {
         var result = button
         result = 31 * result + clicks

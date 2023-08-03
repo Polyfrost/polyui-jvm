@@ -21,7 +21,6 @@
 
 package cc.polyfrost.polyui.component.impl
 
-import cc.polyfrost.polyui.component.StateBlock
 import cc.polyfrost.polyui.property.impl.CheckboxProperties
 import cc.polyfrost.polyui.unit.Point
 import cc.polyfrost.polyui.unit.Size

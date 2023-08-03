@@ -159,11 +159,10 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                 at = 336.px * 113.px,
                 size = 32.px * 32.px
             ),
-            @Suppress("EnumValuesSoftDeprecate")
             Dropdown(
                 at = 24.px * 159.px,
                 size = 352.px * 32.px,
-                entries = Dropdown.from(SlideDirection.values())
+                entries = Dropdown.from(SlideDirection.entries.toTypedArray())
             ),
             TextInput(
                 at = 24.px * 203.px,
@@ -199,7 +198,7 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                 events = events(
                     MouseClicked(0) to {
                         val l = this.layout.getLayout<FlexLayout>(0)
-                        l.removeComponentNow(l.components.last())
+                        l.removeComponentNow(l.flexDrawables.last())
                     }
                 )
             ),

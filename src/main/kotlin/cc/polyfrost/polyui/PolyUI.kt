@@ -307,7 +307,7 @@ class PolyUI @JvmOverloads constructor(
             window.height = newHeight
         }
 
-        val(num, denom) = settings.windowAspectRatio
+        val (num, denom) = settings.windowAspectRatio
         if (num != -1 && denom != -1) {
             val aspectRatio = num.toFloat() / denom.toFloat()
             if (newWidth.toFloat() / newHeight.toFloat() != aspectRatio) {

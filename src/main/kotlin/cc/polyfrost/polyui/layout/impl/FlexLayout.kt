@@ -89,7 +89,7 @@ class FlexLayout @JvmOverloads constructor(
     }
     private val wrapDirection: Wrap
     private val strictSize = size != null && wrap == null
-    private val drawables = drawables.filter { it.at.a is Unit.Flex } as ArrayList
+    val flexDrawables = drawables.filter { it.at.a is Unit.Flex } as ArrayList
 
     private val isSizedCross get() = crossSize != 0f
 
@@ -163,22 +163,21 @@ class FlexLayout @JvmOverloads constructor(
      * Shuffles the drawables in this layout.
      */
     fun shuffle() {
-        components.shuffle()
-        children.shuffle()
+        flexDrawables.shuffle()
         calculateBounds()
     }
 
     override fun addComponent(drawable: Drawable) {
         super.addComponent(drawable)
-        if (drawable.at.a is Unit.Flex) drawables.add(drawable)
+        if (drawable.at.a is Unit.Flex) flexDrawables.add(drawable)
         if (initStage != INIT_NOT_STARTED) calculateBounds()
     }
 
     override fun removeComponent(index: Int) {
         val c = components[index]
         if (c.at.a is Unit.Flex) {
-            removeComponent(c)
-            drawables.remove(c)
+            super.removeComponent(c)
+            flexDrawables.remove(c)
         }
     }
 
@@ -186,7 +185,7 @@ class FlexLayout @JvmOverloads constructor(
         val c = components[index]
         if (c.at.a is Unit.Flex) {
             removeComponentNow(c)
-            drawables.remove(c)
+            flexDrawables.remove(c)
         }
     }
 
@@ -197,6 +196,7 @@ class FlexLayout @JvmOverloads constructor(
 
     override fun removeComponentNow(drawable: Drawable?) {
         super.removeComponentNow(drawable)
+        flexDrawables.remove(drawable)
         calculateBounds()
     }
 
@@ -208,9 +208,9 @@ class FlexLayout @JvmOverloads constructor(
 
         if (wrapDirection != Wrap.NoWrap) {
             var row = arrayListOf<Drawable>()
-            drawables.forEachIndexed { i, it ->
+            flexDrawables.forEachIndexed { i, it ->
                 mainAxis += getMainSize(it) + mainGap
-                if (getFlex(it).endRowAfter || mainAxis + getMainSize(drawables.getOrNull(i + 1)) >= mainSize) { // means we need to wrap
+                if (getFlex(it).endRowAfter || mainAxis + getMainSize(flexDrawables.getOrNull(i + 1)) >= mainSize) { // means we need to wrap
                     rows.add(FlexRow(row))
                     mainAxis = 0F
                     row = arrayListOf()
@@ -229,7 +229,7 @@ class FlexLayout @JvmOverloads constructor(
             row = ArrayList()
         } else {
             // add all to the row if wrap is off
-            rows.add(FlexRow(drawables))
+            rows.add(FlexRow(flexDrawables))
         }
 
         var maxCrossSizeNoGaps = 0F
@@ -253,8 +253,8 @@ class FlexLayout @JvmOverloads constructor(
             }
         }
         if (err) {
-            for (i in minIndex until drawables.size) {
-                val d = drawables[i]
+            for (i in minIndex until flexDrawables.size) {
+                val d = flexDrawables[i]
                 if (d is Component) {
                     components.remove(d)
                 } else {

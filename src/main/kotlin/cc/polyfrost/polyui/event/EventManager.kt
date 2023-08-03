@@ -130,13 +130,15 @@ class EventManager(private val polyUI: PolyUI) {
     }
 
     private fun calcMouse(layout: Layout, x: Float, y: Float) {
-        for (i in layout.components.size - 1 downTo 0) {
-            if (mouseCalculate(layout.components[i], x, y)) {
-                return
+        if (layout.isInside(x, y)) {
+            for (i in layout.children.size - 1 downTo 0) {
+                calcMouse(layout.children[i], x, y)
             }
-        }
-        for (i in layout.children.size - 1 downTo 0) {
-            calcMouse(layout.children[i], x, y)
+            for (i in layout.components.size - 1 downTo 0) {
+                if (mouseCalculate(layout.components[i], x, y)) {
+                    return
+                }
+            }
         }
         mouseCalculate(layout, x, y)
     }
@@ -250,14 +252,21 @@ class EventManager(private val polyUI: PolyUI) {
      * @see dispatch
      */
     @ApiStatus.Internal
-    fun dispatchTo(layout: Layout, event: Event) {
+    fun dispatchTo(layout: Layout, event: Event): Boolean {
         for (i in layout.components.size - 1 downTo 0) {
             val it = layout.components[i]
-            if (it.mouseOver && it.accept(event)) return
+            if (it.mouseOver) {
+                if (it.accept(event)) {
+                    return true
+                }
+            }
         }
         for (i in layout.children.size - 1 downTo 0) {
-            dispatchTo(layout.children[i], event)
+            if (dispatchTo(layout.children[i], event)) return true
         }
-        if (layout.mouseOver && layout.accept(event)) return
+        if (layout.mouseOver) {
+            return layout.accept(event)
+        }
+        return false
     }
 }

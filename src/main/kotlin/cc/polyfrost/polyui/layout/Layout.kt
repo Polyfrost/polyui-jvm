@@ -817,6 +817,9 @@ abstract class Layout(
                     },
                     MouseMoved to {
                         if (dragging) {
+                            if (!polyui.eventManager.mouseDown) {
+                                dragging = false
+                            }
                             this@Layout.x = polyui.mouseX + mx
                             this@Layout.y = polyui.mouseY + my
                         }

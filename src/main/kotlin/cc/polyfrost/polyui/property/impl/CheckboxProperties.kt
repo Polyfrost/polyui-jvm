@@ -22,8 +22,8 @@
 package cc.polyfrost.polyui.property.impl
 
 import cc.polyfrost.polyui.animate.Animation
-import cc.polyfrost.polyui.component.StateBlock
 import cc.polyfrost.polyui.component.impl.Checkbox
+import cc.polyfrost.polyui.component.impl.StateBlock
 import cc.polyfrost.polyui.utils.radii
 import cc.polyfrost.polyui.utils.rgba
 

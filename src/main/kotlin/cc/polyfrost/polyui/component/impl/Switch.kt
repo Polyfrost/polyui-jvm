@@ -25,7 +25,6 @@ import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.animate.Animation
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.color.Colors
-import cc.polyfrost.polyui.component.StateBlock
 import cc.polyfrost.polyui.event.Event
 import cc.polyfrost.polyui.property.impl.SwitchProperties
 import cc.polyfrost.polyui.renderer.Renderer

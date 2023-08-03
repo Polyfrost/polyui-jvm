@@ -432,7 +432,7 @@ fun String.wrap(
             currentLine.append(' ').append(word)
         } else {
             // asm: word doesn't fit in current line, wrap it to the next line
-            lines.add(currentLine.toString())
+            lines.add(currentLine.append(" ").toString())
             currentLine = currentLine.clear().append(word)
         }
     }

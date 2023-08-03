@@ -19,10 +19,9 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cc.polyfrost.polyui.component
+package cc.polyfrost.polyui.component.impl
 
 import cc.polyfrost.polyui.color.Colors
-import cc.polyfrost.polyui.component.impl.Block
 import cc.polyfrost.polyui.event.Event
 import cc.polyfrost.polyui.event.MouseClicked
 import cc.polyfrost.polyui.property.impl.StatedProperties

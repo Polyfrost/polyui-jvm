@@ -22,7 +22,7 @@
 package cc.polyfrost.polyui.property.impl
 
 import cc.polyfrost.polyui.animate.Animations
-import cc.polyfrost.polyui.component.StateBlock
+import cc.polyfrost.polyui.component.impl.StateBlock
 import cc.polyfrost.polyui.event.*
 import cc.polyfrost.polyui.renderer.data.Cursor
 import cc.polyfrost.polyui.unit.seconds
