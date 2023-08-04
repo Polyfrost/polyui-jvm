@@ -136,7 +136,8 @@ class Dropdown(
                 return true
             }
         }
-        return super.accept(event)
+        // k2 why?
+        return super<Component>.accept(event)
     }
 
     fun close() {

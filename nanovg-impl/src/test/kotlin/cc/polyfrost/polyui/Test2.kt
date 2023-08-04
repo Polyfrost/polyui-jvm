@@ -26,6 +26,7 @@ import cc.polyfrost.polyui.color.LightTheme
 import cc.polyfrost.polyui.component.impl.*
 import cc.polyfrost.polyui.event.Event.Companion.events
 import cc.polyfrost.polyui.event.MouseClicked
+import cc.polyfrost.polyui.input.KeyBinder
 import cc.polyfrost.polyui.input.Modifiers
 import cc.polyfrost.polyui.input.PolyTranslator.Companion.localised
 import cc.polyfrost.polyui.layout.Layout.Companion.drawables
@@ -82,10 +83,12 @@ fun main() {
         )
     )
 
-    polyUI.keyBinder.add(key = 'P', mods = Modifiers.mods(Modifiers.LCONTROL)) {
-        polyUI.debugPrint()
-        return@add
-    }
+    polyUI.keyBinder.add(
+        KeyBinder.Bind('P', mods = Modifiers.mods(Modifiers.LCONTROL)) {
+            polyUI.debugPrint()
+            true
+        }
+    )
     polyUI.settings.debug = false
     window.open(polyUI)
 }

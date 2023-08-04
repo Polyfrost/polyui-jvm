@@ -32,10 +32,7 @@ import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.*
 import cc.polyfrost.polyui.unit.Unit
-import cc.polyfrost.polyui.utils.allAre
-import cc.polyfrost.polyui.utils.cl1
-import cc.polyfrost.polyui.utils.fastRemoveIf
-import cc.polyfrost.polyui.utils.toRadians
+import cc.polyfrost.polyui.utils.*
 
 /**
  * # Drawable
@@ -242,6 +239,9 @@ abstract class Drawable(
      * **make sure to call super [Drawable.postRender]!**
      */
     open fun postRender() {
+        operations.fastEachReversed {
+            it.first.unapply(renderer)
+        }
         renderer.pop()
         if (rotation != 0.0) {
             x = acx

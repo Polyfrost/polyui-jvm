@@ -133,7 +133,7 @@ class PolyUI @JvmOverloads constructor(
      */
     val master = PixelLayout(Point(0.px, 0.px), Size(renderer.width.px, renderer.height.px), drawables = drawables, rawResize = true, acceptInput = false)
     val eventManager = EventManager(this)
-    val keyBinder = KeyBinder()
+    val keyBinder = KeyBinder(this)
     val translator = PolyTranslator(this, translationDirectory ?: "")
 
     /** weather this PolyUI instance drew on this frame.
@@ -235,24 +235,29 @@ class PolyUI @JvmOverloads constructor(
         Unit.VUnits.vHeight = height
         Unit.VUnits.vWidth = width
         if (settings.enableDebugKeybind) {
-            keyBinder.add('I', mods = mods(KeyModifiers.LCONTROL, KeyModifiers.LSHIFT)) {
-                settings.debug = !settings.debug
-                master.needsRedraw = true
-                LOGGER.info(
-                    "Debug mode {}",
-                    if (settings.debug) {
-                        frames = 0; "enabled"
-                    } else {
-                        "disabled"
-                    }
-                )
+            keyBinder.add(
+                KeyBinder.Bind('I', mods = mods(KeyModifiers.LCONTROL, KeyModifiers.LSHIFT)) {
+                    settings.debug = !settings.debug
+                    master.needsRedraw = true
+                    LOGGER.info(
+                        "Debug mode {}",
+                        if (settings.debug) {
+                            frames = 0; "enabled"
+                        } else {
+                            "disabled"
+                        }
+                    )
+                    true
+                }
+            )
+        }
+        keyBinder.add(
+            KeyBinder.Bind('R', mods = mods(KeyModifiers.LCONTROL)) {
+                LOGGER.info("Reloading PolyUI")
+                onResize(width.toInt(), height.toInt(), renderer.pixelRatio, true)
+                true
             }
-        }
-        keyBinder.add('R', mods = mods(KeyModifiers.LCONTROL)) {
-            LOGGER.info("Reloading PolyUI")
-            onResize(width.toInt(), height.toInt(), renderer.pixelRatio, true)
-            true
-        }
+        )
         every(1.seconds) {
             if (settings.debug && drew) {
                 perf = "fps: $fps, avg/max/min: ${"%.4f".format(avgFrame)}ms; ${"%.4f".format(longestFrame)}ms; ${"%.4f".format(shortestFrame)}ms"
@@ -266,10 +271,21 @@ class PolyUI @JvmOverloads constructor(
             }
         }
         if (settings.debug) debugPrint()
+        if (settings.cleanupOnShutdown) {
+            Runtime.getRuntime().addShutdownHook(
+                Thread {
+                    LOGGER.info("Quitting!")
+                    this.cleanup()
+                }
+            )
+        }
         if (settings.cleanupAfterInit) {
+            val currentUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
             timed("Running Post-init Cleanup...") {
-                System.gc()
+                Runtime.getRuntime().gc()
             }
+            val newUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
+            LOGGER.info("\t\t> Freed {}KB of memory", (currentUsage - newUsage) / 1024L)
         }
         LOGGER.info("PolyUI initialized!")
     }
@@ -371,6 +387,7 @@ class PolyUI @JvmOverloads constructor(
         } else {
             drew = false
         }
+        keyBinder.update(delta)
         executors.fastRemoveIf { it.tick(delta) }
     }
 
@@ -477,6 +494,11 @@ class PolyUI @JvmOverloads constructor(
     }
 
     fun unfocus() = focus(null)
+
+    /**
+     * Return the key name for the given key code.
+     */
+    fun getKeyName(key: Int) = window.getKeyName(key)
 
     /**
      * print this PolyUI instance's components and children in a list, like this:

@@ -65,21 +65,42 @@ class EventManager(private val polyUI: PolyUI) {
         private set
 
     /** This method should be called when a printable key is typed. This key should be **mapped to the user's keyboard layout!** */
-    fun onKeyTyped(key: Char, isRepeat: Boolean) {
-        val event = FocusedEvent.KeyTyped(key, keyModifiers, isRepeat)
-        if (!isRepeat) {
-            if (polyUI.keyBinder.accept(event)) return
-        }
+    fun keyTyped(key: Char) {
+        polyUI.focused?.accept(FocusedEvent.KeyTyped(key, keyModifiers))
+    }
+
+    /** This method should be called when a non-printable, but representable key is pressed. */
+    fun keyDown(key: Keys) {
+        val event = FocusedEvent.KeyPressed(key, keyModifiers)
+        if (polyUI.keyBinder.accept(event)) return
         polyUI.focused?.accept(event)
     }
 
-    /** This method should be called when a non-printable key is pressed. */
-    fun onUnprintableKeyTyped(key: Keys, isRepeat: Boolean) {
-        val event = FocusedEvent.KeyPressed(key, keyModifiers, isRepeat)
-        if (!isRepeat) {
-            if (polyUI.keyBinder.accept(event)) return
-        }
+    /** This method should be called when a non-printable, but representable key is released. */
+    fun keyUp(key: Keys) {
+        val event = FocusedEvent.KeyReleased(key, keyModifiers)
+        if (polyUI.keyBinder.accept(event)) return
         polyUI.focused?.accept(event)
+    }
+
+    /**
+     * This method should be called when a non-representable key is pressed.
+     *
+     * This is used solely for keybinding, and so the key can be any value, as long as it is consistent, and unique to that key.
+     */
+    fun keyDown(code: Int) {
+        if (polyUI.keyBinder.accept(code, true)) return
+        polyUI.focused?.accept(code, true)
+    }
+
+    /**
+     * This method should be called when a non-representable key is released.
+     *
+     * This is used solely for keybinding, and so the key can be any value, as long as it is consistent, and unique to that key.
+     */
+    fun keyUp(code: Int) {
+        if (polyUI.keyBinder.accept(code, false)) return
+        polyUI.focused?.accept(code, false)
     }
 
     /**

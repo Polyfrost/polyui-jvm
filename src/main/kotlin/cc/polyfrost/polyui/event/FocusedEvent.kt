@@ -65,7 +65,7 @@ open class FocusedEvent : Event {
      * @see [KeyModifiers]
      * @see [cc.polyfrost.polyui.input.Modifiers.fromModifierMerged]
      */
-    data class KeyPressed(val key: Keys, val mods: Short = 0, val isRepeat: Boolean = false) : FocusedEvent() {
+    data class KeyPressed(val key: Keys, val mods: Short = 0) : FocusedEvent() {
         override fun toString(): String = "KeyPressed(${Keys.toString(key, mods)})"
 
         fun toStringPretty(): String = "KeyPressed(${Keys.toStringPretty(key, mods)})"
@@ -76,6 +76,30 @@ open class FocusedEvent : Event {
 
         override fun hashCode(): Int {
             var result = key.hashCode() + 5000
+            result = 31 * result + mods
+            return result
+        }
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is KeyPressed) return false
+
+            if (key != other.key) return false
+            return mods == other.mods
+        }
+    }
+
+    class KeyReleased(val key: Keys, val mods: Short) : FocusedEvent() {
+        override fun toString(): String = "KeyReleased(${Keys.toString(key, mods)})"
+
+        fun toStringPretty(): String = "KeyReleased(${Keys.toStringPretty(key, mods)})"
+
+        inline val modifiers get() = KeyModifiers.fromModifierMerged(mods)
+
+        fun hasModifier(modifier: KeyModifiers): Boolean = (mods and modifier.value).toInt() != 0
+
+        override fun hashCode(): Int {
+            var result = key.hashCode() + 50000
             result = 31 * result + mods
             return result
         }

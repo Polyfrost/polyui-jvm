@@ -22,11 +22,10 @@
 package cc.polyfrost.polyui.input
 
 import cc.polyfrost.polyui.PolyUI
-import cc.polyfrost.polyui.event.Event
-import cc.polyfrost.polyui.event.FocusedEvent
-import cc.polyfrost.polyui.event.MouseClicked
+import cc.polyfrost.polyui.event.*
 import cc.polyfrost.polyui.utils.fastEach
 import org.jetbrains.annotations.ApiStatus
+import java.lang.StringBuilder
 
 /**
  * # KeyBinder
@@ -37,8 +36,11 @@ import org.jetbrains.annotations.ApiStatus
  * @see remove
  * @see removeAll
  */
-class KeyBinder {
-    private val listeners: HashMap<Event, ArrayList<() -> Boolean>> = hashMapOf()
+class KeyBinder(private val polyui: PolyUI) {
+    private val listeners = ArrayList<Bind>(5)
+    private val downMouseButtons = ArrayList<Int>(5)
+    private val downUnmappedKeys = ArrayList<Int>(5)
+    private val downKeys = ArrayList<Keys>(5)
 
     /**
      * accept a keystroke event. This will call all keybindings that match the event.
@@ -47,138 +49,151 @@ class KeyBinder {
      */
     @ApiStatus.Internal
     fun accept(event: Event): Boolean {
-        listeners[event]?.fastEach {
-            if (it()) return true
+        if (event is MousePressed) {
+            downMouseButtons.add(event.button)
+        }
+        if (event is MouseReleased) {
+            downMouseButtons.remove(event.button)
+        }
+        if (event is FocusedEvent.KeyPressed) {
+            downKeys.add(event.key)
+        }
+        if (event is FocusedEvent.KeyReleased) {
+            downKeys.remove(event.key)
+        }
+        return update(0L)
+    }
+
+    /**
+     * accept an unmapped keystroke event. This will call all keybindings that match the event.
+     *
+     * This method is public, but marked as internal. This is because it should only be called by the PolyUI instance, unless you are trying to externally force a keypress (which you probably shouldn't be)
+     */
+    @ApiStatus.Internal
+    fun accept(key: Int, down: Boolean): Boolean {
+        if (down) {
+            downUnmappedKeys.add(key)
+        } else {
+            downUnmappedKeys.remove(key)
+        }
+        return update(0L)
+    }
+
+    fun update(deltaTimeNanos: Long): Boolean {
+        listeners.fastEach {
+            if (it.update(downUnmappedKeys, downKeys, downMouseButtons, polyui.eventManager.keyModifiers, deltaTimeNanos)) {
+                return true
+            }
         }
         return false
     }
 
     /**
-     * Remove the given keybind from the listeners.
+     * Add a keybind to this PolyUI instance, that will be ran when the given keys are pressed.
+     * @since 0.21.0
      */
-    @OverloadResolutionByLambdaReturnType
-    fun remove(keybind: () -> Boolean) {
-        listeners.values.removeIf { it == keybind }
+    fun add(bind: Bind) {
+        listeners.add(bind)
     }
 
-    /**
-     * Remove the given keybind from the listeners.
-     */
-    @OverloadResolutionByLambdaReturnType
-    @JvmName("removeListener")
-    fun remove(keybind: () -> Unit) {
-        val k = { keybind(); true }
-        listeners.values.removeIf { it == k }
-    }
+    class Bind @JvmOverloads constructor(val unmappedKeys: IntArray? = null, val keys: Array<Keys>? = null, val mouse: IntArray? = null, val mods: Short = 0, val durationNanos: Long = 0L, val action: () -> Boolean) {
+        constructor(chars: CharArray? = null, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Short = 0, durationNanos: Long = 0L, action: () -> Boolean) : this(chars?.map { it.code }?.toIntArray(), keys, mouse, mods, durationNanos, action)
+        constructor(char: Char, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Short = 0, durationNanos: Long = 0L, action: () -> Boolean) : this(intArrayOf(char.code), keys, mouse, mods, durationNanos, action)
+        constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Array<Mouse>? = null, mods: Short = 0, durationNanos: Long = 0L, action: () -> Boolean) : this(unmappedKeys, keys, mouse?.map { it.value.toInt() }?.toIntArray(), mods, durationNanos, action)
+        constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Mouse? = null, mods: Short = 0, durationNanos: Long = 0L, action: () -> Boolean) : this(unmappedKeys, keys, mouse?.value?.let { intArrayOf(it.toInt()) }, mods, durationNanos, action)
 
-    /**
-     * Remove all keybindings for the given key and modifiers.
-     */
-    fun removeAll(key: Char, modifiers: Short) {
-        listeners.remove(FocusedEvent.KeyTyped(key, modifiers, false))
-    }
+        constructor(unmappedKeys: IntArray? = null, key: Keys? = null, mouse: Array<Mouse>? = null, mods: Short = 0, durationNanos: Long = 0L, action: () -> Boolean) : this(unmappedKeys, key?.let { arrayOf(it) }, mouse, mods, durationNanos, action)
 
-    /**
-     * Remove all keybindings for the given key and modifiers.
-     */
-    fun removeAll(key: Keys, modifiers: Short) {
-        listeners.remove(FocusedEvent.KeyPressed(key, modifiers, false))
-    }
+        private var time = 0L
+        private var ran = false
 
-    /**
-     * Remove all keybindings for the given key and modifiers.
-     */
-    fun removeAll(mouse: Mouse, amountClicks: Int, modifiers: Short) {
-        listeners.remove(MouseClicked(mouse.value.toInt(), amountClicks, modifiers))
-    }
-
-    private fun add0(listeners: ArrayList<() -> Boolean>?, key: Char, durationNanos: Long, mods: Short, keybind: () -> Boolean) {
-        if (durationNanos == 0L) {
-            if (listeners != null) {
-                PolyUI.LOGGER.warn("found {} other keybindings for key {}", listeners.size, Keys.toStringPretty(key, mods))
-                listeners.add(keybind)
+        fun update(c: ArrayList<Int>, k: ArrayList<Keys>, m: ArrayList<Int>, mods: Short, deltaTimeNanos: Long): Boolean {
+            if (unmappedKeys?.matches(c) != false && keys?.matches(k) != false && mouse?.matches(m) != false && this.mods == mods) {
+                if (!ran) {
+                    if (durationNanos != 0L) {
+                        time += deltaTimeNanos
+                        if (time >= durationNanos) {
+                            ran = true
+                            return action()
+                        }
+                    } else {
+                        ran = true
+                        return action()
+                    }
+                }
             } else {
-                this.listeners[FocusedEvent.KeyTyped(key, mods)] = arrayListOf(keybind)
+                time = 0L
+                ran = false
             }
+            return false
+        }
+
+        override fun toString(): String {
+            val sb = StringBuilder()
+            sb.append("KeyBind(")
+            val s = Modifiers.toStringPretty(mods)
+            if (s.isNotEmpty()) {
+                sb.append(s)
+            }
+            if (unmappedKeys != null) {
+                if (s.isNotEmpty()) sb.append(" + ")
+                for (c in unmappedKeys) {
+                    sb.append(c.toChar())
+                    sb.append(" + ")
+                }
+            }
+            if (keys != null) {
+                if (s.isNotEmpty()) sb.append(" + ")
+                for (k in keys) {
+                    sb.append(Keys.toStringPretty(k))
+                    sb.append(" + ")
+                }
+            }
+            if (mouse != null) {
+                if (s.isNotEmpty()) sb.append(" + ")
+                for (m in mouse) {
+                    sb.append(Mouse.toStringPretty(Mouse.fromValue(m)))
+                    sb.append(" + ")
+                }
+            }
+            sb.setLength(sb.length - 3)
+            sb.append(")")
+            return sb.toString()
+        }
+
+        override fun equals(other: Any?): Boolean {
+            if (other !is Bind) return false
+            if (other.unmappedKeys?.contentEquals(unmappedKeys) == false) return false
+            if (other.keys?.contentEquals(keys) == false) return false
+            if (other.mouse?.contentEquals(mouse) == false) return false
+            if (other.mods != mods) return false
+            if (other.durationNanos != durationNanos) return false
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = unmappedKeys?.contentHashCode() ?: 0
+            result = 31 * result + (keys?.contentHashCode() ?: 0)
+            result = 31 * result + (mouse?.contentHashCode() ?: 0)
+            result = 31 * result + mods.hashCode()
+            result = 31 * result + durationNanos.hashCode()
+            return result
+        }
+
+        private fun <T> Array<T>.matches(other: ArrayList<T>): Boolean {
+            if (other.size == 0) return false
+            for (i in this) {
+                if (!other.contains(i)) return false
+            }
+            return true
+        }
+
+        private fun IntArray.matches(other: ArrayList<Int>): Boolean {
+            if (other.size == 0) return false
+            for (i in this) {
+                if (!other.contains(i)) return false
+            }
+            return true
         }
     }
-
-    private fun add0(listeners: ArrayList<() -> Boolean>?, key: Keys, durationNanos: Long, mods: Short, keybind: () -> Boolean) {
-        if (durationNanos == 0L) {
-            if (listeners != null) {
-                PolyUI.LOGGER.warn("found {} other keybindings for key {}", listeners.size, Keys.toStringPretty(key, mods))
-                listeners.add(keybind)
-            } else {
-                this.listeners[FocusedEvent.KeyPressed(key, mods)] = arrayListOf(keybind)
-            }
-        } else {
-        }
-    }
-
-    private fun add0(listeners: ArrayList<() -> Boolean>?, button: Mouse, durationNanos: Long, amountClicks: Int, mods: Short, keybind: () -> Boolean) {
-        if (durationNanos == 0L) {
-            if (listeners != null) {
-                PolyUI.LOGGER.warn("found {} other keybindings for key {}", listeners.size, Mouse.toStringPretty(button, mods))
-                listeners.add(keybind)
-            } else {
-                this.listeners[MouseClicked(button.value.toInt(), amountClicks, mods)] = arrayListOf(keybind)
-            }
-        }
-    }
-
-    // char //
-    /**
-     * Add a keybinding for the given key and modifiers.
-     * Return true to prevent other keybindings from being called.
-     */
-    @OverloadResolutionByLambdaReturnType
-    fun add(key: Char, durationNanos: Long = 0L, mods: Short = 0, keybind: () -> Boolean) {
-        add0(listeners[FocusedEvent.KeyTyped(key.uppercaseChar(), mods, false)], key, durationNanos, mods, keybind)
-    }
-
-    /**
-     * Add a keybinding for the given key and modifiers.
-     * Return true to prevent other keybindings from being called.
-     */
-    @OverloadResolutionByLambdaReturnType
-    @JvmName("addListener")
-    fun add(key: Char, durationNanos: Long = 0L, mods: Short = 0, keybind: () -> Unit) {
-        add0(listeners[FocusedEvent.KeyTyped(key.uppercaseChar(), mods, false)], key, durationNanos, mods) { keybind(); true }
-    }
-
-    // keys //
-    /**
-     * Add a keybinding for the given key and modifiers.
-     * Return true to prevent other keybindings from being called.
-     */
-    @OverloadResolutionByLambdaReturnType
-    fun add(key: Keys, durationNanos: Long = 0L, mods: Short = 0, keybind: () -> Boolean) =
-        add0(listeners[FocusedEvent.KeyPressed(key, mods, false)], key, durationNanos, mods, keybind)
-
-    /**
-     * Add a keybinding for the given key and modifiers.
-     * Return true to prevent other keybindings from being called.
-     */
-    @OverloadResolutionByLambdaReturnType
-    @JvmName("addListener")
-    fun add(key: Keys, durationNanos: Long = 0L, mods: Short = 0, keybind: () -> Unit) =
-        add0(listeners[FocusedEvent.KeyPressed(key, mods, false)], key, durationNanos, mods) { keybind(); true }
-
-    // mouse //
-    /**
-     * Add a keybinding for the given key and modifiers.
-     * Return true to prevent other keybindings from being called.
-     */
-    @OverloadResolutionByLambdaReturnType
-    @JvmName("addListener")
-    fun add(button: Mouse, durationNanos: Long = 0L, amountClicks: Int = 1, mods: Short = 0, keybind: () -> Unit) =
-        add0(listeners[MouseClicked(button.value.toInt(), amountClicks, mods)], button, durationNanos, amountClicks, mods) { keybind(); true }
-
-    /**
-     * Add a keybinding for the given key and modifiers.
-     * Return true to prevent other keybindings from being called.
-     */
-    @OverloadResolutionByLambdaReturnType
-    fun add(button: Mouse, durationNanos: Long = 0L, amountClicks: Int = 1, mods: Short = 0, keybind: () -> Boolean) =
-        add0(listeners[MouseClicked(button.value.toInt(), amountClicks, mods)], button, durationNanos, amountClicks, mods, keybind)
 }

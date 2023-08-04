@@ -120,7 +120,7 @@ open class TextInput(
             }
         }
         wantRedraw()
-        return super.accept(event)
+        return super<Component>.accept(event)
     }
 
     override fun accept(event: FocusedEvent) {

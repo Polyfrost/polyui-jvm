@@ -30,6 +30,7 @@ import cc.polyfrost.polyui.component.Drawable
 import cc.polyfrost.polyui.component.impl.*
 import cc.polyfrost.polyui.event.Event.Companion.events
 import cc.polyfrost.polyui.event.MouseClicked
+import cc.polyfrost.polyui.input.KeyBinder
 import cc.polyfrost.polyui.input.Keys
 import cc.polyfrost.polyui.input.Modifiers
 import cc.polyfrost.polyui.input.Modifiers.Companion.mods
@@ -233,25 +234,33 @@ fun main() {
             ).scrolling(620.px * 300.px)
         )
     )
-    polyUI.keyBinder.add(key = 'P', mods = mods(Modifiers.LCONTROL)) {
-        polyUI.debugPrint()
-        return@add
-    }
-    polyUI.keyBinder.add(Mouse.LEFT_MOUSE, amountClicks = 2, mods = mods(Modifiers.LCONTROL)) {
-        println("${polyUI.mouseX} x ${polyUI.mouseY}")
-        polyUI.getComponentsIn(polyUI.mouseX - 25f, polyUI.mouseY - 25f, 50f, 50f).fastEach {
-            it.recolor(Color(Random.Default.nextFloat(), Random.Default.nextFloat(), Random.Default.nextFloat(), 1f))
+    polyUI.keyBinder.add(
+        KeyBinder.Bind('P', mods = mods(Modifiers.LCONTROL)) {
+            polyUI.debugPrint()
+            true
         }
-    }
+    )
+    polyUI.keyBinder.add(
+        KeyBinder.Bind(mouse = Mouse.LEFT_MOUSE, mods = mods(Modifiers.LCONTROL), durationNanos = 1.seconds) {
+            println("${polyUI.mouseX} x ${polyUI.mouseY}")
+            polyUI.getComponentsIn(polyUI.mouseX - 25f, polyUI.mouseY - 25f, 50f, 50f).fastEach {
+                it.recolor(Color(Random.Default.nextFloat(), Random.Default.nextFloat(), Random.Default.nextFloat(), 1f))
+            }
+            true
+        }
+    )
     var light = false
-    polyUI.keyBinder.add(Keys.F1) {
-        if (!light) {
-            polyUI.colors = LightTheme()
-        } else {
-            polyUI.colors = DarkTheme()
+    polyUI.keyBinder.add(
+        KeyBinder.Bind(key = Keys.F1) {
+            if (!light) {
+                polyUI.colors = LightTheme()
+            } else {
+                polyUI.colors = DarkTheme()
+            }
+            light = !light
+            true
         }
-        light = !light
-    }
+    )
 
     window.open(polyUI)
 }

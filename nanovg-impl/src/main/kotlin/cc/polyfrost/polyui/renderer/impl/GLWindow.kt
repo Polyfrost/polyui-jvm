@@ -158,52 +158,68 @@ class GLWindow @JvmOverloads constructor(
         }
 
         glfwSetKeyCallback(handle) { _, keyCode, _, action, mods ->
+            if (action == GLFW_REPEAT) return@glfwSetKeyCallback
+            if (keyCode < 255 && mods != 0) {
+                // accept modded chars, as glfwSetCharModsCallback is deprecated and doesn't work with control
+                polyUI.eventManager.keyTyped(keyCode.toChar())
+            }
             // p.s. I have performance tested this; and it is very fast (doesn't even show up on profiler). kotlin is good at int ranges lol
-            if (keyCode < 100) {
-                if (mods > 1 && action != GLFW_RELEASE) {
-                    polyUI.eventManager.onKeyTyped(
-                        keyCode.toChar(),
-                        action == GLFW_REPEAT
-                    )
-                }
-            } else if (keyCode < 340) {
-                val key: Keys = (
-                    when (keyCode) {
-                        // insert, pg down, etc
-                        in 256..261 -> Keys.fromValue(keyCode - 156)
-                        in 266..269 -> Keys.fromValue(keyCode - 160)
-                        // arrows
-                        in 262..265 -> Keys.fromValue(keyCode - 62)
-                        // function keys
-                        in 290..314 -> Keys.fromValue(keyCode - 289)
-                        else -> Keys.UNKNOWN
+            if (keyCode in 255..348) {
+                if (keyCode < 340) {
+                    val key: Keys = (
+                        when (keyCode) {
+                            // insert, pg down, etc
+                            in 256..261 -> Keys.fromValue(keyCode - 156)
+                            in 266..269 -> Keys.fromValue(keyCode - 160)
+                            // arrows
+                            in 262..265 -> Keys.fromValue(keyCode - 62)
+                            // function keys
+                            in 290..314 -> Keys.fromValue(keyCode - 289)
+                            else -> Keys.UNKNOWN
+                        }
+                        )
+                    if (action == GLFW_PRESS) {
+                        polyUI.eventManager.keyDown(key)
+                    } else {
+                        polyUI.eventManager.keyUp(key)
                     }
-                    )
-                if (action != GLFW_RELEASE) polyUI.eventManager.onUnprintableKeyTyped(key, action == GLFW_REPEAT)
+                } else if (keyCode < 348) {
+                    val key: KeyModifiers = (
+                        when (keyCode) {
+                            340 -> KeyModifiers.LSHIFT
+                            341 -> KeyModifiers.LCONTROL
+                            342 -> KeyModifiers.LALT
+                            343 -> KeyModifiers.LMETA
+                            344 -> KeyModifiers.RSHIFT
+                            345 -> KeyModifiers.RCONTROL
+                            346 -> KeyModifiers.RALT
+                            347 -> KeyModifiers.RMETA
+                            else -> KeyModifiers.UNKNOWN
+                        }
+                        )
+                    if (action == GLFW_PRESS) {
+                        polyUI.eventManager.addModifier(key.value)
+                    } else {
+                        polyUI.eventManager.removeModifier(key.value)
+                    }
+                }
+                return@glfwSetKeyCallback
+            }
+            if (action == GLFW_PRESS) {
+                polyUI.eventManager.keyDown(keyCode)
             } else {
-                val key: KeyModifiers = (
-                    when (keyCode) {
-                        340 -> KeyModifiers.LSHIFT
-                        341 -> KeyModifiers.LCONTROL
-                        342 -> KeyModifiers.LALT
-                        343 -> KeyModifiers.LMETA
-                        344 -> KeyModifiers.RSHIFT
-                        345 -> KeyModifiers.RCONTROL
-                        346 -> KeyModifiers.RALT
-                        347 -> KeyModifiers.RMETA
-                        else -> KeyModifiers.UNKNOWN
-                    }
-                    )
-                if (action == GLFW_PRESS) {
-                    polyUI.eventManager.addModifier(key.value)
-                } else if (action == GLFW_RELEASE) {
-                    polyUI.eventManager.removeModifier(key.value)
-                }
+                polyUI.eventManager.keyUp(keyCode)
             }
         }
 
+        glfwSetMouseButtonCallback(handle) { _, button, action, _ ->
+            if (action == GLFW_PRESS) {
+                polyUI.eventManager.onMousePressed(button)
+            } else if (action == GLFW_RELEASE) polyUI.eventManager.onMouseReleased(button)
+        }
+
         glfwSetCharCallback(handle) { _, codepoint ->
-            polyUI.eventManager.onKeyTyped(codepoint.toChar(), false)
+            polyUI.eventManager.keyTyped(codepoint.toChar())
         }
 
         glfwSetScrollCallback(handle) { _, x, y ->
@@ -338,6 +354,8 @@ class GLWindow @JvmOverloads constructor(
             )
         )
     }
+
+    override fun getKeyName(key: Int) = glfwGetKeyName(key, glfwGetKeyScancode(key)) ?: "Unknown"
 
     fun fullscreen() {
         glfwGetVideoMode(glfwGetPrimaryMonitor())?.let {

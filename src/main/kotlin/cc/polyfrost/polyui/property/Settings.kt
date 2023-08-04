@@ -29,6 +29,7 @@ import cc.polyfrost.polyui.unit.milliseconds
  * This contains many values that concern the rendering and event handling of PolyUI internally.
  * */
 class Settings(private val renderer: Renderer) {
+
     /** this enables the debug renderer and various other debug features, including more verbose checks and logging.
      *
      * It can be enabled using `-Dpolyui.debug=true` in the JVM arguments, or by pressing Ctrl+Shift+I in the application [if enabled][enableDebugKeybind].
@@ -150,8 +151,17 @@ class Settings(private val renderer: Renderer) {
      * calling the garbage collector to free up temporary objects created during initialization.
      *
      * This option will usually halve or more the memory usage, but takes time (~10ms). It is recommended for memory limited scenarios and in production.
+     *
+     * @since 0.20.0
      */
     var cleanupAfterInit = true
+
+    /**
+     * This property will run the cleanup() method in a shutdown hook which will free memory used by PolyUI.
+     *
+     * @since 0.20.1
+     */
+    var cleanupOnShutdown = false
 
     /** How to handle resource (image and font) loading errors.
      * @see resourcePolicy

@@ -25,5 +25,20 @@ import cc.polyfrost.polyui.event.FocusedEvent
 
 /** implement this in order to receive focus event, such as key presses */
 interface Focusable {
+    /**
+     * Accept a [FocusedEvent] and handle it.
+     * @see FocusedEvent.KeyPressed
+     * @see FocusedEvent.KeyReleased
+     * @see FocusedEvent.KeyTyped
+     */
     fun accept(event: FocusedEvent)
+
+    /**
+     * Accept a non-mapped key press. This is called when any key is pressed that is not a [mapped key][cc.polyfrost.polyui.input.Keys].
+     *
+     * This method should not really be used in normal usage, as it is effectively platform-dependent. It is provided for usage where you need to use a key that is not mapped by PolyUI, such as keybindings.
+     *
+     * See [PolyUI.getKeyName][cc.polyfrost.polyui.PolyUI.getKeyName] to get the name of the key.
+     */
+    fun accept(key: Int, down: Boolean) {}
 }

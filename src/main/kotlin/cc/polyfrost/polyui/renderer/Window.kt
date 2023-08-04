@@ -63,4 +63,10 @@ abstract class Window(open var width: Int, open var height: Int) {
      * @since 0.18.4
      */
     abstract fun setCursor(cursor: Cursor)
+
+    /**
+     * Return the name of a key that is not mapped by PolyUI.
+     * @see cc.polyfrost.polyui.input.Keys
+     */
+    abstract fun getKeyName(key: Int): String
 }

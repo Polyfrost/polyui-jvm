@@ -48,4 +48,6 @@ class NoOpWindow(title: String, width: Int, height: Int) : Window(width, height)
 
     override fun setCursor(cursor: Cursor) {
     }
+
+    override fun getKeyName(key: Int) = "unknown"
 }
