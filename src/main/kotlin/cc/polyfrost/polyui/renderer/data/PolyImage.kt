@@ -28,12 +28,12 @@ package cc.polyfrost.polyui.renderer.data
  * @param height the width of the image. Specify one to respect the aspect ratio of the image.
  * @param type the [image type][Type]. This is automatically inferred from the file extension normally, but you can manually select it.
  */
-data class PolyImage @JvmOverloads constructor(
-    val resourcePath: String,
+class PolyImage @JvmOverloads constructor(
+    resourcePath: String,
     var width: Float = -1f, // uninitialized
     var height: Float = -1f,
     val type: Type = from(resourcePath)
-) {
+) : Resource(resourcePath) {
 
     override fun toString(): String {
         return "$type Image(file=$resourcePath, ${width}x$height)"

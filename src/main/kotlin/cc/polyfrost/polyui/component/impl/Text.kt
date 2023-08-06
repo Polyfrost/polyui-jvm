@@ -84,7 +84,7 @@ open class Text @JvmOverloads constructor(
     var text
         get() = str.text
         set(value) {
-            value.polyTranslator = polyui.translator
+            value.polyTranslator = polyUI.translator
             // <init>
             value.string
             str.text = value
@@ -120,8 +120,8 @@ open class Text @JvmOverloads constructor(
         }
     }
 
-    override fun setup(renderer: Renderer, polyui: PolyUI) {
-        super.setup(renderer, polyui)
+    override fun setup(renderer: Renderer, polyUI: PolyUI) {
+        super.setup(renderer, polyUI)
         if (fs is Unit.Dynamic) fs.set(sized?.b ?: throw IllegalArgumentException("${this.simpleName} has a dynamic font size, but it has no height"))
         str = if (floor((sized?.height ?: 0f) / this.fs.px).toInt() > 1) {
             MultilineText(initialText, this.properties.font, this.fs.px, textAlign, sized ?: origin)
@@ -129,7 +129,7 @@ open class Text @JvmOverloads constructor(
             SingleText(initialText, this.properties.font, this.fs.px, textAlign, sized ?: origin)
         }
         str.renderer = renderer
-        str.text.polyTranslator = polyui.translator
+        str.text.polyTranslator = polyUI.translator
 
         if (layout.size != null) doDynamicSize(str.size)
         str.calculate(renderer)

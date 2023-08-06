@@ -149,7 +149,7 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                 )
             ),
             Button(
-                text = "button.text".localised(),
+                text = "button.text".localised("simple"),
                 fontSize = 13.px,
                 leftIcon = PolyImage("face-wink.svg"),
                 at = 68.px * 111.px

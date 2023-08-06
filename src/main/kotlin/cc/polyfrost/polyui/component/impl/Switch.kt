@@ -82,8 +82,8 @@ class Switch(
         }
     }
 
-    override fun setup(renderer: Renderer, polyui: PolyUI) {
-        super.setup(renderer, polyui)
+    override fun setup(renderer: Renderer, polyUI: PolyUI) {
+        super.setup(renderer, polyUI)
         bitColor = properties.bitColor.toAnimatable()
     }
 

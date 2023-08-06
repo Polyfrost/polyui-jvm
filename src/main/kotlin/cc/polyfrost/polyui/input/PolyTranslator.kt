@@ -23,7 +23,9 @@ package cc.polyfrost.polyui.input
 
 import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.utils.getResourceStreamNullable
-import java.util.Locale
+import java.text.MessageFormat
+import java.util.*
+import kotlin.collections.ArrayDeque
 
 /**
  * # PolyTranslator
@@ -45,8 +47,10 @@ import java.util.Locale
  *  ```
  *  my.key=hello there!
  *  hello.world=This works well!
- *  something.else=I can also substitute in {} objects using {}!
+ *  something.else=I can also substitute in {0} objects using {1}!
  *  ```
+ *
+ *  @see MessageFormat
  */
 class PolyTranslator(private val polyUI: PolyUI, private val translationDir: String) {
     private var resourcePath: String = if (System.getProperty("polyui.locale") != null) {
@@ -55,6 +59,16 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
         "$translationDir/${Locale.getDefault().language}_${Locale.getDefault().country}.lang"
     }
     private val map = HashMap<String, String>()
+    private val queue = ArrayDeque<String>()
+
+    /** default file loading tracker */
+    private var loadState = 0
+
+    init {
+        if (polyUI.settings.loadTranslationsOnInit) {
+            loadKeys(resourcePath, true)
+        }
+    }
 
     /** set the locale of this translator. All the keys are cleared, and PolyUI is reloaded. */
     fun setLocale(locale: String) {
@@ -64,19 +78,29 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
     }
 
     /**
-     * Load a file of keys.
+     * Add a file to the translation table, which will be used to load keys.
+     *
+     * Unless [now] is `true`, the file will only be loaded if the key is not found in the existing table.
      * @see PolyTranslator
      * @see getResourceStreamNullable
      * @since 0.17.5
      */
-    fun loadKeys(resource: String) {
-        PolyUI.LOGGER.info("Loading translation table $resourcePath...")
-        var i = 0
-        getResourceStreamNullable(resource)?.bufferedReader()?.lines()?.forEach {
-            val split = it.split("=")
-            require(split.size == 2) { "Invalid translation table entry (line $i): $it" }
-            map[split[0]] = split[1]
-            i++
+    fun loadKeys(resource: String, now: Boolean = false) {
+        if (!now) {
+            queue.add(resource)
+        } else {
+            polyUI.timed("Loading translation table $resource...") {
+                val stream = getResourceStreamNullable(resource)?.bufferedReader()?.lines()
+                if (polyUI.settings.parallelLoading) stream?.parallel()
+                stream?.forEach {
+                    val split = it.split("=")
+                    if (split.size == 2) {
+                        if (map.put(split[0], split[1]) != null) PolyUI.LOGGER.warn("Duplicate key: '${split[0]}', overwriting with $resource -> ${split[1]}")
+                    } else {
+                        throw IllegalArgumentException("Invalid key-value pair in $resource: $it")
+                    }
+                } ?: PolyUI.LOGGER.warn("\t\t> Table not found!")
+            }
         }
     }
 
@@ -118,7 +142,7 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
      * The string can be [translate]d if there is an attached [PolyTranslator] to this instance and the key is present in the file.
      * @see PolyTranslator
      */
-    class Text(val key: String, private vararg val objects: Any?) : Cloneable {
+    class Text(val key: String, vararg val objects: Any?) : Cloneable {
         inline val length get() = string.length
 
         var polyTranslator: PolyTranslator? = null
@@ -128,12 +152,19 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
                 field = value
             }
 
+        /**
+         * Weather this Text has objects to be substituted in.
+         * @see MessageFormat
+         * @since 0.21.1
+         */
+        val hasObjects = objects.isNotEmpty()
+
         /** the translated string. This value is automatically set to the translated value when retrieved. */
         var string: String = key
             get() {
                 @Suppress("ReplaceCallWithBinaryOperator")
                 if (canTranslate && field.equals(key)) {
-                    field = polyTranslator!!.translate(key, objects)
+                    field = polyTranslator!!.translate(this)
                     if (field == key) canTranslate = false // key/file missing
                 }
                 return field
@@ -169,54 +200,48 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
      * Warnings will be issued if the file/key does not exist.
      * @throws IllegalArgumentException if multiple values exist for the same key.
      */
-    fun translate(key: String, objects: Array<out Any?>): String {
-        val k = "$key="
-        return map[key] ?: with(
-            getResourceStreamNullable(resourcePath)?.bufferedReader()?.lines()?.filter { it.startsWith(k) }
-                ?.toArray { arrayOfNulls<String>(it) }
-        ) {
-            if (this == null) {
-                PolyUI.LOGGER.warn("No translation for $resourcePath!")
-                val path = "${resourcePath.substring(0, resourcePath.lastIndex - 6)}default.lang"
-                return if (getResourceStreamNullable(path) != null) {
-                    PolyUI.LOGGER.warn("\t\t> Global language file found ($path), using that instead. Country-specific language features will be ignored. Use -Dpolyui.locale to set a locale.")
-                    resourcePath = path
-                    translate(key, objects)
+    fun translate(text: Text): String {
+        val key = text.key
+        val line: String? = map[key] ?: run {
+            while (queue.isNotEmpty()) {
+                loadKeys(queue.first(), true)
+                if (map.containsKey(key)) return@run map[key]
+            }
+            if (loadState == 0) {
+                PolyUI.LOGGER.warn("No translation for '$key'! Attempting to load global file. Country-specific features will be ignored.")
+                val s = "${resourcePath.substring(0, resourcePath.lastIndex - 6)}default.lang"
+                loadKeys(s, true)
+                loadState = if (s == "$translationDir/${polyUI.settings.defaultLocale}.lang") {
+                    2 // asm: dodge double load if files are same
                 } else {
-                    resourcePath = "$translationDir/${polyUI.settings.defaultLocale}.lang"
-                    if (getResourceStreamNullable(resourcePath) == null) throw IllegalArgumentException("No global language file found ($path) or default language file found ($resourcePath)!")
-                    PolyUI.LOGGER.warn("\t\t> No global language file found ($path) either, using default language instead. Use -Dpolyui.locale to set a locale.")
-                    translate(key, objects)
+                    1
                 }
+                if (map.containsKey(key)) return@run map[key]
             }
-            if (isEmpty()) {
-                PolyUI.LOGGER.warn("No value found for key '$key' in translation table $resourcePath!")
-                return key
+            if (loadState == 1) {
+                PolyUI.LOGGER.warn("No translation for '$key'! Attempting to load default file. Locale features will be ignored.")
+                loadKeys("$translationDir/${polyUI.settings.defaultLocale}.lang", true)
+                loadState = 2
+                if (map.containsKey(key)) return@run map[key]
             }
-            if (size > 1) throw IllegalArgumentException("Multiple values found for key '$key' in translation table $resourcePath! ${this.contentToString()}")
-            var s = this[0]!!.substring(k.length)
-            var i = 0
-            while (s.contains("{}")) {
-                s = s.replace(
-                    "{}",
-                    objects.getOrNull(i)?.toString()
-                        ?: throw IllegalArgumentException("Found ${i + 1} substitutions for '$s'; but only ${objects.size} object(s) to substitute!")
-                )
-                i++
-            }
-            if (i != objects.size) throw IllegalArgumentException("Found ${objects.size} object(s) for '$s'; but only ${i + 1} substitutions were present! (objs: ${objects.contentToString()})")
-            map[key] = s
-            return s
+            null
         }
+        if (line == null) {
+            PolyUI.LOGGER.warn("No translation for '$key'!")
+            return key
+        }
+        if (text.hasObjects) {
+            return MessageFormat.format(line, *text.objects)
+        }
+        return line
     }
 
     companion object {
-        /** Use {} in the key for the object substitution */
+        /** Use {idx} in the key for the object substitution
+         * @see MessageFormat
+         */
         @JvmStatic
         fun String.localised(vararg objects: Any?) = Text(this, *objects)
-
-        @JvmStatic
-        fun String.asPolyText(vararg objects: Any?) = Text(this, *objects)
     }
 }
 

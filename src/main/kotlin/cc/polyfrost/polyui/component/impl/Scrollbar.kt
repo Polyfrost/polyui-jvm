@@ -71,12 +71,12 @@ class Scrollbar(private val horizontal: Boolean) : Block(null, origin, origin, f
             y = (layout.height - length) * scrollPercent
         }
         if (dragging) {
-            if (!polyui.mouseDown) {
+            if (!polyUI.mouseDown) {
                 dragging = false
             } else {
                 cancelHide()
                 wantRedraw()
-                val mouse = if (horizontal) polyui.mouseX else polyui.mouseY
+                val mouse = if (horizontal) polyUI.mouseX else polyUI.mouseY
                 scrollPercent = (mouse - m) / (scrollingSize - length)
             }
         }
@@ -124,7 +124,7 @@ class Scrollbar(private val horizontal: Boolean) : Block(null, origin, origin, f
         if (event is MousePressed) {
             if (event.button == 0 && event.mods.toInt() == 0) {
                 dragging = true
-                m = if (horizontal) polyui.mouseX - x - (layout.trueX - layout.ox) else polyui.mouseY - y - (layout.trueY - layout.oy)
+                m = if (horizontal) polyUI.mouseX - x - (layout.trueX - layout.ox) else polyUI.mouseY - y - (layout.trueY - layout.oy)
             }
         }
         return super.accept(event)

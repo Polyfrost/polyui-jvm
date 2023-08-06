@@ -30,7 +30,6 @@ import cc.polyfrost.polyui.unit.TextAlign
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.unit.Vec2
 import cc.polyfrost.polyui.unit.px
-import cc.polyfrost.polyui.utils.getResourceStream
 import cc.polyfrost.polyui.utils.toByteArray
 import org.jetbrains.skija.*
 
@@ -57,6 +56,10 @@ class SkijaRenderer(width: Float, height: Float) : Renderer(width, height) {
     private val images = HashMap<PolyImage, Image>()
     private var font = Font()
     private val radii = FloatArray(4)
+
+    override fun init() {
+    }
+
     override fun beginFrame() {
     }
 
@@ -180,13 +183,13 @@ class SkijaRenderer(width: Float, height: Float) : Renderer(width, height) {
     }
 
     private fun get(image: PolyImage) = images[image] ?: run {
-        Image.makeFromEncoded(getResourceStream(image.resourcePath).toByteArray()).also {
+        Image.makeFromEncoded(image.get().toByteArray()).also {
             images[image] = it
         }
     }
 
     private fun get(font: Font) = fonts[font] ?: run {
-        Typeface.makeFromData(Data.makeFromBytes(getResourceStream(font.resourcePath).toByteArray())).also {
+        Typeface.makeFromData(Data.makeFromBytes(font.get().toByteArray())).also {
             fonts[font] = it
         }
     }

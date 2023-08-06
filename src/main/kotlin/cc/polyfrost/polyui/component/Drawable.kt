@@ -66,7 +66,7 @@ abstract class Drawable(
     /** size of this drawable. */
     abstract var size: Size<Unit>?
     lateinit var renderer: Renderer
-    lateinit var polyui: PolyUI
+    lateinit var polyUI: PolyUI
 
     /**
      * This is the initialization stage of this drawable.
@@ -325,10 +325,10 @@ abstract class Drawable(
      *
      * @see INIT_SETUP
      */
-    internal open fun setup(renderer: Renderer, polyui: PolyUI) {
+    internal open fun setup(renderer: Renderer, polyUI: PolyUI) {
         if (initStage != INIT_NOT_STARTED) throw IllegalStateException("${this.simpleName} has already been setup!")
         this.renderer = renderer
-        this.polyui = polyui
+        this.polyUI = polyUI
     }
 
     /** debug print for this drawable.*/

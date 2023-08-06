@@ -202,7 +202,7 @@ fun main() {
                         events = events(
                             MouseClicked(0) to {
                                 rotateBy(120.0, Animations.EaseInOutCubic)
-                                polyui.master.getLayout<FlexLayout>(0).shuffle()
+                                polyUI.master.getLayout<FlexLayout>(0).shuffle()
                             }
                         )
                     ),

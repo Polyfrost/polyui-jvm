@@ -379,7 +379,7 @@ abstract class Layout(
                 throw Exception("Drawable $drawable is not a component or layout!")
             }
         }
-        if (initStage > INIT_NOT_STARTED && drawable.initStage == INIT_NOT_STARTED) drawable.setup(renderer, polyui)
+        if (initStage > INIT_NOT_STARTED && drawable.initStage == INIT_NOT_STARTED) drawable.setup(renderer, polyUI)
         if (initStage == INIT_COMPLETE) {
             drawable.calculateBounds()
             drawable.onParentInitComplete()
@@ -396,7 +396,7 @@ abstract class Layout(
      * This removal queue is used so that component can finish up any animations they're doing before being removed.
      */
     open fun removeComponent(drawable: Drawable) {
-        if (polyui.settings.debug) PolyUI.LOGGER.info("Preparing to removing drawable ${drawable.simpleName} from layout ${this.simpleName}")
+        if (polyUI.settings.debug) PolyUI.LOGGER.info("Preparing to removing drawable ${drawable.simpleName} from layout ${this.simpleName}")
         when (drawable) {
             is Component -> {
                 removeQueue.add(components[components.indexOf(drawable)])
@@ -442,7 +442,7 @@ abstract class Layout(
     @ApiStatus.Internal
     open fun removeComponentNow(drawable: Drawable?) {
         if (drawable == null) return
-        if (polyui.settings.debug) PolyUI.LOGGER.info("Removing drawable ${drawable.simpleName} from layout ${this.simpleName}")
+        if (polyUI.settings.debug) PolyUI.LOGGER.info("Removing drawable ${drawable.simpleName} from layout ${this.simpleName}")
         when (drawable) {
             is Component -> {
                 if (!components.remove(drawable)) {
@@ -536,7 +536,7 @@ abstract class Layout(
                 false
             }
         }
-        val delta = polyui.delta
+        val delta = polyUI.delta
         needsRedraw = false
         preRender(delta)
         components.fastEach {
@@ -578,17 +578,17 @@ abstract class Layout(
         components.fastEach { it.debugRender() }
     }
 
-    override fun setup(renderer: Renderer, polyui: PolyUI) {
-        super.setup(renderer, polyui)
-        if (!::propertyManager.isInitialized) propertyManager = PropertyManager(polyui)
+    override fun setup(renderer: Renderer, polyUI: PolyUI) {
+        super.setup(renderer, polyUI)
+        if (!::propertyManager.isInitialized) propertyManager = PropertyManager(polyUI)
         colors = propertyManager.colors
         components.fastEach {
             it.layout = this
-            it.setup(renderer, polyui)
+            it.setup(renderer, polyUI)
         }
         children.fastEach {
             it.layout = this
-            it.setup(renderer, polyui)
+            it.setup(renderer, polyUI)
         }
         initStage = INIT_SETUP
     }
@@ -631,7 +631,7 @@ abstract class Layout(
      * @since 0.17.1
      */
     fun every(nanos: Long, repeats: Int = 0, func: Layout.() -> kotlin.Unit): Layout {
-        polyui.every(nanos, repeats) {
+        polyUI.every(nanos, repeats) {
             func(this)
         }
         return this
@@ -715,7 +715,7 @@ abstract class Layout(
         addOperation(object : DrawableOp.Persistent(this) {
             override fun apply(renderer: Renderer) {
                 renderer.pushScissor(ox - trueX, oy - trueY, size.width, size.height)
-                val delta = polyui.delta
+                val delta = polyUI.delta
                 verticalBar?.tryHide(delta)
                 horizontalBar?.tryHide(delta)
                 val (anim, anim1) = anims
@@ -726,7 +726,7 @@ abstract class Layout(
                         x = ofsX + anim.value
                         needsRedraw = true
                     }
-                    polyui.eventManager.recalculateMousePos()
+                    polyUI.eventManager.recalculateMousePos()
                 }
                 if (anim1?.isFinished == true) {
                     anims.second = null
@@ -735,7 +735,7 @@ abstract class Layout(
                         y = ofsY + anim1.value
                         needsRedraw = true
                     }
-                    polyui.eventManager.recalculateMousePos()
+                    polyUI.eventManager.recalculateMousePos()
                 }
             }
 
@@ -749,8 +749,8 @@ abstract class Layout(
             ofsX = x
             ofsY = y
             if (withScrollbars) {
-                polyui.every(0L) {
-                    val d = polyui.delta
+                polyUI.every(0L) {
+                    val d = polyUI.delta
                     verticalBar!!.tryHide(d)
                     horizontalBar!!.tryHide(d)
                 }
@@ -809,19 +809,19 @@ abstract class Layout(
                     true,
                     MousePressed(0) to {
                         dragging = true
-                        mx = this@Layout.x - polyui.mouseX
-                        my = this@Layout.y - polyui.mouseY
+                        mx = this@Layout.x - polyUI.mouseX
+                        my = this@Layout.y - polyUI.mouseY
                     },
                     MouseReleased(0) to {
                         dragging = false
                     },
                     MouseMoved to {
                         if (dragging) {
-                            if (!polyui.eventManager.mouseDown) {
+                            if (!polyUI.eventManager.mouseDown) {
                                 dragging = false
                             }
-                            this@Layout.x = polyui.mouseX + mx
-                            this@Layout.y = polyui.mouseY + my
+                            this@Layout.x = polyUI.mouseX + mx
+                            this@Layout.y = polyUI.mouseY + my
                         }
                     }
                 ).also {

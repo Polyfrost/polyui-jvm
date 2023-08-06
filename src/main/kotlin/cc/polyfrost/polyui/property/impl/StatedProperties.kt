@@ -73,7 +73,7 @@ open class StatedProperties : BlockProperties() {
                 } else {
                     recolor(activePalette.hovered, hoverAnimation, hoverAnimationDuration)
                 }
-                polyui.cursor = Cursor.Clicker
+                polyUI.cursor = Cursor.Clicker
                 true
             },
             MouseExited to {
@@ -82,7 +82,7 @@ open class StatedProperties : BlockProperties() {
                 } else {
                     recolor(activePalette.normal, hoverAnimation, hoverAnimationDuration)
                 }
-                polyui.cursor = Cursor.Pointer
+                polyUI.cursor = Cursor.Pointer
                 true
             }
         )

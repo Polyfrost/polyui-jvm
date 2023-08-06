@@ -56,15 +56,12 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     private val fonts = HashMap<Font, NVGFont>()
     private var vg: Long = -1
 
-    init {
+    override fun init() {
         vg = nvgCreate(if (settings.useAntialiasing) NVG_ANTIALIAS else 0)
         require(vg != -1L) { "Could not initialize NanoVG" }
     }
 
-    private fun checkInit() = require(vg != -1L) { "NanoVG not initialized!" }
-
     override fun beginFrame() {
-        if (settings.debug) checkInit()
         nvgBeginFrame(vg, width, height, pixelRatio)
     }
 

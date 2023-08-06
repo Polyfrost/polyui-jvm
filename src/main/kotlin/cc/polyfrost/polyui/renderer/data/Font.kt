@@ -32,11 +32,11 @@ import java.net.URL
  * @param letterSpacing The letter spacing of the font, in pixels (e.g. 1 pixel = 1 empty pixel between each letter).
  * @param lineSpacing The line spacing of the font, in proportion to the font size (e.g. 2 means 1 empty line between each line, 1.5 = half a line between...)
  */
-data class Font @JvmOverloads constructor(
-    val resourcePath: String,
+class Font @JvmOverloads constructor(
+    resourcePath: String,
     val letterSpacing: Float = 0f,
     val lineSpacing: Float = 1f
-) {
+) : Resource(resourcePath) {
     val name: String = resourcePath.substringAfterLast('/')
         .substringBeforeLast('.')
 

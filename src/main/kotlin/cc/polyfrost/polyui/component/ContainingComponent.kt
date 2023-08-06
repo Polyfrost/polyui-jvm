@@ -74,7 +74,7 @@ abstract class ContainingComponent(
                 children.addOrReplace(it)
                 if (initStage > INIT_NOT_STARTED) {
                     it.layout = this.layout
-                    it.setup(renderer, polyui)
+                    it.setup(renderer, polyUI)
                 }
                 if (initStage == INIT_COMPLETE) it.calculateBounds()
             }
@@ -92,7 +92,7 @@ abstract class ContainingComponent(
                 // this will move it so that it renders around the middle of the main component.
                 it.x -= acx
                 it.y -= acy
-                it.preRender(polyui.delta)
+                it.preRender(polyUI.delta)
                 it.render()
                 it.postRender()
                 it.x += acx
@@ -100,7 +100,7 @@ abstract class ContainingComponent(
             }
         } else {
             children.fastEach {
-                it.preRender(polyui.delta)
+                it.preRender(polyUI.delta)
                 it.render()
                 it.postRender()
             }
@@ -111,11 +111,11 @@ abstract class ContainingComponent(
         children.fastEach { it.reset() }
     }
 
-    override fun setup(renderer: Renderer, polyui: PolyUI) {
-        super.setup(renderer, polyui)
+    override fun setup(renderer: Renderer, polyUI: PolyUI) {
+        super.setup(renderer, polyUI)
         children.fastEach {
             it.layout = this.layout
-            it.setup(renderer, polyui)
+            it.setup(renderer, polyUI)
         }
     }
 

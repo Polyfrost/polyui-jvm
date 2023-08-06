@@ -36,7 +36,7 @@ import java.lang.StringBuilder
  * @see remove
  * @see removeAll
  */
-class KeyBinder(private val polyui: PolyUI) {
+class KeyBinder(private val polyUI: PolyUI) {
     private val listeners = ArrayList<Bind>(5)
     private val downMouseButtons = ArrayList<Int>(5)
     private val downUnmappedKeys = ArrayList<Int>(5)
@@ -81,7 +81,7 @@ class KeyBinder(private val polyui: PolyUI) {
 
     fun update(deltaTimeNanos: Long): Boolean {
         listeners.fastEach {
-            if (it.update(downUnmappedKeys, downKeys, downMouseButtons, polyui.eventManager.keyModifiers, deltaTimeNanos)) {
+            if (it.update(downUnmappedKeys, downKeys, downMouseButtons, polyUI.eventManager.keyModifiers, deltaTimeNanos)) {
                 return true
             }
         }
@@ -101,7 +101,6 @@ class KeyBinder(private val polyui: PolyUI) {
         constructor(char: Char, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Short = 0, durationNanos: Long = 0L, action: () -> Boolean) : this(intArrayOf(char.code), keys, mouse, mods, durationNanos, action)
         constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Array<Mouse>? = null, mods: Short = 0, durationNanos: Long = 0L, action: () -> Boolean) : this(unmappedKeys, keys, mouse?.map { it.value.toInt() }?.toIntArray(), mods, durationNanos, action)
         constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Mouse? = null, mods: Short = 0, durationNanos: Long = 0L, action: () -> Boolean) : this(unmappedKeys, keys, mouse?.value?.let { intArrayOf(it.toInt()) }, mods, durationNanos, action)
-
         constructor(unmappedKeys: IntArray? = null, key: Keys? = null, mouse: Array<Mouse>? = null, mods: Short = 0, durationNanos: Long = 0L, action: () -> Boolean) : this(unmappedKeys, key?.let { arrayOf(it) }, mouse, mods, durationNanos, action)
 
         private var time = 0L

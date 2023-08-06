@@ -57,8 +57,8 @@ open class Block @JvmOverloads constructor(
         renderer.rect(x, y, width, height, color, cornerRadii)
     }
 
-    override fun setup(renderer: Renderer, polyui: PolyUI) {
-        super.setup(renderer, polyui)
+    override fun setup(renderer: Renderer, polyUI: PolyUI) {
+        super.setup(renderer, polyUI)
         outlineColor = properties.outlineColor.toAnimatable()
         cornerRadii = properties.cornerRadii
     }

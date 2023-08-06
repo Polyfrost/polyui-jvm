@@ -21,14 +21,14 @@
 
 package cc.polyfrost.polyui.property
 
-import cc.polyfrost.polyui.renderer.Renderer
+import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.unit.milliseconds
 
 /** Settings for PolyUI.
  *
  * This contains many values that concern the rendering and event handling of PolyUI internally.
  * */
-class Settings(private val renderer: Renderer) {
+class Settings(private val polyUI: PolyUI) {
 
     /** this enables the debug renderer and various other debug features, including more verbose checks and logging.
      *
@@ -162,6 +162,18 @@ class Settings(private val renderer: Renderer) {
      * @since 0.20.1
      */
     var cleanupOnShutdown = false
+
+    /**
+     * Set this to true to enable loading of translation keys upon startup, instead of the default behaviour of loading them when they are first used.
+     * @since 0.21.1
+     */
+    var loadTranslationsOnInit = true
+
+    /**
+     * Enable parallel loading of translation files.
+     * @since 0.21.1
+     */
+    var parallelLoading = false
 
     /** How to handle resource (image and font) loading errors.
      * @see resourcePolicy

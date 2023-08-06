@@ -32,6 +32,9 @@ import cc.polyfrost.polyui.unit.Vec2
 import cc.polyfrost.polyui.unit.origin
 
 class NoOpRenderer(width: Float, height: Float) : Renderer(width, height) {
+    override fun init() {
+    }
+
     override fun beginFrame() {
     }
 

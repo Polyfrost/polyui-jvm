@@ -61,8 +61,8 @@ open class Image @JvmOverloads constructor(
     final override val properties
         get() = super.properties as ImageProperties
 
-    override fun setup(renderer: Renderer, polyui: PolyUI) {
-        super.setup(renderer, polyui)
+    override fun setup(renderer: Renderer, polyUI: PolyUI) {
+        super.setup(renderer, polyUI)
         updateColor()
     }
 

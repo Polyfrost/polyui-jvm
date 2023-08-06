@@ -34,6 +34,7 @@ import cc.polyfrost.polyui.input.Modifiers.Companion.mods
 import cc.polyfrost.polyui.input.PolyTranslator
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.layout.impl.PixelLayout
+import cc.polyfrost.polyui.property.Settings
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.renderer.Window
 import cc.polyfrost.polyui.renderer.data.Cursor
@@ -86,6 +87,12 @@ class PolyUI @JvmOverloads constructor(
     colors: Colors = DarkTheme(),
     vararg drawables: Drawable
 ) {
+    val settings = Settings(this)
+    init {
+        renderer.polyUI = this
+        renderer.init()
+    }
+
     /** Colors attached to this PolyUI instance. This contains all the colors needed for the UI.
      *
      * **Note that changing this value** can be an expensive operation while the UI is running, as it has to update all the components.
@@ -149,7 +156,6 @@ class PolyUI @JvmOverloads constructor(
         private set
     private val clock = Clock()
     private val executors: ArrayList<Clock.Executor> = arrayListOf()
-    inline val settings get() = renderer.settings
     inline val mouseX get() = eventManager.mouseX
     inline val mouseY get() = eventManager.mouseY
     inline val mouseDown get() = eventManager.mouseDown

@@ -229,15 +229,15 @@ abstract class Component @JvmOverloads constructor(
      * @see Properties
      */
     fun setProperties(properties: Properties) {
-        if (polyui.settings.debug) PolyUI.LOGGER.info("{}'s properties set to {}", this.simpleName, properties)
+        if (polyUI.settings.debug) PolyUI.LOGGER.info("{}'s properties set to {}", this.simpleName, properties)
         properties.colors = p!!.colors
         p = properties
         recolor(properties.palette.normal, Animations.Linear, 150L.milliseconds)
         wantRedraw()
     }
 
-    override fun setup(renderer: Renderer, polyui: PolyUI) {
-        super.setup(renderer, polyui)
+    override fun setup(renderer: Renderer, polyUI: PolyUI) {
+        super.setup(renderer, polyUI)
         if (p == null) {
             p = layout.propertyManager.get(this)
         } else {
@@ -284,8 +284,8 @@ abstract class Component @JvmOverloads constructor(
         addEventHandlers(
             MousePressed(0) to {
                 hovered = true
-                mx = polyui.eventManager.mouseX - x
-                my = polyui.eventManager.mouseY - y
+                mx = polyUI.eventManager.mouseX - x
+                my = polyUI.eventManager.mouseY - y
                 consumesEvent
             },
             MouseReleased(0) to {
@@ -296,12 +296,12 @@ abstract class Component @JvmOverloads constructor(
         addOperation(object : DrawableOp.Persistent(this) {
             override fun apply(renderer: Renderer) {
                 if (hovered) {
-                    if (!polyui.eventManager.mouseDown) {
+                    if (!polyUI.eventManager.mouseDown) {
                         hovered = false
                         return
                     }
-                    x = polyui.eventManager.mouseX - mx
-                    y = polyui.eventManager.mouseY - my
+                    x = polyUI.eventManager.mouseX - mx
+                    y = polyUI.eventManager.mouseY - my
                 }
             }
         })
@@ -318,7 +318,7 @@ abstract class Component @JvmOverloads constructor(
      * @since 0.17.1
      */
     fun every(nanos: Long, repeats: Int = 0, func: Component.() -> kotlin.Unit): Component {
-        polyui.every(nanos, repeats) {
+        polyUI.every(nanos, repeats) {
             func(this)
         }
         return this

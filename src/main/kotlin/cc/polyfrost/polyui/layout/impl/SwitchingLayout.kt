@@ -67,7 +67,7 @@ class SwitchingLayout(
 
         if (new.initStage == INIT_NOT_STARTED) {
             new.layout = this.layout
-            new.setup(renderer, polyui)
+            new.setup(renderer, polyUI)
             new.calculateBounds()
             this.layout.addComponent(new)
         } else if (new.initStage == INIT_SETUP) {

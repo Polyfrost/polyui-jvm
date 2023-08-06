@@ -77,12 +77,12 @@ open class DefaultBlockProperties @JvmOverloads constructor(
             },
             MouseEntered to {
                 recolor(palette.hovered, hoverAnimation, hoverAnimationDuration)
-                polyui.cursor = Cursor.Clicker
+                polyUI.cursor = Cursor.Clicker
                 true
             },
             MouseExited to {
                 recolor(palette.normal, hoverAnimation, hoverAnimationDuration)
-                polyui.cursor = Cursor.Pointer
+                polyUI.cursor = Cursor.Pointer
                 true
             }
         )

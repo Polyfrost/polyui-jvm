@@ -57,7 +57,7 @@ open class CheckboxProperties : StatedProperties() {
             if (anim?.isFinished == true) {
                 anim = null
             } else {
-                anim?.update(polyui.delta)
+                anim?.update(polyUI.delta)
                 val value = anim?.value ?: 1f
                 renderer.translate(x, y)
                 renderer.scale(value, value)

@@ -60,8 +60,8 @@ class Slider(
     private var dragging = false
     private var mx = 0f
 
-    override fun setup(renderer: Renderer, polyui: PolyUI) {
-        super.setup(renderer, polyui)
+    override fun setup(renderer: Renderer, polyUI: PolyUI) {
+        super.setup(renderer, polyUI)
         barColor = properties.barColor.normal.toAnimatable()
         usedBarColor = properties.usedBarColor.normal.toAnimatable()
     }
@@ -85,8 +85,8 @@ class Slider(
 
     override fun render() {
         if (dragging) {
-            if (!polyui.mouseDown) dragging = false
-            set(polyui.mouseX - mx)
+            if (!polyUI.mouseDown) dragging = false
+            set(polyUI.mouseX - mx)
         }
         val height = height
         val hHeight = height / 2f

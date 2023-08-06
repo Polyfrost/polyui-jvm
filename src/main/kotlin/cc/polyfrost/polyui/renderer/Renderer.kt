@@ -21,8 +21,8 @@
 
 package cc.polyfrost.polyui.renderer
 
+import cc.polyfrost.polyui.PolyUI
 import cc.polyfrost.polyui.color.Color
-import cc.polyfrost.polyui.property.Settings
 import cc.polyfrost.polyui.renderer.data.Font
 import cc.polyfrost.polyui.renderer.data.Framebuffer
 import cc.polyfrost.polyui.renderer.data.PolyImage
@@ -38,7 +38,7 @@ import kotlin.math.min
  *
  * It is also responsible for loading and caching all images and fonts, but this is down to you as a rendering implementation to implement.
  * for these functions, such as [image] and [text], an initialized [Font] or [PolyImage] instance will be given.
- * This class simply contains a path to the resource. You will need to load it using [getResourceStream][cc.polyfrost.polyui.utils.getResourceStream], and cache it for future use (ideally).
+ * You can access the data using [Resource.stream][cc.polyfrost.polyui.renderer.data.Resource.stream], and cache it for future use (ideally).
  */
 abstract class Renderer(open var width: Float, open var height: Float) : AutoCloseable {
     /**
@@ -48,9 +48,10 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
      */
     var alphaCap: Float = 1f
 
-    /** settings instance for this renderer. */
-    @Suppress("LeakingThis")
-    val settings = Settings(this)
+    lateinit var polyUI: PolyUI
+        internal set
+
+    inline val settings get() = polyUI.settings
 
     /** the pixel ratio of the screen, used mainly on Apple screens which use high-dpi. */
     var pixelRatio: Float = 1f
@@ -59,6 +60,12 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
     /** hook into this renderer. */
     @Suppress("UNUSED_EXPRESSION")
     inline fun render(block: Renderer.() -> kotlin.Unit) = block()
+
+    /**
+     * This function is called during very early initialization, and should be used to prepare the renderer for use. This is always the first function called.
+     * @since 0.21.2
+     */
+    abstract fun init()
 
     /**
      * Begin a frame. this is called before all drawing calls.

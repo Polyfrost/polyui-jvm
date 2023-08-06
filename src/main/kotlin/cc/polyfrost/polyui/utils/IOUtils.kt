@@ -26,6 +26,7 @@ package cc.polyfrost.polyui.utils
 import cc.polyfrost.polyui.PolyUI
 import java.io.FileNotFoundException
 import java.io.InputStream
+import java.net.MalformedURLException
 import java.net.URL
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -59,6 +60,9 @@ fun getResourceStreamNullable(resourcePath: String): InputStream? {
         i = try {
             URL(resourcePath).openStream()
         } catch (e: Exception) {
+            if (e !is MalformedURLException) {
+                PolyUI.LOGGER.error("Failed to get resource: {}", e.message)
+            }
             PolyUI::class.java.getResourceAsStream(resourcePath)
                 ?: PolyUI::class.java.getResourceAsStream("/$resourcePath")
                 ?: PolyUI::class.java.getResourceAsStream("/resources/$resourcePath")

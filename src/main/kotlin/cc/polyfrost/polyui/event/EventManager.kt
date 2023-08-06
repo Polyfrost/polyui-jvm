@@ -199,8 +199,8 @@ class EventManager(private val polyUI: PolyUI) {
             clickAmount = 1
         } else {
             val curr = System.nanoTime()
-            if (curr - clickTimer < polyUI.renderer.settings.comboMaxInterval) {
-                if (clickAmount < polyUI.renderer.settings.maxComboSize) {
+            if (curr - clickTimer < polyUI.settings.comboMaxInterval) {
+                if (clickAmount < polyUI.settings.maxComboSize) {
                     clickAmount++
                 } else if (polyUI.settings.clearComboWhenMaxed) {
                     clickAmount = 1

@@ -58,8 +58,8 @@ class GridLayout @JvmOverloads constructor(
     /** list of rows */
     private var grid: Array<Array<Drawable?>> = emptyArray()
 
-    override fun setup(renderer: Renderer, polyui: PolyUI) {
-        super.setup(renderer, polyui)
+    override fun setup(renderer: Renderer, polyUI: PolyUI) {
+        super.setup(renderer, polyUI)
         var nrows = 0
         var ncols = 0
         drawables.forEach {

@@ -86,10 +86,10 @@ open class TextInput(
 
     override fun accept(event: Event): Boolean {
         if (event is MouseEntered) {
-            polyui.cursor = Cursor.Text
+            polyUI.cursor = Cursor.Text
         }
         if (event is MouseExited) {
-            polyui.cursor = Cursor.Pointer
+            polyUI.cursor = Cursor.Pointer
         }
         if (event is MousePressed) {
             mouseDown = true
@@ -111,11 +111,11 @@ open class TextInput(
         }
         if (event is MouseMoved) {
             if (mouseDown) {
-                if (!polyui.mouseDown) {
+                if (!polyUI.mouseDown) {
                     selecting = false
                     mouseDown = false
                 } else {
-                    mouseInput(polyui.mouseX, polyui.mouseY)
+                    mouseInput(polyUI.mouseX, polyUI.mouseY)
                 }
             }
         }
@@ -143,19 +143,19 @@ open class TextInput(
             } else if (event.hasModifier(KeyModifiers.LCONTROL) || event.hasModifier(KeyModifiers.RCONTROL)) {
                 when (event.key) {
                     'V' -> {
-                        txt = txt.substring(0, caret) + (polyui.clipboard ?: "") + txt.substring(caret)
-                        caret += polyui.clipboard?.length ?: 0
+                        txt = txt.substring(0, caret) + (polyUI.clipboard ?: "") + txt.substring(caret)
+                        caret += polyUI.clipboard?.length ?: 0
                         clearSelection()
                     }
 
                     'C' -> {
                         if (caret != select) {
-                            polyui.clipboard = selection
+                            polyUI.clipboard = selection
                         }
                     }
 
                     'X' -> {
-                        polyui.clipboard = null
+                        polyUI.clipboard = null
                         txt = txt.replace(selection, "")
                         clearSelection()
                     }
@@ -231,7 +231,7 @@ open class TextInput(
                 }
 
                 Keys.ESCAPE -> {
-                    polyui.unfocus()
+                    polyUI.unfocus()
                 }
 
                 else -> {}
@@ -443,8 +443,8 @@ open class TextInput(
         selectBoxes.clear()
     }
 
-    override fun setup(renderer: Renderer, polyui: PolyUI) {
-        super.setup(renderer, polyui)
+    override fun setup(renderer: Renderer, polyUI: PolyUI) {
+        super.setup(renderer, polyUI)
         text = Text(
             properties.text,
             properties.defaultText.clone(),
@@ -455,7 +455,7 @@ open class TextInput(
             false
         )
         text.layout = this.layout
-        text.setup(renderer, polyui)
+        text.setup(renderer, polyUI)
     }
 
     override fun calculateBounds() {

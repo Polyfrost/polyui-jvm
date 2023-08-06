@@ -114,25 +114,25 @@ class Dropdown(
         private set
     private var openAnimation: Animation? = null
 
-    override fun setup(renderer: Renderer, polyui: PolyUI) {
+    override fun setup(renderer: Renderer, polyUI: PolyUI) {
         dropdown.y += if (size != null) size!!.height else 0f
-        super.setup(renderer, polyui)
+        super.setup(renderer, polyUI)
         layout.addComponents(chevron, dropdown)
         borderColor = properties.borderColor.toAnimatable()
     }
 
     override fun accept(event: Event): Boolean {
         if (event is MouseEntered) {
-            polyui.cursor = Cursor.Clicker
+            polyUI.cursor = Cursor.Clicker
             return true
         }
         if (event is MouseExited) {
-            polyui.cursor = Cursor.Pointer
+            polyUI.cursor = Cursor.Pointer
             return true
         }
         if (event is MouseClicked) {
             if (event.button == 0 && active) {
-                polyui.unfocus()
+                polyUI.unfocus()
                 return true
             }
         }
@@ -159,7 +159,7 @@ class Dropdown(
             if (openAnimation!!.isFinished && openAnimation!!.value == 0f) {
                 openAnimation = null
             } else {
-                openAnimation!!.update(polyui.delta)
+                openAnimation!!.update(polyUI.delta)
             }
         }
         dropdown.enabled = (openAnimation?.value ?: 0f) != 0f
@@ -195,7 +195,7 @@ class Dropdown(
         dropdown.visibleSize = dropdown.size!!.clone()
         dropdown.oy = dropdown.y
         chevron.layout = layout
-        chevron.setup(renderer, polyui)
+        chevron.setup(renderer, polyUI)
         chevron.calculateBounds()
         chevron.x = x + width - chevron.width - 12f
         chevron.y = y + height / 2f - chevron.height / 2f
@@ -217,8 +217,8 @@ class Dropdown(
         internal lateinit var dropdown: Dropdown
         internal var show = false
 
-        override fun setup(renderer: Renderer, polyui: PolyUI) {
-            super.setup(renderer, polyui)
+        override fun setup(renderer: Renderer, polyUI: PolyUI) {
+            super.setup(renderer, polyUI)
             // shh
             val i = dropdown.i
             (this.at.a as Unit.Grid).row = i
