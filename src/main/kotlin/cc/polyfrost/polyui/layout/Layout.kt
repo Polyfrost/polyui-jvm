@@ -98,6 +98,8 @@ abstract class Layout(
             super.acceptsInput = value
         }
 
+    override var consumesHover: Boolean = false
+
     /**
      * Weather this layout needs redrawing.
      */

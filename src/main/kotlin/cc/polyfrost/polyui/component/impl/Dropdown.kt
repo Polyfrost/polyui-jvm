@@ -80,6 +80,7 @@ class Dropdown(
             layout.removeComponentNow(field)
             field = value!!.clone()
             field!!.show = true
+            field!!.acceptsInput = false
             layout.addComponent(field!!)
             field!!.y += properties.verticalPadding
             field!!.calculateBounds()
@@ -122,6 +123,7 @@ class Dropdown(
     }
 
     override fun accept(event: Event): Boolean {
+        selected?.accept(event)
         if (event is MouseEntered) {
             polyUI.cursor = Cursor.Clicker
             return true

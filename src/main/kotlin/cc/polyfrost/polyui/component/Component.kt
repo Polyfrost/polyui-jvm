@@ -82,6 +82,8 @@ abstract class Component @JvmOverloads constructor(
         internal set
     protected var keyframes: KeyFrames? = null
 
+    override var consumesHover = true
+
     /**
      * Note that this method will return the [x] if this method is called before the component is added to a layout.
      * @see [Drawable.trueX]

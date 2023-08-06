@@ -40,7 +40,8 @@ import kotlin.experimental.xor
  * @param polyUI The PolyUI instance to use.
  */
 class EventManager(private val polyUI: PolyUI) {
-    private val mouseOverDrawables = ArrayList<Drawable>()
+    private val mouseOverObjects = ArrayList<Drawable>(3)   // asm: it is not expected to have many of this type under hover at once
+    private var mouseOverObj: Drawable? = null
     var mouseX: Float = 0f
         private set
     var mouseY: Float = 0f
@@ -138,11 +139,17 @@ class EventManager(private val polyUI: PolyUI) {
     }
 
     private fun mouseCalculate(drawable: Drawable, x: Float, y: Float): Boolean {
-        if (drawable.acceptsInput && drawable.isInside(x, y)) {
+        if ((!drawable.consumesHover || mouseOverObj == null) && drawable.acceptsInput && drawable.isInside(x, y)) {
             if (!drawable.mouseOver) {
-                mouseOverDrawables.add(drawable)
                 drawable.mouseOver = true
-                if (drawable.accept(MouseEntered)) {
+                if(!drawable.consumesHover) {
+                    mouseOverObjects.add(drawable)
+                    if(drawable.accept(MouseEntered)) {
+                        return true
+                    }
+                } else {
+                    mouseOverObj = drawable
+                    drawable.accept(MouseEntered)
                     return true
                 }
             }
@@ -160,18 +167,29 @@ class EventManager(private val polyUI: PolyUI) {
                     return
                 }
             }
+            mouseCalculate(layout, x, y)
         }
-        mouseCalculate(layout, x, y)
     }
 
     /** call this function to update the mouse position. It also will update all necessary mouse over flags. */
     fun setMousePosAndUpdate(x: Float, y: Float) {
+        if (mouseX == x && mouseY == y) return
         mouseX = x
         mouseY = y
         if (!mouseDown) {
             calcMouse(polyUI.master, x, y)
         }
-        mouseOverDrawables.fastRemoveIf {
+        if (mouseOverObj != null) {
+            val it = mouseOverObj!!
+            if (!it.isInside(x, y)) {
+                it.accept(MouseExited)
+                it.mouseOver = false
+                mouseOverObj = null
+            } else {
+                it.accept(MouseMoved)
+            }
+        }
+        mouseOverObjects.fastRemoveIf {
             (!it.isInside(x, y)).also { b ->
                 if (b) {
                     it.accept(MouseExited)

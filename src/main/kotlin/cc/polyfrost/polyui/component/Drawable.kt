@@ -90,6 +90,15 @@ abstract class Drawable(
      */
     abstract val layout: Layout?
 
+    /**
+     * If this is `true`, the drawable will be the only drawable that is allowed to be hovered at once.
+     *
+     * There are essentially two modes for hovering in PolyUI, and by default, components are in the "normal" (`false`) mode, where only one of them can be hovered as once
+     * as would be expected, but layouts are in the "group" (`true`) mode, so will still receive the events even if another drawable is hovered, for example scrolling.
+     * @since 0.21.3
+     */
+    abstract var consumesHover: Boolean
+
     inline var x get() = at.a.px
         set(value) {
             at.a.px = value
