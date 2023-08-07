@@ -30,9 +30,7 @@ import cc.polyfrost.polyui.animate.Animations
 import cc.polyfrost.polyui.animate.KeyFrames
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.color.Colors
-import cc.polyfrost.polyui.event.Event
-import cc.polyfrost.polyui.event.MousePressed
-import cc.polyfrost.polyui.event.MouseReleased
+import cc.polyfrost.polyui.event.*
 import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.renderer.Renderer
@@ -83,6 +81,22 @@ abstract class Component @JvmOverloads constructor(
     protected var keyframes: KeyFrames? = null
 
     override var consumesHover = true
+
+    /**
+     * Disabled flag for this component. Dispatches the [Disabled] and [Enabled] events by default, leaving it to the [Properties] implementation
+     * to handle the disabled state.
+     *
+     * @since 0.21.4
+     */
+    var disabled = false
+        set(value) {
+            field = value
+            if (value) {
+                accept(Enabled)
+            } else {
+                accept(Disabled)
+            }
+        }
 
     /**
      * Note that this method will return the [x] if this method is called before the component is added to a layout.

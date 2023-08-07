@@ -40,7 +40,7 @@ import kotlin.experimental.xor
  * @param polyUI The PolyUI instance to use.
  */
 class EventManager(private val polyUI: PolyUI) {
-    private val mouseOverObjects = ArrayList<Drawable>(3)   // asm: it is not expected to have many of this type under hover at once
+    private val mouseOverObjects = ArrayList<Drawable>(3) // asm: it is not expected to have many of this type under hover at once
     private var mouseOverObj: Drawable? = null
     var mouseX: Float = 0f
         private set
@@ -142,9 +142,9 @@ class EventManager(private val polyUI: PolyUI) {
         if ((!drawable.consumesHover || mouseOverObj == null) && drawable.acceptsInput && drawable.isInside(x, y)) {
             if (!drawable.mouseOver) {
                 drawable.mouseOver = true
-                if(!drawable.consumesHover) {
+                if (!drawable.consumesHover) {
                     mouseOverObjects.add(drawable)
-                    if(drawable.accept(MouseEntered)) {
+                    if (drawable.accept(MouseEntered)) {
                         return true
                     }
                 } else {

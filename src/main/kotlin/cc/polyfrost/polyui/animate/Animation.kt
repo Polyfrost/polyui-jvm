@@ -28,11 +28,11 @@ package cc.polyfrost.polyui.animate
  *
  * PolyUI comes with many default [animations][cc.polyfrost.polyui.animate.Easing], which you can use. To give the user some choice, you can also use the [Animations.create()][Animation.Type.create] to dynamically create them.
  *
- * check out [DrawableOperation][cc.polyfrost.polyui.component.DrawableOp] for more information on how to use animations dynamically; and [transitions][cc.polyfrost.polyui.animate.Transition] for more information on how to use animations with components.
+ * check out [DrawableOperation][cc.polyfrost.polyui.component.DrawableOp] for more information on how to use animations with components.
  */
 abstract class Animation(val durationNanos: Long, val from: Float, val to: Float) : Cloneable {
     val range = to - from
-    var passedTime = 0F
+    var passedTime = 0f
         protected set
     var isFinished: Boolean = false
         protected set

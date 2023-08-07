@@ -83,6 +83,17 @@ abstract class Drawable(
         internal set
 
     /**
+     * weather or not this drawable should be rendered.
+     *
+     * This is controlled by [Layout.clipDrawables] to save resources by not drawing drawables which cannot be seen.
+     *
+     * It is only respected by [Layout] by default. This means that if you are calling [render] yourself (which you really shouldn't), you should check this value.
+     * @see Layout.render
+     * @since 0.21.4
+     */
+    var renders = true
+
+    /**
      * Reference to the layout encapsulating this drawable.
      * For components, this is never null, but for layout, it can be null (meaning its parent is the polyui).
      *
@@ -370,12 +381,37 @@ abstract class Drawable(
     }
 
     /**
-     * returns true if the given coordinates are inside this drawable.
+     * @return `true` if the given point is inside this drawable.
+     * @see intersects
+     * @see isInside(Float, Float, Float, Float)
      */
     open fun isInside(x: Float, y: Float): Boolean {
         val tx = trueX
         val ty = trueY
         return x in tx..tx + width && y in ty..ty + height
+    }
+
+    /**
+     * @return `true` if all the points of this drawable are inside the given box (x, y, width, height).
+     * @since 0.21.4
+     * @see intersects
+     * @see isInside
+     */
+    open fun isInside(x: Float, y: Float, width: Float, height: Float): Boolean {
+        val tx = trueX
+        val ty = trueY
+        return tx in x..x + width && ty in y..y + height && tx + this.width in x..x + width && ty + this.height in y..y + height
+    }
+
+    /**
+     * @return `true` if the drawable has at least one point inside the given box (x, y, width, height).
+     * @since 0.21.4
+     * @see isInside
+     */
+    open fun intersects(x: Float, y: Float, width: Float, height: Float): Boolean {
+        val tx = trueX
+        val ty = trueY
+        return (x < tx + this.width && tx < x + width) && (y < ty + this.height && ty < y + height)
     }
 
     fun doDynamicSize() {

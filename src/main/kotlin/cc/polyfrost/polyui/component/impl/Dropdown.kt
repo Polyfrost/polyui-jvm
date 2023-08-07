@@ -101,7 +101,10 @@ class Dropdown(
         dropdown.refuseFramebuffer = true
         dropdown.addOperation(object : DrawableOp.Persistent(this) {
             override fun apply(renderer: Renderer) {
-                if (openAnimation != null) renderer.pushScissor(0f, 0f, dropdown.width, dropdown.height * openAnimation!!.value)
+                if (openAnimation != null) {
+                    renderer.pushScissor(0f, 0f, dropdown.width, dropdown.height * openAnimation!!.value)
+                    dropdown.clipDrawables()
+                }
                 renderer.rect(0f, 0f, dropdown.width, dropdown.height, color, 0f, 0f, this@Dropdown.properties.cornerRadius, this@Dropdown.properties.cornerRadius)
             }
 
@@ -164,7 +167,7 @@ class Dropdown(
                 openAnimation!!.update(polyUI.delta)
             }
         }
-        dropdown.enabled = (openAnimation?.value ?: 0f) != 0f
+        dropdown.exists = (openAnimation?.value ?: 0f) != 0f
         if (active) selected?.recolorAll(properties.hoveredColor)
         renderer.rect(x, y, width, height, color, properties.cornerRadius)
         renderer.hollowRect(x, y, width, height, borderColor, properties.borderThickness, properties.cornerRadius)
@@ -193,7 +196,7 @@ class Dropdown(
         dropdown.x += properties.borderThickness
         default()
         selected!!.text.y -= properties.verticalPadding
-        dropdown.enabled = false
+        dropdown.exists = false
         dropdown.visibleSize = dropdown.size!!.clone()
         dropdown.oy = dropdown.y
         chevron.layout = layout

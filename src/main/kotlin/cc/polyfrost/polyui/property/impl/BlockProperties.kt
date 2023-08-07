@@ -24,10 +24,7 @@ package cc.polyfrost.polyui.property.impl
 import cc.polyfrost.polyui.animate.Animations
 import cc.polyfrost.polyui.color.Color
 import cc.polyfrost.polyui.color.Colors
-import cc.polyfrost.polyui.event.MouseEntered
-import cc.polyfrost.polyui.event.MouseExited
-import cc.polyfrost.polyui.event.MousePressed
-import cc.polyfrost.polyui.event.MouseReleased
+import cc.polyfrost.polyui.event.*
 import cc.polyfrost.polyui.property.Properties
 import cc.polyfrost.polyui.property.State
 import cc.polyfrost.polyui.renderer.data.Cursor
@@ -66,6 +63,7 @@ open class DefaultBlockProperties @JvmOverloads constructor(
     cornerRadii: FloatArray = 0f.radii()
 ) : BlockProperties(colorPalette, cornerRadii) {
     init {
+        var old = false
         addEventHandlers(
             MousePressed(0) to {
                 recolor(palette.pressed, pressedAnimation, pressedAnimationDuration)
@@ -83,6 +81,17 @@ open class DefaultBlockProperties @JvmOverloads constructor(
             MouseExited to {
                 recolor(palette.normal, hoverAnimation, hoverAnimationDuration)
                 polyUI.cursor = Cursor.Pointer
+                true
+            },
+            Disabled to {
+                old = acceptsInput
+                acceptsInput = false
+                recolor(palette.disabled, hoverAnimation, hoverAnimationDuration)
+                true
+            },
+            Enabled to {
+                acceptsInput = old
+                recolor(palette.normal, hoverAnimation, hoverAnimationDuration)
                 true
             }
         )

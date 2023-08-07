@@ -204,7 +204,7 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
         val key = text.key
         val line: String? = map[key] ?: run {
             while (queue.isNotEmpty()) {
-                loadKeys(queue.first(), true)
+                loadKeys(queue.removeFirst(), true)
                 if (map.containsKey(key)) return@run map[key]
             }
             if (loadState == 0) {

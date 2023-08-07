@@ -122,6 +122,25 @@ data object MouseExited : Event
  */
 data object MouseMoved : Event
 
+/**
+ * Acceptable by component, this is dispatched when a component is [disabled][cc.polyfrost.polyui.component.Component.disabled].
+ *
+ * Commonly, in this state a component cannot be interacted with and is grayed out.
+ * @since 0.21.4
+ * @see cc.polyfrost.polyui.color.Colors.Palette.disabled
+ * @see Enabled
+ */
+data object Disabled : Event
+
+/**
+ * Acceptable by component, this is dispatched when a component is [enabled][cc.polyfrost.polyui.component.Component.disabled].
+ *
+ * @since 0.21.4
+ * @see cc.polyfrost.polyui.color.Colors.Palette.disabled
+ * @see Disabled
+ */
+data object Enabled : Event
+
 /** Dispatched when the mouse is scrolled on this component/layout.
  *
  * acceptable by component and layout */

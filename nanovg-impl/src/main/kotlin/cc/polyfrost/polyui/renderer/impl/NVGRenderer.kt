@@ -124,7 +124,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         bottomRightRadius: Float
     ) {
         val img = getImage(image)
-        nvgImagePattern(vg, x, y, width, height, 0F, img.id, 1F, nvgPaint)
+        nvgImagePattern(vg, x, y, width, height, 0f, img.id, 1f, nvgPaint)
         if (colorMask != 0) {
             nvgRGBA(
                 (colorMask shr 16 and 0xFF).toByte(),
@@ -151,7 +151,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     }
 
     fun drawImage(img: Int, x: Float, y: Float, width: Float, height: Float, colorMask: Int = 0) {
-        nvgImagePattern(vg, x, y, width, height, 0F, img, 1F, nvgPaint)
+        nvgImagePattern(vg, x, y, width, height, 0f, img, 1f, nvgPaint)
         if (colorMask != 0) {
             nvgRGBA(
                 (colorMask shr 16 and 0xFF).toByte(),
@@ -206,7 +206,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         nvgEndFrame(vg)
         nvgluBindFramebuffer(vg, fbos[fbo] ?: throw NullPointerException("Cannot bind: $fbo does not exist!"))
         glViewport(0, 0, fbo.width.toInt(), fbo.height.toInt())
-        glClearColor(0F, 0F, 0F, 0F)
+        glClearColor(0f, 0f, 0f, 0f)
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
         nvgBeginFrame(vg, fbo.width, fbo.height, pixelRatio)
     }
@@ -332,7 +332,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         nvgFontFaceId(vg, getFont(font).id)
         nvgTextAlign(vg, textAlign(textAlign))
         nvgFontSize(vg, fontSize)
-        nvgTextBounds(vg, 0F, 0F, text, out)
+        nvgTextBounds(vg, 0f, 0f, text, out)
         return Vec2(out[2].px, out[3].px)
     }
 
@@ -525,19 +525,19 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
                 PolyImage.Type.SVG -> {
                     val d = InputStreamReader(stream).readText() as CharSequence
                     val svg =
-                        NanoSVG.nsvgParse(d, "px", 96F) ?: throw Exception("Failed to open SVG: $image (invalid data?)")
+                        NanoSVG.nsvgParse(d, "px", 96f) ?: throw Exception("Failed to open SVG: $image (invalid data?)")
                     val raster = NanoSVG.nsvgCreateRasterizer()
                     val scale = if (image.width != -1f || image.height != -1f) {
                         max(image.width / svg.width(), image.height / svg.height())
                     } else {
-                        1F
+                        1f
                     }
                     image.width = (svg.width() * scale).toInt().toFloat()
                     image.height = (svg.height() * scale).toInt().toFloat()
                     data = MemoryUtil.memAlloc(image.width.toInt() * image.height.toInt() * 4)
                     NanoSVG.nsvgRasterize(
                         raster, svg,
-                        0F, 0F,
+                        0f, 0f,
                         scale, data,
                         image.width.toInt(), image.height.toInt(),
                         image.width.toInt() * 4

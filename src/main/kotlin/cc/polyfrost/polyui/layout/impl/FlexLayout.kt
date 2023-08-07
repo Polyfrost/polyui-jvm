@@ -203,7 +203,7 @@ class FlexLayout @JvmOverloads constructor(
     override fun calculateBounds() {
         if (initStage == INIT_NOT_STARTED) throw IllegalStateException("${this.simpleName} has not been setup, but calculateBounds() was called!")
         doDynamicSize()
-        var mainAxis = 0F
+        var mainAxis = 0f
         val rows = arrayListOf<FlexRow>()
 
         if (wrapDirection != Wrap.NoWrap) {
@@ -212,7 +212,7 @@ class FlexLayout @JvmOverloads constructor(
                 mainAxis += getMainSize(it) + mainGap
                 if (getFlex(it).endRowAfter || mainAxis + getMainSize(flexDrawables.getOrNull(i + 1)) >= mainSize) { // means we need to wrap
                     rows.add(FlexRow(row))
-                    mainAxis = 0F
+                    mainAxis = 0f
                     row = arrayListOf()
                 }
                 row.add(it)
@@ -232,7 +232,7 @@ class FlexLayout @JvmOverloads constructor(
             rows.add(FlexRow(flexDrawables))
         }
 
-        var maxCrossSizeNoGaps = 0F
+        var maxCrossSizeNoGaps = 0f
         var minIndex = 0
         var err = false
         run {
@@ -263,7 +263,7 @@ class FlexLayout @JvmOverloads constructor(
             }
         }
         crossSize = maxCrossSizeNoGaps + (rows.size - 1) * crossGap
-        var cross = 0F
+        var cross = 0f
 
         // justify, with the largest row first.
         (rows.sortedByDescending { it.rowMainSizeWithGaps }).fastEach {
@@ -382,7 +382,7 @@ class FlexLayout @JvmOverloads constructor(
     }
 
     fun isMainSized(drawable: Drawable): Boolean {
-        return if (getMainSize(drawable) != 0F) {
+        return if (getMainSize(drawable) != 0f) {
             true
         } else {
             if (wrapDirection != Wrap.NoWrap) {
@@ -407,13 +407,13 @@ class FlexLayout @JvmOverloads constructor(
         val rowMainSizeWithGaps: Float
 
         init {
-            var main = 0F
+            var main = 0f
             drawables.fastEach { main += getMainSize(it) }
             this.rowMainSize = main
             this.rowMainSizeWithGaps = main + (drawables.size - 1) * mainGap
             resizeMainIfCan()
 
-            var cross = 0F
+            var cross = 0f
             drawables.fastEach { cross = max(cross, getCrossSize(it)) }
             this.maxCrossSize = cross
         }
@@ -487,7 +487,7 @@ class FlexLayout @JvmOverloads constructor(
             trySetMainSize(rowMainSizeWithGaps)
             when (contentJustify) {
                 JustifyContent.Start -> {
-                    var pos = 0F
+                    var pos = 0f
                     drawables.fastEach {
                         setMainPos(it, pos)
                         pos += getMainSize(it) + mainGap

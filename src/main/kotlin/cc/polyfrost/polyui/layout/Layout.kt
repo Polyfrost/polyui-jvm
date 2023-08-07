@@ -86,14 +86,14 @@ abstract class Layout(
 
     /** list of components in this layout. */
     val components = drawables.filterIsInstance<Component>() as ArrayList
-        get() = if (enabled) field else EMPTY_CMPLIST
+        get() = if (exists) field else EMPTY_CMPLIST
 
     /** list of child layouts in this layout */
     val children = drawables.filterIsInstance<Layout>() as ArrayList
-        get() = if (enabled) field else EMPTY_CHLDLIST
+        get() = if (exists) field else EMPTY_CHLDLIST
 
     override var acceptsInput: Boolean
-        get() = enabled && super.acceptsInput
+        get() = exists && super.acceptsInput
         set(value) {
             super.acceptsInput = value
         }
@@ -165,7 +165,7 @@ abstract class Layout(
      *
      * @since 0.19.0
      */
-    var enabled = true
+    var exists = true
 
     /**
      * Flag that is true if the layout can be dragged around.
@@ -214,10 +214,10 @@ abstract class Layout(
      */
     open fun reRenderIfNecessary() {
         if (initStage != INIT_COMPLETE) throw IllegalStateException("${this.simpleName} was attempted to be rendered before it was fully initialized (stage $initStage)")
-        if (!enabled) return
+        if (!exists) return
+        if (!renders) return
         rasterChildren()
-        rasterize()
-        if (fbo != null && fboTracker < 2) {
+        if (rasterize()) {
             renderer.drawFramebuffer(fbo!!, x, y)
         } else {
             val x = x
@@ -237,16 +237,22 @@ abstract class Layout(
 
     /**
      * This function will rasterize the layout to its framebuffer, if it has one.
+     *
+     * @return `true` if this framebuffer drawing is enabled (`fbo != null && fboTracker < 2`), `false` otherwise.
      * @since 0.18.0
      */
-    protected open fun rasterize() {
-        if (fbo != null && needsRedraw && fboTracker < 2) {
-            fboTracker++
-            renderer.bindFramebuffer(fbo)
-            render()
-            renderChildren()
-            renderer.unbindFramebuffer(fbo)
+    protected open fun rasterize(): Boolean {
+        if (fbo != null && fboTracker < 2) {
+            if (needsRedraw) {
+                fboTracker++
+                renderer.bindFramebuffer(fbo)
+                render()
+                renderChildren()
+                renderer.unbindFramebuffer(fbo)
+            }
+            return true
         }
+        return false
     }
 
     /**
@@ -490,6 +496,7 @@ abstract class Layout(
             initStage = INIT_COMPLETE
             onInitComplete()
         }
+        clipDrawables()
     }
 
     override fun onInitComplete() {
@@ -499,14 +506,16 @@ abstract class Layout(
         initCompleteHooks.trimToSize()
         components.fastEach { it.onParentInitComplete() }
         children.fastEach { it.onParentInitComplete() }
+        ox = trueX
+        oy = trueY
     }
 
     override fun rescale(scaleX: Float, scaleY: Float) {
         super.rescale(scaleX, scaleY)
         // asm: enable temporarily so the children and component fields actually exist
-        val wasEnabled = enabled
+        val wasEnabled = exists
         if (!wasEnabled) {
-            enabled = true
+            exists = true
         }
         if (rawResize) {
             ox *= scaleX
@@ -525,7 +534,8 @@ abstract class Layout(
             children.fastEach { it.rescale(1f, 1f) }
             components.fastEach { it.rescale(1f, 1f) }
         }
-        enabled = wasEnabled
+        clipDrawables()
+        exists = wasEnabled
     }
 
     /** render this layout's components, and remove them if they are ready to be removed. */
@@ -542,6 +552,7 @@ abstract class Layout(
         needsRedraw = false
         preRender(delta)
         components.fastEach {
+            if (!it.renders) return@fastEach
             it.preRender(delta)
             it.render()
             it.postRender()
@@ -571,7 +582,7 @@ abstract class Layout(
     }
 
     override fun debugRender() {
-        if (!enabled) return
+        if (!exists) return
         val width = visibleSize?.width ?: this.width
         val height = visibleSize?.height ?: this.height
         renderer.hollowRect(trueX, trueY, width, height, colors.page.border20, 2f)
@@ -595,6 +606,23 @@ abstract class Layout(
         initStage = INIT_SETUP
     }
 
+    /**
+     * This function will enable/disable rendering of drawables inside this layout based on their position and size.
+     *
+     * If they lie outside the bounds of this layout, they will not be drawn to save resources.
+     * @since 0.21.4
+     */
+    open fun clipDrawables() {
+        val s = visibleSize ?: size ?: return
+        children.fastEach {
+            it.clipDrawables()
+            it.renders = it.intersects(ox, oy, s.width, s.height)
+        }
+        components.fastEach {
+            it.renders = it.intersects(ox, oy, s.width, s.height)
+        }
+    }
+
     override fun isInside(x: Float, y: Float): Boolean {
         return if (visibleSize != null) {
             val s = visibleSize!!
@@ -606,13 +634,35 @@ abstract class Layout(
         }
     }
 
+    override fun isInside(x: Float, y: Float, width: Float, height: Float): Boolean {
+        return if (visibleSize != null) {
+            val s = visibleSize!!
+            val tx = ox
+            val ty = oy
+            tx in x..x + width && ty in y..y + height && tx + s.width in x..x + width && ty + s.height in y..y + height
+        } else {
+            super.isInside(x, y, width, height)
+        }
+    }
+
+    override fun intersects(x: Float, y: Float, width: Float, height: Float): Boolean {
+        return if (visibleSize != null) {
+            val s = visibleSize!!
+            val tx = ox
+            val ty = oy
+            return (x < tx + s.width && tx < x + width) && (y < ty + s.height && ty < y + height)
+        } else {
+            super.intersects(x, y, width, height)
+        }
+    }
+
     /** @see onColorsChanged */
     fun changeColors(colors: Colors) = onColorsChanged(colors)
 
     override fun onColorsChanged(colors: Colors) {
-        val wasEnabled = enabled
+        val wasEnabled = exists
         if (!wasEnabled) {
-            enabled = true
+            exists = true
         }
         this.colors = colors
         for ((_, p) in propertyManager.properties) {
@@ -620,7 +670,7 @@ abstract class Layout(
         }
         components.fastEach { it.onColorsChanged(colors) }
         children.fastEach { it.onColorsChanged(colors) }
-        enabled = wasEnabled
+        exists = wasEnabled
     }
 
     final override fun reset() {
@@ -728,6 +778,7 @@ abstract class Layout(
                         x = ofsX + anim.value
                         needsRedraw = true
                     }
+                    clipDrawables()
                     polyUI.eventManager.recalculateMousePos()
                 }
                 if (anim1?.isFinished == true) {
@@ -737,6 +788,7 @@ abstract class Layout(
                         y = ofsY + anim1.value
                         needsRedraw = true
                     }
+                    clipDrawables()
                     polyUI.eventManager.recalculateMousePos()
                 }
             }
@@ -746,8 +798,6 @@ abstract class Layout(
             }
         })
         val f: Layout.() -> kotlin.Unit = {
-            ox = trueX
-            oy = trueY
             ofsX = x
             ofsY = y
             if (withScrollbars) {
