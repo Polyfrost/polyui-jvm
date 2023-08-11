@@ -14,6 +14,7 @@ dependencies {
 }
 
 tasks.jar {
+    dependsOn(":jar")
     manifest {
         attributes["Main-Class"] = "cc.polyfrost.polyui.TestKt"
     }

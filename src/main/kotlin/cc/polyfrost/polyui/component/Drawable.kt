@@ -221,9 +221,9 @@ abstract class Drawable(
         renderer.push()
         operations.fastRemoveIf { (it, func) ->
             it.update(deltaTimeNanos)
+            it.apply(renderer)
             return@fastRemoveIf if (!it.isFinished) {
-                layout?.needsRedraw = true
-                it.apply(renderer)
+                if (it !is DrawableOp.Persistent) layout?.needsRedraw = true
                 false
             } else {
                 if (it is DrawableOp.Rotate) {
@@ -317,15 +317,17 @@ abstract class Drawable(
     }
 
     @OverloadResolutionByLambdaReturnType
-    protected fun addEventHandler(event: Event, handler: (Drawable.(Event) -> Boolean)) {
-        eventHandlers[event] = handler
+    @Suppress("UNCHECKED_CAST")
+    protected fun <E : Event> addEventHandler(event: E, handler: (Drawable.(E) -> Boolean)) {
+        eventHandlers[event] = handler as Drawable.(Event) -> Boolean
     }
 
     @JvmName("addEventhandler")
+    @Suppress("UNCHECKED_CAST")
     @OverloadResolutionByLambdaReturnType
-    protected fun addEventHandler(event: Event, handler: Drawable.(Event) -> kotlin.Unit) {
+    protected fun <E : Event> addEventHandler(event: E, handler: Drawable.(E) -> kotlin.Unit) {
         eventHandlers[event] = {
-            handler(this, it)
+            handler(this, it as E)
             true
         }
     }
@@ -468,7 +470,11 @@ abstract class Drawable(
 
     /** Add a [DrawableOp] to this drawable. */
     open fun addOperation(drawableOp: DrawableOp, onFinish: (Drawable.() -> kotlin.Unit)? = null) {
-        layout?.needsRedraw = true
+        if (this is Layout) {
+            needsRedraw = true
+        } else {
+            layout?.needsRedraw = true
+        }
         operations.add(drawableOp to onFinish)
     }
 

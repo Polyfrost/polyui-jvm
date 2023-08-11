@@ -155,6 +155,10 @@ allprojects {
     }
 }
 
+//apiValidation {
+//    ignoredProjects.addAll(rootProject.subprojects.map { it.name })
+//}
+
 subprojects {
     dependencies {
         api(project.rootProject)

@@ -45,15 +45,16 @@ import org.lwjgl.stb.STBImageResize
 import org.lwjgl.system.MemoryUtil
 import java.io.InputStreamReader
 import java.nio.ByteBuffer
+import java.util.IdentityHashMap
 import kotlin.math.max
 
 class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     private val nvgPaint: NVGPaint = NVGPaint.malloc()
     private val nvgColor: NVGColor = NVGColor.malloc()
     private val nvgColor2: NVGColor = NVGColor.malloc()
-    private val fbos = HashMap<Framebuffer, NVGLUFramebuffer>()
-    private val images = HashMap<PolyImage, NVGImage>()
-    private val fonts = HashMap<Font, NVGFont>()
+    private val fbos = IdentityHashMap<Framebuffer, NVGLUFramebuffer>()
+    private val images = IdentityHashMap<PolyImage, NVGImage>()
+    private val fonts = IdentityHashMap<Font, NVGFont>()
     private var vg: Long = -1
 
     override fun init() {

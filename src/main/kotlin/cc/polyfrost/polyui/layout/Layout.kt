@@ -193,13 +193,13 @@ abstract class Layout(
     init {
         if (onAdded != null) {
             addEventHandler(Added) {
-                onAdded.invoke(this, it as Added)
+                onAdded.invoke(this, it)
                 true
             }
         }
         if (onRemoved != null) {
             addEventHandler(Removed) {
-                onRemoved.invoke(this, it as Removed)
+                onRemoved.invoke(this, it)
                 true
             }
         }
@@ -715,6 +715,8 @@ abstract class Layout(
         val anims = MutablePair<Animation?, Animation?>(null, null)
         var ofsX = ox
         var ofsY = oy
+        var oox = ox
+        var ooy = oy
         this.visibleSize = size
         var horizontalBar: Scrollbar? = null
         var verticalBar: Scrollbar? = null
@@ -730,8 +732,8 @@ abstract class Layout(
             }
         }
 
-        addEventHandler(MouseScrolled()) { event ->
-            event as MouseScrolled // this is annoying...
+        addEventHandler(MouseScrolled()) { event: MouseScrolled ->
+            if (!canBeRemoved()) return@addEventHandler false // disable scrolling when moving
             if ((visibleSize!!.width < width) && event.amountX != 0) {
                 val anim = anims.first
                 val rem = anim?.to?.minus(anim.value)?.also {
@@ -766,6 +768,13 @@ abstract class Layout(
         }
         addOperation(object : DrawableOp.Persistent(this) {
             override fun apply(renderer: Renderer) {
+                if (ox != oox || oy != ooy) {
+                    // external change watcher
+                    oox = ox
+                    ooy = oy
+                    ox = trueX
+                    oy = trueY
+                }
                 renderer.pushScissor(ox - trueX, oy - trueY, size.width, size.height)
                 val delta = polyUI.delta
                 verticalBar?.tryHide(delta)
@@ -798,8 +807,10 @@ abstract class Layout(
             }
         })
         val f: Layout.() -> kotlin.Unit = {
-            ofsX = x
-            ofsY = y
+            ofsX = ox
+            ofsY = oy
+            oox = ox
+            ooy = oy
             if (withScrollbars) {
                 polyUI.every(0L) {
                     val d = polyUI.delta

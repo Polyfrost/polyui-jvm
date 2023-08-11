@@ -43,7 +43,6 @@ import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.utils.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
  * # PolyUI
@@ -84,11 +83,14 @@ import java.util.concurrent.ConcurrentLinkedQueue
 class PolyUI @JvmOverloads constructor(
     translationDirectory: String? = null,
     val renderer: Renderer,
+    settings: Settings? = null,
     colors: Colors = DarkTheme(),
     vararg drawables: Drawable
 ) {
-    val settings = Settings(this)
+    val settings = settings ?: Settings()
     init {
+        this.settings.polyUI = this
+        require(renderer.width > 0f && renderer.height > 0f) { "width/height must be greater than 0 (${renderer.width}x${renderer.height})" }
         renderer.polyUI = this
         renderer.init()
     }
@@ -138,14 +140,14 @@ class PolyUI @JvmOverloads constructor(
     /**
      * This is the root layout of the UI. It is the parent of all other layouts.
      */
-    val master = PixelLayout(Point(0.px, 0.px), Size(renderer.width.px, renderer.height.px), drawables = drawables, rawResize = true, acceptInput = false)
+    val master = PixelLayout(origin, Size(renderer.width.px, renderer.height.px), drawables = drawables, rawResize = true, acceptInput = false)
     val eventManager = EventManager(this)
     val keyBinder = KeyBinder(this)
     val translator = PolyTranslator(this, translationDirectory ?: "")
 
     /** weather this PolyUI instance drew on this frame.
      *
-     * You can use this value to implement a 'frame skipping' function, if you are using a dual-buffered rendering implementation (like OpenGL/GLFW):
+     * You can use this value to implement a 'render pausing' function, if you are using a dual-buffered rendering implementation (like OpenGL/GLFW) **by enabling [this flag][Settings.renderPausingEnabled]**:
      *
      * `if (polyUI.drew) glfwSwapBuffers(handle)`
      *
@@ -181,7 +183,7 @@ class PolyUI @JvmOverloads constructor(
             renderer.height = value
         }
         inline get() = renderer.height
-    private var hooks = ConcurrentLinkedQueue<Renderer.() -> kotlin.Unit>()
+    private var hooks = ArrayList<Renderer.() -> Boolean>()
 
     /**
      * the time since the last frame, in nanoseconds. It is used internally a lot for animations, etc.
@@ -212,6 +214,8 @@ class PolyUI @JvmOverloads constructor(
         master.setup(renderer, this)
         master.simpleName += " [Master]"
         master.calculateBounds()
+        @Suppress("NAME_SHADOWING")
+        val settings = this.settings
         if (settings.framebuffersEnabled && settings.masterIsFramebuffer) {
             if (settings.debug) LOGGER.info("Master is using framebuffer")
             master.fbo = renderer.createFramebuffer(width, height)
@@ -372,10 +376,7 @@ class PolyUI @JvmOverloads constructor(
             renderer.beginFrame()
             master.reRenderIfNecessary()
 
-            var s: (Renderer.() -> kotlin.Unit)?
-            while (hooks.poll().also { s = it } != null) {
-                s!!(renderer)
-            }
+            hooks.fastRemoveIf { it(renderer) }
 
             // telemetry
             if (settings.debug) {
@@ -390,6 +391,7 @@ class PolyUI @JvmOverloads constructor(
 
             renderer.endFrame()
             drew = true
+            if (!settings.renderPausingEnabled) master.needsRedraw = true
         } else {
             drew = false
         }
@@ -412,9 +414,11 @@ class PolyUI @JvmOverloads constructor(
 
     /**
      * add a function to be executed on the main thread, after rendering the UI. a renderer is provided if you want to do any rendering.
+     *
+     * @return `true` at any time to remove the hook.
      * @since 0.18.5
      */
-    fun addHook(func: Renderer.() -> kotlin.Unit) {
+    fun addHook(func: Renderer.() -> Boolean) {
         hooks.add(func)
     }
 

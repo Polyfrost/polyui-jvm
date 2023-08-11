@@ -24,6 +24,7 @@ package cc.polyfrost.polyui.component
 import cc.polyfrost.polyui.animate.Animation
 import cc.polyfrost.polyui.animate.Animations
 import cc.polyfrost.polyui.component.DrawableOp.*
+import cc.polyfrost.polyui.layout.Layout
 import cc.polyfrost.polyui.renderer.Renderer
 import cc.polyfrost.polyui.unit.Unit
 import cc.polyfrost.polyui.unit.Vec2
@@ -65,27 +66,26 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
      */
     class Move(
         to: Vec2<Unit>,
-        private val add: Boolean = true,
+        add: Boolean = true,
         drawable: Drawable,
         type: Animations? = null,
         durationNanos: Long = 1L.seconds
     ) : DrawableOp(drawable) {
         override val animation = type?.create(durationNanos, 0f, 1f)
-        private val targetx = if (add) to.a.px - drawable.x else to.a.px
-        private val targety = if (add) to.b.px - drawable.y else to.b.px
+        private val origin = drawable.at.clone()
+        private val to = if (add) to else to - origin
 
         override fun apply(renderer: Renderer) {
             if (animation != null) {
-                if (add) {
-                    drawable.x += animation.value * targetx
-                    drawable.y += animation.value * targety
-                } else {
-                    drawable.x = animation.value * targetx
-                    drawable.y = animation.value * targety
-                }
+                drawable.x = origin.x + (to.x * animation.value)
+                drawable.y = origin.y + (to.y * animation.value)
             } else {
-                drawable.x = targetx
-                drawable.y = targety
+                drawable.x = origin.x + to.x
+                drawable.y = origin.y + to.y
+            }
+            if (drawable is Layout) {
+                drawable.ox = drawable.x
+                drawable.oy = drawable.y
             }
         }
     }

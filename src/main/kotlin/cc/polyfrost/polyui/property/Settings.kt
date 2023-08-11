@@ -28,7 +28,8 @@ import cc.polyfrost.polyui.unit.milliseconds
  *
  * This contains many values that concern the rendering and event handling of PolyUI internally.
  * */
-class Settings(private val polyUI: PolyUI) {
+class Settings {
+    internal lateinit var polyUI: PolyUI
 
     /** this enables the debug renderer and various other debug features, including more verbose checks and logging.
      *
@@ -88,6 +89,14 @@ class Settings(private val polyUI: PolyUI) {
      * @since 0.18.0
      */
     var framebuffersEnabled = true
+
+    /**
+     * This optimization enables "render pausing", or allowing the renderer to pause rendering when there are no changes to the UI.
+     *
+     * This requires a setup such as `if (`[polyUI.drew][PolyUI.drew]`) glfwSwapBuffers(handle)` in your main loop.
+     * @since 0.12.0
+     */
+    var renderPausingEnabled = true
 
     /** the time between clicks for them to be considered as a combo.
      * @see maxComboSize

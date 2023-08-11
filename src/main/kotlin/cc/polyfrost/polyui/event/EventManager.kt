@@ -31,8 +31,8 @@ import cc.polyfrost.polyui.utils.fastEachReversed
 import cc.polyfrost.polyui.utils.fastRemoveIf
 import org.jetbrains.annotations.ApiStatus
 import kotlin.experimental.and
+import kotlin.experimental.inv
 import kotlin.experimental.or
-import kotlin.experimental.xor
 
 /**
  * # EventManager
@@ -125,7 +125,7 @@ class EventManager(private val polyUI: PolyUI) {
      * @see KeyModifiers
      */
     fun removeModifier(modifier: Short) {
-        keyModifiers = keyModifiers xor modifier
+        keyModifiers = keyModifiers and modifier.inv()
     }
 
     /**

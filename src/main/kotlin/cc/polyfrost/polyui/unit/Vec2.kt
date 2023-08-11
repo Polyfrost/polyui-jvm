@@ -21,6 +21,8 @@
 
 package cc.polyfrost.polyui.unit
 
+import kotlin.math.abs
+
 /**
  * Class to represent a 2D vector of the given unit.
  *
@@ -60,15 +62,77 @@ data class Vec2<T : Unit>(
     }
 
     operator fun plus(value: Vec2<T>): Vec2<T> {
-        this.a.px + value.a.px
-        this.b.px + value.b.px
-        return this
+        val out = clone()
+        out.a.px += value.a.px
+        out.b.px += value.b.px
+        return out
     }
 
     operator fun minus(value: Vec2<T>): Vec2<T> {
-        this.a.px - value.a.px
-        this.b.px - value.b.px
-        return this
+        val out = clone()
+        out.a.px -= value.a.px
+        out.b.px -= value.b.px
+        return out
+    }
+
+    operator fun times(value: Vec2<T>): Vec2<T> {
+        val out = clone()
+        out.a.px *= value.a.px
+        out.b.px *= value.b.px
+        return out
+    }
+
+    operator fun timesAssign(value: Vec2<T>) {
+        this.a.px *= value.a.px
+        this.b.px *= value.b.px
+    }
+
+    operator fun div(value: Vec2<T>): Vec2<T> {
+        val out = clone()
+        out.a.px /= value.a.px
+        out.b.px /= value.b.px
+        return out
+    }
+
+    operator fun divAssign(value: Vec2<T>) {
+        this.a.px /= value.a.px
+        this.b.px /= value.b.px
+    }
+
+    operator fun rem(value: Vec2<T>): Vec2<T> {
+        val out = clone()
+        out.a.px %= value.a.px
+        out.b.px %= value.b.px
+        return out
+    }
+
+    operator fun remAssign(value: Vec2<T>) {
+        this.a.px %= value.a.px
+        this.b.px %= value.b.px
+    }
+
+    operator fun unaryMinus(): Vec2<T> {
+        val out = clone()
+        out.a.px = -out.a.px
+        out.b.px = -out.b.px
+        return out
+    }
+
+    operator fun unaryPlus(): Vec2<T> {
+        val out = clone()
+        out.a.px = abs(out.a.px)
+        out.b.px = abs(out.b.px)
+        return out
+    }
+
+    operator fun plusAssign(value: Vec2<T>) {
+        this.a.px += value.a.px
+        this.b.px += value.b.px
+    }
+
+    operator fun minusAssign(value: Vec2<T>) {
+        this.a.px -= value.a.px
+        this.b.px -= value.b.px
     }
 
     operator fun compareTo(value: Vec2<T>): Int {
@@ -79,12 +143,6 @@ data class Vec2<T : Unit>(
             this.b.px < value.b.px -> -1
             else -> 0
         }
-    }
-
-    fun move(x: Float, y: Float): Vec2<T> {
-        this.a.px += x
-        this.b.px += y
-        return this
     }
 
     fun scale(scaleX: Float, scaleY: Float) {
