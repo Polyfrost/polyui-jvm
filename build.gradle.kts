@@ -27,7 +27,7 @@ buildscript {
     }
 }
 
-group = "cc.polyfrost"
+group = "org.polyfrost"
 version = project.findProperty("version") as String
 val targetKotlinVersion = project.findProperty("kotlin.target") as String? ?: "1.8"
 val jvmToolchainVersion = (project.findProperty("jvm.toolchain") as String? ?: "8").toInt()
