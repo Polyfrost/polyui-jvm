@@ -16,7 +16,7 @@ dependencies {
 tasks.jar {
     dependsOn(":jar")
     manifest {
-        attributes["Main-Class"] = "cc.polyfrost.polyui.TestKt"
+        attributes["Main-Class"] = "org.polyfrost.polyui.TestKt"
     }
     from(sourceSets.test.get().output)
     from(sourceSets.main.get().output)

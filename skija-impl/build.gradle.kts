@@ -2,9 +2,6 @@ plugins {
     id("java")
 }
 
-group = "cc.polyfrost"
-version = "0.19.3"
-
 repositories {
     mavenCentral()
     maven("https://packages.jetbrains.team/maven/p/skija/maven")
