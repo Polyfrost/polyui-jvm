@@ -36,7 +36,7 @@ import kotlin.math.max
  * A button, that supports two images and a text object.
  * @param properties The properties of the button (inherits from [Block]). There are various padding properties here you may want to tweak.
  * @param maxHeight the maximum height for this icon. You can specify this if you want to have more control over the height of this component, as if it is `null` it is controlled by the largest image or text.
- * @param leftIcon The image to be displayed on the left side of the button
+ * @param left The image to be displayed on the left side of the button
  * @param text The text to be displayed in the button
  * @param fontSize The font size of the text
  *
@@ -45,99 +45,107 @@ import kotlin.math.max
 class Button(
     properties: ButtonProperties? = null,
     at: Vec2<Unit>,
-    private var maxHeight: Unit? = null,
-    leftIcon: PolyImage? = null,
+    size: Size<Unit>? = null,
+    left: PolyImage? = null,
     text: PolyText? = null,
     fontSize: Unit.Pixel = 12.px,
-    rightIcon: PolyImage? = null,
+    right: PolyImage? = null,
     acceptsInput: Boolean = true,
     vararg events: Event.Handler
 ) : ContainingComponent(properties, at, null, false, acceptsInput, arrayOf(), *events) {
+    private val fixedSize = size
     override val properties get() = super.properties as ButtonProperties
-    val leftImage: Image? = if (leftIcon != null) Image(image = leftIcon, at = origin, acceptInput = false) else null
-    val rightImage: Image? = if (rightIcon != null) Image(image = rightIcon, at = origin, acceptInput = false) else null
+    val leftImage: Image? = if (left != null) Image(image = left, at = origin, acceptInput = false) else null
+    val rightImage: Image? = if (right != null) Image(image = right, at = origin, acceptInput = false) else null
     val text: Text? =
         if (text != null) Text(initialText = text, fontSize = fontSize, at = origin, acceptInput = false) else null
 
     init {
         if (text == null) {
-            if (leftIcon != null && rightIcon != null) {
+            if (left != null && right != null) {
                 throw IllegalArgumentException("${this.simpleName} cannot have both left and right icons and no text!")
-            } else if (leftIcon == null && rightIcon == null) throw IllegalArgumentException("${this.simpleName} cannot have no text or icons!")
+            } else if (left == null && right == null) throw IllegalArgumentException("${this.simpleName} cannot have no text or icons!")
         }
         addComponents(leftImage, rightImage, this.text)
     }
 
+    override fun recolorRecolorsAll() = properties.recolorsAll
+
     override fun render() {
-        if (properties.outlineThickness != 0f) {
-            renderer.hollowRect(x, y, width, height, color, properties.outlineThickness, properties.cornerRadii)
+        if (properties.hasBackground) {
+            if (properties.outlineThickness != 0f) {
+                renderer.hollowRect(x, y, width, height, color, properties.outlineThickness, properties.cornerRadii)
+            }
+            renderer.rect(x, y, width, height, color, properties.cornerRadii)
         }
-        renderer.rect(x, y, width, height, color, properties.cornerRadii)
         super.render()
     }
 
     override fun calculateSize(): Size<Unit> {
-        (maxHeight as? Unit.Dynamic)?.set(layout.size?.b ?: throw IllegalArgumentException("${this.simpleName} cannot use maxHeight as dynamic unit when it has no parent layout!"))
+        if (fixedSize?.dynamic == true) doDynamicSize(fixedSize)
         text?.size = text?.calculateSize()
         leftImage?.size = leftImage?.calculateSize()
         rightImage?.size = rightImage?.calculateSize()
 
-        if (maxHeight != null) {
-            maxHeight!!.px -= properties.topEdgePadding * 2f
+        leftImage?.x = x + properties.lateralPadding
+        return if (fixedSize != null) {
+            imageFixedSize(leftImage)
+            imageFixedSize(rightImage)
+            rightImage?.x = x + width - properties.lateralPadding - rightImage!!.width
+            if (properties.center) {
+                text?.x = x + width / 2f - text!!.width / 2f
+            } else {
+                text?.x = (if (leftImage != null) leftImage.x + leftImage.width else 0f) + properties.iconTextSpacing
+            }
+            text?.y = y + fixedSize.height / 2f - text!!.height / 2f
+            fixedSize
         } else {
-            maxHeight = getLargestComponent(text, leftImage, rightImage).also {
+            var height = getTallestComponent(text, leftImage, rightImage)
+            if (text != null && text.height != height) {
+                text.height = height
+                text.str.fontSize = height
+            }
+            var width = properties.lateralPadding
+            if (leftImage != null) {
+                leftImage.y = if (properties.center) y + height / 2f - leftImage.height / 2f else y + properties.verticalPadding
+                leftImage.x = x + width
+                width += leftImage.width
                 if (text != null) {
-                    if (text.height != it) {
-                        text.height = it
-                        text.str.fontSize = it
-                    }
+                    width += properties.iconTextSpacing
                 }
-            }.px
+            }
+            text?.x = x + width
+            width += text?.width ?: 0f
+            if (rightImage != null) {
+                rightImage.y = if (properties.center) y + height / 2f - rightImage.height / 2f else y + properties.verticalPadding
+                rightImage.x = x + width + properties.iconTextSpacing
+                width += rightImage.width
+            }
+            width += properties.lateralPadding
+            height += properties.verticalPadding * 2f
+            text?.y = y + height / 2f - text!!.height / 2f
+            return width.px * height.px
         }
-        img(leftImage)
-        img(rightImage)
-        var contentWidth: Float = properties.edgePadding * 2f
-        contentWidth += leftImage?.size?.a?.px ?: 0f
-        contentWidth += text?.size?.a?.px ?: 0f
-        contentWidth += rightImage?.size?.a?.px ?: 0f
-        if (text != null) {
-            if (leftImage != null) contentWidth += properties.iconTextSpacing
-            if (rightImage != null) contentWidth += properties.iconTextSpacing
-        }
-        rightImage?.at?.a?.px = x - properties.edgePadding + contentWidth - rightImage!!.width
-        return Size(contentWidth.px, (maxHeight!!.px + properties.topEdgePadding * 2f).px)
     }
 
     override fun placeChildren() {
-        super.placeChildren()
-        if (leftImage != null) {
-            leftImage.x += properties.edgePadding
-            leftImage.y += properties.topEdgePadding
-            if (text != null) text.x += leftImage.width + properties.iconTextSpacing
-        }
-        if (rightImage != null) {
-            rightImage.y += properties.topEdgePadding
-        }
-        if (text != null) {
-            text.x += properties.edgePadding
-            text.y += height / 2f - text.height / 2f
-        }
     }
 
-    private fun getLargestComponent(vararg cs: Component?): Float {
+    private fun getTallestComponent(vararg cs: Component?): Float {
         var largest = 0f
         cs.forEach { if (it == null) return@forEach else largest = max(largest, it.height) }
         return largest
     }
 
-    /**
-     * do size, and y position of this image
-     */
-    private fun img(icon: Image?) {
-        if (icon == null) return
-        val ratio = icon.height / (maxHeight?.px ?: return)
-        if (ratio != 1f) PolyUI.LOGGER.warn("${this.simpleName} icon heights are not the same! The icon has been resized, but it may look blurry or distorted!")
-        icon.height = maxHeight!!.px
-        icon.width /= ratio
+    private fun imageFixedSize(img: Image?) {
+        if (img == null) return
+        if (img.fixedSize) {
+            img.y = this.y + (fixedSize!!.height - img.height) / 2f
+        } else {
+            PolyUI.LOGGER.warn("Image in ${this.simpleName} is not fixed size inside fixed-size button, and will be scaled to fit the button.")
+            val ratio = img.height / fixedSize!!.height - properties.verticalPadding * 2f
+            img.rescale(ratio, ratio)
+            img.y = this.y + properties.verticalPadding
+        }
     }
 }

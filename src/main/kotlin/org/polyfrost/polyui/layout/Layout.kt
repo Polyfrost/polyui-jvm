@@ -225,7 +225,6 @@ abstract class Layout(
             renderer.pushScissor(x, y, width, height)
             renderer.translate(x, y)
             render()
-            renderChildren()
             renderer.translate(-x, -y)
             renderer.popScissor()
             if (!needsRedraw && fboTracker > 1) {
@@ -247,7 +246,6 @@ abstract class Layout(
                 fboTracker++
                 renderer.bindFramebuffer(fbo)
                 render()
-                renderChildren()
                 renderer.unbindFramebuffer(fbo)
             }
             return true
@@ -557,6 +555,7 @@ abstract class Layout(
             it.render()
             it.postRender()
         }
+        renderChildren()
         postRender()
     }
 

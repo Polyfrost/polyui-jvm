@@ -28,15 +28,33 @@ import org.polyfrost.polyui.utils.radii
  *
  * @since 0.17.3
  */
-class ButtonProperties : DefaultBlockProperties() {
+open class ButtonProperties : DefaultBlockProperties() {
     override val cornerRadii: FloatArray = 8f.radii()
 
     /** This is the padding from the top to the items. */
-    val topEdgePadding: Float = 10f
+    open val verticalPadding: Float = 8f
 
     /** padding between the icons and the text. */
-    val iconTextSpacing: Float = 10f
+    open val iconTextSpacing: Float = 16f
 
     /** padding from the left/right edges. */
-    val edgePadding: Float = 10f
+    open val lateralPadding: Float = 10f
+
+    /**
+     * Enable centering of the items on the button.
+     * @since 0.21.4
+     */
+    open val center = false
+
+    /**
+     * If true, the entire button will be recolored of hover/pressed.
+     * @since 0.21.4
+     * @see [org.polyfrost.polyui.component.ContainingComponent.recolorRecolorsAll]
+     */
+    open val recolorsAll = false
+
+    /**
+     * If true, the button will have a background.
+     */
+    open val hasBackground: Boolean = true
 }

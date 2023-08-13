@@ -96,7 +96,7 @@ class Settings {
      * This requires a setup such as `if (`[polyUI.drew][PolyUI.drew]`) glfwSwapBuffers(handle)` in your main loop.
      * @since 0.12.0
      */
-    var renderPausingEnabled = true
+    var renderPausingEnabled = false
 
     /** the time between clicks for them to be considered as a combo.
      * @see maxComboSize

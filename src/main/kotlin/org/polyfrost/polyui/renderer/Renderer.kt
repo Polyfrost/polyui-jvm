@@ -140,7 +140,9 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
     abstract fun skewY(angleRadians: Double)
 
     /**
-     * begin a scissor rectangle, that will clip rendering to the given rectangle. The scissor is affected by [translate], [scale], and [rotate].
+     * begin a scissor rectangle, that will clip rendering to the given rectangle.
+     *
+     * The scissor **is affected** by [translate], [scale], and [rotate], and is intersected with the previous scissor.
      *
      * **you must** call [popScissor] after you are done with this scissor!
      */
@@ -172,12 +174,6 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
      * @since 0.17.2
      */
     abstract fun pop()
-
-    /** @see push */
-    fun save() = push()
-
-    /** @see pop */
-    fun restore() = pop()
 
     /**
      * draw text to the screen, per the given parameters. The string will already be wrapped to the given width, and will be aligned according to the given [textAlign].

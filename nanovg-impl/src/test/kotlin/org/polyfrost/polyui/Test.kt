@@ -196,9 +196,9 @@ fun main() {
                     ),
                     Button(
                         at = 0.px * 160.px,
-                        leftIcon = PolyImage("/ta.png", 15f, 15f),
+                        left = PolyImage("/ta.png", 15f, 15f),
                         text = "polyui.button".localised(),
-                        rightIcon = PolyImage("/test.jpg", 15f, 15f),
+                        right = PolyImage("/test.jpg", 15f, 15f),
                         events = events(
                             MouseClicked(0) to {
                                 rotateBy(120.0, Animations.EaseInOutCubic)

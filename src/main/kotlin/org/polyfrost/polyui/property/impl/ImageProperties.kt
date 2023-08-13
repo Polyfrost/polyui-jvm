@@ -21,11 +21,8 @@
 
 package org.polyfrost.polyui.property.impl
 
-import org.polyfrost.polyui.color.Color
-import org.polyfrost.polyui.color.Colors
-
-open class ImageProperties : BlockProperties() {
-    override val palette: Colors.Palette = Color.TRANSPARENT_PALETTE
+open class ImageProperties(hasStates: Boolean = false) : DefaultBlockProperties() {
+    override val palette get() = colors.text.primary
 
     /**
      * This is the color used for SVG images.
@@ -33,4 +30,9 @@ open class ImageProperties : BlockProperties() {
      * @since 0.19.2
      */
     open val svgPalette get() = colors.text.primary
+    init {
+        if (!hasStates) {
+            eventHandlers.clear()
+        }
+    }
 }

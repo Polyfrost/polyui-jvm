@@ -42,6 +42,7 @@ open class Image @JvmOverloads constructor(
     acceptInput: Boolean = true,
     vararg events: Event.Handler
 ) : Component(properties, at, null, rawResize, acceptInput, *events) {
+    val fixedSize = image.width != -1f && image.height != -1f
     var image = image
         set(value) {
             if (initStage == INIT_COMPLETE) {

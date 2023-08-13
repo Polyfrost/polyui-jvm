@@ -91,7 +91,7 @@ abstract class Component @JvmOverloads constructor(
     var disabled = false
         set(value) {
             field = value
-            if (value) {
+            if (!value) {
                 accept(Enabled)
             } else {
                 accept(Disabled)

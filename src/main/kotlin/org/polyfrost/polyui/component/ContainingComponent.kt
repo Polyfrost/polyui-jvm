@@ -124,6 +124,20 @@ abstract class ContainingComponent(
         children.fastEach { it.rescale(scaleX, scaleY) }
     }
 
+    /**
+     * Set this to `true` for the [recolor] function to act as [recolorAll].
+     * @since 0.21.4
+     */
+    open fun recolorRecolorsAll() = false
+
+    override fun recolor(toColor: Color, animation: Animation.Type?, durationNanos: Long, onFinish: (Component.() -> kotlin.Unit)?) {
+        if (recolorRecolorsAll()) {
+            recolorAll(toColor, animation, durationNanos, onFinish)
+        } else {
+            super.recolor(toColor, animation, durationNanos, onFinish)
+        }
+    }
+
     fun recolorAll(toColor: Color, animation: Animation.Type? = null, durationNanos: Long = 1L.seconds, onFinish: (Component.() -> kotlin.Unit)? = null) {
         super.recolor(toColor, animation, durationNanos, onFinish)
         children.fastEach { it.recolor(toColor, animation, durationNanos, onFinish) }

@@ -159,7 +159,7 @@ class GLWindow @JvmOverloads constructor(
 
         glfwSetKeyCallback(handle) { _, keyCode, _, action, mods ->
             if (action == GLFW_REPEAT) return@glfwSetKeyCallback
-            if (keyCode < 255 && mods != 0) {
+            if (keyCode < 255 && mods > 1) {
                 // accept modded chars, as glfwSetCharModsCallback is deprecated and doesn't work with control
                 polyUI.eventManager.keyTyped(keyCode.toChar())
             }

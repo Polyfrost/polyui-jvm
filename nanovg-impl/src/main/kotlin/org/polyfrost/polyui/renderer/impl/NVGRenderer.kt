@@ -84,7 +84,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
 
     override fun pop() = nvgRestore(vg)
 
-    override fun pushScissor(x: Float, y: Float, width: Float, height: Float) = nvgScissor(vg, x, y, width, height)
+    override fun pushScissor(x: Float, y: Float, width: Float, height: Float) = nvgIntersectScissor(vg, x, y, width, height)
 
     override fun popScissor() = nvgResetScissor(vg)
 

@@ -244,7 +244,7 @@ abstract class Drawable(
             x = 0f
             y = 0f
         }
-        if (alpha != 1f) renderer.globalAlpha(1f)
+        if (alpha != 1f) renderer.globalAlpha(alpha)
         if (skewX != 0.0) renderer.skewX(skewX)
         if (skewY != 0.0) renderer.skewY(skewY)
         if (scaleX != 1f || scaleY != 1f) renderer.scale(scaleX, scaleY)
@@ -476,6 +476,13 @@ abstract class Drawable(
             layout?.needsRedraw = true
         }
         operations.add(drawableOp to onFinish)
+    }
+
+    /**
+     * Remove an operation from this drawable.
+     */
+    fun removeOperation(drawableOp: DrawableOp) {
+        operations.fastRemoveIf { it.first == drawableOp }
     }
 
     /**

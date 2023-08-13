@@ -246,7 +246,7 @@ inline fun cl1(a: Float, b: Float): Float {
 inline fun min(a: Int, b: Int, c: Int): Int = min(min(a, b), c)
 
 /** convert the given float into an array of 4 floats for radii. */
-inline fun Float.radii() = floatArrayOf(this, this, this, this)
+inline fun Number.radii() = floatArrayOf(this.toFloat(), this.toFloat(), this.toFloat(), this.toFloat())
 
 /** convert the given floats into an array of 4 floats for radii. */
 inline fun radii(topLeft: Float, topRight: Float, bottomLeft: Float, bottomRight: Float) = floatArrayOf(topLeft, topRight, bottomLeft, bottomRight)

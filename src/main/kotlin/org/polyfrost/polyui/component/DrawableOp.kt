@@ -107,24 +107,6 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         override val isFinished get() = false
     }
 
-    /**
-     * A scissor operation that can be applied to a Drawable.
-     *
-     * @param drawable The Drawable to which the scissor operation will be applied.
-     * @param size The size of the scissor operation. If not provided, the size of the drawable will be used.
-     * @since 0.19.2
-     */
-    class Scissor(
-        drawable: Drawable,
-        private val at: Vec2<Unit>,
-        size: Vec2<Unit>? = null
-    ) : Persistent(drawable) {
-        private val size = size ?: drawable.size!!
-        override fun apply(renderer: Renderer) = renderer.pushScissor(at.a.px, at.b.px, size.a.px, size.b.px)
-
-        override fun unapply(renderer: Renderer) = renderer.popScissor()
-    }
-
     class Fade(
         private val amount: Float,
         add: Boolean = true,
@@ -170,22 +152,23 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
     }
 
     class Resize(
-        private val toSize: Vec2<Unit>,
+        toSize: Vec2<Unit>,
         drawable: Drawable,
         animation: Animation.Type?,
         durationNanos: Long = 1L.seconds
     ) :
         DrawableOp(drawable) {
         override val animation = animation?.create(durationNanos, 0f, 1f)
+        private val origin = drawable.size!!.clone()
+        private val to = toSize - origin
 
         override fun apply(renderer: Renderer) {
             if (animation != null) {
-                val p = animation.value
-                drawable.width = toSize.a.px * p
-                drawable.height = toSize.b.px * p
+                drawable.width = origin.width + (to.width * animation.value)
+                drawable.height = origin.height + (to.height * animation.value)
             } else {
-                drawable.width = toSize.a.px
-                drawable.height = toSize.b.px
+                drawable.width = origin.width + to.width
+                drawable.height = origin.height + to.height
             }
         }
     }

@@ -93,6 +93,7 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
                 val stream = getResourceStreamNullable(resource)?.bufferedReader()?.lines()
                 if (polyUI.settings.parallelLoading) stream?.parallel()
                 stream?.forEach {
+                    if (it.isEmpty()) return@forEach
                     val split = it.split("=")
                     if (split.size == 2) {
                         if (map.put(split[0], split[1]) != null) PolyUI.LOGGER.warn("Duplicate key: '${split[0]}', overwriting with $resource -> ${split[1]}")
@@ -192,6 +193,8 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
                 polyTranslator = this.polyTranslator
             }
         }
+
+        override fun toString() = string
     }
 
     /** translate the provided key, returning the key as per the translation table.

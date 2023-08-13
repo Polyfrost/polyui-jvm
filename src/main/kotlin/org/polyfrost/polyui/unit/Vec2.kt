@@ -82,6 +82,13 @@ data class Vec2<T : Unit>(
         return out
     }
 
+    operator fun times(value: Number): Vec2<T> {
+        val out = clone()
+        out.a.px *= value.toFloat()
+        out.b.px *= value.toFloat()
+        return out
+    }
+
     operator fun timesAssign(value: Vec2<T>) {
         this.a.px *= value.a.px
         this.b.px *= value.b.px
@@ -91,6 +98,13 @@ data class Vec2<T : Unit>(
         val out = clone()
         out.a.px /= value.a.px
         out.b.px /= value.b.px
+        return out
+    }
+
+    operator fun div(value: Number): Vec2<T> {
+        val out = clone()
+        out.a.px /= value.toFloat()
+        out.b.px /= value.toFloat()
         return out
     }
 

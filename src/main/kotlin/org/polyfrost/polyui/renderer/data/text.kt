@@ -175,15 +175,17 @@ internal class SingleText(
             }
             lines[0] = Line(text.string, size.width, size.height)
             return
+        } else {
+            lines[0] = Line(
+                text.string,
+                renderer.textBounds(font, text.string, fontSize, textAlign).also {
+                    if (!init && renderer.settings.debug && it.width > size.width) PolyUI.LOGGER.warn("Single line text overflow with initial bounds, is this intended? (text: $text.string, bounds: $size)")
+                } as Vec2<Unit>
+            )
         }
-        lines[0] = Line(
-            text.string,
-            renderer.textBounds(font, text.string, fontSize, textAlign).also {
-                if (!init && renderer.settings.debug && it.width > size.width) PolyUI.LOGGER.warn("Single line text overflow with initial bounds, is this intended? (text: $text.string, bounds: $size)")
-            } as Vec2<Unit>
-        )
 
         textOffsetX = if (lines[0].width > size.width) size.width - lines[0].width else 0f
+        full = textOffsetX != 0f
         init = true
     }
 

@@ -34,12 +34,17 @@ import org.polyfrost.polyui.renderer.data.Cursor
 import org.polyfrost.polyui.renderer.data.Line
 import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.utils.*
+import org.polyfrost.polyui.unit.px
+import org.polyfrost.polyui.utils.closestToPoint
+import org.polyfrost.polyui.utils.dropAt
+import org.polyfrost.polyui.utils.fastEach
+import org.polyfrost.polyui.utils.substringSafe
 
 open class TextInput(
     properties: TextInputProperties? = null,
     at: Vec2<Unit>,
     size: Vec2<Unit>,
+    private val fontSize: Unit = 12.px,
     vararg events: Event.Handler
 ) : Component(properties, at, size, false, true, *events), Focusable {
     override val properties: TextInputProperties
@@ -78,7 +83,7 @@ open class TextInput(
                 renderer.rect(x, y, w, h, layout.colors.page.border20)
             }
         } else {
-            renderer.globalAlpha(0.8f)
+            color.alpha = 0.8f
         }
         text.render()
         renderer.resetGlobalAlpha()
@@ -249,7 +254,7 @@ open class TextInput(
             line.text.substring(0, idx),
             text.str.fontSize,
             properties.text.alignment
-        ).width + text.x
+        ).width + text.x + text.str.textOffsetX
         cposy = lni * text.str.fontSize + text.y + text.str.textOffsetY
     }
 
@@ -296,7 +301,7 @@ open class TextInput(
     }
 
     private fun line(line: Line, startIndex: Int, endIndex: Int, lineIndex: Int) {
-        val start = renderer.textBounds(text.font, line.text.substring(0, startIndex), text.fontSize, text.textAlign).a.px
+        val start = renderer.textBounds(text.font, line.text.substring(0, startIndex), text.fontSize, text.textAlign).a.px + text.str.textOffsetX
         val width = renderer.textBounds(text.font, line.text.substring(startIndex, endIndex), text.fontSize, text.textAlign).a.px
         selectBoxes.add((text.x + start - 1f to text.y + (lineIndex * text.fontSize) + text.str.textOffsetY) to (width to line.height))
     }
@@ -445,17 +450,21 @@ open class TextInput(
 
     override fun setup(renderer: Renderer, polyUI: PolyUI) {
         super.setup(renderer, polyUI)
+        (fontSize as? Unit.Dynamic)?.set((size ?: layout.size ?: throw IllegalArgumentException("cannot set dynamic font size when no size is set")).b)
         text = Text(
             properties.text,
             properties.defaultText.clone(),
             at.clone(),
-            size?.clone(),
+            size?.clone().also {
+                it?.b?.px = it?.b?.px?.minus(properties.paddingFromTextVertical * 2f) ?: 0f
+            },
             properties.text.fontSize,
             properties.text.alignment,
             false
         )
         text.layout = this.layout
         text.setup(renderer, polyUI)
+        text.fontSize = fontSize.px
     }
 
     override fun calculateBounds() {

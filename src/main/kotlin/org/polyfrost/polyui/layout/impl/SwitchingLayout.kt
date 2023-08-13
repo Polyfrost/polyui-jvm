@@ -29,8 +29,10 @@ import org.polyfrost.polyui.animate.Animation
 import org.polyfrost.polyui.color.Color
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.component.DrawableOp
 import org.polyfrost.polyui.layout.Layout
 import org.polyfrost.polyui.property.impl.SwitchingLayoutProperties
+import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.unit.Unit
 
@@ -43,7 +45,6 @@ import org.polyfrost.polyui.unit.Unit
  * @param makesScrolling if `true`, any layout that is switched into this will be able to scroll and not resized, otherwise, the layout will be resized to this size.
  *
  */
-@Deprecated("Not currently implemented.")
 class SwitchingLayout(
     properties: SwitchingLayoutProperties? = null,
     at: Point<Unit>,
@@ -71,7 +72,7 @@ class SwitchingLayout(
             new.calculateBounds()
             this.layout.addComponent(new)
         } else if (new.initStage == INIT_SETUP) {
-            PolyUI.LOGGER.warn("[SwitchingLayout] received partially initialized layout: $new, this is wierd")
+            PolyUI.LOGGER.warn("[SwitchingLayout] received partially initialized layout? $new")
             new.calculateBounds()
             this.layout.addComponent(new)
         }
@@ -94,16 +95,38 @@ class SwitchingLayout(
             val oldx = old.x
             val oldy = old.y
             val oldl = old.layout
+
+            val oldOp = object : DrawableOp.Persistent(old) {
+                override fun apply(renderer: Renderer) {
+                    renderer.pushScissor(x - drawable.x, y - drawable.y, width, height)
+                }
+                override fun unapply(renderer: Renderer) {
+                    renderer.popScissor()
+                }
+            }
+
+            val newOp = object : DrawableOp.Persistent(new) {
+                override fun apply(renderer: Renderer) {
+                    renderer.pushScissor(x - drawable.x, y - drawable.y, width, height)
+                }
+                override fun unapply(renderer: Renderer) {
+                    renderer.popScissor()
+                }
+            }
+
             val reset: Layout.() -> kotlin.Unit = {
                 this.x = oldx
                 this.y = oldy
-                this.layout?.removeComponentNow(this)
-                this.layout = oldl
-                this.layout?.addComponent(this)
+                this.layout?.removeComponent(this)
+                if (oldl !== this.layout) {
+                    this.layout = oldl
+                    this.layout?.addComponent(this)
+                }
+                remove(oldOp)
             }
             if (new.layout != this@SwitchingLayout.layout) {
                 PolyUI.LOGGER.warn("[SwitchingLayout] $new is not a child of this, moving!")
-                new.layout?.removeComponentNow(new)
+                new.layout?.removeComponent(new)
                 new.layout = this@SwitchingLayout.layout
                 this@SwitchingLayout.layout.addComponent(new)
             }
@@ -113,37 +136,53 @@ class SwitchingLayout(
                 is Transitions.Slide -> {
                     when (transition.direction) {
                         SlideDirection.FromLeft -> {
+                            old.addOperation(oldOp)
                             old.moveTo((this.x + this.width).px * this.y.px, properties.transitionCurve, properties.transitionDuration, reset)
                             new.x = this.x - this.width
                             new.y = this.y
-                            new.moveTo(this.x.px * this.y.px, properties.transitionCurve, properties.transitionDuration)
+                            new.addOperation(newOp)
+                            new.moveTo(this.x.px * this.y.px, properties.transitionCurve, properties.transitionDuration) {
+                                remove(newOp)
+                            }
                         }
                         SlideDirection.FromRight -> {
+                            old.addOperation(oldOp)
                             old.moveTo((this.x - this.width).px * this.y.px, properties.transitionCurve, properties.transitionDuration, reset)
                             new.x = this.x + this.width
                             new.y = this.y
-                            new.moveTo(this.x.px * this.y.px, properties.transitionCurve, properties.transitionDuration)
+                            new.addOperation(newOp)
+                            new.moveTo(this.x.px * this.y.px, properties.transitionCurve, properties.transitionDuration) {
+                                remove(newOp)
+                            }
                         }
                         SlideDirection.FromBottom -> {
+                            old.addOperation(oldOp)
                             old.moveTo(this.x.px * (this.y - this.height).px, properties.transitionCurve, properties.transitionDuration, reset)
                             new.x = this.x
                             new.y = this.y + this.height
-                            new.moveTo(this.x.px * this.y.px, properties.transitionCurve, properties.transitionDuration)
+                            new.addOperation(newOp)
+                            new.moveTo(this.x.px * this.y.px, properties.transitionCurve, properties.transitionDuration) {
+                                remove(newOp)
+                            }
                         }
                         SlideDirection.FromTop -> {
+                            old.addOperation(oldOp)
                             old.moveTo(this.x.px * (this.y + this.height).px, properties.transitionCurve, properties.transitionDuration, reset)
                             new.x = this.x
                             new.y = this.y - this.height
-                            new.moveTo(this.x.px * this.y.px, properties.transitionCurve, properties.transitionDuration)
+                            new.addOperation(newOp)
+                            new.moveTo(this.x.px * this.y.px, properties.transitionCurve, properties.transitionDuration) {
+                                remove(newOp)
+                            }
                         }
                     }
                 }
                 Transitions.Fade -> {
+                    new.alpha = 0f
+                    new.moveTo(this.at)
                     old.fadeTo(0f, properties.transitionCurve, properties.transitionDuration / 2L) {
                         reset(this)
-                        new.x = this.x
-                        new.y = this.y
-                        new.fadeTo(1f, properties.transitionCurve, properties.transitionDuration)
+                        new.fadeTo(1f, properties.transitionCurve, properties.transitionDuration / 2L)
                     }
                 }
                 null -> {
@@ -152,8 +191,19 @@ class SwitchingLayout(
                     new.y = this.y
                 }
             }
+        } ?: run {
+            new.x = this.x
+            new.y = this.y
         }
         current = new
+    }
+
+    private fun Drawable.remove(op: DrawableOp) {
+        // for performance, fastRemoveIf doesn't have any co-mod checks, so this would cause an exception if executed normally
+        polyUI.addHook {
+            this@remove.removeOperation(op)
+            true
+        }
     }
 
     override fun preRender(deltaTimeNanos: Long) {

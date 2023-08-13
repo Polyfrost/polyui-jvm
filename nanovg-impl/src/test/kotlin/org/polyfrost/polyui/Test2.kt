@@ -131,7 +131,7 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                 at = 24.px * 65.px
             ),
             Button(
-                leftIcon = moon,
+                left = moon,
                 at = 24.px * 111.px,
                 events = events(
                     MouseClicked(0) to {
@@ -151,7 +151,7 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
             Button(
                 text = "button.text".localised("simple"),
                 fontSize = 13.px,
-                leftIcon = PolyImage("face-wink.svg"),
+                left = PolyImage("face-wink.svg"),
                 at = 68.px * 111.px
             ),
             Switch(
@@ -177,7 +177,7 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                 wrap = 348.px
             ).scrolling(348.px * 117.px),
             Button(
-                leftIcon = PolyImage("shuffle.svg"),
+                left = PolyImage("shuffle.svg"),
                 text = "button.randomize".localised(),
                 at = 24.px * 380.px,
                 events = events(
@@ -187,7 +187,7 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                 )
             ),
             Button(
-                leftIcon = PolyImage("plus.svg"),
+                left = PolyImage("plus.svg"),
                 at = 320.px * 380.px,
                 events = events(
                     MouseClicked(0) to {
@@ -196,7 +196,7 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                 )
             ),
             Button(
-                leftIcon = PolyImage("minus.svg"),
+                left = PolyImage("minus.svg"),
                 at = 355.px * 380.px,
                 events = events(
                     MouseClicked(0) to {

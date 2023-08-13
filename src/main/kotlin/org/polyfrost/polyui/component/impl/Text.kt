@@ -68,7 +68,10 @@ open class Text @JvmOverloads constructor(
         get() = super.properties as TextProperties
     private val fs = fontSize ?: this.properties.fontSize
     internal lateinit var str: Text
-    val fontSize get() = str.fontSize
+    var fontSize get() = str.fontSize
+        set(value) {
+            str.fontSize = value
+        }
     val lines get() = str.lines
     val full get() = str.full
     val font get() = this.properties.font
@@ -89,13 +92,12 @@ open class Text @JvmOverloads constructor(
             value.string
             str.text = value
             str.calculate(renderer)
-            if (autoSized) size = str.size
         }
 
     override fun render() {
         @Suppress("ReplaceSizeZeroCheckWithIsEmpty")
         if (text.string.length == 0) return
-        if (str.textOffsetY != 0f || str.textOffsetX != 0f) renderer.pushScissor(x, y, width, height)
+        if (str.textOffsetY != 0f || str.textOffsetX != 0f) renderer.pushScissor(x, y, width, fontSize)
         str.render(x, y, color)
         if (str.textOffsetY != 0f || str.textOffsetX != 0f) renderer.popScissor()
     }

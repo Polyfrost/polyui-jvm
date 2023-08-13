@@ -59,8 +59,10 @@ abstract class Properties : Cloneable {
      *
      * This means that every component using this property will have this event handler.
      */
-    fun addEventHandler(event: Event, handler: Component.(Event) -> Boolean) {
-        eventHandlers[event] = handler
+    @Suppress("UNCHECKED_CAST")
+    fun <E : Event> addEventHandler(event: E, handler: Component.(E) -> Boolean): Properties {
+        eventHandlers[event] = handler as Component.(Event) -> Boolean
+        return this
     }
 
     /**
@@ -68,18 +70,20 @@ abstract class Properties : Cloneable {
      *
      * This means that every component using this property will have this event handler.
      */
-    fun addEventHandler(handler: Event.Handler) {
+    fun addEventHandler(handler: Event.Handler): Properties {
         eventHandlers[handler.event] = handler.handler
+        return this
     }
 
     /** add a universal event handler to this component's property.
      *
      * This means that every component using this property will have this event handler.
      */
-    fun addEventHandlers(vararg handlers: Event.Handler) {
+    fun addEventHandlers(vararg handlers: Event.Handler): Properties {
         for (handler in handlers) {
             eventHandlers[handler.event] = handler.handler
         }
+        return this
     }
 
     val initialized get() = ::colors.isInitialized
