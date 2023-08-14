@@ -148,6 +148,15 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
      */
     abstract fun pushScissor(x: Float, y: Float, width: Float, height: Float)
 
+    /**
+     * begin a scissor rectangle, that will clip rendering to the given rectangle. The rectangle is intersected with the previous scissor.
+     *
+     * The scissor **is affected** by [translate], [scale], and [rotate], and is intersected with the previous scissor.
+     *
+     * **you must** call [popScissor] after you are done with this scissor!
+     */
+    abstract fun pushScissorIntersecting(x: Float, y: Float, width: Float, height: Float)
+
     /** end a scissor.
      * @see pushScissor
      */

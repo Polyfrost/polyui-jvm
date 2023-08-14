@@ -91,7 +91,7 @@ class SearchField(
 
     override fun accept(event: FocusedEvent) {
         input.accept(event)
-        if(event !== FocusedEvent.Gained && event !== FocusedEvent.Lost) {
+        if (event !== FocusedEvent.Gained && event !== FocusedEvent.Lost) {
             searchOut.clear()
             properties.searchAlgorithm.search(input.txt, searchList, searchOut)
         }

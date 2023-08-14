@@ -62,6 +62,9 @@ class NoOpRenderer(width: Float, height: Float) : Renderer(width, height) {
     override fun pushScissor(x: Float, y: Float, width: Float, height: Float) {
     }
 
+    override fun pushScissorIntersecting(x: Float, y: Float, width: Float, height: Float) {
+    }
+
     override fun popScissor() {
     }
 

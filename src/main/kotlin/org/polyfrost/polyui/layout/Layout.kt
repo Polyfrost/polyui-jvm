@@ -774,7 +774,7 @@ abstract class Layout(
                     ox = trueX
                     oy = trueY
                 }
-                renderer.pushScissor(ox - trueX, oy - trueY, size.width, size.height)
+                renderer.pushScissorIntersecting(ox - trueX, oy - trueY, size.width, size.height)
                 val delta = polyUI.delta
                 verticalBar?.tryHide(delta)
                 horizontalBar?.tryHide(delta)
