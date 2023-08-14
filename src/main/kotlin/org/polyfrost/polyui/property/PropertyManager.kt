@@ -45,7 +45,8 @@ class PropertyManager(val colors: Colors) {
         Checkbox::class.qualifiedName!! to CheckboxProperties(),
         Scrollbar::class.qualifiedName!! to ScrollbarProperties(),
         Switch::class.qualifiedName!! to SwitchProperties(),
-        SwitchingLayout::class.qualifiedName!! to SwitchingLayoutProperties()
+        SwitchingLayout::class.qualifiedName!! to SwitchingLayoutProperties(),
+        SearchField::class.qualifiedName!! to SearchFieldProperties()
     )
 
     inline fun <reified C : Component> get(): Properties = get(C::class.qualifiedName!!)

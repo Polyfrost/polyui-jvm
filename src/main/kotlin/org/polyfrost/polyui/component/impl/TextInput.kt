@@ -456,7 +456,7 @@ open class TextInput(
             properties.defaultText.clone(),
             at.clone(),
             size?.clone().also {
-                it?.b?.px = it?.b?.px?.minus(properties.paddingFromTextVertical * 2f) ?: 0f
+                it?.b?.px = it?.b?.px?.minus(properties.verticalPadding * 2f) ?: 0f
             },
             properties.text.fontSize,
             properties.text.alignment,
@@ -475,16 +475,16 @@ open class TextInput(
 
     override fun onInitComplete() {
         super.onInitComplete()
-        text.x += properties.paddingFromTextLateral
-        text.y += properties.paddingFromTextVertical
-        text.width -= properties.paddingFromTextLateral * 2f
-        text.height -= properties.paddingFromTextVertical * 2f
+        text.x += properties.lateralPadding
+        text.y += properties.verticalPadding
+        text.width -= properties.lateralPadding * 2f
+        text.height -= properties.verticalPadding * 2f
     }
 
     override fun calculateSize(): Vec2<Unit> {
         return text.size!!.clone().also {
-            it.a.px += properties.paddingFromTextLateral * 2f
-            it.b.px += properties.paddingFromTextVertical * 2f
+            it.a.px += properties.lateralPadding * 2f
+            it.b.px += properties.verticalPadding * 2f
         }
     }
 }

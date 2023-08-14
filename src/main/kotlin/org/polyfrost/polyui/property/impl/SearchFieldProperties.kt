@@ -21,20 +21,17 @@
 
 package org.polyfrost.polyui.property.impl
 
-import org.polyfrost.polyui.color.Color
 import org.polyfrost.polyui.color.Colors
-import org.polyfrost.polyui.input.PolyText
-import org.polyfrost.polyui.input.PolyTranslator.Companion.localised
+import org.polyfrost.polyui.input.search.SearchAlgorithm
 import org.polyfrost.polyui.property.Properties
-import org.polyfrost.polyui.utils.radii
+import org.polyfrost.polyui.unit.Unit
+import org.polyfrost.polyui.unit.px
 
-open class TextInputProperties(open val text: TextProperties) : Properties() {
-    override val palette: Colors.Palette get() = colors.component.bg
-    open val lateralPadding: Float = 12f
-    open val verticalPadding: Float = 8f
-    open val defaultText: PolyText = "polyui.text.default".localised()
-    open val cornerRadii: FloatArray = 6f.radii()
-    open val backgroundColor: Color get() = colors.component.bg.normal
-    open val outlineColor: Color get() = colors.page.border20
-    open val outlineThickness: Float = 0f
+open class SearchFieldProperties(open val searchAlgorithm: SearchAlgorithm = SearchAlgorithm.levenshtein) : Properties() {
+    override val palette: Colors.Palette
+        get() = colors.component.bg
+    open val fontSize: Unit = 12.px
+    open val textImagePadding: Unit = 8.px
+    open val lateralPadding: Unit = 8.px
+    open val inputProperties: TextInputProperties = TextInputProperties(TextProperties())
 }

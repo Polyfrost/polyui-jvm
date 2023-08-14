@@ -300,11 +300,6 @@ class FlexLayout @JvmOverloads constructor(
     }
 
     @Suppress("NOTHING_TO_INLINE")
-    inline fun size(drawable: Drawable): Size<Unit> {
-        return drawable.size!!
-    }
-
-    @Suppress("NOTHING_TO_INLINE")
     inline fun init(drawable: Drawable) {
         if (drawable.size == null) drawable.size = calculateSize() ?: origin
     }

@@ -34,9 +34,9 @@ fun interface SearchAlgorithm {
      * Search for objects that match the query.
      * @param query The query to search for.
      * @param objs The objects to search through.
-     * @param output The list to output the results to. It will be empty.
+     * @param output The list to output the results to. Make sure it is empty!
      */
-    fun search(query: String, objs: ArrayList<Any>, output: ArrayList<Any>)
+    fun search(query: String, objs: ArrayList<Any>, output: MutableList<Any>)
 
     companion object {
         /**
