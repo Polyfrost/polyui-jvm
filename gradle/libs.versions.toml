@@ -1,8 +1,8 @@
 [versions]
 kotlin = "1.9.0"
 lwjgl = "3.3.2"
-slf4j = "1.6.1"
-annotations = "24.0.0"
+slf4j = "+"
+annotations = "+"
 kotlinter = "3.13.0"
 textile = "1.+"
 dokka = "1.7.20"

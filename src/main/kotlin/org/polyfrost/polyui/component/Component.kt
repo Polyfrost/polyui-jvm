@@ -34,6 +34,7 @@ import org.polyfrost.polyui.event.*
 import org.polyfrost.polyui.layout.Layout
 import org.polyfrost.polyui.property.Properties
 import org.polyfrost.polyui.renderer.Renderer
+import org.polyfrost.polyui.renderer.data.FontFamily
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.unit.Unit
 
@@ -216,6 +217,10 @@ abstract class Component @JvmOverloads constructor(
         recolor(properties.palette.normal)
     }
 
+    override fun onFontsChanged(fonts: FontFamily) {
+        properties.fonts = fonts
+    }
+
     override fun calculateBounds() {
         if (initStage == INIT_NOT_STARTED) throw IllegalStateException("${this.simpleName} has not been setup, but calculateBounds() was called!")
         if (size == null) {
@@ -247,6 +252,7 @@ abstract class Component @JvmOverloads constructor(
     fun setProperties(properties: Properties) {
         if (polyUI.settings.debug) PolyUI.LOGGER.info("{}'s properties set to {}", this.simpleName, properties)
         properties.colors = p!!.colors
+        properties.fonts = p!!.fonts
         p = properties
         recolor(properties.palette.normal, Animations.Linear, 150L.milliseconds)
         wantRedraw()
@@ -258,6 +264,7 @@ abstract class Component @JvmOverloads constructor(
             p = layout.propertyManager.get(this)
         } else {
             p!!.colors = layout.colors
+            p!!.fonts = layout.fonts
         }
         color = properties.palette.normal.toAnimatable()
         initStage = INIT_SETUP

@@ -28,7 +28,12 @@ import org.polyfrost.polyui.input.PolyTranslator.Companion.localised
 import org.polyfrost.polyui.property.Properties
 import org.polyfrost.polyui.utils.radii
 
-open class TextInputProperties(open val text: TextProperties) : Properties() {
+/**
+ * @param sanitizationFunction A function that will be called every time the text is changed.
+ * If it returns false, the input will be highlighted in [red][org.polyfrost.polyui.color.Colors.State.danger]
+ * and the [listeners][org.polyfrost.polyui.component.impl.TextInput.addTextListener] will not be notified.
+ */
+open class TextInputProperties(open val text: TextProperties = TextProperties(), open val sanitizationFunction: (String) -> Boolean = { true }) : Properties() {
     override val palette: Colors.Palette get() = colors.component.bg
     open val lateralPadding: Float = 12f
     open val verticalPadding: Float = 8f

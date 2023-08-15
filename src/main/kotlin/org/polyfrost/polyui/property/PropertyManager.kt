@@ -27,10 +27,11 @@ import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.layout.impl.SwitchingLayout
 import org.polyfrost.polyui.property.impl.*
+import org.polyfrost.polyui.renderer.data.FontFamily
 
-class PropertyManager(val colors: Colors) {
+class PropertyManager(val colors: Colors, val fonts: FontFamily = PolyUI.defaultFonts) {
 
-    constructor(polyUI: PolyUI) : this(polyUI.colors)
+    constructor(polyUI: PolyUI) : this(polyUI.colors, PolyUI.defaultFonts)
 
     val properties: HashMap<String, Properties> = hashMapOf(
         TextInput::class.qualifiedName!! to TextInputProperties(TextProperties()),
@@ -60,7 +61,10 @@ class PropertyManager(val colors: Colors) {
             properties[name] as? T
                 ?: throw Exception("Properties for component $name not found")
             ).also {
-            if (!it.initialized) it.colors = colors
+            if (!it.initialized) {
+                it.colors = colors
+                it.fonts = fonts
+            }
         }
     }
 

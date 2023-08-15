@@ -22,6 +22,7 @@
 package org.polyfrost.polyui.component.impl
 
 import org.polyfrost.polyui.PolyUI
+import org.polyfrost.polyui.color.Color
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Focusable
@@ -55,6 +56,12 @@ open class TextInput(
         set(value) {
             text.str.text.string = value
             text.str.calculate(renderer)
+            errored = !properties.sanitizationFunction.invoke(txt)
+            if (!errored) {
+                textListeners.fastEach {
+                    it(this, txt)
+                }
+            }
         }
     private var caret = 0
         set(value) {
@@ -69,12 +76,34 @@ open class TextInput(
     private var cposy = 0f
     private var mouseDown = false
     private var selecting = false
+    private lateinit var outlineColor: Color
+    private var outlineThickness = 0f
     val selection get() = txt.substringSafe(caret, select)
+    private val textListeners = ArrayList<TextInput.(String) -> kotlin.Unit>(2)
+
+    /**
+     * represents if [TextInputProperties.sanitizationFunction] returned false (text no good)
+     * @since 0.22.0
+     */
+    var errored = false
+        private set(value) {
+            if (field == value) return
+            field = value
+            if (value) {
+                outlineColor = properties.colors.state.danger.normal
+                if (properties.outlineThickness == 0f) outlineThickness = 2f
+            } else {
+                outlineColor = properties.outlineColor
+                outlineThickness = properties.outlineThickness
+            }
+        }
 
     override fun render() {
         if (!mouseOver) mouseDown = false
         renderer.rect(x, y, width, height, properties.backgroundColor, properties.cornerRadii)
-        renderer.hollowRect(x, y, width, height, properties.outlineColor, properties.outlineThickness, properties.cornerRadii)
+        if (outlineThickness != 0f) {
+            renderer.hollowRect(x, y, width, height, outlineColor, outlineThickness, properties.cornerRadii)
+        }
         if (focused) {
             renderer.rect(cposx, cposy, 2f, text.fontSize, layout.colors.text.primary.normal)
             selectBoxes.fastEach {
@@ -128,9 +157,14 @@ open class TextInput(
         return super<Component>.accept(event)
     }
 
-    override fun accept(event: FocusedEvent) {
+    override fun accept(event: FocusedEvent): Boolean {
         if (event is FocusedEvent.Gained) {
-            focused = true
+            return if (!focused) {
+                focused = true
+                true
+            } else {
+                false
+            }
         }
         if (event is FocusedEvent.Lost) {
             clearSelection()
@@ -203,7 +237,7 @@ open class TextInput(
                 }
 
                 Keys.DELETE -> {
-                    if (caret + 1 > txt.length) return
+                    if (caret + 1 > txt.length) return true
                     txt = txt.dropAt(caret + 1, 1)
                 }
 
@@ -245,6 +279,7 @@ open class TextInput(
         caretPos()
         selections()
         wantRedraw()
+        return true
     }
 
     fun caretPos() {
@@ -462,6 +497,7 @@ open class TextInput(
             properties.text.alignment,
             false
         )
+        outlineColor = properties.outlineColor
         text.layout = this.layout
         text.setup(renderer, polyUI)
         text.fontSize = fontSize.px
@@ -469,14 +505,14 @@ open class TextInput(
 
     override fun calculateBounds() {
         text.calculateBounds()
+        text.x = this.x + properties.lateralPadding
+        text.y = this.y + properties.verticalPadding
         super.calculateBounds()
         caretPos()
     }
 
     override fun onInitComplete() {
         super.onInitComplete()
-        text.x += properties.lateralPadding
-        text.y += properties.verticalPadding
         text.width -= properties.lateralPadding * 2f
         text.height -= properties.verticalPadding * 2f
     }
@@ -486,5 +522,9 @@ open class TextInput(
             it.a.px += properties.lateralPadding * 2f
             it.b.px += properties.verticalPadding * 2f
         }
+    }
+
+    fun addTextListener(function: TextInput.(String) -> kotlin.Unit) {
+        textListeners.add(function)
     }
 }

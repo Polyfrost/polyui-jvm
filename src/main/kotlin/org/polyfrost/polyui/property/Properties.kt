@@ -26,6 +26,7 @@ import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.property.impl.*
+import org.polyfrost.polyui.renderer.data.FontFamily
 import org.polyfrost.polyui.unit.Size
 import org.polyfrost.polyui.unit.Unit
 
@@ -43,6 +44,7 @@ import org.polyfrost.polyui.unit.Unit
  */
 abstract class Properties : Cloneable {
     lateinit var colors: Colors
+    lateinit var fonts: FontFamily
 
     abstract val palette: Colors.Palette
 

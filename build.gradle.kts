@@ -171,9 +171,11 @@ subprojects {
     }
 }
 
-dependencies {
-    implementation(libs.bundles.slf4j)
-    implementation(libs.bundles.kotlin)
+allprojects {
+    dependencies {
+        implementation(rootProject.libs.bundles.kotlin)
+        implementation(rootProject.libs.bundles.slf4j)
+    }
 }
 
 tasks {

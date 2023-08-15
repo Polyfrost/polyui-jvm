@@ -451,9 +451,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
             val data =
                 getResourceStreamNullable(font.resourcePath)?.toByteBuffer()
                     ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) {
-                        getResourceStream(
-                            DefaultFont.resourcePath
-                        ).also {
+                        PolyUI.defaultFonts.regular.get().also {
                             PolyUI.LOGGER.warn(
                                 "Failed to get font: {}, falling back to default font!",
                                 font.resourcePath

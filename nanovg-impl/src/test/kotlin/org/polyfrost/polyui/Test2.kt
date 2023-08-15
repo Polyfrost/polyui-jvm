@@ -36,7 +36,6 @@ import org.polyfrost.polyui.property.Properties
 import org.polyfrost.polyui.property.PropertyManager
 import org.polyfrost.polyui.property.State
 import org.polyfrost.polyui.property.impl.*
-import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.renderer.impl.GLWindow
 import org.polyfrost.polyui.renderer.impl.NVGRenderer
@@ -51,7 +50,7 @@ val brand = BrandBlockProperties(4f.radii())
 val success = StateBlockProperties(State.Success, 4f.radii())
 val warning = StateBlockProperties(State.Warning, 4f.radii())
 val danger = StateBlockProperties(State.Danger, 4f.radii())
-val text = TextProperties(Font("Poppins-SemiBold.ttf"))
+val text = TextProperties { fonts.medium }
 
 fun main() {
     // todo implement designs for textbox etc
@@ -156,7 +155,7 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
             ),
             Switch(
                 at = 266.px * 113.px,
-                size = 64.px * 32.px
+                switchSize = 64.px * 32.px
             ),
             Checkbox(
                 at = 336.px * 113.px,

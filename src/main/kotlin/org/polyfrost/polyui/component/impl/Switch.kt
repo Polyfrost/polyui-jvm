@@ -26,10 +26,12 @@ import org.polyfrost.polyui.animate.Animation
 import org.polyfrost.polyui.color.Color
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.input.PolyText
 import org.polyfrost.polyui.property.impl.SwitchProperties
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.unit.Point
 import org.polyfrost.polyui.unit.Size
+import org.polyfrost.polyui.unit.TextAlign
 import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.utils.radii
 
@@ -38,22 +40,30 @@ import org.polyfrost.polyui.utils.radii
  *
  * A simple switch component, which can be on or off.
  *
- * @param size the size of the switch. Note that this value has to have a width that is at least twice as large as its height. Due to this, only one of the parameters has to be set, and the other one will be inferred.
+ * @param switchSize the size of the switch. Note that this value has to have a width that is at least twice as large as its height. Due to this, only one of the parameters has to be set, and the other one will be inferred.
  */
 @Suppress("UNCHECKED_CAST")
 class Switch(
     properties: SwitchProperties? = null,
     at: Point<Unit>,
-    size: Size<Unit>,
+    label: PolyText? = null,
+    switchSize: Size<Unit>,
     enabled: Boolean = false,
-    onEnable: (Switch.(Boolean) -> kotlin.Unit)? = null,
+    onSwitch: (Switch.(Boolean) -> kotlin.Unit)? = null,
     vararg events: Event.Handler
-) : StateBlock(properties, at, size, defaultState = enabled, onStateChange = onEnable as (StateBlock.(Boolean) -> kotlin.Unit)?, events = events) {
+) : StateBlock(properties, at, switchSize, defaultState = enabled, onStateChange = onSwitch as (StateBlock.(Boolean) -> kotlin.Unit)?, events = events) {
     private var anim: Animation? = null
     private var bitSize = 0f
     private var bitRadius = 0f
     private var dist = 0f
     private lateinit var bitColor: Color.Animated
+    var fontSize = 0f
+    var label = label
+        set(value) {
+            value?.polyTranslator = polyUI.translator
+            value?.string
+            field = value
+        }
 
     override val properties
         get() = super.properties as SwitchProperties
@@ -67,6 +77,9 @@ class Switch(
     }
 
     override fun render() {
+        if (label != null) {
+            renderer.text(properties.labelFont, x - properties.lateralPadding.px, y + height / 2f - fontSize / 2f, label!!.string, properties.labelColor, fontSize, TextAlign.Right)
+        }
         super.render()
         val value = anim?.value ?: if (active) 1f else 0f
         val pad = properties.bitPadding.px
@@ -85,6 +98,15 @@ class Switch(
     override fun setup(renderer: Renderer, polyUI: PolyUI) {
         super.setup(renderer, polyUI)
         bitColor = properties.bitColor.toAnimatable()
+        val fs = properties.labelFontSize.clone()
+        (fs as? Unit.Dynamic)?.set(this.size!!.a)
+        fontSize = fs.px
+        (properties.lateralPadding as? Unit.Dynamic)?.set(this.size!!.a)
+        (properties.verticalPadding as? Unit.Dynamic)?.set(this.size!!.b)
+        if (properties.labelFontSize.px == 0f) {
+            fontSize = height - properties.verticalPadding.px * 2f
+        }
+        label?.polyTranslator = polyUI.translator
     }
 
     override fun calculateBounds() {

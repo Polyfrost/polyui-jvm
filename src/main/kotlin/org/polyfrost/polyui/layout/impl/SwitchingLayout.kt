@@ -76,6 +76,12 @@ class SwitchingLayout(
             new.calculateBounds()
             this.layout.addComponent(new)
         }
+        if (new.layout !== this.layout) {
+            PolyUI.LOGGER.warn("[SwitchingLayout] $new is not a child of this, moving!")
+            new.layout?.removeComponent(new)
+            new.layout = this.layout
+            this.layout.addComponent(new)
+        }
 
         if (autoSized && width == 0f && height == 0f) {
             PolyUI.LOGGER.warn("SwitchingLayout has no size; setting to first given layout: (${new.width}x${new.height})")
@@ -86,14 +92,10 @@ class SwitchingLayout(
             if (new.width > width || new.height > height) {
                 new.scrolling(width.px * height.px)
             }
-        } else {
-            new.rescale(new.width / width, new.height / height)
         }
 
         @Suppress("UNCHECKED_CAST")
         current?.let { old ->
-            val oldx = old.x
-            val oldy = old.y
             val oldl = old.layout
 
             val oldOp = object : DrawableOp.Persistent(old) {
@@ -115,20 +117,13 @@ class SwitchingLayout(
             }
 
             val reset: Layout.() -> kotlin.Unit = {
-                this.x = oldx
-                this.y = oldy
+                this.moveTo(old.at)
                 this.layout?.removeComponent(this)
                 if (oldl !== this.layout) {
                     this.layout = oldl
                     this.layout?.addComponent(this)
                 }
                 remove(oldOp)
-            }
-            if (new.layout != this@SwitchingLayout.layout) {
-                PolyUI.LOGGER.warn("[SwitchingLayout] $new is not a child of this, moving!")
-                new.layout?.removeComponent(new)
-                new.layout = this@SwitchingLayout.layout
-                this@SwitchingLayout.layout.addComponent(new)
             }
 
             reset as Drawable.() -> kotlin.Unit
@@ -187,13 +182,11 @@ class SwitchingLayout(
                 }
                 null -> {
                     reset(old)
-                    new.x = this.x
-                    new.y = this.y
+                    new.moveTo(this.at)
                 }
             }
         } ?: run {
-            new.x = this.x
-            new.y = this.y
+            new.moveTo(this.at)
         }
         current = new
     }

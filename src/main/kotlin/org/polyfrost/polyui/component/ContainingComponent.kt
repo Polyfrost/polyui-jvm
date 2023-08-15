@@ -64,6 +64,16 @@ abstract class ContainingComponent(
         this.children.fastEach { it.acceptsInput = false }
     }
 
+    override fun trueX(): Float {
+        children.fastEach { it.trueX = it.trueX() }
+        return super.trueX()
+    }
+
+    override fun trueY(): Float {
+        children.fastEach { it.trueY = it.trueY() }
+        return super.trueY()
+    }
+
     /**
      * Add components to this containing component.
      * @since 0.19.0

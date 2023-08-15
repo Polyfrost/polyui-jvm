@@ -39,6 +39,7 @@ import org.polyfrost.polyui.property.PropertyManager
 import org.polyfrost.polyui.property.impl.BackgroundProperties
 import org.polyfrost.polyui.property.impl.BlockProperties
 import org.polyfrost.polyui.renderer.Renderer
+import org.polyfrost.polyui.renderer.data.FontFamily
 import org.polyfrost.polyui.renderer.data.Framebuffer
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.unit.Unit
@@ -82,6 +83,8 @@ abstract class Layout(
     }
 
     lateinit var colors: Colors
+        internal set
+    lateinit var fonts: FontFamily
         internal set
 
     /** list of components in this layout. */
@@ -585,7 +588,7 @@ abstract class Layout(
         val width = visibleSize?.width ?: this.width
         val height = visibleSize?.height ?: this.height
         renderer.hollowRect(trueX, trueY, width, height, colors.page.border20, 2f)
-        renderer.text(Renderer.DefaultFont, trueX + 1f, trueY + 1f, simpleName, colors.text.primary.normal, 10f)
+        renderer.text(PolyUI.defaultFonts.regular, trueX + 1f, trueY + 1f, simpleName, colors.text.primary.normal, 10f)
         children.fastEach { it.debugRender() }
         components.fastEach { it.debugRender() }
     }
@@ -594,6 +597,7 @@ abstract class Layout(
         super.setup(renderer, polyUI)
         if (!::propertyManager.isInitialized) propertyManager = PropertyManager(polyUI)
         colors = propertyManager.colors
+        fonts = propertyManager.fonts
         components.fastEach {
             it.layout = this
             it.setup(renderer, polyUI)
@@ -658,6 +662,9 @@ abstract class Layout(
     /** @see onColorsChanged */
     fun changeColors(colors: Colors) = onColorsChanged(colors)
 
+    /** @see onColorsChanged */
+    fun changeFonts(fonts: FontFamily) = onFontsChanged(fonts)
+
     override fun onColorsChanged(colors: Colors) {
         val wasEnabled = exists
         if (!wasEnabled) {
@@ -669,6 +676,20 @@ abstract class Layout(
         }
         components.fastEach { it.onColorsChanged(colors) }
         children.fastEach { it.onColorsChanged(colors) }
+        exists = wasEnabled
+    }
+
+    override fun onFontsChanged(fonts: FontFamily) {
+        val wasEnabled = exists
+        if (!wasEnabled) {
+            exists = true
+        }
+        this.fonts = fonts
+        for ((_, p) in propertyManager.properties) {
+            p.fonts = fonts
+        }
+        components.fastEach { it.onFontsChanged(fonts) }
+        children.fastEach { it.onFontsChanged(fonts) }
         exists = wasEnabled
     }
 

@@ -21,7 +21,11 @@
 
 package org.polyfrost.polyui.property.impl
 
-open class SliderProperties : DefaultBlockProperties() {
+/**
+ * @param setInstantly if true, the slider [value][org.polyfrost.polyui.component.impl.Slider.value] will be updated as the user drags the slider.
+ * Else, it will be updated when the slider is dropped.
+ */
+open class SliderProperties(open val setInstantly: Boolean = false) : DefaultBlockProperties() {
     open val barColor get() = colors.component.bg
     open val usedBarColor get() = colors.brand.fg
 

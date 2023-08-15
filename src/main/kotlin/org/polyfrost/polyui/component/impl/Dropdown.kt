@@ -61,7 +61,7 @@ class Dropdown(
         }
     }
 
-    override fun accept(event: FocusedEvent) {
+    override fun accept(event: FocusedEvent): Boolean {
         if (event is FocusedEvent.Gained) {
             active = true
             open()
@@ -70,6 +70,7 @@ class Dropdown(
             active = false
             close()
         }
+        return true
     }
 
     override val properties: DropdownProperties

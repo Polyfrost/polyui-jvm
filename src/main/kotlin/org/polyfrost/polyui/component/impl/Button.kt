@@ -35,7 +35,7 @@ import kotlin.math.max
 /**
  * A button, that supports two images and a text object.
  * @param properties The properties of the button (inherits from [Block]). There are various padding properties here you may want to tweak.
- * @param maxHeight the maximum height for this icon. You can specify this if you want to have more control over the height of this component, as if it is `null` it is controlled by the largest image or text.
+ * @param size You can specify this if you want to have more control over the height of this component, as if it is `null` it is controlled by the largest item.
  * @param left The image to be displayed on the left side of the button
  * @param text The text to be displayed in the button
  * @param fontSize The font size of the text
@@ -89,6 +89,7 @@ class Button(
 
         leftImage?.x = x + properties.lateralPadding
         return if (fixedSize != null) {
+            size = fixedSize
             imageFixedSize(leftImage)
             imageFixedSize(rightImage)
             rightImage?.x = x + width - properties.lateralPadding - rightImage!!.width

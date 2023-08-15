@@ -38,6 +38,7 @@ import org.polyfrost.polyui.property.Settings
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.Window
 import org.polyfrost.polyui.renderer.data.Cursor
+import org.polyfrost.polyui.renderer.data.FontFamily
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.utils.*
@@ -102,24 +103,30 @@ class PolyUI @JvmOverloads constructor(
      */
     var colors = colors
         set(value) {
+            if (field == value) return
             field = value
             timed("Changing colors from $field to $value") {
                 master.onAllLayouts {
-                    onColorsChanged(value)
+                    changeColors(value)
                 }
-                colorChangeListener?.invoke(this)
             }
         }
 
-    /**
-     * A listener for color changes PolyUI instance.
+    /** Fonts attached to this PolyUI instance. This contains all the colors needed for the UI.
      *
-     * This lambda function is invoked when the [colors] field is changed on this PolyUI instance, which updates **every** color on the UI.
-     *
-     * @see PolyUI
-     * @since 0.19.2
+     * **Note that changing this value** can be an expensive operation while the UI is running, as it has to update all the components.
+     * @since 0.22.0
      */
-    var colorChangeListener: (PolyUI.() -> kotlin.Unit)? = null
+    var fonts = defaultFonts
+        set(value) {
+            if (field == value) return
+            field = value
+            timed("Changing fonts from $field to $value") {
+                master.onAllLayouts {
+                    changeFonts(value)
+                }
+            }
+        }
 
     /**
      * The window this polyUI was opened with.
@@ -402,7 +409,7 @@ class PolyUI @JvmOverloads constructor(
     /** draw the debug overlay text. It is right-aligned. */
     fun drawDebugOverlay(x: Float, y: Float) {
         renderer.text(
-            Renderer.DefaultFont,
+            defaultFonts.regular,
             x,
             y,
             text = perf,
@@ -499,8 +506,7 @@ class PolyUI @JvmOverloads constructor(
         if (focusable === focused) return false
         focused?.accept(FocusedEvent.Lost)
         focused = focusable
-        focused?.accept(FocusedEvent.Gained)
-        return true
+        return focused?.accept(FocusedEvent.Gained) == true
     }
 
     fun unfocus() = focus(null)
@@ -583,6 +589,13 @@ class PolyUI @JvmOverloads constructor(
     companion object {
         @JvmField
         val LOGGER: Logger = LoggerFactory.getLogger("PolyUI")
+
+        /**
+         * Fallback font library bundled with PolyUI
+         * @since 0.22.0
+         */
+        @JvmField
+        val defaultFonts = FontFamily("Poppins", "Poppins.zip")
 
         /**
          * State 0 of initialization. Nothing has been done yet.

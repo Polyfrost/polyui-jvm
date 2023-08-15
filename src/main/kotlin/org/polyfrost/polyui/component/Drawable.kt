@@ -30,6 +30,7 @@ import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.layout.Layout
 import org.polyfrost.polyui.renderer.Renderer
+import org.polyfrost.polyui.renderer.data.FontFamily
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.utils.*
@@ -464,9 +465,22 @@ abstract class Drawable(
      * **Make sure to call** [super.onColorsChanged()][onColorsChanged] if you override this!
      * @see Colors
      * @see Component.recolor
+     * @see onFontsChanged
      * @since 0.17.5
      */
     abstract fun onColorsChanged(colors: Colors)
+
+    /**
+     * Function that is called when the fonts attached to this drawable change.
+     *
+     * If this is a layout, the fonts will change, and all its children and components will be notified and updated accordingly.
+     *
+     * **Make sure to call** [super.onFontsChanged()][onFontsChanged] if you override this!
+     * @see FontFamily
+     * @see onColorsChanged
+     * @since 0.22.0
+     */
+    abstract fun onFontsChanged(fonts: FontFamily)
 
     /** Add a [DrawableOp] to this drawable. */
     open fun addOperation(drawableOp: DrawableOp, onFinish: (Drawable.() -> kotlin.Unit)? = null) {

@@ -28,8 +28,9 @@ import org.polyfrost.polyui.unit.TextAlign
 import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.unit.px
 
-open class TextProperties(val font: Font = Font("/Poppins-Regular.ttf")) : Properties() {
+open class TextProperties(val fontGet: Properties.() -> Font = { fonts.regular }) : Properties() {
     open val fontSize: Unit.Pixel = 12.px
     override val palette: Colors.Palette get() = colors.text.primary
     open val alignment = TextAlign.Left
+    open val font get() = fontGet()
 }

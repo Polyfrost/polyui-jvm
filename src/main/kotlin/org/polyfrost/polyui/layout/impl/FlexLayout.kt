@@ -116,7 +116,7 @@ class FlexLayout @JvmOverloads constructor(
             if (it.atType != Unit.Type.Flex) {
                 throw Exception("Unit type mismatch: Drawable $it needs to be placed using a Flex unit for a flex layout.")
             }
-            if (it.sizeType == Units.Flex) {
+            if (it.size != null && it.sizeType == Units.Flex) {
                 throw Exception("A flex layout's size property is used to specify the minimum size of the component, please use the at property for your flex data.")
             }
         }
@@ -209,6 +209,7 @@ class FlexLayout @JvmOverloads constructor(
         if (wrapDirection != Wrap.NoWrap) {
             var row = arrayListOf<Drawable>()
             flexDrawables.forEachIndexed { i, it ->
+                it.calculateBounds()
                 mainAxis += getMainSize(it) + mainGap
                 if (getFlex(it).endRowAfter || mainAxis + getMainSize(flexDrawables.getOrNull(i + 1)) >= mainSize) { // means we need to wrap
                     rows.add(FlexRow(row))

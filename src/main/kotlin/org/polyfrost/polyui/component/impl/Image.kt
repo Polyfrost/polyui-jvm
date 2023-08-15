@@ -30,8 +30,9 @@ import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.property.impl.ImageProperties
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.PolyImage
-import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.unit.Unit
+import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.unit.px
 import org.polyfrost.polyui.utils.cl1
 
 open class Image @JvmOverloads constructor(

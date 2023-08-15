@@ -32,6 +32,7 @@ import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.origin
 import org.polyfrost.polyui.unit.px
+import org.polyfrost.polyui.utils.fastEach
 import org.polyfrost.polyui.utils.toArrayList
 
 /**
@@ -89,11 +90,14 @@ class SearchField(
      */
     fun getSearch(): List<Any> = searchOut
 
-    override fun accept(event: FocusedEvent) {
+    override fun accept(event: FocusedEvent): Boolean {
         input.accept(event)
         if (event !== FocusedEvent.Gained && event !== FocusedEvent.Lost) {
             searchOut.clear()
-            properties.searchAlgorithm.search(input.txt, searchList, searchOut)
+            searchList.fastEach {
+                if (properties.searchAlgorithm(it, query)) searchOut.add(it)
+            }
         }
+        return true
     }
 }

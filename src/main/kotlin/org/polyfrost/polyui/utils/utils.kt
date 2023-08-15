@@ -317,6 +317,32 @@ fun String.substringSafe(fromIndex: Int, toIndex: Int = lastIndex): String {
     return substring(fromIndex, toIndex)
 }
 
+/**
+ * Limit the given string to a width.
+ * If the string is too long, it will be cut to the width, and [limitText] will be appended to the end.
+ * @since 0.22.0
+ */
+fun String.truncate(
+    renderer: Renderer,
+    font: Font,
+    fontSize: Float,
+    width: Float,
+    limitText: String = "...",
+    textAlign: TextAlign = TextAlign.Left
+): String {
+    var resultWidth = renderer.textBounds(font, this, fontSize, textAlign).width
+    if (resultWidth < width) return this
+    require(width != 0f) { "Cannot truncate to zero width" }
+    val delimiterWidth = renderer.textBounds(font, limitText, fontSize, textAlign).width
+    var t = this
+    while (resultWidth + delimiterWidth > width) {
+        resultWidth = renderer.textBounds(font, t, fontSize, textAlign).width
+        t = t.substring(0, t.length - 1)
+    }
+    t += limitText
+    return t
+}
+
 /** take the given string and cut it to the length, returning a pair of the string cut to the length, and the remainder.
  *
  * if the string fits within the width, the first string will be the entire string, and the second will be empty.

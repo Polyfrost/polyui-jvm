@@ -32,6 +32,7 @@ import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.unit.Point
 import org.polyfrost.polyui.unit.Size
 import org.polyfrost.polyui.unit.Unit
+import org.polyfrost.polyui.utils.fastEach
 
 /**
  * A slider component.
@@ -51,11 +52,17 @@ class Slider(
     private var barY = 0f
     lateinit var barColor: Color.Animated
     lateinit var usedBarColor: Color.Animated
+    private val changeListeners = ArrayList<Slider.(Float) -> kotlin.Unit>(2)
 
     var value: Float = min
         set(value) {
-            field = value
             bitX = (value - min) / (max - min) * (width - height)
+            if ((p as? SliderProperties)?.setInstantly == true && field != value) {
+                changeListeners.fastEach {
+                    it(this, value)
+                }
+            }
+            field = value
         }
     private var dragging = false
     private var mx = 0f
@@ -85,15 +92,22 @@ class Slider(
 
     override fun render() {
         if (dragging) {
-            if (!polyUI.mouseDown) dragging = false
+            if (!polyUI.mouseDown) {
+                if (!properties.setInstantly) {
+                    changeListeners.fastEach {
+                        it(this, value)
+                    }
+                }
+                dragging = false
+            }
             set(polyUI.mouseX - mx)
         }
         val height = height
         val hHeight = height / 2f
         val barRadius = barThickness / 2f
-        if (bitX != x) renderer.rect(x + hHeight, barY, bitX, barThickness, usedBarColor, barRadius)
+        if (bitX + x != x) renderer.rect(x + hHeight, barY, bitX, barThickness, usedBarColor, barRadius)
         renderer.rect(x + bitX + hHeight, barY, width - bitX - height, barThickness, barColor, barRadius)
-        renderer.rect(bitX, y, height, height, color, height)
+        renderer.rect(bitX + x, y, height, height, color, height)
     }
 
     override fun onColorsChanged(colors: Colors) {
@@ -119,5 +133,9 @@ class Slider(
         super.calculateBounds()
         barThickness = height / properties.thicknessRatio
         barY = y + height / 2f - barThickness / 2f
+    }
+
+    fun addChangeListener(listener: Slider.(Float) -> kotlin.Unit) {
+        changeListeners.add(listener)
     }
 }

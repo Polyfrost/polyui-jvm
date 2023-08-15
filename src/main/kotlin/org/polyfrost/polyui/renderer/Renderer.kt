@@ -364,8 +364,5 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
     companion object {
         @JvmField
         var DefaultImage = PolyImage("err.png")
-
-        @JvmField
-        var DefaultFont = Font("Poppins-Regular.ttf")
     }
 }

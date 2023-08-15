@@ -30,8 +30,9 @@ interface Focusable {
      * @see FocusedEvent.KeyPressed
      * @see FocusedEvent.KeyReleased
      * @see FocusedEvent.KeyTyped
+     * @return `true` to consume the event (only applicable to [FocusedEvent.Gained] and [FocusedEvent.Lost]
      */
-    fun accept(event: FocusedEvent)
+    fun accept(event: FocusedEvent): Boolean
 
     /**
      * Accept a non-mapped key press. This is called when any key is pressed that is not a [mapped key][org.polyfrost.polyui.input.Keys].

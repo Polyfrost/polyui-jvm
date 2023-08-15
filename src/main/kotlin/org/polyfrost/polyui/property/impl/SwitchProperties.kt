@@ -33,8 +33,18 @@ open class SwitchProperties : StatedProperties() {
     /**
      * This is the padding between the switch background and the switch 'bit' (the bit that moves)
      */
-    open val bitPadding: Unit = 3.px
+    open val bitPadding: Unit = 4.px
 
-    // create a cool white
     open val bitColor = rgba(233, 236, 239, 1f)
+
+    open val labelColor get() = colors.text.primary.normal
+
+    open val labelFontSize: Unit = 12.px
+
+    open val labelFont get() = fonts.regular
+
+    open val lateralPadding: Unit = 13.px
+
+    /** only used if fontSize is 0 */
+    open val verticalPadding: Unit = 6.px
 }
