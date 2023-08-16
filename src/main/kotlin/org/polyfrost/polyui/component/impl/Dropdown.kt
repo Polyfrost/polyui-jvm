@@ -30,7 +30,7 @@ import org.polyfrost.polyui.component.DrawableOp
 import org.polyfrost.polyui.component.Focusable
 import org.polyfrost.polyui.event.*
 import org.polyfrost.polyui.input.PolyText
-import org.polyfrost.polyui.input.PolyTranslator.Companion.localised
+import org.polyfrost.polyui.input.Translator.Companion.localised
 import org.polyfrost.polyui.layout.Layout.Companion.drawables
 import org.polyfrost.polyui.layout.impl.GridLayout
 import org.polyfrost.polyui.property.impl.DropdownProperties
@@ -89,7 +89,7 @@ class Dropdown(
             field!!.text.y += properties.verticalPadding
             if (field!!.image != null) field!!.image!!.x += x
         }
-    var i = 0
+    private var i = 0
         get() = field++
     private val dropdown = GridLayout(
         at.clone(),

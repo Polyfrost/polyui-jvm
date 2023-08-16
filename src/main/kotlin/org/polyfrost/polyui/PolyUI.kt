@@ -31,7 +31,7 @@ import org.polyfrost.polyui.event.FocusedEvent
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Modifiers.Companion.mods
-import org.polyfrost.polyui.input.PolyTranslator
+import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.layout.Layout
 import org.polyfrost.polyui.layout.impl.PixelLayout
 import org.polyfrost.polyui.property.Settings
@@ -150,7 +150,7 @@ class PolyUI @JvmOverloads constructor(
     val master = PixelLayout(origin, Size(renderer.width.px, renderer.height.px), drawables = drawables, rawResize = true, acceptInput = false)
     val eventManager = EventManager(this)
     val keyBinder = KeyBinder(this)
-    val translator = PolyTranslator(this, translationDirectory ?: "")
+    val translator = Translator(this, translationDirectory ?: "")
 
     /** weather this PolyUI instance drew on this frame.
      *

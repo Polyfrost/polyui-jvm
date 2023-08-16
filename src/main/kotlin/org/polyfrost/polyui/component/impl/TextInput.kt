@@ -29,12 +29,16 @@ import org.polyfrost.polyui.component.Focusable
 import org.polyfrost.polyui.event.*
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
+import org.polyfrost.polyui.input.PolyText
+import org.polyfrost.polyui.input.Translator.Companion.localised
 import org.polyfrost.polyui.property.impl.TextInputProperties
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.Cursor
 import org.polyfrost.polyui.renderer.data.Line
+import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.unit.origin
 import org.polyfrost.polyui.unit.px
 import org.polyfrost.polyui.utils.closestToPoint
 import org.polyfrost.polyui.utils.dropAt
@@ -45,6 +49,11 @@ open class TextInput(
     properties: TextInputProperties? = null,
     at: Vec2<Unit>,
     size: Vec2<Unit>,
+    val placeholder: PolyText = "polyui.textinput.placeholder".localised(),
+    private val image: PolyImage? = null,
+    private val title: PolyText? = null,
+    private val hint: PolyText? = null,
+    private val initialText: PolyText? = null,
     private val fontSize: Unit = 12.px,
     vararg events: Event.Handler
 ) : Component(properties, at, size, false, true, *events), Focusable {
@@ -58,9 +67,8 @@ open class TextInput(
             text.str.calculate(renderer)
             errored = !properties.sanitizationFunction.invoke(txt)
             if (!errored) {
-                textListeners.fastEach {
-                    it(this, txt)
-                }
+                lastValid = value
+                accept(ChangedEvent(value))
             }
         }
     private var caret = 0
@@ -78,8 +86,12 @@ open class TextInput(
     private var selecting = false
     private lateinit var outlineColor: Color
     private var outlineThickness = 0f
+    private var titlex = 0f
+    private var titlew = 0f
+    private var hintx = 0f
+    private var hintw = 0f
+    private val iconAt = origin
     val selection get() = txt.substringSafe(caret, select)
-    private val textListeners = ArrayList<TextInput.(String) -> kotlin.Unit>(2)
 
     /**
      * represents if [TextInputProperties.sanitizationFunction] returned false (text no good)
@@ -91,18 +103,25 @@ open class TextInput(
             field = value
             if (value) {
                 outlineColor = properties.colors.state.danger.normal
-                if (properties.outlineThickness == 0f) outlineThickness = 2f
+                if (properties.outlineThickness.px == 0f) outlineThickness = 2f
             } else {
                 outlineColor = properties.outlineColor
-                outlineThickness = properties.outlineThickness
+                outlineThickness = properties.outlineThickness.px
             }
         }
+    var lastValid: String = ""
 
     override fun render() {
         if (!mouseOver) mouseDown = false
-        renderer.rect(x, y, width, height, properties.backgroundColor, properties.cornerRadii)
+        renderer.rect(x, y, width, height, properties.palette.normal, properties.cornerRadii)
         if (outlineThickness != 0f) {
             renderer.hollowRect(x, y, width, height, outlineColor, outlineThickness, properties.cornerRadii)
+        }
+        if (title != null) {
+            renderer.text(text.font, titlex, text.y, title.string, text.color, text.fontSize, text.textAlign)
+        }
+        if (image != null) {
+            renderer.image(image, iconAt.x, iconAt.y, image.width, image.height)
         }
         if (focused) {
             renderer.rect(cposx, cposy, 2f, text.fontSize, layout.colors.text.primary.normal)
@@ -114,7 +133,15 @@ open class TextInput(
         } else {
             color.alpha = 0.8f
         }
-        text.render()
+        if (txt.isNotEmpty()) {
+            text.render()
+        } else {
+            renderer.text(text.font, text.x, text.y, placeholder.string, properties.placeholderColor, text.fontSize, text.textAlign)
+        }
+        if (hint != null) {
+            renderer.rect(hintx - properties.lateralPadding.px, y, hintw + properties.lateralPadding.px * 2f, height, properties.palette.hovered, 0f, properties.cornerRadii[1], 0f, properties.cornerRadii[3])
+            renderer.text(text.font, hintx, text.y, hint.string, properties.placeholderColor, text.fontSize, text.textAlign)
+        }
         renderer.resetGlobalAlpha()
     }
 
@@ -168,6 +195,10 @@ open class TextInput(
         }
         if (event is FocusedEvent.Lost) {
             clearSelection()
+            if (errored) {
+                txt = lastValid
+                caret = txt.length
+            }
             focused = false
         }
         if (event is FocusedEvent.KeyTyped) {
@@ -473,8 +504,11 @@ open class TextInput(
     }
 
     override fun reset() {
-        properties.defaultText.reset()
-        text.text = properties.defaultText.clone()
+        if (initialText != null) {
+            text.text = initialText.clone()
+        } else {
+            txt = ""
+        }
     }
 
     fun clearSelection() {
@@ -485,13 +519,16 @@ open class TextInput(
 
     override fun setup(renderer: Renderer, polyUI: PolyUI) {
         super.setup(renderer, polyUI)
+        (properties.lateralPadding as? Unit.Dynamic)?.set(this.size!!.a)
         (fontSize as? Unit.Dynamic)?.set((size ?: layout.size ?: throw IllegalArgumentException("cannot set dynamic font size when no size is set")).b)
+        initialText?.translator = polyUI.translator
+        placeholder.translator = polyUI.translator
         text = Text(
             properties.text,
-            properties.defaultText.clone(),
+            initialText ?: "".localised(),
             at.clone(),
             size?.clone().also {
-                it?.b?.px = it?.b?.px?.minus(properties.verticalPadding * 2f) ?: 0f
+                it?.b?.px = it?.b?.px?.minus(properties.verticalPadding.px * 2f) ?: 0f
             },
             properties.text.fontSize,
             properties.text.alignment,
@@ -501,30 +538,58 @@ open class TextInput(
         text.layout = this.layout
         text.setup(renderer, polyUI)
         text.fontSize = fontSize.px
+        if (image != null) renderer.initImage(image)
     }
 
     override fun calculateBounds() {
         text.calculateBounds()
-        text.x = this.x + properties.lateralPadding
-        text.y = this.y + properties.verticalPadding
+        text.x = this.x + properties.lateralPadding.px
+        if (title != null) {
+            titlex = this.x + properties.lateralPadding.px
+            text.x += titlew + properties.lateralPadding.px
+        }
+        if (image != null) {
+            iconAt.a.px = this.x + properties.lateralPadding.px
+            iconAt.b.px = this.y + this.height / 2f - image.height / 2f
+            titlex += image.width + properties.lateralPadding.px
+            text.x += image.width + properties.lateralPadding.px
+        }
+        if (hint != null) {
+            hintx = this.x + this.width - hintw - properties.lateralPadding.px
+        }
+        text.y = this.y + this.height / 2f - text.fontSize / 2f
         super.calculateBounds()
         caretPos()
     }
 
     override fun onInitComplete() {
         super.onInitComplete()
-        text.width -= properties.lateralPadding * 2f
-        text.height -= properties.verticalPadding * 2f
+        text.width -= properties.lateralPadding.px * 2f
+        text.height -= properties.verticalPadding.px * 2f
+        if (image != null) {
+            text.width -= image.width + properties.lateralPadding.px
+        }
+        if (title != null) {
+            titlew = renderer.textBounds(text.font, title.string, text.fontSize, text.textAlign).width
+            text.width -= titlew + properties.lateralPadding.px
+        }
+        if (hint != null) {
+            hintw = renderer.textBounds(text.font, hint.string, text.fontSize, text.textAlign).width
+            text.width -= hintw + properties.lateralPadding.px
+        }
     }
 
     override fun calculateSize(): Vec2<Unit> {
         return text.size!!.clone().also {
-            it.a.px += properties.lateralPadding * 2f
-            it.b.px += properties.verticalPadding * 2f
+            it.a.px += properties.lateralPadding.px * 2f
+            it.b.px += properties.verticalPadding.px * 2f
         }
     }
+    class ChangedEvent internal constructor(val value: String) : Event {
+        constructor() : this("")
 
-    fun addTextListener(function: TextInput.(String) -> kotlin.Unit) {
-        textListeners.add(function)
+        override fun hashCode() = 578439257
+
+        override fun equals(other: Any?) = other is ChangedEvent
     }
 }

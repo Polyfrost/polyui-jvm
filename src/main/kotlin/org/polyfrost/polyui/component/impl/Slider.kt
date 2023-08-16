@@ -32,7 +32,6 @@ import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.unit.Point
 import org.polyfrost.polyui.unit.Size
 import org.polyfrost.polyui.unit.Unit
-import org.polyfrost.polyui.utils.fastEach
 
 /**
  * A slider component.
@@ -43,8 +42,9 @@ class Slider(
     at: Point<Unit>,
     size: Size<Unit>,
     val min: Float = 0f,
-    val max: Float = 100f
-) : Component(properties, at, size, false, true) {
+    val max: Float = 100f,
+    vararg events: Event.Handler
+) : Component(properties, at, size, false, true, *events) {
     override val properties
         get() = super.properties as SliderProperties
     private var barThickness = 0f
@@ -52,15 +52,12 @@ class Slider(
     private var barY = 0f
     lateinit var barColor: Color.Animated
     lateinit var usedBarColor: Color.Animated
-    private val changeListeners = ArrayList<Slider.(Float) -> kotlin.Unit>(2)
 
     var value: Float = min
         set(value) {
             bitX = (value - min) / (max - min) * (width - height)
             if ((p as? SliderProperties)?.setInstantly == true && field != value) {
-                changeListeners.fastEach {
-                    it(this, value)
-                }
+                accept(ChangedEvent(value))
             }
             field = value
         }
@@ -94,9 +91,7 @@ class Slider(
         if (dragging) {
             if (!polyUI.mouseDown) {
                 if (!properties.setInstantly) {
-                    changeListeners.fastEach {
-                        it(this, value)
-                    }
+                    accept(ChangedEvent(value))
                 }
                 dragging = false
             }
@@ -135,7 +130,11 @@ class Slider(
         barY = y + height / 2f - barThickness / 2f
     }
 
-    fun addChangeListener(listener: Slider.(Float) -> kotlin.Unit) {
-        changeListeners.add(listener)
+    class ChangedEvent internal constructor(val value: Float) : Event {
+        constructor() : this(0f)
+
+        // uhh, i'd say about 20 feet
+        override fun hashCode() = 29083213
+        override fun equals(other: Any?) = other is ChangedEvent
     }
 }

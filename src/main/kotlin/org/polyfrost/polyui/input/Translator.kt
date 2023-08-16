@@ -21,6 +21,7 @@
 
 package org.polyfrost.polyui.input
 
+import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.utils.getResourceStreamNullable
 import java.text.MessageFormat
@@ -52,7 +53,7 @@ import kotlin.collections.ArrayDeque
  *
  *  @see MessageFormat
  */
-class PolyTranslator(private val polyUI: PolyUI, private val translationDir: String) {
+class Translator(private val polyUI: PolyUI, private val translationDir: String) {
     private var resourcePath: String = if (System.getProperty("polyui.locale") != null) {
         "$translationDir/${System.getProperty("polyui.locale")}.lang"
     } else {
@@ -60,6 +61,12 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
     }
     private val map = HashMap<String, String>()
     private val queue = ArrayDeque<String>()
+
+    /**
+     * Set to true to disable warnings when a translation is not found.
+     */
+    @ApiStatus.Internal
+    var dontWarn: Boolean = false
 
     /** default file loading tracker */
     private var loadState = 0
@@ -81,7 +88,7 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
      * Add a file to the translation table, which will be used to load keys.
      *
      * Unless [now] is `true`, the file will only be loaded if the key is not found in the existing table.
-     * @see PolyTranslator
+     * @see Translator
      * @see getResourceStreamNullable
      * @since 0.17.5
      */
@@ -109,7 +116,7 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
      * Add a map of keys to the translation table.
      *
      * @see loadKeys
-     * @see PolyTranslator
+     * @see Translator
      * @since 0.17.5
      */
     fun addKeys(keys: Map<out String, String>) = map.putAll(keys)
@@ -123,7 +130,7 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
      * )
      * ```
      * @see loadKeys
-     * @see PolyTranslator
+     * @see Translator
      * @since 0.17.5
      */
     fun addKeys(vararg pairs: Pair<String, String>) = map.putAll(pairs)
@@ -140,16 +147,16 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
 
     /** Internal representation of a string in PolyUI.
      *
-     * The string can be [translate]d if there is an attached [PolyTranslator] to this instance and the key is present in the file.
-     * @see PolyTranslator
+     * The string can be [translate]d if there is an attached [Translator] to this instance and the key is present in the file.
+     * @see Translator
      */
     class Text(val key: String, vararg val objects: Any?) : Cloneable {
         inline val length get() = string.length
 
-        var polyTranslator: PolyTranslator? = null
+        var translator: Translator? = null
             set(value) {
                 if (value === field) return
-                canTranslate = true
+                canTranslate = key.isNotEmpty()
                 field = value
             }
 
@@ -165,7 +172,7 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
             get() {
                 @Suppress("ReplaceCallWithBinaryOperator")
                 if (canTranslate && field.equals(key)) {
-                    field = polyTranslator!!.translate(this)
+                    field = translator!!.translate(this)
                     if (field == key) canTranslate = false // key/file missing
                 }
                 return field
@@ -190,7 +197,7 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
 
         public override fun clone(): Text {
             return Text(this.key, *this.objects).also {
-                polyTranslator = this.polyTranslator
+                translator = this.translator
             }
         }
 
@@ -230,7 +237,7 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
             null
         }
         if (line == null) {
-            PolyUI.LOGGER.warn("No translation for '$key'!")
+            if (!dontWarn) PolyUI.LOGGER.warn("No translation for '$key'!")
             return key
         }
         if (text.hasObjects) {
@@ -248,5 +255,5 @@ class PolyTranslator(private val polyUI: PolyUI, private val translationDir: Str
     }
 }
 
-/** # [click here][PolyTranslator] */
-typealias PolyText = PolyTranslator.Text
+/** # [click here][Translator] */
+typealias PolyText = Translator.Text

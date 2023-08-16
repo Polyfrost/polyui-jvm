@@ -51,7 +51,7 @@ class Settings {
     var useAntialiasing = true
     var enableVSync = true
 
-    /** @see org.polyfrost.polyui.input.PolyTranslator */
+    /** @see org.polyfrost.polyui.input.Translator */
     var defaultLocale = "en_default"
 
     /** How to handle resource (image and font) loading errors. */

@@ -25,7 +25,7 @@ import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.input.PolyText
-import org.polyfrost.polyui.input.PolyTranslator.Companion.localised
+import org.polyfrost.polyui.input.Translator.Companion.localised
 import org.polyfrost.polyui.property.impl.TextProperties
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.Line
@@ -87,10 +87,16 @@ open class Text @JvmOverloads constructor(
     var text
         get() = str.text
         set(value) {
-            value.polyTranslator = polyUI.translator
+            value.translator = polyUI.translator
             // <init>
             value.string
             str.text = value
+            str.calculate(renderer)
+        }
+    var string
+        get() = str.text.string
+        set(value) {
+            str.text.string = value
             str.calculate(renderer)
         }
 
@@ -131,7 +137,7 @@ open class Text @JvmOverloads constructor(
             SingleText(initialText, this.properties.font, this.fs.px, textAlign, sized ?: origin)
         }
         str.renderer = renderer
-        str.text.polyTranslator = polyUI.translator
+        str.text.translator = polyUI.translator
 
         if (layout.size != null) doDynamicSize(str.size)
         str.calculate(renderer)

@@ -21,21 +21,10 @@
 
 package org.polyfrost.polyui.property.impl
 
-import org.polyfrost.polyui.color.Colors
-import org.polyfrost.polyui.property.Properties
-import org.polyfrost.polyui.unit.Unit
-import org.polyfrost.polyui.unit.px
 import org.polyfrost.polyui.utils.levenshteinDistance
 
 open class SearchFieldProperties(
     open val searchAlgorithm: Any.(String) -> Boolean = {
         toString().levenshteinDistance(it) <= 2
     }
-) : Properties() {
-    override val palette: Colors.Palette
-        get() = colors.component.bg
-    open val fontSize: Unit = 12.px
-    open val textImagePadding: Unit = 8.px
-    open val lateralPadding: Unit = 8.px
-    open val inputProperties: TextInputProperties = TextInputProperties(TextProperties())
-}
+) : TextInputProperties()

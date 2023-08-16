@@ -40,7 +40,7 @@ import org.polyfrost.polyui.unit.Vec2
 open class Block @JvmOverloads constructor(
     properties: BlockProperties? = null,
     at: Vec2<Unit>,
-    size: Size<Unit>,
+    size: Size<Unit>?,
     rawResize: Boolean = false,
     acceptInput: Boolean = true,
     vararg events: Event.Handler
@@ -48,7 +48,7 @@ open class Block @JvmOverloads constructor(
     override val properties
         get() = super.properties as BlockProperties
     protected lateinit var outlineColor: Color.Animated
-    protected lateinit var cornerRadii: FloatArray
+    lateinit var cornerRadii: FloatArray
 
     override fun render() {
         if (properties.outlineThickness != 0f) {

@@ -885,7 +885,7 @@ abstract class Layout(
             components.add(
                 0,
                 Block(
-                    properties = if (transparent) BlockProperties(Color.TRANSPARENT_PALETTE) else BackgroundProperties(cornerRadii),
+                    properties = if (transparent) BlockProperties({ Color.TRANSPARENT_PALETTE })else BackgroundProperties(cornerRadii),
                     origin,
                     fill,
                     true,

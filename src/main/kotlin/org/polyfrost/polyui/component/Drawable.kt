@@ -333,7 +333,7 @@ abstract class Drawable(
         }
     }
 
-    /** Use this function to reset your drawable's [PolyText][org.polyfrost.polyui.input.PolyTranslator] if it is using one. */
+    /** Use this function to reset your drawable's [PolyText][org.polyfrost.polyui.input.Translator] if it is using one. */
     open fun reset() {
         // no-op
     }

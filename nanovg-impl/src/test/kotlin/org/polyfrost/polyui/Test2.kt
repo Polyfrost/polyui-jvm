@@ -28,7 +28,7 @@ import org.polyfrost.polyui.event.Event.Companion.events
 import org.polyfrost.polyui.event.MouseClicked
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.Modifiers
-import org.polyfrost.polyui.input.PolyTranslator.Companion.localised
+import org.polyfrost.polyui.input.Translator.Companion.localised
 import org.polyfrost.polyui.layout.Layout.Companion.drawables
 import org.polyfrost.polyui.layout.impl.FlexLayout
 import org.polyfrost.polyui.layout.impl.PixelLayout
@@ -168,7 +168,10 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
             ),
             TextInput(
                 at = 24.px * 203.px,
-                size = 352.px * 32.px
+                size = 352.px * 32.px,
+                image = PolyImage("search.svg"),
+                title = "Title:".localised(),
+                hint = "px".localised()
             ),
             FlexLayout(
                 at = 24.px * 247.px,

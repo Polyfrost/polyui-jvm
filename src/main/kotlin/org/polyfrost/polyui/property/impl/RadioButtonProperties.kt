@@ -21,24 +21,20 @@
 
 package org.polyfrost.polyui.property.impl
 
-import org.polyfrost.polyui.color.Color
-import org.polyfrost.polyui.color.Colors
-import org.polyfrost.polyui.property.Properties
+import org.polyfrost.polyui.animate.Animation
+import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.unit.px
+import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.radii
 
-/**
- * @param sanitizationFunction A function that will be called every time the text is changed.
- * If it returns false, the input will be highlighted in [red][org.polyfrost.polyui.color.Colors.State.danger]
- * and the [listeners][org.polyfrost.polyui.component.impl.TextInput.addTextListener] will not be notified.
- */
-open class TextInputProperties(open val text: TextProperties = TextProperties(), open val sanitizationFunction: (String) -> Boolean = { true }) : Properties() {
-    val placeholderColor: Color get() = colors.text.primary.disabled
-    override val palette: Colors.Palette get() = colors.component.bg
-    open val lateralPadding: Unit = 12.px
-    open val verticalPadding: Unit = 8.px
-    open val cornerRadii: FloatArray = 6f.radii()
-    open val outlineColor: Color get() = colors.page.border20
-    open val outlineThickness: Unit = 0.px
+open class RadioButtonProperties(open val textProperties: TextProperties = TextProperties()) : BlockProperties() {
+
+    val moveAnimationDuration: Long = 0.6.seconds
+    open val moveAnimation: Animation.Type? = Animations.EaseOutExpo
+    open val verticalPadding: Unit = 10.px
+    open val lateralPadding: Unit = 67.px
+    open val edgePadding: Unit = 1.px
+    override val outlineThickness = 1f
+    override val cornerRadii = 8f.radii()
 }

@@ -60,7 +60,7 @@ class Switch(
     var fontSize = 0f
     var label = label
         set(value) {
-            value?.polyTranslator = polyUI.translator
+            value?.translator = polyUI.translator
             value?.string
             field = value
         }
@@ -106,7 +106,7 @@ class Switch(
         if (properties.labelFontSize.px == 0f) {
             fontSize = height - properties.verticalPadding.px * 2f
         }
-        label?.polyTranslator = polyUI.translator
+        label?.translator = polyUI.translator
     }
 
     override fun calculateBounds() {

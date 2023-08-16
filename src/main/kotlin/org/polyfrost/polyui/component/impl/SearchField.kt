@@ -21,16 +21,11 @@
 
 package org.polyfrost.polyui.component.impl
 
-import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.component.ContainingComponent
-import org.polyfrost.polyui.component.Focusable
-import org.polyfrost.polyui.event.FocusedEvent
+import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.property.impl.SearchFieldProperties
-import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.unit.origin
 import org.polyfrost.polyui.unit.px
 import org.polyfrost.polyui.utils.fastEach
 import org.polyfrost.polyui.utils.toArrayList
@@ -46,58 +41,34 @@ class SearchField(
     at: Vec2<Unit>,
     size: Vec2<Unit>,
     image: PolyImage? = null,
-    fontSize: Unit? = 16.px,
+    fontSize: Unit = 16.px,
     searchList: List<Any>,
     searchOut: MutableList<Any>? = null
-) : ContainingComponent(properties, at, size, children = arrayOf()), Focusable {
+) : TextInput(properties = properties, at = at, size = size, image = image, fontSize = fontSize) {
     override val properties
         get() = super.properties as SearchFieldProperties
-    private val image = if (image != null) Image(image = image, at = origin, acceptInput = false) else null
-    private lateinit var input: TextInput
-    private val fs = fontSize
     var searchList = searchList.toArrayList()
     val searchOut = searchOut ?: arrayListOf()
-    var query get() = input.txt
+    var query
+        get() = super.txt
         set(value) {
-            input.txt = value
+            super.txt = value
         }
-
-    override fun setup(renderer: Renderer, polyUI: PolyUI) {
-        super.setup(renderer, polyUI)
-        (properties.fontSize as? Unit.Dynamic)?.set(this.size!!.b)
-        (properties.textImagePadding as? Unit.Dynamic)?.set(this.size!!.a)
-        (properties.lateralPadding as? Unit.Dynamic)?.set(this.size!!.a)
-        val fontSize = fs ?: properties.fontSize
-
-        image?.size = image?.calculateSize()
-        input = TextInput(properties.inputProperties, at = origin, size = size!!, fontSize = fontSize)
-        addComponents(input, image)
-    }
-
-    override fun placeChildren() {
-        super.placeChildren()
-        input.text.x = this.x
-        input.text.y = this.y + this.height / 2f - input.text.fontSize / 2f
-        input.text.x += properties.lateralPadding.px + if (image != null) image.width + properties.textImagePadding.px else 0f
-        if (image != null) {
-            image.x += properties.lateralPadding.px
-            image.y = this.y + this.height / 2f - image.height / 2f
-        }
-    }
 
     /**
      * Return [searchOut], which will be automatically updated when the [query] changes.
      */
     fun getSearch(): List<Any> = searchOut
 
-    override fun accept(event: FocusedEvent): Boolean {
-        input.accept(event)
-        if (event !== FocusedEvent.Gained && event !== FocusedEvent.Lost) {
+    override fun accept(event: Event): Boolean {
+        if (event is ChangedEvent) {
             searchOut.clear()
             searchList.fastEach {
-                if (properties.searchAlgorithm(it, query)) searchOut.add(it)
+                if (properties.searchAlgorithm(it, query)) {
+                    searchOut.add(it)
+                }
             }
         }
-        return true
+        return super.accept(event)
     }
 }

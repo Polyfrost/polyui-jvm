@@ -35,12 +35,11 @@ import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.input.Modifiers.Companion.mods
 import org.polyfrost.polyui.input.Mouse
-import org.polyfrost.polyui.input.PolyTranslator.Companion.localised
+import org.polyfrost.polyui.input.Translator.Companion.localised
 import org.polyfrost.polyui.layout.Layout.Companion.drawables
 import org.polyfrost.polyui.layout.impl.FlexLayout
 import org.polyfrost.polyui.layout.impl.PixelLayout
 import org.polyfrost.polyui.property.Properties
-import org.polyfrost.polyui.property.impl.BlockProperties
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.renderer.impl.GLWindow
 import org.polyfrost.polyui.renderer.impl.NVGRenderer
@@ -143,12 +142,6 @@ fun main() {
                         at = origin
                     ),
                     Block(
-                        properties = BlockProperties(
-                            Color.Gradient(
-                                rgba(1f, 0f, 1f, 1f),
-                                rgba(0f, 1f, 1f, 1f)
-                            )
-                        ),
                         at = 0.px * 30.px,
                         size = 120.px * 120.px,
                         events = events(
@@ -176,7 +169,6 @@ fun main() {
                         )
                     ),
                     Block(
-                        properties = BlockProperties(Color.Chroma(5.seconds)),
                         at = 180.px * 30.px,
                         size = 18.percent * 120.px,
                         events = events(
