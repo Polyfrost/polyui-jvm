@@ -62,7 +62,6 @@ open class Color @JvmOverloads constructor(hue: Float, saturation: Float, bright
 
     /** Set this to true to update the [argb] value. */
     var dirty = true
-        protected set
 
     /** return an integer representation of this color.
      * Utilizes bit-shifts to store the color as one 32-bit integer, like so:
@@ -139,6 +138,14 @@ open class Color @JvmOverloads constructor(hue: Float, saturation: Float, bright
         result = 31 * result + brightness.toInt()
         result = 31 * result + alpha.toInt()
         return result
+    }
+
+    fun take(color: Color): Color {
+        this.hue = color.hue
+        this.saturation = color.saturation
+        this.brightness = color.brightness
+        this.alpha = color.alpha
+        return this
     }
 
     companion object {

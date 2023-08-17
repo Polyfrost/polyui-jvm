@@ -33,6 +33,7 @@ import org.polyfrost.polyui.unit.Point
 import org.polyfrost.polyui.unit.Size
 import org.polyfrost.polyui.unit.TextAlign
 import org.polyfrost.polyui.unit.Unit
+import org.polyfrost.polyui.utils.cl1
 import org.polyfrost.polyui.utils.radii
 
 /**
@@ -112,6 +113,12 @@ class Switch(
     override fun calculateBounds() {
         super.calculateBounds()
         calcRadii()
+    }
+
+    override fun rescale(scaleX: Float, scaleY: Float) {
+        super.rescale(scaleX, scaleY)
+        calcRadii()
+        fontSize *= cl1(scaleX, scaleY)
     }
 
     private fun calcRadii() {

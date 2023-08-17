@@ -28,7 +28,7 @@ import org.polyfrost.polyui.component.Focusable
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.layout.Layout
-import org.polyfrost.polyui.utils.fastEachReversed
+import org.polyfrost.polyui.utils.fastEach
 import org.polyfrost.polyui.utils.fastRemoveIf
 import kotlin.experimental.and
 import kotlin.experimental.inv
@@ -40,8 +40,8 @@ import kotlin.experimental.or
  * @param polyUI The PolyUI instance to use.
  */
 class EventManager(private val polyUI: PolyUI) {
-    private val mouseOverObjects = ArrayList<Drawable>(3) // asm: it is not expected to have many of this type under hover at once
-    private var mouseOverObj: Drawable? = null
+    private val mouseOvers = ArrayList<Drawable>(3) // asm: it is not expected to have many of this type under hover at once
+    private var mouseOver: Drawable? = null
     var mouseX: Float = 0f
         private set
     var mouseY: Float = 0f
@@ -110,7 +110,7 @@ class EventManager(private val polyUI: PolyUI) {
      */
     @ApiStatus.Internal
     @Suppress("NOTHING_TO_INLINE")
-    inline fun recalculateMousePos() = setMousePosAndUpdate(mouseX, mouseY)
+    inline fun recalculateMousePos() = mouseMoved(mouseX, mouseY)
 
     /**
      * add a modifier to the current keyModifiers.
@@ -138,17 +138,23 @@ class EventManager(private val polyUI: PolyUI) {
         keyModifiers = 0
     }
 
-    private fun mouseCalculate(drawable: Drawable, x: Float, y: Float): Boolean {
-        if ((!drawable.consumesHover || mouseOverObj == null) && drawable.acceptsInput && drawable.isInside(x, y)) {
+    /**
+     * Internal method for drawables, tracking it if it lies inside the given point.
+     *
+     * This is used for event dispatching.
+     */
+    @ApiStatus.Internal
+    fun processCandidate(drawable: Drawable, x: Float, y: Float): Boolean {
+        if ((!drawable.consumesHover || mouseOver !== drawable) && drawable.acceptsInput && drawable.isInside(x, y)) {
             if (!drawable.mouseOver) {
                 drawable.mouseOver = true
                 if (!drawable.consumesHover) {
-                    mouseOverObjects.add(drawable)
+                    mouseOvers.add(drawable)
                     if (drawable.accept(MouseEntered)) {
                         return true
                     }
                 } else {
-                    mouseOverObj = drawable
+                    mouseOver = drawable
                     drawable.accept(MouseEntered)
                     return true
                 }
@@ -157,39 +163,39 @@ class EventManager(private val polyUI: PolyUI) {
         return false
     }
 
-    private fun calcMouse(layout: Layout, x: Float, y: Float) {
+    private fun processCandidates(layout: Layout, x: Float, y: Float) {
         if (layout.isInside(x, y)) {
             for (i in layout.children.size - 1 downTo 0) {
-                calcMouse(layout.children[i], x, y)
+                processCandidates(layout.children[i], x, y)
             }
             for (i in layout.components.size - 1 downTo 0) {
-                if (mouseCalculate(layout.components[i], x, y)) {
+                if (processCandidate(layout.components[i], x, y)) {
                     return
                 }
             }
-            mouseCalculate(layout, x, y)
+            processCandidate(layout, x, y)
         }
     }
 
-    /** call this function to update the mouse position. It also will update all necessary mouse over flags. */
-    fun setMousePosAndUpdate(x: Float, y: Float) {
+    /** call this function to update the mouse position. */
+    fun mouseMoved(x: Float, y: Float) {
         if (mouseX == x && mouseY == y) return
         mouseX = x
         mouseY = y
         if (!mouseDown) {
-            calcMouse(polyUI.master, x, y)
+            processCandidates(polyUI.master, x, y)
         }
-        if (mouseOverObj != null) {
-            val it = mouseOverObj!!
+        if (mouseOver != null) {
+            val it = mouseOver!!
             if (!it.isInside(x, y)) {
                 it.accept(MouseExited)
                 it.mouseOver = false
-                mouseOverObj = null
+                mouseOver = null
             } else {
                 it.accept(MouseMoved)
             }
         }
-        mouseOverObjects.fastRemoveIf {
+        mouseOvers.fastRemoveIf {
             (!it.isInside(x, y)).also { b ->
                 if (b) {
                     it.accept(MouseExited)
@@ -201,14 +207,14 @@ class EventManager(private val polyUI: PolyUI) {
         }
     }
 
-    fun onMousePressed(button: Int) {
+    fun mousePressed(button: Int) {
         if (button == 0) mouseDown = true
         val event = MousePressed(button, mouseX, mouseY, keyModifiers)
         dispatch(event)
     }
 
     /** call this function when a mouse button is released. */
-    fun onMouseReleased(button: Int) {
+    fun mouseReleased(button: Int) {
         if (button == 0) {
             mouseDown = false
         }
@@ -239,30 +245,35 @@ class EventManager(private val polyUI: PolyUI) {
         val event2 = MouseClicked(button, mouseX, mouseY, clickAmount, keyModifiers)
         if (polyUI.keyBinder.accept(event)) return
         if (polyUI.keyBinder.accept(event2)) return
-        polyUI.master.onAllLayouts(true) {
-            if (isInside(mouseX, mouseY)) {
-                components.fastEachReversed {
-                    if (it.mouseOver) {
-                        if (button == 0 && it is Focusable) {
-                            if (polyUI.focus(it)) {
-                                return@onAllLayouts
-                            }
-                        }
-                        if (!releaseCancelled) {
-                            if (it.accept(event)) releaseCancelled = true
-                        }
-                        if (!clickedCancelled) {
-                            if (it.accept(event2)) clickedCancelled = true
-                        }
-                    }
+        if (button == 0) {
+            mouseOvers.fastEach {
+                if (tryFocus(it, mouseX, mouseY)) {
+                    return
                 }
             }
+            if (mouseOver != null && tryFocus(mouseOver!!, mouseX, mouseY)) {
+                return
+            }
         }
+        dispatch(event)
+        dispatch(event2)
+    }
+
+    /**
+     * try to focus a drawable, and return true if it was successful.
+     */
+    fun tryFocus(drawable: Drawable, x: Float, y: Float): Boolean {
+        if (drawable is Focusable && drawable.isInside(x, y)) {
+            if (polyUI.focus(drawable)) {
+                return true
+            }
+        }
+        return false
     }
 
     /** call this function when the mouse is scrolled. */
     @Suppress("NAME_SHADOWING")
-    fun onMouseScrolled(amountX: Int, amountY: Int) {
+    fun mouseScrolled(amountX: Int, amountY: Int) {
         var amountX = if (polyUI.settings.naturalScrolling) amountX else -amountX
         var amountY = if (polyUI.settings.naturalScrolling) amountY else -amountY
         if ((keyModifiers and KeyModifiers.LSHIFT.value).toInt() != 0) {
@@ -277,34 +288,17 @@ class EventManager(private val polyUI: PolyUI) {
     }
 
     /**
-     * Dispatch an event to this PolyUI instance, and it will be given to any drawable that has mouseOver true.
+     * Dispatch an event to this PolyUI instance, and it will be given to any tracked drawable.
      */
-    fun dispatch(event: Event) {
-        if (polyUI.keyBinder.accept(event)) return
-        dispatchTo(polyUI.master, event)
-    }
-
-    /**
-     * Dispatch an event to a specific layout, and its children.
-     *
-     * **Note:** [dispatch] is almost every case should be used instead, as it gives it to all drawables; hence why it is marked as internal.
-     * @see dispatch
-     */
-    @ApiStatus.Internal
-    fun dispatchTo(layout: Layout, event: Event): Boolean {
-        for (i in layout.components.size - 1 downTo 0) {
-            val it = layout.components[i]
-            if (it.mouseOver) {
-                if (it.accept(event)) {
-                    return true
-                }
+    fun dispatch(event: Event): Boolean {
+        if (polyUI.keyBinder.accept(event)) return true
+        if (mouseOver?.accept(event) == true) {
+            return true
+        }
+        mouseOvers.fastEach {
+            if (it.accept(event)) {
+                return true
             }
-        }
-        for (i in layout.children.size - 1 downTo 0) {
-            if (dispatchTo(layout.children[i], event)) return true
-        }
-        if (layout.mouseOver) {
-            return layout.accept(event)
         }
         return false
     }

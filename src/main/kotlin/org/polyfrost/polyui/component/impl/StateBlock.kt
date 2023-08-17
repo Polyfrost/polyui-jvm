@@ -21,10 +21,12 @@
 
 package org.polyfrost.polyui.component.impl
 
+import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.event.MouseClicked
 import org.polyfrost.polyui.property.impl.StatedProperties
+import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.unit.Vec2
 
@@ -62,6 +64,11 @@ abstract class StateBlock(
             return true
         }
         return super.accept(event)
+    }
+
+    override fun setup(renderer: Renderer, polyUI: PolyUI) {
+        super.setup(renderer, polyUI)
+        if (active) recolor(properties.activePalette.normal, properties.activateAnimation, properties.activateAnimationDuration)
     }
 
     /**

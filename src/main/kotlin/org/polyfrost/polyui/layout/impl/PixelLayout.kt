@@ -59,6 +59,7 @@ open class PixelLayout(
      * This means that percentages are not 100% accurate, but it is better than nothing as the situation is not really ideal and should not be used in the first place.
      */
     private var dynamicInference = false
+    private var warned = false
 
     init {
         drawables.forEach {
@@ -85,7 +86,8 @@ open class PixelLayout(
         var height = children.maxOfOrNull { cy(it) } ?: 0f
         height = max(height, components.maxOfOrNull { if (!dynamicInference && it.isDynamic) 0f else it.y + it.height } ?: 0f)
         dynamicInference = !dynamicInference && children.anyAre { it.isDynamic } || components.anyAre { it.isDynamic }
-        if (initStage != INIT_COMPLETE && dynamicInference) {
+        if (!warned && initStage != INIT_COMPLETE && dynamicInference) {
+            warned = true
             PolyUI.LOGGER.warn("${this.simpleName} has dynamically sized children, but it does not have a size itself. This is not ideal and may lead to visual issues. Please set a size. See PixelLayout#dynamicInference")
         }
         if (width == 0f) throw Exception("unable to infer width of ${this.simpleName}: no concrete sized children or components, please specify a size")

@@ -40,10 +40,7 @@ import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.origin
 import org.polyfrost.polyui.unit.px
-import org.polyfrost.polyui.utils.closestToPoint
-import org.polyfrost.polyui.utils.dropAt
-import org.polyfrost.polyui.utils.fastEach
-import org.polyfrost.polyui.utils.substringSafe
+import org.polyfrost.polyui.utils.*
 
 open class TextInput(
     properties: TextInputProperties? = null,
@@ -114,9 +111,6 @@ open class TextInput(
     override fun render() {
         if (!mouseOver) mouseDown = false
         renderer.rect(x, y, width, height, properties.palette.normal, properties.cornerRadii)
-        if (outlineThickness != 0f) {
-            renderer.hollowRect(x, y, width, height, outlineColor, outlineThickness, properties.cornerRadii)
-        }
         if (title != null) {
             renderer.text(text.font, titlex, text.y, title.string, text.color, text.fontSize, text.textAlign)
         }
@@ -142,7 +136,9 @@ open class TextInput(
             renderer.rect(hintx - properties.lateralPadding.px, y, hintw + properties.lateralPadding.px * 2f, height, properties.palette.hovered, 0f, properties.cornerRadii[1], 0f, properties.cornerRadii[3])
             renderer.text(text.font, hintx, text.y, hint.string, properties.placeholderColor, text.fontSize, text.textAlign)
         }
-        renderer.resetGlobalAlpha()
+        if (outlineThickness != 0f) {
+            renderer.hollowRect(x, y, width, height, outlineColor, outlineThickness, properties.cornerRadii)
+        }
     }
 
     override fun accept(event: Event): Boolean {
@@ -442,6 +438,20 @@ open class TextInput(
         text.rescale(scaleX, scaleY)
         cposx *= scaleX
         cposy *= scaleY
+        if (title != null) titlew = renderer.textBounds(text.font, title.string, text.fontSize, text.textAlign).width
+        if (hint != null) hintw = renderer.textBounds(text.font, hint.string, text.fontSize, text.textAlign).width
+        if (image != null) {
+            if (rawResize) {
+                image.width *= scaleX
+                image.height *= scaleY
+            } else {
+                val s = cl1(scaleX, scaleY)
+                image.width *= s
+                image.height *= s
+            }
+        }
+        calculateBounds()
+        selections()
     }
 
     fun toLastSpace() {
@@ -519,6 +529,7 @@ open class TextInput(
 
     override fun setup(renderer: Renderer, polyUI: PolyUI) {
         super.setup(renderer, polyUI)
+        (properties.outlineThickness as? Unit.Dynamic)?.set(this.size!!.a)
         (properties.lateralPadding as? Unit.Dynamic)?.set(this.size!!.a)
         (fontSize as? Unit.Dynamic)?.set((size ?: layout.size ?: throw IllegalArgumentException("cannot set dynamic font size when no size is set")).b)
         initialText?.translator = polyUI.translator
@@ -535,6 +546,7 @@ open class TextInput(
             false
         )
         outlineColor = properties.outlineColor
+        outlineThickness = properties.outlineThickness.px
         text.layout = this.layout
         text.setup(renderer, polyUI)
         text.fontSize = fontSize.px
@@ -577,6 +589,7 @@ open class TextInput(
             hintw = renderer.textBounds(text.font, hint.string, text.fontSize, text.textAlign).width
             text.width -= hintw + properties.lateralPadding.px
         }
+        calculateBounds()
     }
 
     override fun calculateSize(): Vec2<Unit> {

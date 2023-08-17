@@ -87,6 +87,22 @@ class Button(
         leftImage?.size = leftImage?.calculateSize()
         rightImage?.size = rightImage?.calculateSize()
 
+        // asm: short-path: only an image, so just center it and dip
+        if (leftImage != null && text == null) {
+            return if (fixedSize == null) {
+                val s = leftImage.size!!.clone()
+                leftImage.y = y + properties.lateralPadding
+                leftImage.x = x + properties.lateralPadding
+                s.a.px += properties.verticalPadding * 2f
+                s.b.px += properties.verticalPadding * 2f
+                s
+            } else {
+                leftImage.x = x + fixedSize.width / 2f - leftImage.width / 2f
+                leftImage.y = y + fixedSize.height / 2f - leftImage.height / 2f
+                fixedSize
+            }
+        }
+
         leftImage?.x = x + properties.lateralPadding
         return if (fixedSize != null) {
             size = fixedSize

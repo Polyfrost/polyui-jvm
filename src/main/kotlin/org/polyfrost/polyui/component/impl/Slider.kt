@@ -37,7 +37,7 @@ import org.polyfrost.polyui.unit.Unit
  * A slider component.
  * @since 0.19.0
  */
-class Slider(
+open class Slider(
     properties: SliderProperties? = null,
     at: Point<Unit>,
     size: Size<Unit>,
@@ -47,9 +47,9 @@ class Slider(
 ) : Component(properties, at, size, false, true, *events) {
     override val properties
         get() = super.properties as SliderProperties
-    private var barThickness = 0f
-    private var bitX = 0f
-    private var barY = 0f
+    protected var barThickness = 0f
+    protected var bitX = 0f
+    protected var barY = 0f
     lateinit var barColor: Color.Animated
     lateinit var usedBarColor: Color.Animated
 
@@ -61,7 +61,7 @@ class Slider(
             }
             field = value
         }
-    private var dragging = false
+    protected var dragging = false
     private var mx = 0f
 
     override fun setup(renderer: Renderer, polyUI: PolyUI) {
@@ -83,11 +83,11 @@ class Slider(
         return super.accept(event)
     }
 
-    private fun isOnBit(x: Float, y: Float): Boolean {
+    protected fun isOnBit(x: Float, y: Float): Boolean {
         return x in bitX..bitX + height && y in y..y + height
     }
 
-    override fun render() {
+    protected fun doDrag() {
         if (dragging) {
             if (!polyUI.mouseDown) {
                 if (!properties.setInstantly) {
@@ -97,6 +97,10 @@ class Slider(
             }
             set(polyUI.mouseX - mx)
         }
+    }
+
+    override fun render() {
+        doDrag()
         val height = height
         val hHeight = height / 2f
         val barRadius = barThickness / 2f
@@ -113,11 +117,12 @@ class Slider(
 
     override fun rescale(scaleX: Float, scaleY: Float) {
         super.rescale(scaleX, scaleY)
+        calculateBounds()
         // set the value back so it updates position stuff
         value = value
     }
 
-    private fun set(value: Float) {
+    protected fun set(value: Float) {
         var v = value
         if (value > width - height) v = width - height
         if (value < 0f) v = 0f

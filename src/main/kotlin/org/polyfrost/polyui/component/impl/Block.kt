@@ -51,10 +51,10 @@ open class Block @JvmOverloads constructor(
     lateinit var cornerRadii: FloatArray
 
     override fun render() {
+        renderer.rect(x, y, width, height, color, cornerRadii)
         if (properties.outlineThickness != 0f) {
             renderer.hollowRect(x, y, width, height, outlineColor, properties.outlineThickness, cornerRadii)
         }
-        renderer.rect(x, y, width, height, color, cornerRadii)
     }
 
     override fun setup(renderer: Renderer, polyUI: PolyUI) {

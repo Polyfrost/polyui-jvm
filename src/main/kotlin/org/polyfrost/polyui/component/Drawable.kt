@@ -79,7 +79,11 @@ abstract class Drawable(
     var initStage = INIT_NOT_STARTED
         internal set
 
-    /** weather or not the mouse is currently over this drawable. DO NOT modify this value. It is managed automatically by [org.polyfrost.polyui.event.EventManager]. */
+    /** weather or not the mouse is currently over this drawable.
+     *
+     * **DO NOT** modify this value. It is managed automatically by [org.polyfrost.polyui.event.EventManager].
+     * Changing this directly will not cause you to receive events.
+     */
     var mouseOver = false
         internal set
 
@@ -92,7 +96,7 @@ abstract class Drawable(
      * @see Layout.render
      * @since 0.21.4
      */
-    var renders = true
+    open var renders = true
 
     /**
      * Reference to the layout encapsulating this drawable.
@@ -348,7 +352,7 @@ abstract class Drawable(
      *
      * @see INIT_SETUP
      */
-    internal open fun setup(renderer: Renderer, polyUI: PolyUI) {
+    open fun setup(renderer: Renderer, polyUI: PolyUI) {
         if (initStage != INIT_NOT_STARTED) throw IllegalStateException("${this.simpleName} has already been setup!")
         this.renderer = renderer
         this.polyUI = polyUI

@@ -28,6 +28,11 @@ import org.polyfrost.polyui.property.impl.ScrollbarProperties
 import org.polyfrost.polyui.unit.origin
 
 class Scrollbar(private val horizontal: Boolean) : Block(null, origin, origin, false, true) {
+    // asm: as scrollbars spend time in the aether when they are not in use,
+    // and they autmatically de-render themselves, this always will return true
+    override var renders: Boolean
+        get() = true
+        set(value) {}
     override val properties
         get() = super.properties as ScrollbarProperties
     private var thickness

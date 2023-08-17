@@ -32,7 +32,7 @@ import org.polyfrost.polyui.event.*
 import org.polyfrost.polyui.input.PolyText
 import org.polyfrost.polyui.input.Translator.Companion.localised
 import org.polyfrost.polyui.layout.Layout.Companion.drawables
-import org.polyfrost.polyui.layout.impl.GridLayout
+import org.polyfrost.polyui.layout.impl.FlexLayout
 import org.polyfrost.polyui.property.impl.DropdownProperties
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.Cursor
@@ -53,6 +53,7 @@ class Dropdown(
 ) : Component(properties, at, size, false, true), Focusable {
     private lateinit var borderColor: Color.Animated
     private val chevron = Image(image = PolyImage("/chevron-down.svg", 16f, 16f), at = origin)
+    private var ycache = 0f
 
     init {
         entries.forEach {
@@ -89,22 +90,23 @@ class Dropdown(
             field!!.text.y += properties.verticalPadding
             if (field!!.image != null) field!!.image!!.x += x
         }
-    private var i = 0
-        get() = field++
-    private val dropdown = GridLayout(
+    private val dropdown = FlexLayout(
         at.clone(),
+        size = size?.clone()?.also {
+            it.b.px = 0f
+        },
         gap = Gap(0f.px, 0f.px),
         drawables = drawables(
             *entries
         )
     ).scrolling(0.px * heightBeforeScrolls)
+
     init {
         dropdown.refuseFramebuffer = true
         dropdown.addOperation(object : DrawableOp.Persistent(this) {
             override fun apply(renderer: Renderer) {
                 if (openAnimation != null) {
                     renderer.pushScissor(0f, 0f, dropdown.width, dropdown.height * openAnimation!!.value)
-                    dropdown.clipDrawables()
                 }
                 renderer.rect(0f, 0f, dropdown.width, dropdown.height, color, 0f, 0f, this@Dropdown.properties.cornerRadius, this@Dropdown.properties.cornerRadius)
             }
@@ -115,6 +117,7 @@ class Dropdown(
         })
         dropdown.simpleName = "Dropdown@${Integer.toHexString(this.hashCode())}"
     }
+
     var active = false
         private set
     private var openAnimation: Animation? = null
@@ -154,6 +157,7 @@ class Dropdown(
     }
 
     fun open() {
+        ycache = layout.y
         openAnimation = properties.openAnimation.create(properties.openDuration, openAnimation?.value ?: 0f, 1f)
         chevron.rotateTo(180.0, properties.openAnimation, properties.openDuration)
         color.recolor(properties.activeColor)
@@ -169,7 +173,13 @@ class Dropdown(
             }
         }
         dropdown.exists = (openAnimation?.value ?: 0f) != 0f
-        if (active) selected?.recolorAll(properties.hoveredColor)
+        if (active) {
+            selected?.recolorAll(properties.hoveredColor)
+            // asm: close dropdown when scrolled
+            if (ycache != layout.y) {
+                polyUI.unfocus()
+            }
+        }
         renderer.rect(x, y, width, height, color, properties.cornerRadius)
         renderer.hollowRect(x, y, width, height, borderColor, properties.borderThickness, properties.cornerRadius)
     }
@@ -183,13 +193,17 @@ class Dropdown(
         }
         largest.a.px = max(largest.a.px, properties.minWidth)
         largest.b.px += properties.verticalPadding * 2f
-        dropdown.y += largest.height + properties.borderThickness
         return largest
     }
 
     override fun calculateBounds() {
         dropdown.calculateBounds()
         super.calculateBounds()
+        dropdown.x = x
+        dropdown.y = y + height + properties.borderThickness
+        dropdown.oy = dropdown.y
+        chevron.x = x + width - chevron.width - 12f
+        chevron.y = y + height / 2f - chevron.height / 2f
     }
 
     override fun onInitComplete() {
@@ -199,37 +213,30 @@ class Dropdown(
         selected!!.text.y -= properties.verticalPadding
         dropdown.exists = false
         dropdown.visibleSize = dropdown.size!!.clone()
-        dropdown.oy = dropdown.y
         chevron.layout = layout
         chevron.setup(renderer, polyUI)
         chevron.calculateBounds()
-        chevron.x = x + width - chevron.width - 12f
-        chevron.y = y + height / 2f - chevron.height / 2f
+        dropdown.components.fastEach {
+            it.rescale(1f, 1f)
+        }
     }
 
     fun default() {
         selected = dropdown.components[default] as Entry
     }
 
-    class Entry @JvmOverloads constructor(private val txt: PolyText, private val icon: PolyImage? = null, private val iconSide: Side = Side.Right, properties: DropdownProperties.Entry? = null, private val onSelected: (() -> kotlin.Unit)? = null) : ContainingComponent(properties, grid(0, 0), null, false, true, arrayOf()) {
+    class Entry @JvmOverloads constructor(private val txt: PolyText, private val icon: PolyImage? = null, private val iconSide: Side = Side.Right, properties: DropdownProperties.Entry? = null, private val onSelected: (() -> kotlin.Unit)? = null) : ContainingComponent(properties, flex(), null, false, true, arrayOf()) {
         @JvmOverloads
         constructor(text: String, icon: PolyImage? = null, iconSide: Side = Side.Right, properties: DropdownProperties.Entry? = null, onSelected: (() -> kotlin.Unit)? = null) : this(text.localised(), icon, iconSide, properties, onSelected)
 
         override val properties
             get() = super.properties as DropdownProperties.Entry
+        // dw bout it x
 
         internal lateinit var text: Text
         internal var image: Image? = null
         internal lateinit var dropdown: Dropdown
         internal var show = false
-
-        override fun setup(renderer: Renderer, polyUI: PolyUI) {
-            super.setup(renderer, polyUI)
-            // shh
-            val i = dropdown.i
-            (this.at.a as Unit.Grid).row = i
-            (this.at.b as Unit.Grid).row = i
-        }
 
         override fun onInitComplete() {
             text = Text(this.properties.textProperties, txt, origin)
@@ -267,27 +274,25 @@ class Dropdown(
             return super.accept(event)
         }
 
-        override fun onParentInitComplete() {
-            text.y += y
-            if (image != null) {
-                image!!.y += y
-            }
+        override fun calculateBounds() {
+            super.calculateBounds()
+            placeChildren()
         }
 
         override fun placeChildren() {
             if (image != null) {
                 if (iconSide == Side.Right) {
-                    image!!.x += width - image!!.width - properties.lateralPadding
-                    text.x += properties.lateralPadding
+                    image!!.x = this.x + width - image!!.width - properties.lateralPadding
+                    text.x = this.x + properties.lateralPadding
                 } else {
-                    image!!.x += properties.lateralPadding
-                    text.x += image!!.width + properties.lateralPadding
+                    image!!.x = x + properties.lateralPadding
+                    text.x = x + image!!.width + properties.lateralPadding
                 }
-                image!!.y += (height - image!!.height) / 2f
+                image!!.y = y + (height - image!!.height) / 2f
             } else {
-                text.x += properties.lateralPadding
+                text.x = x + properties.lateralPadding
             }
-            text.y += (height - text.height) / 2f
+            text.y = y + (height - text.height) / 2f
         }
 
         override fun calculateSize(): Size<Unit> {

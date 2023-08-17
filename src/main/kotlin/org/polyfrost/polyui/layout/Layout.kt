@@ -471,6 +471,7 @@ abstract class Layout(
                         this
                     )
                 }
+                drawable.layout = null
             }
 
             else -> {

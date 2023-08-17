@@ -136,9 +136,9 @@ class GLWindow @JvmOverloads constructor(
 
         glfwSetMouseButtonCallback(handle) { _, button, action, _ ->
             if (action == GLFW_PRESS) {
-                polyUI.eventManager.onMousePressed(button)
+                polyUI.eventManager.mousePressed(button)
             } else if (action == GLFW_RELEASE) {
-                polyUI.eventManager.onMouseReleased(button)
+                polyUI.eventManager.mouseReleased(button)
             }
         }
 
@@ -154,7 +154,7 @@ class GLWindow @JvmOverloads constructor(
                     y /= polyUI.renderer.pixelRatio
                 }
             }
-            polyUI.eventManager.setMousePosAndUpdate(x, y)
+            polyUI.eventManager.mouseMoved(x, y)
         }
 
         glfwSetKeyCallback(handle) { _, keyCode, _, action, mods ->
@@ -214,8 +214,8 @@ class GLWindow @JvmOverloads constructor(
 
         glfwSetMouseButtonCallback(handle) { _, button, action, _ ->
             if (action == GLFW_PRESS) {
-                polyUI.eventManager.onMousePressed(button)
-            } else if (action == GLFW_RELEASE) polyUI.eventManager.onMouseReleased(button)
+                polyUI.eventManager.mousePressed(button)
+            } else if (action == GLFW_RELEASE) polyUI.eventManager.mouseReleased(button)
         }
 
         glfwSetCharCallback(handle) { _, codepoint ->
@@ -223,7 +223,7 @@ class GLWindow @JvmOverloads constructor(
         }
 
         glfwSetScrollCallback(handle) { _, x, y ->
-            polyUI.eventManager.onMouseScrolled(x.toInt(), y.toInt())
+            polyUI.eventManager.mouseScrolled(x.toInt(), y.toInt())
         }
 
 //        glfwSetDropCallback(handle) { _, count, names ->

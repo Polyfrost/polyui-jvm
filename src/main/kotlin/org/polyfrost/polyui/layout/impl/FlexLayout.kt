@@ -33,6 +33,7 @@ import org.polyfrost.polyui.property.PropertyManager
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.utils.fastEach
+import org.polyfrost.polyui.utils.fastEachIndexed
 import org.polyfrost.polyui.utils.sortedByDescending
 import kotlin.Boolean
 import kotlin.Exception
@@ -208,7 +209,7 @@ class FlexLayout @JvmOverloads constructor(
 
         if (wrapDirection != Wrap.NoWrap) {
             var row = arrayListOf<Drawable>()
-            flexDrawables.forEachIndexed { i, it ->
+            flexDrawables.fastEachIndexed { i, it ->
                 it.calculateBounds()
                 mainAxis += getMainSize(it) + mainGap
                 if (getFlex(it).endRowAfter || mainAxis + getMainSize(flexDrawables.getOrNull(i + 1)) >= mainSize) { // means we need to wrap
@@ -230,6 +231,9 @@ class FlexLayout @JvmOverloads constructor(
             row = ArrayList()
         } else {
             // add all to the row if wrap is off
+            flexDrawables.fastEach {
+                it.calculateBounds()
+            }
             rows.add(FlexRow(flexDrawables))
         }
 
@@ -263,7 +267,7 @@ class FlexLayout @JvmOverloads constructor(
                 }
             }
         }
-        crossSize = maxCrossSizeNoGaps + (rows.size - 1) * crossGap
+        crossSize = maxCrossSizeNoGaps + (if (rows.size == 1) 1 else rows.size - 1) * crossGap
         var cross = 0f
 
         // justify, with the largest row first.

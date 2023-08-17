@@ -30,13 +30,13 @@ import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.property.Properties
 import org.polyfrost.polyui.renderer.Renderer
+import org.polyfrost.polyui.renderer.data.FontFamily
 import org.polyfrost.polyui.unit.Point
 import org.polyfrost.polyui.unit.Size
 import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.addOrReplace
 import org.polyfrost.polyui.utils.fastEach
-
 /**
  * This component is used to contain other components.
  *
@@ -59,10 +59,6 @@ abstract class ContainingComponent(
     vararg events: Event.Handler
 ) : Component(properties, at, size, rawResize, acceptInput, *events) {
     val children: ArrayList<Component> = children.filterNotNull() as ArrayList<Component>
-
-    init {
-        this.children.fastEach { it.acceptsInput = false }
-    }
 
     override fun trueX(): Float {
         children.fastEach { it.trueX = it.trueX() }
@@ -99,6 +95,7 @@ abstract class ContainingComponent(
     override fun render() {
         if (rotation != 0.0) {
             children.fastEach {
+                if (!it.renders) return
                 // this will move it so that it renders around the middle of the main component.
                 it.x -= acx
                 it.y -= acy
@@ -110,6 +107,7 @@ abstract class ContainingComponent(
             }
         } else {
             children.fastEach {
+                if (!it.renders) return
                 it.preRender(polyUI.delta)
                 it.render()
                 it.postRender()
@@ -185,14 +183,37 @@ abstract class ContainingComponent(
         }
     }
 
+    override fun isInside(x: Float, y: Float): Boolean {
+        children.fastEach { drawable ->
+            polyUI.eventManager.processCandidate(drawable, x, y)
+        }
+        return super.isInside(x, y)
+    }
+
     override fun accept(event: Event): Boolean {
         // children components cannot cancel an event.
-        children.fastEach { it.accept(event) }
+        children.fastEach { if (it.mouseOver) it.accept(event) }
         return super.accept(event)
+    }
+
+    open fun clipDrawables() {
+        children.fastEach {
+            it.renders = intersects(it.trueX, it.trueY, it.width, it.height)
+        }
     }
 
     override fun onColorsChanged(colors: Colors) {
         super.onColorsChanged(colors)
         children.fastEach { it.onColorsChanged(colors) }
+    }
+
+    override fun onFontsChanged(fonts: FontFamily) {
+        super.onFontsChanged(fonts)
+        children.fastEach { it.onFontsChanged(fonts) }
+    }
+
+    override fun onParentInitComplete() {
+        super.onParentInitComplete()
+        children.fastEach { it.onParentInitComplete() }
     }
 }
