@@ -199,14 +199,18 @@ inline fun <L, E> L.maxOf(selector: (E) -> Vec2<org.polyfrost.polyui.unit.Unit>?
  *
  * @return the old value if it was replaced, or `null` if it was added.
  */
-fun <E> ArrayList<E>.addOrReplace(item: E): E? {
-    val index = this.indexOf(item)
-    return if (index == -1) {
-        this.add(item)
+fun <E> ArrayList<E>.addOrReplace(item: E, index: Int = this.size - 1): E? {
+    val i = this.indexOf(item)
+    return if (i == -1) {
+        if (index == -1 || index == this.size - 1) {
+            this.add(item)
+        } else {
+            this.add(index, item)
+        }
         null
     } else {
-        val old = this[index]
-        this[index] = item
+        val old = this[i]
+        this[i] = item
         old
     }
 }

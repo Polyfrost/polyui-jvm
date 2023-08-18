@@ -47,9 +47,9 @@ class Scrollbar(private val horizontal: Boolean) : Block(null, origin, origin, f
     private var scrollPercent: Float
         get() {
             val p = if (horizontal) {
-                (layout.ox - layout.trueX) / (contentSize - scrollingSize)
+                (layout.ox - layout.trueX) / (layout.width - layout.visibleSize!!.width)
             } else {
-                (layout.oy - layout.trueY) / (contentSize - scrollingSize)
+                (layout.oy - layout.trueY) / (layout.height - layout.visibleSize!!.height)
             }
             return if (p.isNaN()) 0f else p
         }

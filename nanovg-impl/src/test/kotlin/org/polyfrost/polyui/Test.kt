@@ -39,7 +39,7 @@ import org.polyfrost.polyui.input.Translator.Companion.localised
 import org.polyfrost.polyui.layout.Layout.Companion.drawables
 import org.polyfrost.polyui.layout.impl.FlexLayout
 import org.polyfrost.polyui.layout.impl.PixelLayout
-import org.polyfrost.polyui.property.Properties
+import org.polyfrost.polyui.property.impl.BlockProperties
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.renderer.impl.GLWindow
 import org.polyfrost.polyui.renderer.impl.NVGRenderer
@@ -57,22 +57,22 @@ fun main() {
     val window = if (!useNoOp) GLWindow("Test", 800, 800) else NoOpWindow("Test", 800, 800)
     val things = Array<Drawable>(50) { // creates 50 rectangles with random sizes
         val block = Block(
-            properties = Properties.brandBlock,
+            properties = BlockProperties.brandBlock,
             at = flex(),
             size = Size((Random.Default.nextFloat() * 40f + 40f).px, (Random.Default.nextFloat() * 40f + 40f).px),
             events = events(
                 MouseClicked(0) to {
                     println("Mouse clicked! $it")
-                    setProperties(Properties.successBlock)
+                    setProperties(BlockProperties.successBlock)
                     rotateBy(120.0, Animations.EaseInOutCubic, .5.seconds)
                 },
                 MouseClicked(0, 2) to {
                     println("Mouse double-clicked!")
-                    setProperties(Properties.warningBlock)
+                    setProperties(BlockProperties.warningBlock)
                 },
                 MouseClicked(1) to {
                     println("Mouse right-clicked!")
-                    setProperties(Properties.dangerBlock)
+                    setProperties(BlockProperties.dangerBlock)
                     true
                 }
             )
@@ -102,7 +102,7 @@ fun main() {
                                         at = 50.percent * 10.percent,
                                         drawables = drawables(
                                             Block(
-                                                Properties.successBlock,
+                                                BlockProperties.successBlock,
                                                 at = origin,
                                                 size = 60.px * 60.px,
                                                 events = events(
@@ -130,7 +130,7 @@ fun main() {
                                 )
                             ),
                             Block(
-                                Properties.brandBlock,
+                                BlockProperties.brandBlock,
                                 at = origin,
                                 size = 240.px * 240.px
                             )

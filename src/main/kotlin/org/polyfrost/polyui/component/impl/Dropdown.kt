@@ -279,7 +279,7 @@ class Dropdown(
             placeChildren()
         }
 
-        override fun placeChildren() {
+        fun placeChildren() {
             if (image != null) {
                 if (iconSide == Side.Right) {
                     image!!.x = this.x + width - image!!.width - properties.lateralPadding

@@ -168,8 +168,8 @@ class FlexLayout @JvmOverloads constructor(
         calculateBounds()
     }
 
-    override fun addComponent(drawable: Drawable) {
-        super.addComponent(drawable)
+    override fun addComponent(drawable: Drawable, index: Int) {
+        super.addComponent(drawable, index)
         if (drawable.at.a is Unit.Flex) flexDrawables.add(drawable)
         if (initStage != INIT_NOT_STARTED) calculateBounds()
     }

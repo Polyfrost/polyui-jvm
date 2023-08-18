@@ -32,9 +32,7 @@ import org.polyfrost.polyui.input.Translator.Companion.localised
 import org.polyfrost.polyui.layout.Layout.Companion.drawables
 import org.polyfrost.polyui.layout.impl.FlexLayout
 import org.polyfrost.polyui.layout.impl.PixelLayout
-import org.polyfrost.polyui.property.Properties
 import org.polyfrost.polyui.property.PropertyManager
-import org.polyfrost.polyui.property.State
 import org.polyfrost.polyui.property.impl.*
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.renderer.impl.GLWindow
@@ -46,10 +44,10 @@ import kotlin.random.Random
 
 val moon = PolyImage("moon.svg")
 val sun = PolyImage("sun.svg")
-val brand = BrandBlockProperties(4f.radii())
-val success = StateBlockProperties(State.Success, 4f.radii())
-val warning = StateBlockProperties(State.Warning, 4f.radii())
-val danger = StateBlockProperties(State.Danger, 4f.radii())
+val brand = BlockProperties.brand(4f.radii())
+val success = BlockProperties.success(4f.radii())
+val warning = BlockProperties.warning(4f.radii())
+val danger = BlockProperties.danger(4f.radii())
 val text = TextProperties { fonts.medium }
 
 fun main() {
@@ -118,7 +116,7 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
         at = at,
         drawables = drawables(
             Block(
-                properties = Properties.backgroundBlock,
+                properties = BlockProperties.backgroundBlock,
                 at = origin,
                 size = 400.px * 500.px,
                 acceptInput = false
@@ -157,9 +155,9 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                 at = 266.px * 113.px,
                 switchSize = 64.px * 32.px
             ),
-            Checkbox(
-                at = 336.px * 113.px,
-                size = 32.px * 32.px
+            Slider(
+                at = 336.px * 10.px,
+                size = 32.px * 140.px
             ),
             Dropdown(
                 at = 24.px * 159.px,
@@ -208,7 +206,7 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                 )
             ),
             Block(
-                properties = Properties.brandBlock,
+                properties = BlockProperties.brandBlock,
                 at = 24.px * 430.px,
                 size = 85.px * 32.px
             ).draggable(),

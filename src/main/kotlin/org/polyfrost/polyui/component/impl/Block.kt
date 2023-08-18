@@ -66,6 +66,5 @@ open class Block @JvmOverloads constructor(
     override fun onColorsChanged(colors: Colors) {
         super.onColorsChanged(colors)
         outlineColor.recolor(properties.outlineColor)
-        cornerRadii = properties.cornerRadii
     }
 }

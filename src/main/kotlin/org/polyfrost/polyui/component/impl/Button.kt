@@ -30,6 +30,7 @@ import org.polyfrost.polyui.property.impl.ButtonProperties
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.unit.Unit
+import org.polyfrost.polyui.utils.truncate
 import kotlin.math.max
 
 /**
@@ -42,7 +43,7 @@ import kotlin.math.max
  *
  * @since 0.17.3
  */
-class Button(
+open class Button(
     properties: ButtonProperties? = null,
     at: Vec2<Unit>,
     size: Size<Unit>? = null,
@@ -53,12 +54,19 @@ class Button(
     acceptsInput: Boolean = true,
     vararg events: Event.Handler
 ) : ContainingComponent(properties, at, null, false, acceptsInput, arrayOf(), *events) {
-    private val fixedSize = size
+    protected val fixedSize = size
     override val properties get() = super.properties as ButtonProperties
     val leftImage: Image? = if (left != null) Image(image = left, at = origin, acceptInput = false) else null
     val rightImage: Image? = if (right != null) Image(image = right, at = origin, acceptInput = false) else null
     val text: Text? =
         if (text != null) Text(initialText = text, fontSize = fontSize, at = origin, acceptInput = false) else null
+    var string
+        get() = text?.string
+        set(value) {
+            if (value == null || text == null) return
+            text.string = value.truncate(renderer, text.font, text.fontSize, this.width - properties.lateralPadding * 4f - (leftImage?.width ?: 0f) - (rightImage?.width ?: 0f))
+            calculateBounds()
+        }
 
     init {
         if (text == null) {
@@ -74,48 +82,48 @@ class Button(
     override fun render() {
         if (properties.hasBackground) {
             if (properties.outlineThickness != 0f) {
-                renderer.hollowRect(x, y, width, height, color, properties.outlineThickness, properties.cornerRadii)
+                renderer.hollowRect(0f, 0f, width, height, color, properties.outlineThickness, properties.cornerRadii)
             }
-            renderer.rect(x, y, width, height, color, properties.cornerRadii)
+            renderer.rect(0f, 0f, width, height, color, properties.cornerRadii)
         }
         super.render()
     }
 
-    override fun calculateSize(): Size<Unit> {
+    override fun calculateBounds() {
         if (fixedSize?.dynamic == true) doDynamicSize(fixedSize)
-        text?.size = text?.calculateSize()
-        leftImage?.size = leftImage?.calculateSize()
-        rightImage?.size = rightImage?.calculateSize()
+        if (leftImage?.size == null) leftImage?.size = leftImage?.calculateSize()
+        if (rightImage?.size == null) rightImage?.size = rightImage?.calculateSize()
+        if (text?.size == null) text?.size = text?.calculateSize()
 
         // asm: short-path: only an image, so just center it and dip
         if (leftImage != null && text == null) {
-            return if (fixedSize == null) {
-                val s = leftImage.size!!.clone()
-                leftImage.y = y + properties.lateralPadding
-                leftImage.x = x + properties.lateralPadding
-                s.a.px += properties.verticalPadding * 2f
-                s.b.px += properties.verticalPadding * 2f
-                s
+            if (fixedSize == null) {
+                leftImage.x = properties.lateralPadding
+                leftImage.y = properties.lateralPadding
+                if (size == null) {
+                    size = leftImage.size!!.clone()
+                    width += properties.lateralPadding * 2f
+                    height += properties.verticalPadding * 2f
+                }
             } else {
-                leftImage.x = x + fixedSize.width / 2f - leftImage.width / 2f
-                leftImage.y = y + fixedSize.height / 2f - leftImage.height / 2f
-                fixedSize
+                leftImage.x = fixedSize.width / 2f - leftImage.width / 2f
+                leftImage.y = fixedSize.height / 2f - leftImage.height / 2f
+                size = fixedSize
             }
         }
 
-        leftImage?.x = x + properties.lateralPadding
-        return if (fixedSize != null) {
+        leftImage?.x = properties.lateralPadding
+        if (fixedSize != null) {
             size = fixedSize
             imageFixedSize(leftImage)
             imageFixedSize(rightImage)
-            rightImage?.x = x + width - properties.lateralPadding - rightImage!!.width
+            rightImage?.x = width - properties.lateralPadding - rightImage!!.width
             if (properties.center) {
-                text?.x = x + width / 2f - text!!.width / 2f
+                text?.x = width / 2f - text!!.width / 2f
             } else {
                 text?.x = (if (leftImage != null) leftImage.x + leftImage.width else 0f) + properties.iconTextSpacing
             }
-            text?.y = y + fixedSize.height / 2f - text!!.height / 2f
-            fixedSize
+            text?.y = fixedSize.height / 2f - text!!.height / 2f
         } else {
             var height = getTallestComponent(text, leftImage, rightImage)
             if (text != null && text.height != height) {
@@ -124,45 +132,40 @@ class Button(
             }
             var width = properties.lateralPadding
             if (leftImage != null) {
-                leftImage.y = if (properties.center) y + height / 2f - leftImage.height / 2f else y + properties.verticalPadding
-                leftImage.x = x + width
-                width += leftImage.width
-                if (text != null) {
-                    width += properties.iconTextSpacing
-                }
+                leftImage.y = if (properties.center) height / 2f - leftImage.height / 2f else properties.verticalPadding
+                leftImage.x = width
+                width += leftImage.width + properties.iconTextSpacing
             }
-            text?.x = x + width
+            text?.x = width
             width += text?.width ?: 0f
             if (rightImage != null) {
-                rightImage.y = if (properties.center) y + height / 2f - rightImage.height / 2f else y + properties.verticalPadding
-                rightImage.x = x + width + properties.iconTextSpacing
+                rightImage.y = if (properties.center) height / 2f - rightImage.height / 2f else properties.verticalPadding
+                rightImage.x = width + properties.iconTextSpacing
                 width += rightImage.width
             }
             width += properties.lateralPadding
             height += properties.verticalPadding * 2f
-            text?.y = y + height / 2f - text!!.height / 2f
-            return width.px * height.px
+            text?.y = height / 2f - text!!.height / 2f
+            if (size == null) size = width.px * height.px
         }
+        super.calculateBounds()
     }
 
-    override fun placeChildren() {
-    }
-
-    private fun getTallestComponent(vararg cs: Component?): Float {
+    protected fun getTallestComponent(vararg cs: Component?): Float {
         var largest = 0f
         cs.forEach { if (it == null) return@forEach else largest = max(largest, it.height) }
         return largest
     }
 
-    private fun imageFixedSize(img: Image?) {
+    protected fun imageFixedSize(img: Image?) {
         if (img == null) return
         if (img.fixedSize) {
-            img.y = this.y + (fixedSize!!.height - img.height) / 2f
+            img.y = (fixedSize!!.height - img.height) / 2f
         } else {
             PolyUI.LOGGER.warn("Image in ${this.simpleName} is not fixed size inside fixed-size button, and will be scaled to fit the button.")
             val ratio = img.height / fixedSize!!.height - properties.verticalPadding * 2f
             img.rescale(ratio, ratio)
-            img.y = this.y + properties.verticalPadding
+            img.y = properties.verticalPadding
         }
     }
 }

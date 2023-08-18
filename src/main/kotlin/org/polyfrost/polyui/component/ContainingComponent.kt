@@ -61,12 +61,26 @@ abstract class ContainingComponent(
     val children: ArrayList<Component> = children.filterNotNull() as ArrayList<Component>
 
     override fun trueX(): Float {
-        children.fastEach { it.trueX = it.trueX() }
+        children.fastEach {
+            it.trueX = it.trueX() + x
+            if (it is ContainingComponent) {
+                it.children.fastEach {
+                    it.trueX += x
+                }
+            }
+        }
         return super.trueX()
     }
 
     override fun trueY(): Float {
-        children.fastEach { it.trueY = it.trueY() }
+        children.fastEach {
+            it.trueY = it.trueY() + y
+            if (it is ContainingComponent) {
+                it.children.fastEach {
+                    it.trueY += y
+                }
+            }
+        }
         return super.trueY()
     }
 
@@ -85,6 +99,11 @@ abstract class ContainingComponent(
                 if (initStage == INIT_COMPLETE) it.calculateBounds()
             }
         }
+    }
+
+    override fun preRender(deltaTimeNanos: Long) {
+        super.preRender(deltaTimeNanos)
+        renderer.translate(x, y)
     }
 
     /**
@@ -124,12 +143,16 @@ abstract class ContainingComponent(
         children.fastEach {
             it.layout = this.layout
             it.setup(renderer, polyUI)
+            it.consumesHover = false
         }
     }
 
     override fun rescale(scaleX: Float, scaleY: Float) {
         super.rescale(scaleX, scaleY)
         children.fastEach { it.rescale(scaleX, scaleY) }
+        // update the children properly
+        trueX()
+        trueY()
     }
 
     /**
@@ -151,54 +174,27 @@ abstract class ContainingComponent(
         children.fastEach { it.recolor(toColor, animation, durationNanos, onFinish) }
     }
 
+    open fun calculateChildBounds() {
+        children.fastEach { it.calculateBounds() }
+    }
+
     override fun calculateBounds() {
-        children.fastEach {
-            it.calculateBounds()
-        }
+        calculateChildBounds()
         super.calculateBounds()
     }
 
-    /**
-     * ## Make sure to call `super.`[onParentInitComplete]`()`!
-     */
-    override fun onInitComplete() {
-        super.onInitComplete()
-        placeChildren()
-    }
-
-    /**
-     * Use this function to place the children components of this component.
-     *
-     * In this function, only use `+=` and `-=` to move the children components, as their X and Y values are set by this method to the top left corner of this component ([x], [y]).
-     *
-     * This function is called once, and only once.
-     *
-     * ### **Make sure to call `super.`[placeChildren]`()`!**
-     * @since 0.19.0
-     */
-    open fun placeChildren() {
-        children.fastEach {
-            it.x += x
-            it.y += y
-        }
-    }
-
     override fun isInside(x: Float, y: Float): Boolean {
+        val inside = super.isInside(x, y)
+        if (!inside) return false
         children.fastEach { drawable ->
             polyUI.eventManager.processCandidate(drawable, x, y)
         }
-        return super.isInside(x, y)
-    }
-
-    override fun accept(event: Event): Boolean {
-        // children components cannot cancel an event.
-        children.fastEach { if (it.mouseOver) it.accept(event) }
-        return super.accept(event)
+        return true
     }
 
     open fun clipDrawables() {
         children.fastEach {
-            it.renders = intersects(it.trueX, it.trueY, it.width, it.height)
+//            it.renders = it.intersects(trueX, trueY, width, height)
         }
     }
 

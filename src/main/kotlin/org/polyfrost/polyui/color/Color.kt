@@ -76,7 +76,7 @@ open class Color @JvmOverloads constructor(hue: Float, saturation: Float, bright
         get() {
             return if (dirty) {
                 HSBtoRGB(hue, saturation, brightness).let { rgb ->
-                    (rgb and 0x00FFFFFF) or ((alpha * 255).toInt() shl 24)
+                    (rgb and 0x00FFFFFF) or ((alpha * 255f).toInt() shl 24)
                 }.also {
                     dirty = false
                     field = it
@@ -203,6 +203,13 @@ open class Color @JvmOverloads constructor(hue: Float, saturation: Float, bright
         /** @see from(hex) */
         @JvmStatic
         fun from(hex: String, alpha: Float = 1f) = from(hex, (alpha * 255).toInt())
+        fun hexOf(color: Color): String {
+            val r = color.r.toString(16).padStart(2, '0')
+            val g = color.g.toString(16).padStart(2, '0')
+            val b = color.b.toString(16).padStart(2, '0')
+            val a = color.a.toString(16).padStart(2, '0')
+            return "#$r$g$b$a"
+        }
     }
 
     /**
@@ -311,8 +318,8 @@ open class Color @JvmOverloads constructor(hue: Float, saturation: Float, bright
 
     /** A gradient color. */
     class Gradient @JvmOverloads constructor(color1: Color, color2: Color, val type: Type = Type.TopLeftToBottomRight) :
-        Animated(color1.hue, color1.saturation, color1.brightness, color1.alpha) {
-        val color2 = if (color2 !is Animated) color2.toAnimatable() else color2
+        Animated(color2.hue, color2.saturation, color2.brightness, color2.alpha) {
+        val color1 = if (color1 !is Animated) color1.toAnimatable() else color1
 
         sealed class Type {
             data object TopToBottom : Type()
@@ -356,8 +363,8 @@ open class Color @JvmOverloads constructor(hue: Float, saturation: Float, bright
 
         operator fun get(index: Int): Color {
             return when (index) {
-                0 -> this
-                1 -> color2
+                0 -> color1
+                1 -> this
                 else -> throw IndexOutOfBoundsException("index must be 0 or 1")
             }
         }
@@ -365,19 +372,19 @@ open class Color @JvmOverloads constructor(hue: Float, saturation: Float, bright
         operator fun set(index: Int, color: Color) = recolor(index, color)
 
         @get:JvmName("getARGB1")
-        val argb1 get() = super.argb
+        val argb1 get() = color1.argb
 
         @get:JvmName("getARGB2")
-        val argb2 get() = color2.argb
+        val argb2 get() = super.argb
 
         override fun hashCode(): Int {
             var result = super.hashCode()
-            result = 31 * result + color2.hashCode()
+            result = 31 * result + color1.hashCode()
             result = 31 * result + type.hashCode()
             return result
         }
 
-        override fun clone() = Gradient(this, color2, type)
+        override fun clone() = Gradient(color1, this, type)
 
         /**
          * [Animated.recolor] this gradient color.
@@ -385,14 +392,14 @@ open class Color @JvmOverloads constructor(hue: Float, saturation: Float, bright
          */
         fun recolor(whichColor: Int, target: Color, type: Animation.Type? = null, durationNanos: Long = 1L.seconds) {
             when (whichColor) {
-                0 -> super.recolor(target, type, durationNanos)
-                1 -> color2.recolor(target, type, durationNanos)
+                0 -> color1.recolor(target, type, durationNanos)
+                1 -> super.recolor(target, type, durationNanos)
                 else -> throw IllegalArgumentException("Invalid color index")
             }
         }
 
         override fun update(deltaTimeNanos: Long): Boolean {
-            color2.update(deltaTimeNanos)
+            color1.update(deltaTimeNanos)
             return super.update(deltaTimeNanos)
         }
 

@@ -349,13 +349,13 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
 
     private fun color(color: Color) {
         if (color is Color.Gradient) {
-            nvgRGBA(color.r.toByte(), color.g.toByte(), color.b.toByte(), color.a.toByte(), nvgColor)
+            nvgRGBA(color.r.toByte(), color.g.toByte(), color.b.toByte(), color.a.toByte(), nvgColor2)
             nvgRGBA(
-                color.color2.r.toByte(),
-                color.color2.g.toByte(),
-                color.color2.b.toByte(),
-                color.color2.a.toByte(),
-                nvgColor2
+                color.color1.r.toByte(),
+                color.color1.g.toByte(),
+                color.color1.b.toByte(),
+                color.color1.a.toByte(),
+                nvgColor
             )
         } else {
             nvgRGBA(color.r.toByte(), color.g.toByte(), color.b.toByte(), color.a.toByte(), nvgColor)

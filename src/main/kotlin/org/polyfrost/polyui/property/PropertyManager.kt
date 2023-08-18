@@ -35,7 +35,7 @@ class PropertyManager(val colors: Colors, val fonts: FontFamily = PolyUI.default
 
     val properties: HashMap<String, Properties> = hashMapOf(
         TextInput::class.qualifiedName!! to TextInputProperties(TextProperties()),
-        Block::class.qualifiedName!! to DefaultBlockProperties(),
+        Block::class.qualifiedName!! to BlockProperties(withStates = true),
         Divider::class.qualifiedName!! to DividerProperties(),
         Image::class.qualifiedName!! to ImageProperties(),
         Text::class.qualifiedName!! to TextProperties(),
@@ -48,7 +48,8 @@ class PropertyManager(val colors: Colors, val fonts: FontFamily = PolyUI.default
         Switch::class.qualifiedName!! to SwitchProperties(),
         SwitchingLayout::class.qualifiedName!! to SwitchingLayoutProperties(),
         SearchField::class.qualifiedName!! to SearchFieldProperties(),
-        RadioButton::class.qualifiedName!! to RadioButtonProperties()
+        RadioButton::class.qualifiedName!! to RadioButtonProperties(),
+        Keybind::class.qualifiedName!! to KeybindProperties()
     )
 
     inline fun <reified C : Component> get(): Properties = get(C::class.qualifiedName!!)

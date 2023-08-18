@@ -201,7 +201,7 @@ class PolyUI @JvmOverloads constructor(
      */
     var delta: Long = 0L
         private set
-    internal var focused: (Focusable)? = null
+    var focused: (Focusable)? = null
 
     // telemetry
     var fps: Int = 1

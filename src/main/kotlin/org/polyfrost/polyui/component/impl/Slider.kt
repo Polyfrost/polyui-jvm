@@ -48,21 +48,32 @@ open class Slider(
     override val properties
         get() = super.properties as SliderProperties
     protected var barThickness = 0f
-    protected var bitX = 0f
-    protected var barY = 0f
+    protected var bitMain = 0f
+    protected var barCross = 0f
     lateinit var barColor: Color.Animated
     lateinit var usedBarColor: Color.Animated
+    val horizontal = size.width > size.height
+    var main
+        get() = if (horizontal) width else height
+        set(value) {
+            if (horizontal) width = value else height = value
+        }
+    var cross
+        get() = if (horizontal) height else width
+        set(value) {
+            if (horizontal) height = value else width = value
+        }
 
     var value: Float = min
         set(value) {
-            bitX = (value - min) / (max - min) * (width - height)
+            bitMain = (value - min) / (max - min) * (main - cross)
             if ((p as? SliderProperties)?.setInstantly == true && field != value) {
                 accept(ChangedEvent(value))
             }
             field = value
         }
     protected var dragging = false
-    private var mx = 0f
+    private var mp = 0f
 
     override fun setup(renderer: Renderer, polyUI: PolyUI) {
         super.setup(renderer, polyUI)
@@ -73,18 +84,22 @@ open class Slider(
     override fun accept(event: Event): Boolean {
         if (event is MousePressed) {
             if (event.button == 0) {
+                val pos = if (horizontal) event.x else event.y
                 if (!isOnBit(event.x - trueX, event.y - trueY)) {
-                    set(event.x - height)
+                    val truePos = if (horizontal) trueX else trueY
+                    set(event.x - truePos - cross / 2f)
                 }
                 dragging = true
-                mx = event.x - bitX
+                mp = pos - bitMain
             }
         }
         return super.accept(event)
     }
 
     protected fun isOnBit(x: Float, y: Float): Boolean {
-        return x in bitX..bitX + height && y in y..y + height
+        val main = if (horizontal) x else y
+        val crs = if (horizontal) y else main
+        return main in bitMain..bitMain + cross && crs in crs..crs + cross
     }
 
     protected fun doDrag() {
@@ -95,18 +110,25 @@ open class Slider(
                 }
                 dragging = false
             }
-            set(polyUI.mouseX - mx)
+            wantRedraw()
+            if (horizontal) set(polyUI.mouseX - mp) else set(polyUI.mouseY - mp)
         }
     }
 
     override fun render() {
         doDrag()
-        val height = height
-        val hHeight = height / 2f
+        val cross = cross
+        val hCross = cross / 2f
         val barRadius = barThickness / 2f
-        if (bitX + x != x) renderer.rect(x + hHeight, barY, bitX, barThickness, usedBarColor, barRadius)
-        renderer.rect(x + bitX + hHeight, barY, width - bitX - height, barThickness, barColor, barRadius)
-        renderer.rect(bitX + x, y, height, height, color, height)
+        if (horizontal) {
+            if (bitMain + x != x) renderer.rect(x + hCross, barCross, bitMain, barThickness, usedBarColor, barRadius)
+            renderer.rect(x + bitMain + hCross, barCross, main - bitMain - cross, barThickness, barColor, barRadius)
+            renderer.rect(bitMain + x, y, cross, cross, color, cross)
+        } else {
+            if (bitMain + y != y) renderer.rect(barCross, y + hCross, barThickness, bitMain, usedBarColor, barRadius)
+            renderer.rect(barCross, y + bitMain + hCross, barThickness, main - bitMain - cross, barColor, barRadius)
+            renderer.rect(x, bitMain + y, cross, cross, color, cross)
+        }
     }
 
     override fun onColorsChanged(colors: Colors) {
@@ -124,15 +146,16 @@ open class Slider(
 
     protected fun set(value: Float) {
         var v = value
-        if (value > width - height) v = width - height
+        if (value > main - cross) v = main - cross
         if (value < 0f) v = 0f
-        this.value = (v / (width - height)) * (max - min) + min
+        this.value = (v / (main - cross)) * (max - min) + min
     }
 
     override fun calculateBounds() {
         super.calculateBounds()
-        barThickness = height / properties.thicknessRatio
-        barY = y + height / 2f - barThickness / 2f
+        barThickness = cross / properties.thicknessRatio
+        barCross = cross / 2f - barThickness / 2f
+        barCross += if (horizontal) y else x
     }
 
     class ChangedEvent internal constructor(val value: Float) : Event {

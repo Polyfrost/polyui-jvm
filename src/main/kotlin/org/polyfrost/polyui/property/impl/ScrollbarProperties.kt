@@ -27,7 +27,7 @@ import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.radii
 import org.polyfrost.polyui.utils.rgba
 
-open class ScrollbarProperties : DefaultBlockProperties() {
+open class ScrollbarProperties : BlockProperties(withStates = true) {
     override val palette = Colors.Palette(
         rgba(0.5f, 0.5f, 0.5f, 0.5f),
         rgba(0.5f, 0.5f, 0.5f, 0.75f),

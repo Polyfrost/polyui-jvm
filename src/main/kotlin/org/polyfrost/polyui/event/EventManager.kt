@@ -139,42 +139,42 @@ class EventManager(private val polyUI: PolyUI) {
     }
 
     /**
-     * Internal method for drawables, tracking it if it lies inside the given point.
+     * Internal method for drawables, tracking it if it does not consume the events.
      *
      * This is used for event dispatching.
      */
     @ApiStatus.Internal
-    fun processCandidate(drawable: Drawable, x: Float, y: Float): Boolean {
-        if ((!drawable.consumesHover || mouseOver !== drawable) && drawable.acceptsInput && drawable.isInside(x, y)) {
-            if (!drawable.mouseOver) {
-                drawable.mouseOver = true
-                if (!drawable.consumesHover) {
+    fun processCandidate(drawable: Drawable, x: Float, y: Float): Drawable? {
+        var candidate: Drawable? = null
+        if (drawable.acceptsInput && drawable.isInside(x, y)) {
+            if (!drawable.consumesHover) {
+                if (!drawable.mouseOver) {
+                    drawable.mouseOver = true
                     mouseOvers.add(drawable)
-                    if (drawable.accept(MouseEntered)) {
-                        return true
-                    }
-                } else {
-                    mouseOver = drawable
                     drawable.accept(MouseEntered)
-                    return true
                 }
+                return null
+            } else {
+                candidate = drawable
             }
         }
-        return false
+        return candidate
     }
 
-    private fun processCandidates(layout: Layout, x: Float, y: Float) {
+    private fun processCandidates(layout: Layout, x: Float, y: Float): Drawable? {
+        var candidate: Drawable? = null
         if (layout.isInside(x, y)) {
-            for (i in layout.children.size - 1 downTo 0) {
-                processCandidates(layout.children[i], x, y)
-            }
+            candidate = processCandidate(layout, x, y)
             for (i in layout.components.size - 1 downTo 0) {
-                if (processCandidate(layout.components[i], x, y)) {
-                    return
-                }
+                val cc = processCandidate(layout.components[i], x, y)
+                if (cc != null) candidate = cc
             }
-            processCandidate(layout, x, y)
+            for (i in layout.children.indices) {
+                val ccc = processCandidates(layout.children[i], x, y)
+                if (ccc != null) candidate = ccc
+            }
         }
+        return candidate
     }
 
     /** call this function to update the mouse position. */
@@ -183,10 +183,18 @@ class EventManager(private val polyUI: PolyUI) {
         mouseX = x
         mouseY = y
         if (!mouseDown) {
-            processCandidates(polyUI.master, x, y)
+            val candidate = processCandidates(polyUI.master, x, y)
+            if (candidate != null && candidate !== mouseOver) {
+                candidate.mouseOver = true
+                mouseOver?.let {
+                    it.accept(MouseExited)
+                    it.mouseOver = false
+                }
+                mouseOver = candidate
+                candidate.accept(MouseEntered)
+            }
         }
-        if (mouseOver != null) {
-            val it = mouseOver!!
+        mouseOver?.let {
             if (!it.isInside(x, y)) {
                 it.accept(MouseExited)
                 it.mouseOver = false
@@ -234,7 +242,7 @@ class EventManager(private val polyUI: PolyUI) {
             }
             clickTimer = curr
             if (polyUI.focused != null) {
-                if (!(polyUI.focused as Drawable).isInside(mouseX, mouseY)) {
+                if (!(polyUI.focused as Drawable).mouseOver) {
                     polyUI.unfocus()
                 }
             }
@@ -247,11 +255,11 @@ class EventManager(private val polyUI: PolyUI) {
         if (polyUI.keyBinder.accept(event2)) return
         if (button == 0) {
             mouseOvers.fastEach {
-                if (tryFocus(it, mouseX, mouseY)) {
+                if (tryFocus(it)) {
                     return
                 }
             }
-            if (mouseOver != null && tryFocus(mouseOver!!, mouseX, mouseY)) {
+            if (mouseOver != null && tryFocus(mouseOver!!)) {
                 return
             }
         }
@@ -262,11 +270,9 @@ class EventManager(private val polyUI: PolyUI) {
     /**
      * try to focus a drawable, and return true if it was successful.
      */
-    fun tryFocus(drawable: Drawable, x: Float, y: Float): Boolean {
-        if (drawable is Focusable && drawable.isInside(x, y)) {
-            if (polyUI.focus(drawable)) {
-                return true
-            }
+    fun tryFocus(drawable: Drawable): Boolean {
+        if (drawable is Focusable && drawable.mouseOver) {
+            return polyUI.focus(drawable)
         }
         return false
     }

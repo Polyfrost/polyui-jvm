@@ -21,40 +21,15 @@
 
 package org.polyfrost.polyui.property.impl
 
-import org.polyfrost.polyui.utils.radii
+import org.polyfrost.polyui.animate.Animations
+import org.polyfrost.polyui.color.Color
+import org.polyfrost.polyui.unit.seconds
 
-/**
- * Button properties.
- *
- * @since 0.17.3
- */
-open class ButtonProperties : BlockProperties(withStates = true) {
-    override val cornerRadii: FloatArray = 8f.radii()
-
-    /** This is the padding from the top to the items. */
-    open val verticalPadding: Float = 8f
-
-    /** padding between the icons and the text. */
-    open val iconTextSpacing: Float = 16f
-
-    /** padding from the left/right edges. */
-    open val lateralPadding: Float = 10f
-
-    /**
-     * Enable centering of the items on the button.
-     * @since 0.21.4
-     */
-    open val center = false
-
-    /**
-     * If true, the entire button will be recolored of hover/pressed.
-     * @since 0.21.4
-     * @see [org.polyfrost.polyui.component.ContainingComponent.recolorRecolorsAll]
-     */
-    open val recolorsAll = false
-
-    /**
-     * If true, the button will have a background.
-     */
-    open val hasBackground: Boolean = true
+open class KeybindProperties : ButtonProperties() {
+    open val breatheColor: Color get() = colors.state.danger.normal
+    open val breatheDuration: Long = 0.9.seconds
+    open val begin = 32f / 4.5f
+    open val extent = 32f / 2.8f
+    open val breatheAnimation: Animations = Animations.EaseOutQuad
+    override val center = true
 }

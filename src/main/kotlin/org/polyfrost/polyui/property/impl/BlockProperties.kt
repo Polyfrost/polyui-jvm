@@ -25,7 +25,6 @@ import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.event.*
 import org.polyfrost.polyui.property.Properties
-import org.polyfrost.polyui.property.State
 import org.polyfrost.polyui.renderer.data.Cursor
 import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.radii
@@ -35,80 +34,89 @@ import org.polyfrost.polyui.utils.radii
  * @param outlineThickness The thickness of this component. If you set it to something other than 0, it will become hollow.
  */
 open class BlockProperties @JvmOverloads constructor(
-    open val paletteGet: Properties.() -> Colors.Palette = { colors.component.bg },
     open val cornerRadii: FloatArray = 0f.radii(),
-    open val outlineThickness: Float = 0f
+    open val outlineThickness: Float = 0f,
+    withStates: Boolean = false,
+    open val paletteGet: Properties.() -> Colors.Palette = { colors.component.bg }
 ) : Properties() {
+
     val outlineColor get() = colors.page.border10
     override val palette get() = paletteGet(this)
     open val pressedAnimation: Animations? = Animations.EaseOutExpo
     open val hoverAnimation: Animations? = Animations.EaseOutExpo
     open val pressedAnimationDuration: Long = 0.25.seconds
     open val hoverAnimationDuration: Long = 0.5.seconds
-}
 
-open class BackgroundProperties @JvmOverloads constructor(
-    cornerRadii: FloatArray = 0f.radii()
-) : BlockProperties(cornerRadii = cornerRadii) {
-    override val palette: Colors.Palette get() = colors.page.bg
-}
-
-/**
- * Basic block properties with hover and pressed animations.
- */
-open class DefaultBlockProperties @JvmOverloads constructor(
-    paletteGet: Properties.() -> Colors.Palette = { colors.component.bg },
-    cornerRadii: FloatArray = 0f.radii()
-) : BlockProperties(paletteGet, cornerRadii) {
     init {
-        var old = false
-        addEventHandlers(
-            MousePressed(0) to {
-                recolor(palette.pressed, pressedAnimation, pressedAnimationDuration)
-                true
-            },
-            MouseReleased(0) to {
-                recolor(palette.hovered, pressedAnimation, pressedAnimationDuration)
-                true
-            },
-            MouseEntered to {
-                recolor(palette.hovered, hoverAnimation, hoverAnimationDuration)
-                polyUI.cursor = Cursor.Clicker
-                true
-            },
-            MouseExited to {
-                recolor(palette.normal, hoverAnimation, hoverAnimationDuration)
-                polyUI.cursor = Cursor.Pointer
-                true
-            },
-            Disabled to {
-                old = acceptsInput
-                acceptsInput = false
-                recolor(palette.disabled, hoverAnimation, hoverAnimationDuration)
-                true
-            },
-            Enabled to {
-                acceptsInput = old
-                recolor(palette.normal, hoverAnimation, hoverAnimationDuration)
-                true
-            }
-        )
+        if (withStates) {
+            withStates(pressedAnimation, hoverAnimation, pressedAnimationDuration, hoverAnimationDuration)
+        }
     }
-}
 
-open class BrandBlockProperties @JvmOverloads constructor(
-    cornerRadii: FloatArray = 0f.radii()
-) : DefaultBlockProperties(cornerRadii = cornerRadii) {
-    override val palette: Colors.Palette get() = colors.brand.fg
-}
+    companion object {
+        @JvmStatic
+        fun background(cornerRadii: FloatArray = 0f.radii(), outlineThickness: Float = 0f) = BlockProperties(cornerRadii, outlineThickness, false) { colors.page.bg }
 
-open class StateBlockProperties @JvmOverloads constructor(
-    private val state: State = State.Success,
-    cornerRadii: FloatArray = 0f.radii()
-) : DefaultBlockProperties(cornerRadii = cornerRadii) {
-    override val palette: Colors.Palette get() = when (state) {
-        State.Success -> colors.state.success
-        State.Warning -> colors.state.warning
-        State.Danger -> colors.state.danger
+        @JvmStatic
+        fun brand(cornerRadii: FloatArray = 0f.radii(), outlineThickness: Float = 0f) = BlockProperties(cornerRadii, outlineThickness, true) { colors.brand.fg }
+
+        @JvmStatic
+        fun warning(cornerRadii: FloatArray = 0f.radii(), outlineThickness: Float = 0f) = BlockProperties(cornerRadii, outlineThickness, true) { colors.state.warning }
+
+        @JvmStatic
+        fun danger(cornerRadii: FloatArray = 0f.radii(), outlineThickness: Float = 0f) = BlockProperties(cornerRadii, outlineThickness, true) { colors.state.danger }
+
+        @JvmStatic
+        fun success(cornerRadii: FloatArray = 0f.radii(), outlineThickness: Float = 0f) = BlockProperties(cornerRadii, outlineThickness, true) { colors.state.success }
+
+        @JvmField
+        val brandBlock = brand()
+
+        @JvmField
+        val successBlock = success()
+
+        @JvmField
+        val warningBlock = warning()
+
+        @JvmField
+        val dangerBlock = danger()
+
+        @JvmField
+        val backgroundBlock = background()
+
+        fun Properties.withStates(pressedAnimation: Animations? = Animations.EaseOutExpo, hoverAnimation: Animations? = Animations.EaseOutExpo, pressedAnimationDuration: Long = 0.25.seconds, hoverAnimationDuration: Long = 0.5.seconds) {
+            var old = false
+            addEventHandlers(
+                MousePressed(0) to {
+                    recolor(palette.pressed, pressedAnimation, pressedAnimationDuration)
+                    true
+                },
+                MouseReleased(0) to {
+                    recolor(palette.hovered, pressedAnimation, pressedAnimationDuration)
+                    true
+                },
+                MouseEntered to {
+                    recolor(palette.hovered, hoverAnimation, hoverAnimationDuration)
+                    polyUI.cursor = Cursor.Clicker
+                    true
+                },
+                MouseExited to {
+                    recolor(palette.normal, hoverAnimation, hoverAnimationDuration)
+                    polyUI.cursor = Cursor.Pointer
+                    true
+                },
+                Disabled to {
+                    old = acceptsInput
+                    acceptsInput = false
+                    recolor(palette.disabled, hoverAnimation, hoverAnimationDuration)
+                    true
+                },
+                Enabled to {
+                    acceptsInput = old
+                    recolor(palette.normal, hoverAnimation, hoverAnimationDuration)
+                    true
+                }
+            )
+        }
     }
 }

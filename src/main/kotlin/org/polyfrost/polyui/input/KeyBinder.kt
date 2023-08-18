@@ -23,9 +23,14 @@ package org.polyfrost.polyui.input
 
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.event.*
+import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.event.FocusedEvent
+import org.polyfrost.polyui.event.MousePressed
+import org.polyfrost.polyui.event.MouseReleased
+import org.polyfrost.polyui.utils.addOrReplace
 import org.polyfrost.polyui.utils.fastEach
-import java.lang.StringBuilder
+import java.util.concurrent.CancellationException
+import java.util.concurrent.CompletableFuture
 
 /**
  * # KeyBinder
@@ -41,6 +46,9 @@ class KeyBinder(private val polyUI: PolyUI) {
     private val downMouseButtons = ArrayList<Int>(5)
     private val downUnmappedKeys = ArrayList<Int>(5)
     private val downKeys = ArrayList<Keys>(5)
+    private var recording: CompletableFuture<Bind>? = null
+    private var recordingTime = 0L
+    private var recordingFunc: (() -> Boolean)? = null
 
     /**
      * accept a keystroke event. This will call all keybindings that match the event.
@@ -50,13 +58,23 @@ class KeyBinder(private val polyUI: PolyUI) {
     @ApiStatus.Internal
     fun accept(event: Event): Boolean {
         if (event is MousePressed) {
+            if (polyUI.eventManager.keyModifiers == 0.toShort()) {
+                recording?.completeExceptionally(IllegalStateException("Cannot bind to just left click"))
+                return false
+            }
             downMouseButtons.add(event.button)
+            completeRecording()
         }
         if (event is MouseReleased) {
             downMouseButtons.remove(event.button)
         }
         if (event is FocusedEvent.KeyPressed) {
+            if (event.key == Keys.ESCAPE) {
+                recording?.completeExceptionally(CancellationException("ESC key pressed"))
+                return false
+            }
             downKeys.add(event.key)
+            completeRecording()
         }
         if (event is FocusedEvent.KeyReleased) {
             downKeys.remove(event.key)
@@ -73,6 +91,7 @@ class KeyBinder(private val polyUI: PolyUI) {
     fun accept(key: Int, down: Boolean): Boolean {
         if (down) {
             downUnmappedKeys.add(key)
+            completeRecording()
         } else {
             downUnmappedKeys.remove(key)
         }
@@ -88,12 +107,94 @@ class KeyBinder(private val polyUI: PolyUI) {
         return false
     }
 
+    @ApiStatus.Internal
+    fun completeRecording() {
+        if (recording == null) return
+        val b = Bind(
+            if (downUnmappedKeys.size == 0) null else downUnmappedKeys.toIntArray(),
+            if (downKeys.size == 0) null else downKeys.toTypedArray(),
+            if (downMouseButtons.size == 0) null else downMouseButtons.toIntArray(),
+            polyUI.eventManager.keyModifiers,
+            recordingTime,
+            recordingFunc!!
+        )
+        if (listeners.contains(b)) {
+            recording!!.completeExceptionally(IllegalStateException("Duplicate keybind: $b"))
+            release()
+            return
+        }
+        recording!!.complete(b)
+        this.recording = null
+        this.recordingTime = 0L
+        this.recordingFunc = null
+        release()
+    }
+
     /**
-     * Add a keybind to this PolyUI instance, that will be ran when the given keys are pressed.
+     * Add a keybind to this PolyUI instance, that will be run when the given keys are pressed.
      * @since 0.21.0
      */
     fun add(bind: Bind) {
-        listeners.add(bind)
+        val old = listeners.addOrReplace(bind)
+        if (old != null && old !== bind) {
+            PolyUI.LOGGER.warn("Keybind replaced: $bind")
+        }
+    }
+
+    fun remove(bind: Bind) {
+        listeners.remove(bind)
+    }
+
+    /**
+     * Begin recording for a keybind. This will return a CompletableFuture that will complete when the keybind is recorded.
+     *
+     * The keybind will be registered when the CompletableFuture completes.
+     *
+     * @param holdDurationNanos the duration that the keys have to be pressed in the resultant keybind
+     * @param function the function that will be run when the keybind is pressed
+     * @throws CancellationException if [Keys.ESCAPE] is pressed, or if a new recording is started before this one is completed.
+     * @throws IllegalStateException if the keybind is already present
+     * @since 0.24.0
+     */
+    fun record(holdDurationNanos: Long = 0L, function: () -> Boolean): CompletableFuture<Bind> {
+        if (polyUI.settings.debug) {
+            PolyUI.LOGGER.info("Recording keybind began")
+        }
+        if (recording != null) {
+            recording!!.completeExceptionally(CancellationException("New recording was started"))
+        }
+        release()
+        recording = CompletableFuture<Bind>()
+        recordingTime = holdDurationNanos
+        recordingFunc = function
+        return recording!!.thenApply {
+            if (polyUI.settings.debug) {
+                PolyUI.LOGGER.info("Bind created: $it")
+            }
+            if (listeners.addOrReplace(it) != null) {
+                PolyUI.LOGGER.warn("Keybind replaced: $it")
+            }
+            it
+        }.exceptionally {
+            PolyUI.LOGGER.warn("Keybind recording cancelled: ${it.message}")
+            recording = null
+            recordingTime = 0L
+            recordingFunc = null
+            null
+        }
+    }
+
+    fun cancelRecord() {
+        recording?.completeExceptionally(CancellationException("Recording cancelled"))
+    }
+
+    /**
+     * Synthetically drop all pressed keys
+     */
+    private fun release() {
+        downKeys.clear()
+        downMouseButtons.clear()
+        downUnmappedKeys.clear()
     }
 
     class Bind @JvmOverloads constructor(val unmappedKeys: IntArray? = null, val keys: Array<Keys>? = null, val mouse: IntArray? = null, val mods: Short = 0, val durationNanos: Long = 0L, val action: () -> Boolean) {
@@ -130,6 +231,13 @@ class KeyBinder(private val polyUI: PolyUI) {
         override fun toString(): String {
             val sb = StringBuilder()
             sb.append("KeyBind(")
+            sb.append(keysToString())
+            sb.append(")")
+            return sb.toString()
+        }
+
+        fun keysToString(): String {
+            val sb = StringBuilder()
             val s = Modifiers.toStringPretty(mods)
             if (s.isNotEmpty()) {
                 sb.append(s)
@@ -156,7 +264,6 @@ class KeyBinder(private val polyUI: PolyUI) {
                 }
             }
             sb.setLength(sb.length - 3)
-            sb.append(")")
             return sb.toString()
         }
 

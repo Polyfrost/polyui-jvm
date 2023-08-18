@@ -89,21 +89,4 @@ abstract class Properties : Cloneable {
     }
 
     val initialized get() = ::colors.isInitialized
-
-    companion object {
-        @JvmField
-        val brandBlock = BrandBlockProperties()
-
-        @JvmField
-        val successBlock = StateBlockProperties(State.Success)
-
-        @JvmField
-        val warningBlock = StateBlockProperties(State.Warning)
-
-        @JvmField
-        val dangerBlock = StateBlockProperties(State.Danger)
-
-        @JvmField
-        val backgroundBlock = BackgroundProperties()
-    }
 }

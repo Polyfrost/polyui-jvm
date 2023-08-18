@@ -91,10 +91,10 @@ class RadioButton<T>(
                 field = value
                 return
             }
-            val x = value * (width / values.size) + this.x + properties.edgePadding.px
+            val x = value * (width / values.size) + properties.edgePadding.px
             block.moveTo(x.px * block.at.b, properties.moveAnimation, properties.moveAnimationDuration)
             if (properties.colors is LightTheme) {
-                children[field + 1].color.recolor(properties.textProperties.palette.normal)
+                children[field + 1].color.recolor(properties.colors.text.primary.normal)
                 children[value + 1].color.recolor(properties.colors.onBrand.fg.normal)
             }
             field = value
@@ -109,25 +109,29 @@ class RadioButton<T>(
 
     override fun render() {
         if (properties.outlineThickness != 0f) {
-            renderer.hollowRect(x, y, width, height, properties.outlineColor, properties.outlineThickness, properties.cornerRadii)
+            renderer.hollowRect(0f, 0f, width, height, properties.outlineColor, properties.outlineThickness, properties.cornerRadii)
         }
-        renderer.rect(x, y, width, height, color, properties.cornerRadii)
+        renderer.rect(0f, 0f, width, height, color, properties.cornerRadii)
         super.render()
     }
 
-    override fun placeChildren() {
-        super.placeChildren()
+    override fun onInitComplete() {
+        super.onInitComplete()
+        block.cornerRadii = properties.cornerRadii - properties.edgePadding.px
+        block.y = properties.edgePadding.px
+    }
+
+    override fun calculateBounds() {
+        super.calculateBounds()
         block.width = width / values.size - (properties.edgePadding.px * 2f)
         block.height = height - (properties.edgePadding.px * 2f)
-        block.cornerRadii = properties.cornerRadii - properties.edgePadding.px
-        block.x = x + selectedIndex * (width / values.size) + properties.edgePadding.px
-        block.y += properties.edgePadding.px
+        block.x = selectedIndex * (width / values.size) + properties.edgePadding.px
         val blockSize = width / values.size
         children.fastEachIndexed { i, it ->
             if (it !is Text) return@fastEachIndexed
             if (!autoSized) it.string = it.string.truncate(renderer, it.font, it.fontSize, blockSize - 12f)
-            it.x = x + blockSize * (i - 1) + blockSize / 2f - it.width / 2f
-            it.y = y + (height - it.height) / 2f
+            it.x = blockSize * (i - 1) + blockSize / 2f - it.width / 2f
+            it.y = (height - it.height) / 2f
         }
     }
 

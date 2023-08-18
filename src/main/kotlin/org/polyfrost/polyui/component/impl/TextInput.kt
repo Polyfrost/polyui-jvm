@@ -306,7 +306,7 @@ open class TextInput(
         caretPos()
         selections()
         wantRedraw()
-        return true
+        return eventHandlers[event]?.let { it(this, event) } ?: false
     }
 
     fun caretPos() {

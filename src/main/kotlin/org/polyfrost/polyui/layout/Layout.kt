@@ -36,7 +36,6 @@ import org.polyfrost.polyui.component.impl.Block
 import org.polyfrost.polyui.component.impl.Scrollbar
 import org.polyfrost.polyui.event.*
 import org.polyfrost.polyui.property.PropertyManager
-import org.polyfrost.polyui.property.impl.BackgroundProperties
 import org.polyfrost.polyui.property.impl.BlockProperties
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.FontFamily
@@ -372,15 +371,15 @@ abstract class Layout(
      *
      * this will add the drawable to the [Layout.components] or [children] list, and invoke its [Added] if it is present.
      */
-    open fun addComponent(drawable: Drawable) {
+    open fun addComponent(drawable: Drawable, index: Int = -1) {
         when (drawable) {
             is Component -> {
-                if (components.addOrReplace(drawable) != null) PolyUI.LOGGER.warn("${drawable.simpleName} was attempted to be added to layout ${this.simpleName} multiple times!")
+                if (components.addOrReplace(drawable, index) != null) PolyUI.LOGGER.warn("${drawable.simpleName} was attempted to be added to layout ${this.simpleName} multiple times!")
                 if (initStage > INIT_NOT_STARTED) drawable.layout = this
             }
 
             is Layout -> {
-                if (children.addOrReplace(drawable) != null) PolyUI.LOGGER.warn("${drawable.simpleName} was attempted to be added to layout ${this.simpleName} multiple times!")
+                if (children.addOrReplace(drawable, index) != null) PolyUI.LOGGER.warn("${drawable.simpleName} was attempted to be added to layout ${this.simpleName} multiple times!")
                 if (initStage > INIT_NOT_STARTED) drawable.layout = this
             }
 
@@ -874,7 +873,7 @@ abstract class Layout(
         if (!drags) {
             this.components.add(
                 0,
-                Block(BackgroundProperties(cornerRadii), origin, fill, acceptInput = false, rawResize = true).also {
+                Block(BlockProperties.background(cornerRadii), origin, fill, acceptInput = false, rawResize = true).also {
                     it.simpleName = "Background" + it.simpleName
                 }
             )
@@ -886,7 +885,7 @@ abstract class Layout(
             components.add(
                 0,
                 Block(
-                    properties = if (transparent) BlockProperties({ Color.TRANSPARENT_PALETTE })else BackgroundProperties(cornerRadii),
+                    properties = if (transparent) BlockProperties { Color.TRANSPARENT_PALETTE } else BlockProperties.background(cornerRadii),
                     origin,
                     fill,
                     true,
