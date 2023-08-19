@@ -79,17 +79,15 @@ open class Keybind(
 
     init {
         rightImage!!.acceptsInput = true
-        addEventHandlers(
-            MouseClicked(0) to {
+        addEventHandler(MouseClicked(0)) {
+            if (mouseOver) {
                 recording = true
             }
-        )
-        rightImage.addEventHandlers(
-            MouseClicked(0) to {
-                mouseOver = false
-                recording = false
-            }
-        )
+        }
+        rightImage.addEventHandler(MouseClicked(0)) {
+            mouseOver = false
+            recording = false
+        }
     }
 
     override fun render() {

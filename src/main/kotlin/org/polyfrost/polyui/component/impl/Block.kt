@@ -25,7 +25,7 @@ import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.Color
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.component.Component
-import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.event.EventDSL
 import org.polyfrost.polyui.property.impl.BlockProperties
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.unit.Size
@@ -37,14 +37,15 @@ import org.polyfrost.polyui.unit.Vec2
  *
  * A simple block component, supporting the full PolyUI API.
  */
+@Suppress("UNCHECKED_CAST")
 open class Block @JvmOverloads constructor(
     properties: BlockProperties? = null,
     at: Vec2<Unit>,
     size: Size<Unit>?,
     rawResize: Boolean = false,
     acceptInput: Boolean = true,
-    vararg events: Event.Handler
-) : Component(properties, at, size, rawResize, acceptInput, *events) {
+    events: EventDSL<Block>.() -> kotlin.Unit = {}
+) : Component(properties, at, size, rawResize, acceptInput, events as EventDSL<Component>.() -> kotlin.Unit) {
     override val properties
         get() = super.properties as BlockProperties
     protected lateinit var outlineColor: Color.Animated

@@ -195,13 +195,13 @@ abstract class Layout(
     init {
         if (onAdded != null) {
             addEventHandler(Added) {
-                onAdded.invoke(this, it)
+                onAdded!!.invoke(this, it)
                 true
             }
         }
         if (onRemoved != null) {
             addEventHandler(Removed) {
-                onRemoved.invoke(this, it)
+                onRemoved!!.invoke(this, it)
                 true
             }
         }
@@ -590,7 +590,6 @@ abstract class Layout(
         renderer.hollowRect(trueX, trueY, width, height, colors.page.border20, 2f)
         renderer.text(PolyUI.defaultFonts.regular, trueX + 1f, trueY + 1f, simpleName, colors.text.primary.normal, 10f)
         children.fastEach { it.debugRender() }
-        components.fastEach { it.debugRender() }
     }
 
     override fun setup(renderer: Renderer, polyUI: PolyUI) {
@@ -888,23 +887,25 @@ abstract class Layout(
                     properties = if (transparent) BlockProperties { Color.TRANSPARENT_PALETTE } else BlockProperties.background(cornerRadii),
                     origin,
                     fill,
-                    true,
-                    true,
-                    MousePressed(0) to {
-                        dragging = true
-                        mx = this@Layout.x - polyUI.mouseX
-                        my = this@Layout.y - polyUI.mouseY
-                    },
-                    MouseReleased(0) to {
-                        dragging = false
-                    },
-                    MouseMoved to {
-                        if (dragging) {
-                            if (!polyUI.eventManager.mouseDown) {
-                                dragging = false
+                    rawResize = true,
+                    acceptInput = true,
+                    events = {
+                        MousePressed(0) to {
+                            dragging = true
+                            mx = this@Layout.x - polyUI.mouseX
+                            my = this@Layout.y - polyUI.mouseY
+                        }
+                        MouseReleased(0) to {
+                            dragging = false
+                        }
+                        MouseMoved to {
+                            if (dragging) {
+                                if (!polyUI.eventManager.mouseDown) {
+                                    dragging = false
+                                }
+                                this@Layout.x = polyUI.mouseX + mx
+                                this@Layout.y = polyUI.mouseY + my
                             }
-                            this@Layout.x = polyUI.mouseX + mx
-                            this@Layout.y = polyUI.mouseY + my
                         }
                     }
                 ).also {

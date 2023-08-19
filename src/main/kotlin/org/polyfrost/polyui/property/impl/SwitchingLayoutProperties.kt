@@ -24,14 +24,13 @@ package org.polyfrost.polyui.property.impl
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.color.Color
 import org.polyfrost.polyui.property.Properties
-import org.polyfrost.polyui.unit.SlideDirection
 import org.polyfrost.polyui.unit.Transitions
 import org.polyfrost.polyui.unit.seconds
 
 open class SwitchingLayoutProperties : Properties() {
     final override val palette = Color.TRANSPARENT_PALETTE
 
-    open val transition: Transitions? = Transitions.Slide(SlideDirection.FromRight)
+    open val transition: Transitions? = Transitions.Fade
     open val transitionCurve: Animations? = Animations.EaseOutQuad
-    open val transitionDuration = 1.seconds
+    open val transitionDuration = 0.7.seconds
 }

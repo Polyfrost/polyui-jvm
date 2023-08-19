@@ -25,24 +25,24 @@ import org.polyfrost.polyui.unit.Vec2;
 
 public class JavaTest {
 	public static void main(String[] args) {
-		GLWindow window = new GLWindow("Java Window", 800, 800);
-		ArrayList<Drawable> things = new ArrayList<>(50);
-		for (int i = 0; i < 51; i++) { // creates 50 rectangles with random sizes
-			int finalI = i;
-			things.add(new Block(Units.flex(), new Vec2<>(Units.pixels(Math.random() * 40 + 40), Units.pixels(Math.random() * 40 + 40)), new MouseClicked(0).to(component -> {
-				System.out.println("Mouse clicked! " + finalI);
-			}), new MouseClicked(0, 2).to(component -> {
-				System.out.println("Mouse double-clicked! " + finalI);
-			}), new MouseClicked(1).to(component -> {
-				System.out.println("Mouse right clicked! " + finalI);
-			})));
-		}
-		PolyUI polyUI = new PolyUI("", new NVGRenderer(window.getWidth(), window.getHeight()), Layout.drawables(
+//		GLWindow window = new GLWindow("Java Window", 800, 800);
+//		ArrayList<Drawable> things = new ArrayList<>(50);
+//		for (int i = 0; i < 51; i++) { // creates 50 rectangles with random sizes
+//			int finalI = i;
+//			things.add(new Block(Units.flex(), new Vec2<>(Units.pixels(Math.random() * 40 + 40), Units.pixels(Math.random() * 40 + 40)), new MouseClicked(0).to(component -> {
+//				System.out.println("Mouse clicked! " + finalI);
+//			}), new MouseClicked(0, 2).to(component -> {
+//				System.out.println("Mouse double-clicked! " + finalI);
+//			}), new MouseClicked(1).to(component -> {
+//				System.out.println("Mouse right clicked! " + finalI);
+//			})));
+//		}
+//		PolyUI polyUI = new PolyUI("", new NVGRenderer(window.getWidth(), window.getHeight()), Layout.drawables(
 				//new Text(PolyTranslator.localised("Java...         rainbow!     and image"), Units.pixels(32), Units.times(Units.pixels(20), Units.pixels(570))),
 //                new Block(new BlockProperties(new Color.Gradient(new Color(1f, 0f, 0f), new Color(0f, 1f, 1f))), Units.times(Units.pixels(20), Units.pixels(600)), Units.times(Units.pixels(120), Units.pixels(120))),
 //                new Block(new BlockProperties(new Color.Chroma(Units.seconds(5))), Units.times(Units.pixels(200), Units.pixels(600)), Units.times(Units.pixels(120), Units.pixels(120))),
-				new Image(new PolyImage("/s.png", 120, 120), Units.times(Units.pixels(380), Units.pixels(600))),
-				new FlexLayout(Units.times(Units.pixels(20), Units.pixels(30)), Units.percent(80), things.toArray(new Drawable[50]))));
-		window.open(polyUI);
+//				new Image(new PolyImage("/s.png", 120, 120), Units.times(Units.pixels(380), Units.pixels(600))),
+//				new FlexLayout(Units.times(Units.pixels(20), Units.pixels(30)), Units.percent(80), things.toArray(new Drawable[50]))));
+//		window.open(polyUI);
 	}
 }

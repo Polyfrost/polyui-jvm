@@ -86,37 +86,35 @@ open class BlockProperties @JvmOverloads constructor(
 
         fun Properties.withStates(pressedAnimation: Animations? = Animations.EaseOutExpo, hoverAnimation: Animations? = Animations.EaseOutExpo, pressedAnimationDuration: Long = 0.25.seconds, hoverAnimationDuration: Long = 0.5.seconds) {
             var old = false
-            addEventHandlers(
-                MousePressed(0) to {
-                    recolor(palette.pressed, pressedAnimation, pressedAnimationDuration)
-                    true
-                },
-                MouseReleased(0) to {
-                    recolor(palette.hovered, pressedAnimation, pressedAnimationDuration)
-                    true
-                },
-                MouseEntered to {
-                    recolor(palette.hovered, hoverAnimation, hoverAnimationDuration)
-                    polyUI.cursor = Cursor.Clicker
-                    true
-                },
-                MouseExited to {
-                    recolor(palette.normal, hoverAnimation, hoverAnimationDuration)
-                    polyUI.cursor = Cursor.Pointer
-                    true
-                },
-                Disabled to {
-                    old = acceptsInput
-                    acceptsInput = false
-                    recolor(palette.disabled, hoverAnimation, hoverAnimationDuration)
-                    true
-                },
-                Enabled to {
-                    acceptsInput = old
-                    recolor(palette.normal, hoverAnimation, hoverAnimationDuration)
-                    true
-                }
-            )
+            addEventHandler(MouseClicked(0)) {
+                recolor(palette.pressed, pressedAnimation, pressedAnimationDuration)
+                true
+            }
+            addEventHandler(MouseReleased(0)) {
+                recolor(palette.hovered, pressedAnimation, pressedAnimationDuration)
+                true
+            }
+            addEventHandler(MouseEntered) {
+                recolor(palette.hovered, hoverAnimation, hoverAnimationDuration)
+                polyUI.cursor = Cursor.Clicker
+                true
+            }
+            addEventHandler(MouseExited) {
+                recolor(palette.normal, hoverAnimation, hoverAnimationDuration)
+                polyUI.cursor = Cursor.Pointer
+                true
+            }
+            addEventHandler(Disabled) {
+                old = acceptsInput
+                acceptsInput = false
+                recolor(palette.disabled, hoverAnimation, hoverAnimationDuration)
+                true
+            }
+            addEventHandler(Enabled) {
+                acceptsInput = old
+                recolor(palette.normal, hoverAnimation, hoverAnimationDuration)
+                true
+            }
         }
     }
 }

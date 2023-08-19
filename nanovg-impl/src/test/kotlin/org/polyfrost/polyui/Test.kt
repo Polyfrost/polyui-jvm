@@ -28,7 +28,6 @@ import org.polyfrost.polyui.color.DarkTheme
 import org.polyfrost.polyui.color.LightTheme
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.impl.*
-import org.polyfrost.polyui.event.Event.Companion.events
 import org.polyfrost.polyui.event.MouseClicked
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.Keys
@@ -60,22 +59,22 @@ fun main() {
             properties = BlockProperties.brandBlock,
             at = flex(),
             size = Size((Random.Default.nextFloat() * 40f + 40f).px, (Random.Default.nextFloat() * 40f + 40f).px),
-            events = events(
+            events = {
                 MouseClicked(0) to {
                     println("Mouse clicked! $it")
                     setProperties(BlockProperties.successBlock)
                     rotateBy(120.0, Animations.EaseInOutCubic, .5.seconds)
-                },
+                }
                 MouseClicked(0, 2) to {
                     println("Mouse double-clicked!")
                     setProperties(BlockProperties.warningBlock)
-                },
+                }
                 MouseClicked(1) to {
                     println("Mouse right-clicked!")
                     setProperties(BlockProperties.dangerBlock)
                     true
                 }
-            )
+            }
         )
         block
     }
@@ -105,7 +104,7 @@ fun main() {
                                                 BlockProperties.successBlock,
                                                 at = origin,
                                                 size = 60.px * 60.px,
-                                                events = events(
+                                                events = {
                                                     MouseClicked(0) to {
                                                         recolor(
                                                             Color.Gradient(
@@ -115,11 +114,11 @@ fun main() {
                                                             Animations.EaseOutExpo,
                                                             2.seconds
                                                         )
-                                                    },
+                                                    }
                                                     MouseClicked(1) to {
                                                         recolor(rgba(1f, 0f, 1f, 1f), Animations.EaseOutExpo, 2.seconds)
                                                     }
-                                                )
+                                                }
                                             )
                                         )
                                     ),
@@ -144,7 +143,7 @@ fun main() {
                     Block(
                         at = 0.px * 30.px,
                         size = 120.px * 120.px,
-                        events = events(
+                        events = {
                             MouseClicked(0) to {
                                 keyframed(2.seconds, Animations.EaseOutExpo) {
                                     20 {
@@ -166,37 +165,37 @@ fun main() {
                                     }
                                 }
                             }
-                        )
+                        }
                     ),
                     Block(
                         at = 180.px * 30.px,
                         size = 18.percent * 120.px,
-                        events = events(
+                        events = {
                             MouseClicked(0) to {
                                 rotateBy(120.0, Animations.EaseInOutCubic, .5.seconds)
                             }
-                        )
+                        }
                     ),
                     Image(
                         image = PolyImage("/a.png", 120f, 120f),
                         at = 360.px * 30.px,
-                        events = events(
+                        events = {
                             MouseClicked(0) to {
                                 rotateBy(120.0, Animations.EaseOutBump)
                             }
-                        )
+                        }
                     ),
                     Button(
                         at = 0.px * 160.px,
                         left = PolyImage("/ta.png", 15f, 15f),
                         text = "polyui.button".localised(),
                         right = PolyImage("/test.jpg", 15f, 15f),
-                        events = events(
+                        events = {
                             MouseClicked(0) to {
                                 rotateBy(120.0, Animations.EaseInOutCubic)
                                 polyUI.master.getLayout<FlexLayout>(0).shuffle()
                             }
-                        )
+                        }
                     ),
                     TextInput(
                         at = 200.px * 160.px,

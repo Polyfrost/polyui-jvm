@@ -67,26 +67,5 @@ abstract class Properties : Cloneable {
         return this
     }
 
-    /**
-     * Add a universal event handler to this component's property.
-     *
-     * This means that every component using this property will have this event handler.
-     */
-    fun addEventHandler(handler: Event.Handler): Properties {
-        eventHandlers[handler.event] = handler.handler
-        return this
-    }
-
-    /** add a universal event handler to this component's property.
-     *
-     * This means that every component using this property will have this event handler.
-     */
-    fun addEventHandlers(vararg handlers: Event.Handler): Properties {
-        for (handler in handlers) {
-            eventHandlers[handler.event] = handler.handler
-        }
-        return this
-    }
-
     val initialized get() = ::colors.isInitialized
 }

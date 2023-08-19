@@ -23,7 +23,7 @@ package org.polyfrost.polyui.component.impl
 
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.component.Component
-import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.event.EventDSL
 import org.polyfrost.polyui.input.PolyText
 import org.polyfrost.polyui.input.Translator.Companion.localised
 import org.polyfrost.polyui.property.impl.TextProperties
@@ -37,6 +37,7 @@ import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.utils.cl1
 import kotlin.math.floor
 
+@Suppress("UNCHECKED_CAST")
 open class Text @JvmOverloads constructor(
     properties: TextProperties? = null,
     var initialText: PolyText,
@@ -46,8 +47,8 @@ open class Text @JvmOverloads constructor(
     val textAlign: TextAlign = TextAlign.Left,
     rawResize: Boolean = false,
     acceptInput: Boolean = false,
-    vararg events: Event.Handler
-) : Component(properties, at, null, rawResize, acceptInput, *events) {
+    events: EventDSL<org.polyfrost.polyui.component.impl.Text>.() -> kotlin.Unit = {}
+) : Component(properties, at, null, rawResize, acceptInput, events as EventDSL<Component>.() -> kotlin.Unit) {
     /** Internally [txt] is stored as a [PolyText] object, which supports localization and object substitution */
     @JvmOverloads
     constructor(
@@ -58,8 +59,8 @@ open class Text @JvmOverloads constructor(
         textAlign: TextAlign = TextAlign.Left,
         rawResize: Boolean = false,
         acceptInput: Boolean = false,
-        vararg events: Event.Handler
-    ) : this(null, txt.localised(), at, size, fontSize, textAlign, rawResize, acceptInput, *events)
+        events: EventDSL<org.polyfrost.polyui.component.impl.Text>.() -> kotlin.Unit = {}
+    ) : this(null, txt.localised(), at, size, fontSize, textAlign, rawResize, acceptInput, events)
 
     constructor(properties: TextProperties? = null, text: PolyText, fontSize: Unit, at: Vec2<Unit>) :
         this(properties, text, at, null, fontSize)

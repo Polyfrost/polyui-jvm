@@ -52,7 +52,7 @@ abstract class Component @JvmOverloads constructor(
     override var size: Size<Unit>? = null,
     rawResize: Boolean = false,
     acceptInput: Boolean = true,
-    vararg events: Event.Handler
+    events: EventDSL<Component>.() -> kotlin.Unit = {}
 ) : Drawable(at, rawResize, acceptInput) {
 
     @PublishedApi
@@ -78,7 +78,6 @@ abstract class Component @JvmOverloads constructor(
     protected var autoSized = false
     protected var finishColorFunc: (Component.() -> kotlin.Unit)? = null
     override lateinit var layout: Layout
-        internal set
     protected var keyframes: KeyFrames? = null
 
     override var consumesHover = true
@@ -130,22 +129,12 @@ abstract class Component @JvmOverloads constructor(
     }
 
     init {
-        addEventHandlers(*events)
+        events(events)
     }
 
     override fun accept(event: Event): Boolean {
         if (super.accept(event)) return true
         return properties.eventHandlers[event]?.let { it(this, event) } == true
-    }
-
-    /**
-     * Add event handlers to this drawable.
-     * @since 0.18.5
-     */
-    fun addEventHandlers(vararg handlers: Event.Handler) {
-        for (handler in handlers) {
-            eventHandlers[handler.event] = handler.handler
-        }
     }
 
     /**
@@ -304,18 +293,16 @@ abstract class Component @JvmOverloads constructor(
         var hovered = false
         var mx = 0f
         var my = 0f
-        addEventHandlers(
-            MousePressed(0) to {
-                hovered = true
-                mx = polyUI.eventManager.mouseX - x
-                my = polyUI.eventManager.mouseY - y
-                consumesEvent
-            },
-            MouseReleased(0) to {
-                hovered = false
-                consumesEvent
-            }
-        )
+        addEventHandler(MousePressed(0)) {
+            hovered = true
+            mx = polyUI.eventManager.mouseX - x
+            my = polyUI.eventManager.mouseY - y
+            consumesEvent
+        }
+        addEventHandler(MouseReleased(0)) {
+            hovered = false
+            consumesEvent
+        }
         addOperation(object : DrawableOp.Persistent(this) {
             override fun apply(renderer: Renderer) {
                 if (hovered) {

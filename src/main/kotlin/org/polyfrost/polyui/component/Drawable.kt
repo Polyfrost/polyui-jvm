@@ -28,6 +28,8 @@ import org.polyfrost.polyui.PolyUI.Companion.INIT_SETUP
 import org.polyfrost.polyui.animate.Animation
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.event.EventDSL
+import org.polyfrost.polyui.event.EventDSLMarker
 import org.polyfrost.polyui.layout.Layout
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.FontFamily
@@ -323,18 +325,23 @@ abstract class Drawable(
 
     @OverloadResolutionByLambdaReturnType
     @Suppress("UNCHECKED_CAST")
-    protected fun <E : Event> addEventHandler(event: E, handler: (Drawable.(E) -> Boolean)) {
+    fun <E : Event, S : Drawable> S.addEventHandler(event: E, handler: (S.(E) -> Boolean)) {
         eventHandlers[event] = handler as Drawable.(Event) -> Boolean
     }
 
     @JvmName("addEventhandler")
     @Suppress("UNCHECKED_CAST")
     @OverloadResolutionByLambdaReturnType
-    protected fun <E : Event> addEventHandler(event: E, handler: Drawable.(E) -> kotlin.Unit) {
+    fun <E : Event, S : Drawable> S.addEventHandler(event: E, handler: S.(E) -> kotlin.Unit) {
         eventHandlers[event] = {
-            handler(this, it as E)
+            handler(this as S, it as E)
             true
         }
+    }
+
+    @EventDSLMarker
+    fun <S : Drawable> S.events(dsl: EventDSL<S>.() -> kotlin.Unit) {
+        EventDSL<S>(this).apply(dsl)
     }
 
     /** Use this function to reset your drawable's [PolyText][org.polyfrost.polyui.input.Translator] if it is using one. */

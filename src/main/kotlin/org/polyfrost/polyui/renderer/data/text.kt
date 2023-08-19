@@ -121,6 +121,7 @@ internal class MultilineText(
                 it.add(Line("", 0f, fontSize))
             }
         }
+        size.b.px = lines.sumOf { it.height }
         textOffsetY = if (lines.size * fontSize > size.height) {
             full = true
             size.height - lines.size * fontSize

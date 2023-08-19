@@ -64,6 +64,7 @@ class SwitchingLayout(
      */
     @JvmName("switchLayout")
     fun switch(new: Layout) {
+        if (new === current) return
         require(initStage == INIT_COMPLETE) { "Cannot switch layouts before initialization is complete!" }
 
         if (new.initStage == INIT_NOT_STARTED) {

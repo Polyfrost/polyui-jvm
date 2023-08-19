@@ -24,7 +24,7 @@ package org.polyfrost.polyui.component.impl
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.ContainingComponent
-import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.event.EventDSL
 import org.polyfrost.polyui.input.PolyText
 import org.polyfrost.polyui.property.impl.ButtonProperties
 import org.polyfrost.polyui.renderer.data.PolyImage
@@ -43,6 +43,7 @@ import kotlin.math.max
  *
  * @since 0.17.3
  */
+@Suppress("UNCHECKED_CAST")
 open class Button(
     properties: ButtonProperties? = null,
     at: Vec2<Unit>,
@@ -52,8 +53,8 @@ open class Button(
     fontSize: Unit.Pixel = 12.px,
     right: PolyImage? = null,
     acceptsInput: Boolean = true,
-    vararg events: Event.Handler
-) : ContainingComponent(properties, at, null, false, acceptsInput, arrayOf(), *events) {
+    events: EventDSL<Button>.() -> kotlin.Unit = {}
+) : ContainingComponent(properties, at, null, false, acceptsInput, arrayOf(), events as EventDSL<ContainingComponent>.() -> kotlin.Unit) {
     protected val fixedSize = size
     override val properties get() = super.properties as ButtonProperties
     val leftImage: Image? = if (left != null) Image(image = left, at = origin, acceptInput = false) else null

@@ -32,6 +32,7 @@ import org.polyfrost.polyui.layout.Layout
 import org.polyfrost.polyui.property.PropertyManager
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.unit.Unit
+import org.polyfrost.polyui.utils.addOrReplace
 import org.polyfrost.polyui.utils.fastEach
 import org.polyfrost.polyui.utils.fastEachIndexed
 import org.polyfrost.polyui.utils.sortedByDescending
@@ -67,9 +68,10 @@ class FlexLayout @JvmOverloads constructor(
     private val contentJustify: JustifyContent = JustifyContent.Start,
     private val itemAlign: AlignItems = AlignItems.Start,
     private val contentAlign: AlignContent = AlignContent.Start,
+    resizesChildren: Boolean = false,
     gap: Gap = Gap.Default,
     vararg drawables: Drawable
-) : Layout(at, size, onAdded, onRemoved, propertyManager, false, false, false, *drawables) {
+) : Layout(at, size, onAdded, onRemoved, propertyManager, false, resizesChildren, false, *drawables) {
     constructor(at: Point<Unit>, wrap: Unit.Percent, vararg drawables: Drawable) : this(
         at,
         null,
@@ -170,7 +172,7 @@ class FlexLayout @JvmOverloads constructor(
 
     override fun addComponent(drawable: Drawable, index: Int) {
         super.addComponent(drawable, index)
-        if (drawable.at.a is Unit.Flex) flexDrawables.add(drawable)
+        if (drawable.at.a is Unit.Flex) flexDrawables.addOrReplace(drawable, index)
         if (initStage != INIT_NOT_STARTED) calculateBounds()
     }
 
@@ -211,8 +213,10 @@ class FlexLayout @JvmOverloads constructor(
             var row = arrayListOf<Drawable>()
             flexDrawables.fastEachIndexed { i, it ->
                 it.calculateBounds()
+                val next = flexDrawables.getOrNull(i + 1)
+                next?.calculateBounds()
                 mainAxis += getMainSize(it) + mainGap
-                if (getFlex(it).endRowAfter || mainAxis + getMainSize(flexDrawables.getOrNull(i + 1)) >= mainSize) { // means we need to wrap
+                if (getFlex(it).endRowAfter || mainAxis + getMainSize(next) >= mainSize) { // means we need to wrap
                     rows.add(FlexRow(row))
                     mainAxis = 0f
                     row = arrayListOf()

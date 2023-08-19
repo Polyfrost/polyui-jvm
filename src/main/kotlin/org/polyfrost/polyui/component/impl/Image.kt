@@ -26,7 +26,7 @@ import org.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
 import org.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.component.Component
-import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.event.EventDSL
 import org.polyfrost.polyui.property.impl.ImageProperties
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.PolyImage
@@ -35,14 +35,15 @@ import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.px
 import org.polyfrost.polyui.utils.cl1
 
+@Suppress("UNCHECKED_CAST")
 open class Image @JvmOverloads constructor(
     properties: ImageProperties? = null,
     image: PolyImage,
     at: Vec2<Unit>,
     rawResize: Boolean = false,
     acceptInput: Boolean = true,
-    vararg events: Event.Handler
-) : Component(properties, at, null, rawResize, acceptInput, *events) {
+    events: EventDSL<Image>.() -> kotlin.Unit = {}
+) : Component(properties, at, null, rawResize, acceptInput, events as EventDSL<Component>.() -> kotlin.Unit) {
     val fixedSize = image.width != -1f && image.height != -1f
     var image = image
         set(value) {

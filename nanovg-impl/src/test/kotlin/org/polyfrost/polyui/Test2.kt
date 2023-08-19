@@ -24,7 +24,6 @@ package org.polyfrost.polyui
 import org.polyfrost.polyui.color.DarkTheme
 import org.polyfrost.polyui.color.LightTheme
 import org.polyfrost.polyui.component.impl.*
-import org.polyfrost.polyui.event.Event.Companion.events
 import org.polyfrost.polyui.event.MouseClicked
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.Modifiers
@@ -130,20 +129,20 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
             Button(
                 left = moon,
                 at = 24.px * 111.px,
-                events = events(
+                events = {
                     MouseClicked(0) to {
                         if (t) {
                             this.layout.changeColors(LightTheme())
                             this.layout.getComponent<Text>(1).text = "text.light".localised()
-                            (this as Button).leftImage!!.image = moon
+                            this.leftImage!!.image = moon
                         } else {
                             this.layout.changeColors(DarkTheme())
                             this.layout.getComponent<Text>(1).text = "text.dark".localised()
-                            (this as Button).leftImage!!.image = sun
+                            this.leftImage!!.image = sun
                         }
                         t = !t
                     }
-                )
+                }
             ),
             Button(
                 text = "button.text".localised("simple"),
@@ -180,30 +179,30 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                 left = PolyImage("shuffle.svg"),
                 text = "button.randomize".localised(),
                 at = 24.px * 380.px,
-                events = events(
+                events = {
                     MouseClicked(0) to {
                         this.layout.getLayout<FlexLayout>(0).shuffle()
                     }
-                )
+                }
             ),
             Button(
                 left = PolyImage("plus.svg"),
                 at = 320.px * 380.px,
-                events = events(
+                events = {
                     MouseClicked(0) to {
                         this.layout.getLayout<FlexLayout>(0).addComponent(block())
                     }
-                )
+                }
             ),
             Button(
                 left = PolyImage("minus.svg"),
                 at = 355.px * 380.px,
-                events = events(
+                events = {
                     MouseClicked(0) to {
                         val l = this.layout.getLayout<FlexLayout>(0)
                         l.removeComponentNow(l.flexDrawables.last())
                     }
-                )
+                }
             ),
             Block(
                 properties = BlockProperties.brandBlock,

@@ -24,6 +24,7 @@ package org.polyfrost.polyui.component.impl
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.event.EventDSL
 import org.polyfrost.polyui.event.MouseClicked
 import org.polyfrost.polyui.property.impl.StatedProperties
 import org.polyfrost.polyui.renderer.Renderer
@@ -34,6 +35,7 @@ import org.polyfrost.polyui.unit.Vec2
  * Represents a component that can be either in an active or inactive state, such as a [Checkbox][org.polyfrost.polyui.component.impl.Checkbox] or a [Switch][org.polyfrost.polyui.component.impl.Switch].
  * @since 0.20.0
  */
+@Suppress("UNCHECKED_CAST")
 abstract class StateBlock(
     properties: StatedProperties? = null,
     at: Vec2<Unit>,
@@ -41,8 +43,8 @@ abstract class StateBlock(
     rawResize: Boolean = false,
     defaultState: Boolean = false,
     protected open val onStateChange: (StateBlock.(Boolean) -> kotlin.Unit)? = null,
-    vararg events: Event.Handler
-) : Block(properties, at, size, rawResize, true, *events) {
+    events: EventDSL<StateBlock>.() -> kotlin.Unit = {}
+) : Block(properties, at, size, rawResize, true, events as EventDSL<Block>.() -> kotlin.Unit) {
     override val properties
         get() = super.properties as StatedProperties
 

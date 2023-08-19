@@ -35,6 +35,7 @@ import org.polyfrost.polyui.utils.toArrayList
  *
  * @param searchList the list of objects to search through. So you maintain control of it, you should pass as an [ArrayList] reference.
  * @param searchOut the output of the search, where you can pass a list reference.
+ * @since 0.22.0
  */
 class SearchField(
     properties: SearchFieldProperties? = null,

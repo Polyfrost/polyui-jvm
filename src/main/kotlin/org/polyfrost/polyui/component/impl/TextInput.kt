@@ -42,6 +42,7 @@ import org.polyfrost.polyui.unit.origin
 import org.polyfrost.polyui.unit.px
 import org.polyfrost.polyui.utils.*
 
+@Suppress("UNCHECKED_CAST")
 open class TextInput(
     properties: TextInputProperties? = null,
     at: Vec2<Unit>,
@@ -52,8 +53,8 @@ open class TextInput(
     private val hint: PolyText? = null,
     private val initialText: PolyText? = null,
     private val fontSize: Unit = 12.px,
-    vararg events: Event.Handler
-) : Component(properties, at, size, false, true, *events), Focusable {
+    events: EventDSL<TextInput>.() -> kotlin.Unit = {}
+) : Component(properties, at, size, false, true, events as EventDSL<Component>.() -> kotlin.Unit), Focusable {
     override val properties: TextInputProperties
         get() = super.properties as TextInputProperties
     lateinit var text: Text

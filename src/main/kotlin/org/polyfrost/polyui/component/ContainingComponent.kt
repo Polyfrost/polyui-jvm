@@ -27,7 +27,7 @@ import org.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
 import org.polyfrost.polyui.animate.Animation
 import org.polyfrost.polyui.color.Color
 import org.polyfrost.polyui.color.Colors
-import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.event.EventDSL
 import org.polyfrost.polyui.property.Properties
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.FontFamily
@@ -37,6 +37,7 @@ import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.addOrReplace
 import org.polyfrost.polyui.utils.fastEach
+
 /**
  * This component is used to contain other components.
  *
@@ -48,6 +49,7 @@ import org.polyfrost.polyui.utils.fastEach
  *
  * @since 0.17.4
  */
+@Suppress("UNCHECKED_CAST")
 abstract class ContainingComponent(
     properties: Properties? = null,
     /** position relative to this layout. */
@@ -56,8 +58,8 @@ abstract class ContainingComponent(
     rawResize: Boolean = false,
     acceptInput: Boolean = true,
     children: Array<out Component?>,
-    vararg events: Event.Handler
-) : Component(properties, at, size, rawResize, acceptInput, *events) {
+    events: EventDSL<ContainingComponent>.() -> kotlin.Unit = {}
+) : Component(properties, at, size, rawResize, acceptInput, events as EventDSL<Component>.() -> kotlin.Unit) {
     val children: ArrayList<Component> = children.filterNotNull() as ArrayList<Component>
 
     override fun trueX(): Float {
@@ -194,7 +196,7 @@ abstract class ContainingComponent(
 
     open fun clipDrawables() {
         children.fastEach {
-//            it.renders = it.intersects(trueX, trueY, width, height)
+            it.renders = it.x in 0f..width && it.y in 0f..height
         }
     }
 

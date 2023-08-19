@@ -25,8 +25,9 @@ import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.color.Color
 import org.polyfrost.polyui.property.Properties
 import org.polyfrost.polyui.unit.seconds
+import org.polyfrost.polyui.utils.radii
 
-open class DropdownProperties : Properties() {
+open class DropdownProperties : BlockProperties() {
 
     open class Entry : Properties() {
         val textProperties = TextProperties()
@@ -65,5 +66,5 @@ open class DropdownProperties : Properties() {
 
     open val borderThickness = 1f
 
-    open val cornerRadius = 8f
+    override val cornerRadii = 8f.radii()
 }

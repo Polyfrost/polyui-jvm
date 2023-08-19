@@ -26,6 +26,7 @@ import org.polyfrost.polyui.color.Color
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.event.EventDSL
 import org.polyfrost.polyui.event.MousePressed
 import org.polyfrost.polyui.property.impl.SliderProperties
 import org.polyfrost.polyui.renderer.Renderer
@@ -37,14 +38,15 @@ import org.polyfrost.polyui.unit.Unit
  * A slider component.
  * @since 0.19.0
  */
+@Suppress("UNCHECKED_CAST")
 open class Slider(
     properties: SliderProperties? = null,
     at: Point<Unit>,
     size: Size<Unit>,
     val min: Float = 0f,
     val max: Float = 100f,
-    vararg events: Event.Handler
-) : Component(properties, at, size, false, true, *events) {
+    events: EventDSL<Slider>.() -> kotlin.Unit = {}
+) : Component(properties, at, size, false, true, events as EventDSL<Component>.() -> kotlin.Unit) {
     override val properties
         get() = super.properties as SliderProperties
     protected var barThickness = 0f

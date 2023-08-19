@@ -23,7 +23,10 @@ package org.polyfrost.polyui.property.impl
 
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.component.impl.StateBlock
-import org.polyfrost.polyui.event.*
+import org.polyfrost.polyui.event.MouseEntered
+import org.polyfrost.polyui.event.MouseExited
+import org.polyfrost.polyui.event.MousePressed
+import org.polyfrost.polyui.event.MouseReleased
 import org.polyfrost.polyui.renderer.data.Cursor
 import org.polyfrost.polyui.unit.seconds
 
@@ -50,41 +53,39 @@ open class StatedProperties : BlockProperties() {
     open val onDeactivate: (StateBlock.() -> Unit)? = null
 
     init {
-        addEventHandlers(
-            MousePressed(0) to {
-                if (!(this as StateBlock).active) {
-                    recolor(palette.pressed, pressedAnimation, pressedAnimationDuration)
-                } else {
-                    recolor(activePalette.pressed, pressedAnimation, pressedAnimationDuration)
-                }
-                true
-            },
-            MouseReleased(0) to {
-                if (!(this as StateBlock).active) {
-                    recolor(palette.hovered, pressedAnimation, pressedAnimationDuration)
-                } else {
-                    recolor(activePalette.hovered, pressedAnimation, pressedAnimationDuration)
-                }
-                true
-            },
-            MouseEntered to {
-                if (!(this as StateBlock).active) {
-                    recolor(palette.hovered, hoverAnimation, hoverAnimationDuration)
-                } else {
-                    recolor(activePalette.hovered, hoverAnimation, hoverAnimationDuration)
-                }
-                polyUI.cursor = Cursor.Clicker
-                true
-            },
-            MouseExited to {
-                if (!(this as StateBlock).active) {
-                    recolor(palette.normal, hoverAnimation, hoverAnimationDuration)
-                } else {
-                    recolor(activePalette.normal, hoverAnimation, hoverAnimationDuration)
-                }
-                polyUI.cursor = Cursor.Pointer
-                true
+        addEventHandler(MousePressed(0)) {
+            if (!(this as StateBlock).active) {
+                recolor(palette.pressed, pressedAnimation, pressedAnimationDuration)
+            } else {
+                recolor(activePalette.pressed, pressedAnimation, pressedAnimationDuration)
             }
-        )
+            true
+        }
+        addEventHandler(MouseReleased(0)) {
+            if (!(this as StateBlock).active) {
+                recolor(palette.hovered, pressedAnimation, pressedAnimationDuration)
+            } else {
+                recolor(activePalette.hovered, pressedAnimation, pressedAnimationDuration)
+            }
+            true
+        }
+        addEventHandler(MouseEntered) {
+            if (!(this as StateBlock).active) {
+                recolor(palette.hovered, hoverAnimation, hoverAnimationDuration)
+            } else {
+                recolor(activePalette.hovered, hoverAnimation, hoverAnimationDuration)
+            }
+            polyUI.cursor = Cursor.Clicker
+            true
+        }
+        addEventHandler(MouseExited) {
+            if (!(this as StateBlock).active) {
+                recolor(palette.normal, hoverAnimation, hoverAnimationDuration)
+            } else {
+                recolor(activePalette.normal, hoverAnimation, hoverAnimationDuration)
+            }
+            polyUI.cursor = Cursor.Pointer
+            true
+        }
     }
 }
