@@ -41,7 +41,7 @@ internal abstract class Text(
     val font: Font,
     fontSize: Float,
     val textAlign: TextAlign = TextAlign.Left,
-    var size: Vec2<Unit>
+    var size: Vec2<Unit>,
 ) {
     lateinit var renderer: Renderer
     protected val autoSized = size.dynamic || size == origin
@@ -92,7 +92,7 @@ internal class MultilineText(
     font: Font,
     fontSize: Float,
     textAlign: TextAlign = TextAlign.Left,
-    size: Vec2<Unit>
+    size: Vec2<Unit>,
 ) : Text(text, font, fontSize, textAlign, size) {
     override lateinit var lines: ArrayList<Line>
 
@@ -160,7 +160,7 @@ internal class SingleText(
     font: Font,
     fontSize: Float,
     textAlign: TextAlign = TextAlign.Left,
-    size: Vec2<Unit>
+    size: Vec2<Unit>,
 ) : Text(text, font, fontSize, textAlign, size) {
     override var lines: ArrayList<Line> = arrayListOf(Line(text.string, size.width, size.height))
     var init = false
@@ -181,7 +181,7 @@ internal class SingleText(
                 text.string,
                 renderer.textBounds(font, text.string, fontSize, textAlign).also {
                     if (!init && renderer.settings.debug && it.width > size.width) PolyUI.LOGGER.warn("Single line text overflow with initial bounds, is this intended? (text: $text.string, bounds: $size)")
-                } as Vec2<Unit>
+                } as Vec2<Unit>,
             )
         }
 

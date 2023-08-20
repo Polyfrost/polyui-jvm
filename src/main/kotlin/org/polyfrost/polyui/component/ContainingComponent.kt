@@ -21,6 +21,7 @@
 
 package org.polyfrost.polyui.component
 
+import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
 import org.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
@@ -58,31 +59,17 @@ abstract class ContainingComponent(
     rawResize: Boolean = false,
     acceptInput: Boolean = true,
     children: Array<out Component?>,
-    events: EventDSL<ContainingComponent>.() -> kotlin.Unit = {}
+    events: EventDSL<ContainingComponent>.() -> kotlin.Unit = {},
 ) : Component(properties, at, size, rawResize, acceptInput, events as EventDSL<Component>.() -> kotlin.Unit) {
     val children: ArrayList<Component> = children.filterNotNull() as ArrayList<Component>
 
     override fun trueX(): Float {
-        children.fastEach {
-            it.trueX = it.trueX() + x
-            if (it is ContainingComponent) {
-                it.children.fastEach {
-                    it.trueX += x
-                }
-            }
-        }
+        children.fastEach { it.trueX = it.trueX() }
         return super.trueX()
     }
 
     override fun trueY(): Float {
-        children.fastEach {
-            it.trueY = it.trueY() + y
-            if (it is ContainingComponent) {
-                it.children.fastEach {
-                    it.trueY += y
-                }
-            }
-        }
+        children.fastEach { it.trueY = it.trueY() }
         return super.trueY()
     }
 
@@ -113,6 +100,7 @@ abstract class ContainingComponent(
      *
      * **you must** call [super.render()][render]!
      */
+    @MustBeInvokedByOverriders
     override fun render() {
         if (rotation != 0.0) {
             children.fastEach {
@@ -143,6 +131,7 @@ abstract class ContainingComponent(
     override fun setup(renderer: Renderer, polyUI: PolyUI) {
         super.setup(renderer, polyUI)
         children.fastEach {
+            it.parent = this
             it.layout = this.layout
             it.setup(renderer, polyUI)
             it.consumesHover = false

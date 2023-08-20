@@ -43,7 +43,7 @@ abstract class StateBlock(
     rawResize: Boolean = false,
     defaultState: Boolean = false,
     protected open val onStateChange: (StateBlock.(Boolean) -> kotlin.Unit)? = null,
-    events: EventDSL<StateBlock>.() -> kotlin.Unit = {}
+    events: EventDSL<StateBlock>.() -> kotlin.Unit = {},
 ) : Block(properties, at, size, rawResize, true, events as EventDSL<Block>.() -> kotlin.Unit) {
     override val properties
         get() = super.properties as StatedProperties

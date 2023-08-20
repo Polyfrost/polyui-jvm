@@ -102,7 +102,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         text: String,
         color: Color,
         fontSize: Float,
-        textAlign: TextAlign
+        textAlign: TextAlign,
     ) {
         if (color === Color.TRANSPARENT) return
         nvgBeginPath(vg)
@@ -124,7 +124,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         topLeftRadius: Float,
         topRightRadius: Float,
         bottomLeftRadius: Float,
-        bottomRightRadius: Float
+        bottomRightRadius: Float,
     ) {
         val img = getImage(image)
         nvgImagePattern(vg, x, y, width, height, 0f, img.id, 1f, nvgPaint)
@@ -134,7 +134,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
                 (colorMask shr 8 and 0xFF).toByte(),
                 (colorMask and 0xFF).toByte(),
                 (colorMask shr 24 and 0xFF).toByte(),
-                nvgPaint.innerColor()
+                nvgPaint.innerColor(),
             )
         }
         nvgBeginPath(vg)
@@ -147,7 +147,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
             topLeftRadius,
             topRightRadius,
             bottomRightRadius,
-            bottomLeftRadius
+            bottomLeftRadius,
         )
         nvgFillPaint(vg, nvgPaint)
         nvgFill(vg)
@@ -161,7 +161,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
                 (colorMask shr 8 and 0xFF).toByte(),
                 (colorMask and 0xFF).toByte(),
                 (colorMask shr 24 and 0xFF).toByte(),
-                nvgPaint.innerColor()
+                nvgPaint.innerColor(),
             )
         }
         nvgBeginPath(vg)
@@ -176,7 +176,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
             vg,
             width.toInt(),
             height.toInt(),
-            0
+            0,
         ) ?: throw ExceptionInInitializerError("Could not create: $f (possibly an invalid sized layout?)")
         return f
     }
@@ -234,7 +234,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         topLeftRadius: Float,
         topRightRadius: Float,
         bottomLeftRadius: Float,
-        bottomRightRadius: Float
+        bottomRightRadius: Float,
     ) {
         if (color === Color.TRANSPARENT) return
         // note: nvg checks params and draws classic rect if 0, so we don't need to
@@ -248,7 +248,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
             topLeftRadius,
             topRightRadius,
             bottomRightRadius,
-            bottomLeftRadius
+            bottomLeftRadius,
         )
         if (color(color, x, y, width, height)) {
             nvgFillPaint(vg, nvgPaint)
@@ -268,7 +268,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         topLeftRadius: Float,
         topRightRadius: Float,
         bottomLeftRadius: Float,
-        bottomRightRadius: Float
+        bottomRightRadius: Float,
     ) {
         if (color === Color.TRANSPARENT) return
         nvgBeginPath(vg)
@@ -281,7 +281,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
             topLeftRadius,
             topRightRadius,
             bottomRightRadius,
-            bottomLeftRadius
+            bottomLeftRadius,
         )
         nvgStrokeWidth(vg, lineWidth)
         if (color(color, x, y, width, height)) {
@@ -313,7 +313,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         height: Float,
         blur: Float,
         spread: Float,
-        radius: Float
+        radius: Float,
     ) {
         nvgBoxGradient(vg, x - spread, y - spread, width + spread * 2f, height + spread * 2f, radius + spread, blur, nvgColor, nvgColor2, nvgPaint)
         nvgBeginPath(vg)
@@ -355,7 +355,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
                 color.color1.g.toByte(),
                 color.color1.b.toByte(),
                 color.color1.a.toByte(),
-                nvgColor
+                nvgColor,
             )
         } else {
             nvgRGBA(color.r.toByte(), color.g.toByte(), color.b.toByte(), color.a.toByte(), nvgColor)
@@ -367,7 +367,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         x: Float,
         y: Float,
         width: Float,
-        height: Float
+        height: Float,
     ): Boolean {
         color(color)
         if (color !is Color.Gradient) return false
@@ -380,7 +380,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
                 y + height,
                 nvgColor,
                 nvgColor2,
-                nvgPaint
+                nvgPaint,
             )
 
             is Color.Gradient.Type.TopLeftToBottomRight -> nvgLinearGradient(
@@ -391,7 +391,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
                 y + height,
                 nvgColor,
                 nvgColor2,
-                nvgPaint
+                nvgPaint,
             )
 
             is Color.Gradient.Type.LeftToRight -> nvgLinearGradient(
@@ -402,7 +402,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
                 y,
                 nvgColor,
                 nvgColor2,
-                nvgPaint
+                nvgPaint,
             )
 
             is Color.Gradient.Type.BottomLeftToTopRight -> nvgLinearGradient(
@@ -413,7 +413,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
                 y,
                 nvgColor,
                 nvgColor2,
-                nvgPaint
+                nvgPaint,
             )
 
             is Color.Gradient.Type.Radial -> {
@@ -426,7 +426,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
                     (color.type as Color.Gradient.Type.Radial).outerRadius,
                     nvgColor,
                     nvgColor2,
-                    nvgPaint
+                    nvgPaint,
                 )
             }
 
@@ -440,7 +440,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
                 (color.type as Color.Gradient.Type.Box).feather,
                 nvgColor,
                 nvgColor2,
-                nvgPaint
+                nvgPaint,
             )
         }
         return true
@@ -454,7 +454,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
                         PolyUI.defaultFonts.regular.get().also {
                             PolyUI.LOGGER.warn(
                                 "Failed to get font: {}, falling back to default font!",
-                                font.resourcePath
+                                font.resourcePath,
                             )
                         }.toByteBuffer()
                     } else {
@@ -473,7 +473,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
                         .also {
                             PolyUI.LOGGER.warn(
                                 "Failed to get image: {}, falling back to default image!",
-                                image.resourcePath
+                                image.resourcePath,
                             )
                         }
                 } else {
@@ -489,7 +489,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
                         w,
                         h,
                         IntArray(1),
-                        4
+                        4,
                     ).also {
                         if (it == null) {
                             throw Exception("Failed to initialize image: $image")
@@ -518,7 +518,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
                             it, w[0], h[0],
                             0, it,
                             image.width.toInt(), image.height.toInt(),
-                            0, 4
+                            0, 4,
                         )
                     } ?: throw Exception("Failed to initialize image: $image")
                 }
@@ -541,7 +541,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
                         0f, 0f,
                         scale, data,
                         image.width.toInt(), image.height.toInt(),
-                        image.width.toInt() * 4
+                        image.width.toInt() * 4,
                     )
                     NanoSVG.nsvgDeleteRasterizer(raster)
                     NanoSVG.nsvgDelete(svg)

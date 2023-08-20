@@ -44,7 +44,7 @@ open class Block @JvmOverloads constructor(
     size: Size<Unit>?,
     rawResize: Boolean = false,
     acceptInput: Boolean = true,
-    events: EventDSL<Block>.() -> kotlin.Unit = {}
+    events: EventDSL<Block>.() -> kotlin.Unit = {},
 ) : Component(properties, at, size, rawResize, acceptInput, events as EventDSL<Component>.() -> kotlin.Unit) {
     override val properties
         get() = super.properties as BlockProperties

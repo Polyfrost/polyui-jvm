@@ -251,20 +251,10 @@ inline fun Number.radii() = floatArrayOf(this.toFloat(), this.toFloat(), this.to
 /** convert the given floats into an array of 4 floats for radii. */
 inline fun radii(topLeft: Float, topRight: Float, bottomLeft: Float, bottomRight: Float) = floatArrayOf(topLeft, topRight, bottomLeft, bottomRight)
 
-/** varargs wrapper */
-inline fun <T> varargs(vararg any: T): Array<out T> {
-    return any
-}
-
 /** print the object to stdout, then return it. */
-inline fun <T> T.stdout(): T {
+inline fun <T> T.stdout(arg: Any? = null): T {
+    if (arg != null) print("$arg -> ")
     println(this)
-    return this
-}
-
-/** print the given string to stdout, then return the object. */
-inline fun <T> T.prints(string: String): T {
-    println(string)
     return this
 }
 
@@ -328,7 +318,7 @@ fun String.truncate(
     fontSize: Float,
     width: Float,
     limitText: String = "...",
-    textAlign: TextAlign = TextAlign.Left
+    textAlign: TextAlign = TextAlign.Left,
 ): String {
     var resultWidth = renderer.textBounds(font, this, fontSize, textAlign).width
     if (resultWidth < width) return this
@@ -352,13 +342,13 @@ fun String.substringToWidth(
     font: Font,
     fontSize: Float,
     width: Float,
-    textAlign: TextAlign = TextAlign.Left
+    textAlign: TextAlign = TextAlign.Left,
 ): Pair<String, String> {
     if (renderer.settings.debug && renderer.textBounds(
             font,
             "W",
             fontSize,
-            textAlign
+            textAlign,
         ).width > width
     ) { // this is enabled only on debug mode for performance in prod
         throw RuntimeException("Text box maximum width is too small for the given font size! (string: $this, font: ${font.resourcePath}, fontSize: $fontSize, width: $width)")
@@ -407,7 +397,7 @@ fun String.levenshteinDistance(other: String): Int {
                 d[i][j] = min(
                     d[i - 1][j] + 1, // deletion
                     d[i][j - 1] + 1, // insertion
-                    d[i - 1][j - 1] + 1 // substitution
+                    d[i - 1][j - 1] + 1, // substitution
                 )
             }
         }
@@ -425,7 +415,7 @@ fun String.wrap(
     renderer: Renderer,
     font: Font,
     fontSize: Float,
-    textAlign: TextAlign = TextAlign.Left
+    textAlign: TextAlign = TextAlign.Left,
 ): ArrayList<String> {
     if (maxWidth == 0f) return arrayListOf(this)
     val words = split(" ").toArrayList()
@@ -485,7 +475,7 @@ fun String.closestToPoint(renderer: Renderer, font: Font, fontSize: Float, align
             font,
             this.substring(0, c),
             fontSize,
-            alignment
+            alignment,
         ).width
         // get closest char (not necessarily more)
         if (x < w) {

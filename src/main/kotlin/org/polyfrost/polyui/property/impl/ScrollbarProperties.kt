@@ -32,7 +32,7 @@ open class ScrollbarProperties : BlockProperties(withStates = true) {
         rgba(0.5f, 0.5f, 0.5f, 0.5f),
         rgba(0.5f, 0.5f, 0.5f, 0.75f),
         rgba(0.5f, 0.5f, 0.5f, 0.8f),
-        rgba(0.5f, 0.5f, 0.5f, 0.2f)
+        rgba(0.5f, 0.5f, 0.5f, 0.2f),
     )
     override val cornerRadii: FloatArray = 2f.radii()
     open val padding = 2f

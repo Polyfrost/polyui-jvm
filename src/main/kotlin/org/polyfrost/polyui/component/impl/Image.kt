@@ -42,7 +42,7 @@ open class Image @JvmOverloads constructor(
     at: Vec2<Unit>,
     rawResize: Boolean = false,
     acceptInput: Boolean = true,
-    events: EventDSL<Image>.() -> kotlin.Unit = {}
+    events: EventDSL<Image>.() -> kotlin.Unit = {},
 ) : Component(properties, at, null, rawResize, acceptInput, events as EventDSL<Component>.() -> kotlin.Unit) {
     val fixedSize = image.width != -1f && image.height != -1f
     var image = image
@@ -75,7 +75,7 @@ open class Image @JvmOverloads constructor(
                 properties.svgPalette.normal
             } else {
                 properties.palette.normal
-            }
+            },
         )
     }
 

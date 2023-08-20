@@ -48,7 +48,7 @@ open class PixelLayout(
     acceptInput: Boolean = true,
     rawResize: Boolean = false,
     resizesChildren: Boolean = true,
-    vararg drawables: Drawable
+    vararg drawables: Drawable,
 ) : Layout(at, size, onAdded, onRemoved, propertyManager, rawResize, resizesChildren, acceptInput, *drawables) {
     /**
      * This variable represents weather this layout was created with 'dynamic inference', meaning it has no size specified, but has dynamically sized children.

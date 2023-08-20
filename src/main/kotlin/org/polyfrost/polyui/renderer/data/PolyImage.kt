@@ -32,7 +32,7 @@ class PolyImage @JvmOverloads constructor(
     resourcePath: String,
     var width: Float = -1f, // uninitialized
     var height: Float = -1f,
-    val type: Type = from(resourcePath)
+    val type: Type = from(resourcePath),
 ) : Resource(resourcePath) {
 
     override fun toString(): String {
@@ -47,7 +47,7 @@ class PolyImage @JvmOverloads constructor(
     override fun equals(other: Any?): Boolean = resourcePath.equals(other)
 
     enum class Type {
-        PNG, JPEG, BMP, SVG;
+        PNG, JPEG, BMP, SVG
     }
 
     /**
@@ -59,7 +59,7 @@ class PolyImage @JvmOverloads constructor(
         ROUND("materialiconsround"),
         SHARP("materialiconssharp"),
         TWOTONE("materialiconstwotone"),
-        NORMAL("materialicons")
+        NORMAL("materialicons"),
     }
 
     companion object {
@@ -71,7 +71,7 @@ class PolyImage @JvmOverloads constructor(
                 "jpg", "jpeg", "jpe", "jif", "jfif", "jfi" -> Type.JPEG
                 "bmp" -> Type.BMP
                 else -> throw IllegalArgumentException(
-                    "Unknown image type for file $fileName"
+                    "Unknown image type for file $fileName",
                 )
             }
         }
@@ -91,13 +91,13 @@ class PolyImage @JvmOverloads constructor(
             icon: String,
             width: Float = -1f,
             height: Float = -1f,
-            style: MaterialStyle = MaterialStyle.NORMAL
+            style: MaterialStyle = MaterialStyle.NORMAL,
         ) = PolyImage(
             "https://raw.githubusercontent.com/google/material-design-icons/master/src/" +
                 "${icon.replace('.', '/')}/${style.style}/24px.svg",
             width,
             height,
-            Type.SVG
+            Type.SVG,
         )
     }
 }

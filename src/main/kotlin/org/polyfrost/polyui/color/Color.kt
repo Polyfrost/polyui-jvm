@@ -219,7 +219,7 @@ open class Color @JvmOverloads constructor(hue: Float, saturation: Float, bright
         hue: Float,
         saturation: Float,
         brightness: Float,
-        alpha: Float
+        alpha: Float,
     ) : Color(hue, saturation, brightness, alpha) {
 
         /** Set this in your Color class if it's always updating, but still can be removed while updating, for
@@ -258,7 +258,7 @@ open class Color @JvmOverloads constructor(hue: Float, saturation: Float, bright
                     this.r.toFloat(),
                     this.g.toFloat(),
                     this.b.toFloat(),
-                    this.alpha
+                    this.alpha,
                 )
                 val from = this.from!!
                 current = from.clone()
@@ -266,7 +266,7 @@ open class Color @JvmOverloads constructor(hue: Float, saturation: Float, bright
                     target.r.toFloat() - from[0],
                     target.g.toFloat() - from[1],
                     target.b.toFloat() - from[2],
-                    target.alpha - from[3]
+                    target.alpha - from[3],
                 )
             } else {
                 this.hue = target.hue
@@ -302,7 +302,7 @@ open class Color @JvmOverloads constructor(hue: Float, saturation: Float, bright
                     (from[0] + to[0] * progress).toInt(),
                     (from[1] + to[1] * progress).toInt(),
                     (from[2] + to[2] * progress).toInt(),
-                    current
+                    current,
                 )
                 this.hue = current!![0]
                 this.saturation = current!![1]
@@ -342,7 +342,7 @@ open class Color @JvmOverloads constructor(hue: Float, saturation: Float, bright
                 val innerRadius: Float,
                 val outerRadius: Float,
                 val centerX: Float = -1f,
-                val centerY: Float = -1f
+                val centerY: Float = -1f,
             ) : Type() {
                 init {
                     require(innerRadius < outerRadius) { "innerRadius must be smaller than outerRadius! ($innerRadius < $outerRadius)" }
@@ -409,7 +409,7 @@ open class Color @JvmOverloads constructor(hue: Float, saturation: Float, bright
         @Deprecated(
             "Gradient colors cannot be animated in this way. They can be animated separately using the given method.",
             ReplaceWith("recolor(0, target, type, durationNanos)"),
-            DeprecationLevel.ERROR
+            DeprecationLevel.ERROR,
         )
         override fun recolor(target: Color, type: Animation.Type?, durationNanos: Long) {
             // nop
@@ -439,7 +439,7 @@ open class Color @JvmOverloads constructor(hue: Float, saturation: Float, bright
         /** saturation of the color range (0.0 - 1.0) */
         saturation: Float = 1f,
         alpha: Float = 1f,
-        initialHue: Float = 0f
+        initialHue: Float = 0f,
     ) : Animated(0f, saturation, brightness, alpha) {
         private var time: Long = ((initialHue % 360f) * speedNanos.toFloat()).toLong()
 

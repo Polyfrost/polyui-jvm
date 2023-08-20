@@ -113,9 +113,17 @@ abstract class Unit(val type: Type) : Cloneable {
             internal var vMax = 0f
                 private set
             internal var vWidth = 0f
-                set(value) = run { field = value; vMin = min(vWidth, vHeight); vMax = max(vWidth, vHeight) }
+                set(value) = run {
+                    field = value
+                    vMin = min(vWidth, vHeight)
+                    vMax = max(vWidth, vHeight)
+                }
             internal var vHeight = 0f
-                set(value) = run { field = value; vMin = min(vWidth, vHeight); vMax = max(vWidth, vHeight) }
+                set(value) = run {
+                    field = value
+                    vMin = min(vWidth, vHeight)
+                    vMax = max(vWidth, vHeight)
+                }
         }
     }
 

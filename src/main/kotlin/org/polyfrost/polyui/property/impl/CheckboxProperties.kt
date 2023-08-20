@@ -67,7 +67,7 @@ open class CheckboxProperties : StatedProperties() {
                     width * 0.4f,
                     height * 0.7f,
                     checkmarkColor,
-                    2f
+                    2f,
                 )
                 renderer.line(
                     width * 0.4f,
@@ -75,7 +75,7 @@ open class CheckboxProperties : StatedProperties() {
                     width * 0.8f,
                     height * 0.3f,
                     checkmarkColor,
-                    2f
+                    2f,
                 )
                 renderer.scale(1f / value, 1f / value)
                 renderer.translate(-x, -y)

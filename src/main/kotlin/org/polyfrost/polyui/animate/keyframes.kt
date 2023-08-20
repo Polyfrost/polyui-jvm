@@ -33,7 +33,7 @@ import org.polyfrost.polyui.unit.seconds
  *
  * Keyframes are an easy way to create animations on components. PolyUI uses a [Kotlin DSL](https://kotlinlang.org/docs/type-safe-builders.html) to create them in an easy and concise way.
  *
- * They can be created wherever a [Component] is in scope, so everything from [events][org.polyfrost.polyui.event.Event.Handler]
+ * They can be created wherever a [Component] is in scope, so everything from [events][org.polyfrost.polyui.event.Event]
  * for [mouse clicks][org.polyfrost.polyui.event.MouseClicked]; to in your initialization block; using the extension function [keyframed].
  *
  * Each keyframe can be added using a number between 0 (representing the start or 0%) to 100, representing the end or 100%.
@@ -79,7 +79,7 @@ class KeyFrames @JvmOverloads constructor(private val overNanos: Long, private v
             PolyUI.LOGGER.warn(
                 "Keyframe ordering incorrect: Keyframe at {} is placed after {}, please swap these frames.",
                 last,
-                t
+                t,
             )
         }
         frame(f)
@@ -114,7 +114,7 @@ class KeyFrames @JvmOverloads constructor(private val overNanos: Long, private v
                 nn.rotation,
                 nn.scaleX, nn.scaleY,
                 nn.skewX, nn.skewY,
-                animation, nn.time - n.time
+                animation, nn.time - n.time,
             )
             if (nn.color != null) component.recolor(nn.color!!, animation, nn.time - n.time)
         }
@@ -150,7 +150,7 @@ annotation class KeyFrameDSL
 fun Component.keyframed(
     durationNanos: Long = 1L.seconds,
     animation: Animations = Animation.Type.Linear,
-    frames: KeyFrames.() -> kotlin.Unit
+    frames: KeyFrames.() -> kotlin.Unit,
 ) {
     val k = KeyFrames(durationNanos, animation, this)
     k.apply(frames)
@@ -167,5 +167,5 @@ fun Component.keyframed(
 fun Component.keyframes(
     durationNanos: Long = 1L.seconds,
     animation: Animations = Animation.Type.Linear,
-    frames: KeyFrames.() -> kotlin.Unit
+    frames: KeyFrames.() -> kotlin.Unit,
 ) = keyframed(durationNanos, animation, frames)

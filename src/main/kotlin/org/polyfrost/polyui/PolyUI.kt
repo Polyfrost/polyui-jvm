@@ -86,7 +86,7 @@ class PolyUI @JvmOverloads constructor(
     val renderer: Renderer,
     settings: Settings? = null,
     colors: Colors = DarkTheme(),
-    vararg drawables: Drawable
+    vararg drawables: Drawable,
 ) {
     val settings = settings ?: Settings()
     init {
@@ -236,7 +236,7 @@ class PolyUI @JvmOverloads constructor(
                 if (!refuseFramebuffer && settings.minDrawablesForFramebuffer < components.size) {
                     fbo = renderer.createFramebuffer(width, height)
                     if (settings.debug) {
-                        LOGGER.info("Layout {} ({} items) created with {}", varargs(simpleName, components.size, fbo))
+                        LOGGER.info("Layout $simpleName ({} items) created with $fbo", components.size)
                     }
                 }
             }
@@ -259,21 +259,22 @@ class PolyUI @JvmOverloads constructor(
                     LOGGER.info(
                         "Debug mode {}",
                         if (settings.debug) {
-                            frames = 0; "enabled"
+                            frames = 0
+                            "enabled"
                         } else {
                             "disabled"
-                        }
+                        },
                     )
                     true
-                }
+                },
             )
         }
         keyBinder.add(
             KeyBinder.Bind('R', mods = mods(KeyModifiers.LCONTROL)) {
                 LOGGER.info("Reloading PolyUI")
-                onResize(width.toInt(), height.toInt(), renderer.pixelRatio, true)
+                resize(width.toInt(), height.toInt(), renderer.pixelRatio, true)
                 true
-            }
+            },
         )
         every(1.seconds) {
             if (settings.debug && drew) {
@@ -293,7 +294,7 @@ class PolyUI @JvmOverloads constructor(
                 Thread {
                     LOGGER.info("Quitting!")
                     this.cleanup()
-                }
+                },
             )
         }
         if (settings.cleanupAfterInit) {
@@ -311,7 +312,7 @@ class PolyUI @JvmOverloads constructor(
      * Resize this PolyUI instance.
      */
     @Suppress("NAME_SHADOWING")
-    fun onResize(newWidth: Int, newHeight: Int, pixelRatio: Float = renderer.pixelRatio, force: Boolean = false) {
+    fun resize(newWidth: Int, newHeight: Int, pixelRatio: Float = renderer.pixelRatio, force: Boolean = false) {
         if (newWidth == 0 || newHeight == 0) {
             LOGGER.error("Cannot resize to zero size: {}x{}", newWidth, newHeight)
             return
@@ -361,7 +362,7 @@ class PolyUI @JvmOverloads constructor(
         master.calculateBounds()
         master.rescale(
             newWidth.toFloat() / this.width,
-            newHeight.toFloat() / this.height
+            newHeight.toFloat() / this.height,
         )
 
         master.onAllLayouts {
@@ -383,7 +384,7 @@ class PolyUI @JvmOverloads constructor(
             renderer.beginFrame()
             master.reRenderIfNecessary()
 
-            hooks.fastRemoveIf { it(renderer) }
+            hooks.fastRemoveIfReversed { it(renderer) }
 
             // telemetry
             if (settings.debug) {
@@ -403,7 +404,7 @@ class PolyUI @JvmOverloads constructor(
             drew = false
         }
         keyBinder.update(delta)
-        executors.fastRemoveIf { it.tick(delta) }
+        executors.fastRemoveIfReversed { it.tick(delta) }
     }
 
     /** draw the debug overlay text. It is right-aligned. */
@@ -415,7 +416,7 @@ class PolyUI @JvmOverloads constructor(
             text = perf,
             color = colors.text.primary.normal,
             fontSize = 10f,
-            textAlign = TextAlign.Right
+            textAlign = TextAlign.Right,
         )
     }
 

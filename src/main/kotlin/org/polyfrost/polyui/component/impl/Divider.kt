@@ -33,7 +33,7 @@ open class Divider @JvmOverloads constructor(
     properties: DividerProperties? = null,
     at: Vec2<Unit>,
     val length: Unit,
-    val direction: Direction = Direction.Horizontal
+    val direction: Direction = Direction.Horizontal,
 ) : Component(properties, at, null, true, false) {
     override fun render() {
         renderer.line(x, y, x + width, y + height, color, (properties as DividerProperties).thickness)

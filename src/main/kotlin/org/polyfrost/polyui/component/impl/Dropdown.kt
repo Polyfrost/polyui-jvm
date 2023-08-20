@@ -49,11 +49,11 @@ class Dropdown(
     size: Size<Unit>? = null,
     heightBeforeScrolls: Unit.Pixel = 300.px,
     val default: Int = 0,
-    vararg entries: Entry
+    vararg entries: Entry,
 ) : Component(properties, at, size, false, true), Focusable {
     private lateinit var borderColor: Color.Animated
 
-//    private val chevron = Image(image = PolyImage("/chevron-down.svg", 16f, 16f), at = origin)
+    private val chevron = Image(image = PolyImage("/chevron-down.svg", 16f, 16f), at = origin)
     private var ycache = 0f
 
     init {
@@ -85,11 +85,7 @@ class Dropdown(
             field!!.show = true
             field!!.acceptsInput = false
             layout.addComponent(field!!)
-            field!!.y += properties.verticalPadding
             field!!.calculateBounds()
-            field!!.text.x += x
-            field!!.text.y += properties.verticalPadding
-            if (field!!.image != null) field!!.image!!.x += x
         }
     val dropdown = FlexLayout(
         at.clone(),
@@ -98,8 +94,8 @@ class Dropdown(
         },
         gap = Gap(0f.px, 0f.px),
         drawables = drawables(
-            *entries
-        )
+            *entries,
+        ),
     ).scrolling(0.px * heightBeforeScrolls)
 
     init {
@@ -126,7 +122,9 @@ class Dropdown(
     override fun setup(renderer: Renderer, polyUI: PolyUI) {
         dropdown.y += if (size != null) size!!.height else 0f
         super.setup(renderer, polyUI)
-        layout.addComponents(dropdown)
+        layout.addComponents(dropdown, chevron)
+        chevron.setup(renderer, polyUI)
+        chevron.size = chevron.calculateSize()
         borderColor = properties.borderColor.toAnimatable()
     }
 
@@ -152,7 +150,7 @@ class Dropdown(
 
     fun close() {
         openAnimation = properties.openAnimation.create(properties.openDuration, openAnimation?.value ?: 1f, 0f)
-//        chevron.rotateTo(0.0, properties.openAnimation, properties.openDuration)
+        chevron.rotateTo(0.0, properties.openAnimation, properties.openDuration)
         color.recolor(properties.palette.normal)
         borderColor.recolor(properties.borderColor)
     }
@@ -160,7 +158,7 @@ class Dropdown(
     fun open() {
         ycache = layout.y
         openAnimation = properties.openAnimation.create(properties.openDuration, openAnimation?.value ?: 0f, 1f)
-//        chevron.rotateTo(180.0, properties.openAnimation, properties.openDuration)
+        chevron.rotateTo(180.0, properties.openAnimation, properties.openDuration)
         color.recolor(properties.activeColor)
         borderColor.recolor(properties.activeBorderColor)
         dropdown.trueX = dropdown.trueX()
@@ -168,6 +166,16 @@ class Dropdown(
     }
 
     override fun render() {
+        // asm: if this is inside a ContainingComponent, get the ACTUAL y value
+        var parent = this.parent
+        var actualY = y
+        while (parent != null) {
+            actualY += parent.y
+            if (parent.layout == dropdown.layout) break
+            parent = (parent as Component).parent
+        }
+        dropdown.y = actualY + height + properties.borderThickness
+
         if (openAnimation != null) {
             if (openAnimation!!.isFinished && openAnimation!!.value == 0f) {
                 openAnimation = null
@@ -177,7 +185,6 @@ class Dropdown(
         }
         dropdown.exists = (openAnimation?.value ?: 0f) != 0f
         if (active) {
-//            selected?.recolorAll(properties.hoveredColor)
             // asm: close dropdown when scrolled
             if (ycache != layout.y) {
                 polyUI.unfocus()
@@ -201,31 +208,23 @@ class Dropdown(
 
     override fun calculateBounds() {
         dropdown.calculateBounds()
+        chevron.calculateBounds()
         super.calculateBounds()
-        dropdown.x = x
+        dropdown.x = x + properties.borderThickness
         dropdown.y = y + height + properties.borderThickness
-        dropdown.oy = dropdown.y
-//        chevron.x = x + width - chevron.width - 12f
-//        chevron.y = y + height / 2f - chevron.height / 2f
+        chevron.x = x + width - chevron.width - 12f
+        chevron.y = y + height / 2f - chevron.height / 2f
     }
 
     override fun onInitComplete() {
         x += properties.borderThickness
-        dropdown.x += properties.borderThickness
         default()
-//        selected!!.text.y -= properties.verticalPadding
         dropdown.exists = false
         dropdown.visibleSize = dropdown.size!!.clone()
-//        chevron.layout = layout
-//        chevron.setup(renderer, polyUI)
-//        chevron.calculateBounds()
-        dropdown.components.fastEach {
-            it.rescale(1f, 1f)
-        }
     }
 
     fun default() {
-//        selected = dropdown.components[default] as Entry
+        selected = dropdown.components[default] as Entry
     }
 
     class Entry @JvmOverloads constructor(private val txt: PolyText, private val icon: PolyImage? = null, private val iconSide: Side = Side.Right, properties: DropdownProperties.Entry? = null, private val onSelected: (() -> kotlin.Unit)? = null) : ContainingComponent(properties, flex(), null, false, true, arrayOf()) {
@@ -277,19 +276,12 @@ class Dropdown(
                 if (!show) {
                     dropdown.active = false
                     dropdown.close()
-//                    dropdown.selected = this
+                    dropdown.selected = this
                     onSelected?.invoke()
                     return true
                 }
             }
             return super.accept(event)
-        }
-
-        override fun isInside(x: Float, y: Float): Boolean {
-            val xx = x - dropdown.trueX
-            val yy = y - dropdown.trueY - dropdown.height
-            println("$xx $yy")
-            return xx in this.x..(this.x + width) && yy in this.y..(this.y + height)
         }
 
         override fun calculateBounds() {

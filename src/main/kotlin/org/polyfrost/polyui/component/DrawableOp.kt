@@ -69,7 +69,7 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         add: Boolean = true,
         drawable: Drawable,
         type: Animations? = null,
-        durationNanos: Long = 1L.seconds
+        durationNanos: Long = 1L.seconds,
     ) : DrawableOp(drawable) {
         override val animation = type?.create(durationNanos, 0f, 1f)
         private val origin = drawable.at.clone()
@@ -112,7 +112,7 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         add: Boolean = true,
         drawable: Drawable,
         type: Animations? = null,
-        durationNanos: Long = 1L.seconds
+        durationNanos: Long = 1L.seconds,
     ) : DrawableOp(drawable) {
         override val animation = type?.create(durationNanos, drawable.alpha, if (add) drawable.alpha + amount else amount)
         override fun apply(renderer: Renderer) {
@@ -132,14 +132,14 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         add: Boolean = true,
         drawable: Drawable,
         type: Animations? = null,
-        durationNanos: Long = 1L.seconds
+        durationNanos: Long = 1L.seconds,
     ) :
         DrawableOp(drawable) {
         override val animation =
             type?.create(
                 durationNanos,
                 drawable.rotation.toFloat(),
-                if (add) (drawable.rotation + angle).toFloat() else angle.toFloat()
+                if (add) (drawable.rotation + angle).toFloat() else angle.toFloat(),
             )
 
         override fun apply(renderer: Renderer) {
@@ -155,7 +155,7 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         toSize: Vec2<Unit>,
         drawable: Drawable,
         animation: Animation.Type?,
-        durationNanos: Long = 1L.seconds
+        durationNanos: Long = 1L.seconds,
     ) :
         DrawableOp(drawable) {
         override val animation = animation?.create(durationNanos, 0f, 1f)
@@ -179,7 +179,7 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         add: Boolean = true,
         drawable: Drawable,
         animation: Animations? = null,
-        durationNanos: Long = 1L.seconds
+        durationNanos: Long = 1L.seconds,
     ) : DrawableOp(drawable) {
         override val animation = animation?.create(durationNanos, 0f, 1f)
         private val tx = if (add) drawable.scaleX + scaleX else scaleX
@@ -203,7 +203,7 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
         add: Boolean = true,
         drawable: Drawable,
         animation: Animations? = null,
-        durationNanos: Long = 1L.seconds
+        durationNanos: Long = 1L.seconds,
     ) : DrawableOp(drawable) {
         override val animation = animation?.create(durationNanos, 0f, 1f)
         private val tx = if (add) drawable.skewX + skewX else skewX

@@ -36,7 +36,7 @@ open class Checkbox(
     at: Point<Unit>,
     size: Size<Unit>,
     enabled: Boolean = false,
-    onCheck: (Checkbox.(Boolean) -> kotlin.Unit)? = null
+    onCheck: (Checkbox.(Boolean) -> kotlin.Unit)? = null,
 ) : StateBlock(properties, at, size, defaultState = enabled, onStateChange = onCheck as (StateBlock.(Boolean) -> kotlin.Unit)?) {
     override val properties
         get() = super.properties as CheckboxProperties

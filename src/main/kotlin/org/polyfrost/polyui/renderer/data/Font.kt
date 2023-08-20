@@ -35,7 +35,7 @@ import java.net.URL
 class Font @JvmOverloads constructor(
     resourcePath: String,
     val letterSpacing: Float = 0f,
-    val lineSpacing: Float = 1f
+    val lineSpacing: Float = 1f,
 ) : Resource(resourcePath) {
     val name: String = resourcePath.substringAfterLast('/')
         .substringBeforeLast('.')
@@ -72,7 +72,7 @@ class Font @JvmOverloads constructor(
             style: String,
             letterSpacing: Float = 0f,
             lineSpacing: Float = 1f,
-            verify: Boolean = false
+            verify: Boolean = false,
         ): Font {
             val dir = family.lowercase()
             val family = family.capitalize()
@@ -102,7 +102,7 @@ class Font @JvmOverloads constructor(
             return Font(
                 link,
                 letterSpacing,
-                lineSpacing
+                lineSpacing,
             )
         }
     }

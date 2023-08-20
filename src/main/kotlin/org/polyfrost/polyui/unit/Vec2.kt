@@ -32,7 +32,7 @@ data class Vec2<T : Unit>(
     /** x/width/first/a */
     val a: T,
     /** y/height/second/b */
-    val b: T
+    val b: T,
 ) : Cloneable {
     inline val x get() = a.px // parity with Point
     inline val y get() = b.px

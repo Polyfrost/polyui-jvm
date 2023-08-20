@@ -51,7 +51,7 @@ class Switch(
     switchSize: Size<Unit>,
     enabled: Boolean = false,
     onSwitch: (Switch.(Boolean) -> kotlin.Unit)? = null,
-    events: EventDSL<Switch>.() -> kotlin.Unit = {}
+    events: EventDSL<Switch>.() -> kotlin.Unit = {},
 ) : StateBlock(properties, at, switchSize, defaultState = enabled, onStateChange = onSwitch as (StateBlock.(Boolean) -> kotlin.Unit)?, events = events as EventDSL<StateBlock>.() -> kotlin.Unit) {
     private var anim: Animation? = null
     private var bitSize = 0f

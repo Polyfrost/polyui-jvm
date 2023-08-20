@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.archivesName
 import org.jetbrains.dokka.base.DokkaBase
 import org.jetbrains.dokka.base.DokkaBaseConfiguration
 import org.jetbrains.dokka.gradle.AbstractDokkaTask
+import org.jmailen.gradle.kotlinter.tasks.FormatTask
 import java.time.Year
 
 @Suppress(
@@ -70,8 +71,6 @@ allprojects {
     kotlinter {
         ignoreFailures = false
         reporters = arrayOf("checkstyle", "plain")
-        experimentalRules = true
-        disabledRules = arrayOf("no-wildcard-imports", "filename", "max-line-length")
     }
 
     license {
@@ -91,7 +90,7 @@ allprojects {
             }
 
             doLast {
-                val scriptsOut = outputDirectory.get().resolve("scripts")
+                val scriptsOut = outputDirectory.get().asFile.resolve("scripts")
                 val scriptsIn = file("${rootProject.projectDir}/format/dokka/scripts")
                 if (project != rootProject) return@doLast
                 scriptsIn.listFiles()!!.forEach {

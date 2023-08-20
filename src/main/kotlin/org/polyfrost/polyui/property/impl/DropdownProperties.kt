@@ -27,7 +27,7 @@ import org.polyfrost.polyui.property.Properties
 import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.radii
 
-open class DropdownProperties : BlockProperties() {
+open class DropdownProperties(open val minWidth: Float = 120f) : BlockProperties() {
 
     open class Entry : Properties() {
         val textProperties = TextProperties()
@@ -47,7 +47,6 @@ open class DropdownProperties : BlockProperties() {
     override val palette
         get() = colors.component.bg
 
-    open val minWidth = 120f
     open val verticalPadding = 2f
 
     open val activeColor: Color

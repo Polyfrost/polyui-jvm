@@ -81,7 +81,7 @@ class NoOpRenderer(width: Float, height: Float) : Renderer(width, height) {
         text: String,
         color: Color,
         fontSize: Float,
-        textAlign: TextAlign
+        textAlign: TextAlign,
     ) {
     }
 
@@ -103,7 +103,7 @@ class NoOpRenderer(width: Float, height: Float) : Renderer(width, height) {
         topLeftRadius: Float,
         topRightRadius: Float,
         bottomLeftRadius: Float,
-        bottomRightRadius: Float
+        bottomRightRadius: Float,
     ) {
     }
 
@@ -116,7 +116,7 @@ class NoOpRenderer(width: Float, height: Float) : Renderer(width, height) {
         topLeftRadius: Float,
         topRightRadius: Float,
         bottomLeftRadius: Float,
-        bottomRightRadius: Float
+        bottomRightRadius: Float,
     ) {
     }
 
@@ -130,7 +130,7 @@ class NoOpRenderer(width: Float, height: Float) : Renderer(width, height) {
         topLeftRadius: Float,
         topRightRadius: Float,
         bottomLeftRadius: Float,
-        bottomRightRadius: Float
+        bottomRightRadius: Float,
     ) {
     }
 
@@ -144,7 +144,7 @@ class NoOpRenderer(width: Float, height: Float) : Renderer(width, height) {
         height: Float,
         blur: Float,
         spread: Float,
-        radius: Float
+        radius: Float,
     ) {
     }
 

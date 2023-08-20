@@ -192,6 +192,6 @@ class Settings {
         CRASH,
 
         /** Warn in the log and use the default resource (bundled with your rendering implementation). */
-        WARN
+        WARN,
     }
 }

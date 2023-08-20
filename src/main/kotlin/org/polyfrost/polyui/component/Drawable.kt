@@ -21,6 +21,7 @@
 
 package org.polyfrost.polyui.component
 
+import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
 import org.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
@@ -55,7 +56,7 @@ abstract class Drawable(
      * @since 0.19.0
      */
     val rawResize: Boolean = false,
-    open var acceptsInput: Boolean = true
+    open var acceptsInput: Boolean = true,
 ) : Cloneable {
     val eventHandlers = HashMap<Event, (Drawable.(Event) -> Boolean)>()
 
@@ -223,6 +224,7 @@ abstract class Drawable(
      *
      * **make sure to call super [Drawable.preRender]!**
      */
+    @MustBeInvokedByOverriders
     open fun preRender(deltaTimeNanos: Long) {
         if (initStage != INIT_COMPLETE) throw IllegalStateException("${this.simpleName} was attempted to be rendered before it was fully initialized (parent ${this.layout?.simpleName}; stage $initStage)")
         renderer.push()
@@ -319,6 +321,7 @@ abstract class Drawable(
      *
      * @return true if the event should be consumed (cancelled so no more handlers are called), false otherwise.
      * */
+    @MustBeInvokedByOverriders
     open fun accept(event: Event): Boolean {
         return eventHandlers[event]?.let { it(this, event) } ?: false
     }
@@ -437,13 +440,13 @@ abstract class Drawable(
         if (upon.a is Unit.Dynamic) {
             upon.a.set(
                 layout?.size?.a
-                    ?: throw IllegalStateException("Dynamic unit only work on parents with a set size! (${this.simpleName}; parent ${this.layout?.simpleName})")
+                    ?: throw IllegalStateException("Dynamic unit only work on parents with a set size! (${this.simpleName}; parent ${this.layout?.simpleName})"),
             )
         }
         if (upon.b is Unit.Dynamic) {
             upon.b.set(
                 layout?.size?.b
-                    ?: throw IllegalStateException("Dynamic unit only work on parents with a set size! (${this.simpleName}; parent ${this.layout?.simpleName})")
+                    ?: throw IllegalStateException("Dynamic unit only work on parents with a set size! (${this.simpleName}; parent ${this.layout?.simpleName})"),
             )
         }
     }
@@ -479,6 +482,7 @@ abstract class Drawable(
      * @see onFontsChanged
      * @since 0.17.5
      */
+    @MustBeInvokedByOverriders
     abstract fun onColorsChanged(colors: Colors)
 
     /**
@@ -491,6 +495,7 @@ abstract class Drawable(
      * @see onColorsChanged
      * @since 0.22.0
      */
+    @MustBeInvokedByOverriders
     abstract fun onFontsChanged(fonts: FontFamily)
 
     /** Add a [DrawableOp] to this drawable. */
@@ -507,7 +512,7 @@ abstract class Drawable(
      * Remove an operation from this drawable.
      */
     fun removeOperation(drawableOp: DrawableOp) {
-        operations.fastRemoveIf { it.first == drawableOp }
+        operations.fastRemoveIfReversed { it.first == drawableOp }
     }
 
     /**
@@ -522,7 +527,7 @@ abstract class Drawable(
         yFactor: Float,
         animation: Animation.Type? = null,
         durationNanos: Long = 1.seconds,
-        onFinish: (Drawable.() -> kotlin.Unit)? = null
+        onFinish: (Drawable.() -> kotlin.Unit)? = null,
     ) {
         addOperation(DrawableOp.Scale(xFactor, yFactor, true, this, animation, durationNanos), onFinish)
     }
@@ -539,7 +544,7 @@ abstract class Drawable(
         yFactor: Float,
         animation: Animation.Type? = null,
         durationNanos: Long = 1.seconds,
-        onFinish: (Drawable.() -> kotlin.Unit)? = null
+        onFinish: (Drawable.() -> kotlin.Unit)? = null,
     ) {
         addOperation(DrawableOp.Scale(xFactor, yFactor, false, this, animation, durationNanos), onFinish)
     }
@@ -554,11 +559,11 @@ abstract class Drawable(
         degrees: Double,
         animation: Animation.Type? = null,
         durationNanos: Long = 1L.seconds,
-        onFinish: (Drawable.() -> kotlin.Unit)? = null
+        onFinish: (Drawable.() -> kotlin.Unit)? = null,
     ) {
         addOperation(
             DrawableOp.Rotate(degrees.toRadians(), false, this, animation, durationNanos),
-            onFinish
+            onFinish,
         )
     }
 
@@ -572,11 +577,11 @@ abstract class Drawable(
         degrees: Double,
         animation: Animation.Type? = null,
         durationNanos: Long = 1L.seconds,
-        onFinish: (Drawable.() -> kotlin.Unit)? = null
+        onFinish: (Drawable.() -> kotlin.Unit)? = null,
     ) {
         addOperation(
             DrawableOp.Rotate(degrees.toRadians(), true, this, animation, durationNanos),
-            onFinish
+            onFinish,
         )
     }
 
@@ -612,7 +617,7 @@ abstract class Drawable(
         to: Vec2<Unit>,
         animation: Animation.Type? = null,
         durationNanos: Long = 1L.seconds,
-        onFinish: (Drawable.() -> kotlin.Unit)? = null
+        onFinish: (Drawable.() -> kotlin.Unit)? = null,
     ) {
         doDynamicSize(to)
         addOperation(DrawableOp.Move(to, false, this, animation, durationNanos), onFinish)
@@ -629,7 +634,7 @@ abstract class Drawable(
         by: Vec2<Unit>,
         animation: Animation.Type? = null,
         durationNanos: Long = 1L.seconds,
-        onFinish: (Drawable.() -> kotlin.Unit)? = null
+        onFinish: (Drawable.() -> kotlin.Unit)? = null,
     ) {
         doDynamicSize(by)
         addOperation(DrawableOp.Move(by, true, this, animation, durationNanos), onFinish)
@@ -643,7 +648,7 @@ abstract class Drawable(
         alpha: Float,
         animation: Animation.Type? = null,
         durationNanos: Long = 1L.seconds,
-        onFinish: (Drawable.() -> kotlin.Unit)? = null
+        onFinish: (Drawable.() -> kotlin.Unit)? = null,
     ) {
         addOperation(DrawableOp.Fade(alpha, false, this, animation, durationNanos), onFinish)
     }
@@ -656,7 +661,7 @@ abstract class Drawable(
         alpha: Float,
         animation: Animation.Type? = null,
         durationNanos: Long = 1L.seconds,
-        onFinish: (Drawable.() -> kotlin.Unit)? = null
+        onFinish: (Drawable.() -> kotlin.Unit)? = null,
     ) {
         addOperation(DrawableOp.Fade(alpha, true, this, animation, durationNanos), onFinish)
     }
@@ -679,7 +684,7 @@ abstract class Drawable(
         skewX: Double = 0.0,
         skewY: Double = 0.0,
         animation: Animation.Type? = null,
-        durationNanos: Long = 1L.seconds
+        durationNanos: Long = 1L.seconds,
     ) {
         if (to != null) moveTo(to, animation, durationNanos)
         if (size != null) resize(size, animation, durationNanos)
@@ -706,7 +711,7 @@ abstract class Drawable(
         skewX: Double = 0.0,
         skewY: Double = 0.0,
         animation: Animation.Type? = null,
-        durationNanos: Long = 1L.seconds
+        durationNanos: Long = 1L.seconds,
     ) {
         if (to != null) moveBy(to, animation, durationNanos)
         if (size != null) resize(size, animation, durationNanos)
@@ -720,7 +725,7 @@ abstract class Drawable(
         toSize: Size<Unit>,
         animation: Animation.Type? = null,
         durationNanos: Long = 1L.seconds,
-        onFinish: (Drawable.() -> kotlin.Unit)? = null
+        onFinish: (Drawable.() -> kotlin.Unit)? = null,
     ) {
         doDynamicSize(toSize)
         addOperation(DrawableOp.Resize(toSize, this, animation, durationNanos), onFinish)

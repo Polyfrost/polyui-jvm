@@ -70,7 +70,7 @@ class FlexLayout @JvmOverloads constructor(
     private val contentAlign: AlignContent = AlignContent.Start,
     resizesChildren: Boolean = false,
     gap: Gap = Gap.Default,
-    vararg drawables: Drawable
+    vararg drawables: Drawable,
 ) : Layout(at, size, onAdded, onRemoved, propertyManager, false, resizesChildren, false, *drawables) {
     constructor(at: Point<Unit>, wrap: Unit.Percent, vararg drawables: Drawable) : this(
         at,
@@ -78,7 +78,7 @@ class FlexLayout @JvmOverloads constructor(
         wrap,
         null,
         null,
-        drawables = drawables
+        drawables = drawables,
     )
 
     private var mainGap = when (flexDirection) {
@@ -253,7 +253,7 @@ class FlexLayout @JvmOverloads constructor(
                         PolyUI.LOGGER.warn(
                             "[Flex] Cross size is too small for the content. (Cross size: {}, content size: {}). Excess removed.",
                             crossSize,
-                            maxCrossSizeNoGaps
+                            maxCrossSizeNoGaps,
                         )
                         err = true
                         return@run
@@ -301,6 +301,7 @@ class FlexLayout @JvmOverloads constructor(
             renderer.delete(fbo)
             fbo = renderer.createFramebuffer(width, height)
         }
+        clipDrawables()
         needsRedraw = true
     }
 
@@ -392,7 +393,7 @@ class FlexLayout @JvmOverloads constructor(
             if (wrapDirection != Wrap.NoWrap) {
                 PolyUI.LOGGER.warn(
                     "[Flex] Drawable {} has a main size of 0. This may lead to odd things on wrapped layouts.",
-                    drawable
+                    drawable,
                 )
             }
             false
@@ -404,7 +405,7 @@ class FlexLayout @JvmOverloads constructor(
     }
 
     private inner class FlexRow(
-        val drawables: ArrayList<Drawable>
+        val drawables: ArrayList<Drawable>,
     ) {
         val rowMainSize: Float
         val maxCrossSize: Float

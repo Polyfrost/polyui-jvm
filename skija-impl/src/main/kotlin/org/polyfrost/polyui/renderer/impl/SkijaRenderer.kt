@@ -158,7 +158,7 @@ class SkijaRenderer(width: Float, height: Float) : Renderer(width, height) {
                     Shader.makeBlend(
                         BlendMode.SRC_OVER,
                         Shader.makeLinearGradient(x, y, x + w, y, colors, floatArrayOf(0f, 1f), GradientStyle.DEFAULT),
-                        Shader.makeLinearGradient(x, y, x, y + h, colors, floatArrayOf(0f, 1f), GradientStyle.DEFAULT)
+                        Shader.makeLinearGradient(x, y, x, y + h, colors, floatArrayOf(0f, 1f), GradientStyle.DEFAULT),
                     )
                 }
                 is Color.Gradient.Type.Radial -> {

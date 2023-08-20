@@ -53,7 +53,7 @@ open class Button(
     fontSize: Unit.Pixel = 12.px,
     right: PolyImage? = null,
     acceptsInput: Boolean = true,
-    events: EventDSL<Button>.() -> kotlin.Unit = {}
+    events: EventDSL<Button>.() -> kotlin.Unit = {},
 ) : ContainingComponent(properties, at, null, false, acceptsInput, arrayOf(), events as EventDSL<ContainingComponent>.() -> kotlin.Unit) {
     protected val fixedSize = size
     override val properties get() = super.properties as ButtonProperties

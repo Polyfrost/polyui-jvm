@@ -52,7 +52,7 @@ class GridLayout @JvmOverloads constructor(
     private val contentStretch: ContentStretch = ContentStretch.FillCell,
     private val gap: Gap = Gap.Default,
     resizesChildren: Boolean = true,
-    private vararg val drawables: Drawable
+    private vararg val drawables: Drawable,
 ) : Layout(at, origin, onAdded, onRemoved, propertyManager, false, resizesChildren, false, *drawables) {
 
     /** list of rows */
@@ -202,7 +202,7 @@ class GridLayout @JvmOverloads constructor(
         DependsOnRow,
 
         /** Each column has its own size (the largest of that column). */
-        DependsOnColumn;
+        DependsOnColumn,
     }
 
     enum class ContentStretch {
@@ -213,6 +213,6 @@ class GridLayout @JvmOverloads constructor(
         FillRespectAspectRatio,
 
         /** The content is not stretched. */
-        DontStretch;
+        DontStretch,
     }
 }

@@ -65,7 +65,8 @@ enum class Keys(val keyName: String, val value: Short) {
     RIGHT("Right", 200),
     LEFT("Left", 201),
     DOWN("Down", 202),
-    UP("Up", 203);
+    UP("Up", 203),
+    ;
 
     companion object {
 
@@ -146,7 +147,8 @@ enum class Mouse(val keyName: String, val value: Short) {
     MIDDLE_MOUSE("Middle Click", 2),
     MOUSE_3("Mouse Button 3", 3),
     MOUSE_4("Mouse Button 4", 4),
-    MOUSE_5("Mouse Button 5", 5);
+    MOUSE_5("Mouse Button 5", 5),
+    ;
 
     companion object {
         @JvmStatic
@@ -200,7 +202,8 @@ enum class Modifiers(val keyName: String, val value: Short) {
     RMETA("Right Meta", 0b10000000),
 
     /** you will never receive this value. */
-    UNKNOWN("Unknown", 0);
+    UNKNOWN("Unknown", 0),
+    ;
 
     companion object {
         /**

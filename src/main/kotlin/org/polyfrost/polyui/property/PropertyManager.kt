@@ -49,7 +49,7 @@ class PropertyManager(val colors: Colors, val fonts: FontFamily = PolyUI.default
         SwitchingLayout::class.qualifiedName!! to SwitchingLayoutProperties(),
         SearchField::class.qualifiedName!! to SearchFieldProperties(),
         RadioButton::class.qualifiedName!! to RadioButtonProperties(),
-        Keybind::class.qualifiedName!! to KeybindProperties()
+        Keybind::class.qualifiedName!! to KeybindProperties(),
     )
 
     inline fun <reified C : Component> get(): Properties = get(C::class.qualifiedName!!)

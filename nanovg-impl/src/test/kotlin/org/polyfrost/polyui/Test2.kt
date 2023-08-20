@@ -63,27 +63,27 @@ fun main() {
                     Text(
                         text = "polyfrost.copyright".localised(),
                         at = 24.px * 475.px,
-                        fontSize = 10.px
+                        fontSize = 10.px,
                     ),
                     Image(
                         image = PolyImage("polyfrost.png"),
-                        at = 24.px * 24.px
-                    )
+                        at = 24.px * 24.px,
+                    ),
                 )
             },
             create(400.px * 0.px, true).also {
                 it.propertyManager = PropertyManager(DarkTheme())
                 it.getComponent<Button>(2).leftImage!!.image = sun
                 it.getComponent<Text>(1).initialText = "text.dark".localised()
-            }
-        )
+            },
+        ),
     )
 
     polyUI.keyBinder.add(
         KeyBinder.Bind('P', mods = Modifiers.mods(Modifiers.LCONTROL)) {
             polyUI.debugPrint()
             true
-        }
+        },
     )
     polyUI.settings.debug = false
     window.open(polyUI)
@@ -98,7 +98,7 @@ fun blocks(amount: Int = 40): Array<Block> {
 fun block() = Block(
     properties = prop(),
     at = flex(),
-    size = (Random.nextFloat() * 100f + 32f).px * 32.px
+    size = (Random.nextFloat() * 100f + 32f).px * 32.px,
 )
 
 fun prop() = when (Random.Default.nextInt(4)) {
@@ -118,13 +118,13 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                 properties = BlockProperties.backgroundBlock,
                 at = origin,
                 size = 400.px * 500.px,
-                acceptInput = false
+                acceptInput = false,
             ),
             Text(
                 properties = text,
                 text = "text.light".localised(),
                 fontSize = 20.px,
-                at = 24.px * 65.px
+                at = 24.px * 65.px,
             ),
             Button(
                 left = moon,
@@ -142,38 +142,38 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                         }
                         t = !t
                     }
-                }
+                },
             ),
             Button(
                 text = "button.text".localised("simple"),
                 fontSize = 13.px,
                 left = PolyImage("face-wink.svg"),
-                at = 68.px * 111.px
+                at = 68.px * 111.px,
             ),
             Switch(
                 at = 266.px * 113.px,
-                switchSize = 64.px * 32.px
+                switchSize = 64.px * 32.px,
             ),
             Slider(
                 at = 336.px * 10.px,
-                size = 32.px * 140.px
+                size = 32.px * 140.px,
             ),
             Dropdown(
                 at = 24.px * 159.px,
                 size = 352.px * 32.px,
-                entries = Dropdown.from(SlideDirection.entries.toTypedArray())
+                entries = Dropdown.from(SlideDirection.entries.toTypedArray()),
             ),
             TextInput(
                 at = 24.px * 203.px,
                 size = 352.px * 32.px,
                 image = PolyImage("search.svg"),
                 title = "Title:".localised(),
-                hint = "px".localised()
+                hint = "px".localised(),
             ),
             FlexLayout(
                 at = 24.px * 247.px,
                 drawables = blocks(),
-                wrap = 348.px
+                wrap = 348.px,
             ).scrolling(348.px * 117.px),
             Button(
                 left = PolyImage("shuffle.svg"),
@@ -183,7 +183,7 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                     MouseClicked(0) to {
                         this.layout.getLayout<FlexLayout>(0).shuffle()
                     }
-                }
+                },
             ),
             Button(
                 left = PolyImage("plus.svg"),
@@ -192,7 +192,7 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                     MouseClicked(0) to {
                         this.layout.getLayout<FlexLayout>(0).addComponent(block())
                     }
-                }
+                },
             ),
             Button(
                 left = PolyImage("minus.svg"),
@@ -202,25 +202,25 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                         val l = this.layout.getLayout<FlexLayout>(0)
                         l.removeComponentNow(l.flexDrawables.last())
                     }
-                }
+                },
             ),
             Block(
                 properties = BlockProperties.brandBlock,
                 at = 24.px * 430.px,
-                size = 85.px * 32.px
+                size = 85.px * 32.px,
             ).draggable(),
             Block(
                 at = 113.px * 430.px,
-                size = 85.px * 32.px
+                size = 85.px * 32.px,
             ),
             Block(
                 at = 202.px * 430.px,
-                size = 85.px * 32.px
+                size = 85.px * 32.px,
             ),
             Block(
                 at = 291.px * 430.px,
-                size = 85.px * 32.px
-            )
-        )
+                size = 85.px * 32.px,
+            ),
+        ),
     )
 }

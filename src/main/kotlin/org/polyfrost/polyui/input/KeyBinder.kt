@@ -116,7 +116,7 @@ class KeyBinder(private val polyUI: PolyUI) {
             if (downMouseButtons.size == 0) null else downMouseButtons.toIntArray(),
             polyUI.eventManager.keyModifiers,
             recordingTime,
-            recordingFunc!!
+            recordingFunc!!,
         )
         if (listeners.contains(b)) {
             recording!!.completeExceptionally(IllegalStateException("Duplicate keybind: $b"))

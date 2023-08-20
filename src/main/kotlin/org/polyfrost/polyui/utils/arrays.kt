@@ -95,7 +95,7 @@ inline fun <L, E> L.fastEachIndexedReversed(f: (Int, E) -> Unit) where L : List<
 }
 
 /**
- * [removeIf][kotlin.collections.filterInPlace] re-implementation that doesn't allocate any memory.
+ * [removeIf][MutableList.removeIf] re-implementation that doesn't allocate any memory.
  *
  * Utilizes the [RandomAccess] trait.
  *
@@ -113,6 +113,28 @@ inline fun <L, E> L.fastRemoveIf(f: (E) -> Boolean) where L : MutableList<E>, L 
             i--
         }
         i++
+    }
+}
+
+/**
+ * [removeIf][MutableList.removeIf] re-implementation that doesn't allocate any memory, but it traverses the list backwards.
+ *
+ * Can be faster as [MutableList.removeAt] works better with fewer elements to the right of the current.
+ *
+ * Utilizes the [RandomAccess] trait.
+ *
+ * @see [fastEachReversed]
+ * @see [fastEachIndexed]
+ * @since 0.23.2
+ */
+inline fun <L, E> L.fastRemoveIfReversed(f: (E) -> Boolean) where L : MutableList<E>, L : RandomAccess {
+    if (this.size == 0) return
+    var i = this.size - 1
+    while (i >= 0) {
+        if (f(this[i])) {
+            this.removeAt(i)
+        }
+        i--
     }
 }
 
@@ -272,10 +294,9 @@ fun <T> Iterable<T>.toArrayList(): ArrayList<T> {
  * @param action should be used to directly remove itself from the collection.
  */
 fun <E> MutableCollection<E>.clearUsing(action: (E) -> Unit) {
-    val it = this.toMutableList().iterator()
-    while (it.hasNext()) {
-        action(it.next())
-        it.remove()
+    this.toArrayList().fastRemoveIfReversed {
+        action(it)
+        true
     }
 }
 
@@ -309,7 +330,7 @@ fun <E> List<E>.indexOfOrDie(element: E, or: () -> Nothing = throw IllegalArgume
  */
 data class MutablePair<A, B>(
     var first: A,
-    var second: B
+    var second: B,
 ) {
 
     /**
@@ -346,7 +367,7 @@ data class MutablePair<A, B>(
 data class MutableTriple<A, B, C>(
     var first: A,
     var second: B,
-    var third: C
+    var third: C,
 ) {
 
     /**

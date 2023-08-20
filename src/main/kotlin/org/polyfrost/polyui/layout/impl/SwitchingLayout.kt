@@ -49,7 +49,7 @@ class SwitchingLayout(
     properties: SwitchingLayoutProperties? = null,
     at: Point<Unit>,
     size: Size<Unit>? = null,
-    private val makesScrolling: Boolean = false
+    private val makesScrolling: Boolean = false,
 ) : Component(properties, at, size, false, false) {
     // don't tell anyone it's actually a component ;)
 
@@ -78,7 +78,7 @@ class SwitchingLayout(
             this.layout.addComponent(new)
         }
         if (new.layout !== this.layout) {
-            PolyUI.LOGGER.warn("[SwitchingLayout] $new is not a child of this, moving!")
+            if (new.layout != null) PolyUI.LOGGER.warn("[SwitchingLayout] $new is not a child of this, moving!")
             new.layout?.removeComponent(new)
             new.layout = this.layout
             this.layout.addComponent(new)
@@ -103,6 +103,7 @@ class SwitchingLayout(
                 override fun apply(renderer: Renderer) {
                     renderer.pushScissor(x - drawable.x, y - drawable.y, width, height)
                 }
+
                 override fun unapply(renderer: Renderer) {
                     renderer.popScissor()
                 }
@@ -112,6 +113,7 @@ class SwitchingLayout(
                 override fun apply(renderer: Renderer) {
                     renderer.pushScissor(x - drawable.x, y - drawable.y, width, height)
                 }
+
                 override fun unapply(renderer: Renderer) {
                     renderer.popScissor()
                 }
@@ -141,6 +143,7 @@ class SwitchingLayout(
                                 remove(newOp)
                             }
                         }
+
                         SlideDirection.FromRight -> {
                             old.addOperation(oldOp)
                             old.moveTo((this.x - this.width).px * this.y.px, properties.transitionCurve, properties.transitionDuration, reset)
@@ -151,6 +154,7 @@ class SwitchingLayout(
                                 remove(newOp)
                             }
                         }
+
                         SlideDirection.FromBottom -> {
                             old.addOperation(oldOp)
                             old.moveTo(this.x.px * (this.y - this.height).px, properties.transitionCurve, properties.transitionDuration, reset)
@@ -161,6 +165,7 @@ class SwitchingLayout(
                                 remove(newOp)
                             }
                         }
+
                         SlideDirection.FromTop -> {
                             old.addOperation(oldOp)
                             old.moveTo(this.x.px * (this.y + this.height).px, properties.transitionCurve, properties.transitionDuration, reset)
@@ -173,6 +178,7 @@ class SwitchingLayout(
                         }
                     }
                 }
+
                 Transitions.Fade -> {
                     new.alpha = 0f
                     new.moveTo(this.at)
@@ -181,6 +187,7 @@ class SwitchingLayout(
                         new.fadeTo(1f, properties.transitionCurve, properties.transitionDuration / 2L)
                     }
                 }
+
                 null -> {
                     reset(old)
                     new.moveTo(this.at)
@@ -202,6 +209,7 @@ class SwitchingLayout(
 
     override fun preRender(deltaTimeNanos: Long) {
     }
+
     override fun render() {
     }
 

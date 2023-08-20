@@ -21,6 +21,7 @@
 
 package org.polyfrost.polyui.component
 
+import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
 import org.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
@@ -52,7 +53,7 @@ abstract class Component @JvmOverloads constructor(
     override var size: Size<Unit>? = null,
     rawResize: Boolean = false,
     acceptInput: Boolean = true,
-    events: EventDSL<Component>.() -> kotlin.Unit = {}
+    events: EventDSL<Component>.() -> kotlin.Unit = {},
 ) : Drawable(at, rawResize, acceptInput) {
 
     @PublishedApi
@@ -77,6 +78,14 @@ abstract class Component @JvmOverloads constructor(
     private var hueToReturnTo = 0f
     protected var autoSized = false
     protected var finishColorFunc: (Component.() -> kotlin.Unit)? = null
+
+    /**
+     * This is a reference to the parent of this component. It is currently only used by [trueX] and [trueY].
+     *
+     * Controlled by [ContainingComponent]
+     */
+    @ApiStatus.Experimental
+    var parent: Drawable? = null
     override lateinit var layout: Layout
     protected var keyframes: KeyFrames? = null
 
@@ -105,10 +114,10 @@ abstract class Component @JvmOverloads constructor(
     override fun trueX(): Float {
         var x = this.x
         if (!::layout.isInitialized) return x
-        var parent: Layout? = this.layout
+        var parent: Drawable? = this.parent ?: this.layout
         while (parent != null) {
             x += parent.x
-            parent = parent.layout
+            parent = (parent as? Component)?.parent ?: parent.layout
         }
         return x
     }
@@ -120,10 +129,10 @@ abstract class Component @JvmOverloads constructor(
     override fun trueY(): Float {
         var y = this.y
         if (!::layout.isInitialized) return y
-        var parent: Layout? = this.layout
+        var parent: Drawable? = this.parent ?: this.layout
         while (parent != null) {
             y += parent.y
-            parent = parent.layout
+            parent = (parent as? Component)?.parent ?: parent.layout
         }
         return y
     }
@@ -133,6 +142,7 @@ abstract class Component @JvmOverloads constructor(
     }
 
     override fun accept(event: Event): Boolean {
+        if (disabled) return false
         if (super.accept(event)) return true
         return properties.eventHandlers[event]?.let { it(this, event) } == true
     }
@@ -156,7 +166,7 @@ abstract class Component @JvmOverloads constructor(
         toColor: Color,
         animation: Animation.Type? = null,
         durationNanos: Long = 1L.seconds,
-        onFinish: (Component.() -> kotlin.Unit)? = null
+        onFinish: (Component.() -> kotlin.Unit)? = null,
     ) {
         var finishFunc = onFinish
         when (toColor) {

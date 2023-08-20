@@ -28,7 +28,7 @@ import org.polyfrost.polyui.renderer.data.Cursor
  * This class represents the physical window that PolyUI will render to.
  * As a rendering implementation, you must:
  *  - implement all the methods
- *  - create callbacks for the event methods in PolyUI e.g. [PolyUI.onResize]
+ *  - create callbacks for the event methods in PolyUI e.g. [PolyUI.resize]
  *  - create callbacks for all the event-related methods in [org.polyfrost.polyui.event.EventManager]
  *  - call [open] to start the rendering loop; this can be blocking or non-blocking. Please note that after open is called, the rendering implementation will be created. This means that in a thread-based system such as LWJGL's OpenGL, you **must** ensure that it is fully setup before exiting `init {}`.
  */

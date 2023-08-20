@@ -26,5 +26,5 @@ import org.polyfrost.polyui.utils.levenshteinDistance
 open class SearchFieldProperties(
     open val searchAlgorithm: Any.(String) -> Boolean = {
         toString().levenshteinDistance(it) <= 2
-    }
+    },
 ) : TextInputProperties()

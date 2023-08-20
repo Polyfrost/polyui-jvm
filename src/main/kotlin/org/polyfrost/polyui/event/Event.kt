@@ -28,32 +28,24 @@ import org.polyfrost.polyui.component.Drawable
  * An event in the PolyUI system.
  * @see EventManager
  */
-@Suppress("INAPPLICABLE_JVM_NAME")
-interface Event {
-
-    companion object {
-        @JvmStatic
-        fun <S : Drawable, E : Event> insertTrueInsn(action: (S.(E) -> Unit)): (S.(E) -> Boolean) {
-            return {
-                action(this, it)
-                true
-            }
-        }
-    }
-}
+interface Event
 
 /** marker class for preventing illegal nesting. */
 @Target(AnnotationTarget.CLASS, AnnotationTarget.TYPE, AnnotationTarget.FUNCTION)
 @DslMarker
 annotation class EventDSLMarker
 
-class EventDSL<S : Drawable>(val self: Drawable) {
+/**
+ * DSL for events.
+ * @since 0.23.2
+ */
+class EventDSL<S : Drawable>(private val self: S) {
 
     /** specify a handler for this event.
      *
      * in the given [handler], you can perform things on this component, such as [Component.rotateBy], [Component.recolor], etc.
      *
-     * @return returns a [Handler] for the event, which will return true when called, meaning it will **consume** the event. Return false to not consume this event.
+     * Return true to consume the event. True by default.
      * @see then
      * @since 0.19.2
      * */
@@ -67,7 +59,7 @@ class EventDSL<S : Drawable>(val self: Drawable) {
      *
      * in the given [handler], you can perform things on this component, such as [Component.rotateBy], [Component.recolor], etc.
      *
-     * @return returns a [Handler] for the event, which will return true when called, meaning it will **consume** the event. Return false to not consume this event.
+     * Return true to consume the event. True by default.
      * @see then
      * @since 0.19.2
      * */
@@ -75,14 +67,14 @@ class EventDSL<S : Drawable>(val self: Drawable) {
     @Suppress("UNCHECKED_CAST")
     @OverloadResolutionByLambdaReturnType
     infix fun <E : Event> E.to(handler: S.(E) -> Unit) {
-        self.eventHandlers[this] = Event.insertTrueInsn(handler) as Drawable.(Event) -> Boolean
+        self.eventHandlers[this] = insertTrueInsn(handler) as Drawable.(Event) -> Boolean
     }
 
     /** specify a handler for this event.
      *
      * in the given [handler], you can perform things on this component, such as [Component.rotateBy], [Component.recolor], etc.
      *
-     * @return returns a [Handler] for the event, which will return true when called, meaning it will **consume** the event. Return false to not consume this event.
+     * Return true to consume the event. True by default.
      * @see to
      * @since 0.19.2
      * */
@@ -96,7 +88,7 @@ class EventDSL<S : Drawable>(val self: Drawable) {
      *
      * in the given [handler], you can perform things on this component, such as [Component.rotateBy], [Component.recolor], etc.
      *
-     * @return returns a [Handler] for the event, which will return true when called, meaning it will **consume** the event. Return false to not consume this event.
+     * Return true to consume the event. True by default.
      * @see to
      * @since 0.19.2
      * */
@@ -104,6 +96,13 @@ class EventDSL<S : Drawable>(val self: Drawable) {
     @Suppress("UNCHECKED_CAST")
     @OverloadResolutionByLambdaReturnType
     infix fun <E : Event> E.then(handler: S.(E) -> Unit) {
-        self.eventHandlers[this] = Event.insertTrueInsn(handler) as Drawable.(Event) -> Boolean
+        self.eventHandlers[this] = insertTrueInsn(handler) as Drawable.(Event) -> Boolean
+    }
+
+    private fun <S : Drawable, E : Event> insertTrueInsn(action: (S.(E) -> Unit)): (S.(E) -> Boolean) {
+        return {
+            action(this, it)
+            true
+        }
     }
 }

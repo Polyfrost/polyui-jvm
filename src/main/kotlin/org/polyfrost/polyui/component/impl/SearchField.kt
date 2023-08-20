@@ -44,7 +44,7 @@ class SearchField(
     image: PolyImage? = null,
     fontSize: Unit = 16.px,
     searchList: List<Any>,
-    searchOut: MutableList<Any>? = null
+    searchOut: MutableList<Any>? = null,
 ) : TextInput(properties = properties, at = at, size = size, image = image, fontSize = fontSize) {
     override val properties
         get() = super.properties as SearchFieldProperties

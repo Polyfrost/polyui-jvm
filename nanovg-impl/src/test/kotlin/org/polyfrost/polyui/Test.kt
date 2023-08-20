@@ -74,7 +74,7 @@ fun main() {
                     setProperties(BlockProperties.dangerBlock)
                     true
                 }
-            }
+            },
         )
         block
     }
@@ -82,7 +82,7 @@ fun main() {
         renderer = if (!useNoOp) {
             NVGRenderer(
                 window.width.toFloat(),
-                window.height.toFloat()
+                window.height.toFloat(),
             )
         } else {
             NoOpRenderer(window.width.toFloat(), window.height.toFloat())
@@ -109,36 +109,36 @@ fun main() {
                                                         recolor(
                                                             Color.Gradient(
                                                                 rgba(1f, 0f, 1f, 1f),
-                                                                rgba(0f, 1f, 1f, 1f)
+                                                                rgba(0f, 1f, 1f, 1f),
                                                             ),
                                                             Animations.EaseOutExpo,
-                                                            2.seconds
+                                                            2.seconds,
                                                         )
                                                     }
                                                     MouseClicked(1) to {
                                                         recolor(rgba(1f, 0f, 1f, 1f), Animations.EaseOutExpo, 2.seconds)
                                                     }
-                                                }
-                                            )
-                                        )
+                                                },
+                                            ),
+                                        ),
                                     ),
                                     Block(
                                         at = origin,
-                                        size = 120.px * 120.px
-                                    )
-                                )
+                                        size = 120.px * 120.px,
+                                    ),
+                                ),
                             ),
                             Block(
                                 BlockProperties.brandBlock,
                                 at = origin,
-                                size = 240.px * 240.px
-                            )
-                        )
+                                size = 240.px * 240.px,
+                            ),
+                        ),
                     ),
                     Text(
                         text = "polyui.test".localised("rainbow"),
                         fontSize = 32.px,
-                        at = origin
+                        at = origin,
                     ),
                     Block(
                         at = 0.px * 30.px,
@@ -165,7 +165,7 @@ fun main() {
                                     }
                                 }
                             }
-                        }
+                        },
                     ),
                     Block(
                         at = 180.px * 30.px,
@@ -174,7 +174,7 @@ fun main() {
                             MouseClicked(0) to {
                                 rotateBy(120.0, Animations.EaseInOutCubic, .5.seconds)
                             }
-                        }
+                        },
                     ),
                     Image(
                         image = PolyImage("/a.png", 120f, 120f),
@@ -183,7 +183,7 @@ fun main() {
                             MouseClicked(0) to {
                                 rotateBy(120.0, Animations.EaseOutBump)
                             }
-                        }
+                        },
                     ),
                     Button(
                         at = 0.px * 160.px,
@@ -195,15 +195,15 @@ fun main() {
                                 rotateBy(120.0, Animations.EaseInOutCubic)
                                 polyUI.master.getLayout<FlexLayout>(0).shuffle()
                             }
-                        }
+                        },
                     ),
                     TextInput(
                         at = 200.px * 160.px,
-                        size = 270.px * 40.px
+                        size = 270.px * 40.px,
                     ),
                     Slider(
                         at = 0.px * 220.px,
-                        size = 50.percent * 30.px
+                        size = 50.percent * 30.px,
                     ),
                     Checkbox(
                         at = 0.px * 260.px,
@@ -214,22 +214,22 @@ fun main() {
                             } else {
                                 layout.changeColors(DarkTheme())
                             }
-                        }
-                    )
-                )
+                        },
+                    ),
+                ),
             ).draggable().background(),
             FlexLayout(
                 at = 2.percent * 30.px,
                 wrap = 80.percent,
-                drawables = things
-            ).scrolling(620.px * 300.px)
-        )
+                drawables = things,
+            ).scrolling(620.px * 300.px),
+        ),
     )
     polyUI.keyBinder.add(
         KeyBinder.Bind('P', mods = mods(Modifiers.LCONTROL)) {
             polyUI.debugPrint()
             true
-        }
+        },
     )
     polyUI.keyBinder.add(
         KeyBinder.Bind(mouse = Mouse.LEFT_MOUSE, mods = mods(Modifiers.LCONTROL), durationNanos = 1.seconds) {
@@ -238,7 +238,7 @@ fun main() {
                 it.recolor(Color(Random.Default.nextFloat(), Random.Default.nextFloat(), Random.Default.nextFloat(), 1f))
             }
             true
-        }
+        },
     )
     var light = false
     polyUI.keyBinder.add(
@@ -250,7 +250,7 @@ fun main() {
             }
             light = !light
             true
-        }
+        },
     )
 
     window.open(polyUI)

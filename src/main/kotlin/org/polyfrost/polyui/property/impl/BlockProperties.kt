@@ -37,7 +37,7 @@ open class BlockProperties @JvmOverloads constructor(
     open val cornerRadii: FloatArray = 0f.radii(),
     open val outlineThickness: Float = 0f,
     withStates: Boolean = false,
-    open val paletteGet: Properties.() -> Colors.Palette = { colors.component.bg }
+    open val paletteGet: Properties.() -> Colors.Palette = { colors.component.bg },
 ) : Properties() {
 
     val outlineColor get() = colors.page.border10

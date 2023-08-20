@@ -35,5 +35,5 @@ enum class Cursor {
     Text,
 
     /** the little hand which can click. */
-    Clicker
+    Clicker,
 }

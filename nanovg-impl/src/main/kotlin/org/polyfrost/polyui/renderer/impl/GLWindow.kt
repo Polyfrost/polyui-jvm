@@ -48,7 +48,7 @@ class GLWindow @JvmOverloads constructor(
     height: Int,
     gl2: Boolean = false,
     resizeable: Boolean = true,
-    decorated: Boolean = true
+    decorated: Boolean = true,
 ) : Window(width, height) {
 
     override var height: Int = height
@@ -125,13 +125,13 @@ class GLWindow @JvmOverloads constructor(
         glfwSetFramebufferSizeCallback(handle) { _, width, height ->
             this.width = width
             this.height = height
-            polyUI.onResize((width / polyUI.renderer.pixelRatio).toInt(), (height / polyUI.renderer.pixelRatio).toInt(), polyUI.renderer.pixelRatio)
+            polyUI.resize((width / polyUI.renderer.pixelRatio).toInt(), (height / polyUI.renderer.pixelRatio).toInt())
         }
 
         glfwSetWindowContentScaleCallback(handle) { _, xScale, yScale ->
             val pixelRatio = max(xScale, yScale)
             if (polyUI.settings.debug) PolyUI.LOGGER.info("Pixel ratio: $pixelRatio")
-            polyUI.onResize((width / pixelRatio).toInt(), (height / pixelRatio).toInt(), pixelRatio)
+            polyUI.resize((width / pixelRatio).toInt(), (height / pixelRatio).toInt(), pixelRatio)
         }
 
         glfwSetMouseButtonCallback(handle) { _, button, action, _ ->
@@ -275,10 +275,10 @@ class GLWindow @JvmOverloads constructor(
             this.width = w[0]
             this.height = h[0]
 
-            polyUI.onResize(
+            polyUI.resize(
                 (this.width / this.contentScaleX).toInt(),
                 (this.height / this.contentScaleY).toInt(),
-                max(this.contentScaleX, this.contentScaleY)
+                max(this.contentScaleX, this.contentScaleY),
             )
         }
 
@@ -350,8 +350,8 @@ class GLWindow @JvmOverloads constructor(
                     Cursor.Pointer -> GLFW_ARROW_CURSOR
                     Cursor.Clicker -> GLFW_POINTING_HAND_CURSOR
                     Cursor.Text -> GLFW_IBEAM_CURSOR
-                }
-            )
+                },
+            ),
         )
     }
 

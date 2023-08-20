@@ -32,5 +32,5 @@ open class SwitchingLayoutProperties : Properties() {
 
     open val transition: Transitions? = Transitions.Fade
     open val transitionCurve: Animations? = Animations.EaseOutQuad
-    open val transitionDuration = 0.7.seconds
+    open val transitionDuration = 0.3.seconds
 }

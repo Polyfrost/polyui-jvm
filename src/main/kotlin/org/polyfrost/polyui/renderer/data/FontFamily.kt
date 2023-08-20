@@ -38,7 +38,7 @@ import java.util.zip.ZipInputStream
 class FontFamily(
     val name: String,
     val path: String,
-    private val fallback: FontFamily? = null
+    private val fallback: FontFamily? = null,
 ) {
     val isZip = path.endsWith(".zip")
     private val dir by lazy {

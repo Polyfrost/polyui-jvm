@@ -70,7 +70,7 @@ abstract class Layout(
     val resizesChildren: Boolean = true,
     /** If this layout can receive events (separate to its children!). */
     acceptInput: Boolean = false,
-    vararg drawables: Drawable
+    vararg drawables: Drawable,
 ) : Drawable(at, rawResize, acceptInput) {
     open lateinit var propertyManager: PropertyManager
 
@@ -375,12 +375,12 @@ abstract class Layout(
         when (drawable) {
             is Component -> {
                 if (components.addOrReplace(drawable, index) != null) PolyUI.LOGGER.warn("${drawable.simpleName} was attempted to be added to layout ${this.simpleName} multiple times!")
-                if (initStage > INIT_NOT_STARTED) drawable.layout = this
+                drawable.layout = this
             }
 
             is Layout -> {
                 if (children.addOrReplace(drawable, index) != null) PolyUI.LOGGER.warn("${drawable.simpleName} was attempted to be added to layout ${this.simpleName} multiple times!")
-                if (initStage > INIT_NOT_STARTED) drawable.layout = this
+                drawable.layout = this
             }
 
             else -> {
@@ -457,7 +457,7 @@ abstract class Layout(
                     PolyUI.LOGGER.warn(
                         "Tried to remove component {} from {}, but it wasn't found!",
                         drawable,
-                        this
+                        this,
                     )
                 }
             }
@@ -467,7 +467,7 @@ abstract class Layout(
                     PolyUI.LOGGER.warn(
                         "Tried to remove layout {} from {}, but it wasn't found!",
                         drawable,
-                        this
+                        this,
                     )
                 }
                 drawable.layout = null
@@ -507,6 +507,8 @@ abstract class Layout(
         initCompleteHooks.trimToSize()
         components.fastEach { it.onParentInitComplete() }
         children.fastEach { it.onParentInitComplete() }
+        trueX = trueX()
+        trueY = trueY()
         ox = trueX
         oy = trueY
     }
@@ -541,7 +543,7 @@ abstract class Layout(
 
     /** render this layout's components, and remove them if they are ready to be removed. */
     override fun render() {
-        removeQueue.fastRemoveIf {
+        removeQueue.fastRemoveIfReversed {
             if (it.canBeRemoved()) {
                 removeComponentNow(it)
                 true
@@ -615,13 +617,27 @@ abstract class Layout(
      * @since 0.21.4
      */
     open fun clipDrawables() {
-        val s = visibleSize ?: size ?: return
+        val x: Float
+        val y: Float
+        val width: Float
+        val height: Float
+        if (visibleSize != null) {
+            x = ox
+            y = oy
+            width = visibleSize!!.width
+            height = visibleSize!!.height
+        } else {
+            x = trueX
+            y = trueY
+            width = this.width
+            height = this.height
+        }
         children.fastEach {
             it.clipDrawables()
-            it.renders = it.intersects(ox, oy, s.width, s.height)
+            it.renders = it.intersects(x, y, width, height)
         }
         components.fastEach {
-            it.renders = it.intersects(ox, oy, s.width, s.height)
+            it.renders = it.intersects(x, y, width, height)
         }
     }
 
@@ -763,7 +779,7 @@ abstract class Layout(
                 anims.first = Animation.Type.EaseOutExpo.create(
                     .5.seconds,
                     0f,
-                    scrollCalc(rem - event.amountX.toFloat(), ox, trueX, size.width, width)
+                    scrollCalc(rem - event.amountX.toFloat(), ox, trueX, size.width, width),
                 )
                 horizontalBar?.cancelHide()
             }
@@ -777,7 +793,7 @@ abstract class Layout(
                 anims.second = Animation.Type.EaseOutExpo.create(
                     .5.seconds,
                     0f,
-                    scrollCalc(rem - event.amountY.toFloat(), oy, trueY, size.height, height)
+                    scrollCalc(rem - event.amountY.toFloat(), oy, trueY, size.height, height),
                 )
                 verticalBar?.cancelHide()
             }
@@ -805,9 +821,9 @@ abstract class Layout(
                     anim?.update(delta)?.also {
                         x = ofsX + anim.value
                         needsRedraw = true
+                        clipDrawables()
+                        polyUI.eventManager.recalculateMousePos()
                     }
-                    clipDrawables()
-                    polyUI.eventManager.recalculateMousePos()
                 }
                 if (anim1?.isFinished == true) {
                     anims.second = null
@@ -815,9 +831,9 @@ abstract class Layout(
                     anim1?.update(delta)?.also {
                         y = ofsY + anim1.value
                         needsRedraw = true
+                        clipDrawables()
+                        polyUI.eventManager.recalculateMousePos()
                     }
-                    clipDrawables()
-                    polyUI.eventManager.recalculateMousePos()
                 }
             }
 
@@ -874,7 +890,7 @@ abstract class Layout(
                 0,
                 Block(BlockProperties.background(cornerRadii), origin, fill, acceptInput = false, rawResize = true).also {
                     it.simpleName = "Background" + it.simpleName
-                }
+                },
             )
         } else {
             draggable = true
@@ -907,10 +923,10 @@ abstract class Layout(
                                 this@Layout.y = polyUI.mouseY + my
                             }
                         }
-                    }
+                    },
                 ).also {
                     it.simpleName = "Drag" + it.simpleName
-                }
+                },
             )
         }
         return this

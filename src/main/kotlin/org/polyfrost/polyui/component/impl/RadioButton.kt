@@ -53,7 +53,7 @@ class RadioButton<T>(
     val onChange: RadioButton<T>.(T) -> kotlin.Unit = {},
     defaultIndex: Int = 0,
     fontSize: Unit = 12f.px,
-    values: List<T>
+    values: List<T>,
 ) : ContainingComponent(properties, at, size, false, true, arrayOf()) {
     val block = Block(properties = BlockProperties(paletteGet = { colors.brand.fg }), at = origin, size = origin, acceptInput = false)
 
@@ -65,7 +65,7 @@ class RadioButton<T>(
         onChange: RadioButton<T>.(T) -> kotlin.Unit = {},
         defaultIndex: Int = 0,
         fontSize: Unit = 12f.px,
-        vararg values: T
+        vararg values: T,
     ) : this(properties, at, size, toStringFunc, onChange, defaultIndex, fontSize, values.toList())
 
     init {

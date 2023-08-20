@@ -194,7 +194,7 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
         text: String,
         color: Color,
         fontSize: Float,
-        textAlign: TextAlign = TextAlign.Left
+        textAlign: TextAlign = TextAlign.Left,
     )
 
     /** calculate the bounds of this text, per the given parameters.
@@ -218,7 +218,7 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
         topLeftRadius: Float,
         topRightRadius: Float,
         bottomLeftRadius: Float,
-        bottomRightRadius: Float
+        bottomRightRadius: Float,
     )
 
     /**
@@ -235,7 +235,7 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
         topLeftRadius: Float,
         topRightRadius: Float,
         bottomLeftRadius: Float,
-        bottomRightRadius: Float
+        bottomRightRadius: Float,
     )
 
     /**
@@ -251,7 +251,7 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
         topLeftRadius: Float,
         topRightRadius: Float,
         bottomLeftRadius: Float,
-        bottomRightRadius: Float
+        bottomRightRadius: Float,
     )
 
     /** @see image */
@@ -284,7 +284,7 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
         height: Float,
         color: Color,
         lineWidth: Float,
-        radius: Float = 0f
+        radius: Float = 0f,
     ) =
         hollowRect(x, y, width, height, color, lineWidth, radius, radius, radius, radius)
 
@@ -296,7 +296,7 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
         height: Float,
         color: Color,
         lineWidth: Float,
-        radii: FloatArray
+        radii: FloatArray,
     ) =
         hollowRect(x, y, width, height, color, lineWidth, radii[0], radii[1], radii[2], radii[3])
 
@@ -334,7 +334,7 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
         x: Float,
         y: Float,
         width: Float = fbo.width,
-        height: Float = fbo.height
+        height: Float = fbo.height,
     )
 
     /** Delete the given framebuffer. Ignore if null. */

@@ -50,7 +50,7 @@ abstract class Easing(val type: Type, durationNanos: Long, start: Float, end: Fl
     enum class Type {
         In,
         Out,
-        InOut
+        InOut,
     }
 
     class Back(type: Type, durationNanos: Long, start: Float, end: Float) :

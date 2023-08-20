@@ -39,7 +39,7 @@ open class Keybind(
     at: Vec2<Unit>,
     size: Vec2<Unit>? = null,
     withIcon: Boolean = true,
-    bind: KeyBinder.Bind? = null
+    bind: KeyBinder.Bind? = null,
 ) : Button(properties, at, size, left = if (withIcon) PolyImage("keyboard.svg", 18f, 18f) else null, text = bind?.keysToString()?.localised() ?: empty, right = PolyImage("close.svg", 10f, 10f)) {
     override val properties
         get() = super.properties as KeybindProperties
@@ -55,7 +55,7 @@ open class Keybind(
                     bind?.action ?: {
                         println("Unmapped keybind function")
                         true
-                    }
+                    },
                 ).thenAccept {
                     if (it != null) {
                         bind = it

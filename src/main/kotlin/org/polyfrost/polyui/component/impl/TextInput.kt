@@ -53,7 +53,7 @@ open class TextInput(
     private val hint: PolyText? = null,
     private val initialText: PolyText? = null,
     private val fontSize: Unit = 12.px,
-    events: EventDSL<TextInput>.() -> kotlin.Unit = {}
+    events: EventDSL<TextInput>.() -> kotlin.Unit = {},
 ) : Component(properties, at, size, false, true, events as EventDSL<Component>.() -> kotlin.Unit), Focusable {
     override val properties: TextInputProperties
         get() = super.properties as TextInputProperties
@@ -316,7 +316,7 @@ open class TextInput(
             properties.text.font,
             line.text.substring(0, idx),
             text.str.fontSize,
-            properties.text.alignment
+            properties.text.alignment,
         ).width + text.x + text.str.textOffsetX
         cposy = lni * text.str.fontSize + text.y + text.str.textOffsetY
     }
@@ -424,7 +424,7 @@ open class TextInput(
         posFromMouse(
             text.trueX + (cposx - text.x),
             text.trueY + (cposy - text.y) +
-                if (down) h else -h
+                if (down) h else -h,
         )
         if (text.full) {
             if (!down && text.str.textOffsetY >= 0f) return
@@ -544,7 +544,7 @@ open class TextInput(
             },
             properties.text.fontSize,
             properties.text.alignment,
-            false
+            false,
         )
         outlineColor = properties.outlineColor
         outlineThickness = properties.outlineThickness.px

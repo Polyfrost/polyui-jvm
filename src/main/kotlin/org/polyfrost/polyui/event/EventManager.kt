@@ -29,7 +29,7 @@ import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.layout.Layout
 import org.polyfrost.polyui.utils.fastEach
-import org.polyfrost.polyui.utils.fastRemoveIf
+import org.polyfrost.polyui.utils.fastRemoveIfReversed
 import kotlin.experimental.and
 import kotlin.experimental.inv
 import kotlin.experimental.or
@@ -109,8 +109,12 @@ class EventManager(private val polyUI: PolyUI) {
      * @since 0.18.5
      */
     @ApiStatus.Internal
-    @Suppress("NOTHING_TO_INLINE")
-    inline fun recalculateMousePos() = mouseMoved(mouseX, mouseY)
+    fun recalculateMousePos() {
+        // force update
+        val mouseX = mouseX
+        this.mouseX = 0f
+        mouseMoved(mouseX, mouseY)
+    }
 
     /**
      * add a modifier to the current keyModifiers.
@@ -195,7 +199,7 @@ class EventManager(private val polyUI: PolyUI) {
             }
         }
         mouseOver?.let {
-            if (!it.isInside(x, y)) {
+            if (!it.isInside(x, y) || it.layout == null) {
                 it.accept(MouseExited)
                 it.mouseOver = false
                 mouseOver = null
@@ -203,8 +207,8 @@ class EventManager(private val polyUI: PolyUI) {
                 it.accept(MouseMoved)
             }
         }
-        mouseOvers.fastRemoveIf {
-            (!it.isInside(x, y)).also { b ->
+        mouseOvers.fastRemoveIfReversed {
+            (!it.isInside(x, y) || it.layout == null).also { b ->
                 if (b) {
                     it.accept(MouseExited)
                     it.mouseOver = false

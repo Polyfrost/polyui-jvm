@@ -45,7 +45,7 @@ open class Slider(
     size: Size<Unit>,
     val min: Float = 0f,
     val max: Float = 100f,
-    events: EventDSL<Slider>.() -> kotlin.Unit = {}
+    events: EventDSL<Slider>.() -> kotlin.Unit = {},
 ) : Component(properties, at, size, false, true, events as EventDSL<Component>.() -> kotlin.Unit) {
     override val properties
         get() = super.properties as SliderProperties

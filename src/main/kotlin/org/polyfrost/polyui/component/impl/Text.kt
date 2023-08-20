@@ -47,7 +47,7 @@ open class Text @JvmOverloads constructor(
     val textAlign: TextAlign = TextAlign.Left,
     rawResize: Boolean = false,
     acceptInput: Boolean = false,
-    events: EventDSL<org.polyfrost.polyui.component.impl.Text>.() -> kotlin.Unit = {}
+    events: EventDSL<org.polyfrost.polyui.component.impl.Text>.() -> kotlin.Unit = {},
 ) : Component(properties, at, null, rawResize, acceptInput, events as EventDSL<Component>.() -> kotlin.Unit) {
     /** Internally [txt] is stored as a [PolyText] object, which supports localization and object substitution */
     @JvmOverloads
@@ -59,7 +59,7 @@ open class Text @JvmOverloads constructor(
         textAlign: TextAlign = TextAlign.Left,
         rawResize: Boolean = false,
         acceptInput: Boolean = false,
-        events: EventDSL<org.polyfrost.polyui.component.impl.Text>.() -> kotlin.Unit = {}
+        events: EventDSL<org.polyfrost.polyui.component.impl.Text>.() -> kotlin.Unit = {},
     ) : this(null, txt.localised(), at, size, fontSize, textAlign, rawResize, acceptInput, events)
 
     constructor(properties: TextProperties? = null, text: PolyText, fontSize: Unit, at: Vec2<Unit>) :
