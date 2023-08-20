@@ -1,8 +1,7 @@
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.archivesName
 import org.jetbrains.dokka.base.DokkaBase
 import org.jetbrains.dokka.base.DokkaBaseConfiguration
 import org.jetbrains.dokka.gradle.AbstractDokkaTask
-import org.jmailen.gradle.kotlinter.tasks.FormatTask
+import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.archivesName
 import java.time.Year
 
 @Suppress(
@@ -35,11 +34,11 @@ val jvmToolchainVersion = (project.findProperty("jvm.toolchain") as String? ?: "
 
 allprojects {
     apply(plugin = "java-library")
-    apply(plugin=rootProject.libs.plugins.kotlin.jvm.get().pluginId)
-    apply(plugin=rootProject.libs.plugins.licenser.get().pluginId)
-    apply(plugin=rootProject.libs.plugins.kotlinter.get().pluginId)
-    apply(plugin=rootProject.libs.plugins.dokka.get().pluginId)
-    apply(plugin="maven-publish")
+    apply(plugin = rootProject.libs.plugins.kotlin.jvm.get().pluginId)
+    apply(plugin = rootProject.libs.plugins.licenser.get().pluginId)
+    apply(plugin = rootProject.libs.plugins.kotlinter.get().pluginId)
+    apply(plugin = rootProject.libs.plugins.dokka.get().pluginId)
+    apply(plugin = "maven-publish")
 
     group = rootProject.group
     version = rootProject.version

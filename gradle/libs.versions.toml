@@ -1,11 +1,11 @@
 [versions]
-kotlin = "+"
-lwjgl = "+"
-slf4j = "+"
-annotations = "+"
-kotlinter = "+"
-textile = "+"
-dokka = "+"
+kotlin = "1.9.0"
+lwjgl = "3.3.2"
+slf4j = "2.0.7"
+annotations = "24.0.1"
+kotlinter = "3.16.0"
+textile = "2.0.1"
+dokka = "1.8.20"
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
