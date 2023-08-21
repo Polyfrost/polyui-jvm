@@ -29,6 +29,7 @@ import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.layout.Layout
 import org.polyfrost.polyui.utils.fastEach
+import org.polyfrost.polyui.utils.fastEachReversed
 import org.polyfrost.polyui.utils.fastRemoveIfReversed
 import kotlin.experimental.and
 import kotlin.experimental.inv
@@ -331,7 +332,7 @@ class EventManager(private val polyUI: PolyUI) {
         if (mouseOver?.accept(event) == true) {
             return true
         }
-        mouseOvers.fastEach {
+        mouseOvers.fastEachReversed {
             if (it.accept(event)) {
                 return true
             }

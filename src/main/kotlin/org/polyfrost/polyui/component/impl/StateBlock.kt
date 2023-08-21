@@ -42,7 +42,7 @@ abstract class StateBlock(
     size: Vec2<Unit>,
     rawResize: Boolean = false,
     defaultState: Boolean = false,
-    protected open val onStateChange: (StateBlock.(Boolean) -> kotlin.Unit)? = null,
+    @Transient protected open val onStateChange: (StateBlock.(Boolean) -> kotlin.Unit)? = null,
     events: EventDSL<StateBlock>.() -> kotlin.Unit = {},
 ) : Block(properties, at, size, rawResize, true, events as EventDSL<Block>.() -> kotlin.Unit) {
     override val properties

@@ -57,6 +57,8 @@ open class TextInput(
 ) : Component(properties, at, size, false, true, events as EventDSL<Component>.() -> kotlin.Unit), Focusable {
     override val properties: TextInputProperties
         get() = super.properties as TextInputProperties
+
+    @Transient
     lateinit var text: Text
     var txt
         inline get() = text.text.string
@@ -69,25 +71,55 @@ open class TextInput(
                 accept(ChangedEvent(value))
             }
         }
+
+    @Transient
     private var caret = 0
         set(value) {
             field = value
             if (!selecting) select = value
         }
+
+    @Transient
     private val selectBoxes = ArrayList<Pair<Pair<Float, Float>, Pair<Float, Float>>>(5)
+
+    @Transient
     private var select: Int = 0
+
+    @Transient
     var focused = false
         private set
+
+    @Transient
     private var cposx = 0f
+
+    @Transient
     private var cposy = 0f
+
+    @Transient
     private var mouseDown = false
+
+    @Transient
     private var selecting = false
+
+    @Transient
     private lateinit var outlineColor: Color
+
+    @Transient
     private var outlineThickness = 0f
+
+    @Transient
     private var titlex = 0f
+
+    @Transient
     private var titlew = 0f
+
+    @Transient
     private var hintx = 0f
+
+    @Transient
     private var hintw = 0f
+
+    @Transient
     private val iconAt = origin
     val selection get() = txt.substringSafe(caret, select)
 
@@ -95,6 +127,7 @@ open class TextInput(
      * represents if [TextInputProperties.sanitizationFunction] returned false (text no good)
      * @since 0.22.0
      */
+    @Transient
     var errored = false
         private set(value) {
             if (field == value) return
@@ -107,6 +140,8 @@ open class TextInput(
                 outlineThickness = properties.outlineThickness.px
             }
         }
+
+    @Transient
     var lastValid: String = ""
 
     override fun render() {

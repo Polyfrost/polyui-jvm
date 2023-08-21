@@ -37,7 +37,7 @@ open class BlockProperties @JvmOverloads constructor(
     open val cornerRadii: FloatArray = 0f.radii(),
     open val outlineThickness: Float = 0f,
     withStates: Boolean = false,
-    open val paletteGet: Properties.() -> Colors.Palette = { colors.component.bg },
+    @Transient open val paletteGet: Properties.() -> Colors.Palette = { colors.component.bg },
 ) : Properties() {
 
     val outlineColor get() = colors.page.border10
@@ -71,18 +71,23 @@ open class BlockProperties @JvmOverloads constructor(
         fun success(cornerRadii: FloatArray = 0f.radii(), outlineThickness: Float = 0f) = BlockProperties(cornerRadii, outlineThickness, true) { colors.state.success }
 
         @JvmField
+        @Transient
         val brandBlock = brand()
 
         @JvmField
+        @Transient
         val successBlock = success()
 
         @JvmField
+        @Transient
         val warningBlock = warning()
 
         @JvmField
+        @Transient
         val dangerBlock = danger()
 
         @JvmField
+        @Transient
         val backgroundBlock = background()
 
         fun Properties.withStates(pressedAnimation: Animations? = Animations.EaseOutExpo, hoverAnimation: Animations? = Animations.EaseOutExpo, pressedAnimationDuration: Long = 0.25.seconds, hoverAnimationDuration: Long = 0.5.seconds) {

@@ -32,7 +32,7 @@ import kotlin.math.min
  * @see Flex
  * @see VUnits
  */
-abstract class Unit(val type: Type) : Cloneable {
+abstract class Unit(@Transient val type: Type) : Cloneable {
     /** computed pixel value of this unit. */
     abstract var px: Float
 
@@ -108,16 +108,23 @@ abstract class Unit(val type: Type) : Cloneable {
         }
 
         companion object {
+            @Transient
             internal var vMin = 0f
                 private set
+
+            @Transient
             internal var vMax = 0f
                 private set
+
+            @Transient
             internal var vWidth = 0f
                 set(value) = run {
                     field = value
                     vMin = min(vWidth, vHeight)
                     vMax = max(vWidth, vHeight)
                 }
+
+            @Transient
             internal var vHeight = 0f
                 set(value) = run {
                     field = value

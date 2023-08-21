@@ -54,6 +54,7 @@ open class Color @JvmOverloads constructor(hue: Float, saturation: Float, bright
             field = value
             dirty = true
         }
+
     var alpha = alpha
         set(value) {
             field = value
@@ -61,6 +62,7 @@ open class Color @JvmOverloads constructor(hue: Float, saturation: Float, bright
         }
 
     /** Set this to true to update the [argb] value. */
+    @Transient
     var dirty = true
 
     /** return an integer representation of this color.
@@ -72,6 +74,7 @@ open class Color @JvmOverloads constructor(hue: Float, saturation: Float, bright
      * @see org.polyfrost.polyui.utils.toColor
      */
     @get:JvmName("getARGB")
+    @Transient
     var argb: Int = 0
         get() {
             return if (dirty) {
@@ -154,9 +157,11 @@ open class Color @JvmOverloads constructor(hue: Float, saturation: Float, bright
          * `if (color === TRANSPARENT) return`
          */
         @JvmField
+        @Transient
         val TRANSPARENT = rgba(0f, 0f, 0f, 0f)
 
         @JvmField
+        @Transient
         val TRANSPARENT_PALETTE = Colors.Palette(TRANSPARENT, TRANSPARENT, TRANSPARENT, TRANSPARENT)
 
         /**
@@ -233,9 +238,17 @@ open class Color @JvmOverloads constructor(hue: Float, saturation: Float, bright
          * @see alwaysUpdates
          */
         open val updating get() = animation != null
+
+        @Transient
         private var animation: Animation? = null
+
+        @Transient
         private var to: FloatArray? = null
+
+        @Transient
         private var from: FloatArray? = null
+
+        @Transient
         private var current: FloatArray? = null
 
         @Deprecated("This would convert an animatable color to an animatable one.", replaceWith = ReplaceWith("clone()"))
@@ -441,6 +454,7 @@ open class Color @JvmOverloads constructor(hue: Float, saturation: Float, bright
         alpha: Float = 1f,
         initialHue: Float = 0f,
     ) : Animated(0f, saturation, brightness, alpha) {
+        @Transient
         private var time: Long = ((initialHue % 360f) * speedNanos.toFloat()).toLong()
 
         @Deprecated("Chroma colors cannot be animated.", level = DeprecationLevel.ERROR)

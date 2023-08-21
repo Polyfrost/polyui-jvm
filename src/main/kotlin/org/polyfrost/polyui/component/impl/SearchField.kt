@@ -22,6 +22,7 @@
 package org.polyfrost.polyui.component.impl
 
 import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.event.EventDSL
 import org.polyfrost.polyui.property.impl.SearchFieldProperties
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Unit
@@ -33,40 +34,37 @@ import org.polyfrost.polyui.utils.toArrayList
 /**
  * Search field in PolyUI.
  *
- * @param searchList the list of objects to search through. So you maintain control of it, you should pass as an [ArrayList] reference.
- * @param searchOut the output of the search, where you can pass a list reference.
+ * @param input the list of objects to search through. So you maintain control of it, you should pass as an [ArrayList] reference.
+ * @param output the output of the search, where you can pass a list reference.
  * @since 0.22.0
  */
+@Suppress("UNCHECKED_CAST")
 class SearchField(
     properties: SearchFieldProperties? = null,
     at: Vec2<Unit>,
     size: Vec2<Unit>,
     image: PolyImage? = null,
     fontSize: Unit = 16.px,
-    searchList: List<Any>,
-    searchOut: MutableList<Any>? = null,
-) : TextInput(properties = properties, at = at, size = size, image = image, fontSize = fontSize) {
+    input: List<Any>,
+    output: MutableList<Any>? = null,
+    events: EventDSL<SearchField>.() -> kotlin.Unit = {},
+) : TextInput(properties = properties, at = at, size = size, image = image, fontSize = fontSize, events = events as EventDSL<TextInput>.() -> kotlin.Unit) {
     override val properties
         get() = super.properties as SearchFieldProperties
-    var searchList = searchList.toArrayList()
-    val searchOut = searchOut ?: arrayListOf()
+    var input = input.toArrayList()
+    val output = output ?: arrayListOf()
     var query
         get() = super.txt
         set(value) {
             super.txt = value
         }
 
-    /**
-     * Return [searchOut], which will be automatically updated when the [query] changes.
-     */
-    fun getSearch(): List<Any> = searchOut
-
     override fun accept(event: Event): Boolean {
         if (event is ChangedEvent) {
-            searchOut.clear()
-            searchList.fastEach {
+            output.clear()
+            input.fastEach {
                 if (properties.searchAlgorithm(it, query)) {
-                    searchOut.add(it)
+                    output.add(it)
                 }
             }
         }

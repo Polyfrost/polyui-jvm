@@ -58,7 +58,10 @@ open class PixelLayout(
      * To avoid this, we calculate the size of this layout based on the size of its concrete children (not dynamic), and then calculate the size of its children based on the size produced by this.
      * This means that percentages are not 100% accurate, but it is better than nothing as the situation is not really ideal and should not be used in the first place.
      */
+    @Transient
     private var dynamicInference = false
+
+    @Transient
     private var warned = false
 
     init {

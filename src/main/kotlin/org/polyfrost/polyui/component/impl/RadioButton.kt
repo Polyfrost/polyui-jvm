@@ -49,12 +49,13 @@ class RadioButton<T>(
     properties: RadioButtonProperties? = null,
     at: Vec2<Unit>,
     size: Vec2<Unit>? = null,
-    private val toStringFunc: (T) -> String = { it.toString() },
-    val onChange: RadioButton<T>.(T) -> kotlin.Unit = {},
+    @Transient private val toStringFunc: (T) -> String = { it.toString() },
+    @Transient val onChange: RadioButton<T>.(T) -> kotlin.Unit = {},
     defaultIndex: Int = 0,
     fontSize: Unit = 12f.px,
     values: List<T>,
 ) : ContainingComponent(properties, at, size, false, true, arrayOf()) {
+    @Transient
     val block = Block(properties = BlockProperties(paletteGet = { colors.brand.fg }), at = origin, size = origin, acceptInput = false)
 
     constructor(
@@ -84,6 +85,8 @@ class RadioButton<T>(
                 (it as? Text)?.text = toStringFunc(value[i]).localised()
             }
         }
+
+    @Transient
     var selectedIndex: Int = defaultIndex
         set(value) {
             if (field == value) return

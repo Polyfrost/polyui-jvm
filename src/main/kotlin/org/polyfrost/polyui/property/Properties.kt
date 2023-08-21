@@ -43,7 +43,10 @@ import org.polyfrost.polyui.unit.Unit
  * @see [TextProperties]
  */
 abstract class Properties : Cloneable {
+    @Transient
     lateinit var colors: Colors
+
+    @Transient
     lateinit var fonts: FontFamily
 
     abstract val palette: Colors.Palette
@@ -54,6 +57,8 @@ abstract class Properties : Cloneable {
      * Else, if this is not null and the component's size is null, the component's size will be set to this.
      */
     open val size: Size<Unit>? = null
+
+    @Transient
     val eventHandlers = HashMap<Event, (Component.(Event) -> Boolean)>()
 
     /**

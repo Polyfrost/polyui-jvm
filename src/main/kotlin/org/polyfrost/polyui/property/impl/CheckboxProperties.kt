@@ -33,11 +33,13 @@ open class CheckboxProperties : StatedProperties() {
 
     open val checkmarkColor = rgba(255, 255, 255)
 
+    @Transient
     protected open var anim: Animation? = null
 
     /**
      * This function is called when the checkbox is checked.
      */
+    @Transient
     override val onActivate: StateBlock.() -> Unit = {
         anim = activateAnimation?.create(activateAnimationDuration, 0f, 1f)
     }
@@ -45,6 +47,7 @@ open class CheckboxProperties : StatedProperties() {
     /**
      * This function is called when the checkbox is unchecked.
      */
+    @Transient
     override val onDeactivate: StateBlock.() -> Unit = {
         anim = activateAnimation?.create(activateAnimationDuration, 1f, 0f)
     }
@@ -52,6 +55,7 @@ open class CheckboxProperties : StatedProperties() {
     /**
      * This function is called every time the checkbox is rendered, so you will need to check if [Checkbox.checked] is true.
      */
+    @Transient
     open val renderCheck: Checkbox.() -> Unit = {
         if (active || anim != null) {
             if (anim?.isFinished == true) {

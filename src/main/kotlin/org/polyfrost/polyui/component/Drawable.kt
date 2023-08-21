@@ -56,8 +56,9 @@ abstract class Drawable(
      * @since 0.19.0
      */
     val rawResize: Boolean = false,
-    open var acceptsInput: Boolean = true,
+    acceptsInput: Boolean = true,
 ) : Cloneable {
+    @Transient
     val eventHandlers = HashMap<Event, (Drawable.(Event) -> Boolean)>()
 
     /**
@@ -65,12 +66,20 @@ abstract class Drawable(
      *
      * `val text = myLayout["Text@4cf777e8"] as Text`
      */
+    @Transient
     open var simpleName = "${this::class.simpleName}@${Integer.toHexString(this.hashCode())}"
 
     /** size of this drawable. */
     abstract var size: Size<Unit>?
+
+    @Transient
     lateinit var renderer: Renderer
+
+    @Transient
     lateinit var polyUI: PolyUI
+
+    var acceptsInput = acceptsInput
+        get() = exists && field
 
     /**
      * This is the initialization stage of this drawable.
@@ -79,6 +88,7 @@ abstract class Drawable(
      * @see PolyUI.INIT_SETUP
      * @since 0.19.0
      */
+    @Transient
     var initStage = INIT_NOT_STARTED
         internal set
 
@@ -87,6 +97,7 @@ abstract class Drawable(
      * **DO NOT** modify this value. It is managed automatically by [org.polyfrost.polyui.event.EventManager].
      * Changing this directly will not cause you to receive events.
      */
+    @Transient
     var mouseOver = false
         internal set
 
@@ -100,6 +111,7 @@ abstract class Drawable(
      * @since 0.21.4
      */
     open var renders = true
+        get() = field && exists
 
     /**
      * Reference to the layout encapsulating this drawable.
@@ -140,10 +152,23 @@ abstract class Drawable(
             size!!.b.px = value
         }
 
+    /**
+     * This flag controls weather this drawable exists, meaning if it accepts events and renders.
+     *
+     * Additionally:
+     * - In layouts, they will display as empty (no drawables) if this is false.
+     * - In components, they will be excluded from calculations.
+     *
+     * @since 0.19.0
+     */
+    var exists = true
+
     /** true X value (i.e. not relative to the layout) */
+    @Transient
     var trueX = 0f
 
     /** true Y value (i.e. not relative to the layout) */
+    @Transient
     var trueY = 0f
 
     /**
@@ -188,6 +213,7 @@ abstract class Drawable(
      */
     inline val isDynamic get() = at.dynamic || size?.dynamic ?: true
 
+    @Transient
     protected val operations: ArrayList<Pair<DrawableOp, (Drawable.() -> kotlin.Unit)?>> = ArrayList(5)
 
     /** current rotation of this drawable (radians). */
@@ -212,9 +238,11 @@ abstract class Drawable(
     var alpha = 1f
 
     /** **a**t **c**ache **x** for transformations. */
+    @Transient
     var acx = 0f
 
     /** **a**t **c**ache **y** for transformations. */
+    @Transient
     var acy = 0f
 
     /**
@@ -344,7 +372,7 @@ abstract class Drawable(
 
     @EventDSLMarker
     fun <S : Drawable> S.events(dsl: EventDSL<S>.() -> kotlin.Unit) {
-        EventDSL<S>(this).apply(dsl)
+        EventDSL(this).apply(dsl)
     }
 
     /** Use this function to reset your drawable's [PolyText][org.polyfrost.polyui.input.Translator] if it is using one. */

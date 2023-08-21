@@ -28,6 +28,7 @@ import org.polyfrost.polyui.unit.Transitions
 import org.polyfrost.polyui.unit.seconds
 
 open class SwitchingLayoutProperties : Properties() {
+    @Transient
     final override val palette = Color.TRANSPARENT_PALETTE
 
     open val transition: Transitions? = Transitions.Fade

@@ -31,9 +31,9 @@ import org.polyfrost.polyui.utils.radii
 /**
  * @param sanitizationFunction A function that will be called every time the text is changed.
  * If it returns false, the input will be highlighted in [red][org.polyfrost.polyui.color.Colors.State.danger]
- * and the [listeners][org.polyfrost.polyui.component.impl.TextInput.addTextListener] will not be notified.
+ * and the [listeners][org.polyfrost.polyui.component.impl.TextInput.ChangedEvent] will not be notified.
  */
-open class TextInputProperties(open val text: TextProperties = TextProperties(), open val sanitizationFunction: (String) -> Boolean = { true }) : Properties() {
+open class TextInputProperties(open val text: TextProperties = TextProperties(), @Transient open val sanitizationFunction: (String) -> Boolean = { true }) : Properties() {
     val placeholderColor: Color get() = colors.text.primary.disabled
     override val palette: Colors.Palette get() = colors.component.bg
     open val lateralPadding: Unit = 12.px

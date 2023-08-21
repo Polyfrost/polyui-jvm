@@ -44,6 +44,7 @@ open class Image @JvmOverloads constructor(
     acceptInput: Boolean = true,
     events: EventDSL<Image>.() -> kotlin.Unit = {},
 ) : Component(properties, at, null, rawResize, acceptInput, events as EventDSL<Component>.() -> kotlin.Unit) {
+    @Transient
     val fixedSize = image.width != -1f && image.height != -1f
     var image = image
         set(value) {
@@ -61,7 +62,7 @@ open class Image @JvmOverloads constructor(
                 updateColor()
             }
         }
-    final override val properties
+    override val properties
         get() = super.properties as ImageProperties
 
     override fun setup(renderer: Renderer, polyUI: PolyUI) {

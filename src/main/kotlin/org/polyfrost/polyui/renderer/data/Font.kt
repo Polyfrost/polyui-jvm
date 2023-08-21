@@ -37,6 +37,7 @@ class Font @JvmOverloads constructor(
     val letterSpacing: Float = 0f,
     val lineSpacing: Float = 1f,
 ) : Resource(resourcePath) {
+    @Transient
     val name: String = resourcePath.substringAfterLast('/')
         .substringBeforeLast('.')
 

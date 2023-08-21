@@ -53,10 +53,19 @@ class Switch(
     onSwitch: (Switch.(Boolean) -> kotlin.Unit)? = null,
     events: EventDSL<Switch>.() -> kotlin.Unit = {},
 ) : StateBlock(properties, at, switchSize, defaultState = enabled, onStateChange = onSwitch as (StateBlock.(Boolean) -> kotlin.Unit)?, events = events as EventDSL<StateBlock>.() -> kotlin.Unit) {
+    @Transient
     private var anim: Animation? = null
+
+    @Transient
     private var bitSize = 0f
+
+    @Transient
     private var bitRadius = 0f
+
+    @Transient
     private var dist = 0f
+
+    @Transient
     private lateinit var bitColor: Color.Animated
     var fontSize = 0f
     var label = label

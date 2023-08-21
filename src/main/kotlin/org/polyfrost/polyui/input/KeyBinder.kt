@@ -197,14 +197,17 @@ class KeyBinder(private val polyUI: PolyUI) {
         downUnmappedKeys.clear()
     }
 
-    class Bind @JvmOverloads constructor(val unmappedKeys: IntArray? = null, val keys: Array<Keys>? = null, val mouse: IntArray? = null, val mods: Short = 0, val durationNanos: Long = 0L, val action: () -> Boolean) {
+    class Bind @JvmOverloads constructor(val unmappedKeys: IntArray? = null, val keys: Array<Keys>? = null, val mouse: IntArray? = null, val mods: Short = 0, val durationNanos: Long = 0L, @Transient val action: () -> Boolean) {
         constructor(chars: CharArray? = null, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Short = 0, durationNanos: Long = 0L, action: () -> Boolean) : this(chars?.map { it.code }?.toIntArray(), keys, mouse, mods, durationNanos, action)
         constructor(char: Char, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Short = 0, durationNanos: Long = 0L, action: () -> Boolean) : this(intArrayOf(char.code), keys, mouse, mods, durationNanos, action)
         constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Array<Mouse>? = null, mods: Short = 0, durationNanos: Long = 0L, action: () -> Boolean) : this(unmappedKeys, keys, mouse?.map { it.value.toInt() }?.toIntArray(), mods, durationNanos, action)
         constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Mouse? = null, mods: Short = 0, durationNanos: Long = 0L, action: () -> Boolean) : this(unmappedKeys, keys, mouse?.value?.let { intArrayOf(it.toInt()) }, mods, durationNanos, action)
         constructor(unmappedKeys: IntArray? = null, key: Keys? = null, mouse: Array<Mouse>? = null, mods: Short = 0, durationNanos: Long = 0L, action: () -> Boolean) : this(unmappedKeys, key?.let { arrayOf(it) }, mouse, mods, durationNanos, action)
 
+        @Transient
         private var time = 0L
+
+        @Transient
         private var ran = false
 
         fun update(c: ArrayList<Int>, k: ArrayList<Keys>, m: ArrayList<Int>, mods: Short, deltaTimeNanos: Long): Boolean {

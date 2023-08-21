@@ -34,13 +34,20 @@ import java.util.concurrent.CompletableFuture
  * @since 0.21.1
  */
 abstract class Resource(val resourcePath: String) {
+    @Transient
     var init = false
         private set(value) {
             field = value
             if (value) runCallbacks()
         }
+
+    @Transient
     private var initting = false
+
+    @Transient
     private var _stream: InputStream? = null
+
+    @Transient
     private val completionCallbacks = ArrayList<Resource.() -> Unit>(0)
 
     val stream: InputStream?

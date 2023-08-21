@@ -56,6 +56,7 @@ class GridLayout @JvmOverloads constructor(
 ) : Layout(at, origin, onAdded, onRemoved, propertyManager, false, resizesChildren, false, *drawables) {
 
     /** list of rows */
+    @Transient
     private var grid: Array<Array<Drawable?>> = emptyArray()
 
     override fun setup(renderer: Renderer, polyUI: PolyUI) {

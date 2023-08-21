@@ -42,6 +42,7 @@ import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.utils.fastEach
 import org.polyfrost.polyui.utils.maxOf
 import kotlin.math.max
+import kotlin.math.min
 
 class Dropdown(
     properties: DropdownProperties? = null,
@@ -51,8 +52,13 @@ class Dropdown(
     val default: Int = 0,
     vararg entries: Entry,
 ) : ContainingComponent(properties, at, size, false, true, arrayOf()), Focusable {
+    @Transient
     private lateinit var borderColor: Color.Animated
+
+    @Transient
     private val chevron = Image(image = PolyImage("/chevron-down.svg", 16f, 16f), at = origin)
+
+    @Transient
     private var ycache = 0f
 
     init {
@@ -77,6 +83,8 @@ class Dropdown(
 
     override val properties: DropdownProperties
         get() = super.properties as DropdownProperties
+
+    @Transient
     var selected: Entry? = null
         private set(value) {
             if (field === value) return
@@ -89,6 +97,7 @@ class Dropdown(
             }
         }
 
+    @Transient
     val dropdown = FlexLayout(
         at.clone(),
         size = size?.clone()?.also {
@@ -98,16 +107,19 @@ class Dropdown(
         drawables = drawables(
             *entries,
         ),
+        acceptInput = true,
     ).scrolling(0.px * heightBeforeScrolls)
 
     init {
         dropdown.refuseFramebuffer = true
         dropdown.addOperation(object : DrawableOp.Persistent(this) {
             override fun apply(renderer: Renderer) {
+                val w = dropdown.visibleSize!!.width
+                val h = dropdown.visibleSize!!.height
                 if (openAnimation != null) {
-                    renderer.pushScissor(0f, 0f, dropdown.width, dropdown.height * openAnimation!!.value)
+                    renderer.pushScissor(0f, dropdown.oy - dropdown.trueY, w, h * openAnimation!!.value)
                 }
-                renderer.rect(0f, 0f, dropdown.width, dropdown.height, color, 0f, 0f, this@Dropdown.properties.cornerRadii[2], this@Dropdown.properties.cornerRadii[3])
+                renderer.rect(0f, dropdown.oy - dropdown.trueY, w, h, color, 0f, 0f, this@Dropdown.properties.cornerRadii[2], this@Dropdown.properties.cornerRadii[3])
             }
 
             override fun unapply(renderer: Renderer) {
@@ -117,8 +129,11 @@ class Dropdown(
         dropdown.simpleName = "Dropdown@${Integer.toHexString(this.hashCode())}"
     }
 
+    @Transient
     var active = false
         private set
+
+    @Transient
     private var openAnimation: Animation? = null
 
     override fun setup(renderer: Renderer, polyUI: PolyUI) {
@@ -151,6 +166,7 @@ class Dropdown(
         chevron.rotateTo(0.0, properties.openAnimation, properties.openDuration)
         color.recolor(properties.palette.normal)
         borderColor.recolor(properties.borderColor)
+        polyUI.eventManager.drop(dropdown)
     }
 
     fun open() {
@@ -215,7 +231,8 @@ class Dropdown(
 
     override fun onInitComplete() {
         default()
-        dropdown.visibleSize = dropdown.size!!.clone()
+        dropdown.visibleSize!!.a.px = dropdown.width
+        dropdown.visibleSize!!.b.px = min(dropdown.height, dropdown.visibleSize!!.b.px)
     }
 
     fun default() {
@@ -223,7 +240,7 @@ class Dropdown(
     }
 
     @Suppress("EqualsOrHashCode")
-    class Entry @JvmOverloads constructor(private val txt: PolyText, private val icon: PolyImage? = null, private val iconSide: Side = Side.Right, properties: DropdownProperties.Entry? = null, private val onSelected: (() -> kotlin.Unit)? = null) : ContainingComponent(properties, flex(), null, false, true, arrayOf()) {
+    class Entry @JvmOverloads constructor(private val txt: PolyText, private val icon: PolyImage? = null, private val iconSide: Side = Side.Right, properties: DropdownProperties.Entry? = null, @Transient private val onSelected: (() -> kotlin.Unit)? = null) : ContainingComponent(properties, flex(), null, false, true, arrayOf()) {
         @JvmOverloads
         constructor(text: String, icon: PolyImage? = null, iconSide: Side = Side.Right, properties: DropdownProperties.Entry? = null, onSelected: (() -> kotlin.Unit)? = null) : this(text.localised(), icon, iconSide, properties, onSelected)
 
@@ -232,7 +249,11 @@ class Dropdown(
 
         val text = Text(text = txt, at = origin, fontSize = 12.px)
         val image: Image? = if (icon != null) Image(image = icon, at = origin) else null
+
+        @Transient
         lateinit var dropdown: Dropdown
+
+        @Transient
         var show = false
 
         init {

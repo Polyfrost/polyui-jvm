@@ -37,9 +37,9 @@ import org.polyfrost.polyui.unit.origin
  *
  * @see [fastEachReversed]
  */
-inline fun <L, E> L.fastEach(f: (E) -> Unit) where L : List<E>, L : RandomAccess {
+inline fun <L, E> L.fastEach(beginAt: Int = 0, f: (E) -> Unit) where L : List<E>, L : RandomAccess {
     if (this.size == 0) return
-    for (i in 0 until this.size) {
+    for (i in beginAt until this.size) {
         f(this[i])
     }
 }
@@ -54,9 +54,9 @@ inline fun <L, E> L.fastEach(f: (E) -> Unit) where L : List<E>, L : RandomAccess
  * @see [fastEach]
  * @since 0.18.5
  */
-inline fun <L, E> L.fastEachReversed(f: (E) -> Unit) where L : List<E>, L : RandomAccess {
+inline fun <L, E> L.fastEachReversed(beginAt: Int = this.size - 1, f: (E) -> Unit) where L : List<E>, L : RandomAccess {
     if (this.size == 0) return
-    for (i in this.size - 1 downTo 0) {
+    for (i in beginAt downTo 0) {
         f(this[i])
     }
 }
@@ -70,9 +70,9 @@ inline fun <L, E> L.fastEachReversed(f: (E) -> Unit) where L : List<E>, L : Rand
  *
  * @see [fastRemoveIf]
  */
-inline fun <L, E> L.fastEachIndexed(f: (Int, E) -> Unit) where L : List<E>, L : RandomAccess {
+inline fun <L, E> L.fastEachIndexed(beginAt: Int = 0, f: (Int, E) -> Unit) where L : List<E>, L : RandomAccess {
     if (this.size == 0) return
-    for (i in 0 until this.size) {
+    for (i in beginAt until this.size) {
         f(i, this[i])
     }
 }
@@ -87,9 +87,9 @@ inline fun <L, E> L.fastEachIndexed(f: (Int, E) -> Unit) where L : List<E>, L : 
  * @see [fastEachIndexed]
  * @since 0.18.5
  */
-inline fun <L, E> L.fastEachIndexedReversed(f: (Int, E) -> Unit) where L : List<E>, L : RandomAccess {
+inline fun <L, E> L.fastEachIndexedReversed(beginAt: Int = this.size - 1, f: (Int, E) -> Unit) where L : List<E>, L : RandomAccess {
     if (this.size == 0) return
-    for (i in this.size - 1 downTo 0) {
+    for (i in beginAt downTo 0) {
         f(i, this[i])
     }
 }
@@ -279,6 +279,8 @@ fun <E> Array<E>.append(element: E, stillPutOnFail: Boolean = false): Array<E> {
 /**
  * Return this iterable as an ArrayList. **Note:** if it is already an ArrayList, it will be returned as-is.
  */
+@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+@kotlin.internal.InlineOnly
 fun <T> Iterable<T>.toArrayList(): ArrayList<T> {
     return if (this is ArrayList) {
         this
@@ -300,7 +302,8 @@ fun <E> MutableCollection<E>.clearUsing(action: (E) -> Unit) {
     }
 }
 
-@Suppress("NOTHING_TO_INLINE")
+@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+@kotlin.internal.InlineOnly
 inline fun <T> Array<T>.toArrayList(): ArrayList<T> = this.toMutableList() as ArrayList<T>
 
 /**

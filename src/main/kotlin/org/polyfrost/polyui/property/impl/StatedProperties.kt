@@ -45,11 +45,13 @@ open class StatedProperties : BlockProperties() {
     /**
      * This function is called when the component is activated.
      */
+    @Transient
     open val onActivate: (StateBlock.() -> Unit)? = null
 
     /**
      * This function is called when the component is deactivated.
      */
+    @Transient
     open val onDeactivate: (StateBlock.() -> Unit)? = null
 
     init {

@@ -23,8 +23,29 @@ package org.polyfrost.polyui.property.impl
 
 import org.polyfrost.polyui.utils.levenshteinDistance
 
+/**
+ * @param searchAlgorithm the searching algorithm to use. It takes Any, the object, and String, the query, and returns a boolean.
+ * True means that it matches, false means it does not.
+ * By default, the search algorithm is a case-insensitive, combination fuzzy/substring search, utilizing [levenshteinDistance] and [String.contains].
+ */
 open class SearchFieldProperties(
-    open val searchAlgorithm: Any.(String) -> Boolean = {
-        toString().levenshteinDistance(it) <= 2
+    @Transient open val searchAlgorithm: Any.(String) -> Boolean = {
+        if (it.isEmpty()) {
+            true
+        } else {
+            val dist = 2
+            val query = it.lowercase()
+            val obj = this.toString().lowercase()
+            if (obj.length <= dist) {
+                obj.contains(query)
+            } else {
+                var similar = false
+                for (word in obj.split(" ")) {
+                    similar = word.contains(query) || word.levenshteinDistance(query) <= dist
+                    if (similar) break
+                }
+                similar || query.contains(obj) || obj.levenshteinDistance(query) <= dist
+            }
+        }
     },
 ) : TextInputProperties()

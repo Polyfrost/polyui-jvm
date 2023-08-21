@@ -63,10 +63,12 @@ class FlexLayout @JvmOverloads constructor(
     private val contentJustify: JustifyContent = JustifyContent.Start,
     private val itemAlign: AlignItems = AlignItems.Start,
     private val contentAlign: AlignContent = AlignContent.Start,
+    rawResize: Boolean = false,
     resizesChildren: Boolean = false,
+    acceptInput: Boolean = false,
     gap: Gap = Gap.Default,
     vararg drawables: Drawable,
-) : Layout(at, size, onAdded, onRemoved, propertyManager, false, resizesChildren, false, *drawables) {
+) : Layout(at, size, onAdded, onRemoved, propertyManager, rawResize, resizesChildren, acceptInput, *drawables) {
     constructor(at: Point<Unit>, wrap: Unit.Percent, vararg drawables: Drawable) : this(
         at,
         null,
@@ -76,17 +78,25 @@ class FlexLayout @JvmOverloads constructor(
         drawables = drawables,
     )
 
+    @Transient
     private var mainGap = when (flexDirection) {
         Direction.Row, Direction.RowReverse -> gap.mainGap.px
         Direction.Column, Direction.ColumnReverse -> gap.crossGap.px
     }
 
+    @Transient
     private var crossGap = when (flexDirection) {
         Direction.Row, Direction.RowReverse -> gap.crossGap.px
         Direction.Column, Direction.ColumnReverse -> gap.mainGap.px
     }
+
+    @Transient
     private val wrapDirection: Wrap
+
+    @Transient
     private val strictSize = size != null && wrap == null
+
+    @Transient
     val flexDrawables = drawables.filter { it.at.a is Unit.Flex } as ArrayList
 
     private val isSizedCross get() = crossSize != 0f
@@ -203,6 +213,7 @@ class FlexLayout @JvmOverloads constructor(
         if (wrapDirection != Wrap.NoWrap) {
             var row = arrayListOf<Drawable>()
             flexDrawables.fastEachIndexed { i, it ->
+                if (!it.exists) return@fastEachIndexed
                 it.calculateBounds()
                 val next = flexDrawables.getOrNull(i + 1)
                 next?.calculateBounds()

@@ -48,7 +48,11 @@ open class Block @JvmOverloads constructor(
 ) : Component(properties, at, size, rawResize, acceptInput, events as EventDSL<Component>.() -> kotlin.Unit) {
     override val properties
         get() = super.properties as BlockProperties
+
+    @Transient
     protected lateinit var outlineColor: Color.Animated
+
+    @Transient
     lateinit var cornerRadii: FloatArray
 
     override fun render() {

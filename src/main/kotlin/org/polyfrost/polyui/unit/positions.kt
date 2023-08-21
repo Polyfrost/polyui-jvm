@@ -53,6 +53,7 @@ data class Gap(val mainGap: Unit.Pixel, val crossGap: Unit.Pixel) {
 
     companion object {
         @JvmField
+        @Transient
         val Default = Gap(5.px, 5.px)
     }
 }

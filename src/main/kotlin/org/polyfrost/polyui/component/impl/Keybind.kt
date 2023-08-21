@@ -43,6 +43,8 @@ open class Keybind(
 ) : Button(properties, at, size, left = if (withIcon) PolyImage("keyboard.svg", 18f, 18f) else null, text = bind?.keysToString()?.localised() ?: empty, right = PolyImage("close.svg", 10f, 10f)) {
     override val properties
         get() = super.properties as KeybindProperties
+
+    @Transient
     private var recording = false
         set(value) {
             if (value == field) return
@@ -73,8 +75,14 @@ open class Keybind(
             string = value?.keysToString() ?: empty.string
             if (value != null) polyUI.keyBinder.add(value)
         }
+
+    @Transient
     protected open var animation: Animation? = null
+
+    @Transient
     protected var out = false
+
+    @Transient
     protected lateinit var color2: Color
 
     init {

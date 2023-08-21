@@ -53,14 +53,16 @@ class SwitchingLayout(
 ) : Component(properties, at, size, false, false) {
     // don't tell anyone it's actually a component ;)
 
-    private var current: Layout? = null
+    /** @see switch */
+    @Transient
+    var current: Layout? = null
+        private set
 
     override val properties
         get() = super.properties as SwitchingLayoutProperties
 
     /**
      * Switches the given layout into this layout.
-     * @param new the layout to switch into this.
      */
     @JvmName("switchLayout")
     fun switch(new: Layout) {
@@ -137,8 +139,7 @@ class SwitchingLayout(
                         SlideDirection.FromLeft -> {
                             old.addOperation(oldOp)
                             old.moveTo((this.x + this.width).px * this.y.px, properties.transitionCurve, properties.transitionDuration, reset)
-                            new.x = this.x - this.width
-                            new.y = this.y
+                            new.moveTo((this.x - this.width).px * this.y.px)
                             new.addOperation(newOp)
                             new.moveTo(this.x.px * this.y.px, properties.transitionCurve, properties.transitionDuration) {
                                 remove(newOp)
@@ -148,8 +149,7 @@ class SwitchingLayout(
                         SlideDirection.FromRight -> {
                             old.addOperation(oldOp)
                             old.moveTo((this.x - this.width).px * this.y.px, properties.transitionCurve, properties.transitionDuration, reset)
-                            new.x = this.x + this.width
-                            new.y = this.y
+                            new.moveTo((this.x + this.width).px * this.y.px)
                             new.addOperation(newOp)
                             new.moveTo(this.x.px * this.y.px, properties.transitionCurve, properties.transitionDuration) {
                                 remove(newOp)
@@ -159,8 +159,7 @@ class SwitchingLayout(
                         SlideDirection.FromBottom -> {
                             old.addOperation(oldOp)
                             old.moveTo(this.x.px * (this.y - this.height).px, properties.transitionCurve, properties.transitionDuration, reset)
-                            new.x = this.x
-                            new.y = this.y + this.height
+                            new.moveTo(this.x.px * (this.y + this.height).px)
                             new.addOperation(newOp)
                             new.moveTo(this.x.px * this.y.px, properties.transitionCurve, properties.transitionDuration) {
                                 remove(newOp)
@@ -170,8 +169,7 @@ class SwitchingLayout(
                         SlideDirection.FromTop -> {
                             old.addOperation(oldOp)
                             old.moveTo(this.x.px * (this.y + this.height).px, properties.transitionCurve, properties.transitionDuration, reset)
-                            new.x = this.x
-                            new.y = this.y - this.height
+                            new.moveTo(this.x.px * (this.y - this.height).px)
                             new.addOperation(newOp)
                             new.moveTo(this.x.px * this.y.px, properties.transitionCurve, properties.transitionDuration) {
                                 remove(newOp)

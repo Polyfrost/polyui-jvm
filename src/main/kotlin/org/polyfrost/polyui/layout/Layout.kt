@@ -59,8 +59,8 @@ import org.polyfrost.polyui.utils.*
 abstract class Layout(
     at: Point<Unit>,
     override var size: Size<Unit>? = null,
-    internal val onAdded: (Drawable.(Added) -> kotlin.Unit)? = null,
-    internal val onRemoved: (Drawable.(Removed) -> kotlin.Unit)? = null,
+    @Transient internal val onAdded: (Drawable.(Added) -> kotlin.Unit)? = null,
+    @Transient internal val onRemoved: (Drawable.(Removed) -> kotlin.Unit)? = null,
     propertyManager: PropertyManager? = null,
     rawResize: Boolean = false,
     /**
@@ -72,6 +72,7 @@ abstract class Layout(
     acceptInput: Boolean = false,
     vararg drawables: Drawable,
 ) : Drawable(at, rawResize, acceptInput) {
+    @Transient
     open lateinit var propertyManager: PropertyManager
 
     init {
@@ -81,8 +82,11 @@ abstract class Layout(
         }
     }
 
+    @Transient
     lateinit var colors: Colors
         internal set
+
+    @Transient
     lateinit var fonts: FontFamily
         internal set
 
@@ -94,17 +98,12 @@ abstract class Layout(
     val children = drawables.filterIsInstance<Layout>() as ArrayList
         get() = if (exists) field else EMPTY_CHLDLIST
 
-    override var acceptsInput: Boolean
-        get() = exists && super.acceptsInput
-        set(value) {
-            super.acceptsInput = value
-        }
-
     override var consumesHover: Boolean = false
 
     /**
      * Weather this layout needs redrawing.
      */
+    @Transient
     open var needsRedraw = true
         set(value) {
             if (value && !field) {
@@ -126,11 +125,13 @@ abstract class Layout(
     }
 
     /** tracker variable for framebuffer disabling/enabling. don't touch this. */
+    @Transient
     protected var fboTracker = 0
 
     /** removal queue of drawables.
      * @see remove
      */
+    @Transient
     protected val removeQueue = arrayListOf<Drawable>()
 
     /** set this to true if you want this layout to never use a framebuffer. Recommended in situations with chroma colors */
@@ -146,6 +147,7 @@ abstract class Layout(
         }
 
     /** reference to parent */
+    @Transient
     final override var layout: Layout? = null
         set(value) {
             require(value !== this) { "$this cannot be its own parent!" }
@@ -156,14 +158,8 @@ abstract class Layout(
      * These hooks are ran when the [onInitComplete] function is called.
      * @since 0.19.2
      */
+    @Transient
     val initCompleteHooks = ArrayList<Layout.() -> kotlin.Unit>(5)
-
-    /**
-     * This flag simply controls whether the layout exists. If it is false, it will not be rendered, and will report having 0 components.
-     *
-     * @since 0.19.0
-     */
-    var exists = true
 
     /**
      * Flag that is true if the layout can be dragged around.
@@ -171,6 +167,7 @@ abstract class Layout(
      * @see background
      * @since 0.19.2
      */
+    @Transient
     var draggable = false
         private set
 
@@ -183,9 +180,11 @@ abstract class Layout(
     var visibleSize: Size<Unit>? = null
 
     /** used by [scrolling] */
+    @Transient
     internal var ox = 0f
 
     /** used by [scrolling] */
+    @Transient
     internal var oy = 0f
 
     init {
@@ -212,7 +211,6 @@ abstract class Layout(
      */
     open fun reRenderIfNecessary() {
         require(initStage == INIT_COMPLETE) { "${this.simpleName} was attempted to be rendered before it was fully initialized (stage $initStage)" }
-        if (!exists) return
         if (!renders) return
         rasterChildren()
         if (rasterize()) {
@@ -273,7 +271,7 @@ abstract class Layout(
 
     /** perform the given [function] on all this layout's components, and [optionally][onChildLayouts] on all child layouts. */
     fun onAll(onChildLayouts: Boolean = false, function: Component.() -> kotlin.Unit) {
-        components.fastEach(function)
+        components.fastEach(0, function)
         if (onChildLayouts) children.fastEach { it.onAll(true, function) }
     }
 
@@ -805,10 +803,11 @@ abstract class Layout(
             override fun apply(renderer: Renderer) {
                 if (ox != oox || oy != ooy) {
                     // external change watcher
-                    oox = ox
-                    ooy = oy
                     ox = trueX
                     oy = trueY
+                    oox = ox
+                    ooy = oy
+                    clipDrawables()
                 }
                 renderer.pushScissorIntersecting(ox - trueX, oy - trueY, size.width, size.height)
                 val delta = polyUI.delta

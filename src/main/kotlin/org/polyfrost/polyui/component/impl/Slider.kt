@@ -49,11 +49,23 @@ open class Slider(
 ) : Component(properties, at, size, false, true, events as EventDSL<Component>.() -> kotlin.Unit) {
     override val properties
         get() = super.properties as SliderProperties
+
+    @Transient
     protected var barThickness = 0f
+
+    @Transient
     protected var bitMain = 0f
+
+    @Transient
     protected var barCross = 0f
+
+    @Transient
     lateinit var barColor: Color.Animated
+
+    @Transient
     lateinit var usedBarColor: Color.Animated
+
+    @Transient
     val horizontal = size.width > size.height
     var main
         get() = if (horizontal) width else height
@@ -74,7 +86,11 @@ open class Slider(
             }
             field = value
         }
+
+    @Transient
     protected var dragging = false
+
+    @Transient
     private var mp = 0f
 
     override fun setup(renderer: Renderer, polyUI: PolyUI) {

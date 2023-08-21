@@ -67,7 +67,11 @@ open class Text @JvmOverloads constructor(
 
     final override val properties: TextProperties
         get() = super.properties as TextProperties
+
+    @Transient
     private val fs = fontSize ?: this.properties.fontSize
+
+    @Transient
     internal lateinit var str: Text
     var fontSize get() = str.fontSize
         set(value) {

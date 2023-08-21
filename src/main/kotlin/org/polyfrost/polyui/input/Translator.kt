@@ -150,9 +150,10 @@ class Translator(private val polyUI: PolyUI, private val translationDir: String)
      * The string can be [translate]d if there is an attached [Translator] to this instance and the key is present in the file.
      * @see Translator
      */
-    class Text(val key: String, vararg val objects: Any?) : Cloneable {
+    class Text(val key: String, @Transient vararg val objects: Any?) : Cloneable {
         inline val length get() = string.length
 
+        @Transient
         var translator: Translator? = null
             set(value) {
                 if (value === field) return
@@ -165,7 +166,7 @@ class Translator(private val polyUI: PolyUI, private val translationDir: String)
          * @see MessageFormat
          * @since 0.21.1
          */
-        val hasObjects = objects.isNotEmpty()
+        inline val hasObjects get() = objects.isNotEmpty()
 
         /** the translated string. This value is automatically set to the translated value when retrieved. */
         var string: String = key
@@ -189,6 +190,7 @@ class Translator(private val polyUI: PolyUI, private val translationDir: String)
         }
 
         /** if this Text has an attached PolyTranslator, meaning it is able to attempt to translate. */
+        @Transient
         var canTranslate = false
             private set
 

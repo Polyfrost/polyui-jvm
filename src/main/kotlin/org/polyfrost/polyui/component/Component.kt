@@ -22,6 +22,7 @@
 package org.polyfrost.polyui.component
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
 import org.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
@@ -70,13 +71,19 @@ abstract class Component @JvmOverloads constructor(
     open val properties get() = p!!
 
     /** the color of this component. */
+    @Transient
     lateinit var color: Color.Animated
 
     /**
      * represents the hue value to return to when a chroma color is animated to something else, and is set back.
      */
+    @Transient
     private var hueToReturnTo = 0f
+
+    @Transient
     protected var autoSized = false
+
+    @Transient
     protected var finishColorFunc: (Component.() -> kotlin.Unit)? = null
 
     /**
@@ -85,8 +92,13 @@ abstract class Component @JvmOverloads constructor(
      * Controlled by [ContainingComponent]
      */
     @ApiStatus.Internal
+    @Transient
     var parent: Drawable? = null
+
+    @Transient
     override lateinit var layout: Layout
+
+    @Transient
     protected var keyframes: KeyFrames? = null
 
     override var consumesHover = true
@@ -257,6 +269,7 @@ abstract class Component @JvmOverloads constructor(
         wantRedraw()
     }
 
+    @MustBeInvokedByOverriders
     override fun setup(renderer: Renderer, polyUI: PolyUI) {
         super.setup(renderer, polyUI)
         if (p == null) {
@@ -269,6 +282,7 @@ abstract class Component @JvmOverloads constructor(
         initStage = INIT_SETUP
     }
 
+    @MustBeInvokedByOverriders
     override fun preRender(deltaTimeNanos: Long) {
         super.preRender(deltaTimeNanos)
         if (keyframes != null) {
