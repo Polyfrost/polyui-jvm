@@ -117,6 +117,32 @@ class EventManager(private val polyUI: PolyUI) {
     }
 
     /**
+     * Internal function that will forcefully drop the given drawable from event tracking.
+     */
+    @ApiStatus.Internal
+    fun drop(drawable: Drawable, withChildren: Boolean = false) {
+        if (drawable === mouseOver) {
+            drawable.mouseOver = false
+            drawable.accept(MouseExited)
+            mouseOver = null
+        }
+        mouseOvers.fastRemoveIfReversed {
+            if (it === drawable) {
+                it.mouseOver = false
+                it.accept(MouseExited)
+                true
+            } else {
+                false
+            }
+        }
+        if (withChildren) {
+            if (drawable is Layout) {
+                drawable.children.fastEach { drop(it) }
+            }
+        }
+    }
+
+    /**
      * add a modifier to the current keyModifiers.
      * @see KeyModifiers
      */
@@ -199,7 +225,7 @@ class EventManager(private val polyUI: PolyUI) {
             }
         }
         mouseOver?.let {
-            if (!it.isInside(x, y) || it.layout == null) {
+            if (!it.isInside(x, y)) {
                 it.accept(MouseExited)
                 it.mouseOver = false
                 mouseOver = null
@@ -208,7 +234,7 @@ class EventManager(private val polyUI: PolyUI) {
             }
         }
         mouseOvers.fastRemoveIfReversed {
-            (!it.isInside(x, y) || it.layout == null).also { b ->
+            (!it.isInside(x, y)).also { b ->
                 if (b) {
                     it.accept(MouseExited)
                     it.mouseOver = false

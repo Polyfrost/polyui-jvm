@@ -49,6 +49,7 @@ open class BlockProperties @JvmOverloads constructor(
 
     init {
         if (withStates) {
+            @Suppress("LeakingThis")
             withStates(pressedAnimation, hoverAnimation, pressedAnimationDuration, hoverAnimationDuration)
         }
     }
@@ -86,7 +87,7 @@ open class BlockProperties @JvmOverloads constructor(
 
         fun Properties.withStates(pressedAnimation: Animations? = Animations.EaseOutExpo, hoverAnimation: Animations? = Animations.EaseOutExpo, pressedAnimationDuration: Long = 0.25.seconds, hoverAnimationDuration: Long = 0.5.seconds) {
             var old = false
-            addEventHandler(MouseClicked(0)) {
+            addEventHandler(MousePressed(0)) {
                 recolor(palette.pressed, pressedAnimation, pressedAnimationDuration)
                 true
             }

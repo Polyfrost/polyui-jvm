@@ -363,7 +363,7 @@ abstract class Drawable(
      * @see INIT_SETUP
      */
     open fun setup(renderer: Renderer, polyUI: PolyUI) {
-        if (initStage != INIT_NOT_STARTED) throw IllegalStateException("${this.simpleName} has already been setup!")
+        require(initStage == INIT_NOT_STARTED) { "${this.simpleName} has already been setup!" }
         this.renderer = renderer
         this.polyUI = polyUI
     }
@@ -434,6 +434,22 @@ abstract class Drawable(
     fun doDynamicSize() {
         doDynamicSize(at)
         if (size != null) doDynamicSize(size!!)
+    }
+
+    /**
+     * Return the layout of the highest order (the one inside the [master layout][PolyUI.master]) that contains this drawable.
+     *
+     * If this is the master layout, it is returned.
+     *
+     * @since 0.23.2
+     */
+    fun getContainingLayout(): Layout {
+        if (this === polyUI.master) return this
+        var layout = if (this is Layout) this else this.layout
+        while (layout?.layout?.layout != null) {
+            layout = layout.layout
+        }
+        return layout!!
     }
 
     protected fun doDynamicSize(upon: Vec2<Unit>) {

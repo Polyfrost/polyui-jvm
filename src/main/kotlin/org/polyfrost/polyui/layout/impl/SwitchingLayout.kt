@@ -71,17 +71,17 @@ class SwitchingLayout(
             new.layout = this.layout
             new.setup(renderer, polyUI)
             new.calculateBounds()
-            this.layout.addComponent(new)
+            this.layout.add(new)
         } else if (new.initStage == INIT_SETUP) {
             PolyUI.LOGGER.warn("[SwitchingLayout] received partially initialized layout? $new")
             new.calculateBounds()
-            this.layout.addComponent(new)
+            this.layout.add(new)
         }
         if (new.layout !== this.layout) {
             if (new.layout != null) PolyUI.LOGGER.warn("[SwitchingLayout] $new is not a child of this, moving!")
-            new.layout?.removeComponent(new)
+            new.layout?.remove(new)
             new.layout = this.layout
-            this.layout.addComponent(new)
+            this.layout.add(new)
         }
 
         if (autoSized && width == 0f && height == 0f) {
@@ -119,14 +119,15 @@ class SwitchingLayout(
                 }
             }
 
-            val reset: Layout.() -> kotlin.Unit = {
+            val reset: Layout.() -> kotlin.Unit = reset@{
                 this.moveTo(old.at)
-                this.layout?.removeComponent(this)
+                this.layout?.remove(this)
                 if (oldl !== this.layout) {
                     this.layout = oldl
-                    this.layout?.addComponent(this)
+                    this.layout?.add(this)
                 }
                 remove(oldOp)
+                polyUI.eventManager.drop(this, true)
             }
 
             reset as Drawable.() -> kotlin.Unit

@@ -59,7 +59,7 @@ fun main() {
         colors = LightTheme(),
         drawables = drawables(
             create(origin, false).also {
-                it.addComponents(
+                it.add(
                     Text(
                         text = "polyfrost.copyright".localised(),
                         at = 24.px * 475.px,
@@ -190,7 +190,7 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                 at = 320.px * 380.px,
                 events = {
                     MouseClicked(0) to {
-                        this.layout.getLayout<FlexLayout>(0).addComponent(block())
+                        this.layout.getLayout<FlexLayout>(0).add(block())
                     }
                 },
             ),
@@ -200,7 +200,7 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
                 events = {
                     MouseClicked(0) to {
                         val l = this.layout.getLayout<FlexLayout>(0)
-                        l.removeComponentNow(l.flexDrawables.last())
+                        l.removeNow(l.flexDrawables.last())
                     }
                 },
             ),

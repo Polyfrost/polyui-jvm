@@ -84,7 +84,7 @@ class GridLayout @JvmOverloads constructor(
     }
 
     override fun calculateBounds() {
-        if (initStage == INIT_NOT_STARTED) throw IllegalStateException("${this.simpleName} has not been setup, but calculateBounds() was called!")
+        require(initStage != INIT_NOT_STARTED) { "${this.simpleName} has not been setup, but calculateBounds() was called!" }
         doDynamicSize()
         components.fastEach {
             it.layout = this

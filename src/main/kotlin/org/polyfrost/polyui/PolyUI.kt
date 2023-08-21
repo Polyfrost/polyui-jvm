@@ -431,22 +431,22 @@ class PolyUI @JvmOverloads constructor(
     }
 
     fun removeComponent(drawable: Drawable): PolyUI {
-        master.removeComponent(drawable)
+        master.remove(drawable)
         return this
     }
 
     fun addComponent(drawable: Drawable): PolyUI {
-        master.addComponent(drawable)
+        master.add(drawable)
         return this
     }
 
     fun addComponents(vararg drawables: Drawable): PolyUI {
-        master.addComponents(*drawables)
+        master.add(*drawables)
         return this
     }
 
     fun addComponents(drawables: Collection<Drawable>): PolyUI {
-        master.addComponents(drawables)
+        master.add(drawables)
         return this
     }
 
@@ -544,6 +544,7 @@ class PolyUI @JvmOverloads constructor(
         master.children.fastEach {
             debugPrint(it, 0, sb)
         }
+        @Suppress("DEPRECATION")
         return sb.toString().stdout()
     }
 

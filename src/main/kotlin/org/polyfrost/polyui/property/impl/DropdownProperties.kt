@@ -30,8 +30,6 @@ import org.polyfrost.polyui.utils.radii
 open class DropdownProperties(open val minWidth: Float = 120f) : BlockProperties() {
 
     open class Entry : Properties() {
-        val textProperties = TextProperties()
-        val iconProperties = ImageProperties()
         override val palette
             get() = colors.component.bg
 
@@ -51,9 +49,6 @@ open class DropdownProperties(open val minWidth: Float = 120f) : BlockProperties
 
     open val activeColor: Color
         get() = colors.brand.accent.normal
-
-    open val hoveredColor: Color
-        get() = colors.text.primary.hovered
 
     open val borderColor: Color
         get() = colors.page.border5

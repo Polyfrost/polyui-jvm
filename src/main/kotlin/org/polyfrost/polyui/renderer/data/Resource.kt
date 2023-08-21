@@ -21,6 +21,7 @@
 
 package org.polyfrost.polyui.renderer.data
 
+import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.utils.fastEach
 import org.polyfrost.polyui.utils.getResourceStream
 import org.polyfrost.polyui.utils.getResourceStreamNullable
@@ -40,7 +41,7 @@ abstract class Resource(val resourcePath: String) {
         }
     private var initting = false
     private var _stream: InputStream? = null
-    val completionCallbacks = ArrayList<Resource.() -> Unit>(0)
+    private val completionCallbacks = ArrayList<Resource.() -> Unit>(0)
 
     val stream: InputStream?
         get() {
@@ -59,6 +60,7 @@ abstract class Resource(val resourcePath: String) {
         init = false
     }
 
+    @ApiStatus.Experimental
     fun getAsync(exceptionHandler: (Throwable) -> Unit = { it.printStackTrace() }, callback: InputStream.() -> Unit) {
         if (!init) {
             if (!initting) {
@@ -80,6 +82,7 @@ abstract class Resource(val resourcePath: String) {
         }
     }
 
+    @ApiStatus.Experimental
     fun getAsyncNullable(exceptionHandler: (Throwable) -> Unit = { it.printStackTrace() }, callback: InputStream?.() -> Unit) {
         if (!init) {
             if (!initting) {

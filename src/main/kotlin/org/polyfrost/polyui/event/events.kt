@@ -156,13 +156,13 @@ data class MouseScrolled internal constructor(val amountX: Int, val amountY: Int
 }
 
 /**
- * This event is dispatched when a component/layout is added **after** it has been initialized (i.e. not in the UI creation block), using the [addComponent][org.polyfrost.polyui.layout.Layout.addComponent] function.
+ * This event is dispatched when a component/layout is added **after** it has been initialized (i.e. not in the UI creation block), using the [addComponent][org.polyfrost.polyui.layout.Layout.add] function.
  *
  * acceptable by component and layout. */
 object Added : Event
 
 /**
- * This event is dispatched when a component/layout is removed, using the [removeComponent][org.polyfrost.polyui.layout.Layout.removeComponent] function.
+ * This event is dispatched when a component/layout is removed, using the [removeComponent][org.polyfrost.polyui.layout.Layout.remove] function.
  *
  * acceptable by component and layout. */
 object Removed : Event

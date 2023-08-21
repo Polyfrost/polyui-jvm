@@ -70,9 +70,7 @@ class PolyImage @JvmOverloads constructor(
                 "svg" -> Type.SVG
                 "jpg", "jpeg", "jpe", "jif", "jfif", "jfi" -> Type.JPEG
                 "bmp" -> Type.BMP
-                else -> throw IllegalArgumentException(
-                    "Unknown image type for file $fileName",
-                )
+                else -> throw IllegalArgumentException("Unknown image type for file $fileName")
             }
         }
 

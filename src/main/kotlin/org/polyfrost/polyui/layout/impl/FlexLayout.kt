@@ -32,14 +32,9 @@ import org.polyfrost.polyui.layout.Layout
 import org.polyfrost.polyui.property.PropertyManager
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.unit.Unit
-import org.polyfrost.polyui.utils.addOrReplace
-import org.polyfrost.polyui.utils.fastEach
-import org.polyfrost.polyui.utils.fastEachIndexed
-import org.polyfrost.polyui.utils.sortedByDescending
+import org.polyfrost.polyui.utils.*
 import kotlin.Boolean
-import kotlin.Exception
 import kotlin.Float
-import kotlin.IllegalStateException
 import kotlin.Int
 import kotlin.Suppress
 import kotlin.math.max
@@ -116,12 +111,8 @@ class FlexLayout @JvmOverloads constructor(
             this.wrapDirection = wrapDirection
         }
         drawables.forEach {
-            if (it.atType != Unit.Type.Flex) {
-                throw Exception("Unit type mismatch: Drawable $it needs to be placed using a Flex unit for a flex layout.")
-            }
-            if (it.size != null && it.sizeType == Units.Flex) {
-                throw Exception("A flex layout's size property is used to specify the minimum size of the component, please use the at property for your flex data.")
-            }
+            require(it.atType == Unit.Type.Flex) { "Unit type mismatch: Drawable $it needs to be placed using a Flex unit for a flex layout." }
+            require(it.size == null || it.sizeType != Units.Flex) { "A flex layout's size property is used to specify the minimum size of the component, please use the at property for your flex data." }
         }
     }
 
@@ -170,41 +161,41 @@ class FlexLayout @JvmOverloads constructor(
         calculateBounds()
     }
 
-    override fun addComponent(drawable: Drawable, index: Int) {
-        super.addComponent(drawable, index)
+    override fun add(drawable: Drawable, index: Int) {
+        super.add(drawable, index)
         if (drawable.at.a is Unit.Flex) flexDrawables.addOrReplace(drawable, index)
         if (initStage != INIT_NOT_STARTED) calculateBounds()
     }
 
-    override fun removeComponent(index: Int) {
+    override fun remove(index: Int) {
         val c = components[index]
         if (c.at.a is Unit.Flex) {
-            super.removeComponent(c)
+            super.remove(c)
             flexDrawables.remove(c)
         }
     }
 
-    override fun removeComponentNow(index: Int) {
+    override fun removeNow(index: Int) {
         val c = components[index]
         if (c.at.a is Unit.Flex) {
-            removeComponentNow(c)
+            removeNow(c)
             flexDrawables.remove(c)
         }
     }
 
-    override fun removeComponent(drawable: Drawable) {
-        super.removeComponent(drawable)
+    override fun remove(drawable: Drawable) {
+        super.remove(drawable)
         calculateBounds()
     }
 
-    override fun removeComponentNow(drawable: Drawable?) {
-        super.removeComponentNow(drawable)
+    override fun removeNow(drawable: Drawable?) {
+        super.removeNow(drawable)
         flexDrawables.remove(drawable)
         calculateBounds()
     }
 
     override fun calculateBounds() {
-        if (initStage == INIT_NOT_STARTED) throw IllegalStateException("${this.simpleName} has not been setup, but calculateBounds() was called!")
+        require(initStage != INIT_NOT_STARTED) { "${this.simpleName} has not been setup, but calculateBounds() was called!" }
         doDynamicSize()
         var mainAxis = 0f
         val rows = arrayListOf<FlexRow>()
@@ -275,7 +266,7 @@ class FlexLayout @JvmOverloads constructor(
         var cross = 0f
 
         // justify, with the largest row first.
-        (rows.sortedByDescending { it.rowMainSizeWithGaps }).fastEach {
+        rows.sortedByDescending { it.rowMainSizeWithGaps }.fastEach {
             it.justify()
         }
         rows.fastEach { row ->
@@ -305,30 +296,50 @@ class FlexLayout @JvmOverloads constructor(
         needsRedraw = true
     }
 
+    override fun clipDrawables() {
+        val x: Float
+        val y: Float
+        val width: Float
+        val height: Float
+        if (visibleSize != null) {
+            x = ox
+            y = oy
+            width = visibleSize!!.width
+            height = visibleSize!!.height
+        } else {
+            x = trueX
+            y = trueY
+            width = this.width
+            height = this.height
+        }
+        children.fastEach {
+            it.clipDrawables()
+            it.renders = it.intersects(x, y, width, height)
+        }
+        components.fastEach {
+            it.renders = it.intersects(x, y, width, height)
+        }
+    }
+
     fun trySetMainSize(new: Float) {
         mainSize = max(mainSize, new)
     }
 
-    @Suppress("NOTHING_TO_INLINE")
-    inline fun init(drawable: Drawable) {
-        if (drawable.size == null) drawable.size = calculateSize() ?: origin
-    }
-
-    fun getMainPos(drawable: Drawable): Float {
+    private fun getMainPos(drawable: Drawable): Float {
         return when (flexDirection) {
             Direction.Row, Direction.RowReverse -> drawable.x
             Direction.Column, Direction.ColumnReverse -> drawable.y
         }
     }
 
-    fun setMainPos(drawable: Drawable, value: Float) {
+    private fun setMainPos(drawable: Drawable, value: Float) {
         when (flexDirection) {
             Direction.Row, Direction.RowReverse -> drawable.x = value
             Direction.Column, Direction.ColumnReverse -> drawable.y = value
         }
     }
 
-    fun getCrossPos(drawable: Drawable?): Float {
+    private fun getCrossPos(drawable: Drawable?): Float {
         if (drawable == null) return 0f
         return when (flexDirection) {
             Direction.Row, Direction.RowReverse -> drawable.y
@@ -336,21 +347,21 @@ class FlexLayout @JvmOverloads constructor(
         }
     }
 
-    fun setCrossPos(drawable: Drawable, value: Float) {
+    private fun setCrossPos(drawable: Drawable, value: Float) {
         when (flexDirection) {
             Direction.Row, Direction.RowReverse -> drawable.y = value
             Direction.Column, Direction.ColumnReverse -> drawable.x = value
         }
     }
 
-    fun addCrossPos(drawable: Drawable, value: Float) {
+    private fun addCrossPos(drawable: Drawable, value: Float) {
         when (flexDirection) {
             Direction.Row, Direction.RowReverse -> drawable.y += value
             Direction.Column, Direction.ColumnReverse -> drawable.x += value
         }
     }
 
-    fun getMainSize(drawable: Drawable?): Float {
+    private fun getMainSize(drawable: Drawable?): Float {
         if (drawable == null) return 0f
         return when (flexDirection) {
             Direction.Row, Direction.RowReverse -> drawable.width
@@ -358,35 +369,35 @@ class FlexLayout @JvmOverloads constructor(
         }
     }
 
-    fun setMainSize(drawable: Drawable, value: Float) {
+    private fun setMainSize(drawable: Drawable, value: Float) {
         when (flexDirection) {
             Direction.Row, Direction.RowReverse -> drawable.width = value
             Direction.Column, Direction.ColumnReverse -> drawable.height = value
         }
     }
 
-    fun addMainSize(drawable: Drawable, value: Float) {
+    private fun addMainSize(drawable: Drawable, value: Float) {
         when (flexDirection) {
             Direction.Row, Direction.RowReverse -> drawable.width += value
             Direction.Column, Direction.ColumnReverse -> drawable.height += value
         }
     }
 
-    fun getCrossSize(drawable: Drawable): Float {
+    private fun getCrossSize(drawable: Drawable): Float {
         return when (flexDirection) {
             Direction.Row, Direction.RowReverse -> drawable.height
             Direction.Column, Direction.ColumnReverse -> drawable.width
         }
     }
 
-    fun setCrossSize(drawable: Drawable, value: Float) {
+    private fun setCrossSize(drawable: Drawable, value: Float) {
         when (flexDirection) {
             Direction.Row, Direction.RowReverse -> drawable.height = value
             Direction.Column, Direction.ColumnReverse -> drawable.width = value
         }
     }
 
-    fun isMainSized(drawable: Drawable): Boolean {
+    private fun isMainSized(drawable: Drawable): Boolean {
         return if (getMainSize(drawable) != 0f) {
             true
         } else {
@@ -400,7 +411,7 @@ class FlexLayout @JvmOverloads constructor(
         }
     }
 
-    fun getFlex(drawable: Drawable): Unit.Flex {
+    private fun getFlex(drawable: Drawable): Unit.Flex {
         return drawable.at.a as Unit.Flex
     }
 

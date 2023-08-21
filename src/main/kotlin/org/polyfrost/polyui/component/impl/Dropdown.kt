@@ -22,9 +22,9 @@
 package org.polyfrost.polyui.component.impl
 
 import org.polyfrost.polyui.PolyUI
+import org.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
 import org.polyfrost.polyui.animate.Animation
 import org.polyfrost.polyui.color.Color
-import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.ContainingComponent
 import org.polyfrost.polyui.component.DrawableOp
 import org.polyfrost.polyui.component.Focusable
@@ -50,13 +50,13 @@ class Dropdown(
     heightBeforeScrolls: Unit.Pixel = 300.px,
     val default: Int = 0,
     vararg entries: Entry,
-) : Component(properties, at, size, false, true), Focusable {
+) : ContainingComponent(properties, at, size, false, true, arrayOf()), Focusable {
     private lateinit var borderColor: Color.Animated
-
     private val chevron = Image(image = PolyImage("/chevron-down.svg", 16f, 16f), at = origin)
     private var ycache = 0f
 
     init {
+        addComponents(chevron)
         entries.forEach {
             it.dropdown = this
             if (size != null) it.size = size.clone()
@@ -79,14 +79,16 @@ class Dropdown(
         get() = super.properties as DropdownProperties
     var selected: Entry? = null
         private set(value) {
-            if (field == value) return
-            layout.removeComponentNow(field)
-            field = value!!.clone()
-            field!!.show = true
-            field!!.acceptsInput = false
-            layout.addComponent(field!!)
-            field!!.calculateBounds()
+            if (field === value) return
+            removeComponents(field)
+            value?.clone()?.let {
+                field = it
+                it.show = true
+                it.acceptsInput = false
+                addComponents(it)
+            }
         }
+
     val dropdown = FlexLayout(
         at.clone(),
         size = size?.clone()?.also {
@@ -120,16 +122,12 @@ class Dropdown(
     private var openAnimation: Animation? = null
 
     override fun setup(renderer: Renderer, polyUI: PolyUI) {
-        dropdown.y += if (size != null) size!!.height else 0f
         super.setup(renderer, polyUI)
-        layout.addComponents(dropdown, chevron)
-        chevron.setup(renderer, polyUI)
-        chevron.size = chevron.calculateSize()
+        polyUI.master.add(dropdown)
         borderColor = properties.borderColor.toAnimatable()
     }
 
     override fun accept(event: Event): Boolean {
-//        selected?.accept(event)
         if (event is MouseEntered) {
             polyUI.cursor = Cursor.Clicker
             return true
@@ -145,7 +143,7 @@ class Dropdown(
             }
         }
         // k2 why?
-        return super<Component>.accept(event)
+        return super<ContainingComponent>.accept(event)
     }
 
     fun close() {
@@ -161,21 +159,18 @@ class Dropdown(
         chevron.rotateTo(180.0, properties.openAnimation, properties.openDuration)
         color.recolor(properties.activeColor)
         borderColor.recolor(properties.activeBorderColor)
-        dropdown.trueX = dropdown.trueX()
-        dropdown.trueY = dropdown.trueY()
+        // asm: assert on top
+        if (polyUI.master.children.indexOf(this.getContainingLayout()) > polyUI.master.children.indexOf(dropdown)) {
+            if (polyUI.settings.debug) PolyUI.LOGGER.warn("Promoting dropdown to top of stack")
+            polyUI.master.removeNow(dropdown)
+            polyUI.master.add(dropdown)
+        }
+        dropdown.exists = true
+        dropdown.moveTo((trueX + properties.borderThickness).px * (trueY + height + properties.borderThickness).px)
+        dropdown.calculateBounds()
     }
 
     override fun render() {
-        // asm: if this is inside a ContainingComponent, get the ACTUAL y value
-        var parent = this.parent
-        var actualY = y
-        while (parent != null) {
-            actualY += parent.y
-            if (parent.layout == dropdown.layout) break
-            parent = (parent as Component).parent
-        }
-        dropdown.y = actualY + height + properties.borderThickness
-
         if (openAnimation != null) {
             if (openAnimation!!.isFinished && openAnimation!!.value == 0f) {
                 openAnimation = null
@@ -190,8 +185,9 @@ class Dropdown(
                 polyUI.unfocus()
             }
         }
-        renderer.rect(x, y, width, height, color, properties.cornerRadii)
-        renderer.hollowRect(x, y, width, height, borderColor, properties.borderThickness, properties.cornerRadii)
+        renderer.rect(0f, 0f, width, height, color, properties.cornerRadii)
+        renderer.hollowRect(0f, 0f, width, height, borderColor, properties.borderThickness, properties.cornerRadii)
+        super.render()
     }
 
     override fun calculateSize(): Size<Unit> {
@@ -207,19 +203,18 @@ class Dropdown(
     }
 
     override fun calculateBounds() {
+        if (dropdown.initStage == INIT_NOT_STARTED) {
+            dropdown.setup(renderer, polyUI)
+        }
         dropdown.calculateBounds()
         chevron.calculateBounds()
         super.calculateBounds()
-        dropdown.x = x + properties.borderThickness
-        dropdown.y = y + height + properties.borderThickness
-        chevron.x = x + width - chevron.width - 12f
-        chevron.y = y + height / 2f - chevron.height / 2f
+        chevron.x = width - chevron.width - 12f
+        chevron.y = height / 2f - chevron.height / 2f
     }
 
     override fun onInitComplete() {
-        x += properties.borderThickness
         default()
-        dropdown.exists = false
         dropdown.visibleSize = dropdown.size!!.clone()
     }
 
@@ -227,6 +222,7 @@ class Dropdown(
         selected = dropdown.components[default] as Entry
     }
 
+    @Suppress("EqualsOrHashCode")
     class Entry @JvmOverloads constructor(private val txt: PolyText, private val icon: PolyImage? = null, private val iconSide: Side = Side.Right, properties: DropdownProperties.Entry? = null, private val onSelected: (() -> kotlin.Unit)? = null) : ContainingComponent(properties, flex(), null, false, true, arrayOf()) {
         @JvmOverloads
         constructor(text: String, icon: PolyImage? = null, iconSide: Side = Side.Right, properties: DropdownProperties.Entry? = null, onSelected: (() -> kotlin.Unit)? = null) : this(text.localised(), icon, iconSide, properties, onSelected)
@@ -234,20 +230,12 @@ class Dropdown(
         override val properties
             get() = super.properties as DropdownProperties.Entry
 
-        // dw bout it x
-        override var renders: Boolean
-            get() = true
-            set(value) {}
+        val text = Text(text = txt, at = origin, fontSize = 12.px)
+        val image: Image? = if (icon != null) Image(image = icon, at = origin) else null
+        lateinit var dropdown: Dropdown
+        var show = false
 
-        internal lateinit var text: Text
-        internal var image: Image? = null
-        internal lateinit var dropdown: Dropdown
-        internal var show = false
-
-        override fun setup(renderer: Renderer, polyUI: PolyUI) {
-            super.setup(renderer, polyUI)
-            text = Text(this.properties.textProperties, txt, origin)
-            image = if (icon != null) Image(this.properties.iconProperties, icon, origin) else null
+        init {
             addComponents(text, image)
         }
 
@@ -288,13 +276,13 @@ class Dropdown(
             super.calculateBounds()
             if (image != null) {
                 if (iconSide == Side.Right) {
-                    image!!.x = width - image!!.width - properties.lateralPadding
+                    image.x = width - image.width - properties.lateralPadding
                     text.x = properties.lateralPadding
                 } else {
-                    image!!.x = properties.lateralPadding
-                    text.x = image!!.width + properties.lateralPadding
+                    image.x = properties.lateralPadding
+                    text.x = image.width + properties.lateralPadding
                 }
-                image!!.y = (height - image!!.height) / 2f
+                image.y = (height - image.height) / 2f
             } else {
                 text.x = properties.lateralPadding
             }
@@ -302,18 +290,13 @@ class Dropdown(
         }
 
         override fun calculateSize(): Size<Unit> {
-            val (w, h) = renderer.textBounds(properties.textProperties.font, txt.string, properties.textProperties.fontSize.px, properties.textProperties.alignment)
-            val width = w.px + properties.lateralPadding * 2f + if (image != null) image!!.width + properties.lateralPadding else 0f
-            val height = h.px + properties.verticalPadding * 2f
+            val width = text.width + properties.lateralPadding * 2f + if (image != null) image.width + properties.lateralPadding else 0f
+            val height = text.height + properties.verticalPadding * 2f
             return Size(max(width, dropdown.properties.minWidth).px, height.px)
         }
 
         override fun clone() = Entry(txt, image?.image, iconSide, properties, onSelected).also {
             it.size = size!!.clone()
-            it.x = dropdown.x
-            it.y = dropdown.y
-            it.text = text
-            it.image = image
             it.dropdown = this.dropdown
         }
 

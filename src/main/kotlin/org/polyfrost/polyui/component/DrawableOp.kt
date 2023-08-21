@@ -174,25 +174,27 @@ abstract class DrawableOp(protected open val drawable: Drawable) {
     }
 
     class Scale(
-        private val scaleX: Float,
-        private val scaleY: Float,
+        scaleX: Float,
+        scaleY: Float,
         add: Boolean = true,
         drawable: Drawable,
         animation: Animations? = null,
         durationNanos: Long = 1L.seconds,
     ) : DrawableOp(drawable) {
         override val animation = animation?.create(durationNanos, 0f, 1f)
-        private val tx = if (add) drawable.scaleX + scaleX else scaleX
-        private val ty = if (add) drawable.scaleY + scaleY else scaleY
+        private val ox = drawable.scaleX
+        private val oy = drawable.scaleY
+        private val tx = if (add) scaleX else scaleX - ox
+        private val ty = if (add) scaleY else scaleY - oy
 
         override fun apply(renderer: Renderer) {
             if (animation != null) {
                 val p = animation.value
-                drawable.scaleX = tx * p
-                drawable.scaleY = ty * p
+                drawable.scaleX = ox + (tx * p)
+                drawable.scaleY = oy + (ty * p)
             } else {
-                drawable.scaleX = scaleX
-                drawable.scaleY = scaleY
+                drawable.scaleX = ox + tx
+                drawable.scaleY = oy + ty
             }
         }
     }

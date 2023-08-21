@@ -84,7 +84,7 @@ abstract class Component @JvmOverloads constructor(
      *
      * Controlled by [ContainingComponent]
      */
-    @ApiStatus.Experimental
+    @ApiStatus.Internal
     var parent: Drawable? = null
     override lateinit var layout: Layout
     protected var keyframes: KeyFrames? = null
@@ -221,7 +221,7 @@ abstract class Component @JvmOverloads constructor(
     }
 
     override fun calculateBounds() {
-        if (initStage == INIT_NOT_STARTED) throw IllegalStateException("${this.simpleName} has not been setup, but calculateBounds() was called!")
+        require(initStage != INIT_NOT_STARTED) { "${this.simpleName} has not been setup, but calculateBounds() was called!" }
         if (size == null) {
             size = if (properties.size != null) {
                 properties.size!!.clone()

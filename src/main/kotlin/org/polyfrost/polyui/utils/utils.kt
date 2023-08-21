@@ -252,6 +252,7 @@ inline fun Number.radii() = floatArrayOf(this.toFloat(), this.toFloat(), this.to
 inline fun radii(topLeft: Float, topRight: Float, bottomLeft: Float, bottomRight: Float) = floatArrayOf(topLeft, topRight, bottomLeft, bottomRight)
 
 /** print the object to stdout, then return it. */
+@Deprecated("remove in prod")
 inline fun <T> T.stdout(arg: Any? = null): T {
     if (arg != null) print("$arg -> ")
     println(this)
@@ -408,6 +409,8 @@ fun String.levenshteinDistance(other: String): Int {
 
 /**
  * Wrap the given text to the given width, returning a list of lines.
+ *
+ * @param maxHeight the max height. currently unused, but may be used in the future.
  */
 fun String.wrap(
     maxWidth: Float,

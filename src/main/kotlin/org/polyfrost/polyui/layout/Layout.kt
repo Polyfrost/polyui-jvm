@@ -48,7 +48,7 @@ import org.polyfrost.polyui.utils.*
  * # Layout
  * Layout is PolyUI's take on containers. They can contain [components] and other [layouts][children], as children.
  *
- * They can dynamically [add][addComponent] and [remove][removeComponent] their children and components.
+ * They can dynamically [add] and [remove] their children and components.
  *
  * They are responsible for all their children's sizes, positions and rendering.
  *
@@ -114,24 +114,22 @@ abstract class Layout(
         }
 
     override fun trueX(): Float {
-        trueX = super.trueX()
         children.fastEach { it.trueX = it.trueX() }
         components.fastEach { it.trueX = it.trueX() }
-        return trueX
+        return super.trueX()
     }
 
     override fun trueY(): Float {
-        trueY = super.trueY()
         children.fastEach { it.trueY = it.trueY() }
         components.fastEach { it.trueY = it.trueY() }
-        return trueY
+        return super.trueY()
     }
 
     /** tracker variable for framebuffer disabling/enabling. don't touch this. */
     protected var fboTracker = 0
 
     /** removal queue of drawables.
-     * @see removeComponent
+     * @see remove
      */
     protected val removeQueue = arrayListOf<Drawable>()
 
@@ -150,9 +148,7 @@ abstract class Layout(
     /** reference to parent */
     final override var layout: Layout? = null
         set(value) {
-            if (value === this) {
-                throw IllegalArgumentException("Layout cannot be its own parent!")
-            }
+            require(value !== this) { "$this cannot be its own parent!" }
             field = value
         }
 
@@ -215,7 +211,7 @@ abstract class Layout(
      * **Note:** Do not call this function yourself.
      */
     open fun reRenderIfNecessary() {
-        if (initStage != INIT_COMPLETE) throw IllegalStateException("${this.simpleName} was attempted to be rendered before it was fully initialized (stage $initStage)")
+        require(initStage == INIT_COMPLETE) { "${this.simpleName} was attempted to be rendered before it was fully initialized (stage $initStage)" }
         if (!exists) return
         if (!renders) return
         rasterChildren()
@@ -353,8 +349,8 @@ abstract class Layout(
      *
      * this will add the drawables to the [Layout.components] or [children] list, and invoke its added event function.
      */
-    fun addComponents(components: Collection<Drawable>) {
-        components.forEach { addComponent(it) }
+    fun add(drawables: Collection<Drawable>) {
+        drawables.forEach { add(it) }
     }
 
     /**
@@ -362,8 +358,8 @@ abstract class Layout(
      *
      * this will add the drawables to the [Layout.components] or [children] list, and invoke its added event function.
      */
-    fun addComponents(vararg components: Drawable) {
-        components.forEach { addComponent(it) }
+    fun add(vararg components: Drawable) {
+        components.forEach { add(it) }
     }
 
     /**
@@ -371,7 +367,7 @@ abstract class Layout(
      *
      * this will add the drawable to the [Layout.components] or [children] list, and invoke its [Added] if it is present.
      */
-    open fun addComponent(drawable: Drawable, index: Int = -1) {
+    open fun add(drawable: Drawable, index: Int = -1) {
         when (drawable) {
             is Component -> {
                 if (components.addOrReplace(drawable, index) != null) PolyUI.LOGGER.warn("${drawable.simpleName} was attempted to be added to layout ${this.simpleName} multiple times!")
@@ -403,15 +399,19 @@ abstract class Layout(
      *
      * This removal queue is used so that component can finish up any animations they're doing before being removed.
      */
-    open fun removeComponent(drawable: Drawable) {
+    open fun remove(drawable: Drawable) {
         if (polyUI.settings.debug) PolyUI.LOGGER.info("Preparing to removing drawable ${drawable.simpleName} from layout ${this.simpleName}")
         when (drawable) {
             is Component -> {
-                removeQueue.add(components[components.indexOf(drawable)])
+                val idx = components.indexOf(drawable)
+                require(idx != -1) { "Tried to remove component $drawable from $this, but it wasn't found!" }
+                removeQueue.add(components[idx])
             }
 
             is Layout -> {
-                removeQueue.add(children[children.indexOf(drawable)])
+                val idx = children.indexOf(drawable)
+                require(idx != -1) { "Tried to remove layout $drawable from $this, but it wasn't found!" }
+                removeQueue.add(children[idx])
             }
 
             else -> {
@@ -425,30 +425,30 @@ abstract class Layout(
      * Removes a component from this layout at the specified index.
      *
      * @param index The index of the component to be removed.
-     * @see removeComponent
+     * @see remove
      * @since 0.19.2
      */
-    open fun removeComponent(index: Int) {
-        removeComponent(components[index])
+    open fun remove(index: Int) {
+        remove(components[index])
     }
 
     /**
      * Removes a component from this layout immediately.
      *
      * @param index The index of the component to be removed.
-     * @see removeComponentNow
+     * @see removeNow
      * @since 0.19.2
      */
-    open fun removeComponentNow(index: Int) {
-        removeComponentNow(components[index])
+    open fun removeNow(index: Int) {
+        removeNow(components[index])
     }
 
     /** removes a component immediately, without waiting for it to finish up.
      *
-     * This is marked as internal because you should be using [removeComponent] for most cases to remove a component, as it waits for it to finish and play any removal animations.
+     * This is marked as internal because you should be using [remove] for most cases to remove a component, as it waits for it to finish and play any removal animations.
      */
     @ApiStatus.Internal
-    open fun removeComponentNow(drawable: Drawable?) {
+    open fun removeNow(drawable: Drawable?) {
         if (drawable == null) return
         if (polyUI.settings.debug) PolyUI.LOGGER.info("Removing drawable ${drawable.simpleName} from layout ${this.simpleName}")
         when (drawable) {
@@ -481,7 +481,7 @@ abstract class Layout(
     }
 
     override fun calculateBounds() {
-        if (initStage == INIT_NOT_STARTED) throw IllegalStateException("${this.simpleName} has not been setup, but calculateBounds() was called!")
+        require(initStage != INIT_NOT_STARTED) { "${this.simpleName} has not been setup, but calculateBounds() was called!" }
         if (layout != null) doDynamicSize()
         components.fastEach {
             it.calculateBounds()
@@ -545,7 +545,7 @@ abstract class Layout(
     override fun render() {
         removeQueue.fastRemoveIfReversed {
             if (it.canBeRemoved()) {
-                removeComponentNow(it)
+                removeNow(it)
                 true
             } else {
                 false
@@ -759,7 +759,7 @@ abstract class Layout(
         if (withScrollbars) {
             horizontalBar = Scrollbar(true)
             verticalBar = Scrollbar(false)
-            addComponents(horizontalBar, verticalBar)
+            add(horizontalBar, verticalBar)
             addEventHandler(MouseEntered) {
                 horizontalBar.show()
                 verticalBar.show()

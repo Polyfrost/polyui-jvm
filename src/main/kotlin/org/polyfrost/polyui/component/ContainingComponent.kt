@@ -90,6 +90,10 @@ abstract class ContainingComponent(
         }
     }
 
+    fun removeComponents(vararg component: Component?) {
+        component.forEach { children.remove(it) }
+    }
+
     override fun preRender(deltaTimeNanos: Long) {
         super.preRender(deltaTimeNanos)
         renderer.translate(x, y)
