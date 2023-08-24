@@ -136,17 +136,17 @@ allprojects {
             mavenLocal()
             maven {
                 url = uri("https://repo.polyfrost.cc/releases")
-                name = "polyReleases"
+                name = "releases"
                 credentials(PasswordCredentials::class)
             }
             maven {
                 url = uri("https://repo.polyfrost.cc/snapshots")
-                name = "polySnapshots"
+                name = "snapshots"
                 credentials(PasswordCredentials::class)
             }
             maven {
                 url = uri("https://repo.polyfrost.cc/private")
-                name = "polyPrivate"
+                name = "private"
                 credentials(PasswordCredentials::class)
             }
         }

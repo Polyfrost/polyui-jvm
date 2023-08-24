@@ -26,6 +26,7 @@ package org.polyfrost.polyui.utils
 import org.polyfrost.polyui.PolyUI
 import java.io.FileNotFoundException
 import java.io.InputStream
+import java.net.HttpURLConnection
 import java.net.MalformedURLException
 import java.net.URL
 import java.nio.ByteBuffer
@@ -43,8 +44,8 @@ fun getResourceStream(resourcePath: String) =
     getResourceStreamNullable(resourcePath)
         ?: throw FileNotFoundException(
             "Resource $resourcePath not found " +
-                "(check your Properties, and make sure the file " +
-                "is in the resources folder/on classpath; or the URL is valid)",
+                    "(check your Properties, and make sure the file " +
+                    "is in the resources folder/on classpath; or the URL is valid)",
         )
 
 /**
@@ -58,7 +59,19 @@ fun getResourceStreamNullable(resourcePath: String): InputStream? {
     val i: InputStream?
     val t = measureNanoTime {
         i = try {
-            URL(resourcePath).openStream()
+            val url = URL(resourcePath)
+            return if (url.protocol == "file") {
+                url.openStream()
+            } else {
+                val connection = url.openConnection() as HttpURLConnection
+                connection.requestMethod = "GET"
+                connection.setUseCaches(true)
+                connection.addRequestProperty("User-Agent", "Mozilla/5.0 (PolyUI)")
+                connection.setReadTimeout(5000)
+                connection.setConnectTimeout(5000)
+                connection.setDoOutput(true)
+                connection.inputStream
+            }
         } catch (e: Exception) {
             if (e !is MalformedURLException) {
                 PolyUI.LOGGER.error("Failed to get resource: {}", e.message)
