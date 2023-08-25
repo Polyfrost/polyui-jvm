@@ -44,8 +44,8 @@ fun getResourceStream(resourcePath: String) =
     getResourceStreamNullable(resourcePath)
         ?: throw FileNotFoundException(
             "Resource $resourcePath not found " +
-                    "(check your Properties, and make sure the file " +
-                    "is in the resources folder/on classpath; or the URL is valid)",
+                "(check your Properties, and make sure the file " +
+                "is in the resources folder/on classpath; or the URL is valid)",
         )
 
 /**

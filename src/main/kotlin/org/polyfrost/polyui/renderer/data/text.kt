@@ -115,9 +115,13 @@ internal class MultilineText(
             return
         }
         val tempLines = arrayListOf<Line>()
-        text.string.split("\n").forEach { tempLines.addAll(it.wrap(size.width, size.height, renderer, font, fontSize, textAlign).map { trimmed ->
-            Line(trimmed, renderer.textBounds(font, trimmed, fontSize, textAlign) as Vec2<Unit>)
-        }) }
+        text.string.split("\n").forEach {
+            tempLines.addAll(
+                it.wrap(size.width, size.height, renderer, font, fontSize, textAlign).map { trimmed ->
+                    Line(trimmed, renderer.textBounds(font, trimmed, fontSize, textAlign) as Vec2<Unit>)
+                },
+            )
+        }
         if (tempLines.isEmpty()) {
             tempLines.add(Line("", 0f, fontSize))
         }

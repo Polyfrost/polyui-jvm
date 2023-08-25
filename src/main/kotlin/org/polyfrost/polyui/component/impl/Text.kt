@@ -42,7 +42,7 @@ open class Text @JvmOverloads constructor(
     properties: TextProperties? = null,
     var initialText: PolyText,
     at: Vec2<Unit>,
-    var sized: Size<Unit>? = null,
+    sized: Size<Unit>? = null,
     fontSize: Unit? = null,
     val textAlign: TextAlign = TextAlign.Left,
     rawResize: Boolean = false,
@@ -68,8 +68,19 @@ open class Text @JvmOverloads constructor(
     final override val properties: TextProperties
         get() = super.properties as TextProperties
 
+    var sized = sized
+        set(value) {
+            field = value
+            if (setupRan) {
+                setupText(renderer, polyUI)
+            }
+        }
+
     @Transient
     private val fs = fontSize ?: this.properties.fontSize
+
+    @Transient
+    private var setupRan = false
 
     @Transient
     internal lateinit var str: Text
@@ -135,6 +146,11 @@ open class Text @JvmOverloads constructor(
 
     override fun setup(renderer: Renderer, polyUI: PolyUI) {
         super.setup(renderer, polyUI)
+        setupText(renderer, polyUI)
+        setupRan = true
+    }
+
+    private fun setupText(renderer: Renderer, polyUI: PolyUI) {
         if (fs is Unit.Dynamic) fs.set(sized?.b ?: throw IllegalArgumentException("${this.simpleName} has a dynamic font size, but it has no height"))
         str = if (initialText.string.contains("\n") || floor((sized?.height ?: 0f) / this.fs.px).toInt() > 1) {
             MultilineText(initialText, this.properties.font, this.fs.px, textAlign, sized ?: origin)
