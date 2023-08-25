@@ -73,16 +73,13 @@ open class Text @JvmOverloads constructor(
     var sized = sized
         set(value) {
             field = value
-            if (setupRan) {
+            if (initStage == PolyUI.INIT_COMPLETE) {
                 setupText(renderer, polyUI)
             }
         }
 
     @Transient
     private val fs = fontSize ?: this.properties.fontSize
-
-    @Transient
-    private var setupRan = false
 
     @Transient
     internal lateinit var str: Text
@@ -149,7 +146,6 @@ open class Text @JvmOverloads constructor(
     override fun setup(renderer: Renderer, polyUI: PolyUI) {
         super.setup(renderer, polyUI)
         setupText(renderer, polyUI)
-        setupRan = true
     }
 
     private fun setupText(renderer: Renderer, polyUI: PolyUI) {
