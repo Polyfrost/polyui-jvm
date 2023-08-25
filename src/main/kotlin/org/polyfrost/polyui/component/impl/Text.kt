@@ -43,6 +43,7 @@ open class Text @JvmOverloads constructor(
     var initialText: PolyText,
     at: Vec2<Unit>,
     sized: Size<Unit>? = null,
+    private val lineLimit: Int? = null,
     fontSize: Unit? = null,
     val textAlign: TextAlign = TextAlign.Left,
     rawResize: Boolean = false,
@@ -55,15 +56,16 @@ open class Text @JvmOverloads constructor(
         txt: String,
         at: Vec2<Unit>,
         size: Size<Unit>? = null,
+        lineLimit: Int? = null,
         fontSize: Unit? = null,
         textAlign: TextAlign = TextAlign.Left,
         rawResize: Boolean = false,
         acceptInput: Boolean = false,
         events: EventDSL<org.polyfrost.polyui.component.impl.Text>.() -> kotlin.Unit = {},
-    ) : this(null, txt.localised(), at, size, fontSize, textAlign, rawResize, acceptInput, events)
+    ) : this(null, txt.localised(), at, size, lineLimit, fontSize, textAlign, rawResize, acceptInput, events)
 
     constructor(properties: TextProperties? = null, text: PolyText, fontSize: Unit, at: Vec2<Unit>) :
-            this(properties, text, at, null, fontSize)
+        this(properties, text, at, null, null, fontSize)
 
     final override val properties: TextProperties
         get() = super.properties as TextProperties
@@ -153,7 +155,7 @@ open class Text @JvmOverloads constructor(
     private fun setupText(renderer: Renderer, polyUI: PolyUI) {
         if (fs is Unit.Dynamic) fs.set(sized?.b ?: throw IllegalArgumentException("${this.simpleName} has a dynamic font size, but it has no height"))
         str = if (initialText.string.contains("\n") || floor((sized?.height ?: 0f) / this.fs.px).toInt() > 1) {
-            MultilineText(initialText, this.properties.font, this.fs.px, textAlign, sized ?: origin)
+            MultilineText(initialText, this.properties.font, this.fs.px, textAlign, sized ?: origin, lineLimit)
         } else {
             SingleText(initialText, this.properties.font, this.fs.px, textAlign, sized ?: origin)
         }

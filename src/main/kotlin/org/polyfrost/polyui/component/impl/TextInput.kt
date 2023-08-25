@@ -577,6 +577,7 @@ open class TextInput(
             size?.clone().also {
                 it?.b?.px = it?.b?.px?.minus(properties.verticalPadding.px * 2f) ?: 0f
             },
+            null,
             properties.text.fontSize,
             properties.text.alignment,
             false,

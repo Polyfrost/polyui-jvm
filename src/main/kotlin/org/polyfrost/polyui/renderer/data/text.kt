@@ -93,6 +93,7 @@ internal class MultilineText(
     fontSize: Float,
     textAlign: TextAlign = TextAlign.Left,
     size: Vec2<Unit>,
+    private val lineLimit: Int?,
 ) : Text(text, font, fontSize, textAlign, size) {
     override lateinit var lines: ArrayList<Line>
 
@@ -115,10 +116,19 @@ internal class MultilineText(
             return
         }
         val tempLines = arrayListOf<Line>()
+        var i = 0
         text.string.split("\n").forEach {
             tempLines.addAll(
-                it.wrap(size.width, size.height, renderer, font, fontSize, textAlign).map { trimmed ->
-                    Line(trimmed, renderer.textBounds(font, trimmed, fontSize, textAlign) as Vec2<Unit>)
+                it.wrap(size.width, size.height, renderer, font, fontSize, textAlign).mapNotNull { trimmed ->
+                    i++
+                    if (lineLimit != null) {
+                        if (i > lineLimit) {
+                            return@mapNotNull null
+                        } else if (i == lineLimit) {
+                            return@mapNotNull Line(trimmed.dropLast(3) + "...", renderer.textBounds(font, trimmed.dropLast(3) + "...", fontSize, textAlign) as Vec2<Unit>)
+                        }
+                    }
+                    return@mapNotNull Line(trimmed, renderer.textBounds(font, trimmed, fontSize, textAlign) as Vec2<Unit>)
                 },
             )
         }
