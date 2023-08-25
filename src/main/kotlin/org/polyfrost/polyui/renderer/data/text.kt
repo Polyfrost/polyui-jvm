@@ -114,13 +114,14 @@ internal class MultilineText(
             lines = arrayListOf(Line(text.string, size.width, size.height))
             return
         }
-        lines = text.string.wrap(size.width, size.height, renderer, font, fontSize, textAlign).map {
-            Line(it, renderer.textBounds(font, it, fontSize, textAlign) as Vec2<Unit>)
-        }.toArrayList().also {
-            if (it.isEmpty()) {
-                it.add(Line("", 0f, fontSize))
-            }
+        val tempLines = arrayListOf<Line>()
+        text.string.split("\n").forEach { tempLines.addAll(it.wrap(size.width, size.height, renderer, font, fontSize, textAlign).map { trimmed ->
+            Line(trimmed, renderer.textBounds(font, trimmed, fontSize, textAlign) as Vec2<Unit>)
+        }) }
+        if (tempLines.isEmpty()) {
+            tempLines.add(Line("", 0f, fontSize))
         }
+        lines = tempLines
         size.b.px = lines.sumOf { it.height }
         textOffsetY = if (lines.size * fontSize > size.height) {
             full = true
