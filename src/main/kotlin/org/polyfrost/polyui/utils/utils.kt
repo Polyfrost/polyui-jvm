@@ -420,7 +420,7 @@ fun String.wrap(
     fontSize: Float,
     textAlign: TextAlign = TextAlign.Left,
 ): ArrayList<String> {
-    if (maxWidth == 0f) return arrayListOf(this)
+    if (maxWidth == 0f || this.all { it.isWhitespace() }) return arrayListOf(this)
     val words = split(" ").toArrayList()
     if (words.size == 0) return arrayListOf("")
     val lines = arrayListOf<String>()
