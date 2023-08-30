@@ -1,7 +1,7 @@
 ![polyfrost-site_index – 6](https://github.com/Polyfrost/polyui-jvm/assets/62163840/768a4420-4ba3-4636-ad85-2dd89b18f936)
 # PolyUI
 
-PolyUI is a declarative UI framework developed for, and by [Polyfrost](https://polyfrost.src/main/kotlin/org/polyfrost).
+PolyUI is a declarative UI framework developed for, and by [Polyfrost](https://polyfrost.org/).
 
 It is designed to be lightweight, fast, extensible and easy to use, while still being very powerful. Make sure to check out the examples for more information.
 
