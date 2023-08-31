@@ -2,7 +2,7 @@
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
  * Copyright (C) 2023 Polyfrost and its contributors.
- *   <https://polyfrost.cc> <https://github.com/Polyfrost/polui-jvm>
+ *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -54,7 +54,7 @@ import kotlin.math.min
 /**
  * # PolyUI
  *
- * PolyUI is a declarative UI framework developed for, and by [Polyfrost](https://polyfrost.cc).
+ * PolyUI is a declarative UI framework developed for, and by [Polyfrost](https://polyfrost.org).
  *
  * It is designed to be lightweight, fast, extensible and easy to use, while still being very powerful. Make sure to check out the examples for more information.
  *

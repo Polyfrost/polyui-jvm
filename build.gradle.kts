@@ -45,7 +45,7 @@ allprojects {
 
     repositories {
         mavenCentral()
-        maven("https://repo.polyfrost.cc/releases")
+        maven("https://repo.polyfrost.org/releases")
     }
 
     dependencies {
@@ -140,17 +140,17 @@ allprojects {
         repositories {
             mavenLocal()
             maven {
-                url = uri("https://repo.polyfrost.cc/releases")
+                url = uri("https://repo.polyfrost.org/releases")
                 name = "releases"
                 credentials(PasswordCredentials::class)
             }
             maven {
-                url = uri("https://repo.polyfrost.cc/snapshots")
+                url = uri("https://repo.polyfrost.org/snapshots")
                 name = "snapshots"
                 credentials(PasswordCredentials::class)
             }
             maven {
-                url = uri("https://repo.polyfrost.cc/private")
+                url = uri("https://repo.polyfrost.org/private")
                 name = "private"
                 credentials(PasswordCredentials::class)
             }
