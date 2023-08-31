@@ -22,6 +22,7 @@
 package org.polyfrost.polyui.component.impl
 
 import org.polyfrost.polyui.PolyUI
+import org.polyfrost.polyui.animate.Animation
 import org.polyfrost.polyui.color.Color
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.component.Component
@@ -36,10 +37,8 @@ import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.Cursor
 import org.polyfrost.polyui.renderer.data.Line
 import org.polyfrost.polyui.renderer.data.PolyImage
+import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.unit.Unit
-import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.unit.origin
-import org.polyfrost.polyui.unit.px
 import org.polyfrost.polyui.utils.*
 
 @Suppress("UNCHECKED_CAST")
@@ -61,11 +60,10 @@ open class TextInput(
     @Transient
     lateinit var text: Text
     var txt
-        inline get() = text.text.string
+        inline get() = text.string
         set(value) {
-            text.str.text.string = value
-            text.str.calculate(renderer)
-            errored = !properties.sanitizationFunction.invoke(txt)
+            text.string = value
+            errored = !properties.sanitizationFunction.invoke(value)
             if (!errored) {
                 lastValid = value
                 accept(ChangedEvent(value))
@@ -120,7 +118,14 @@ open class TextInput(
     private var hintw = 0f
 
     @Transient
+    private lateinit var caretColor: Color
+
+    @Transient
+    private var caretAnim: Animation? = null
+
+    @Transient
     private val iconAt = origin
+
     val selection get() = txt.substringSafe(caret, select)
 
     /**
@@ -144,33 +149,42 @@ open class TextInput(
     @Transient
     var lastValid: String = ""
 
+    override fun preRender(deltaTimeNanos: Long) {
+        super.preRender(deltaTimeNanos)
+        caretAnim?.update(deltaTimeNanos)
+    }
+
     override fun render() {
         if (!mouseOver) mouseDown = false
         renderer.rect(x, y, width, height, properties.palette.normal, properties.cornerRadii)
         if (title != null) {
-            renderer.text(text.font, titlex, text.y, title.string, text.color, text.fontSize, text.textAlign)
+            renderer.text(text.font, titlex, text.y, title.string, text.color, text.fontSize)
         }
         if (image != null) {
             renderer.image(image, iconAt.x, iconAt.y, image.width, image.height)
         }
         if (focused) {
-            renderer.rect(cposx, cposy, 2f, text.fontSize, layout.colors.text.primary.normal)
+            text.color.alpha = 1f
+            caretAnim?.let {
+                caretColor.alpha = it.value
+            }
+            renderer.rect(cposx, cposy, 2f, text.fontSize, caretColor)
             selectBoxes.fastEach {
                 val (x, y) = it.first
                 val (w, h) = it.second
                 renderer.rect(x, y, w, h, layout.colors.page.border20)
             }
         } else {
-            color.alpha = 0.8f
+            text.color.alpha = 0.8f
         }
         if (txt.isNotEmpty()) {
             text.render()
         } else {
-            renderer.text(text.font, text.x, text.y, placeholder.string, properties.placeholderColor, text.fontSize, text.textAlign)
+            renderer.text(text.font, text.x, text.y, placeholder.string, properties.placeholderColor, text.fontSize)
         }
         if (hint != null) {
             renderer.rect(hintx - properties.lateralPadding.px, y, hintw + properties.lateralPadding.px * 2f, height, properties.palette.hovered, 0f, properties.cornerRadii[1], 0f, properties.cornerRadii[3])
-            renderer.text(text.font, hintx, text.y, hint.string, properties.placeholderColor, text.fontSize, text.textAlign)
+            renderer.text(text.font, hintx, text.y, hint.string, properties.placeholderColor, text.fontSize)
         }
         if (outlineThickness != 0f) {
             renderer.hollowRect(x, y, width, height, outlineColor, outlineThickness, properties.cornerRadii)
@@ -351,7 +365,6 @@ open class TextInput(
             properties.text.font,
             line.text.substring(0, idx),
             text.str.fontSize,
-            properties.text.alignment,
         ).width + text.x + text.str.textOffsetX
         cposy = lni * text.str.fontSize + text.y + text.str.textOffsetY
     }
@@ -399,8 +412,8 @@ open class TextInput(
     }
 
     private fun line(line: Line, startIndex: Int, endIndex: Int, lineIndex: Int) {
-        val start = renderer.textBounds(text.font, line.text.substring(0, startIndex), text.fontSize, text.textAlign).a.px + text.str.textOffsetX
-        val width = renderer.textBounds(text.font, line.text.substring(startIndex, endIndex), text.fontSize, text.textAlign).a.px
+        val start = renderer.textBounds(text.font, line.text.substring(0, startIndex), text.fontSize).a.px + text.str.textOffsetX
+        val width = renderer.textBounds(text.font, line.text.substring(startIndex, endIndex), text.fontSize).a.px
         selectBoxes.add((text.x + start - 1f to text.y + (lineIndex * text.fontSize) + text.str.textOffsetY) to (width to line.height))
     }
 
@@ -444,7 +457,7 @@ open class TextInput(
         } else if (mouseX > l.width) {
             idx + l.text.length
         } else {
-            val index = l.text.closestToPoint(renderer, properties.text.font, text.str.fontSize, properties.text.alignment, mouseX)
+            val index = l.text.closestToPoint(renderer, properties.text.font, text.str.fontSize, mouseX)
             if (index == -1) {
                 idx + l.text.length
             } else {
@@ -474,8 +487,8 @@ open class TextInput(
         text.rescale(scaleX, scaleY)
         cposx *= scaleX
         cposy *= scaleY
-        if (title != null) titlew = renderer.textBounds(text.font, title.string, text.fontSize, text.textAlign).width
-        if (hint != null) hintw = renderer.textBounds(text.font, hint.string, text.fontSize, text.textAlign).width
+        if (title != null) titlew = renderer.textBounds(text.font, title.string, text.fontSize).width
+        if (hint != null) hintw = renderer.textBounds(text.font, hint.string, text.fontSize).width
         if (image != null) {
             if (rawResize) {
                 image.width *= scaleX
@@ -551,7 +564,7 @@ open class TextInput(
 
     override fun reset() {
         if (initialText != null) {
-            text.text = initialText.clone()
+            text.reset()
         } else {
             txt = ""
         }
@@ -570,13 +583,12 @@ open class TextInput(
         (fontSize as? Unit.Dynamic)?.set((size ?: layout.size ?: throw IllegalArgumentException("cannot set dynamic font size when no size is set")).b)
         initialText?.translator = polyUI.translator
         placeholder.translator = polyUI.translator
+        hint?.translator = polyUI.translator
+        title?.translator = polyUI.translator
         text = Text(
             properties.text,
             initialText ?: "".localised(),
             at.clone(),
-            size?.clone().also {
-                it?.b?.px = it?.b?.px?.minus(properties.verticalPadding.px * 2f) ?: 0f
-            },
             null,
             properties.text.fontSize,
             properties.text.alignment,
@@ -587,6 +599,10 @@ open class TextInput(
         text.layout = this.layout
         text.setup(renderer, polyUI)
         text.fontSize = fontSize.px
+        caretColor = properties.caretColor.toAnimatable()
+        caretAnim = properties.caretAnimation?.create(properties.caretAnimationDuration, 0f, 2f) {
+            this.reverse()
+        }
         if (image != null) renderer.initImage(image)
     }
 
@@ -619,11 +635,11 @@ open class TextInput(
             text.width -= image.width + properties.lateralPadding.px
         }
         if (title != null) {
-            titlew = renderer.textBounds(text.font, title.string, text.fontSize, text.textAlign).width
+            titlew = renderer.textBounds(text.font, title.string, text.fontSize).width
             text.width -= titlew + properties.lateralPadding.px
         }
         if (hint != null) {
-            hintw = renderer.textBounds(text.font, hint.string, text.fontSize, text.textAlign).width
+            hintw = renderer.textBounds(text.font, hint.string, text.fontSize).width
             text.width -= hintw + properties.lateralPadding.px
         }
         calculateBounds()

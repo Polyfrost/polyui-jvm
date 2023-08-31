@@ -27,8 +27,10 @@ import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.Color
 import org.polyfrost.polyui.input.PolyText
 import org.polyfrost.polyui.renderer.Renderer
-import org.polyfrost.polyui.unit.*
+import org.polyfrost.polyui.unit.TextAlign
 import org.polyfrost.polyui.unit.Unit
+import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.unit.origin
 import org.polyfrost.polyui.utils.*
 
 /**
@@ -41,31 +43,31 @@ internal abstract class Text(
     val font: Font,
     fontSize: Float,
     val textAlign: TextAlign = TextAlign.Left,
-    var size: Vec2<Unit>,
+    protected val renderer: Renderer,
 ) {
-    lateinit var renderer: Renderer
-    protected val autoSized = size.dynamic || size == origin
+    var size: Vec2<Unit> = origin
+        protected set
+    val at: Vec2<Unit> = origin
     var textOffsetX = 0f
     var textOffsetY = 0f
 
     /** weather the text is overflowing the [size] */
-    var full = false
+    abstract val full: Boolean
 
     /** storage of the lines of text */
-    abstract var lines: ArrayList<Line>
-        protected set
+    abstract val lines: ArrayList<Line>
     var text = text
         set(value) {
             field = value
-            calculate(renderer)
+            calculate()
         }
     var fontSize = fontSize
         set(value) {
             field = value
-            calculate(renderer)
+            calculate()
         }
 
-    abstract fun render(x: Float, y: Float, color: Color)
+    abstract fun render(color: Color)
 
     /**
      * @return the [Line] that encapsulates this character, the index of the character relative to the start of the line, and the index of this line
@@ -73,16 +75,19 @@ internal abstract class Text(
      */
     abstract fun getLineByIndex(index: Int): Triple<Line, Int, Int>
 
-    abstract fun calculate(renderer: Renderer)
+    abstract fun calculate()
 
     open operator fun get(index: Int): Line = lines[index]
 
     abstract fun rescale(scaleX: Float, scaleY: Float): Float
+
+    override fun toString() = "('${text.string}', ${at.x} x ${at.y}, ${size.width} x ${size.height})"
 }
 
 /**
  * represents internally a collection of lines of text.
- * They are wrapped to fit the [size], and will not overflow when [full].
+ * They are wrapped to fit the [maxSize], and will not overflow when [full].
+ *
  *
  * @see SingleText
  * @see Text
@@ -92,56 +97,51 @@ internal class MultilineText(
     font: Font,
     fontSize: Float,
     textAlign: TextAlign = TextAlign.Left,
-    size: Vec2<Unit>,
-    private val lineLimit: Int?,
-) : Text(text, font, fontSize, textAlign, size) {
-    override lateinit var lines: ArrayList<Line>
+    renderer: Renderer,
+    private val maxSize: Vec2<Unit>,
+    private val truncates: Boolean = false,
+) : Text(text, font, fontSize, textAlign, renderer) {
+    override val lines = ArrayList<Line>(10)
+    override val full: Boolean
+        get() = textOffsetY != 0f
 
-    override fun render(x: Float, y: Float, color: Color) {
-        var y = y + textOffsetY
-        lines.fastEach { (text, _, h) ->
-            renderer.text(font, x, y, text, color, fontSize, textAlign)
-            y += h
+    override fun render(color: Color) {
+        var yy = at.y + textOffsetY
+        lines.fastEach { (text, w, h) ->
+            when (textAlign) {
+                TextAlign.Left -> renderer.text(font, at.x, yy, text, color, fontSize)
+                TextAlign.Center -> renderer.text(font, at.x + (size.width - w) / 2f, yy, text, color, fontSize)
+                TextAlign.Right -> renderer.text(font, at.x + (size.width - w), yy, text, color, fontSize)
+            }
+            yy += h
         }
     }
 
-    override fun calculate(renderer: Renderer) {
-        if (autoSized) {
-            renderer.textBounds(font, text.string, fontSize, textAlign).also {
-                if (size.dynamic) size = Vec2(it.width.px, it.height.px)
-                size.a.px = it.width
-                size.b.px = it.height
-            }
-            lines = arrayListOf(Line(text.string, size.width, size.height))
-            return
+    override fun calculate() {
+        if (truncates) {
+            val max = maxSize.width * ((maxSize.height / fontSize).toInt() - 1)
+            text.string = text.string.truncate(renderer, font, fontSize, max)
         }
-        val tempLines = arrayListOf<Line>()
-        var i = 0
-        text.string.split("\n").forEach {
-            tempLines.addAll(
-                it.wrap(size.width, size.height, renderer, font, fontSize, textAlign).mapNotNull { trimmed ->
-                    i++
-                    if (lineLimit != null) {
-                        if (i > lineLimit) {
-                            return@mapNotNull null
-                        } else if (i == lineLimit) {
-                            return@mapNotNull Line(trimmed.dropLast(3) + "...", renderer.textBounds(font, trimmed.dropLast(3) + "...", fontSize, textAlign) as Vec2<Unit>)
-                        }
-                    }
-                    return@mapNotNull Line(trimmed, renderer.textBounds(font, trimmed, fontSize, textAlign) as Vec2<Unit>)
-                },
-            )
-        }
-        if (tempLines.isEmpty()) {
-            tempLines.add(Line("", 0f, fontSize))
-        }
-        lines = tempLines
-        size.b.px = lines.sumOf { it.height }
-        textOffsetY = if (lines.size * fontSize > size.height) {
-            full = true
-            size.height - lines.size * fontSize
+        val split = text.string.split("\n").asArrayList()
+        if (split.isEmpty()) {
+            lines.add(Line("", 0f, fontSize))
         } else {
-            full = false
+            split.fastEach { line ->
+                val bounded = line.wrap(maxSize.width, renderer, font, fontSize).map {
+                    Line(it, renderer.textBounds(font, it, fontSize) as Vec2<Unit>)
+                }.asArrayList()
+                lines.addAll(bounded)
+            }
+        }
+        lines.fastEach { line ->
+            size.a.px = maxOf(size.width, line.width)
+            size.b.px += line.height
+        }
+        textOffsetY = if (maxSize.height != 0f && size.height > maxSize.height) {
+            if (truncates) PolyUI.LOGGER.warn("should not have to offset a truncated text! Please report this!")
+//            maxSize.height - size.height
+            0f
+        } else {
             0f
         }
     }
@@ -162,6 +162,8 @@ internal class MultilineText(
         fontSize *= scaleY
         return 1f
     }
+
+    override fun toString() = "MultilineText${super.toString()}"
 }
 
 /**
@@ -175,34 +177,31 @@ internal class SingleText(
     font: Font,
     fontSize: Float,
     textAlign: TextAlign = TextAlign.Left,
-    size: Vec2<Unit>,
-) : Text(text, font, fontSize, textAlign, size) {
-    override var lines: ArrayList<Line> = arrayListOf(Line(text.string, size.width, size.height))
-    var init = false
-    override fun render(x: Float, y: Float, color: Color) {
-        renderer.text(font, x + textOffsetX, y + textOffsetY, text.string, color, fontSize, textAlign)
+    renderer: Renderer,
+    private val maxWidth: Float = -1f,
+) : Text(text, font, fontSize, textAlign, renderer) {
+    override val lines = ArrayList<Line>(1)
+
+    init {
+        // so set works later (dw bout it)
+        lines.add(Line("", 0f, fontSize))
     }
 
-    override fun calculate(renderer: Renderer) {
-        if (autoSized) {
-            renderer.textBounds(font, text.string, fontSize, textAlign).also {
-                size.a.px = it.width
-                size.b.px = it.height
-            }
-            lines[0] = Line(text.string, size.width, size.height)
-            return
-        } else {
-            lines[0] = Line(
-                text.string,
-                renderer.textBounds(font, text.string, fontSize, textAlign).also {
-                    if (!init && renderer.settings.debug && it.width > size.width) PolyUI.LOGGER.warn("Single line text overflow with initial bounds, is this intended? (text: $text.string, bounds: $size)")
-                } as Vec2<Unit>,
-            )
+    override val full get() = textOffsetX != 0f
+    override fun render(color: Color) {
+        val (text, w, _) = lines[0]
+        when (textAlign) {
+            TextAlign.Left -> renderer.text(font, at.x, at.y, text, color, fontSize)
+            TextAlign.Center -> renderer.text(font, at.x + (size.width - w) / 2f, at.y, text, color, fontSize)
+            TextAlign.Right -> renderer.text(font, at.x + (size.width - w), at.y, text, color, fontSize)
         }
+    }
 
-        textOffsetX = if (lines[0].width > size.width) size.width - lines[0].width else 0f
-        full = textOffsetX != 0f
-        init = true
+    override fun calculate() {
+        size = renderer.textBounds(font, text.string, fontSize) as Vec2<Unit>
+        lines[0] = Line(text.string, size.width, size.height)
+
+        if (maxWidth != -1f) textOffsetX = if (lines[0].width > maxWidth) maxWidth - lines[0].width else 0f
     }
 
     override operator fun get(index: Int): Line {
@@ -220,6 +219,8 @@ internal class SingleText(
         fontSize *= scaleY
         return 1f
     }
+
+    override fun toString() = "SingleText${super.toString()}"
 }
 
 /** stores a line of text, its width, and its height. The height in 98% of times is just the font size. */

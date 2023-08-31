@@ -22,6 +22,7 @@
 package org.polyfrost.polyui.component.impl
 
 import org.polyfrost.polyui.PolyUI
+import org.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
 import org.polyfrost.polyui.color.Color
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.component.Component
@@ -81,7 +82,7 @@ open class Slider(
     var value: Float = min
         set(value) {
             bitMain = (value - min) / (max - min) * (main - cross)
-            if ((p as? SliderProperties)?.setInstantly == true && field != value) {
+            if (initStage == INIT_COMPLETE && properties.setInstantly && field != value) {
                 accept(ChangedEvent(value))
             }
             field = value

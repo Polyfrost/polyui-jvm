@@ -21,6 +21,8 @@
 
 package org.polyfrost.polyui.renderer.data
 
+import org.polyfrost.polyui.PolyUI
+
 /**
  * Image representation in PolyUI. The image is lazily-loaded from the [resourcePath].
  * @param resourcePath the path to the [resource][org.polyfrost.polyui.utils.getResourceStream]
@@ -46,8 +48,24 @@ class PolyImage @JvmOverloads constructor(
     @Suppress("ReplaceCallWithBinaryOperator")
     override fun equals(other: Any?): Boolean = resourcePath.equals(other)
 
+    /**
+     * Types for images in PolyUI.
+     */
     enum class Type {
-        PNG, JPEG, BMP, SVG
+        /**
+         * Raster image, such as PNG, JPEG, BMP, etc.
+         */
+        Raster,
+
+        /**
+         * Vector image, such as SVG.
+         */
+        Vector,
+
+        /**
+         * Unknown image type. Down to the rendering implementation what to do with this.
+         */
+        Unknown,
     }
 
     /**
@@ -66,11 +84,12 @@ class PolyImage @JvmOverloads constructor(
         @JvmStatic
         fun from(fileName: String): Type {
             return when (fileName.substringAfterLast('.')) {
-                "png" -> Type.PNG
-                "svg" -> Type.SVG
-                "jpg", "jpeg", "jpe", "jif", "jfif", "jfi" -> Type.JPEG
-                "bmp" -> Type.BMP
-                else -> throw IllegalArgumentException("Unknown image type for file $fileName")
+                "bmp", "png", "jpg", "jpeg", "jpe", "jif", "jfif", "jfi" -> Type.Raster
+                "svg" -> Type.Vector
+                else -> {
+                    PolyUI.LOGGER.warn("Unknown image type for $fileName")
+                    Type.Unknown
+                }
             }
         }
 
@@ -95,7 +114,7 @@ class PolyImage @JvmOverloads constructor(
                 "${icon.replace('.', '/')}/${style.style}/24px.svg",
             width,
             height,
-            Type.SVG,
+            Type.Vector,
         )
     }
 }

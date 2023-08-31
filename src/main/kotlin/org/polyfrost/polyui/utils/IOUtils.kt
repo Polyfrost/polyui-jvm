@@ -85,6 +85,11 @@ fun getResourceStreamNullable(resourcePath: String): InputStream? {
     return i
 }
 
+fun resourceExists(resourcePath: String): Boolean {
+    val s = getResourceStreamNullable(resourcePath)?.close()
+    return s != null
+}
+
 fun InputStream.toByteBuffer(): ByteBuffer {
     val bytes = this.toByteArray()
     return ByteBuffer.allocateDirect(bytes.size)

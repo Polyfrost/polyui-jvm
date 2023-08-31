@@ -82,11 +82,10 @@ class RadioButton<T>(
             require(value.size == field.size) { "Resizing radiobutton is not currently supported!" }
             field = value
             children.fastEachIndexed { i, it ->
-                (it as? Text)?.text = toStringFunc(value[i]).localised()
+                (it as? Text)?.string = toStringFunc(value[i])
             }
         }
 
-    @Transient
     var selectedIndex: Int = defaultIndex
         set(value) {
             if (field == value) return

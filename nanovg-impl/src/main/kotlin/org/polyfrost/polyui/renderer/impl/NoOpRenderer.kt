@@ -26,7 +26,6 @@ import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.data.Framebuffer
 import org.polyfrost.polyui.renderer.data.PolyImage
-import org.polyfrost.polyui.unit.TextAlign
 import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.origin
@@ -81,12 +80,11 @@ class NoOpRenderer(width: Float, height: Float) : Renderer(width, height) {
         text: String,
         color: Color,
         fontSize: Float,
-        textAlign: TextAlign,
     ) {
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun textBounds(font: Font, text: String, fontSize: Float, textAlign: TextAlign): Vec2<Unit.Pixel> {
+    override fun textBounds(font: Font, text: String, fontSize: Float): Vec2<Unit.Pixel> {
         return origin as Vec2<Unit.Pixel>
     }
 

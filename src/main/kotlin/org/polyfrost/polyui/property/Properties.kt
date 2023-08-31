@@ -72,5 +72,10 @@ abstract class Properties : Cloneable {
         return this
     }
 
+    fun init(colors: Colors, fonts: FontFamily) {
+        this.colors = colors
+        this.fonts = fonts
+    }
+
     val initialized get() = ::colors.isInitialized
 }

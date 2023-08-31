@@ -26,7 +26,6 @@ import org.polyfrost.polyui.color.Color
 import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.data.Framebuffer
 import org.polyfrost.polyui.renderer.data.PolyImage
-import org.polyfrost.polyui.unit.TextAlign
 import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.unit.Vec2
 import kotlin.math.min
@@ -185,7 +184,7 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
     abstract fun pop()
 
     /**
-     * draw text to the screen, per the given parameters. The string will already be wrapped to the given width, and will be aligned according to the given [textAlign].
+     * draw text to the screen, per the given parameters. The string will already be wrapped to the given width.
      */
     abstract fun text(
         font: Font,
@@ -194,13 +193,12 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
         text: String,
         color: Color,
         fontSize: Float,
-        textAlign: TextAlign = TextAlign.Left,
     )
 
     /** calculate the bounds of this text, per the given parameters.
      * @return a Vec2 containing the width and height of the given string. If your API does not support returning string heights, just return the font size. The discrepancy should be negligible.
      */
-    abstract fun textBounds(font: Font, text: String, fontSize: Float, textAlign: TextAlign): Vec2<Unit.Pixel>
+    abstract fun textBounds(font: Font, text: String, fontSize: Float): Vec2<Unit.Pixel>
 
     /** Function that can be called to explicitly initialize an image. This is used mainly for getting the size of an image, or to ensure an SVG has been rasterized. */
     abstract fun initImage(image: PolyImage)
@@ -359,10 +357,5 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
     /** @see cleanup */
     override fun close() {
         cleanup()
-    }
-
-    companion object {
-        @JvmField
-        var DefaultImage = PolyImage("err.png")
     }
 }

@@ -21,6 +21,7 @@
 
 package org.polyfrost.polyui.component
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
@@ -239,10 +240,12 @@ abstract class Drawable(
 
     /** **a**t **c**ache **x** for transformations. */
     @Transient
+    @ApiStatus.Internal
     var acx = 0f
 
     /** **a**t **c**ache **y** for transformations. */
     @Transient
+    @ApiStatus.Internal
     var acy = 0f
 
     /**

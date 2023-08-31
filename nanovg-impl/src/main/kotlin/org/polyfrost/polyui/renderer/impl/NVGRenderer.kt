@@ -21,7 +21,10 @@
 
 package org.polyfrost.polyui.renderer.impl
 
-import org.lwjgl.nanovg.*
+import org.lwjgl.nanovg.NVGColor
+import org.lwjgl.nanovg.NVGLUFramebuffer
+import org.lwjgl.nanovg.NVGPaint
+import org.lwjgl.nanovg.NanoSVG
 import org.lwjgl.nanovg.NanoVG.*
 import org.lwjgl.nanovg.NanoVGGL3.*
 import org.lwjgl.opengl.GL11.*
@@ -35,17 +38,14 @@ import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.data.Framebuffer
 import org.polyfrost.polyui.renderer.data.PolyImage
-import org.polyfrost.polyui.unit.TextAlign
 import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.px
 import org.polyfrost.polyui.utils.clearUsing
-import org.polyfrost.polyui.utils.getResourceStream
-import org.polyfrost.polyui.utils.getResourceStreamNullable
 import org.polyfrost.polyui.utils.toByteBuffer
 import java.io.InputStreamReader
 import java.nio.ByteBuffer
-import java.util.IdentityHashMap
+import java.util.*
 import kotlin.math.max
 
 class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
@@ -102,13 +102,13 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         text: String,
         color: Color,
         fontSize: Float,
-        textAlign: TextAlign,
     ) {
         if (color === Color.TRANSPARENT) return
+        // todo potentially ascend/descend?
         nvgBeginPath(vg)
         nvgFontSize(vg, fontSize)
         nvgFontFaceId(vg, getFont(font).id)
-        nvgTextAlign(vg, textAlign(textAlign))
+        nvgTextAlign(vg, NVG_ALIGN_LEFT or NVG_ALIGN_TOP)
         color(color)
         nvgFillColor(vg, nvgColor)
         nvgText(vg, x, y, text)
@@ -325,7 +325,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     }
 
     @Suppress("NAME_SHADOWING")
-    override fun textBounds(font: Font, text: String, fontSize: Float, textAlign: TextAlign): Vec2<Unit.Pixel> {
+    override fun textBounds(font: Font, text: String, fontSize: Float): Vec2<Unit.Pixel> {
         // nanovg trims single whitespace, so add an extra one (lol)
         var text = text
         if (text.endsWith(' ')) {
@@ -333,18 +333,12 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         }
         val out = FloatArray(4)
         nvgFontFaceId(vg, getFont(font).id)
-        nvgTextAlign(vg, textAlign(textAlign))
+        nvgTextAlign(vg, NVG_ALIGN_TOP or NVG_ALIGN_LEFT)
         nvgFontSize(vg, fontSize)
         nvgTextBounds(vg, 0f, 0f, text, out)
-        return Vec2(out[2].px, out[3].px)
-    }
-
-    private fun textAlign(textAlign: TextAlign): Int {
-        return when (textAlign) {
-            TextAlign.Left -> NVG_ALIGN_LEFT or NVG_ALIGN_TOP
-            TextAlign.Center -> NVG_ALIGN_CENTER or NVG_ALIGN_TOP
-            TextAlign.Right -> NVG_ALIGN_RIGHT or NVG_ALIGN_TOP
-        }
+        val w = out[2] - out[0]
+        val h = out[3] - out[1]
+        return Vec2(w.px, h.px)
     }
 
     private fun color(color: Color) {
@@ -449,17 +443,19 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     private fun getFont(font: Font): NVGFont {
         return fonts[font] ?: run {
             val data =
-                getResourceStreamNullable(font.resourcePath)?.toByteBuffer()
-                    ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) {
-                        PolyUI.defaultFonts.regular.get().also {
-                            PolyUI.LOGGER.warn(
-                                "Failed to get font: {}, falling back to default font!",
-                                font.resourcePath,
-                            )
-                        }.toByteBuffer()
-                    } else {
-                        throw ExceptionInInitializerError("Failed to get font: ${font.resourcePath}")
+                font.stream?.use {
+                    it.toByteBuffer()
+                } ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) {
+                    PolyUI.defaultFonts.regular.get().use {
+                        PolyUI.LOGGER.warn(
+                            "Failed to get font: {}, falling back to default font!",
+                            font.resourcePath,
+                        )
+                        it.toByteBuffer()
                     }
+                } else {
+                    throw ExceptionInInitializerError("Failed to get font: ${font.resourcePath}")
+                }
             val ft = nvgCreateFontMem(vg, font.name, data, false)
             NVGFont(ft, data).also { fonts[font] = it }
         }
@@ -467,32 +463,34 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
 
     private fun getImage(image: PolyImage): NVGImage {
         return images[image] ?: run {
-            val stream = getResourceStreamNullable(image.resourcePath)
-                ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) {
-                    getResourceStream(DefaultImage.resourcePath)
-                        .also {
-                            PolyUI.LOGGER.warn(
-                                "Failed to get image: {}, falling back to default image!",
-                                image.resourcePath,
-                            )
-                        }
-                } else {
-                    throw ExceptionInInitializerError("Failed to get image: ${image.resourcePath}")
-                }
+            val stream = image.stream ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) {
+                PolyUI.defaultImage.stream.also {
+                    PolyUI.LOGGER.warn(
+                        "Failed to get image: {}, falling back to default image!",
+                        image.resourcePath,
+                    )
+                } ?: throw IllegalStateException("Default image not found!")
+            } else {
+                throw ExceptionInInitializerError("Failed to get image: ${image.resourcePath}")
+            }
             val data: ByteBuffer
             when (image.type) {
-                PolyImage.Type.PNG, PolyImage.Type.JPEG, PolyImage.Type.BMP -> {
+                // let stb figure it out
+                PolyImage.Type.Unknown, PolyImage.Type.Raster -> {
                     val w = IntArray(1)
                     val h = IntArray(1)
                     data = STBImage.stbi_load_from_memory(
-                        stream.toByteBuffer(),
+                        stream.use {
+                            it.toByteBuffer()
+                        },
                         w,
                         h,
                         IntArray(1),
                         4,
                     ).also {
                         if (it == null) {
-                            throw Exception("Failed to initialize image: $image")
+                            PolyUI.LOGGER.error("STB error: ${STBImage.stbi_failure_reason()}")
+                            throw Exception("Failed to initialize $image")
                         }
                         if (image.width == -1f || image.height == -1f) {
                             val sh = image.height != -1f
@@ -520,13 +518,16 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
                             image.width.toInt(), image.height.toInt(),
                             0, 4,
                         )
-                    } ?: throw Exception("Failed to initialize image: $image")
+                    } ?: throw Exception("Failed to initialize $image")
                 }
 
-                PolyImage.Type.SVG -> {
-                    val d = InputStreamReader(stream).readText() as CharSequence
-                    val svg =
-                        NanoSVG.nsvgParse(d, "px", 96f) ?: throw Exception("Failed to open SVG: $image (invalid data?)")
+                PolyImage.Type.Vector -> {
+                    val d = InputStreamReader(stream).use {
+                        val t = it.readText()
+                        it.close()
+                        t
+                    } as CharSequence
+                    val svg = NanoSVG.nsvgParse(d, "px", 96f) ?: throw Exception("Failed to open SVG: $image (invalid data?)")
                     val raster = NanoSVG.nsvgCreateRasterizer()
                     val scale = if (image.width != -1f || image.height != -1f) {
                         max(image.width / svg.width(), image.height / svg.height())

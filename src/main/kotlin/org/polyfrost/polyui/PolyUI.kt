@@ -30,20 +30,26 @@ import org.polyfrost.polyui.event.EventManager
 import org.polyfrost.polyui.event.FocusedEvent
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.KeyModifiers
+import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.input.Modifiers.Companion.mods
 import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.layout.Layout
 import org.polyfrost.polyui.layout.impl.PixelLayout
+import org.polyfrost.polyui.property.PropertyManager
 import org.polyfrost.polyui.property.Settings
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.Window
 import org.polyfrost.polyui.renderer.data.Cursor
+import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.data.FontFamily
+import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.utils.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * # PolyUI
@@ -151,6 +157,7 @@ class PolyUI @JvmOverloads constructor(
     val eventManager = EventManager(this)
     val keyBinder = KeyBinder(this)
     val translator = Translator(this, translationDirectory ?: "")
+    val propertyManager = PropertyManager(this)
 
     /** weather this PolyUI instance drew on this frame.
      *
@@ -393,8 +400,24 @@ class PolyUI @JvmOverloads constructor(
                 if (frameTime > longestFrame) longestFrame = frameTime
                 if (frameTime < shortestFrame) shortestFrame = frameTime
                 frames++
-                master.debugRender()
-                drawDebugOverlay(width - 1f, height - 11f)
+                drawDebugOverlay(0f, height - 11f)
+                if (focused == null && eventManager.keyModifiers.hasModifier(Modifiers.LCONTROL)) {
+                    val obj = eventManager.mouseOver ?: eventManager.primaryCandidate
+                    if (obj != null) {
+                        val os = obj.toString()
+                        val w = renderer.textBounds(monospaceFont, os, 10f).width
+                        val pos = min(max(0f, mouseX - w / 2f), this.width - w - 10f)
+                        renderer.rect(pos, mouseY - 14f, w + 10f, 14f, colors.component.bg.hovered)
+                        renderer.text(monospaceFont, pos + 5f, mouseY - 10f, text = os, colors.text.primary.normal, 10f)
+                    }
+                }
+                if (focused == null && eventManager.keyModifiers.hasModifier(Modifiers.LSHIFT)) {
+                    val s = "${eventManager.mouseX}x${eventManager.mouseY}"
+                    val ww = renderer.textBounds(monospaceFont, s, 10f).width
+                    val ppos = min(mouseX + 10f, this.width - ww - 10f)
+                    renderer.rect(ppos, mouseY, ww + 10f, 14f, colors.component.bg.hovered)
+                    renderer.text(monospaceFont, ppos + 5f, mouseY + 4f, text = s, colors.text.primary.normal, 10f)
+                }
             }
 
             renderer.endFrame()
@@ -410,13 +433,12 @@ class PolyUI @JvmOverloads constructor(
     /** draw the debug overlay text. It is right-aligned. */
     fun drawDebugOverlay(x: Float, y: Float) {
         renderer.text(
-            defaultFonts.regular,
+            monospaceFont,
             x,
             y,
             text = perf,
             color = colors.text.primary.normal,
             fontSize = 10f,
-            textAlign = TextAlign.Right,
         )
     }
 
@@ -597,7 +619,17 @@ class PolyUI @JvmOverloads constructor(
          * @since 0.22.0
          */
         @JvmField
-        val defaultFonts = FontFamily("Poppins", "Poppins.zip")
+        var defaultFonts = FontFamily("Poppins", "Poppins.zip")
+
+        @JvmField
+        var monospaceFont = Font("JetBrainsMono-Regular.ttf")
+
+        /**
+         * The fallback default image bundled with PolyUI
+         * @since 0.11.0
+         */
+        @JvmField
+        var defaultImage = PolyImage("err.png")
 
         /**
          * State 0 of initialization. Nothing has been done yet.
@@ -605,7 +637,7 @@ class PolyUI @JvmOverloads constructor(
          * @see INIT_SETUP
          * @see INIT_COMPLETE
          */
-        const val INIT_NOT_STARTED = 0
+        const val INIT_NOT_STARTED: Byte = 0
 
         /**
          * Stage 1 of initialization, where the component has access to a [PolyUI] and [Renderer], and its [Properties][org.polyfrost.polyui.property.Properties] if it is a component, but has not been calculated.
@@ -613,7 +645,7 @@ class PolyUI @JvmOverloads constructor(
          * @see INIT_NOT_STARTED
          * @see INIT_COMPLETE
          */
-        const val INIT_SETUP = 1
+        const val INIT_SETUP: Byte = 1
 
         /**
          * Stage 2 of initialization, where the component has been calculated, and is ready to be drawn.
@@ -621,6 +653,6 @@ class PolyUI @JvmOverloads constructor(
          * @see INIT_NOT_STARTED
          * @see INIT_SETUP
          */
-        const val INIT_COMPLETE = 2
+        const val INIT_COMPLETE: Byte = 2
     }
 }

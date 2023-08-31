@@ -37,7 +37,7 @@ open class BlockProperties @JvmOverloads constructor(
     open val cornerRadii: FloatArray = 0f.radii(),
     open val outlineThickness: Float = 0f,
     withStates: Boolean = false,
-    @Transient open val paletteGet: Properties.() -> Colors.Palette = { colors.component.bg },
+    @Transient open var paletteGet: Properties.() -> Colors.Palette = { colors.component.bg },
 ) : Properties() {
 
     val outlineColor get() = colors.page.border10
@@ -90,7 +90,7 @@ open class BlockProperties @JvmOverloads constructor(
         @Transient
         val backgroundBlock = background()
 
-        fun Properties.withStates(pressedAnimation: Animations? = Animations.EaseOutExpo, hoverAnimation: Animations? = Animations.EaseOutExpo, pressedAnimationDuration: Long = 0.25.seconds, hoverAnimationDuration: Long = 0.5.seconds) {
+        fun <P : Properties> P.withStates(pressedAnimation: Animations? = Animations.EaseOutExpo, hoverAnimation: Animations? = Animations.EaseOutExpo, pressedAnimationDuration: Long = 0.25.seconds, hoverAnimationDuration: Long = 0.5.seconds): P {
             var old = false
             addEventHandler(MousePressed(0)) {
                 recolor(palette.pressed, pressedAnimation, pressedAnimationDuration)
@@ -121,6 +121,7 @@ open class BlockProperties @JvmOverloads constructor(
                 recolor(palette.normal, hoverAnimation, hoverAnimationDuration)
                 true
             }
+            return this
         }
     }
 }

@@ -221,7 +221,7 @@ inline fun <L, E> L.maxOf(selector: (E) -> Vec2<org.polyfrost.polyui.unit.Unit>?
  *
  * @return the old value if it was replaced, or `null` if it was added.
  */
-fun <E> ArrayList<E>.addOrReplace(item: E, index: Int = this.size - 1): E? {
+fun <E> MutableList<E>.addOrReplace(item: E, index: Int = this.size - 1): E? {
     val i = this.indexOf(item)
     return if (i == -1) {
         if (index == -1 || index == this.size - 1) {
@@ -234,6 +234,23 @@ fun <E> ArrayList<E>.addOrReplace(item: E, index: Int = this.size - 1): E? {
         val old = this[i]
         this[i] = item
         old
+    }
+}
+
+/**
+ * If the specified item is not already present, appends it to the end of this list, and returns null. Else, returns the item in this list.
+ * @param item the item to add
+ * @return the previous value associated in this list, or null if was not found and added successfully.
+ * @since 0.23.2
+ * @see MutableMap.putIfAbsent
+ */
+fun <E> MutableList<E>.putIfAbsent(item: E): E? {
+    val i = this.indexOf(item)
+    return if (i == -1) {
+        this.add(item)
+        null
+    } else {
+        this[i]
     }
 }
 
@@ -281,7 +298,7 @@ fun <E> Array<E>.append(element: E, stillPutOnFail: Boolean = false): Array<E> {
  */
 @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 @kotlin.internal.InlineOnly
-fun <T> Iterable<T>.toArrayList(): ArrayList<T> {
+fun <T> Iterable<T>.asArrayList(): ArrayList<T> {
     return if (this is ArrayList) {
         this
     } else {
@@ -296,7 +313,7 @@ fun <T> Iterable<T>.toArrayList(): ArrayList<T> {
  * @param action should be used to directly remove itself from the collection.
  */
 fun <E> MutableCollection<E>.clearUsing(action: (E) -> Unit) {
-    this.toArrayList().fastRemoveIfReversed {
+    this.asArrayList().fastRemoveIfReversed {
         action(it)
         true
     }
@@ -304,7 +321,7 @@ fun <E> MutableCollection<E>.clearUsing(action: (E) -> Unit) {
 
 @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 @kotlin.internal.InlineOnly
-inline fun <T> Array<T>.toArrayList(): ArrayList<T> = this.toMutableList() as ArrayList<T>
+inline fun <T> Array<T>.asArrayList(): ArrayList<T> = this.toMutableList() as ArrayList<T>
 
 /**
  * Returns the index of the [element] in the list or runs the [or] parameter if the element is not found.

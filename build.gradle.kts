@@ -48,6 +48,11 @@ allprojects {
         maven("https://repo.polyfrost.cc/releases")
     }
 
+    dependencies {
+        implementation(rootProject.libs.bundles.kotlin)
+        implementation(rootProject.libs.bundles.slf4j)
+    }
+
     kotlin {
         sourceSets.all {
             languageSettings.apply {
@@ -166,13 +171,6 @@ subprojects {
 
     tasks.named<Jar>("dokkaJavadocJar") {
         archiveBaseName.set("polyui-${project.name}")
-    }
-}
-
-allprojects {
-    dependencies {
-        implementation(rootProject.libs.bundles.kotlin)
-        implementation(rootProject.libs.bundles.slf4j)
     }
 }
 

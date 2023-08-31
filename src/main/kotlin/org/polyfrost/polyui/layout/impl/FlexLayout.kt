@@ -212,18 +212,18 @@ class FlexLayout @JvmOverloads constructor(
 
         if (wrapDirection != Wrap.NoWrap) {
             var row = arrayListOf<Drawable>()
+            flexDrawables[0].calculateBounds()
             flexDrawables.fastEachIndexed { i, it ->
                 if (!it.exists) return@fastEachIndexed
-                it.calculateBounds()
                 val next = flexDrawables.getOrNull(i + 1)
                 next?.calculateBounds()
                 mainAxis += getMainSize(it) + mainGap
+                row.add(it)
                 if (getFlex(it).endRowAfter || mainAxis + getMainSize(next) >= mainSize) { // means we need to wrap
                     rows.add(FlexRow(row))
                     mainAxis = 0f
-                    row = arrayListOf()
+                    row = ArrayList(row.size + 1)
                 }
-                row.add(it)
             }
 
             // do last row
@@ -234,7 +234,6 @@ class FlexLayout @JvmOverloads constructor(
                 rows.reverse()
                 rows.fastEach { it.drawables.reverse() }
             }
-            row = ArrayList()
         } else {
             // add all to the row if wrap is off
             flexDrawables.fastEach {

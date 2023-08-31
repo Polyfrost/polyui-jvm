@@ -106,6 +106,7 @@ abstract class ContainingComponent(
      */
     @MustBeInvokedByOverriders
     override fun render() {
+        val debug = polyUI.settings.debug
         if (rotation != 0.0) {
             children.fastEach {
                 if (!it.renders) return
@@ -123,6 +124,7 @@ abstract class ContainingComponent(
                 if (!it.renders) return
                 it.preRender(polyUI.delta)
                 it.render()
+                if (debug) it.debugRender()
                 it.postRender()
             }
         }
@@ -130,6 +132,11 @@ abstract class ContainingComponent(
 
     override fun reset() {
         children.fastEach { it.reset() }
+    }
+
+    override fun debugRender() {
+        val color = if (mouseOver) properties.colors.page.border20 else properties.colors.page.border10
+        renderer.hollowRect(0f, 0f, width, height, color, 1f)
     }
 
     override fun setup(renderer: Renderer, polyUI: PolyUI) {

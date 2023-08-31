@@ -23,13 +23,14 @@ package org.polyfrost.polyui.component.impl
 
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.event.EventDSL
+import org.polyfrost.polyui.input.Translator.Companion.localised
 import org.polyfrost.polyui.property.impl.SearchFieldProperties
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.px
+import org.polyfrost.polyui.utils.asArrayList
 import org.polyfrost.polyui.utils.fastEach
-import org.polyfrost.polyui.utils.toArrayList
 
 /**
  * Search field in PolyUI.
@@ -45,13 +46,13 @@ class SearchField(
     size: Vec2<Unit>,
     image: PolyImage? = null,
     fontSize: Unit = 16.px,
-    input: List<Any>,
+    input: List<Any> = listOf(),
     output: MutableList<Any>? = null,
     events: EventDSL<SearchField>.() -> kotlin.Unit = {},
-) : TextInput(properties = properties, at = at, size = size, image = image, fontSize = fontSize, events = events as EventDSL<TextInput>.() -> kotlin.Unit) {
+) : TextInput(properties = properties, at = at, size = size, image = image, placeholder = "polyui.search.placeholder".localised(), fontSize = fontSize, events = events as EventDSL<TextInput>.() -> kotlin.Unit) {
     override val properties
         get() = super.properties as SearchFieldProperties
-    var input = input.toArrayList()
+    var input = input.asArrayList()
     val output = output ?: arrayListOf()
     var query
         get() = super.txt

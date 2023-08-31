@@ -42,7 +42,9 @@ import kotlin.experimental.or
  */
 class EventManager(private val polyUI: PolyUI) {
     private val mouseOvers = ArrayList<Drawable>(3) // asm: it is not expected to have many of this type under hover at once
-    private var mouseOver: Drawable? = null
+    var mouseOver: Drawable? = null
+        private set
+    val primaryCandidate get() = mouseOvers.lastOrNull()
     var mouseX: Float = 0f
         private set
     var mouseY: Float = 0f

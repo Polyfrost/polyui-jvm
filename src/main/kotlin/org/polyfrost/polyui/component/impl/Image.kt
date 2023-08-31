@@ -72,7 +72,7 @@ open class Image @JvmOverloads constructor(
 
     protected open fun updateColor() {
         color.recolor(
-            if (image.type == PolyImage.Type.SVG) {
+            if (image.type == PolyImage.Type.Vector) {
                 properties.svgPalette.normal
             } else {
                 properties.palette.normal

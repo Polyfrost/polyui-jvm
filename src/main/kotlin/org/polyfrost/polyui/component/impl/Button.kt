@@ -57,9 +57,12 @@ open class Button(
 ) : ContainingComponent(properties, at, null, false, acceptsInput, arrayOf(), events as EventDSL<ContainingComponent>.() -> kotlin.Unit) {
     protected val fixedSize = size
     override val properties get() = super.properties as ButtonProperties
-    val leftImage: Image? = if (left != null) Image(image = left, at = origin, acceptInput = false) else null
-    val rightImage: Image? = if (right != null) Image(image = right, at = origin, acceptInput = false) else null
-    val text: Text? =
+
+    @Transient val leftImage: Image? = if (left != null) Image(image = left, at = origin, acceptInput = false) else null
+
+    @Transient val rightImage: Image? = if (right != null) Image(image = right, at = origin, acceptInput = false) else null
+
+    @Transient val text: Text? =
         if (text != null) Text(initialText = text, fontSize = fontSize, at = origin, acceptInput = false) else null
     var string
         get() = text?.string

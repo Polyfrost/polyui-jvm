@@ -126,6 +126,7 @@ abstract class Layout(
 
     /** tracker variable for framebuffer disabling/enabling. don't touch this. */
     @Transient
+    @ApiStatus.Internal
     protected var fboTracker = 0
 
     /** removal queue of drawables.
@@ -218,11 +219,9 @@ abstract class Layout(
         } else {
             val x = x
             val y = y
-            renderer.pushScissor(x, y, width, height)
             renderer.translate(x, y)
             render()
             renderer.translate(-x, -y)
-            renderer.popScissor()
             if (!needsRedraw && fboTracker > 1) {
                 needsRedraw = true
                 fboTracker = 0
@@ -550,15 +549,18 @@ abstract class Layout(
             }
         }
         val delta = polyUI.delta
+        val debug = polyUI.settings.debug
         needsRedraw = false
         preRender(delta)
         components.fastEach {
             if (!it.renders) return@fastEach
             it.preRender(delta)
             it.render()
+            if (debug) it.debugRender()
             it.postRender()
         }
         renderChildren()
+        if (debug) debugRender()
         postRender()
     }
 
@@ -584,17 +586,19 @@ abstract class Layout(
     }
 
     override fun debugRender() {
-        if (!exists) return
-        val width = visibleSize?.width ?: this.width
-        val height = visibleSize?.height ?: this.height
-        renderer.hollowRect(trueX, trueY, width, height, colors.page.border20, 2f)
-        renderer.text(PolyUI.defaultFonts.regular, trueX + 1f, trueY + 1f, simpleName, colors.text.primary.normal, 10f)
-        children.fastEach { it.debugRender() }
+        // asm: currently disabled as new mode is actually useful and this isn't
+//        if (!exists) return
+//        val width = visibleSize?.width ?: this.width
+//        val height = visibleSize?.height ?: this.height
+//        val ofsX = ox - trueX
+//        val ofsY = oy - trueY
+//        renderer.hollowRect(ofsX, ofsY, width, height, colors.page.border20, 2f)
+//        renderer.text(PolyUI.defaultFonts.regular, ofsX + 1f, ofsY + 1f, simpleName, colors.text.primary.normal, 10f)
     }
 
     override fun setup(renderer: Renderer, polyUI: PolyUI) {
         super.setup(renderer, polyUI)
-        if (!::propertyManager.isInitialized) propertyManager = PropertyManager(polyUI)
+        if (!::propertyManager.isInitialized) propertyManager = polyUI.propertyManager.clone()
         colors = propertyManager.colors
         fonts = propertyManager.fonts
         components.fastEach {

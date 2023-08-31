@@ -30,12 +30,28 @@ package org.polyfrost.polyui.animate
  *
  * check out [DrawableOperation][org.polyfrost.polyui.component.DrawableOp] for more information on how to use animations with components.
  */
-abstract class Animation(val durationNanos: Long, val from: Float, val to: Float) : Cloneable {
-    val range = to - from
+abstract class Animation(var durationNanos: Long, var from: Float, var to: Float, var onFinish: (Animation.() -> Unit)? = null) : Cloneable {
+    inline val range get() = to - from
     var passedTime = 0f
         protected set
     var isFinished: Boolean = false
-        protected set
+        protected set(value) {
+            if (field == value) return
+            field = value
+            if (value) onFinish?.invoke(this)
+        }
+
+    fun reset() {
+        passedTime = 0f
+        isFinished = false
+    }
+
+    fun reverse() {
+        val temp = from
+        from = to
+        to = temp
+        reset()
+    }
 
     val value: Float
         get() {
@@ -72,50 +88,50 @@ abstract class Animation(val durationNanos: Long, val from: Float, val to: Float
 
         /** create an animation based on the type.
          * @see Animations */
-        fun create(durationNanos: Long, start: Float, end: Float): Animation {
-            if (start == end) return Linear(1L, start, start) // prevent empty animations
+        fun create(durationNanos: Long, start: Float, end: Float, onFinish: (Animation.() -> Unit)? = null): Animation {
+            if (start == end) return Linear(1L, start, start, onFinish) // prevent empty animations
             return when (this) {
                 Linear -> Linear(durationNanos, start, end)
 
-                EaseInBack -> Easing.Back(Easing.Type.In, durationNanos, start, end)
-                EaseOutBack -> Easing.Back(Easing.Type.Out, durationNanos, start, end)
-                EaseInOutBack -> Easing.Back(Easing.Type.InOut, durationNanos, start, end)
+                EaseInBack -> Easing.Back(Easing.Type.In, durationNanos, start, end, onFinish)
+                EaseOutBack -> Easing.Back(Easing.Type.Out, durationNanos, start, end, onFinish)
+                EaseInOutBack -> Easing.Back(Easing.Type.InOut, durationNanos, start, end, onFinish)
 
-                EaseInBump -> Easing.Bump(Easing.Type.In, durationNanos, start, end)
-                EaseOutBump -> Easing.Bump(Easing.Type.Out, durationNanos, start, end)
-                EaseInOutBump -> Easing.Bump(Easing.Type.InOut, durationNanos, start, end)
+                EaseInBump -> Easing.Bump(Easing.Type.In, durationNanos, start, end, onFinish)
+                EaseOutBump -> Easing.Bump(Easing.Type.Out, durationNanos, start, end, onFinish)
+                EaseInOutBump -> Easing.Bump(Easing.Type.InOut, durationNanos, start, end, onFinish)
 
-                EaseInQuad -> Easing.Quad(Easing.Type.In, durationNanos, start, end)
-                EaseOutQuad -> Easing.Quad(Easing.Type.Out, durationNanos, start, end)
-                EaseInOutQuad -> Easing.Quad(Easing.Type.InOut, durationNanos, start, end)
+                EaseInQuad -> Easing.Quad(Easing.Type.In, durationNanos, start, end, onFinish)
+                EaseOutQuad -> Easing.Quad(Easing.Type.Out, durationNanos, start, end, onFinish)
+                EaseInOutQuad -> Easing.Quad(Easing.Type.InOut, durationNanos, start, end, onFinish)
 
-                EaseInQuart -> Easing.Quart(Easing.Type.In, durationNanos, start, end)
-                EaseOutQuart -> Easing.Quart(Easing.Type.Out, durationNanos, start, end)
-                EaseInOutQuart -> Easing.Quart(Easing.Type.InOut, durationNanos, start, end)
+                EaseInQuart -> Easing.Quart(Easing.Type.In, durationNanos, start, end, onFinish)
+                EaseOutQuart -> Easing.Quart(Easing.Type.Out, durationNanos, start, end, onFinish)
+                EaseInOutQuart -> Easing.Quart(Easing.Type.InOut, durationNanos, start, end, onFinish)
 
-                EaseInQuint -> Easing.Quint(Easing.Type.In, durationNanos, start, end)
-                EaseOutQuint -> Easing.Quint(Easing.Type.Out, durationNanos, start, end)
-                EaseInOutQuint -> Easing.Quint(Easing.Type.InOut, durationNanos, start, end)
+                EaseInQuint -> Easing.Quint(Easing.Type.In, durationNanos, start, end, onFinish)
+                EaseOutQuint -> Easing.Quint(Easing.Type.Out, durationNanos, start, end, onFinish)
+                EaseInOutQuint -> Easing.Quint(Easing.Type.InOut, durationNanos, start, end, onFinish)
 
-                EaseInCirc -> Easing.Circ(Easing.Type.In, durationNanos, start, end)
-                EaseOutCirc -> Easing.Circ(Easing.Type.Out, durationNanos, start, end)
-                EaseInOutCirc -> Easing.Circ(Easing.Type.InOut, durationNanos, start, end)
+                EaseInCirc -> Easing.Circ(Easing.Type.In, durationNanos, start, end, onFinish)
+                EaseOutCirc -> Easing.Circ(Easing.Type.Out, durationNanos, start, end, onFinish)
+                EaseInOutCirc -> Easing.Circ(Easing.Type.InOut, durationNanos, start, end, onFinish)
 
-                EaseInExpo -> Easing.Expo(Easing.Type.In, durationNanos, start, end)
-                EaseOutExpo -> Easing.Expo(Easing.Type.Out, durationNanos, start, end)
-                EaseInOutExpo -> Easing.Expo(Easing.Type.InOut, durationNanos, start, end)
+                EaseInExpo -> Easing.Expo(Easing.Type.In, durationNanos, start, end, onFinish)
+                EaseOutExpo -> Easing.Expo(Easing.Type.Out, durationNanos, start, end, onFinish)
+                EaseInOutExpo -> Easing.Expo(Easing.Type.InOut, durationNanos, start, end, onFinish)
 
-                EaseInSine -> Easing.Sine(Easing.Type.In, durationNanos, start, end)
-                EaseOutSine -> Easing.Sine(Easing.Type.Out, durationNanos, start, end)
-                EaseInOutSine -> Easing.Sine(Easing.Type.InOut, durationNanos, start, end)
+                EaseInSine -> Easing.Sine(Easing.Type.In, durationNanos, start, end, onFinish)
+                EaseOutSine -> Easing.Sine(Easing.Type.Out, durationNanos, start, end, onFinish)
+                EaseInOutSine -> Easing.Sine(Easing.Type.InOut, durationNanos, start, end, onFinish)
 
-                EaseInCubic -> Easing.Cubic(Easing.Type.In, durationNanos, start, end)
-                EaseOutCubic -> Easing.Cubic(Easing.Type.Out, durationNanos, start, end)
-                EaseInOutCubic -> Easing.Cubic(Easing.Type.InOut, durationNanos, start, end)
+                EaseInCubic -> Easing.Cubic(Easing.Type.In, durationNanos, start, end, onFinish)
+                EaseOutCubic -> Easing.Cubic(Easing.Type.Out, durationNanos, start, end, onFinish)
+                EaseInOutCubic -> Easing.Cubic(Easing.Type.InOut, durationNanos, start, end, onFinish)
 
-                EaseInElastic -> Easing.Elastic(Easing.Type.In, durationNanos, start, end)
-                EaseOutElastic -> Easing.Elastic(Easing.Type.Out, durationNanos, start, end)
-                EaseInOutElastic -> Easing.Elastic(Easing.Type.InOut, durationNanos, start, end)
+                EaseInElastic -> Easing.Elastic(Easing.Type.In, durationNanos, start, end, onFinish)
+                EaseOutElastic -> Easing.Elastic(Easing.Type.Out, durationNanos, start, end, onFinish)
+                EaseInOutElastic -> Easing.Elastic(Easing.Type.InOut, durationNanos, start, end, onFinish)
             }
         }
     }

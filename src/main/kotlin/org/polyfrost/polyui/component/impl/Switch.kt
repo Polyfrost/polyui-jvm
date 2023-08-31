@@ -31,7 +31,6 @@ import org.polyfrost.polyui.property.impl.SwitchProperties
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.unit.Point
 import org.polyfrost.polyui.unit.Size
-import org.polyfrost.polyui.unit.TextAlign
 import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.utils.cl1
 import org.polyfrost.polyui.utils.radii
@@ -66,6 +65,9 @@ class Switch(
     private var dist = 0f
 
     @Transient
+    private var labelw = 0f
+
+    @Transient
     private lateinit var bitColor: Color.Animated
     var fontSize = 0f
     var label = label
@@ -88,7 +90,7 @@ class Switch(
 
     override fun render() {
         if (label != null) {
-            renderer.text(properties.labelFont, x - properties.lateralPadding.px, y + height / 2f - fontSize / 2f, label!!.string, properties.labelColor, fontSize, TextAlign.Right)
+            renderer.text(properties.labelFont, x - properties.lateralPadding.px - labelw, y + height / 2f - fontSize / 2f, label!!.string, properties.labelColor, fontSize)
         }
         super.render()
         val value = anim?.value ?: if (active) 1f else 0f
@@ -116,7 +118,10 @@ class Switch(
         if (properties.labelFontSize.px == 0f) {
             fontSize = height - properties.verticalPadding.px * 2f
         }
-        label?.translator = polyUI.translator
+        label?.let {
+            it.translator = polyUI.translator
+            labelw = renderer.textBounds(properties.labelFont, it.string, properties.labelFontSize.px).width
+        }
     }
 
     override fun calculateBounds() {

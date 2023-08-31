@@ -56,19 +56,16 @@ abstract class Component @JvmOverloads constructor(
     acceptInput: Boolean = true,
     events: EventDSL<Component>.() -> kotlin.Unit = {},
 ) : Drawable(at, rawResize, acceptInput) {
-
-    @PublishedApi
-    internal var p: Properties? = properties
-        private set
+    private var props: Properties? = properties
 
     /** properties for the component. This is `open` so you can cast it, like so:
      * ```
-     * final override val properties
+     * override val properties
      *     get() = super.properties as YourProperties
      * ```
      * @see Properties
      */
-    open val properties get() = p!!
+    open val properties get() = props!!
 
     /** the color of this component. */
     @Transient
@@ -101,6 +98,7 @@ abstract class Component @JvmOverloads constructor(
     @Transient
     protected var keyframes: KeyFrames? = null
 
+    @Transient
     override var consumesHover = true
 
     /**
@@ -190,6 +188,7 @@ abstract class Component @JvmOverloads constructor(
                 c.recolor(0, toColor[0], animation, durationNanos)
                 c.recolor(1, toColor[1], animation, durationNanos)
             }
+
             is Color.Chroma -> {
                 if (color !is Color.Chroma) {
                     color = Color.Chroma(toColor.speedNanos, toColor.brightness, toColor.saturation, toColor.alpha, color.hue)
@@ -202,6 +201,7 @@ abstract class Component @JvmOverloads constructor(
                 }
                 color.hue = hueToReturnTo
             }
+
             else -> {
                 if (color is Color.Gradient) {
                     val c = color as Color.Gradient
@@ -262,9 +262,9 @@ abstract class Component @JvmOverloads constructor(
      */
     fun setProperties(properties: Properties) {
         if (polyUI.settings.debug) PolyUI.LOGGER.info("{}'s properties set to {}", this.simpleName, properties)
-        properties.colors = p!!.colors
-        properties.fonts = p!!.fonts
-        p = properties
+        properties.colors = props!!.colors
+        properties.fonts = props!!.fonts
+        props = properties
         recolor(properties.palette.normal, Animations.Linear, 150L.milliseconds)
         wantRedraw()
     }
@@ -272,12 +272,10 @@ abstract class Component @JvmOverloads constructor(
     @MustBeInvokedByOverriders
     override fun setup(renderer: Renderer, polyUI: PolyUI) {
         super.setup(renderer, polyUI)
-        if (p == null) {
-            p = layout.propertyManager.get(this)
-        } else {
-            p!!.colors = layout.colors
-            p!!.fonts = layout.fonts
+        if (props == null) {
+            props = layout.propertyManager.get(this)
         }
+        props!!.init(layout.colors, layout.fonts)
         color = properties.palette.normal.toAnimatable()
         initStage = INIT_SETUP
     }
@@ -298,6 +296,11 @@ abstract class Component @JvmOverloads constructor(
             finishColorFunc = null
         }
         if (color.updating || color.alwaysUpdates) wantRedraw()
+    }
+
+    override fun debugRender() {
+        val color = if (mouseOver) properties.colors.page.border20 else properties.colors.page.border10
+        renderer.hollowRect(x, y, width, height, color, 1f)
     }
 
     override fun canBeRemoved(): Boolean = super.canBeRemoved() && !color.updating && keyframes == null

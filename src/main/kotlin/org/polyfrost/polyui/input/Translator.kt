@@ -25,7 +25,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.utils.getResourceStreamNullable
 import java.text.MessageFormat
-import java.util.*
+import java.util.Locale
 import kotlin.collections.ArrayDeque
 
 /**

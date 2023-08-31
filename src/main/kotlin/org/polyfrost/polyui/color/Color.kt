@@ -41,23 +41,27 @@ open class Color @JvmOverloads constructor(hue: Float, saturation: Float, bright
 
     var hue = hue
         set(value) {
+            if (field == value) return
             field = value
             dirty = true
         }
     var saturation = saturation
         set(value) {
-            field = value
+            if (field == value) return
+            field = value.coerceIn(0f, 1f)
             dirty = true
         }
     var brightness = brightness
         set(value) {
-            field = value
+            if (field == value) return
+            field = value.coerceIn(0f, 1f)
             dirty = true
         }
 
     var alpha = alpha
         set(value) {
-            field = value
+            if (field == value) return
+            field = value.coerceIn(0f, 1f)
             dirty = true
         }
 
@@ -159,6 +163,14 @@ open class Color @JvmOverloads constructor(hue: Float, saturation: Float, bright
         @JvmField
         @Transient
         val TRANSPARENT = rgba(0f, 0f, 0f, 0f)
+
+        @JvmField
+        @Transient
+        val WHITE = rgba(1f, 1f, 1f, 1f)
+
+        @JvmField
+        @Transient
+        val BLACK = rgba(0f, 0f, 0f, 1f)
 
         @JvmField
         @Transient

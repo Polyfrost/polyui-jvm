@@ -21,11 +21,13 @@
 
 package org.polyfrost.polyui.property.impl
 
+import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.color.Color
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.property.Properties
 import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.unit.px
+import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.radii
 
 /**
@@ -34,6 +36,9 @@ import org.polyfrost.polyui.utils.radii
  * and the [listeners][org.polyfrost.polyui.component.impl.TextInput.ChangedEvent] will not be notified.
  */
 open class TextInputProperties(open val text: TextProperties = TextProperties(), @Transient open val sanitizationFunction: (String) -> Boolean = { true }) : Properties() {
+    open val caretAnimation: Animations? = Animations.EaseOutExpo
+    open val caretAnimationDuration: Long = 0.5.seconds
+    open val caretColor: Color get() = colors.text.primary.normal
     val placeholderColor: Color get() = colors.text.primary.disabled
     override val palette: Colors.Palette get() = colors.component.bg
     open val lateralPadding: Unit = 12.px
@@ -41,4 +46,53 @@ open class TextInputProperties(open val text: TextProperties = TextProperties(),
     open val cornerRadii: FloatArray = 6f.radii()
     open val outlineColor: Color get() = colors.page.border20
     open val outlineThickness: Unit = 0.px
+
+    companion object {
+        @JvmField
+        @Transient
+        val floatingNumber = numberProperties(true)
+
+        @JvmField
+        @Transient
+        val integralNumber = numberProperties(false)
+
+        @JvmStatic
+        fun floatingNumber(min: Float, max: Float) = numberProperties(true, min, max)
+
+        @JvmStatic
+        fun integralNumber(min: Int, max: Int) = numberProperties(false, min.toFloat(), max.toFloat())
+
+        @JvmStatic
+        fun numberProperties(floating: Boolean, min: Float, max: Float) = TextInputProperties(
+            sanitizationFunction = s@{
+                if (it.isEmpty()) return@s true
+                try {
+                    val f = it.toFloat()
+                    if (f !in min..max) return@s false
+                    if (!floating) {
+                        if (f % 1f != 0f) return@s false
+                    }
+                    true
+                } catch (_: NumberFormatException) {
+                    false
+                }
+            },
+        )
+
+        @JvmStatic
+        fun numberProperties(floating: Boolean) = TextInputProperties(
+            sanitizationFunction = s@{
+                if (it.isEmpty()) return@s true
+                try {
+                    val f = it.toFloat()
+                    if (!floating) {
+                        if (f % 1f != 0f) return@s false
+                    }
+                    true
+                } catch (_: NumberFormatException) {
+                    false
+                }
+            },
+        )
+    }
 }

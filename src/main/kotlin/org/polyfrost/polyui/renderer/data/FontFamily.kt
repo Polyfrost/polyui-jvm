@@ -23,6 +23,7 @@ package org.polyfrost.polyui.renderer.data
 
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.utils.getResourceStreamNullable
+import org.polyfrost.polyui.utils.resourceExists
 import java.io.File
 import java.util.zip.ZipInputStream
 
@@ -36,14 +37,14 @@ import java.util.zip.ZipInputStream
  * @since 0.22.0
  */
 @Suppress("unused")
-class FontFamily(
+open class FontFamily(
     val name: String,
     val path: String,
     private val fallback: FontFamily? = null,
 ) {
     @Transient
     val isZip = path.endsWith(".zip")
-    private val dir by lazy {
+    protected val dir by lazy {
         val f = File(System.getProperty("java.io.tmpdir")).resolve("polyui-$name")
         f.deleteOnExit()
         PolyUI.LOGGER.info("Extracting font $name to temporary directory... ($f)")
@@ -61,38 +62,35 @@ class FontFamily(
         f.toURI()
     }
 
-    val thin by lazy { get("Thin", false) }
-    val thinItalic by lazy { get("Thin", true) }
+    open val thin by lazy { get("Thin") }
+    open val thinItalic by lazy { get("ThinItalic") }
 
-    val light by lazy { get("Light", false) }
-    val lightItalic by lazy { get("Light", true) }
+    open val light by lazy { get("Light") }
+    open val lightItalic by lazy { get("LightItalic") }
 
-    val regular by lazy { get("Regular", false) }
-    val regularItalic by lazy { get("Regular", true) }
+    open val regular by lazy { get("Regular") }
+    open val regularItalic by lazy { get("Italic") }
 
-    val medium by lazy { get("Medium", false) }
-    val mediumItalic by lazy { get("Medium", true) }
+    open val medium by lazy { get("Medium") }
+    open val mediumItalic by lazy { get("MediumItalic") }
 
-    val bold by lazy { get("Bold", false) }
-    val boldItalic by lazy { get("Bold", true) }
+    open val bold by lazy { get("Bold") }
+    open val boldItalic by lazy { get("BoldItalic") }
 
-    val black by lazy { get("Black", false) }
-    val blackItalic by lazy { get("Black", true) }
+    open val black by lazy { get("Black") }
+    open val blackItalic by lazy { get("BlackItalic") }
 
-    private fun get(style: String, italic: Boolean): Font {
-        val p = "$name-$style${if (italic) "Italic" else ""}.ttf"
-        val address = if (isZip) "$dir/$p" else "$path/$p"
-        return if (getResourceStreamNullable(address) == null) {
+    fun get(style: String): Font {
+        val p = "$name-$style.ttf"
+        val address = if (isZip) "$dir$p" else "$path/$p"
+        return if (!resourceExists(address)) {
             PolyUI.LOGGER.warn("Font $address not found! Falling back to ${fallback?.name}")
-            if (this === PolyUI.defaultFonts) {
+            return if (this === PolyUI.defaultFonts) {
                 PolyUI.LOGGER.warn("Default fonts does not contain font $p, using regular.")
-                return if (italic) {
-                    PolyUI.defaultFonts.regularItalic
-                } else {
-                    PolyUI.defaultFonts.regular
-                }
+                PolyUI.defaultFonts.regular
+            } else {
+                fallback?.get(style) ?: PolyUI.defaultFonts.get(style)
             }
-            fallback?.get(style, italic) ?: PolyUI.defaultFonts.get(style, italic)
         } else {
             Font(address)
         }

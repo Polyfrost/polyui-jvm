@@ -33,7 +33,7 @@ import java.util.concurrent.CompletableFuture
  *
  * @since 0.21.1
  */
-abstract class Resource(val resourcePath: String) {
+abstract class Resource(val resourcePath: String) : AutoCloseable {
     @Transient
     var init = false
         private set(value) {
@@ -61,10 +61,17 @@ abstract class Resource(val resourcePath: String) {
 
     fun get() = stream ?: throw NullPointerException("Resource $resourcePath not found!")
 
-    fun close() {
+    fun reset() {
         _stream?.close()
+        _stream = null
         initting = false
         init = false
+    }
+
+    override fun close() {
+        _stream?.close()
+        _stream = null
+        initting = false
     }
 
     @ApiStatus.Experimental

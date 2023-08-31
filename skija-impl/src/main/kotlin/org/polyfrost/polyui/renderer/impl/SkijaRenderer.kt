@@ -95,6 +95,9 @@ class SkijaRenderer(width: Float, height: Float) : Renderer(width, height) {
         surface.canvas.clipRect(Rect.makeXYWH(x, y, width, height), ClipMode.INTERSECT)
     }
 
+    override fun pushScissorIntersecting(x: Float, y: Float, width: Float, height: Float) {
+    }
+
     override fun popScissor() {
         surface.canvas.restore()
     }

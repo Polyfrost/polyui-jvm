@@ -28,8 +28,9 @@ import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.layout.impl.SwitchingLayout
 import org.polyfrost.polyui.property.impl.*
 import org.polyfrost.polyui.renderer.data.FontFamily
+import kotlin.reflect.KClass
 
-class PropertyManager(val colors: Colors, val fonts: FontFamily = PolyUI.defaultFonts) {
+class PropertyManager(val colors: Colors, val fonts: FontFamily = PolyUI.defaultFonts) : Cloneable {
 
     constructor(polyUI: PolyUI) : this(polyUI.colors, PolyUI.defaultFonts)
 
@@ -80,6 +81,14 @@ class PropertyManager(val colors: Colors, val fonts: FontFamily = PolyUI.default
         this.properties[forComponent::class.qualifiedName!!] = properties
     }
 
+    fun addPropertyType(forComponent: Class<*>, properties: Properties) {
+        this.properties[forComponent.canonicalName!!] = properties
+    }
+
+    fun addPropertyType(forComponent: KClass<*>, properties: Properties) {
+        this.properties[forComponent.qualifiedName!!] = properties
+    }
+
     /**
      * Add the given properties to the property registry (bulk version of [addPropertyType]).
      *
@@ -108,5 +117,11 @@ class PropertyManager(val colors: Colors, val fonts: FontFamily = PolyUI.default
      */
     fun addPropertyType(name: String, properties: Properties) {
         this.properties[name] = properties
+    }
+
+    public override fun clone(): PropertyManager {
+        return PropertyManager(colors, fonts).also {
+            it.properties.putAll(properties)
+        }
     }
 }
