@@ -121,41 +121,6 @@ allprojects {
             from(dokkaJavadoc)
         }
     }
-
-    publishing {
-        publications {
-            create<MavenPublication>("Maven") {
-                artifactId = project.name
-                version = rootProject.version.toString()
-
-                artifact(tasks.getByName<Jar>("jar").archiveFile)
-
-                artifact(tasks.getByName<Jar>("dokkaJavadocJar").archiveFile) {
-                    builtBy(tasks.getByName("dokkaJavadocJar"))
-                    this.classifier = "javadoc"
-                }
-            }
-        }
-
-        repositories {
-            mavenLocal()
-            maven {
-                url = uri("https://repo.polyfrost.org/releases")
-                name = "releases"
-                credentials(PasswordCredentials::class)
-            }
-            maven {
-                url = uri("https://repo.polyfrost.org/snapshots")
-                name = "snapshots"
-                credentials(PasswordCredentials::class)
-            }
-            maven {
-                url = uri("https://repo.polyfrost.org/private")
-                name = "private"
-                credentials(PasswordCredentials::class)
-            }
-        }
-    }
 }
 
 //apiValidation {
@@ -186,12 +151,41 @@ tasks {
 
 publishing {
     publications {
-        getByName<MavenPublication>("Maven") {
+        create<MavenPublication>("Maven") {
+            artifactId = project.name
+            version = rootProject.version.toString()
+
+            artifact(tasks.getByName<Jar>("jar").archiveFile)
+
+            artifact(tasks.getByName<Jar>("dokkaJavadocJar").archiveFile) {
+                builtBy(tasks.getByName("dokkaJavadocJar"))
+                this.classifier = "javadoc"
+            }
+
             val dokka = rootProject.tasks.getByName<Jar>("dokkaHtmlJar")
             artifact(dokka.archiveFile) {
                 builtBy(dokka)
                 classifier = "dokka"
             }
+        }
+    }
+
+    repositories {
+        mavenLocal()
+        maven {
+            url = uri("https://repo.polyfrost.org/releases")
+            name = "releases"
+            credentials(PasswordCredentials::class)
+        }
+        maven {
+            url = uri("https://repo.polyfrost.org/snapshots")
+            name = "snapshots"
+            credentials(PasswordCredentials::class)
+        }
+        maven {
+            url = uri("https://repo.polyfrost.org/private")
+            name = "private"
+            credentials(PasswordCredentials::class)
         }
     }
 }
