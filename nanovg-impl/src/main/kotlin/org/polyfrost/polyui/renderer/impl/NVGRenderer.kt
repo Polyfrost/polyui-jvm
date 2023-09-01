@@ -32,7 +32,7 @@ import org.lwjgl.stb.STBImage
 import org.lwjgl.stb.STBImageResize
 import org.lwjgl.system.MemoryUtil
 import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.color.Color
+import org.polyfrost.polyui.color.PolyColor as Color
 import org.polyfrost.polyui.property.Settings
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.Font
@@ -522,11 +522,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
                 }
 
                 PolyImage.Type.Vector -> {
-                    val d = InputStreamReader(stream).use {
-                        val t = it.readText()
-                        it.close()
-                        t
-                    } as CharSequence
+                    val d = InputStreamReader(stream).readText()
                     val svg = NanoSVG.nsvgParse(d, "px", 96f) ?: throw Exception("Failed to open SVG: $image (invalid data?)")
                     val raster = NanoSVG.nsvgCreateRasterizer()
                     val scale = if (image.width != -1f || image.height != -1f) {

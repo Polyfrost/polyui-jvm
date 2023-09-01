@@ -24,7 +24,7 @@ package org.polyfrost.polyui.component.impl
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
 import org.polyfrost.polyui.animate.Animation
-import org.polyfrost.polyui.color.Color
+import org.polyfrost.polyui.color.PolyColor as Color
 import org.polyfrost.polyui.component.ContainingComponent
 import org.polyfrost.polyui.component.DrawableOp
 import org.polyfrost.polyui.component.Focusable

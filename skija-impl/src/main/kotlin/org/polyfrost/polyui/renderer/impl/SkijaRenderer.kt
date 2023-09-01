@@ -22,7 +22,7 @@
 package org.polyfrost.polyui.renderer.impl
 
 import org.jetbrains.skija.*
-import org.polyfrost.polyui.color.Color
+import org.polyfrost.polyui.color.PolyColor as Color
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.data.Framebuffer

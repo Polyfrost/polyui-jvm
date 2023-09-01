@@ -22,7 +22,7 @@
 package org.polyfrost.polyui.component.impl
 
 import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.color.Color
+import org.polyfrost.polyui.color.PolyColor as Color
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.event.EventDSL

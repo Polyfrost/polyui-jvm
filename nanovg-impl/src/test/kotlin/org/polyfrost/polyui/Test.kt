@@ -23,7 +23,7 @@ package org.polyfrost.polyui
 
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.animate.keyframed
-import org.polyfrost.polyui.color.Color
+import org.polyfrost.polyui.color.PolyColor as Color
 import org.polyfrost.polyui.color.DarkTheme
 import org.polyfrost.polyui.color.LightTheme
 import org.polyfrost.polyui.component.Drawable

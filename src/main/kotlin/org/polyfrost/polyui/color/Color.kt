@@ -37,7 +37,7 @@ import org.polyfrost.polyui.utils.rgba
  * @see [Color.Gradient]
  * @see [Color.Chroma]
  */
-open class Color @JvmOverloads constructor(hue: Float, saturation: Float, brightness: Float, alpha: Float = 1f) : Cloneable {
+open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, brightness: Float, alpha: Float = 1f) : Cloneable {
 
     var hue = hue
         set(value) {
@@ -493,3 +493,5 @@ open class Color @JvmOverloads constructor(hue: Float, saturation: Float, bright
         override val alwaysUpdates get() = true
     }
 }
+
+typealias Color = PolyColor
