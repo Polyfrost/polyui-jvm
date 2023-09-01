@@ -24,7 +24,6 @@ package org.polyfrost.polyui.component.impl
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
 import org.polyfrost.polyui.animate.Animation
-import org.polyfrost.polyui.color.PolyColor as Color
 import org.polyfrost.polyui.component.ContainingComponent
 import org.polyfrost.polyui.component.DrawableOp
 import org.polyfrost.polyui.component.Focusable
@@ -43,6 +42,7 @@ import org.polyfrost.polyui.utils.fastEach
 import org.polyfrost.polyui.utils.maxOf
 import kotlin.math.max
 import kotlin.math.min
+import org.polyfrost.polyui.color.PolyColor as Color
 
 class Dropdown(
     properties: DropdownProperties? = null,

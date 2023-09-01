@@ -30,7 +30,6 @@ import org.polyfrost.polyui.PolyUI.Companion.INIT_SETUP
 import org.polyfrost.polyui.animate.Animation
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.animate.KeyFrames
-import org.polyfrost.polyui.color.PolyColor as Color
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.event.*
 import org.polyfrost.polyui.layout.Layout
@@ -39,6 +38,7 @@ import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.FontFamily
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.unit.Unit
+import org.polyfrost.polyui.color.PolyColor as Color
 
 /**
  * A component is a drawable object that can be interacted with. <br>

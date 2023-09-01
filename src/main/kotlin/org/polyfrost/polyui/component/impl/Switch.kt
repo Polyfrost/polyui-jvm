@@ -23,7 +23,6 @@ package org.polyfrost.polyui.component.impl
 
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animation
-import org.polyfrost.polyui.color.PolyColor as Color
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.event.EventDSL
 import org.polyfrost.polyui.input.PolyText
@@ -34,6 +33,7 @@ import org.polyfrost.polyui.unit.Size
 import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.utils.cl1
 import org.polyfrost.polyui.utils.radii
+import org.polyfrost.polyui.color.PolyColor as Color
 
 /**
  * # Switch

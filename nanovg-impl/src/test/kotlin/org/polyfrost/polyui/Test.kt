@@ -23,7 +23,6 @@ package org.polyfrost.polyui
 
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.animate.keyframed
-import org.polyfrost.polyui.color.PolyColor as Color
 import org.polyfrost.polyui.color.DarkTheme
 import org.polyfrost.polyui.color.LightTheme
 import org.polyfrost.polyui.component.Drawable
@@ -48,6 +47,7 @@ import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.fastEach
 import org.polyfrost.polyui.utils.rgba
 import kotlin.random.Random
+import org.polyfrost.polyui.color.PolyColor as Color
 
 fun main() {
     // use the no-op rendering implementation (for profiling of the system code)
