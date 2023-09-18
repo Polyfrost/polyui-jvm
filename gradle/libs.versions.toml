@@ -1,6 +1,6 @@
 [versions]
 kotlin = "1.9.10"
-lwjgl = "3.3.2"
+lwjgl = "3.3.3"
 slf4j = "2.0.7"
 annotations = "24.0.1"
 kotlinter = "3.16.0"
