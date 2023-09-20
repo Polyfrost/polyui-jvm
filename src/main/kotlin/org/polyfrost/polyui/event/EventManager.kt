@@ -312,14 +312,13 @@ class EventManager(private val polyUI: PolyUI) {
 
     /** call this function when the mouse is scrolled. */
     @Suppress("NAME_SHADOWING")
-    fun mouseScrolled(amountX: Int, amountY: Int) {
+    fun mouseScrolled(amountX: Float, amountY: Float) {
         var amountX = if (polyUI.settings.naturalScrolling) amountX else -amountX
         var amountY = if (polyUI.settings.naturalScrolling) amountY else -amountY
         if ((keyModifiers and KeyModifiers.LSHIFT.value).toInt() != 0) {
-            (amountX to amountY).let {
-                amountX = it.second
-                amountY = it.first
-            }
+            val t = amountX
+            amountX = amountY
+            amountY = t
         }
         val (sx, sy) = polyUI.settings.scrollMultiplier
         val event = MouseScrolled(amountX * sx, amountY * sy, keyModifiers)

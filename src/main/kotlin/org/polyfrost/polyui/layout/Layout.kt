@@ -769,9 +769,9 @@ abstract class Layout(
             }
         }
 
-        addEventHandler(MouseScrolled()) { event: MouseScrolled ->
+        addEventHandler(MouseScrolled()) {
             if (!canBeRemoved()) return@addEventHandler false // disable scrolling when moving
-            if ((visibleSize!!.width < width) && event.amountX != 0) {
+            if ((visibleSize!!.width < width) && it.amountX != 0f) {
                 val anim = anims.first
                 val rem = anim?.to?.minus(anim.value)?.also {
                     ofsX += anim.value
@@ -779,13 +779,13 @@ abstract class Layout(
                     ofsX = x
                 }
                 anims.first = Animation.Type.EaseOutExpo.create(
-                    .5.seconds,
+                    .25.seconds,
                     0f,
-                    scrollCalc(rem - event.amountX.toFloat(), ox, trueX, size.width, width),
+                    scrollCalc(rem - it.amountX, ox, trueX, size.width, width),
                 )
                 horizontalBar?.cancelHide()
             }
-            if ((visibleSize!!.height < height) && event.amountY != 0) {
+            if ((visibleSize!!.height < height) && it.amountY != 0f) {
                 val anim = anims.second
                 val rem = anim?.to?.minus(anim.value)?.also {
                     ofsY += anim.value
@@ -793,9 +793,9 @@ abstract class Layout(
                     ofsY = y
                 }
                 anims.second = Animation.Type.EaseOutExpo.create(
-                    .5.seconds,
+                    .25.seconds,
                     0f,
-                    scrollCalc(rem - event.amountY.toFloat(), oy, trueY, size.height, height),
+                    scrollCalc(rem - it.amountY, oy, trueY, size.height, height),
                 )
                 verticalBar?.cancelHide()
             }

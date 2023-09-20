@@ -96,7 +96,7 @@ class Settings {
      * This requires a setup such as `if (`[polyUI.drew][PolyUI.drew]`) glfwSwapBuffers(handle)` in your main loop.
      * @since 0.12.0
      */
-    var renderPausingEnabled = false
+    var renderPausingEnabled = true
 
     /** the time between clicks for them to be considered as a combo.
      * @see maxComboSize
@@ -121,7 +121,7 @@ class Settings {
      * Scroll multiplier factor, which will multiply the returned value of the callback by this value.
      * First value is the X scroll multiplier, with the second being the Y scroll multiplier.
      */
-    var scrollMultiplier: Pair<Int, Int> = 60 to 60
+    var scrollMultiplier: Pair<Float, Float> = 10f to 10f
 
     /** Weather to invert the scroll direction */
     var naturalScrolling = false

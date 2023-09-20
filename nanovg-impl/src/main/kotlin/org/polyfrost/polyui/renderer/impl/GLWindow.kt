@@ -223,7 +223,7 @@ class GLWindow @JvmOverloads constructor(
         }
 
         glfwSetScrollCallback(handle) { _, x, y ->
-            polyUI.eventManager.mouseScrolled(x.toInt(), y.toInt())
+            polyUI.eventManager.mouseScrolled(x.toFloat(), y.toFloat())
         }
 
 //        glfwSetDropCallback(handle) { _, count, names ->
@@ -236,16 +236,8 @@ class GLWindow @JvmOverloads constructor(
             if (polyUI.settings.unfocusedFPS != 0) {
                 fpsCap = if (focused) polyUI.settings.maxFPS.toDouble() else polyUI.settings.unfocusedFPS.toDouble()
             }
-            glfwSetWindowSize(handle, width, height)
             if (focused) {
                 polyUI.master.needsRedraw = true
-            }
-        }
-
-        // fix macOS windows being small when focus is lost
-        glfwSetWindowIconifyCallback(handle) { _, iconified ->
-            if (iconified) {
-                glfwSetWindowSize(handle, width, height)
             }
         }
     }

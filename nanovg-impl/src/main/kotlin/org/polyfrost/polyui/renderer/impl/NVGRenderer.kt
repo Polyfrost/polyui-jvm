@@ -92,7 +92,11 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
 
     override fun drawFramebuffer(fbo: Framebuffer, x: Float, y: Float, width: Float, height: Float) {
         val framebuffer = fbos[fbo] ?: throw IllegalStateException("unknown framebuffer!")
-        drawImage(framebuffer.image(), x, y, width, height, 0)
+        nvgImagePattern(vg, x, y, fbo.width, fbo.height, 0f, framebuffer.image(), 1f, nvgPaint)
+        nvgBeginPath(vg)
+        nvgRect(vg, x, y, width, height)
+        nvgFillPaint(vg, nvgPaint)
+        nvgFill(vg)
     }
 
     override fun text(
@@ -153,23 +157,6 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         nvgFill(vg)
     }
 
-    fun drawImage(img: Int, x: Float, y: Float, width: Float, height: Float, colorMask: Int = 0) {
-        nvgImagePattern(vg, x, y, width, height, 0f, img, 1f, nvgPaint)
-        if (colorMask != 0) {
-            nvgRGBA(
-                (colorMask shr 16 and 0xFF).toByte(),
-                (colorMask shr 8 and 0xFF).toByte(),
-                (colorMask and 0xFF).toByte(),
-                (colorMask shr 24 and 0xFF).toByte(),
-                nvgPaint.innerColor(),
-            )
-        }
-        nvgBeginPath(vg)
-        nvgRect(vg, x, y, width, height)
-        nvgFillPaint(vg, nvgPaint)
-        nvgFill(vg)
-    }
-
     override fun createFramebuffer(width: Float, height: Float): Framebuffer {
         val f = Framebuffer(width, height)
         fbos[f] = nvgluCreateFramebuffer(
@@ -217,7 +204,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     override fun unbindFramebuffer(fbo: Framebuffer?) {
         nvgEndFrame(vg)
         nvgluBindFramebuffer(vg, null)
-        glViewport(0, 0, width.toInt(), height.toInt())
+        glViewport(0, 0, (width * pixelRatio).toInt(), (height * pixelRatio).toInt())
         nvgBeginFrame(vg, width, height, pixelRatio)
     }
 

@@ -95,6 +95,7 @@ class PolyUI @JvmOverloads constructor(
     vararg drawables: Drawable,
 ) {
     val settings = settings ?: Settings()
+
     init {
         this.settings.polyUI = this
         require(renderer.width > 0f && renderer.height > 0f) { "width/height must be greater than 0 (${renderer.width}x${renderer.height})" }
@@ -329,6 +330,7 @@ class PolyUI @JvmOverloads constructor(
             return
         }
 
+        renderer.pixelRatio = pixelRatio
         var newWidth = newWidth
         var newHeight = newHeight
         val (minW, minH) = settings.minimumWindowSize
@@ -381,7 +383,6 @@ class PolyUI @JvmOverloads constructor(
         }
         this.width = newWidth.toFloat()
         this.height = newHeight.toFloat()
-        renderer.pixelRatio = pixelRatio
     }
 
     fun render() {
@@ -401,22 +402,26 @@ class PolyUI @JvmOverloads constructor(
                 if (frameTime < shortestFrame) shortestFrame = frameTime
                 frames++
                 drawDebugOverlay(0f, height - 11f)
-                if (focused == null && eventManager.keyModifiers.hasModifier(Modifiers.LCONTROL)) {
-                    val obj = eventManager.mouseOver ?: eventManager.primaryCandidate
-                    if (obj != null) {
-                        val os = obj.toString()
-                        val w = renderer.textBounds(monospaceFont, os, 10f).width
-                        val pos = min(max(0f, mouseX - w / 2f), this.width - w - 10f)
-                        renderer.rect(pos, mouseY - 14f, w + 10f, 14f, colors.component.bg.hovered)
-                        renderer.text(monospaceFont, pos + 5f, mouseY - 10f, text = os, colors.text.primary.normal, 10f)
+                if (focused == null) {
+                    if (eventManager.keyModifiers.hasModifier(Modifiers.LCONTROL)) {
+                        val obj = eventManager.mouseOver ?: eventManager.primaryCandidate
+                        if (obj != null) {
+                            val os = obj.toString()
+                            val w = renderer.textBounds(monospaceFont, os, 10f).width
+                            val pos = min(max(0f, mouseX - w / 2f), this.width - w - 10f)
+                            renderer.rect(pos, mouseY - 14f, w + 10f, 14f, colors.component.bg.hovered)
+                            renderer.text(monospaceFont, pos + 5f, mouseY - 10f, text = os, colors.text.primary.normal, 10f)
+                            master.needsRedraw = true
+                        }
                     }
-                }
-                if (focused == null && eventManager.keyModifiers.hasModifier(Modifiers.LSHIFT)) {
-                    val s = "${eventManager.mouseX}x${eventManager.mouseY}"
-                    val ww = renderer.textBounds(monospaceFont, s, 10f).width
-                    val ppos = min(mouseX + 10f, this.width - ww - 10f)
-                    renderer.rect(ppos, mouseY, ww + 10f, 14f, colors.component.bg.hovered)
-                    renderer.text(monospaceFont, ppos + 5f, mouseY + 4f, text = s, colors.text.primary.normal, 10f)
+                    if (eventManager.keyModifiers.hasModifier(Modifiers.LSHIFT)) {
+                        val s = "${eventManager.mouseX}x${eventManager.mouseY}"
+                        val ww = renderer.textBounds(monospaceFont, s, 10f).width
+                        val ppos = min(mouseX + 10f, this.width - ww - 10f)
+                        renderer.rect(ppos, mouseY, ww + 10f, 14f, colors.component.bg.hovered)
+                        renderer.text(monospaceFont, ppos + 5f, mouseY + 4f, text = s, colors.text.primary.normal, 10f)
+                        master.needsRedraw = true
+                    }
                 }
             }
 

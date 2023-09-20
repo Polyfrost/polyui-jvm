@@ -144,8 +144,8 @@ data object Enabled : Event
 /** Dispatched when the mouse is scrolled on this component/layout.
  *
  * acceptable by component and layout */
-data class MouseScrolled internal constructor(val amountX: Int, val amountY: Int, val mods: Short = 0) : Event {
-    constructor() : this(0, 0)
+data class MouseScrolled internal constructor(val amountX: Float, val amountY: Float, val mods: Short = 0) : Event {
+    constructor() : this(0f, 0f)
 
     override fun hashCode() = 0
 
