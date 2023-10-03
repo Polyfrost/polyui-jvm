@@ -35,28 +35,28 @@ class PropertyManager(val colors: Colors, val fonts: FontFamily = PolyUI.default
     constructor(polyUI: PolyUI) : this(polyUI.colors, PolyUI.defaultFonts)
 
     val properties: HashMap<String, Properties> = hashMapOf(
-        TextInput::class.qualifiedName!! to TextInputProperties(TextProperties()),
-        Block::class.qualifiedName!! to BlockProperties(withStates = true),
-        Divider::class.qualifiedName!! to DividerProperties(),
-        Image::class.qualifiedName!! to ImageProperties(),
-        Text::class.qualifiedName!! to TextProperties(),
-        Button::class.qualifiedName!! to ButtonProperties(),
-        Dropdown::class.qualifiedName!! to DropdownProperties(),
-        Dropdown.Entry::class.qualifiedName!! to DropdownProperties.Entry(),
-        Slider::class.qualifiedName!! to SliderProperties(),
-        Checkbox::class.qualifiedName!! to CheckboxProperties(),
-        Scrollbar::class.qualifiedName!! to ScrollbarProperties(),
-        Switch::class.qualifiedName!! to SwitchProperties(),
-        SwitchingLayout::class.qualifiedName!! to SwitchingLayoutProperties(),
-        SearchField::class.qualifiedName!! to SearchFieldProperties(),
-        RadioButton::class.qualifiedName!! to RadioButtonProperties(),
-        Keybind::class.qualifiedName!! to KeybindProperties(),
+        TextInput::class.java.name to TextInputProperties(TextProperties()),
+        Block::class.java.name to BlockProperties(withStates = true),
+        Divider::class.java.name to DividerProperties(),
+        Image::class.java.name to ImageProperties(),
+        Text::class.java.name to TextProperties(),
+        Button::class.java.name to ButtonProperties(),
+        Dropdown::class.java.name to DropdownProperties(),
+        Dropdown.Entry::class.java.name to DropdownProperties.Entry(),
+        Slider::class.java.name to SliderProperties(),
+        Checkbox::class.java.name to CheckboxProperties(),
+        Scrollbar::class.java.name to ScrollbarProperties(),
+        Switch::class.java.name to SwitchProperties(),
+        SwitchingLayout::class.java.name to SwitchingLayoutProperties(),
+        SearchField::class.java.name to SearchFieldProperties(),
+        RadioButton::class.java.name to RadioButtonProperties(),
+        Keybind::class.java.name to KeybindProperties(),
     )
 
-    inline fun <reified C : Component> get(): Properties = get(C::class.qualifiedName!!)
+    inline fun <reified C : Component> get(): Properties = get(C::class.java.name)
 
     fun <T : Properties> get(component: Component): T =
-        get(component::class.qualifiedName!!)
+        get(component::class.java.name)
 
     @Suppress("UNCHECKED_CAST")
     fun <T : Properties> get(name: String): T {
@@ -78,7 +78,7 @@ class PropertyManager(val colors: Colors, val fonts: FontFamily = PolyUI.default
      * @param properties the property to add
      */
     fun addPropertyType(forComponent: Component, properties: Properties) {
-        this.properties[forComponent::class.qualifiedName!!] = properties
+        this.properties[forComponent::class.java.name] = properties
     }
 
     fun addPropertyType(forComponent: Class<*>, properties: Properties) {
@@ -86,7 +86,7 @@ class PropertyManager(val colors: Colors, val fonts: FontFamily = PolyUI.default
     }
 
     fun addPropertyType(forComponent: KClass<*>, properties: Properties) {
-        this.properties[forComponent.qualifiedName!!] = properties
+        this.properties[forComponent.java.name] = properties
     }
 
     /**

@@ -33,9 +33,9 @@ import org.polyfrost.polyui.utils.rgba
  *
  * The color used by PolyUI. It stores the color in the HSBA format, and can be converted to ARGB.
  *
- * @see [Color.Animated]
- * @see [Color.Gradient]
- * @see [Color.Chroma]
+ * @see [PolyColor.Animated]
+ * @see [PolyColor.Gradient]
+ * @see [PolyColor.Chroma]
  */
 open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, brightness: Float, alpha: Float = 1f) : Cloneable {
 
@@ -220,6 +220,7 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
         /** @see from(hex) */
         @JvmStatic
         fun from(hex: String, alpha: Float = 1f) = from(hex, (alpha * 255).toInt())
+        @JvmStatic
         fun hexOf(color: Color): String {
             val r = color.r.toString(16).padStart(2, '0')
             val g = color.g.toString(16).padStart(2, '0')

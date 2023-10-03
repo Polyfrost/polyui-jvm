@@ -45,7 +45,7 @@ abstract class Unit(@Transient val type: Type) : Cloneable {
     }
 
     enum class Type {
-        Pixel, Flex, Grid, Percent, VMin, VMax, VWidth, VHeight
+        Pixel, Flex, Grid, Percent, Viewport, Center, Sibling
     }
 
     override fun toString(): String {
@@ -86,7 +86,7 @@ abstract class Unit(@Transient val type: Type) : Cloneable {
     }
 
     /** viewport-specific units. */
-    class VUnits(val amount: Float, type: Type) : Unit(type), Dynamic {
+    class VUnits(val amount: Float, val mode: Int) : Unit(Type.Viewport), Dynamic {
         override var px: Float = 0f
 
         init {
@@ -94,20 +94,24 @@ abstract class Unit(@Transient val type: Type) : Cloneable {
         }
 
         override fun clone(): VUnits {
-            return VUnits(amount, type).also { it.px = px }
+            return VUnits(amount, mode).also { it.px = px }
         }
 
         override fun set(parent: Unit) {
-            px = when (type) {
-                Type.VWidth -> vWidth
-                Type.VHeight -> vHeight
-                Type.VMin -> vMin
-                Type.VMax -> vMax
+            px = when (mode) {
+                V_WIDTH -> vWidth
+                V_HEIGHT -> vHeight
+                V_MIN -> vMin
+                V_MAX -> vMax
                 else -> throw IllegalArgumentException("VUnits must be either VWidth, VHeight, VMin, or VMax.")
             } * (amount / 100f)
         }
 
         companion object {
+            const val V_WIDTH = 0
+            const val V_HEIGHT = 1
+            const val V_MIN = 2
+            const val V_MAX = 3
             @Transient
             internal var vMin = 0f
                 private set
@@ -173,6 +177,10 @@ abstract class Unit(@Transient val type: Type) : Cloneable {
     /** specify a unit as something that is dependent on another value. */
     interface Dynamic {
         fun set(parent: Unit)
+    }
+
+    interface Dynamic2 {
+        fun set(parent: Unit, parent2: Unit)
     }
 }
 
