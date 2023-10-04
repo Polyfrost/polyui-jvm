@@ -98,6 +98,13 @@ class Settings {
      */
     var renderPausingEnabled = true
 
+    /**
+     * If enabled, the command key on Mac will act as control inputs.
+     * @since 0.24.3
+     */
+    var swapCommandWithControlOnMac = true
+        get() = field && polyUI.isOnMac
+
     /** the time between clicks for them to be considered as a combo.
      * @see maxComboSize
      * @see clearComboWhenMaxed

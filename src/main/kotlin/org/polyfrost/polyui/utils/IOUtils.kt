@@ -65,11 +65,11 @@ fun getResourceStreamNullable(resourcePath: String): InputStream? {
             } else {
                 val connection = url.openConnection() as HttpURLConnection
                 connection.requestMethod = "GET"
-                connection.setUseCaches(true)
+                connection.useCaches = true
                 connection.addRequestProperty("User-Agent", "Mozilla/5.0 (PolyUI)")
-                connection.setReadTimeout(5000)
-                connection.setConnectTimeout(5000)
-                connection.setDoOutput(true)
+                connection.readTimeout = 5000
+                connection.connectTimeout = 5000
+                connection.doOutput = true
                 connection.inputStream
             }
         } catch (e: Exception) {

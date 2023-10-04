@@ -198,7 +198,8 @@ class PolyUI @JvmOverloads constructor(
             renderer.height = value
         }
         inline get() = renderer.height
-    private var hooks = ArrayList<Renderer.() -> Boolean>()
+    private val hooks = ArrayList<Renderer.() -> Boolean>(5)
+    private val preHooks = ArrayList<Renderer.() -> kotlin.Unit>(5)
 
     /**
      * the time since the last frame, in nanoseconds. It is used internally a lot for animations, etc.
@@ -224,6 +225,11 @@ class PolyUI @JvmOverloads constructor(
         private set
     private var perf: String = ""
 
+    /**
+     * If the current OS is detected as macOS
+     */
+    val isOnMac = System.getProperty("os.name").contains("mac", true)
+
     init {
         LOGGER.info("PolyUI initializing...")
         master.setup(renderer, this)
@@ -244,7 +250,7 @@ class PolyUI @JvmOverloads constructor(
                 if (!refuseFramebuffer && settings.minDrawablesForFramebuffer < components.size) {
                     fbo = renderer.createFramebuffer(width, height)
                     if (settings.debug) {
-                        LOGGER.info("Layout $simpleName ({} items) created with $fbo", components.size)
+                        LOGGER.info("Layout $simpleName (${components.size} items) created with $fbo")
                     }
                 }
             }
@@ -296,6 +302,8 @@ class PolyUI @JvmOverloads constructor(
                 LOGGER.info(perf)
             }
         }
+        hooks.trimToSize()
+        preHooks.trimToSize()
         if (settings.debug) debugPrint()
         if (settings.cleanupOnShutdown) {
             Runtime.getRuntime().addShutdownHook(
@@ -390,6 +398,7 @@ class PolyUI @JvmOverloads constructor(
         if (master.needsRedraw) {
             val now = clock.now
             renderer.beginFrame()
+            preHooks.fastEach { it(renderer) }
             master.reRenderIfNecessary()
 
             hooks.fastRemoveIfReversed { it(renderer) }
@@ -451,30 +460,22 @@ class PolyUI @JvmOverloads constructor(
      * add a function to be executed on the main thread, after rendering the UI. a renderer is provided if you want to do any rendering.
      *
      * @return `true` at any time to remove the hook.
+     * @see beforeRender
      * @since 0.18.5
      */
     fun addHook(func: Renderer.() -> Boolean) {
         hooks.add(func)
     }
 
-    fun removeComponent(drawable: Drawable): PolyUI {
-        master.remove(drawable)
-        return this
-    }
-
-    fun addComponent(drawable: Drawable): PolyUI {
-        master.add(drawable)
-        return this
-    }
-
-    fun addComponents(vararg drawables: Drawable): PolyUI {
-        master.add(*drawables)
-        return this
-    }
-
-    fun addComponents(drawables: Collection<Drawable>): PolyUI {
-        master.add(drawables)
-        return this
+    /**
+     * Add a function to be executed just before a render cycle begins.
+     *
+     * Any modifications to the renderer at this point such as transformations will affect the rendering of the entire UI.
+     * @since 0.24.3
+     * @see addHook
+     */
+    fun beforeRender(func: Renderer.() -> kotlin.Unit) {
+        preHooks.add(func)
     }
 
     /** add a function that is called every [nanos] nanoseconds. */

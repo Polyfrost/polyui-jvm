@@ -27,6 +27,7 @@ import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.Focusable
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
+import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.layout.Layout
 import org.polyfrost.polyui.utils.fastEach
 import org.polyfrost.polyui.utils.fastEachReversed
@@ -150,7 +151,11 @@ class EventManager(private val polyUI: PolyUI) {
      * @see KeyModifiers
      */
     fun addModifier(modifier: Short) {
-        keyModifiers = keyModifiers or modifier
+        keyModifiers = if (polyUI.settings.swapCommandWithControlOnMac && modifier == Modifiers.LMETA.value) {
+            keyModifiers or Modifiers.LCONTROL.value
+        } else {
+            keyModifiers or modifier
+        }
     }
 
     /**
@@ -158,7 +163,11 @@ class EventManager(private val polyUI: PolyUI) {
      * @see KeyModifiers
      */
     fun removeModifier(modifier: Short) {
-        keyModifiers = keyModifiers and modifier.inv()
+        keyModifiers = if (polyUI.settings.swapCommandWithControlOnMac && modifier == Modifiers.LMETA.value) {
+            keyModifiers and Modifiers.LCONTROL.value
+        } else {
+            keyModifiers and modifier.inv()
+        }
     }
 
     /**

@@ -33,16 +33,16 @@ inline val Number.px get() = Unit.Pixel(this.toFloat())
 inline val Number.percent get() = Unit.Percent(this.toFloat())
 
 @get:JvmName("vwidth")
-inline val Number.vwidth get() = Unit.VUnits(this.toFloat(), Unit.Type.VWidth)
+inline val Number.vwidth get() = Unit.VUnits(this.toFloat(), Unit.VUnits.V_WIDTH)
 
 @get:JvmName("vheight")
-inline val Number.vheight get() = Unit.VUnits(this.toFloat(), Unit.Type.VHeight)
+inline val Number.vheight get() = Unit.VUnits(this.toFloat(), Unit.VUnits.V_HEIGHT)
 
 @get:JvmName("vmin")
-inline val Number.vmin get() = Unit.VUnits(this.toFloat(), Unit.Type.VMin)
+inline val Number.vmin get() = Unit.VUnits(this.toFloat(), Unit.VUnits.V_MIN)
 
 @get:JvmName("vmax")
-inline val Number.vmax get() = Unit.VUnits(this.toFloat(), Unit.Type.VMax)
+inline val Number.vmax get() = Unit.VUnits(this.toFloat(), Unit.VUnits.V_MAX)
 
 /** note that the smallest unit of time in PolyUI is 1 nanosecond. */
 @get:JvmName("nanoseconds")

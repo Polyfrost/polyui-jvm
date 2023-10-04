@@ -68,7 +68,7 @@ abstract class Drawable(
      * `val text = myLayout["Text@4cf777e8"] as Text`
      */
     @Transient
-    open var simpleName = "${this::class.simpleName}@${Integer.toHexString(this.hashCode())}"
+    open var simpleName = "${this::class.java.simpleName}@${Integer.toHexString(this.hashCode())}"
 
     /** size of this drawable. */
     abstract var size: Size<Unit>?
@@ -111,6 +111,7 @@ abstract class Drawable(
      * @see Layout.render
      * @since 0.21.4
      */
+    @Transient
     open var renders = true
         get() = field && exists
 
@@ -484,17 +485,17 @@ abstract class Drawable(
     }
 
     protected fun doDynamicSize(upon: Vec2<Unit>) {
+        val a = layout?.size?.a ?: throw IllegalStateException("Dynamic unit only work on parents with a set size! (${this.simpleName}; parent ${this.layout?.simpleName})")
+        val b = layout?.size?.b ?: throw IllegalStateException("Dynamic unit only work on parents with a set size! (${this.simpleName}; parent ${this.layout?.simpleName})")
         if (upon.a is Unit.Dynamic) {
-            upon.a.set(
-                layout?.size?.a
-                    ?: throw IllegalStateException("Dynamic unit only work on parents with a set size! (${this.simpleName}; parent ${this.layout?.simpleName})"),
-            )
+            upon.a.set(a)
+        } else if(upon.a is Unit.Dynamic2) {
+            upon.a.set(a, size?.a ?: at.a)
         }
         if (upon.b is Unit.Dynamic) {
-            upon.b.set(
-                layout?.size?.b
-                    ?: throw IllegalStateException("Dynamic unit only work on parents with a set size! (${this.simpleName}; parent ${this.layout?.simpleName})"),
-            )
+            upon.b.set(b)
+        } else if(upon.b is Unit.Dynamic2) {
+            upon.b.set(b, size?.b ?: at.b)
         }
     }
 
