@@ -53,6 +53,10 @@ allprojects {
         implementation(rootProject.libs.bundles.slf4j)
     }
 
+    java {
+        withSourcesJar()
+    }
+
     kotlin {
         sourceSets.all {
             languageSettings.apply {
@@ -156,6 +160,10 @@ publishing {
             version = rootProject.version.toString()
 
             artifact(tasks.getByName<Jar>("jar").archiveFile)
+
+            artifact(tasks.getByName<Jar>("sourcesJar").archiveFile) {
+                this.classifier = "sources"
+            }
 
             artifact(tasks.getByName<Jar>("dokkaJavadocJar").archiveFile) {
                 builtBy(tasks.getByName("dokkaJavadocJar"))
