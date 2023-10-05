@@ -489,12 +489,12 @@ abstract class Drawable(
         val b = layout?.size?.b ?: throw IllegalStateException("Dynamic unit only work on parents with a set size! (${this.simpleName}; parent ${this.layout?.simpleName})")
         if (upon.a is Unit.Dynamic) {
             upon.a.set(a)
-        } else if(upon.a is Unit.Dynamic2) {
+        } else if (upon.a is Unit.Dynamic2) {
             upon.a.set(a, size?.a ?: at.a)
         }
         if (upon.b is Unit.Dynamic) {
             upon.b.set(b)
-        } else if(upon.b is Unit.Dynamic2) {
+        } else if (upon.b is Unit.Dynamic2) {
             upon.b.set(b, size?.b ?: at.b)
         }
     }

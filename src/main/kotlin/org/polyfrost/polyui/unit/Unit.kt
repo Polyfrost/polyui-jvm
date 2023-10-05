@@ -112,6 +112,7 @@ abstract class Unit(@Transient val type: Type) : Cloneable {
             const val V_HEIGHT = 1
             const val V_MIN = 2
             const val V_MAX = 3
+
             @Transient
             internal var vMin = 0f
                 private set

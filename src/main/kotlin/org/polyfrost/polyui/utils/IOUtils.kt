@@ -44,8 +44,8 @@ fun getResourceStream(resourcePath: String) =
     getResourceStreamNullable(resourcePath)
         ?: throw FileNotFoundException(
             "Resource $resourcePath not found " +
-                "(check your Properties, and make sure the file " +
-                "is in the resources folder/on classpath; or the URL is valid)",
+                    "(check your Properties, and make sure the file " +
+                    "is in the resources folder/on classpath; or the URL is valid)",
         )
 
 /**
@@ -90,8 +90,8 @@ fun resourceExists(resourcePath: String): Boolean {
     return s != null
 }
 
-fun InputStream.toByteBuffer(): ByteBuffer {
-    val bytes = this.toByteArray()
+fun InputStream.toByteBuffer(close: Boolean = true): ByteBuffer {
+    val bytes = this.toByteArray(close)
     return ByteBuffer.allocateDirect(bytes.size)
         .order(ByteOrder.nativeOrder())
         .put(bytes)
@@ -104,8 +104,8 @@ fun InputStream.toByteBuffer(): ByteBuffer {
  * @return The byte array of the InputStream.
  */
 @Suppress("NOTHING_TO_INLINE")
-inline fun InputStream.toByteArray(): ByteArray {
+inline fun InputStream.toByteArray(close: Boolean = true): ByteArray {
     val bytes = this.readBytes()
-    this.close()
+    if (close) this.close()
     return bytes
 }

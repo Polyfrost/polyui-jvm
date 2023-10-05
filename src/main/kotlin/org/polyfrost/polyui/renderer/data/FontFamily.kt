@@ -45,6 +45,7 @@ open class FontFamily(
     @Transient
     val isZip = path.endsWith(".zip")
     protected val dir by lazy {
+        val start = System.nanoTime()
         val f = File(System.getProperty("java.io.tmpdir")).resolve("polyui-$name")
         f.deleteOnExit()
         PolyUI.LOGGER.info("Extracting font $name to temporary directory... ($f)")
@@ -59,6 +60,7 @@ open class FontFamily(
             }
         }
         zip.close()
+        PolyUI.LOGGER.info("\t\t> took ${(System.nanoTime() - start) / 1_000_000.0}ms")
         f.toURI()
     }
 

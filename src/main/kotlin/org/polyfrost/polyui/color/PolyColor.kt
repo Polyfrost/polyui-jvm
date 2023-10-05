@@ -220,6 +220,7 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
         /** @see from(hex) */
         @JvmStatic
         fun from(hex: String, alpha: Float = 1f) = from(hex, (alpha * 255).toInt())
+
         @JvmStatic
         fun hexOf(color: Color): String {
             val r = color.r.toString(16).padStart(2, '0')
