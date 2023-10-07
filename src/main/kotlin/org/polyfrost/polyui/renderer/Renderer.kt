@@ -21,8 +21,8 @@
 
 package org.polyfrost.polyui.renderer
 
-import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.Color
+import org.polyfrost.polyui.property.Settings
 import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.data.Framebuffer
 import org.polyfrost.polyui.renderer.data.PolyImage
@@ -47,17 +47,14 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
      */
     var alphaCap: Float = 1f
 
-    lateinit var polyUI: PolyUI
+    lateinit var settings: Settings
         internal set
-
-    inline val settings get() = polyUI.settings
 
     /** the pixel ratio of the screen, used mainly on Apple screens which use high-dpi. */
     var pixelRatio: Float = 1f
         internal set
 
     /** hook into this renderer. */
-    @Suppress("UNUSED_EXPRESSION")
     inline fun render(block: Renderer.() -> kotlin.Unit) = block()
 
     /**
@@ -267,12 +264,6 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
     /** @see rect */
     fun rect(x: Float, y: Float, width: Float, height: Float, color: Color, radii: FloatArray) =
         rect(x, y, width, height, color, radii[0], radii[1], radii[2], radii[3])
-
-    /**
-     * Draw a circle to the screen, as per the given parameters. Note that the x,y is the top left of the circle box, and this is intentional; so it is in-line with the rest of the PolyUI rendering methods.
-     */
-    open fun circle(x: Float, y: Float, radius: Float, color: Color) =
-        rect(x, y, radius + radius, radius + radius, color, radius)
 
     /** @see hollowRect */
     fun hollowRect(

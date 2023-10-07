@@ -32,8 +32,6 @@ import kotlin.reflect.KClass
 
 class PropertyManager(val colors: Colors, val fonts: FontFamily = PolyUI.defaultFonts) : Cloneable {
 
-    constructor(polyUI: PolyUI) : this(polyUI.colors, PolyUI.defaultFonts)
-
     val properties: HashMap<String, Properties> = hashMapOf(
         TextInput::class.java.name to TextInputProperties(TextProperties()),
         Block::class.java.name to BlockProperties(withStates = true),

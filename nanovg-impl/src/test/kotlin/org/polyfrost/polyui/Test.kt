@@ -225,13 +225,13 @@ fun main() {
             ).scrolling(620.px * 300.px),
         ),
     )
-    polyUI.keyBinder.add(
+    polyUI.keyBinder?.add(
         KeyBinder.Bind('P', mods = mods(Modifiers.LCONTROL)) {
             polyUI.debugPrint()
             true
         },
     )
-    polyUI.keyBinder.add(
+    polyUI.keyBinder?.add(
         KeyBinder.Bind(mouse = Mouse.LEFT_MOUSE, mods = mods(Modifiers.LCONTROL), durationNanos = 1.seconds) {
             println("${polyUI.mouseX} x ${polyUI.mouseY}")
             polyUI.getComponentsIn(polyUI.mouseX - 25f, polyUI.mouseY - 25f, 50f, 50f).fastEach {
@@ -241,7 +241,7 @@ fun main() {
         },
     )
     var light = false
-    polyUI.keyBinder.add(
+    polyUI.keyBinder?.add(
         KeyBinder.Bind(key = Keys.F1) {
             if (!light) {
                 polyUI.colors = LightTheme()

@@ -29,26 +29,36 @@ import org.polyfrost.polyui.unit.milliseconds
  * This contains many values that concern the rendering and event handling of PolyUI internally.
  * */
 class Settings {
-    internal lateinit var polyUI: PolyUI
 
     /** this enables the debug renderer and various other debug features, including more verbose checks and logging.
      *
      * It can be enabled using `-Dpolyui.debug=true` in the JVM arguments, or by pressing Ctrl+Shift+I in the application [if enabled][enableDebugKeybind].
      */
+    @get:JvmName("isDebugMode")
+    @set:JvmName("enableDebug")
     var debug = System.getProperty("polyui.debug", "true").toBoolean()
 
     /** enable the debug keybind in the window (Ctrl+Shift+I)
      * @see debug*/
+    @get:JvmName("hasDebugKeybind")
+    @set:JvmName("enableDebugKeybind")
     var enableDebugKeybind = true
 
     /** set this to something other than 0 to set a framerate cap for the UI.
+     *
+     * Most implementations will only use this if [vsync][enableVSync] is disabled.
      * @see unfocusedFPS */
     var maxFPS = 0
 
     /** set this to something other than 0 to change the framerate from the current [maxFPS] to this value when it is unfocused. */
     var unfocusedFPS = 10
 
+    @get:JvmName("isAntialiasingEnabled")
+    @set:JvmName("enableAntialiasing")
     var useAntialiasing = true
+
+    @get:JvmName("isVSyncEnabled")
+    @set:JvmName("enableVSync")
     var enableVSync = true
 
     /** @see org.polyfrost.polyui.input.Translator */
@@ -61,7 +71,7 @@ class Settings {
      * @see minDrawablesForFramebuffer
      * @since 0.18.0
      */
-    var masterIsFramebuffer = false
+    var isMasterFrameBuffer = false
 
     /**
      * minimum number of drawables in a layout (and its children) before it will use a framebuffer.
@@ -81,6 +91,8 @@ class Settings {
      * @see org.polyfrost.polyui.layout.Layout.draggable
      * @see org.polyfrost.polyui.component.Component.draggable
      */
+    @get:JvmName("areDraggablesOnTop")
+    @set:JvmName("enableDraggablesOnTop")
     var draggablesOnTop = true
 
     /**
@@ -88,6 +100,8 @@ class Settings {
      * @see org.polyfrost.polyui.PolyUI
      * @since 0.18.0
      */
+    @get:JvmName("framebuffersEnabled")
+    @set:JvmName("enableFramebuffers")
     var framebuffersEnabled = true
 
     /**
@@ -96,14 +110,17 @@ class Settings {
      * This requires a setup such as `if (`[polyUI.drew][PolyUI.drew]`) glfwSwapBuffers(handle)` in your main loop.
      * @since 0.12.0
      */
+    @get:JvmName("isRenderPausingEnabled")
+    @set:JvmName("enableRenderPausing")
     var renderPausingEnabled = true
 
     /**
      * If enabled, the command key on Mac will act as control inputs.
      * @since 0.24.3
      */
-    var swapCommandWithControlOnMac = true
-        get() = field && polyUI.isOnMac
+    @get:JvmName("doesCommandActAsControl")
+    @set:JvmName("enableCommandAsControl")
+    var commandActsAsControl = true
 
     /** the time between clicks for them to be considered as a combo.
      * @see maxComboSize
@@ -122,6 +139,8 @@ class Settings {
      * @see maxComboSize
      * @see comboMaxInterval
      */
+    @set:JvmName("shouldClearComboWhenMaxed")
+    @get:JvmName("enableComboClearing")
     var clearComboWhenMaxed = false
 
     /**
@@ -131,6 +150,8 @@ class Settings {
     var scrollMultiplier: Pair<Float, Float> = 10f to 10f
 
     /** Weather to invert the scroll direction */
+    @get:JvmName("isNaturalScrolling")
+    @set:JvmName("enableNaturalScrolling")
     var naturalScrolling = false
 
     /**
@@ -170,6 +191,8 @@ class Settings {
      *
      * @since 0.20.0
      */
+    @get:JvmName("willCleanupAfterInit")
+    @set:JvmName("enableInitCleanup")
     var cleanupAfterInit = true
 
     /**
@@ -177,18 +200,24 @@ class Settings {
      *
      * @since 0.20.1
      */
+    @get:JvmName("willCleanupOnShutdown")
+    @set:JvmName("enableShutdownCleanup")
     var cleanupOnShutdown = false
 
     /**
      * Set this to true to enable loading of translation keys upon startup, instead of the default behaviour of loading them when they are first used.
      * @since 0.21.1
      */
+    @get:JvmName("shouldLoadTranslationsOnInit")
+    @set:JvmName("enableTranslationLoadingOnInit")
     var loadTranslationsOnInit = true
 
     /**
      * Enable parallel loading of translation files.
      * @since 0.21.1
      */
+    @get:JvmName("isParallelLoadingEnabled")
+    @set:JvmName("enableParallelLoading")
     var parallelLoading = false
 
     /** How to handle resource (image and font) loading errors.

@@ -79,7 +79,7 @@ fun main() {
         ),
     )
 
-    polyUI.keyBinder.add(
+    polyUI.keyBinder?.add(
         KeyBinder.Bind('P', mods = Modifiers.mods(Modifiers.LCONTROL)) {
             polyUI.debugPrint()
             true

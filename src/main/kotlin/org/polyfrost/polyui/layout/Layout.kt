@@ -598,7 +598,7 @@ abstract class Layout(
 
     override fun setup(renderer: Renderer, polyUI: PolyUI) {
         super.setup(renderer, polyUI)
-        if (!::propertyManager.isInitialized) propertyManager = polyUI.propertyManager.clone()
+        if (!::propertyManager.isInitialized) propertyManager = polyUI.master.propertyManager.clone()
         colors = propertyManager.colors
         fonts = propertyManager.fonts
         components.fastEach {

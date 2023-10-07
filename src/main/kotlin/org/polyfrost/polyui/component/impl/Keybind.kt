@@ -47,12 +47,17 @@ open class Keybind(
     @Transient
     private var recording = false
         set(value) {
+            val keyBinder = polyUI.keyBinder
+                ?: run {
+                    PolyUI.LOGGER.warn("Can't record without a keyBinder instance")
+                    return
+                }
             if (value == field) return
             field = value
             if (value) {
-                if (bind != null) polyUI.keyBinder.remove(bind!!)
+                if (bind != null) keyBinder.remove(bind!!)
                 text!!.recolor(properties.colors.state.danger.normal)
-                polyUI.keyBinder.record(
+                keyBinder.record(
                     bind?.durationNanos ?: 0L,
                     bind?.action ?: {
                         println("Unmapped keybind function")
@@ -66,15 +71,20 @@ open class Keybind(
                 }
             } else {
                 text!!.recolor(properties.colors.text.primary.normal)
-                polyUI.keyBinder.cancelRecord()
+                keyBinder.cancelRecord()
             }
         }
     var bind = bind
         set(value) {
             field = value
             string = value?.keysToString() ?: empty.string
-            if (value != null) polyUI.keyBinder.add(value)
+            if (value != null) polyUI.keyBinder?.add(value) ?: PolyUI.LOGGER.warn("Can't add keybind without a keyBinder instance")
         }
+
+    /**
+     * Whether this keybind is valid, i.e. it has a bind and a valid keyBinder where it is registered.
+     */
+    val valid get() = bind != null && polyUI.keyBinder != null
 
     @Transient
     protected open var animation: Animation? = null
@@ -119,7 +129,7 @@ open class Keybind(
         empty.translator = polyUI.translator
         empty.string
         rightImage!!.properties.withStates()
-        if (bind != null) polyUI.keyBinder.add(bind!!)
+        if (bind != null) polyUI.keyBinder?.add(bind!!) ?: PolyUI.LOGGER.warn("Can't add keybind without a keyBinder instance")
         color2 = properties.breatheColor.clone()
         color2.alpha = 0.6f
     }

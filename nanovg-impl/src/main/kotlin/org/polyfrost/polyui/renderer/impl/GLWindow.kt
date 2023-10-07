@@ -242,14 +242,10 @@ class GLWindow @JvmOverloads constructor(
         }
     }
 
-    override fun videoSettingsChanged() {
-        glfwSwapInterval(if (polyUI.renderer.settings.enableVSync) 1 else 0)
-    }
-
     override fun open(polyUI: PolyUI): Window {
         this.polyUI = polyUI
         polyUI.window = this
-        videoSettingsChanged()
+        glfwSwapInterval(if (polyUI.renderer.settings.enableVSync) 1 else 0)
 
         createCallbacks()
 

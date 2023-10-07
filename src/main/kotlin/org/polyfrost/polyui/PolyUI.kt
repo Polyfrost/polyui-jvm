@@ -27,7 +27,6 @@ import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.Focusable
 import org.polyfrost.polyui.event.EventManager
-import org.polyfrost.polyui.event.FocusedEvent
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Modifiers
@@ -85,21 +84,21 @@ import kotlin.math.min
  *
  * **Interactions** are driven by [events][EventManager], which thanks to Kotlin's inlining are a zero-overhead way of distributing events, such as [mouse clicks][org.polyfrost.polyui.event.MouseClicked], or [key presses][org.polyfrost.polyui.event.FocusedEvent.KeyPressed].
  *
- * PolyUI also supports a variety of [animations][org.polyfrost.polyui.animate.Animation] and transitions, which can be used to make your UI more dynamic, along with dynamically [adding][addComponent] and [removing][removeComponent] components.
+ * PolyUI also supports a variety of [animations][org.polyfrost.polyui.animate.Animation] and transitions, which can be used to make your UI more dynamic, along with dynamically [adding][Layout.add] and [removing][Layout.remove] components.
  */
 class PolyUI @JvmOverloads constructor(
-    translationDirectory: String? = null,
     val renderer: Renderer,
     settings: Settings? = null,
+    eventManager: EventManager? = null,
+    translator: Translator? = null,
     colors: Colors = DarkTheme(),
     vararg drawables: Drawable,
 ) {
     val settings = settings ?: Settings()
 
     init {
-        this.settings.polyUI = this
         require(renderer.width > 0f && renderer.height > 0f) { "width/height must be greater than 0 (${renderer.width}x${renderer.height})" }
-        renderer.polyUI = this
+        renderer.settings = this.settings
         renderer.init()
     }
 
@@ -108,11 +107,10 @@ class PolyUI @JvmOverloads constructor(
      * **Note that changing this value** can be an expensive operation while the UI is running, as it has to update all the components.
      * @since 0.17.0
      */
-    var colors = colors
+    var colors: Colors
+        get() = master.colors
         set(value) {
-            if (field == value) return
-            field = value
-            timed("Changing colors from $field to $value") {
+            timed("Changing colors from ${master.colors} to $value") {
                 master.onAllLayouts {
                     changeColors(value)
                 }
@@ -124,11 +122,10 @@ class PolyUI @JvmOverloads constructor(
      * **Note that changing this value** can be an expensive operation while the UI is running, as it has to update all the components.
      * @since 0.22.0
      */
-    var fonts = defaultFonts
+    var fonts: FontFamily
+        get() = master.fonts
         set(value) {
-            if (field == value) return
-            field = value
-            timed("Changing fonts from $field to $value") {
+            timed("Changing fonts from ${master.fonts} to $value") {
                 master.onAllLayouts {
                     changeFonts(value)
                 }
@@ -154,11 +151,10 @@ class PolyUI @JvmOverloads constructor(
     /**
      * This is the root layout of the UI. It is the parent of all other layouts.
      */
-    val master = PixelLayout(origin, Size(renderer.width.px, renderer.height.px), drawables = drawables, rawResize = true, acceptInput = false)
-    val eventManager = EventManager(this)
-    val keyBinder = KeyBinder(this)
-    val translator = Translator(this, translationDirectory ?: "")
-    val propertyManager = PropertyManager(this)
+    val master = PixelLayout(origin, Size(renderer.width.px, renderer.height.px), propertyManager = PropertyManager(colors, defaultFonts), drawables = drawables, rawResize = true, acceptInput = false)
+    val eventManager = eventManager?.with(master) ?: EventManager(master, KeyBinder(this.settings), this.settings)
+    inline val keyBinder get() = eventManager.keyBinder
+    val translator = translator ?: Translator(this.settings, "")
 
     /** weather this PolyUI instance drew on this frame.
      *
@@ -210,7 +206,6 @@ class PolyUI @JvmOverloads constructor(
      */
     var delta: Long = 0L
         private set
-    var focused: (Focusable)? = null
 
     // telemetry
     var fps: Int = 1
@@ -225,11 +220,6 @@ class PolyUI @JvmOverloads constructor(
         private set
     private var perf: String = ""
 
-    /**
-     * If the current OS is detected as macOS
-     */
-    val isOnMac = System.getProperty("os.name").contains("mac", true)
-
     init {
         LOGGER.info("PolyUI initializing...")
         master.setup(renderer, this)
@@ -237,7 +227,7 @@ class PolyUI @JvmOverloads constructor(
         master.calculateBounds()
         @Suppress("NAME_SHADOWING")
         val settings = this.settings
-        if (settings.framebuffersEnabled && settings.masterIsFramebuffer) {
+        if (settings.framebuffersEnabled && settings.isMasterFrameBuffer) {
             if (settings.debug) LOGGER.info("Master is using framebuffer")
             master.fbo = renderer.createFramebuffer(width, height)
         }
@@ -266,7 +256,7 @@ class PolyUI @JvmOverloads constructor(
         Unit.VUnits.vHeight = height
         Unit.VUnits.vWidth = width
         if (settings.enableDebugKeybind) {
-            keyBinder.add(
+            this.keyBinder?.add(
                 KeyBinder.Bind('I', mods = mods(KeyModifiers.LCONTROL, KeyModifiers.LSHIFT)) {
                     settings.debug = !settings.debug
                     master.needsRedraw = true
@@ -283,7 +273,7 @@ class PolyUI @JvmOverloads constructor(
                 },
             )
         }
-        keyBinder.add(
+        this.keyBinder?.add(
             KeyBinder.Bind('R', mods = mods(KeyModifiers.LCONTROL)) {
                 LOGGER.info("Reloading PolyUI")
                 resize(width.toInt(), height.toInt(), renderer.pixelRatio, true)
@@ -411,7 +401,7 @@ class PolyUI @JvmOverloads constructor(
                 if (frameTime < shortestFrame) shortestFrame = frameTime
                 frames++
                 drawDebugOverlay(0f, height - 11f)
-                if (focused == null) {
+                if (!eventManager.hasFocused) {
                     if (eventManager.keyModifiers.hasModifier(Modifiers.LCONTROL)) {
                         val obj = eventManager.mouseOver ?: eventManager.primaryCandidate
                         if (obj != null) {
@@ -440,7 +430,7 @@ class PolyUI @JvmOverloads constructor(
         } else {
             drew = false
         }
-        keyBinder.update(delta)
+        keyBinder?.update(delta, eventManager.keyModifiers)
         executors.fastRemoveIfReversed { it.tick(delta) }
     }
 
@@ -531,14 +521,9 @@ class PolyUI @JvmOverloads constructor(
      * @param focusable the element to set focus on
      * @return true if focus was successfully set, false if the provided focusable is already focused
      */
-    fun focus(focusable: Focusable?): Boolean {
-        if (focusable === focused) return false
-        focused?.accept(FocusedEvent.Lost)
-        focused = focusable
-        return focused?.accept(FocusedEvent.Gained) == true
-    }
+    fun focus(focusable: Focusable?) = eventManager.focus(focusable)
 
-    fun unfocus() = focus(null)
+    fun unfocus() = eventManager.unfocus()
 
     /**
      * Return the key name for the given key code.
@@ -610,7 +595,7 @@ class PolyUI @JvmOverloads constructor(
     /** cleanup the polyUI instance. This will delete all resources, and render this instance unusable. */
     fun cleanup() {
         renderer.cleanup()
-        focused = null
+        unfocus()
         hooks.clear()
         master.children.clear()
         master.components.clear()

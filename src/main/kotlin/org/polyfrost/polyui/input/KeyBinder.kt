@@ -23,10 +23,8 @@ package org.polyfrost.polyui.input
 
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.event.Event
-import org.polyfrost.polyui.event.FocusedEvent
-import org.polyfrost.polyui.event.MousePressed
-import org.polyfrost.polyui.event.MouseReleased
+import org.polyfrost.polyui.event.*
+import org.polyfrost.polyui.property.Settings
 import org.polyfrost.polyui.utils.addOrReplace
 import org.polyfrost.polyui.utils.fastEach
 import java.util.concurrent.CancellationException
@@ -41,13 +39,14 @@ import java.util.concurrent.CompletableFuture
  * @see remove
  * @see removeAll
  */
-class KeyBinder(private val polyUI: PolyUI) {
+class KeyBinder(private val settings: Settings) {
     private val listeners = ArrayList<Bind>(5)
     private val downMouseButtons = ArrayList<Int>(5)
     private val downUnmappedKeys = ArrayList<Int>(5)
     private val downKeys = ArrayList<Keys>(5)
     private var recording: CompletableFuture<Bind>? = null
     private var recordingTime = 0L
+    private var modifiers: Short = 0
     private var recordingFunc: (() -> Boolean)? = null
 
     /**
@@ -58,7 +57,7 @@ class KeyBinder(private val polyUI: PolyUI) {
     @ApiStatus.Internal
     fun accept(event: Event): Boolean {
         if (event is MousePressed) {
-            if (polyUI.eventManager.keyModifiers == 0.toShort()) {
+            if (event.mods == 0.toShort()) {
                 recording?.completeExceptionally(IllegalStateException("Cannot bind to just left click"))
                 return false
             }
@@ -79,7 +78,7 @@ class KeyBinder(private val polyUI: PolyUI) {
         if (event is FocusedEvent.KeyReleased) {
             downKeys.remove(event.key)
         }
-        return update(0L)
+        return update(0L, modifiers)
     }
 
     /**
@@ -95,12 +94,13 @@ class KeyBinder(private val polyUI: PolyUI) {
         } else {
             downUnmappedKeys.remove(key)
         }
-        return update(0L)
+        return update(0L, modifiers)
     }
 
-    fun update(deltaTimeNanos: Long): Boolean {
+    fun update(deltaTimeNanos: Long, keyModifiers: Short): Boolean {
+        modifiers = keyModifiers
         listeners.fastEach {
-            if (it.update(downUnmappedKeys, downKeys, downMouseButtons, polyUI.eventManager.keyModifiers, deltaTimeNanos)) {
+            if (it.update(downUnmappedKeys, downKeys, downMouseButtons, keyModifiers, deltaTimeNanos)) {
                 return true
             }
         }
@@ -114,7 +114,7 @@ class KeyBinder(private val polyUI: PolyUI) {
             if (downUnmappedKeys.size == 0) null else downUnmappedKeys.toIntArray(),
             if (downKeys.size == 0) null else downKeys.toTypedArray(),
             if (downMouseButtons.size == 0) null else downMouseButtons.toIntArray(),
-            polyUI.eventManager.keyModifiers,
+            modifiers,
             recordingTime,
             recordingFunc!!,
         )
@@ -157,7 +157,7 @@ class KeyBinder(private val polyUI: PolyUI) {
      * @since 0.24.0
      */
     fun record(holdDurationNanos: Long = 0L, function: () -> Boolean): CompletableFuture<Bind> {
-        if (polyUI.settings.debug) {
+        if (settings.debug) {
             PolyUI.LOGGER.info("Recording keybind began")
         }
         if (recording != null) {
@@ -168,7 +168,7 @@ class KeyBinder(private val polyUI: PolyUI) {
         recordingTime = holdDurationNanos
         recordingFunc = function
         return recording!!.thenApply {
-            if (polyUI.settings.debug) {
+            if (settings.debug) {
                 PolyUI.LOGGER.info("Bind created: $it")
             }
             if (listeners.addOrReplace(it) != null) {
