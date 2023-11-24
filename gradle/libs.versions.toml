@@ -1,5 +1,5 @@
 [versions]
-kotlin = "1.9.10"
+kotlin = "1.9.21"
 lwjgl = "3.3.3"
 slf4j = "2.0.9"
 annotations = "24.0.1"
