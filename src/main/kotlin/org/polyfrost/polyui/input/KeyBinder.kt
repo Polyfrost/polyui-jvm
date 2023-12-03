@@ -25,8 +25,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.event.*
 import org.polyfrost.polyui.property.Settings
-import org.polyfrost.polyui.utils.addOrReplace
-import org.polyfrost.polyui.utils.fastEach
+import org.polyfrost.polyui.utils.LinkedList
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 
@@ -40,10 +39,10 @@ import java.util.concurrent.CompletableFuture
  * @see removeAll
  */
 class KeyBinder(private val settings: Settings) {
-    private val listeners = ArrayList<Bind>(5)
-    private val downMouseButtons = ArrayList<Int>(5)
-    private val downUnmappedKeys = ArrayList<Int>(5)
-    private val downKeys = ArrayList<Keys>(5)
+    private val listeners = LinkedList<Bind>()
+    private val downMouseButtons = LinkedList<Int>()
+    private val downUnmappedKeys = LinkedList<Int>()
+    private val downKeys = LinkedList<Keys>()
     private var recording: CompletableFuture<Bind>? = null
     private var recordingTime = 0L
     private var modifiers: Short = 0
@@ -211,7 +210,7 @@ class KeyBinder(private val settings: Settings) {
         @Transient
         private var ran = false
 
-        fun update(c: ArrayList<Int>, k: ArrayList<Keys>, m: ArrayList<Int>, mods: Short, deltaTimeNanos: Long): Boolean {
+        fun update(c: LinkedList<Int>, k: LinkedList<Keys>, m: LinkedList<Int>, mods: Short, deltaTimeNanos: Long): Boolean {
             if (unmappedKeys?.matches(c) != false && keys?.matches(k) != false && mouse?.matches(m) != false && this.mods == mods) {
                 if (!ran) {
                     if (durationNanos != 0L) {
@@ -290,7 +289,7 @@ class KeyBinder(private val settings: Settings) {
             return result
         }
 
-        private fun <T> Array<T>.matches(other: ArrayList<T>): Boolean {
+        private fun <T> Array<T>.matches(other: LinkedList<T>): Boolean {
             if (other.size == 0) return false
             for (i in this) {
                 if (!other.contains(i)) return false
@@ -298,7 +297,7 @@ class KeyBinder(private val settings: Settings) {
             return true
         }
 
-        private fun IntArray.matches(other: ArrayList<Int>): Boolean {
+        private fun IntArray.matches(other: LinkedList<Int>): Boolean {
             if (other.size == 0) return false
             for (i in this) {
                 if (!other.contains(i)) return false

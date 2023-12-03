@@ -44,6 +44,14 @@ abstract class Window(open var width: Int, open var height: Int) {
     abstract fun createCallbacks()
 
     /**
+     * Return true if your window supports "render pausing", a optimization technique which will not render any frames if not necessary.
+     *
+     * See [Settings.renderPausing][org.polyfrost.polyui.property.Settings.renderPausingEnabled] for a better explanation.
+     * @since 0.25.1
+     */
+    abstract fun supportsRenderPausing(): Boolean
+
+    /**
      * Get the clipboard string. This is used for the [org.polyfrost.polyui.component.impl.TextInput] class.
      *
      * If the data is empty or not a string, then null is returned.

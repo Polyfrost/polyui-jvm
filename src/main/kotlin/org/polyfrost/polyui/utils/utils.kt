@@ -19,7 +19,7 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-@file:Suppress("NOTHING_TO_INLINE")
+@file:Suppress("NOTHING_TO_INLINE", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "UNUSED")
 @file:JvmName("Utils")
 
 package org.polyfrost.polyui.utils
@@ -59,7 +59,7 @@ fun rgba(r: Int, g: Int, b: Int, a: Float = 1f): Color {
  *
  * The integer that is returned by [HSBtoRGB] encodes the
  * value of a color in bits 0-23 of an integer value that is the same
- * format used by the method [getARGB()][Color.argb]
+ * format used by the method getARGB().
  * This integer can be supplied as an argument to the
  * [toColor] method that takes a single integer argument to create a [Color].
  * @param hue the hue component of the color
@@ -174,15 +174,20 @@ fun RGBtoHSB(r: Int, g: Int, b: Int, out: FloatArray? = null): FloatArray {
  */
 fun Int.toColor() = Color(RGBtoHSB(this shr 16 and 0xFF, this shr 8 and 0xFF, this and 0xFF), this shr 24 and 0xFF)
 
+@kotlin.internal.InlineOnly
 inline val Int.red get() = this shr 16 and 0xFF
 
+@kotlin.internal.InlineOnly
 inline val Int.green get() = this shr 8 and 0xFF
 
+@kotlin.internal.InlineOnly
 inline val Int.blue get() = this and 0xFF
 
+@kotlin.internal.InlineOnly
 inline val Int.alpha get() = this shr 24 and 0xFF
 
-fun Double.toRadians() = (this % 360.0) * (PI / 180.0)
+@kotlin.internal.InlineOnly
+inline fun Double.toRadians() = (this % 360.0) * (PI / 180.0)
 
 /**
  * Calculate the greatest common denominator of two integers.
@@ -216,13 +221,8 @@ fun Pair<Int, Int>.simplifyRatio(): Pair<Int, Int> {
  *
  * If `a == b`, then the result is `a`.
  */
-inline fun cl0(a: Float, b: Float): Float {
-    return if (abs(a) <= abs(b)) {
-        a
-    } else {
-        b
-    }
-}
+@kotlin.internal.InlineOnly
+inline fun cl0(a: Float, b: Float) = if (abs(a) <= abs(b)) a else b
 
 /**
  * Returns the value closer to one.
@@ -231,13 +231,8 @@ inline fun cl0(a: Float, b: Float): Float {
  *
  * If `a == b`, then the result is `a`.
  */
-inline fun cl1(a: Float, b: Float): Float {
-    return if (abs(a - 1f) <= abs(b - 1f)) {
-        a
-    } else {
-        b
-    }
-}
+@kotlin.internal.InlineOnly
+inline fun cl1(a: Float, b: Float) = if (abs(a - 1f) <= abs(b - 1f)) a else b
 
 /**
  * Returns the minimum value among three given ints.
@@ -247,12 +242,15 @@ inline fun cl1(a: Float, b: Float): Float {
  * @param c the third value
  * @return the minimum value among a, b, and c
  */
-inline fun min(a: Int, b: Int, c: Int): Int = min(min(a, b), c)
+@kotlin.internal.InlineOnly
+inline fun min3(a: Int, b: Int, c: Int): Int = min(min(a, b), c)
 
 /** convert the given float into an array of 4 floats for radii. */
+@kotlin.internal.InlineOnly
 inline fun Number.radii() = floatArrayOf(this.toFloat(), this.toFloat(), this.toFloat(), this.toFloat())
 
 /** convert the given floats into an array of 4 floats for radii. */
+@kotlin.internal.InlineOnly
 inline fun radii(topLeft: Float, topRight: Float, bottomLeft: Float, bottomRight: Float) = floatArrayOf(topLeft, topRight, bottomLeft, bottomRight)
 
 /** print the object to stdout, then return it. */
@@ -263,11 +261,22 @@ inline fun <T> T.stdout(arg: Any? = null): T {
     return this
 }
 
+@kotlin.internal.InlineOnly
+inline fun Any?.identityHashCode() = System.identityHashCode(this)
+
+/**
+ * Return true if the Collection is empty or null.
+ */
+@kotlin.internal.InlineOnly
+inline fun Collection<*>?.isEmpty() = this?.isEmpty() ?: true
+
 fun Short.fromModifierMerged(): Array<KeyModifiers> = KeyModifiers.fromModifierMerged(this)
 
-fun Short.hasModifier(mod: Modifiers): Boolean = this and mod.value != 0.toShort()
+@kotlin.internal.InlineOnly
+inline fun Short.hasModifier(mod: Modifiers): Boolean = this and mod.value != 0.toShort()
 
-fun Array<out KeyModifiers>.merge(): Short = KeyModifiers.merge(*this)
+@kotlin.internal.InlineOnly
+inline fun Array<out KeyModifiers>.merge(): Short = KeyModifiers.merge(*this)
 
 // strutils.kt
 
@@ -290,17 +299,6 @@ fun StringBuilder.append(c: CharSequence, repeats: Int): StringBuilder {
     return this
 }
 
-fun String.dropAt(index: Int = lastIndex, amount: Int = 1): String {
-    if (index - amount == 0) return ""
-    if (index - amount < 0) return this
-    return substring(0, index - amount) + substring(index)
-}
-
-/** safe [substring] function.
- * - if [fromIndex] is negative, it will be set to 0
- * - if [toIndex] is greater than the length of the string, or negative, it will be set to the length of the string
- * - if [fromIndex] is greater than [toIndex], they will be swapped, then substring'd as normal
- */
 fun String.substringSafe(fromIndex: Int, toIndex: Int = lastIndex): String {
     if (fromIndex > toIndex) {
         return substringSafe(toIndex, fromIndex)
@@ -312,6 +310,12 @@ fun String.substringSafe(fromIndex: Int, toIndex: Int = lastIndex): String {
         return substringSafe(fromIndex, length)
     }
     return substring(fromIndex, toIndex)
+}
+
+fun String.dropAt(index: Int = lastIndex, amount: Int = 1): String {
+    if (index - amount == 0) return ""
+    if (index - amount < 0) return this
+    return substring(0, index - amount) + substring(index)
 }
 
 /**
@@ -398,7 +402,7 @@ fun String.levenshteinDistance(other: String): Int {
             if (this[i - 1] == other[j - 1]) {
                 d[i][j] = d[i - 1][j - 1]
             } else {
-                d[i][j] = min(
+                d[i][j] = min3(
                     d[i - 1][j] + 1, // deletion
                     d[i][j - 1] + 1, // insertion
                     d[i - 1][j - 1] + 1, // substitution
@@ -411,28 +415,35 @@ fun String.levenshteinDistance(other: String): Int {
 }
 
 /**
- * Wrap the given text to the given width, returning a list of lines.
+ * Wrap the given text to the given width, inserting them into [lines], or a new list is created if it is null. It also returned.
  */
 fun String.wrap(
     maxWidth: Float,
     renderer: Renderer,
     font: Font,
     fontSize: Float,
-): ArrayList<String> {
-    if (maxWidth == 0f) return arrayListOf(this)
-    val words = split(" ").asArrayList()
-    if (words.size == 0) return arrayListOf("")
-    val lines = arrayListOf<String>()
+    lines: LinkedList<String>?,
+): LinkedList<String> {
+    val ls = lines ?: LinkedList()
+    ls.clear()
+    if (maxWidth == 0f) {
+        ls.add(this)
+        return ls
+    }
+    val words = split(" ")
+    if (words.isEmpty()) {
+        return ls
+    }
     var currentLine = StringBuilder()
 
-    words.fastEach { word ->
+    words.forEach { word ->
         val wordLength = renderer.textBounds(font, word, fontSize).width
 
         if (wordLength > maxWidth) {
             // ah. word is longer than the maximum wrap width
             if (currentLine.isNotEmpty()) {
                 // Finish current line and start a new one with the long word
-                lines.add(currentLine.toString())
+                ls.add(currentLine.toString())
                 currentLine.clear()
             }
 
@@ -440,7 +451,7 @@ fun String.wrap(
             var remainingWord = word
             while (remainingWord.isNotEmpty()) {
                 val chunk = remainingWord.substringToWidth(renderer, font, fontSize, maxWidth)
-                lines.add(chunk.first)
+                ls.add(chunk.first)
                 remainingWord = chunk.second
             }
         } else if (currentLine.isEmpty()) {
@@ -450,17 +461,17 @@ fun String.wrap(
             currentLine.append(' ').append(word)
         } else {
             // asm: word doesn't fit in current line, wrap it to the next line
-            lines.add(currentLine.append(" ").toString())
+            ls.add(currentLine.append(" ").toString())
             currentLine = currentLine.clear().append(word)
         }
     }
 
     // Add the last line
     if (currentLine.isNotEmpty()) {
-        lines.add(currentLine.toString())
+        ls.add(currentLine.toString())
     }
 
-    return lines
+    return ls
 }
 
 /**
@@ -489,4 +500,9 @@ fun String.closestToPoint(renderer: Renderer, font: Font, fontSize: Float, x: Fl
         prev = w
     }
     return -1
+}
+
+fun <T> Pair<T, T>.both(func: (T) -> Unit) {
+    func(first)
+    func(second)
 }

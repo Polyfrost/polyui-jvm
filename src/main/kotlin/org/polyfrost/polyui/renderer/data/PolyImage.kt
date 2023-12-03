@@ -22,23 +22,33 @@
 package org.polyfrost.polyui.renderer.data
 
 import org.polyfrost.polyui.PolyUI
+import org.polyfrost.polyui.unit.Vec2
 
 /**
  * Image representation in PolyUI. The image is lazily-loaded from the [resourcePath].
  * @param resourcePath the path to the [resource][org.polyfrost.polyui.utils.getResourceStream]
- * @param width the width of the image. Specify one to respect the aspect ratio of the image.
- * @param height the width of the image. Specify one to respect the aspect ratio of the image.
+ * @param size the size of the image. Specify one to respect the aspect ratio of the image.
  * @param type the [image type][Type]. This is automatically inferred from the file extension normally, but you can manually select it.
  */
 class PolyImage @JvmOverloads constructor(
     resourcePath: String,
-    var width: Float = -1f, // uninitialized
-    var height: Float = -1f,
+    size: Vec2? = null,
     val type: Type = from(resourcePath),
 ) : Resource(resourcePath) {
+    val size = size ?: Vec2(-1f, -1f)
+    inline var width: Float
+        get() = size.x
+        set(value) {
+            size.x = value
+        }
+    inline var height: Float
+        get() = size.y
+        set(value) {
+            size.y = value
+        }
 
     override fun toString(): String {
-        return "$type Image(file=$resourcePath, ${width}x$height)"
+        return "$type Image($resourcePath, $size)"
     }
 
     override fun hashCode(): Int {
@@ -106,14 +116,12 @@ class PolyImage @JvmOverloads constructor(
         @JvmOverloads
         fun getMaterialIcon(
             icon: String,
-            width: Float = -1f,
-            height: Float = -1f,
+            size: Vec2? = null,
             style: MaterialStyle = MaterialStyle.NORMAL,
         ) = PolyImage(
             "https://raw.githubusercontent.com/google/material-design-icons/master/src/" +
                 "${icon.replace('.', '/')}/${style.style}/24px.svg",
-            width,
-            height,
+            size,
             Type.Vector,
         )
     }

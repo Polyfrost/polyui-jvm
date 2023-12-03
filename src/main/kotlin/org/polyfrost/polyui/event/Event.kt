@@ -21,7 +21,6 @@
 
 package org.polyfrost.polyui.event
 
-import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
 
 /**
@@ -43,66 +42,31 @@ class EventDSL<S : Drawable>(private val self: S) {
 
     /** specify a handler for this event.
      *
-     * in the given [handler], you can perform things on this component, such as [Component.rotateBy], [Component.recolor], etc.
+     * in the given [handler], you can perform things on this component, such as recoloring and rotating
      *
      * Return true to consume the event. True by default.
      * @see then
      * @since 0.19.2
      * */
-    @Suppress("UNCHECKED_CAST")
+    // kotlin bug: resolution error means self.run {} has to be used
+    // target fix is set for 2.1.0
+    // https://youtrack.jetbrains.com/issue/KT-63581/
     @OverloadResolutionByLambdaReturnType
-    infix fun <E : Event> E.to(handler: S.(E) -> Boolean) {
-        self.eventHandlers[this] = handler as Drawable.(Event) -> Boolean
+    infix fun <E : Event> E.then(handler: S.(E) -> Boolean) = self.run {
+        addEventHandler(this@then, handler)
     }
 
     /** specify a handler for this event.
      *
-     * in the given [handler], you can perform things on this component, such as [Component.rotateBy], [Component.recolor], etc.
+     * in the given [handler], you can perform things on this component, such as recoloring and rotating.
      *
      * Return true to consume the event. True by default.
      * @see then
      * @since 0.19.2
      * */
     @JvmName("To")
-    @Suppress("UNCHECKED_CAST")
     @OverloadResolutionByLambdaReturnType
-    infix fun <E : Event> E.to(handler: S.(E) -> Unit) {
-        self.eventHandlers[this] = insertTrueInsn(handler) as Drawable.(Event) -> Boolean
-    }
-
-    /** specify a handler for this event.
-     *
-     * in the given [handler], you can perform things on this component, such as [Component.rotateBy], [Component.recolor], etc.
-     *
-     * Return true to consume the event. True by default.
-     * @see to
-     * @since 0.19.2
-     * */
-    @Suppress("UNCHECKED_CAST")
-    @OverloadResolutionByLambdaReturnType
-    infix fun <E : Event> E.then(handler: S.(E) -> Boolean) {
-        self.eventHandlers[this] = handler as Drawable.(Event) -> Boolean
-    }
-
-    /** specify a handler for this event.
-     *
-     * in the given [handler], you can perform things on this component, such as [Component.rotateBy], [Component.recolor], etc.
-     *
-     * Return true to consume the event. True by default.
-     * @see to
-     * @since 0.19.2
-     * */
-    @JvmName("Then")
-    @Suppress("UNCHECKED_CAST")
-    @OverloadResolutionByLambdaReturnType
-    infix fun <E : Event> E.then(handler: S.(E) -> Unit) {
-        self.eventHandlers[this] = insertTrueInsn(handler) as Drawable.(Event) -> Boolean
-    }
-
-    private fun <S : Drawable, E : Event> insertTrueInsn(action: (S.(E) -> Unit)): (S.(E) -> Boolean) {
-        return {
-            action(this, it)
-            true
-        }
+    infix fun <E : Event> E.then(handler: S.(E) -> Unit?) = self.run {
+        addEventHandler(this@then, handler)
     }
 }

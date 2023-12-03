@@ -116,14 +116,7 @@ data object MouseEntered : Event
 data object MouseExited : Event
 
 /**
- * acceptable by component and layout, when the mouse is moved on this drawable.
- *
- * This does not have any data attached from it so that it is not instanced every time the mouse moves. It can be accessed with [polyUI.mouseX][org.polyfrost.polyui.PolyUI.mouseX] and [polyUI.mouseY][org.polyfrost.polyui.PolyUI.mouseY].
- */
-data object MouseMoved : Event
-
-/**
- * Acceptable by component, this is dispatched when a component is [disabled][org.polyfrost.polyui.component.Component.disabled].
+ * Acceptable by component, this is dispatched when a component is [disabled][org.polyfrost.polyui.component.Drawable.enabled].
  *
  * Commonly, in this state a component cannot be interacted with and is grayed out.
  * @since 0.21.4
@@ -133,7 +126,7 @@ data object MouseMoved : Event
 data object Disabled : Event
 
 /**
- * Acceptable by component, this is dispatched when a component is [enabled][org.polyfrost.polyui.component.Component.disabled].
+ * Acceptable by component, this is dispatched when a component is [enabled][org.polyfrost.polyui.component.Drawable.enabled].
  *
  * @since 0.21.4
  * @see org.polyfrost.polyui.color.Colors.Palette.disabled
@@ -147,7 +140,7 @@ data object Enabled : Event
 data class MouseScrolled internal constructor(val amountX: Float, val amountY: Float, val mods: Short = 0) : Event {
     constructor() : this(0f, 0f)
 
-    override fun hashCode() = 0
+    override fun hashCode() = 893402779
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -155,14 +148,67 @@ data class MouseScrolled internal constructor(val amountX: Float, val amountY: F
     }
 }
 
+data class StateEvent internal constructor(val state: Boolean) : Event {
+    constructor() : this(false)
+    override fun hashCode() = 38294781
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        return other is StateEvent
+    }
+}
+
+data class NumberEvent internal constructor(val amount: Float) : Event {
+    constructor() : this(0f)
+    override fun hashCode() = 57328903
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        return other is NumberEvent
+    }
+}
+
+data class TextEvent internal constructor(val text: String) : Event {
+    constructor() : this("")
+    override fun hashCode() = 859347809
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        return other is TextEvent
+    }
+}
+
+data class RadioEvent internal constructor(val index: Int) : Event {
+    constructor() : this(0)
+    override fun hashCode() = 684922789
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        return other is RadioEvent
+    }
+}
+
 /**
- * This event is dispatched when a component/layout is added **after** it has been initialized (i.e. not in the UI creation block), using the [addComponent][org.polyfrost.polyui.layout.Layout.add] function.
+ * This event is dispatched when a component/layout is added **after** it has been initialized (i.e. not in the UI creation block), using the [addChild][org.polyfrost.polyui.component.Drawable.addChild] function.
  *
  * acceptable by component and layout. */
 object Added : Event
 
 /**
- * This event is dispatched when a component/layout is removed, using the [removeComponent][org.polyfrost.polyui.layout.Layout.remove] function.
+ * This event is dispatched when a component/layout is removed, using the [removeChild][org.polyfrost.polyui.component.Drawable.removeChild] function.
  *
  * acceptable by component and layout. */
 object Removed : Event
+
+interface InitEvent : Event
+
+/**
+ * This event is called just before positioning. The drawable will have access to its color, polyUI and renderer.
+ */
+object Initialization : InitEvent
+
+/**
+ * This event is posted after initialization is complete.
+ */
+object PostInitialization : InitEvent
+
+const val INPUT_DISABLED: Byte = -1
+const val INPUT_NONE: Byte = 0
+const val INPUT_HOVERED: Byte = 1
+const val INPUT_PRESSED: Byte = 2

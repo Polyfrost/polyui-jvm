@@ -19,26 +19,27 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.polyfrost.polyui.animate
+package org.polyfrost.polyui.operations
 
-import org.polyfrost.polyui.PolyUI
+import org.polyfrost.polyui.animate.Animation
 import org.polyfrost.polyui.color.Color
-import org.polyfrost.polyui.component.Component
-import org.polyfrost.polyui.unit.Unit
+import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.component.animateBy
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.unit.seconds
+import org.polyfrost.polyui.utils.LinkedList
+import org.polyfrost.polyui.utils.sortBy
 
 /**
  * # KeyFrames
  *
  * Keyframes are an easy way to create animations on components. PolyUI uses a [Kotlin DSL](https://kotlinlang.org/docs/type-safe-builders.html) to create them in an easy and concise way.
  *
- * They can be created wherever a [Component] is in scope, so everything from [events][org.polyfrost.polyui.event.Event]
+ * They can be created wherever a [Drawable] is in scope, so everything from [events][org.polyfrost.polyui.event.Event]
  * for [mouse clicks][org.polyfrost.polyui.event.MouseClicked]; to in your initialization block; using the extension function [keyframed].
  *
  * Each keyframe can be added using a number between 0 (representing the start or 0%) to 100, representing the end or 100%.
- * Each keyframe can control the color, rotation, position, skew and size of the component (using this [function][org.polyfrost.polyui.component.Component.animateTo]).
- * They support different animation curves and durations using the parameters [overNanos] and [animation].
+ * Each keyframe can control the color, rotation, position, skew and size of the component (using this [function][org.polyfrost.polyui.component.animateTo]).
+ * They support different animation curves and durations using the [animation] parameter.
  *
  * The syntax is as follows:
  * ```
@@ -58,79 +59,65 @@ import org.polyfrost.polyui.unit.seconds
  * }
  * ```
  *
- * @param overNanos duration in nanoseconds of this keyframe set (how long it takes to finish)
  * @param animation the animation curve to use for each keyframe movement
- * @param component the component to apply to.
+ * @param self the component to apply to.
  */
 @KeyFrameDSL
-class KeyFrames @JvmOverloads constructor(private val overNanos: Long, private val animation: Animations = Animation.Type.Linear, val component: Component) {
-    private var time = 0L
-    private val keyframes = ArrayList<KeyFrame>()
+class KeyFrames<T : Drawable>(self: T, animation: Animation) : DrawableOp.Animatable<T>(self, animation) {
+    private val keyframes = LinkedList<KeyFrame>()
     private var i = 0
     private inline val next get() = keyframes.getOrNull(i)
 
-    operator fun Number.invoke(frame: (@KeyFrameDSL KeyFrame).() -> kotlin.Unit) {
+    operator fun Number.invoke(frame: (@KeyFrameDSL KeyFrame).() -> Unit) {
         val percent = this.toFloat()
         require(percent in 0f..100f) { "Keyframe number must be between 0 and 100%!" }
-        val last: Long
-        val t = percentToTime(percent)
-        val f = KeyFrame(t, keyframes.lastOrNull().also { last = it?.time ?: 0L })
-        if (last > t) {
-            PolyUI.LOGGER.warn(
-                "Keyframe ordering incorrect: Keyframe at {} is placed after {}, please swap these frames.",
-                last,
-                t,
-            )
-        }
+        val f = KeyFrame(percent / 100f, keyframes.lastOrNull())
         frame(f)
         keyframes.add(f)
     }
 
-    fun at(percent: Float, frame: (@KeyFrameDSL KeyFrame).() -> kotlin.Unit) {
+    fun at(percent: Float, frame: (@KeyFrameDSL KeyFrame).() -> Unit) {
         percent { frame() }
     }
 
-    fun frame(percent: Float, frame: (@KeyFrameDSL KeyFrame).() -> kotlin.Unit) {
+    fun frame(percent: Float, frame: (@KeyFrameDSL KeyFrame).() -> Unit) {
         percent { frame() }
     }
 
-    private fun percentToTime(percent: Float) = (overNanos.toFloat() * (percent / 100f)).toLong()
+    private fun percentToTime(percent: Float) = (animation!!.durationNanos.toFloat() * (percent / 100f)).toLong()
 
-    /**
-     * Setup this keyframe instance. This method will sort the keyframes so they
-     */
-    fun setup() {
-        keyframes.sortBy { it.time }
+    fun begin() {
+        keyframes.sortBy { it.start }
+        add()
     }
 
-    fun update(deltaTimeNanos: Long): Boolean {
-        time += deltaTimeNanos
-        val n = next ?: return true
-        if (time >= n.time) {
+    override fun apply(value: Float) {
+        val n = next ?: return
+        if (value >= n.start) {
             i++
-            val nn = next ?: return true
-            component.animateTo(
+            val nn = next ?: return
+            self.animateBy(
                 nn.position, nn.size,
                 nn.rotation,
                 nn.scaleX, nn.scaleY,
                 nn.skewX, nn.skewY,
-                animation, nn.time - n.time,
+                nn.color,
+                // todo test animation stuff
+                animation,
             )
-            if (nn.color != null) component.recolor(nn.color!!, animation, nn.time - n.time)
         }
-        return false
     }
 }
 
 @KeyFrameDSL
-class KeyFrame(val time: Long, prev: KeyFrame?) {
+class KeyFrame(val start: Float, prev: KeyFrame?) {
     var rotation: Double = prev?.rotation ?: 0.0
-    var position: Vec2<Unit>? = prev?.position
+    var position: Vec2? = prev?.position
     var scaleX: Float = prev?.scaleX ?: 1f
     var scaleY: Float = prev?.scaleY ?: 1f
     var skewX: Double = prev?.skewX ?: 0.0
     var skewY: Double = prev?.skewY ?: 0.0
-    var size: Vec2<Unit>? = prev?.size
+    var size: Vec2? = prev?.size
     var color: Color? = prev?.color
 
     override fun toString() = "KeyFrame(toRotate $rotation, skews $skewX+$skewY, scales $scaleX+$scaleY, to $position, toSize $size, toColor $color)"
@@ -145,27 +132,12 @@ annotation class KeyFrameDSL
  *
  * # [click here][KeyFrames]
  */
-@JvmOverloads
 @KeyFrameDSL
-fun Component.keyframed(
-    durationNanos: Long = 1L.seconds,
-    animation: Animations = Animation.Type.Linear,
-    frames: KeyFrames.() -> kotlin.Unit,
+fun <S : Drawable> S.keyframed(
+    animation: Animation,
+    frames: KeyFrames<S>.() -> Unit,
 ) {
-    val k = KeyFrames(durationNanos, animation, this)
+    val k = KeyFrames(this, animation)
     k.apply(frames)
-    k.setup()
-    this.addKeyframes(k)
+    k.begin()
 }
-
-/** create a keyframe set for this component.
- *
- * # [click here][KeyFrames]
- */
-@JvmOverloads
-@KeyFrameDSL
-fun Component.keyframes(
-    durationNanos: Long = 1L.seconds,
-    animation: Animations = Animation.Type.Linear,
-    frames: KeyFrames.() -> kotlin.Unit,
-) = keyframed(durationNanos, animation, frames)

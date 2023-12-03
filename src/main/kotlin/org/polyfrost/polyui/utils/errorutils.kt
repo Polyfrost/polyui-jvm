@@ -19,41 +19,20 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.polyfrost.polyui.unit
+package org.polyfrost.polyui.utils
 
-enum class SlideDirection {
-    FromLeft, FromRight, FromTop, FromBottom
-}
+import org.polyfrost.polyui.component.Drawable
 
-/** enum representing the type of animation to be used. */
-sealed class Transitions {
-    data object Fade : Transitions()
-    data class Slide(val direction: SlideDirection) : Transitions()
-}
-
-enum class TextAlign {
-    Left, Right, Center
-}
-
-enum class Direction {
-    Horizontal, Vertical
-}
-
-enum class Side {
-    Left, Right
-}
-
-/**
- * Represents a fixed-size gap between rows or columns, used in flex and grid layouts.
- *
- * @see [org.polyfrost.polyui.layout.impl.FlexLayout]
- * @see [org.polyfrost.polyui.layout.impl.GridLayout]
- */
-data class Gap(val mainGap: Unit.Pixel, val crossGap: Unit.Pixel) {
-
-    companion object {
-        @JvmField
-        @Transient
-        val Default = Gap(5.px, 5.px)
+fun printInfo(target: Drawable) {
+    var c: Drawable? = target.parent
+    var i = 0
+    val sb = StringBuilder().append("Tree for $target:\n")
+    while (c != null) {
+        sb.append("\t", i).append(c.toString()).append('\n')
+        c = c.parent
+        i++
     }
+    i++
+    sb.append("\t", i).append(target.polyUI.toString())
+    println(sb.toString())
 }

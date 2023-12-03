@@ -19,11 +19,29 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.polyfrost.polyui.property
+package org.polyfrost.polyui.unit
+
 
 /**
+ * @param main the main axis, for example the X axis in a [Mode.Horizontal] autolayout.
+ * @param cross the cross axis, for example the Y axis in a [Mode.Horizontal] autolayout.
+ * @param mode the mode for the autolayout. Horizontal fills from left to right, and Vertical fills from top to bottom.
+ */
+class Align(val main: Main = Main.Center, val cross: Cross = Cross.Middle, val mode: Mode = Mode.Horizontal, val padding: Vec2 = Vec2(6f, 2f)) {
+    enum class Main {
+        Left, Center, Right, Spread
+    }
+    enum class Cross {
+        Top, Middle, Bottom
+    }
+    enum class Mode {
+        Horizontal, Vertical
+    }
+}
+
+// todo implement state again
+/**
  * Enum to represent the three states a stated component can have in PolyUI.
- * @see org.polyfrost.polyui.property.impl.StateBlockProperties
  * @see org.polyfrost.polyui.color.Colors.State
  * @since 0.17.2
  */

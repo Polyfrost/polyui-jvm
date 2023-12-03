@@ -272,15 +272,16 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
          * recolor this color to the target color, with the given animation type and duration.
          *
          * **make sure to check if the color is a gradient, as this method may not have the expected result!**
-         * @param type animation type. if it is null, the color will be set to the target color immediately.
+         * @param animation animation to use. if it is null, the color will be set to the target color immediately.
          * @see [Gradient]
          */
-        open fun recolor(target: Color, type: Animation.Type? = null, durationNanos: Long = 1L.seconds) {
+        open fun recolor(target: Color, animation: Animation? = null) {
+            // todo fix the wierd bug where it colors wrong sometimes
             if (target == this) return
             // clear old animation
-            animation = null
-            if (type != null) {
-                this.animation = type.create(durationNanos, 0f, 1f)
+            this.animation = null
+            if (animation != null) {
+                this.animation = animation
                 from = floatArrayOf(
                     this.r.toFloat(),
                     this.g.toFloat(),
@@ -288,7 +289,7 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
                     this.alpha,
                 )
                 val from = this.from!!
-                current = from.clone()
+                current = FloatArray(4)
                 to = floatArrayOf(
                     target.r.toFloat() - from[0],
                     target.g.toFloat() - from[1],
@@ -417,10 +418,10 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
          * [Animated.recolor] this gradient color.
          * @param whichColor which color to recolor. 0 for the first color, 1 for the second color.
          */
-        fun recolor(whichColor: Int, target: Color, type: Animation.Type? = null, durationNanos: Long = 1L.seconds) {
+        fun recolor(whichColor: Int, target: Color, animation: Animation? = null) {
             when (whichColor) {
-                0 -> color1.recolor(target, type, durationNanos)
-                1 -> super.recolor(target, type, durationNanos)
+                0 -> color1.recolor(target, animation)
+                1 -> super.recolor(target, animation)
                 else -> throw IllegalArgumentException("Invalid color index")
             }
         }
@@ -431,14 +432,14 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
         }
 
         /**
-         * Deprecated, see [Component.recolor][org.polyfrost.polyui.component.Component.recolor] for how to animate gradients.
+         * Deprecated, see [Component.recolor][org.polyfrost.polyui.operations.Recolor] for how to animate gradients.
          */
         @Deprecated(
             "Gradient colors cannot be animated in this way. They can be animated separately using the given method.",
             ReplaceWith("recolor(0, target, type, durationNanos)"),
             DeprecationLevel.ERROR,
         )
-        override fun recolor(target: Color, type: Animation.Type?, durationNanos: Long) {
+        override fun recolor(target: Color, animation: Animation?) {
             // nop
         }
     }
@@ -472,7 +473,7 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
         private var time: Long = ((initialHue % 360f) * speedNanos.toFloat()).toLong()
 
         @Deprecated("Chroma colors cannot be animated.", level = DeprecationLevel.ERROR)
-        override fun recolor(target: Color, type: Animation.Type?, durationNanos: Long) {
+        override fun recolor(target: Color, animation: Animation?) {
             // nop
         }
 

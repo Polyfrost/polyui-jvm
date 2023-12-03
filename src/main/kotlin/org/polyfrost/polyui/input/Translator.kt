@@ -23,7 +23,6 @@ package org.polyfrost.polyui.input
 
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.layout.Layout
 import org.polyfrost.polyui.property.Settings
 import org.polyfrost.polyui.utils.getResourceStreamNullable
 import java.text.MessageFormat
@@ -55,6 +54,7 @@ import kotlin.collections.ArrayDeque
  *
  *  @see MessageFormat
  */
+// todo reimplement this
 class Translator(private val settings: Settings, private val translationDir: String) {
     private var resourcePath: String = if (System.getProperty("polyui.locale") != null) {
         "$translationDir/${System.getProperty("polyui.locale")}.lang"
@@ -63,11 +63,11 @@ class Translator(private val settings: Settings, private val translationDir: Str
     }
     private val map = HashMap<String, String>()
     private val queue = ArrayDeque<String>()
-    var master: Layout? = null
-        set(value) {
-            if (value == null) return
-            field = value
-        }
+//    var master: Layout? = null
+//        set(value) {
+//            if (value == null) return
+//            field = value
+//        }
 
     /**
      * Set to true to disable warnings when a translation is not found.
@@ -88,7 +88,7 @@ class Translator(private val settings: Settings, private val translationDir: Str
     fun setLocale(locale: String) {
         resourcePath = "$translationDir/$locale.lang"
         map.clear()
-        master?.reset() ?: PolyUI.LOGGER.warn("no loaded layout for translator, not resetting!")
+//        master?.reset() ?: PolyUI.LOGGER.warn("no loaded layout for translator, not resetting!")
     }
 
     /**

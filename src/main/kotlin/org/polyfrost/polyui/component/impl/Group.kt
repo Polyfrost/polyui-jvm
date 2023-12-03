@@ -21,34 +21,22 @@
 
 package org.polyfrost.polyui.component.impl
 
-import org.polyfrost.polyui.property.impl.CheckboxProperties
-import org.polyfrost.polyui.unit.Point
-import org.polyfrost.polyui.unit.Size
-import org.polyfrost.polyui.unit.Unit
+import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.unit.Align
+import org.polyfrost.polyui.unit.AlignDefault
+import org.polyfrost.polyui.unit.Vec2
 
 /**
- * A simple checkbox component, which can be checked or unchecked.
- * @since 0.19.3
+ * A drawable that contains other drawables, and does not render anything itself.
  */
-@Suppress("UNCHECKED_CAST")
-open class Checkbox(
-    properties: CheckboxProperties? = null,
-    at: Point<Unit>,
-    size: Size<Unit>,
-    enabled: Boolean = false,
-    onCheck: (Checkbox.(Boolean) -> kotlin.Unit)? = null,
-) : StateBlock(properties, at, size, defaultState = enabled, onStateChange = onCheck as (StateBlock.(Boolean) -> kotlin.Unit)?) {
-    override val properties
-        get() = super.properties as CheckboxProperties
-
-    inline var checked: Boolean
-        get() = active
-        set(value) {
-            active = value
-        }
-
-    override fun render() {
-        super.render()
-        properties.renderCheck(this)
-    }
+class Group(
+    at: Vec2? = null,
+    alignment: Align = AlignDefault,
+    size: Vec2? = null,
+    visibleSize: Vec2? = null,
+    vararg children: Drawable?,
+) : Drawable(at, alignment, size, visibleSize, children = children) {
+    override val consumesHover: Boolean
+        get() = false
+    override fun render() {}
 }

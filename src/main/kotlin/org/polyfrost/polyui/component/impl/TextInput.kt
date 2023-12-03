@@ -22,53 +22,49 @@
 package org.polyfrost.polyui.component.impl
 
 import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.animate.Animation
-import org.polyfrost.polyui.color.Color
-import org.polyfrost.polyui.color.Colors
-import org.polyfrost.polyui.component.Component
+import org.polyfrost.polyui.color.PolyColor
+import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.Focusable
 import org.polyfrost.polyui.event.*
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
-import org.polyfrost.polyui.input.PolyText
-import org.polyfrost.polyui.input.Translator.Companion.localised
-import org.polyfrost.polyui.property.impl.TextInputProperties
-import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.Cursor
-import org.polyfrost.polyui.renderer.data.Line
-import org.polyfrost.polyui.renderer.data.PolyImage
-import org.polyfrost.polyui.unit.*
-import org.polyfrost.polyui.unit.Unit
+import org.polyfrost.polyui.renderer.data.Font
+import org.polyfrost.polyui.unit.Align
+import org.polyfrost.polyui.unit.AlignDefault
+import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.*
 
-@Suppress("UNCHECKED_CAST")
-open class TextInput(
-    properties: TextInputProperties? = null,
-    at: Vec2<Unit>,
-    size: Vec2<Unit>,
-    val placeholder: PolyText = "polyui.textinput.placeholder".localised(),
-    private val image: PolyImage? = null,
-    private val title: PolyText? = null,
-    private val hint: PolyText? = null,
-    private val initialText: PolyText? = null,
-    private val fontSize: Unit = 12.px,
-    events: EventDSL<TextInput>.() -> kotlin.Unit = {},
-) : Component(properties, at, size, false, true, events as EventDSL<Component>.() -> kotlin.Unit), Focusable {
-    override val properties: TextInputProperties
-        get() = super.properties as TextInputProperties
+class TextInput(
+    text: String = "Write something...",
+    font: Font = PolyUI.defaultFonts.regular,
+    fontSize: Float = 12f,
+    at: Vec2? = null,
+    alignment: Align = AlignDefault,
+    size: Vec2? = null,
+    wrap: Float = 120f,
+    vararg children: Drawable?,
+) : Text(text, font, fontSize, at, alignment, size, wrap, *children), Focusable {
+    @Transient
+    private val linesData = LinkedList<Float>()
 
     @Transient
-    lateinit var text: Text
-    var txt
-        inline get() = text.string
-        set(value) {
-            text.string = value
-            errored = !properties.sanitizationFunction.invoke(value)
-            if (!errored) {
-                lastValid = value
-                accept(ChangedEvent(value))
-            }
-        }
+    private val selectBoxes = LinkedList<Pair<Pair<Float, Float>, Pair<Float, Float>>>()
+
+    // todo the old error stuff?
+
+    @Transient
+    var focused = false
+        private set
+
+    @Transient
+    private val caretColor = PolyColor.WHITE
+
+    @Transient
+    private var cposx = 0f
+
+    @Transient
+    private var cposy = 0f
 
     @Transient
     private var caret = 0
@@ -78,117 +74,30 @@ open class TextInput(
         }
 
     @Transient
-    private val selectBoxes = ArrayList<Pair<Pair<Float, Float>, Pair<Float, Float>>>(5)
-
-    @Transient
-    private var select: Int = 0
-
-    @Transient
-    var focused = false
-        private set
-
-    @Transient
-    private var cposx = 0f
-
-    @Transient
-    private var cposy = 0f
-
-    @Transient
-    private var mouseDown = false
+    private var select = 0
 
     @Transient
     private var selecting = false
 
-    @Transient
-    private lateinit var outlineColor: Color
+    val selection get() = text.substringSafe(caret, select)
 
-    @Transient
-    private var outlineThickness = 0f
-
-    @Transient
-    private var titlex = 0f
-
-    @Transient
-    private var titlew = 0f
-
-    @Transient
-    private var hintx = 0f
-
-    @Transient
-    private var hintw = 0f
-
-    @Transient
-    private lateinit var caretColor: Color
-
-    @Transient
-    private var caretAnim: Animation? = null
-
-    @Transient
-    private val iconAt = origin
-
-    val selection get() = txt.substringSafe(caret, select)
-
-    /**
-     * represents if [TextInputProperties.sanitizationFunction] returned false (text no good)
-     * @since 0.22.0
-     */
-    @Transient
-    var errored = false
-        private set(value) {
-            if (field == value) return
-            field = value
-            if (value) {
-                outlineColor = properties.colors.state.danger.normal
-                if (properties.outlineThickness.px == 0f) outlineThickness = 2f
-            } else {
-                outlineColor = properties.outlineColor
-                outlineThickness = properties.outlineThickness.px
-            }
-        }
-
-    @Transient
-    var lastValid: String = ""
-
-    override fun preRender(deltaTimeNanos: Long) {
-        super.preRender(deltaTimeNanos)
-        caretAnim?.update(deltaTimeNanos)
+    init {
+        acceptsInput = true
     }
 
     override fun render() {
-        if (!mouseOver) mouseDown = false
-        renderer.rect(x, y, width, height, properties.palette.normal, properties.cornerRadii)
-        if (title != null) {
-            renderer.text(text.font, titlex, text.y, title.string, text.color, text.fontSize)
-        }
-        if (image != null) {
-            renderer.image(image, iconAt.x, iconAt.y, image.width, image.height)
-        }
         if (focused) {
-            text.color.alpha = 1f
-            caretAnim?.let {
-                caretColor.alpha = it.value
-            }
-            renderer.rect(cposx, cposy, 2f, text.fontSize, caretColor)
+            alpha = 1f
+            renderer.rect(cposx, cposy, 2f, fontSize, caretColor)
             selectBoxes.fastEach {
                 val (x, y) = it.first
                 val (w, h) = it.second
-                renderer.rect(x, y, w, h, layout.colors.page.border20)
+                renderer.rect(x, y, w, h, polyUI.colors.page.border20)
             }
         } else {
-            text.color.alpha = 0.8f
+            alpha = 0.8f
         }
-        if (txt.isNotEmpty()) {
-            text.render()
-        } else {
-            renderer.text(text.font, text.x, text.y, placeholder.string, properties.placeholderColor, text.fontSize)
-        }
-        if (hint != null) {
-            renderer.rect(hintx - properties.lateralPadding.px, y, hintw + properties.lateralPadding.px * 2f, height, properties.palette.hovered, 0f, properties.cornerRadii[1], 0f, properties.cornerRadii[3])
-            renderer.text(text.font, hintx, text.y, hint.string, properties.placeholderColor, text.fontSize)
-        }
-        if (outlineThickness != 0f) {
-            renderer.hollowRect(x, y, width, height, outlineColor, outlineThickness, properties.cornerRadii)
-        }
+        super.render()
     }
 
     override fun accept(event: Event): Boolean {
@@ -198,68 +107,41 @@ open class TextInput(
         if (event is MouseExited) {
             polyUI.cursor = Cursor.Pointer
         }
-        if (event is MousePressed) {
-            mouseDown = true
-            return true
-        }
-        if (event is MouseReleased) {
-            mouseDown = false
-            return true
-        }
         if (event is MouseClicked) {
             clearSelection()
             if (event.clicks == 1) {
-                posFromMouse(event.mouseX, event.mouseY)
+                caretFromMouse(event.mouseX, event.mouseY)
                 return true
             } else if (event.clicks == 2) {
                 selectWordAroundCaret()
                 return true
             }
         }
-        if (event is MouseMoved) {
-            if (mouseDown) {
-                if (!polyUI.mouseDown) {
-                    selecting = false
-                    mouseDown = false
-                } else {
-                    mouseInput(polyUI.mouseX, polyUI.mouseY)
-                }
-            }
-        }
-        wantRedraw()
-        return super<Component>.accept(event)
+        return super<Text>.accept(event)
     }
 
     override fun accept(event: FocusedEvent): Boolean {
         if (event is FocusedEvent.Gained) {
-            return if (!focused) {
-                focused = true
-                true
-            } else {
-                false
-            }
+            focused = true
+            caretPos()
         }
         if (event is FocusedEvent.Lost) {
             clearSelection()
-            if (errored) {
-                txt = lastValid
-                caret = txt.length
-            }
             focused = false
         }
         if (event is FocusedEvent.KeyTyped) {
             if (event.mods < 2) {
                 if (caret != select) {
-                    txt = txt.replace(selection, "")
+                    text = text.replace(selection, "")
                     caret = if (select > caret) caret else select
                     clearSelection()
                 }
-                txt = txt.substring(0, caret) + event.key + txt.substring(caret)
+                text = text.substring(0, caret) + event.key + text.substring(caret)
                 caret++
             } else if (event.hasModifier(KeyModifiers.LCONTROL) || event.hasModifier(KeyModifiers.RCONTROL)) {
                 when (event.key) {
                     'V' -> {
-                        txt = txt.substring(0, caret) + (polyUI.clipboard ?: "") + txt.substring(caret)
+                        text = text.substring(0, caret) + (polyUI.clipboard ?: "") + text.substring(caret)
                         caret += polyUI.clipboard?.length ?: 0
                         clearSelection()
                     }
@@ -272,12 +154,12 @@ open class TextInput(
 
                     'X' -> {
                         polyUI.clipboard = null
-                        txt = txt.replace(selection, "")
+                        text = text.replace(selection, "")
                         clearSelection()
                     }
 
                     'A' -> {
-                        caret = txt.lastIndex + 1
+                        caret = text.lastIndex + 1
                         select = 0
                     }
                 }
@@ -298,11 +180,11 @@ open class TextInput(
                             f = select
                             t = caret
                         }
-                        txt = txt.substring(0, f) + txt.substring(t)
+                        text = text.substring(0, f) + text.substring(t)
                         caret = f
                         clearSelection()
                     } else if (!hasControl) {
-                        txt = txt.dropAt(caret, 1)
+                        text = text.dropAt(caret, 1)
                         if (caret != 0) caret--
                     } else {
                         dropToLastSpace()
@@ -310,12 +192,12 @@ open class TextInput(
                 }
 
                 Keys.TAB -> {
-                    txt += "    "
+                    text += "    "
                 }
 
                 Keys.DELETE -> {
-                    if (caret + 1 > txt.length) return true
-                    txt = txt.dropAt(caret + 1, 1)
+                    if (caret + 1 > text.length) return true
+                    text = text.dropAt(caret + 1, 1)
                 }
 
                 Keys.LEFT -> {
@@ -355,36 +237,36 @@ open class TextInput(
         }
         caretPos()
         selections()
-        wantRedraw()
-        return eventHandlers[event]?.let { it(this, event) } ?: false
+        return false
     }
 
-    fun caretPos() {
-        val (line, idx, lni) = text.getLineByIndex(caret)
+    private fun caretPos() {
+        val (line, idx, lni) = getLineByIndex(caret)
         cposx = renderer.textBounds(
-            properties.text.font,
-            line.text.substring(0, idx),
-            text.str.fontSize,
-        ).width + text.x + text.str.textOffsetX
-        cposy = lni * text.str.fontSize + text.y + text.str.textOffsetY
+            font,
+            line.substring(0, idx),
+            fontSize,
+        ).width + x
+        cposy = lni * (fontSize + spacing) + y
     }
 
-    private fun mouseInput(mouseX: Float, mouseY: Float) {
+    // todo make this work at some point
+    fun mouseInput(mouseX: Float, mouseY: Float) {
         if (!selecting) {
-            posFromMouse(mouseX, mouseY)
+            caretFromMouse(mouseX, mouseY)
             select = caret
             selecting = true
         }
-        posFromMouse(mouseX, mouseY)
+        caretFromMouse(mouseX, mouseY)
         caretPos()
         selections()
     }
 
     fun selectWordAroundCaret() {
-        var start = txt.lastIndexOf(' ', caret - 1) + 1
-        var end = txt.indexOf(' ', caret)
+        var start = text.lastIndexOf(' ', caret - 1) + 1
+        var end = text.indexOf(' ', caret)
         if (start == -1) start = 0
-        if (end == -1) end = txt.length
+        if (end == -1) end = text.length
         selecting = true
         select = start
         caret = end
@@ -392,120 +274,58 @@ open class TextInput(
         caretPos()
     }
 
+    private fun getLineByIndex(index: Int): Triple<String, Int, Int> {
+        var i = 0
+        lines.fastEachIndexed { li, it ->
+            if (index < i + it.length) {
+                return Triple(it, index - i, li)
+            }
+            i += it.length
+        }
+        val l = lines.last()
+        return Triple(l, l.length, lines.lastIndex)
+    }
+
     private fun selections() {
         selectBoxes.clear()
         if (select == caret) return
-        val (sl, si, sli) = if (caret < select) text.getLineByIndex(caret) else text.getLineByIndex(select)
-        val (el, ei, eli) = if (caret < select) text.getLineByIndex(select) else text.getLineByIndex(caret)
+        val (sl, si, sli) = if (caret < select) getLineByIndex(caret) else getLineByIndex(select)
+        val (el, ei, eli) = if (caret < select) getLineByIndex(select) else getLineByIndex(caret)
         if (sl === el) {
             val endIndex = if (caret < select) select else caret
             val startIndex = if (caret < select) caret else select
-            line(sl, si, endIndex - startIndex + si, sli)
+            selection(sl, si, endIndex - startIndex + si, sli)
             return
         }
+        val lh = fontSize + spacing
         for (i in sli + 1 until eli) {
-            val line = text[i]
-            selectBoxes.add((text.x - 1f to text.y + (i.toFloat() * text.fontSize) + text.str.textOffsetY) to (line.width to line.height))
+            selectBoxes.add((x - 1f to y + (i.toFloat() * lh)) to (linesData[i] to lh))
         }
-        line(sl, si, sl.text.length, sli)
-        line(el, 0, ei, eli)
+        selection(sl, si, sl.length, sli)
+        selection(el, 0, ei, eli)
     }
 
-    private fun line(line: Line, startIndex: Int, endIndex: Int, lineIndex: Int) {
-        val start = renderer.textBounds(text.font, line.text.substring(0, startIndex), text.fontSize).a.px + text.str.textOffsetX
-        val width = renderer.textBounds(text.font, line.text.substring(startIndex, endIndex), text.fontSize).a.px
-        selectBoxes.add((text.x + start - 1f to text.y + (lineIndex * text.fontSize) + text.str.textOffsetY) to (width to line.height))
+    private fun selection(line: String, startIndex: Int, endIndex: Int, lineIndex: Int) {
+        val lh = fontSize + spacing
+        val start = renderer.textBounds(font, line.substring(0, startIndex), fontSize).x
+        val width = renderer.textBounds(font, line.substring(startIndex, endIndex), fontSize).x
+        selectBoxes.add((x + start - 1f to y + (lineIndex * lh)) to (width to lh))
     }
 
-    private fun posFromMouse(x: Float, y: Float) {
-        val mouseY = y - text.trueY - text.str.textOffsetY
-        val mouseX = x - text.trueX
-
-        var i = 0f
-        var idx = 0
-        var l: Line
-        if (text.lines.size == 1) {
-            l = text.lines[0]
-            if (mouseY > l.height) {
-                caret = l.text.length
-                caretPos()
-                return
-            }
-        } else {
-            run {
-                text.lines.fastEach {
-                    i += it.height
-                    if (mouseY < i) {
-                        l = it
-                        if (mouseY > i + it.height) {
-                            caret = idx + it.text.length
-                            caretPos()
-                            return
-                        }
-                        return@run
-                    } else {
-                        idx += it.text.length
-                    }
-                }
-                // best to be safe
-                l = text.lines.last()
-            }
-        }
-
-        caret = if (mouseX < 0) {
-            idx
-        } else if (mouseX > l.width) {
-            idx + l.text.length
-        } else {
-            val index = l.text.closestToPoint(renderer, properties.text.font, text.str.fontSize, mouseX)
-            if (index == -1) {
-                idx + l.text.length
-            } else {
-                idx + index
-            }
-        }
+    private fun caretFromMouse(mouseX: Float, mouseY: Float) {
+        val line = ((mouseY - y) / (fontSize + spacing)).toInt()
+        val p = lines[line].closestToPoint(renderer, font, fontSize, mouseX - x)
+        caret = if (p == -1) text.length else p
         caretPos()
     }
 
-    private fun moveLine(down: Boolean) {
-        val h = text.getLineByIndex(caret).first.height
-        posFromMouse(
-            text.trueX + (cposx - text.x),
-            text.trueY + (cposy - text.y) +
-                if (down) h else -h,
-        )
-        if (text.full) {
-            if (!down && text.str.textOffsetY >= 0f) return
-            if (down && text.str.textOffsetY <= -text.height) return
-            text.str.textOffsetY += if (down) -h else h
-            cposy += if (down) -h else h
-        }
-    }
-
-    override fun rescale(scaleX: Float, scaleY: Float) {
-        super.rescale(scaleX, scaleY)
-        text.rescale(scaleX, scaleY)
-        cposx *= scaleX
-        cposy *= scaleY
-        if (title != null) titlew = renderer.textBounds(text.font, title.string, text.fontSize).width
-        if (hint != null) hintw = renderer.textBounds(text.font, hint.string, text.fontSize).width
-        if (image != null) {
-            if (rawResize) {
-                image.width *= scaleX
-                image.height *= scaleY
-            } else {
-                val s = cl1(scaleX, scaleY)
-                image.width *= s
-                image.height *= s
-            }
-        }
-        calculateBounds()
-        selections()
+    fun moveLine(down: Boolean) {
+        caretFromMouse(cposx, cposy + if (down) spacing else -spacing)
     }
 
     fun toLastSpace() {
-        while (caret > 0 && txt[caret - 1] == ' ') caret--
-        txt.trimEnd().lastIndexOf(' ', caret - 1).let {
+        while (caret > 0 && text[caret - 1] == ' ') caret--
+        text.trimEnd().lastIndexOf(' ', caret - 1).let {
             if (selecting && select == caret) select = caret
             caret = if (it != -1) {
                 it
@@ -517,24 +337,24 @@ open class TextInput(
 
     fun dropToLastSpace() {
         val c = caret
-        txt.trimEnd().lastIndexOf(' ', caret).let {
+        text.trimEnd().lastIndexOf(' ', caret).let {
             caret = if (it != -1) {
                 it
             } else {
                 0
             }
         }
-        txt = txt.substring(0, caret) + txt.substring(c)
+        text = text.substring(0, caret) + text.substring(c)
     }
 
     fun toNextSpace() {
-        while (caret < txt.length - 1 && txt[caret] == ' ') caret++
-        txt.indexOf(' ', caret).let {
+        while (caret < text.length - 1 && text[caret] == ' ') caret++
+        text.indexOf(' ', caret).let {
             if (selecting && select == caret) select = caret
             caret = if (it != -1) {
                 it
             } else {
-                txt.length
+                text.length
             }
         }
     }
@@ -550,23 +370,10 @@ open class TextInput(
 
     fun forward() {
         if (selecting && select == caret) select = caret
-        caret = if (caret < txt.length - 1) {
+        caret = if (caret < text.length - 1) {
             caret + 1
         } else {
-            txt.length
-        }
-    }
-
-    override fun onColorsChanged(colors: Colors) {
-        super.onColorsChanged(colors)
-        text.onColorsChanged(colors)
-    }
-
-    override fun reset() {
-        if (initialText != null) {
-            text.reset()
-        } else {
-            txt = ""
+            text.length
         }
     }
 
@@ -576,86 +383,13 @@ open class TextInput(
         selectBoxes.clear()
     }
 
-    override fun setup(renderer: Renderer, polyUI: PolyUI) {
-        super.setup(renderer, polyUI)
-        (properties.outlineThickness as? Unit.Dynamic)?.set(this.size!!.a)
-        (properties.lateralPadding as? Unit.Dynamic)?.set(this.size!!.a)
-        (fontSize as? Unit.Dynamic)?.set((size ?: layout.size ?: throw IllegalArgumentException("cannot set dynamic font size when no size is set")).b)
-        initialText?.translator = polyUI.translator
-        placeholder.translator = polyUI.translator
-        hint?.translator = polyUI.translator
-        title?.translator = polyUI.translator
-        text = Text(
-            properties.text,
-            initialText ?: "".localised(),
-            at.clone(),
-            null,
-            properties.text.fontSize,
-            properties.text.alignment,
-            false,
-        )
-        outlineColor = properties.outlineColor
-        outlineThickness = properties.outlineThickness.px
-        text.layout = this.layout
-        text.setup(renderer, polyUI)
-        text.fontSize = fontSize.px
-        caretColor = properties.caretColor.toAnimatable()
-        caretAnim = properties.caretAnimation?.create(properties.caretAnimationDuration, 0f, 2f) {
-            this.reverse()
+    override fun calculateSize(): Vec2 {
+        val out = super.calculateSize()
+        linesData.clear()
+        lines.fastEach {
+            val size = renderer.textBounds(font, it, fontSize)
+            linesData.add(size.x)
         }
-        if (image != null) renderer.initImage(image)
-    }
-
-    override fun calculateBounds() {
-        text.calculateBounds()
-        text.x = this.x + properties.lateralPadding.px
-        if (title != null) {
-            titlex = this.x + properties.lateralPadding.px
-            text.x += titlew + properties.lateralPadding.px
-        }
-        if (image != null) {
-            iconAt.a.px = this.x + properties.lateralPadding.px
-            iconAt.b.px = this.y + this.height / 2f - image.height / 2f
-            titlex += image.width + properties.lateralPadding.px
-            text.x += image.width + properties.lateralPadding.px
-        }
-        if (hint != null) {
-            hintx = this.x + this.width - hintw - properties.lateralPadding.px
-        }
-        text.y = this.y + this.height / 2f - text.fontSize / 2f
-        super.calculateBounds()
-        caretPos()
-    }
-
-    override fun onInitComplete() {
-        super.onInitComplete()
-        text.width -= properties.lateralPadding.px * 2f
-        text.height -= properties.verticalPadding.px * 2f
-        if (image != null) {
-            text.width -= image.width + properties.lateralPadding.px
-        }
-        if (title != null) {
-            titlew = renderer.textBounds(text.font, title.string, text.fontSize).width
-            text.width -= titlew + properties.lateralPadding.px
-        }
-        if (hint != null) {
-            hintw = renderer.textBounds(text.font, hint.string, text.fontSize).width
-            text.width -= hintw + properties.lateralPadding.px
-        }
-        calculateBounds()
-    }
-
-    override fun calculateSize(): Vec2<Unit> {
-        return text.size!!.clone().also {
-            it.a.px += properties.lateralPadding.px * 2f
-            it.b.px += properties.verticalPadding.px * 2f
-        }
-    }
-    class ChangedEvent internal constructor(val value: String) : Event {
-        constructor() : this("")
-
-        override fun hashCode() = 578439257
-
-        override fun equals(other: Any?) = other is ChangedEvent
+        return out
     }
 }

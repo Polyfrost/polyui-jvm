@@ -24,15 +24,15 @@ package org.polyfrost.polyui.animate
 
 import kotlin.math.*
 
-class Linear(durationNanos: Long, start: Float, end: Float, onFinish: (Animation.() -> Unit)? = null) :
-    Animation(durationNanos, start, end, onFinish) {
+class Linear(durationNanos: Long, start: Float, end: Float) :
+    Animation(durationNanos, start, end) {
     override fun getValue(percent: Float) = percent
 
     override fun clone(): Animation = Linear(durationNanos, from, to)
 }
 
-abstract class Easing(val type: Type, durationNanos: Long, start: Float, end: Float, onFinish: (Animation.() -> Unit)? = null) :
-    Animation(durationNanos, start, end, onFinish) {
+abstract class Easing(val type: Type, durationNanos: Long, start: Float, end: Float) :
+    Animation(durationNanos, start, end) {
     abstract fun getValueInOut(percent: Float): Float
     abstract fun getValueIn(percent: Float): Float
     abstract fun getValueOut(percent: Float): Float
@@ -51,8 +51,8 @@ abstract class Easing(val type: Type, durationNanos: Long, start: Float, end: Fl
         InOut,
     }
 
-    class Back(type: Type, durationNanos: Long, start: Float, end: Float, onFinish: (Animation.() -> Unit)? = null) :
-        Easing(type, durationNanos, start, end, onFinish) {
+    class Back(type: Type, durationNanos: Long, start: Float, end: Float) :
+        Easing(type, durationNanos, start, end) {
         private inline val overshoot get() = 1.70158f
         private inline val overshoot2 get() = 2.70158f
         private inline val overshoot3 get() = overshoot * 1.525f
@@ -75,8 +75,8 @@ abstract class Easing(val type: Type, durationNanos: Long, start: Float, end: Fl
         override fun clone(): Animation = Back(type, durationNanos, from, to)
     }
 
-    class Bump(type: Type, durationNanos: Long, start: Float, end: Float, onFinish: (Animation.() -> Unit)? = null) :
-        Easing(type, durationNanos, start, end, onFinish) {
+    class Bump(type: Type, durationNanos: Long, start: Float, end: Float) :
+        Easing(type, durationNanos, start, end) {
 
         override fun getValueOut(percent: Float): Float {
             return (3.7 * (percent - 1.0).pow(3.0) + 1.7 * 1.2 * (percent - 1.0).pow(2.0)).toFloat()
@@ -97,8 +97,8 @@ abstract class Easing(val type: Type, durationNanos: Long, start: Float, end: Fl
         override fun clone(): Animation = Bump(type, durationNanos, from, to)
     }
 
-    class Quad(type: Type, durationNanos: Long, start: Float, end: Float, onFinish: (Animation.() -> Unit)? = null) :
-        Easing(type, durationNanos, start, end, onFinish) {
+    class Quad(type: Type, durationNanos: Long, start: Float, end: Float) :
+        Easing(type, durationNanos, start, end) {
         override fun getValueOut(percent: Float): Float {
             return 1f - (1f - percent) * (1f - percent)
         }
@@ -118,8 +118,8 @@ abstract class Easing(val type: Type, durationNanos: Long, start: Float, end: Fl
         override fun clone(): Animation = Quad(type, durationNanos, from, to)
     }
 
-    class Expo(type: Type, durationNanos: Long, start: Float, end: Float, onFinish: (Animation.() -> Unit)? = null) :
-        Easing(type, durationNanos, start, end, onFinish) {
+    class Expo(type: Type, durationNanos: Long, start: Float, end: Float) :
+        Easing(type, durationNanos, start, end) {
         override fun getValueOut(percent: Float): Float {
             return if (percent == 1f) {
                 1f
@@ -151,8 +151,8 @@ abstract class Easing(val type: Type, durationNanos: Long, start: Float, end: Fl
         override fun clone(): Animation = Expo(type, durationNanos, from, to)
     }
 
-    class Sine(type: Type, durationNanos: Long, start: Float, end: Float, onFinish: (Animation.() -> Unit)? = null) :
-        Easing(type, durationNanos, start, end, onFinish) {
+    class Sine(type: Type, durationNanos: Long, start: Float, end: Float) :
+        Easing(type, durationNanos, start, end) {
         override fun getValueIn(percent: Float): Float {
             return 1f - cos((percent.toDouble() * PI) / 2.0).toFloat()
         }
@@ -170,8 +170,8 @@ abstract class Easing(val type: Type, durationNanos: Long, start: Float, end: Fl
         }
     }
 
-    class Cubic(type: Type, durationNanos: Long, start: Float, end: Float, onFinish: (Animation.() -> Unit)? = null) :
-        Easing(type, durationNanos, start, end, onFinish) {
+    class Cubic(type: Type, durationNanos: Long, start: Float, end: Float) :
+        Easing(type, durationNanos, start, end) {
         override fun getValueIn(percent: Float): Float {
             return percent * percent * percent
         }
@@ -191,8 +191,8 @@ abstract class Easing(val type: Type, durationNanos: Long, start: Float, end: Fl
         override fun clone(): Animation = Cubic(type, durationNanos, from, to)
     }
 
-    class Quart(type: Type, durationNanos: Long, start: Float, end: Float, onFinish: (Animation.() -> Unit)? = null) :
-        Easing(type, durationNanos, start, end, onFinish) {
+    class Quart(type: Type, durationNanos: Long, start: Float, end: Float) :
+        Easing(type, durationNanos, start, end) {
         override fun getValueIn(percent: Float): Float {
             return percent * percent * percent * percent
         }
@@ -212,8 +212,8 @@ abstract class Easing(val type: Type, durationNanos: Long, start: Float, end: Fl
         override fun clone(): Animation = Quart(type, durationNanos, from, to)
     }
 
-    class Quint(type: Type, durationNanos: Long, start: Float, end: Float, onFinish: (Animation.() -> Unit)? = null) :
-        Easing(type, durationNanos, start, end, onFinish) {
+    class Quint(type: Type, durationNanos: Long, start: Float, end: Float) :
+        Easing(type, durationNanos, start, end) {
         override fun getValueIn(percent: Float): Float {
             return percent * percent * percent * percent * percent
         }
@@ -233,8 +233,8 @@ abstract class Easing(val type: Type, durationNanos: Long, start: Float, end: Fl
         override fun clone(): Animation = Quint(type, durationNanos, from, to)
     }
 
-    class Circ(type: Type, durationNanos: Long, start: Float, end: Float, onFinish: (Animation.() -> Unit)? = null) :
-        Easing(type, durationNanos, start, end, onFinish) {
+    class Circ(type: Type, durationNanos: Long, start: Float, end: Float) :
+        Easing(type, durationNanos, start, end) {
         override fun getValueIn(percent: Float): Float {
             return 1f - sqrt(1.0 - percent.toDouble().pow(2.0)).toFloat()
         }
@@ -254,8 +254,8 @@ abstract class Easing(val type: Type, durationNanos: Long, start: Float, end: Fl
         override fun clone(): Animation = Circ(type, durationNanos, from, to)
     }
 
-    class Elastic(type: Type, durationNanos: Long, start: Float, end: Float, onFinish: (Animation.() -> Unit)? = null) :
-        Easing(type, durationNanos, start, end, onFinish) {
+    class Elastic(type: Type, durationNanos: Long, start: Float, end: Float) :
+        Easing(type, durationNanos, start, end) {
         private inline val v get() = (2.0 * PI) / 3.0
 
         override fun getValueIn(percent: Float): Float {

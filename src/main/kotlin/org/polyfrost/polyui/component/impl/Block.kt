@@ -21,55 +21,30 @@
 
 package org.polyfrost.polyui.component.impl
 
-import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.color.Colors
-import org.polyfrost.polyui.component.Component
-import org.polyfrost.polyui.event.EventDSL
-import org.polyfrost.polyui.property.impl.BlockProperties
-import org.polyfrost.polyui.renderer.Renderer
-import org.polyfrost.polyui.unit.Size
-import org.polyfrost.polyui.unit.Unit
+import org.polyfrost.polyui.color.PolyColor
+import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.unit.Align
+import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.color.PolyColor as Color
+import org.polyfrost.polyui.utils.radii
 
-/**
- * # Block
- *
- * A simple block component, supporting the full PolyUI API.
- */
-@Suppress("UNCHECKED_CAST")
 open class Block @JvmOverloads constructor(
-    properties: BlockProperties? = null,
-    at: Vec2<Unit>,
-    size: Size<Unit>?,
-    rawResize: Boolean = false,
-    acceptInput: Boolean = true,
-    events: EventDSL<Block>.() -> kotlin.Unit = {},
-) : Component(properties, at, size, rawResize, acceptInput, events as EventDSL<Component>.() -> kotlin.Unit) {
-    override val properties
-        get() = super.properties as BlockProperties
-
-    @Transient
-    protected lateinit var outlineColor: Color.Animated
-
-    @Transient
-    lateinit var cornerRadii: FloatArray
+    at: Vec2? = null,
+    size: Vec2? = null,
+    alignment: Align = AlignDefault,
+    visibleSize: Vec2? = null,
+    var radii: FloatArray = 8f.radii(),
+    var boarderColor: PolyColor? = null,
+    var boarderWidth: Float = 2f,
+    vararg children: Drawable?,
+) : Drawable(at, alignment, size, visibleSize, children = children) {
+    init {
+        require(radii.size == 4) { "Corner radius array must be 4 values" }
+    }
 
     override fun render() {
-        renderer.rect(x, y, width, height, color, cornerRadii)
-        if (properties.outlineThickness != 0f) {
-            renderer.hollowRect(x, y, width, height, outlineColor, properties.outlineThickness, cornerRadii)
-        }
-    }
-
-    override fun setup(renderer: Renderer, polyUI: PolyUI) {
-        super.setup(renderer, polyUI)
-        outlineColor = properties.outlineColor.toAnimatable()
-        cornerRadii = properties.cornerRadii
-    }
-
-    override fun onColorsChanged(colors: Colors) {
-        super.onColorsChanged(colors)
-        outlineColor.recolor(properties.outlineColor)
+        renderer.rect(x, y, width, height, color, radii)
+        val outlineColor = boarderColor ?: return
+        renderer.hollowRect(x, y, width, height, outlineColor, boarderWidth, radii)
     }
 }

@@ -46,15 +46,13 @@ class Clock {
             return delta
         }
 
-    inline fun peek(): Long = System.nanoTime() - lastTime
+    fun peek(): Long = System.nanoTime() - lastTime
 
     /**
      * Create a new Executor.
      * @param executeEveryNanos how often (in nanoseconds) to execute the given [function][func].
      * @param func the function to execute after the given time.
      * @see FixedTimeExecutor
-     * @see ConditionalExecutor
-     * @see UntilExecutor
      * @since 0.14.0
      */
     abstract class Executor(val executeEveryNanos: Long, protected val func: () -> Unit) {
@@ -104,48 +102,6 @@ class Clock {
                 time = 0L
             }
             return false
-        }
-    }
-
-    /**
-     * An executor that will do its function until the given amount of time has passed.
-     *
-     * @since 0.18.1
-     */
-    class UntilExecutor(executeEveryNanos: Long, val executeForNanos: Long, func: () -> Unit) : Executor(executeEveryNanos, func) {
-        private var total = 0L
-        override val finished get() = total >= executeForNanos
-
-        override fun tick(deltaTimeNanos: Long): Boolean {
-            total += deltaTimeNanos
-            return super.tick(deltaTimeNanos)
-        }
-    }
-
-    /**
-     * An executor that will do its function until the given condition is true.
-     *
-     * @since 0.18.1
-     */
-    class ConditionalExecutor(executeEveryNanos: Long, private val condition: () -> Boolean, func: () -> Unit) : Executor(executeEveryNanos, func) {
-        override val finished get() = condition()
-    }
-
-    /**
-     * An executor that will do its function after the given amount of time has passed.
-     * @since 0.18.3
-     */
-    class AfterExecutor(timeNanos: Long, func: () -> Unit) : Executor(timeNanos, func) {
-        override val finished get() = time >= executeEveryNanos
-
-        override fun tick(deltaTimeNanos: Long): Boolean {
-            time += deltaTimeNanos
-            return if (time >= executeEveryNanos) {
-                func()
-                true
-            } else {
-                false
-            }
         }
     }
 }

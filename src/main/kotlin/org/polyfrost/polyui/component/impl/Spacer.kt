@@ -19,22 +19,21 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.polyfrost.polyui.property.impl
+package org.polyfrost.polyui.component.impl
 
-/**
- * @param setInstantly if true, the slider [value][org.polyfrost.polyui.component.impl.Slider.value] will be updated as the user drags the slider.
- * Else, it will be updated when the slider is dropped.
- */
-open class SliderProperties(open val setInstantly: Boolean = false) : BlockProperties(withStates = true) {
-    open val barColor get() = colors.component.bg
-    open val usedBarColor get() = colors.brand.fg
+import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.unit.Vec2
 
-    /**
-     * This value controls the ratio of the thickness of the bar to the size of the slider head.
-     *
-     * The size of the slider head is the same as the size of the slider, and this is used to calculate the thickness of the bar.
-     *
-     * Smaller values mean thicker bars, and larger values mean thinner bars.
-     */
-    open val thicknessRatio = 3f
+class Spacer(at: Vec2? = null, size: Vec2) : Drawable(at = at, size = size) {
+    init {
+        acceptsInput = false
+    }
+
+    override val consumesHover: Boolean
+        get() = false
+    override val shouldScroll: Boolean
+        get() = false
+    override fun preRender() {}
+    override fun render() {}
+    override fun postRender() {}
 }

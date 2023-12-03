@@ -19,81 +19,62 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-@file:Suppress("NOTHING_TO_INLINE")
+@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 @file:JvmName("Units")
 
 package org.polyfrost.polyui.unit
 
-inline operator fun Float.compareTo(x: Unit): Int = compareTo(x.px)
-
-@get:JvmName("pixels")
-inline val Number.px get() = Unit.Pixel(this.toFloat())
-
-@get:JvmName("percent")
-inline val Number.percent get() = Unit.Percent(this.toFloat())
-
-@get:JvmName("vwidth")
-inline val Number.vwidth get() = Unit.VUnits(this.toFloat(), Unit.VUnits.V_WIDTH)
-
-@get:JvmName("vheight")
-inline val Number.vheight get() = Unit.VUnits(this.toFloat(), Unit.VUnits.V_HEIGHT)
-
-@get:JvmName("vmin")
-inline val Number.vmin get() = Unit.VUnits(this.toFloat(), Unit.VUnits.V_MIN)
-
-@get:JvmName("vmax")
-inline val Number.vmax get() = Unit.VUnits(this.toFloat(), Unit.VUnits.V_MAX)
-
 /** note that the smallest unit of time in PolyUI is 1 nanosecond. */
 @get:JvmName("nanoseconds")
+@kotlin.internal.InlineOnly
 inline val Number.nanoseconds get() = toLong()
 
 @get:JvmName("microseconds")
+@kotlin.internal.InlineOnly
 inline val Number.microseconds get() = (toDouble() * 1_000.0).toLong()
 
 @get:JvmName("milliseconds")
+@kotlin.internal.InlineOnly
 inline val Number.milliseconds get() = (toDouble() * 1_000_000.0).toLong()
 
 @get:JvmName("seconds")
+@kotlin.internal.InlineOnly
 inline val Number.seconds get() = (toDouble() * 1_000_000_000.0).toLong()
 
 @get:JvmName("minutes")
+@kotlin.internal.InlineOnly
 inline val Number.minutes get() = (toDouble() * 60_000_000_000.0).toLong()
 
 @get:JvmName("hours")
+@kotlin.internal.InlineOnly
 inline val Number.hours get() = (toDouble() * 3_600_000_000_000.0).toLong()
 
-inline val origin get() = (Unit.Pixel(0f) * Unit.Pixel(0f)).clone()
-inline val fill get() = (Unit.Percent(100f) * Unit.Percent(100f)).clone()
+val AlignDefault = Align()
 
-fun index(index: Int) = Unit.Flex(index)
-
-/**
- * create a new flex unit, in vec2 form for at property.
- * @see Unit.Flex
- * @see org.polyfrost.polyui.layout.impl.FlexLayout
- */
-@JvmOverloads
-fun flex(flexShrink: Int = 0, flexGrow: Int = 0, endRowAfter: Boolean = false): Vec2<Unit> {
-    val u = Unit.Flex(flexShrink, flexGrow, endRowAfter)
-    return Vec2(u, u.clone())
+fun Vec2.makeRelative(to: Vec2): Vec2 {
+    return if (this is Vec2.Relative) {
+        this.source = to
+        this
+    } else {
+        Vec2.Relative(this.x - to.x, this.y - to.y, to)
+    }
 }
 
 /**
- * create a new grid unit, in vec2 form for at property.
- * @see Unit.Grid
- * @see org.polyfrost.polyui.layout.impl.GridLayout
+ * A negative vec2 which is used to indicate that the given drawable with this property should be ignored.
+ * @see org.polyfrost.polyui.component.Positioner.Default
  */
-@JvmOverloads
-fun grid(row: Int, column: Int, rowSpan: Int = 1, columnSpan: Int = 1): Vec2<Unit> {
-    val u = Unit.Grid(row, column, rowSpan, columnSpan)
-    return Vec2(u, u.clone())
-}
+@kotlin.internal.InlineOnly
+inline val ignored: Vec2 get() = Vec2(-0.001f, -0.001f)
 
 /**
- * Declare a vec2 of unit, for either at or size property.
- *
- * example:
- * `30.px * 30.px`
- * */
-inline operator fun Unit.times(other: Unit): Vec2<Unit> = Vec2(this, other)
+ * [ignored], but relative, meaning you can attach things to it.
+ */
+@kotlin.internal.InlineOnly
+inline val Rignored: Vec2 get() = Vec2.Relative(-0.001f, -0.001f)
+
+@kotlin.internal.InlineOnly
+inline fun percent(percentX: Float, percentY: Float): Vec2 = Vec2.Percent(percentX, percentY)
+
+@kotlin.internal.InlineOnly
+inline operator fun Number.times(other: Number): Vec2 = Vec2(this.toFloat(), other.toFloat())

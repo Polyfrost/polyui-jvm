@@ -21,39 +21,23 @@
 
 package org.polyfrost.polyui
 
-import org.polyfrost.polyui.color.DarkTheme
-import org.polyfrost.polyui.color.LightTheme
-import org.polyfrost.polyui.component.impl.*
-import org.polyfrost.polyui.event.MouseClicked
-import org.polyfrost.polyui.input.KeyBinder
-import org.polyfrost.polyui.input.Modifiers
-import org.polyfrost.polyui.input.Translator.Companion.localised
-import org.polyfrost.polyui.layout.Layout.Companion.drawables
-import org.polyfrost.polyui.layout.impl.FlexLayout
-import org.polyfrost.polyui.layout.impl.PixelLayout
-import org.polyfrost.polyui.property.PropertyManager
-import org.polyfrost.polyui.property.impl.*
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.renderer.impl.GLWindow
-import org.polyfrost.polyui.renderer.impl.NVGRenderer
-import org.polyfrost.polyui.unit.*
-import org.polyfrost.polyui.unit.Unit
-import org.polyfrost.polyui.utils.radii
-import kotlin.random.Random
 
 val moon = PolyImage("moon.svg")
 val sun = PolyImage("sun.svg")
-val brand = BlockProperties.brand(4f.radii())
-val success = BlockProperties.success(4f.radii())
-val warning = BlockProperties.warning(4f.radii())
-val danger = BlockProperties.danger(4f.radii())
-val text = TextProperties { fonts.medium }
+// val brand = BlockProperties.brand(4f.radii())
+// val success = BlockProperties.success(4f.radii())
+// val warning = BlockProperties.warning(4f.radii())
+// val danger = BlockProperties.danger(4f.radii())
+// val text = TextProperties { fonts.medium }
 
 fun main() {
     // todo implement designs for textbox etc
 
     val window = GLWindow("Test", 800, 500)
 
+    /*
     val polyUI = PolyUI(
         renderer = NVGRenderer(window.width.toFloat(), window.height.toFloat()),
         colors = LightTheme(),
@@ -223,4 +207,6 @@ fun create(at: Point<Unit>, default: Boolean): PixelLayout {
             ),
         ),
     )
+
+     */
 }

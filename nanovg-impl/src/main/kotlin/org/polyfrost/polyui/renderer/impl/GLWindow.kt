@@ -107,7 +107,6 @@ class GLWindow @JvmOverloads constructor(
             glfwTerminate()
             throw RuntimeException("Failed to create the window.")
         }
-        setIcon("icon.png")
 
         glfwMakeContextCurrent(handle)
         createCapabilities()
@@ -125,13 +124,13 @@ class GLWindow @JvmOverloads constructor(
         glfwSetFramebufferSizeCallback(handle) { _, width, height ->
             this.width = width
             this.height = height
-            polyUI.resize((width / polyUI.renderer.pixelRatio).toInt(), (height / polyUI.renderer.pixelRatio).toInt())
+            polyUI.resize((width.toFloat() / polyUI.renderer.pixelRatio), (height.toFloat() / polyUI.renderer.pixelRatio))
         }
 
         glfwSetWindowContentScaleCallback(handle) { _, xScale, yScale ->
             val pixelRatio = max(xScale, yScale)
             if (polyUI.settings.debug) PolyUI.LOGGER.info("Pixel ratio: $pixelRatio")
-            polyUI.resize((width / pixelRatio).toInt(), (height / pixelRatio).toInt(), pixelRatio)
+            polyUI.resize((width.toFloat() / pixelRatio), (height.toFloat() / pixelRatio), pixelRatio)
         }
 
         glfwSetMouseButtonCallback(handle) { _, button, action, _ ->
@@ -237,7 +236,8 @@ class GLWindow @JvmOverloads constructor(
                 fpsCap = if (focused) polyUI.settings.maxFPS.toDouble() else polyUI.settings.unfocusedFPS.toDouble()
             }
             if (focused) {
-                polyUI.master.needsRedraw = true
+                // todo render pausing
+//                polyUI.master.needsRedraw = true
             }
         }
     }
@@ -264,8 +264,8 @@ class GLWindow @JvmOverloads constructor(
             this.height = h[0]
 
             polyUI.resize(
-                (this.width / this.contentScaleX).toInt(),
-                (this.height / this.contentScaleY).toInt(),
+                (this.width / this.contentScaleX),
+                (this.height / this.contentScaleY),
                 max(this.contentScaleX, this.contentScaleY),
             )
         }
@@ -285,8 +285,8 @@ class GLWindow @JvmOverloads constructor(
         fpsCap = polyUI.settings.maxFPS.toDouble()
         while (!glfwWindowShouldClose(handle)) {
             glViewport(0, offset, width, height)
-            val c = polyUI.colors.page.bg.normal
-            glClearColor(c.r / 255f, c.g / 255f, c.b / 255f, 0f)
+//            val c = polyUI.colors.page.bg.normal
+            glClearColor(0f, 0f, 0f, 0f)
             glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
 
             this.polyUI.render()
@@ -325,6 +325,8 @@ class GLWindow @JvmOverloads constructor(
             ?: throw Exception("error occurred while loading icon!")
         glfwSetWindowIcon(handle, GLFWImage.malloc(1).put(0, GLFWImage.malloc().set(w[0], h[0], data)))
     }
+
+    override fun supportsRenderPausing() = true
 
     override fun getClipboard() = glfwGetClipboardString(handle)
 
