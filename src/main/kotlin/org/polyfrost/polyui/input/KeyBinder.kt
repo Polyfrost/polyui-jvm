@@ -55,7 +55,7 @@ class KeyBinder(private val settings: Settings) {
      */
     @ApiStatus.Internal
     fun accept(event: Event): Boolean {
-        if (event is MousePressed) {
+        if (event is Event.Mouse.Pressed) {
             if (event.mods == 0.toShort()) {
                 recording?.completeExceptionally(IllegalStateException("Cannot bind to just left click"))
                 return false
@@ -63,10 +63,10 @@ class KeyBinder(private val settings: Settings) {
             downMouseButtons.add(event.button)
             completeRecording()
         }
-        if (event is MouseReleased) {
+        if (event is Event.Mouse.Pressed) {
             downMouseButtons.remove(event.button)
         }
-        if (event is FocusedEvent.KeyPressed) {
+        if (event is Event.Focused.KeyPressed) {
             if (event.key == Keys.ESCAPE) {
                 recording?.completeExceptionally(CancellationException("ESC key pressed"))
                 return false
@@ -74,7 +74,7 @@ class KeyBinder(private val settings: Settings) {
             downKeys.add(event.key)
             completeRecording()
         }
-        if (event is FocusedEvent.KeyReleased) {
+        if (event is Event.Focused.KeyReleased) {
             downKeys.remove(event.key)
         }
         return update(0L, modifiers)

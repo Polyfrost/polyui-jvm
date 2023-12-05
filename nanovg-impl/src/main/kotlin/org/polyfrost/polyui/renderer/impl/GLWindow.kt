@@ -221,7 +221,14 @@ class GLWindow @JvmOverloads constructor(
             polyUI.eventManager.keyTyped(codepoint.toChar())
         }
 
+        var ran = false
         glfwSetScrollCallback(handle) { _, x, y ->
+            // asm: small scroll amounts are usually trackpads
+            if (!ran && (y < 1.0 && x < 1.0) && PolyUI.isOnMac && !polyUI.settings.naturalScrolling) {
+                PolyUI.LOGGER.info("Enabled natural scrolling as it has been guessed to be a trackpad on macOS.")
+                polyUI.settings.naturalScrolling = true
+            }
+            ran = true
             polyUI.eventManager.mouseScrolled(x.toFloat(), y.toFloat())
         }
 
@@ -236,8 +243,7 @@ class GLWindow @JvmOverloads constructor(
                 fpsCap = if (focused) polyUI.settings.maxFPS.toDouble() else polyUI.settings.unfocusedFPS.toDouble()
             }
             if (focused) {
-                // todo render pausing
-//                polyUI.master.needsRedraw = true
+                polyUI.master.needsRedraw = true
             }
         }
     }
@@ -285,7 +291,6 @@ class GLWindow @JvmOverloads constructor(
         fpsCap = polyUI.settings.maxFPS.toDouble()
         while (!glfwWindowShouldClose(handle)) {
             glViewport(0, offset, width, height)
-//            val c = polyUI.colors.page.bg.normal
             glClearColor(0f, 0f, 0f, 0f)
             glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
 

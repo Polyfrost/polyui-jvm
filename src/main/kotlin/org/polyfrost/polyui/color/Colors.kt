@@ -23,7 +23,10 @@
 
 package org.polyfrost.polyui.color
 
-import org.polyfrost.polyui.event.*
+import org.polyfrost.polyui.PolyUI.Companion.INPUT_DISABLED
+import org.polyfrost.polyui.PolyUI.Companion.INPUT_HOVERED
+import org.polyfrost.polyui.PolyUI.Companion.INPUT_NONE
+import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
 
 /**
  * # Colors

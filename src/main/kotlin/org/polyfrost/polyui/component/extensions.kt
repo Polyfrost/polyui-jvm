@@ -21,6 +21,10 @@
 
 package org.polyfrost.polyui.component
 
+import org.polyfrost.polyui.PolyUI.Companion.DANGER
+import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
+import org.polyfrost.polyui.PolyUI.Companion.SUCCESS
+import org.polyfrost.polyui.PolyUI.Companion.WARNING
 import org.polyfrost.polyui.animate.Animation
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.color.Colors
@@ -40,10 +44,11 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, con
     var pressed = false
     var px = 0f
     var py = 0f
-    addEventHandler(MousePressed(0)) {
+    addEventHandler(Event.Mouse.Pressed(0)) {
         pressed = true
         px = it.x - x
         py = it.y - y
+        needsRedraw = true
         prioritize()
         consumesEvent
     }
@@ -56,6 +61,7 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, con
                     pressed = false
                     return
                 }
+                needsRedraw = true
                 val mx = self.polyUI.eventManager.mouseX
                 val my = self.polyUI.eventManager.mouseY
                 var i = false
@@ -67,7 +73,7 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, con
                     self.y = my - py
                     i = true
                 }
-                if (i) onDrag?.invoke((this@draggable))
+                if (i) onDrag?.invoke(this@draggable)
                 prevX = mx
                 prevY = my
             }
@@ -97,29 +103,88 @@ fun <S : Drawable> S.disable(state: Boolean = true): S {
  * Set the color palette of this drawable during initialization, using the PolyUI colors instance.
  */
 fun <S : Drawable> S.setPalette(palette: Colors.() -> Colors.Palette): S {
-    addEventHandler(Initialization) {
+    addEventHandler(Event.Lifetime.Init) {
         this.palette = palette(polyUI.colors)
     }
     return this
 }
 
 fun <S : Drawable> S.withStates(showClicker: Boolean = true, animation: (() -> Animation)? = { Animations.EaseInOutQuad.create(0.08.seconds) }): S {
-    addEventHandler(MouseEntered) {
+    addEventHandler(Event.Mouse.Entered) {
         Recolor(this, this.palette!!.hovered, animation?.invoke()).add()
         if (showClicker) polyUI.cursor = Cursor.Clicker
         false
     }
-    addEventHandler(MouseExited) {
+    addEventHandler(Event.Mouse.Exited) {
         Recolor(this, this.palette!!.normal, animation?.invoke()).add()
         polyUI.cursor = Cursor.Pointer
         false
     }
-    addEventHandler(MousePressed(0)) {
+    addEventHandler(Event.Mouse.Pressed(0)) {
         Recolor(this, this.palette!!.pressed, animation?.invoke()).add()
         false
     }
-    addEventHandler(MouseReleased(0)) {
+    addEventHandler(Event.Mouse.Released(0)) {
         Recolor(this, this.palette!!.hovered, animation?.invoke()).add()
+        false
+    }
+    return this
+}
+
+/**
+ * Set the palette of this drawable according to one of the three possible component states in PolyUI.
+ * @param state the state to set. One of [DANGER]/0 (red), [WARNING]/1 (yellow), [SUCCESS]/2 (green).
+ */
+fun <S : Drawable> S.setState(state: Byte): S {
+    palette = when (state) {
+        DANGER -> polyUI.colors.state.danger
+        WARNING -> polyUI.colors.state.warning
+        SUCCESS -> polyUI.colors.state.success
+        else -> throw IllegalArgumentException("Invalid state: $state")
+    }
+    return this
+}
+
+/**
+ * Prioritize this drawable, meaning it will, in relation to its siblings:
+ * - drawn last
+ * - receive events first
+ * @since 2.0.0
+ */
+fun <S : Drawable> S.prioritize(): S {
+    val children = parent?.children ?: return this
+    if (children[children.lastIndex] === this) return this
+    children.remove(this)
+    children.add(this)
+    return this
+}
+
+fun <S : Drawable> S.onInit(function: S.(Event.Lifetime.Init) -> Unit): S {
+    addEventHandler(Event.Lifetime.Init, function)
+    return this
+}
+
+fun <S : Drawable> S.afterInit(function: S.(Event.Lifetime.PostInit) -> Unit): S {
+    addEventHandler(Event.Lifetime.PostInit, function)
+    return this
+}
+
+/**
+ * Add an event handler to this drawable's parent, and (optionally) it's parent's parent ([depth]).
+ *
+ * This is used to run functions that may move or resize this drawable,
+ * as if they were ran under this [PostInitialization] they would be overwritten by the positioning logic.
+ */
+fun <S : Drawable> S.afterParentInit(depth: Int = 1, handler: S.() -> Unit): S {
+    this.addEventHandler(Event.Lifetime.PostInit) { _ ->
+        var it: Drawable = this
+        repeat(depth) { _ ->
+            it = it.parent ?: throw IllegalArgumentException("Cannot add event handler to parent of ${this.simpleName} as it has no parent (depth $depth)")
+        }
+        it.addEventHandler(Event.Lifetime.PostInit) {
+            handler(this@afterParentInit)
+            false
+        }
         false
     }
     return this

@@ -156,7 +156,7 @@ fun interface Positioner {
                     // todo backlog: change this: allow other children to provide a size for it??
                 } else {
                     if (sz == null) {
-                        printInfo(it)
+                        it.printInfo()
                         throw IllegalArgumentException("Cannot infer size of $it: does not implement calculateSize(), please specify a size")
                     }
                     it.size = sz

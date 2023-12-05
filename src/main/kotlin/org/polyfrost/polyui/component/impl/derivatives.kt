@@ -23,19 +23,19 @@
 
 package org.polyfrost.polyui.component.impl
 
-import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.component.*
-import org.polyfrost.polyui.event.*
-import org.polyfrost.polyui.input.KeyBinder
+import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.operations.Fade
 import org.polyfrost.polyui.operations.Move
 import org.polyfrost.polyui.operations.Resize
+import org.polyfrost.polyui.operations.Rotate
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.LinkedList
 import org.polyfrost.polyui.utils.asLinkedList
 import org.polyfrost.polyui.utils.radii
+import kotlin.math.PI
 
 fun Button(text: String? = null, leftImage: PolyImage? = null, rightImage: PolyImage? = null, at: Vec2? = null): Drawable {
     return Block(
@@ -45,19 +45,11 @@ fun Button(text: String? = null, leftImage: PolyImage? = null, rightImage: PolyI
             if (text != null) Text(text) else null,
             if (rightImage != null) Image(rightImage) else null,
         ),
-    ).apply {
-        addEventHandler(Initialization) { _ ->
-            this.children?.fastEach {
-                (it as? Image)?.image?.size?.max(32f, 32f)
-            }
+    ).onInit { _ ->
+        this.children?.fastEach {
+            (it as? Image)?.image?.size?.max(32f, 32f)
         }
     }.withStates().namedId("Button")
-}
-
-@ApiStatus.Experimental
-fun Keybind(bind: KeyBinder.Bind, at: Vec2? = null): Drawable {
-    return Button(at = at, leftImage = PolyImage("recording.png"), text = "Click to add").events {
-    }.namedId("Keybind")
 }
 
 fun Switch(at: Vec2? = null, size: Float, padding: Float = 3f, lateralStretch: Float = 1.8f): Drawable {
@@ -73,13 +65,13 @@ fun Switch(at: Vec2? = null, size: Float, padding: Float = 3f, lateralStretch: F
         ),
     ).withStates().events {
         var state = false
-        MouseClicked(0) then {
+        Event.Mouse.Clicked(0) then {
             val circle = this[0]!!
             val target = Vec2(if (state) -adjSize else adjSize, 0f)
             state = !state
             palette = if (state) polyUI.colors.brand.fg else polyUI.colors.component.bg
             Move(circle, target, true, Animations.EaseInOutQuad.create(0.2.seconds)).add()
-            accept(StateEvent(state))
+            accept(Event.Change.State(state))
             false
         }
     }.namedId("Switch")
@@ -93,14 +85,14 @@ fun Radiobutton(at: Vec2? = null, entries: Array<Pair<PolyImage?, String?>>): Dr
                 if (text != null) Text(text) else null,
             ),
         ).events {
-            Initialization then {
+            Event.Lifetime.Init then {
                 (this[0] as? Image)?.image?.size?.max(16f, 16f)
             }
-            MouseClicked(0) then { _ ->
+            Event.Mouse.Clicked(0) then { _ ->
                 val it = parent?.children?.first()!!
                 Move(it, this.x, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
                 Resize(it, this.width, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
-                accept(RadioEvent(parent!!.children!!.indexOf(this) - 1))
+                accept(Event.Change.Number(parent!!.children!!.indexOf(this) - 1))
                 true
             }
         }
@@ -111,57 +103,70 @@ fun Radiobutton(at: Vec2? = null, entries: Array<Pair<PolyImage?, String?>>): Dr
             add(0, Block(ignored, ignored))
         }.toTypedArray(),
         alignment = Align(padding = Vec2(6f, 8f)),
-    ).apply {
-        addEventHandler(PostInitialization) { _ ->
-            val it = this[0]!!
-            val first = this[1]!!
-            it.at.set(first.at)
-            it.size.set(first.size)
-            it.palette = polyUI.colors.brand.fg
-        }
+    ).afterInit { _ ->
+        val it = this[0]!!
+        val first = this[1]!!
+        it.at.set(first.at)
+        it.size.set(first.size)
+        it.palette = polyUI.colors.brand.fg
     }.namedId("Radiobutton")
 }
 
-// todo dropdown
-@ApiStatus.Experimental
 fun Dropdown(at: Vec2? = null, size: Vec2? = null, entries: Array<Pair<PolyImage?, String>>): Drawable {
-    return Block(
+    var targetHeight = 0f
+    val it = Block(
         at,
         size,
+        focusable = true,
         children = arrayOf(
             Text(entries[0].second),
             Image(PolyImage("chevron-down.svg")),
         ),
-    ).events {
-        var state = false
-        var dropdown: Drawable? = null
-        MouseClicked(0) then {
-            state = !state
-            if (state) {
-                if (dropdown == null) {
-                    // todo dont do this in a lambda as we need to use it in order for the size calculation of the parent,
-                    dropdown = Block(
-                        at = this.at + Vec2(0f, this.size.y),
-                        children = entries.map { (img, text) ->
-                            Group(
-                                children = arrayOf(
-                                    img?.let { Image(it) },
-                                    Text(text),
-                                ),
-                            )
-                        }.toTypedArray(),
-                    )
-                }
-            } else {
-                dropdown?.let {
-                    Fade(it, 0f, false, Animations.EaseInOutQuad.create(0.1.seconds)) {
-                        parent?.removeChild(it)
-                    }.add()
-                } ?: run {
+    )
+    val dropdown = Block(
+        size = size,
+        alignment = Align(mode = Align.Mode.Vertical),
+        children = entries.map { (img, text) ->
+            Group(
+                children = arrayOf(
+                    if (img != null) Image(img) else null,
+                    Text(text),
+                ),
+            ).events {
+                Event.Mouse.Clicked(0) then { _ ->
+                    val title = (it[0] as Text)
+                    val self = ((if (children!!.size == 2) this[1]!! else this[0]!!) as Text).text
+                    if (title.text == self) return@then false
+                    title.text = self
+                    accept(Event.Change.Number(parent!!.children!!.indexOf(this)))
                 }
             }
+        }.toTypedArray(),
+    ).disable()
+    return it.events {
+        Event.Focused.Gained then {
+            if (dropdown.height != 0f) targetHeight = dropdown.height
+            dropdown.height = 0f
+            dropdown.enabled = true
+            dropdown.y = this.y + this.size.y
+            Resize(dropdown, height = targetHeight, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
+            Rotate(this[1]!!, PI, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
         }
-    }.namedId("Dropdown")
+        Event.Focused.Lost then {
+            if (dropdown.height != 0f) targetHeight = dropdown.height
+            Resize(dropdown, height = 0f, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)) {
+                dropdown.enabled = false
+            }.add()
+            Rotate(this[1]!!, 0.0, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
+        }
+        Event.Lifetime.PostInit then {
+            parent?.addChild(dropdown)
+        }
+    }.namedId("Dropdown").afterParentInit {
+        this.x = dropdown.x
+        this.width = dropdown.width
+        this[1]!!.x = this.x + this.width - this[1]!!.width - alignment.padding.x
+    }
 }
 
 fun Slider(at: Vec2? = null, size: Vec2? = null, min: Float = 0f, max: Float = 100f, scaleFactor: Float = 2f, floating: Boolean = true, instant: Boolean = false): Drawable {
@@ -184,7 +189,7 @@ fun Slider(at: Vec2? = null, size: Vec2? = null, min: Float = 0f, max: Float = 1
                         size = Vec2.Relative(realSize.y, desiredHeight, ptrAt),
                         radii = rad,
                     ).setPalette { brand.fg }.apply {
-                        afterParentInitialization(3) { (this.size as Vec2.Relative).zero() }
+                        afterParentInit(3) { (this.size as Vec2.Relative).zero() }
                     },
                 ),
             ),
@@ -200,12 +205,12 @@ fun Slider(at: Vec2? = null, size: Vec2? = null, min: Float = 0f, max: Float = 1
                     val progress = (this.x + half - bar.x) / realSize.x
                     var value = (max - min) * progress
                     if (!floating) value = value.toInt().toFloat()
-                    accept(NumberEvent(value))
+                    accept(Event.Change.Number(value))
                 }
             },
         ),
     ).apply {
-        addEventHandler(MouseClicked(0)) {
+        addEventHandler(Event.Mouse.Clicked(0)) {
             val bar = this[0]!!
             val ptr = this[1]!!
             val half = ptr.size.x / 2f
@@ -214,7 +219,7 @@ fun Slider(at: Vec2? = null, size: Vec2? = null, min: Float = 0f, max: Float = 1
             val progress = (ptr.x + half - bar.x) / realSize.x
             var value = (max - min) * progress
             if (!floating) value = value.toInt().toFloat()
-            accept(NumberEvent(value))
+            accept(Event.Change.Number(value))
         }
     }.namedId("Slider")
 }
@@ -232,7 +237,7 @@ fun Checkbox(at: Vec2? = null, size: Float): Drawable {
         ),
     ).events {
         var state = false
-        MouseClicked(0) then {
+        Event.Mouse.Clicked(0) then {
             val check = this[0]!!
             state = !state
             palette = if (state) polyUI.colors.brand.fg else polyUI.colors.component.bg
@@ -244,7 +249,7 @@ fun Checkbox(at: Vec2? = null, size: Float): Drawable {
                     check.enabled = false
                 }.add()
             }
-            accept(StateEvent(state))
+            accept(Event.Change.State(state))
         }
     }.withStates().namedId("Checkbox")
 }

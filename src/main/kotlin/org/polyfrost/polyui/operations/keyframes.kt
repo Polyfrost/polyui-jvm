@@ -27,7 +27,6 @@ import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.animateBy
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.LinkedList
-import org.polyfrost.polyui.utils.sortBy
 
 /**
  * # KeyFrames

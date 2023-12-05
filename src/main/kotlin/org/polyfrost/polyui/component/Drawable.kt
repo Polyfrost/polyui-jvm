@@ -27,13 +27,15 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.jetbrains.annotations.NotNull
 import org.polyfrost.polyui.PolyUI
+import org.polyfrost.polyui.PolyUI.Companion.INPUT_DISABLED
+import org.polyfrost.polyui.PolyUI.Companion.INPUT_NONE
 import org.polyfrost.polyui.animate.Animation
 import org.polyfrost.polyui.animate.Easing
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.event.*
 import org.polyfrost.polyui.operations.*
-import org.polyfrost.polyui.renderer.Renderer
+import org.polyfrost.polyui.renderer.data.Framebuffer
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.*
 
@@ -49,16 +51,20 @@ abstract class Drawable(
     size: Vec2? = null,
     visibleSize: Vec2? = null,
     palette: Colors.Palette? = null,
+    val focusable: Boolean = false,
     vararg children: Drawable? = arrayOf(),
 ) : Cloneable {
+    @set:Locking
     var size = size ?: Vec2()
         set(value) {
             field = value
             (visibleSize as? Vec2.Sourced)?.source = value
         }
 
+    @set:Locking
     var visibleSize: Vec2 = visibleSize ?: Vec2.Based(base = this.size)
 
+    @set:Locking
     var parent: Drawable? = null
         private set(value) {
             if (value === field) return
@@ -68,6 +74,7 @@ abstract class Drawable(
             field = value
         }
 
+    @set:Locking
     var at = at ?: Vec2.Relative()
 
     /**
@@ -91,6 +98,7 @@ abstract class Drawable(
     open var simpleName = "${this::class.java.simpleName}@${Integer.toHexString(this.hashCode())}"
 
     var children: LinkedList<Drawable>?
+        private set
 
     init {
         if (children.isNotEmpty()) {
@@ -105,29 +113,35 @@ abstract class Drawable(
     }
 
     @Transient
-    lateinit var renderer: Renderer
-        private set
-
-    @Transient
     lateinit var polyUI: PolyUI
         private set
+
+    @kotlin.internal.InlineOnly
+    inline val renderer get() = polyUI.renderer
+
+    @set:Locking
+    var framebuffer: Framebuffer? = null
 
     /**
      * Setting of this value could have undesirable results, and the [PolyColor.Animated.recolor] method should be used instead.
      */
     @set:ApiStatus.Internal
+    @set:Locking
     lateinit var color: PolyColor.Animated
 
+    @Transient
+    @set:Locking
     var palette: Colors.Palette? = palette
         set(@NotNull value) {
             if (value == null) return
             field = value
             if (!::color.isInitialized) return
-            color.recolor(value.get(inputState))
+            color.recolor(value.normal)
         }
 
     // InlineOnly makes it so that it doesn't add useless local variables called $i$f$getX or whatever
     @kotlin.internal.InlineOnly
+    @set:Locking
     inline var x: Float
         get() = at.x
         set(value) {
@@ -135,6 +149,7 @@ abstract class Drawable(
         }
 
     @kotlin.internal.InlineOnly
+    @set:Locking
     inline var y: Float
         get() = at.y
         set(value) {
@@ -142,6 +157,7 @@ abstract class Drawable(
         }
 
     @kotlin.internal.InlineOnly
+    @set:Locking
     inline var width: Float
         get() = size.x
         set(value) {
@@ -149,6 +165,7 @@ abstract class Drawable(
         }
 
     @kotlin.internal.InlineOnly
+    @set:Locking
     inline var height: Float
         get() = size.y
         set(value) {
@@ -156,6 +173,7 @@ abstract class Drawable(
         }
 
     @kotlin.internal.InlineOnly
+    @set:Locking
     inline var visibleWidth: Float
         get() = visibleSize.x
         set(value) {
@@ -163,6 +181,7 @@ abstract class Drawable(
         }
 
     @kotlin.internal.InlineOnly
+    @set:Locking
     inline var visibleHeight: Float
         get() = visibleSize.y
         set(value) {
@@ -170,10 +189,21 @@ abstract class Drawable(
         }
 
     @Transient
+    @set:Locking
     protected var xScroll: Animation? = null
 
     @Transient
+    @set:Locking
     protected var yScroll: Animation? = null
+
+    var needsRedraw = true
+        set(value) {
+            if (field == value) return
+            if (value) {
+                parent?.needsRedraw = true
+            }
+            field = value
+        }
 
     protected open val shouldScroll get() = true
 
@@ -187,7 +217,7 @@ abstract class Drawable(
 
     /**
      * The current input state of this drawable. Note that this value is **not responsible** for dispatching events
-     * such as [MouseEntered] or [MousePressed]. It is just here for tracking purposes and for your benefit.
+     * such as [Event.Mouse.Exited] or [Event.Mouse.Pressed]. It is just here for tracking purposes and for your benefit.
      *
      * This value will be of [INPUT_DISABLED] (-1), [INPUT_NONE] (0), [INPUT_HOVERED] (1), or [INPUT_PRESSED] (2).
      *
@@ -200,19 +230,19 @@ abstract class Drawable(
             if (field == value) return
 
             if (value == INPUT_DISABLED) {
-                accept(Disabled)
+                accept(Event.Lifetime.Disabled)
+                field = value
                 return
             }
             if (field == INPUT_DISABLED) {
-                accept(Enabled)
-                return
+                accept(Event.Lifetime.Enabled)
             }
 
             if (INPUT_NONE in field..<value) {
-                accept(MouseEntered)
+                accept(Event.Mouse.Entered)
             }
             if (INPUT_NONE in value..<field) {
-                accept(MouseExited)
+                accept(Event.Mouse.Exited)
             }
             field = value
         }
@@ -227,6 +257,7 @@ abstract class Drawable(
      * @since 0.21.4
      */
     @Transient
+    @set:Locking
     open var renders = true
         get() = field && enabled
 
@@ -245,8 +276,9 @@ abstract class Drawable(
      * @since 0.21.4
      */
     @kotlin.internal.InlineOnly
+    @set:Locking
     inline var enabled
-        get() = inputState != INPUT_DISABLED
+        get() = inputState > INPUT_DISABLED
         set(value) {
             inputState = if (value) INPUT_NONE else INPUT_DISABLED
         }
@@ -256,6 +288,7 @@ abstract class Drawable(
         private set
 
     /** current rotation of this drawable (radians). */
+    @set:Locking
     var rotation: Double = 0.0
 
     /** current skew in x dimension of this drawable (radians). */
@@ -284,15 +317,19 @@ abstract class Drawable(
     @Transient
     private var acy = 0f
 
+    @Locking
     fun draw() {
         if (!renders) return
+        needsRedraw = false
         // todo impl framebuffers
+        framebuffer?.let { renderer.bindFramebuffer(it) }
         preRender()
         render()
         children?.fastEach {
             it.draw()
         }
         postRender()
+        framebuffer?.let { renderer.unbindFramebuffer(it) }
     }
 
     /**
@@ -304,6 +341,7 @@ abstract class Drawable(
      */
     @MustBeInvokedByOverriders
     protected open fun preRender() {
+        val renderer = renderer
         renderer.push()
         operations?.fastEach { it.apply() }
 
@@ -357,6 +395,7 @@ abstract class Drawable(
     /**
      * Method that is called when the physical size of the total window area changes.
      */
+    @Locking
     open fun rescale(scaleX: Float, scaleY: Float) {
         if (rawResize) {
             at.scale(scaleX, scaleY)
@@ -375,6 +414,7 @@ abstract class Drawable(
         children?.fastEach {
             it.renders = it.intersects(xScroll?.from ?: x, yScroll?.from ?: y, visibleSize.x, visibleSize.y)
         }
+        needsRedraw = true
     }
 
     /** function that should return true if it is ready to be removed from its parent.
@@ -415,7 +455,7 @@ abstract class Drawable(
     @MustBeInvokedByOverriders
     open fun accept(event: Event): Boolean {
         if (!enabled) return false
-        if (event is MouseScrolled) {
+        if (event is Event.Mouse.Scrolled) {
             var ran = false
             if (size.x - visibleSize.x > 0f) {
                 xScroll?.let {
@@ -456,29 +496,38 @@ abstract class Drawable(
      * @see initialized
      */
     @MustBeInvokedByOverriders
-    open fun setup(renderer: Renderer, polyUI: PolyUI) {
-        require(!initialized) { "${this.simpleName} has already been setup!" }
-        this.renderer = renderer
+    open fun setup(polyUI: PolyUI) {
+//        require(!initialized) { "${this.simpleName} has already been setup!" }
         this.polyUI = polyUI
         if (palette == null) palette = polyUI.colors.component.bg
-        this.color = palette!!.normal.toAnimatable()
+        if (!::color.isInitialized) this.color = palette!!.normal.toAnimatable()
         children?.fastEach {
-            it.setup(renderer, polyUI)
+            it.setup(polyUI)
         }
         // asm: don't use accept as we don't want to dispatch to children
-        eventHandlers?.remove(Initialization)?.let {
+        eventHandlers?.remove(Event.Lifetime.Init)?.let {
             it.fastEach { handler ->
-                handler.invoke(this, Initialization)
+                handler.invoke(this, Event.Lifetime.Init)
             }
             // help gc
             it.clear()
         }
         polyUI.positioner.position(this)
         children?.fastEach {
+            var scrolling = false
             if (it.shouldScroll) {
-                if (it.size.x > it.visibleSize.x) it.xScroll = Easing.Expo(Easing.Type.Out, 0L, it.at.x, it.at.x)
-                if (it.size.y > it.visibleSize.y) it.yScroll = Easing.Expo(Easing.Type.Out, 0L, it.at.y, it.at.y)
-                it.acceptsInput = true
+                if (it.size.x > it.visibleSize.x && it.xScroll == null) {
+                    scrolling = true
+                    it.xScroll = Easing.Expo(Easing.Type.Out, 0L, it.at.x, it.at.x)
+                }
+                if (it.size.y > it.visibleSize.y && it.yScroll == null) {
+                    scrolling = true
+                    it.yScroll = Easing.Expo(Easing.Type.Out, 0L, it.at.y, it.at.y)
+                }
+                if (scrolling) {
+                    it.acceptsInput = true
+                    if (polyUI.settings.debug) PolyUI.LOGGER.info("Enabled scrolling for ${it.simpleName}")
+                }
             }
         }
 
@@ -489,18 +538,29 @@ abstract class Drawable(
 //        }
 
         initialized = true
-        eventHandlers?.remove(PostInitialization)?.let {
+        eventHandlers?.remove(Event.Lifetime.PostInit)?.let {
             it.fastEach { handler ->
-                handler.invoke(this, PostInitialization)
+                handler.invoke(this, Event.Lifetime.PostInit)
             }
             // help gc
             it.clear()
         }
+        // following all init events being removed, if it is empty, we can set it to null
+        if (eventHandlers.isNullOrEmpty()) eventHandlers = null
+        clipDrawables()
     }
 
     /** debug print for this drawable.*/
     open fun debugPrint() {
         // noop
+    }
+
+    @ApiStatus.Experimental
+    fun reset() {
+        this.x = 0f
+        this.y = 0f
+        this.initialized = false
+        children?.fastEach { it.reset() }
     }
 
     /**
@@ -537,41 +597,54 @@ abstract class Drawable(
     override fun toString() = "$simpleName($at, $size)"
 
     /** Add a [DrawableOp] to this drawable. */
+    @Locking
     fun addOperation(drawableOp: DrawableOp) {
         if (operations == null) operations = LinkedList()
         this.operations?.add(drawableOp)
+        needsRedraw = true
     }
 
+    @Locking
     fun addOperation(vararg drawableOps: DrawableOp) {
         if (operations == null) operations = LinkedList()
         operations?.addAll(drawableOps)
+        needsRedraw = true
     }
 
     /**
      * Remove an operation from this drawable.
      */
+    @Locking
     fun removeOperation(drawableOp: DrawableOp) {
         this.operations?.remove(drawableOp)
+        needsRedraw = true
     }
 
+    @Locking
     fun addChild(child: Drawable) {
+        child.accept(Event.Lifetime.Added)
         val children = this.children ?: LinkedList()
         children.add(child)
+        needsRedraw = true
     }
 
+    @Locking
     fun addChild(vararg children: Drawable) {
-        val ls = this.children ?: LinkedList()
-        ls.addAll(children)
+        for (child in children) addChild(child)
     }
 
+    @Locking
     fun removeChild(child: Drawable) {
         removeChild(this.children?.indexOf(child) ?: return)
+        needsRedraw = true
     }
 
+    @Locking
     fun removeChild(index: Int) {
         val children = this.children ?: return
-        children[index].accept(Removed)
+        children[index].accept(Event.Lifetime.Removed)
         polyUI.forRemoval(children, index)
+        needsRedraw = true
     }
 
     operator fun get(index: Int) = children?.get(index)
@@ -594,55 +667,25 @@ abstract class Drawable(
         return i
     }
 
-    /**
-     * Prioritize this drawable, meaning it will, in relation to its siblings:
-     * - drawn last
-     * - receive events first
-     * @since 2.0.0
-     */
-    fun prioritize() {
-        val children = parent?.children ?: return
-        if (children[children.lastIndex] === this) return
-        children.remove(this)
-        children.add(this)
-    }
-
     @JvmName("addEventhandler")
     @OverloadResolutionByLambdaReturnType
-    fun <E : Event, S : Drawable> S.addEventHandler(event: E, handler: S.(E) -> Unit?) {
+    fun <E : Event, S : Drawable> S.addEventHandler(event: E, handler: S.(E) -> Unit?): S {
         val s: S.(E) -> Boolean = {
             handler(this, it)
             true
         }
         addEventHandler(event, s)
+        return this
     }
 
     @OverloadResolutionByLambdaReturnType
     @Suppress("UNCHECKED_CAST")
-    fun <E : Event, S : Drawable> S.addEventHandler(event: E, handler: S.(E) -> Boolean) {
-        if (event !is InitEvent) acceptsInput = true
+    fun <E : Event, S : Drawable> S.addEventHandler(event: E, handler: S.(E) -> Boolean): S {
+        if (event !is Event.Lifetime) acceptsInput = true
         val ev = eventHandlers ?: HashMap(8)
         val ls = ev.getOrPut(event) { LinkedList() }
         ls.add(handler as Drawable.(Event) -> Boolean)
         eventHandlers = ev
-    }
-
-    /**
-     * Add an event handler to this drawable's parent, and (optionally) it's parent's parent ([depth]).
-     *
-     * This is used to run functions that may move or resize this drawable,
-     * as if they were ran under this [PostInitialization] they would be overwritten by the positioning logic.
-     */
-    fun <S : Drawable> S.afterParentInitialization(depth: Int = 1, handler: S.() -> Unit) {
-        addEventHandler(PostInitialization) { _ ->
-            var it: Drawable = this
-            repeat(depth) { _ ->
-                it = it.parent ?: throw IllegalArgumentException("Cannot add event handler to parent of ${this.simpleName} as it has no parent (depth $depth)")
-            }
-            it.addEventHandler(PostInitialization) {
-                handler(this@afterParentInitialization)
-                false
-            }
-        }
+        return this
     }
 }

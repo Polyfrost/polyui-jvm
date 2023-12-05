@@ -33,8 +33,6 @@ val sun = PolyImage("sun.svg")
 // val text = TextProperties { fonts.medium }
 
 fun main() {
-    // todo implement designs for textbox etc
-
     val window = GLWindow("Test", 800, 500)
 
     /*

@@ -21,18 +21,13 @@
 
 package org.polyfrost.polyui.utils
 
-import org.polyfrost.polyui.component.Drawable
+import org.jetbrains.annotations.ApiStatus
 
-fun printInfo(target: Drawable) {
-    var c: Drawable? = target.parent
-    var i = 0
-    val sb = StringBuilder().append("Tree for $target:\n")
-    while (c != null) {
-        sb.append("\t", i).append(c.toString()).append('\n')
-        c = c.parent
-        i++
-    }
-    i++
-    sb.append("\t", i).append(target.polyUI.toString())
-    println(sb.toString())
-}
+/**
+ * Marker class for future use, which will be used to indicate that the given function or property
+ * will block until the lock is freed (when it finishes the frame)
+ */
+@Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_SETTER)
+@Retention(AnnotationRetention.SOURCE)
+@ApiStatus.Experimental
+annotation class Locking

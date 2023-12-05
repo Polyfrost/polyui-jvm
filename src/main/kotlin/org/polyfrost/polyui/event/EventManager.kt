@@ -22,8 +22,11 @@
 package org.polyfrost.polyui.event
 
 import org.jetbrains.annotations.ApiStatus
+import org.polyfrost.polyui.PolyUI
+import org.polyfrost.polyui.PolyUI.Companion.INPUT_HOVERED
+import org.polyfrost.polyui.PolyUI.Companion.INPUT_NONE
+import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
 import org.polyfrost.polyui.component.Drawable
-import org.polyfrost.polyui.component.Focusable
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
@@ -57,11 +60,6 @@ class EventManager @JvmOverloads constructor(
         private set
     private var clickTimer: Long = 0L
 
-    /**
-     * If the current OS is detected as macOS
-     */
-    val isOnMac = System.getProperty("os.name").contains("mac", true)
-
     /** @see org.polyfrost.polyui.input.Modifiers */
     var keyModifiers: Short = 0
         private set
@@ -71,7 +69,7 @@ class EventManager @JvmOverloads constructor(
 
     /** tracker for the combo */
     private var clickedButton: Int = 0
-    private var focused: (Focusable)? = null
+    private var focused: Drawable? = null
     val hasFocused get() = focused != null
 
     /** weather or not the left button/primary click is DOWN (aka repeating) */
@@ -85,19 +83,19 @@ class EventManager @JvmOverloads constructor(
 
     /** This method should be called when a printable key is typed. This key should be **mapped to the user's keyboard layout!** */
     fun keyTyped(key: Char) {
-        focused?.accept(FocusedEvent.KeyTyped(key, keyModifiers))
+        focused?.accept(Event.Focused.KeyTyped(key, keyModifiers))
     }
 
     /** This method should be called when a non-printable, but representable key is pressed. */
     fun keyDown(key: Keys) {
-        val event = FocusedEvent.KeyPressed(key, keyModifiers)
+        val event = Event.Focused.KeyPressed(key, keyModifiers)
         if (keyBinder?.accept(event) == true) return
         focused?.accept(event)
     }
 
     /** This method should be called when a non-printable, but representable key is released. */
     fun keyUp(key: Keys) {
-        val event = FocusedEvent.KeyReleased(key, keyModifiers)
+        val event = Event.Focused.KeyReleased(key, keyModifiers)
         if (keyBinder?.accept(event) == true) return
         focused?.accept(event)
     }
@@ -109,7 +107,7 @@ class EventManager @JvmOverloads constructor(
      */
     fun keyDown(code: Int) {
         if (keyBinder?.accept(code, true) == true) return
-        focused?.accept(code, true)
+        focused?.accept(Event.Focused.UnmappedInput(code, true))
     }
 
     /**
@@ -119,7 +117,7 @@ class EventManager @JvmOverloads constructor(
      */
     fun keyUp(code: Int) {
         if (keyBinder?.accept(code, false) == true) return
-        focused?.accept(code, false)
+        focused?.accept(Event.Focused.UnmappedInput(code, false))
     }
 
     /**
@@ -161,7 +159,7 @@ class EventManager @JvmOverloads constructor(
      * @see KeyModifiers
      */
     fun addModifier(modifier: Short) {
-        keyModifiers = if (isOnMac && settings.commandActsAsControl && modifier == Modifiers.LMETA.value) {
+        keyModifiers = if (PolyUI.isOnMac && settings.commandActsAsControl && modifier == Modifiers.LMETA.value) {
             keyModifiers or Modifiers.LCONTROL.value
         } else {
             keyModifiers or modifier
@@ -173,7 +171,7 @@ class EventManager @JvmOverloads constructor(
      * @see KeyModifiers
      */
     fun removeModifier(modifier: Short) {
-        keyModifiers = if (isOnMac && settings.commandActsAsControl && modifier == Modifiers.LMETA.value) {
+        keyModifiers = if (PolyUI.isOnMac && settings.commandActsAsControl && modifier == Modifiers.LMETA.value) {
             keyModifiers and (Modifiers.LCONTROL.value).inv()
         } else {
             keyModifiers and modifier.inv()
@@ -241,6 +239,7 @@ class EventManager @JvmOverloads constructor(
             mouseOver = candidate
         } else {
             mouseOver?.let {
+                if (!it.acceptsInput) mouseOver = null
                 if (!it.isInside(x, y)) {
                     it.inputState = INPUT_NONE
                     mouseOver = null
@@ -249,14 +248,14 @@ class EventManager @JvmOverloads constructor(
         }
         mouseOvers.fastRemoveIfReversed {
             val b = !it.isInside(x, y)
-            if (b) it.inputState = INPUT_NONE
+            if (b && it.acceptsInput) it.inputState = INPUT_NONE
             b
         }
     }
 
     fun mousePressed(button: Int) {
         if (button == 0) mouseDown = true
-        val event = MousePressed(button, mouseX, mouseY, keyModifiers)
+        val event = Event.Mouse.Pressed(button, mouseX, mouseY, keyModifiers)
         dispatchPress(event, INPUT_PRESSED)
     }
 
@@ -286,8 +285,8 @@ class EventManager @JvmOverloads constructor(
                 }
             }
         }
-        val release = MouseReleased(button, mouseX, mouseY, keyModifiers)
-        val click = MouseClicked(button, mouseX, mouseY, clickAmount, keyModifiers)
+        val release = Event.Mouse.Released(button, mouseX, mouseY, keyModifiers)
+        val click = Event.Mouse.Clicked(button, mouseX, mouseY, clickAmount, keyModifiers)
         if (button == 0) {
             mouseOvers.fastEach { if (tryFocus(it)) return }
             if (tryFocus(mouseOver)) return
@@ -301,7 +300,7 @@ class EventManager @JvmOverloads constructor(
      */
     fun tryFocus(drawable: Drawable?): Boolean {
         if (drawable == null) return false
-        if (drawable.inputState > INPUT_NONE && drawable is Focusable) {
+        if (drawable.inputState > INPUT_NONE && drawable.focusable) {
             return focus(drawable)
         }
         return false
@@ -318,7 +317,7 @@ class EventManager @JvmOverloads constructor(
             amountY = t
         }
         val (sx, sy) = settings.scrollMultiplier
-        val event = MouseScrolled(amountX * sx, amountY * sy, keyModifiers)
+        val event = Event.Mouse.Scrolled(amountX * sx, amountY * sy, keyModifiers)
         dispatch(event)
     }
 
@@ -361,11 +360,12 @@ class EventManager @JvmOverloads constructor(
      * @param focusable the element to set focus on
      * @return true if focus was successfully set, false if the provided focusable is already focused
      */
-    fun focus(focusable: Focusable?): Boolean {
+    fun focus(focusable: Drawable?): Boolean {
         if (focusable === focused) return false
-        focused?.accept(FocusedEvent.Lost)
+        require(focusable?.focusable ?: true) { "Cannot focus un-focusable drawable!" }
+        focused?.accept(Event.Focused.Lost)
         focused = focusable
-        return focused?.accept(FocusedEvent.Gained) == true
+        return focused?.accept(Event.Focused.Gained) == true
     }
 
     fun unfocus() = focus(null)

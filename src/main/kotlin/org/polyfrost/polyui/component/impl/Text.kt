@@ -23,8 +23,7 @@ package org.polyfrost.polyui.component.impl
 
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.component.Drawable
-import org.polyfrost.polyui.event.TextEvent
-import org.polyfrost.polyui.renderer.Renderer
+import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
@@ -33,7 +32,8 @@ import org.polyfrost.polyui.utils.LinkedList
 import org.polyfrost.polyui.utils.truncate
 import org.polyfrost.polyui.utils.wrap
 
-open class Text(text: String, font: Font = PolyUI.defaultFonts.regular, fontSize: Float = 12f, at: Vec2? = null, alignment: Align = AlignDefault, size: Vec2? = null, wrap: Float = 120f, vararg children: Drawable?) : Drawable(at, alignment, size, children = children) {
+open class Text(text: String, font: Font = PolyUI.defaultFonts.regular, fontSize: Float = 12f, at: Vec2? = null, alignment: Align = AlignDefault, size: Vec2? = null, wrap: Float = 120f, focusable: Boolean = false, vararg children: Drawable?) :
+    Drawable(at, alignment, size, focusable = focusable, children = children) {
     @Transient
     protected val fixed = !this.size.isZero
     val isSingleLine get() = lines.size == 1
@@ -50,7 +50,7 @@ open class Text(text: String, font: Font = PolyUI.defaultFonts.regular, fontSize
             if (field == value) return
             field = value
             size = calculateSize()
-            accept(TextEvent(value))
+            accept(Event.Change.Text(value))
         }
 
     @Transient
@@ -83,13 +83,14 @@ open class Text(text: String, font: Font = PolyUI.defaultFonts.regular, fontSize
         }
     }
 
-    override fun setup(renderer: Renderer, polyUI: PolyUI) {
+    override fun setup(polyUI: PolyUI) {
         palette = polyUI.colors.text.primary
-        super.setup(renderer, polyUI)
+        super.setup(polyUI)
         calculateSize()
     }
 
     override fun calculateSize(): Vec2 {
+        needsRedraw = true
         var width = if (fixed) size.x else wrap
         var height = 0f
         val len = renderer.textBounds(font, text, fontSize).x
@@ -102,7 +103,7 @@ open class Text(text: String, font: Font = PolyUI.defaultFonts.regular, fontSize
         } else {
             if (fixed) text = text.truncate(renderer, font, fontSize, this.width * (height / fontSize).toInt())
             text.wrap(width, renderer, font, fontSize, lines)
-            height = lines.size * (fontSize + spacing)
+            height = (lines.size - 1) * (fontSize + spacing)
         }
         return if (fixed) size else Vec2(width, height)
     }

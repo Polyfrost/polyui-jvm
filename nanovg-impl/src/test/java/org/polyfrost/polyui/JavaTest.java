@@ -16,7 +16,6 @@ import org.polyfrost.polyui.component.Drawable;
 import org.polyfrost.polyui.component.impl.Block;
 import org.polyfrost.polyui.component.impl.Image;
 import org.polyfrost.polyui.component.impl.Text;
-import org.polyfrost.polyui.event.MouseClicked;
 import org.polyfrost.polyui.renderer.data.PolyImage;
 import org.polyfrost.polyui.renderer.impl.GLWindow;
 import org.polyfrost.polyui.renderer.impl.NVGRenderer;

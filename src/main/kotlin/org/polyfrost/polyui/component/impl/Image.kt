@@ -23,7 +23,6 @@ package org.polyfrost.polyui.component.impl
 
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.component.Drawable
-import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
@@ -44,8 +43,8 @@ open class Image(image: PolyImage, at: Vec2? = null, alignment: Align = AlignDef
 
     override fun debugRender() {}
 
-    override fun setup(renderer: Renderer, polyUI: PolyUI) {
-        renderer.initImage(image)
-        super.setup(renderer, polyUI)
+    override fun setup(polyUI: PolyUI) {
+        polyUI.renderer.initImage(image)
+        super.setup(polyUI)
     }
 }

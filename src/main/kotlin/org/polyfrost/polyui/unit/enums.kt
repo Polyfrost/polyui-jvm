@@ -21,7 +21,6 @@
 
 package org.polyfrost.polyui.unit
 
-
 /**
  * @param main the main axis, for example the X axis in a [Mode.Horizontal] autolayout.
  * @param cross the cross axis, for example the Y axis in a [Mode.Horizontal] autolayout.
@@ -37,14 +36,4 @@ class Align(val main: Main = Main.Center, val cross: Cross = Cross.Middle, val m
     enum class Mode {
         Horizontal, Vertical
     }
-}
-
-// todo implement state again
-/**
- * Enum to represent the three states a stated component can have in PolyUI.
- * @see org.polyfrost.polyui.color.Colors.State
- * @since 0.17.2
- */
-enum class State {
-    Danger, Warning, Success
 }

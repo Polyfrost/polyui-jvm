@@ -33,11 +33,12 @@ open class Block @JvmOverloads constructor(
     size: Vec2? = null,
     alignment: Align = AlignDefault,
     visibleSize: Vec2? = null,
+    focusable: Boolean = false,
     var radii: FloatArray = 8f.radii(),
     var boarderColor: PolyColor? = null,
     var boarderWidth: Float = 2f,
     vararg children: Drawable?,
-) : Drawable(at, alignment, size, visibleSize, children = children) {
+) : Drawable(at, alignment, size, visibleSize, focusable = focusable, children = children) {
     init {
         require(radii.size == 4) { "Corner radius array must be 4 values" }
     }

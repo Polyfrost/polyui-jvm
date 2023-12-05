@@ -24,7 +24,6 @@ package org.polyfrost.polyui
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.color.DarkTheme
 import org.polyfrost.polyui.component.Drawable
-import org.polyfrost.polyui.component.Focusable
 import org.polyfrost.polyui.component.Positioner
 import org.polyfrost.polyui.component.impl.Group
 import org.polyfrost.polyui.event.EventManager
@@ -46,7 +45,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import kotlin.math.max
 import kotlin.math.min
-
 
 // todo rewrite this doc
 /**
@@ -212,7 +210,7 @@ class PolyUI @JvmOverloads constructor(
     init {
         LOGGER.info("PolyUI initializing...")
         master.simpleName += " [Master]"
-        master.setup(renderer, this)
+        master.setup(this)
         @Suppress("NAME_SHADOWING")
         val settings = this.settings
 //        if (settings.framebuffersEnabled && renderer.supportsFramebuffers()) {
@@ -226,7 +224,6 @@ class PolyUI @JvmOverloads constructor(
 //                if (settings.debug) LOGGER.info("Layout ${it.simpleName} (${it.children?.size} items) created with ${it.fbo}")
 //            }
 //        }
-
 
         if (settings.enableDebugKeybind) {
             this.keyBinder?.add(
@@ -242,6 +239,12 @@ class PolyUI @JvmOverloads constructor(
                             "disabled"
                         },
                     )
+                    true
+                },
+            )
+            this.keyBinder?.add(
+                KeyBinder.Bind('P', mods = mods(KeyModifiers.LCONTROL)) {
+                    debugPrint()
                     true
                 },
             )
@@ -341,6 +344,7 @@ class PolyUI @JvmOverloads constructor(
 
         if (settings.debug) LOGGER.info("resize: {}x{}", newWidth, newHeight)
 
+        // todo rescaling
 //        master.rescale(
 //            newWidth / this.size.x,
 //            newHeight / this.size.y,
@@ -359,51 +363,50 @@ class PolyUI @JvmOverloads constructor(
 
     fun render() {
         delta = clock.delta
-//        if (master.needsRedraw) {
-        val now = clock.now
-        renderer.beginFrame()
-        preHooks.fastRemoveIfReversed { it(renderer) }
-        master.draw()
+        if (master.needsRedraw) {
+            renderer.beginFrame()
+            preHooks.fastRemoveIfReversed { it(renderer) }
+            master.draw()
 
-        hooks.fastRemoveIfReversed { it(renderer) }
+            hooks.fastRemoveIfReversed { it(renderer) }
 
-        // telemetry
-        if (settings.debug) {
-            val frameTime = (System.nanoTime() - now) / 1_000_000f
-            timeInFrames += frameTime
-            if (frameTime > longestFrame) longestFrame = frameTime
-            if (frameTime < shortestFrame) shortestFrame = frameTime
-            frames++
-            drawDebugOverlay(0f, size.y - 11f)
-            if (!eventManager.hasFocused) {
-                if (eventManager.keyModifiers.hasModifier(Modifiers.LCONTROL)) {
-                    val obj = eventManager.mouseOver ?: eventManager.primaryCandidate
-                    if (obj != null) {
-                        val os = obj.toString()
-                        val w = renderer.textBounds(monospaceFont, os, 10f).width
-                        val pos = min(max(0f, mouseX - w / 2f), this.size.x - w - 10f)
-                        renderer.rect(pos, mouseY - 14f, w + 10f, 14f, colors.component.bg.hovered)
-                        renderer.text(monospaceFont, pos + 5f, mouseY - 10f, text = os, colors.text.primary.normal, 10f)
-//                            master.needsRedraw = true
+            // telemetry
+            if (settings.debug) {
+                val frameTime = (System.nanoTime() - clock.now) / 1_000_000f
+                timeInFrames += frameTime
+                if (frameTime > longestFrame) longestFrame = frameTime
+                if (frameTime < shortestFrame) shortestFrame = frameTime
+                frames++
+                drawDebugOverlay(0f, size.y - 11f)
+                if (!eventManager.hasFocused) {
+                    if (eventManager.keyModifiers.hasModifier(Modifiers.LCONTROL)) {
+                        val obj = eventManager.mouseOver ?: eventManager.primaryCandidate
+                        if (obj != null) {
+                            val os = obj.toString()
+                            val w = renderer.textBounds(monospaceFont, os, 10f).width
+                            val pos = min(max(0f, mouseX - w / 2f), this.size.x - w - 10f)
+                            renderer.rect(pos, mouseY - 14f, w + 10f, 14f, colors.component.bg.hovered)
+                            renderer.text(monospaceFont, pos + 5f, mouseY - 10f, text = os, colors.text.primary.normal, 10f)
+                            master.needsRedraw = true
+                        }
+                    }
+                    if (eventManager.keyModifiers.hasModifier(Modifiers.LSHIFT)) {
+                        val s = "${eventManager.mouseX}x${eventManager.mouseY}"
+                        val ww = renderer.textBounds(monospaceFont, s, 10f).width
+                        val ppos = min(mouseX + 10f, this.size.y - ww - 10f)
+                        renderer.rect(ppos, mouseY, ww + 10f, 14f, colors.component.bg.hovered)
+                        renderer.text(monospaceFont, ppos + 5f, mouseY + 4f, text = s, colors.text.primary.normal, 10f)
+                        master.needsRedraw = true
                     }
                 }
-                if (eventManager.keyModifiers.hasModifier(Modifiers.LSHIFT)) {
-                    val s = "${eventManager.mouseX}x${eventManager.mouseY}"
-                    val ww = renderer.textBounds(monospaceFont, s, 10f).width
-                    val ppos = min(mouseX + 10f, this.size.y - ww - 10f)
-                    renderer.rect(ppos, mouseY, ww + 10f, 14f, colors.component.bg.hovered)
-                    renderer.text(monospaceFont, ppos + 5f, mouseY + 4f, text = s, colors.text.primary.normal, 10f)
-//                        master.needsRedraw = true
-                }
             }
-        }
 
-        renderer.endFrame()
-        drew = true
-//            if (!window.supportsRenderPausing() || !settings.renderPausingEnabled) master.needsRedraw = true
-//        } else {
-//            drew = false
-//        }
+            renderer.endFrame()
+            drew = true
+            if (!window.supportsRenderPausing() || !settings.renderPausingEnabled) master.needsRedraw = true
+        } else {
+            drew = false
+        }
         keyBinder?.update(delta, eventManager.keyModifiers)
         executors.fastRemoveIfReversed { it.tick(delta) }
     }
@@ -466,7 +469,7 @@ class PolyUI @JvmOverloads constructor(
      * @param focusable the element to set focus on
      * @return true if focus was successfully set, false if the provided focusable is already focused
      */
-    fun focus(focusable: Focusable?) = eventManager.focus(focusable)
+    fun focus(focusable: Drawable?) = eventManager.focus(focusable)
 
     fun unfocus() = eventManager.unfocus()
 
@@ -550,6 +553,12 @@ class PolyUI @JvmOverloads constructor(
         val LOGGER: Logger = LoggerFactory.getLogger("PolyUI")
 
         /**
+         * If the current OS is detected as macOS
+         */
+        @JvmField
+        val isOnMac = System.getProperty("os.name").contains("mac", true)
+
+        /**
          * Fallback font library bundled with PolyUI
          * @since 0.22.0
          */
@@ -565,5 +574,14 @@ class PolyUI @JvmOverloads constructor(
          */
         @JvmField
         var defaultImage = PolyImage("err.png")
+
+        const val INPUT_DISABLED: Byte = -1
+        const val INPUT_NONE: Byte = 0
+        const val INPUT_HOVERED: Byte = 1
+        const val INPUT_PRESSED: Byte = 2
+
+        const val DANGER: Byte = 0
+        const val WARNING: Byte = 1
+        const val SUCCESS: Byte = 2
     }
 }

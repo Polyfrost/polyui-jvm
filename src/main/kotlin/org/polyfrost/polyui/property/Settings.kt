@@ -99,7 +99,7 @@ class Settings {
      */
     @get:JvmName("isRenderPausingEnabled")
     @set:JvmName("enableRenderPausing")
-    var renderPausingEnabled = true
+    var renderPausingEnabled = false
 
     /**
      * If enabled, the command key on Mac will act as control inputs.

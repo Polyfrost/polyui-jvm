@@ -24,7 +24,6 @@ package org.polyfrost.polyui.component.impl
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Drawable
-import org.polyfrost.polyui.component.Focusable
 import org.polyfrost.polyui.event.*
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
@@ -44,7 +43,7 @@ class TextInput(
     size: Vec2? = null,
     wrap: Float = 120f,
     vararg children: Drawable?,
-) : Text(text, font, fontSize, at, alignment, size, wrap, *children), Focusable {
+) : Text(text, font, fontSize, at, alignment, size, wrap, true, *children) {
     @Transient
     private val linesData = LinkedList<Float>()
 
@@ -101,138 +100,158 @@ class TextInput(
     }
 
     override fun accept(event: Event): Boolean {
-        if (event is MouseEntered) {
-            polyUI.cursor = Cursor.Text
-        }
-        if (event is MouseExited) {
-            polyUI.cursor = Cursor.Pointer
-        }
-        if (event is MouseClicked) {
-            clearSelection()
-            if (event.clicks == 1) {
-                caretFromMouse(event.mouseX, event.mouseY)
-                return true
-            } else if (event.clicks == 2) {
-                selectWordAroundCaret()
-                return true
+        return when (event) {
+            is Event.Mouse.Entered -> {
+                polyUI.cursor = Cursor.Text
+                true
             }
+
+            is Event.Mouse.Exited -> {
+                polyUI.cursor = Cursor.Pointer
+                true
+            }
+
+            is Event.Mouse.Clicked -> {
+                clearSelection()
+                return when (event.clicks) {
+                    1 -> {
+                        caretFromMouse(event.mouseX, event.mouseY)
+                        true
+                    }
+                    2 -> {
+                        selectWordAroundCaret()
+                        true
+                    }
+                    else -> false
+                }
+            }
+
+            is Event.Focused -> {
+                accept(event)
+            }
+
+            else -> super.accept(event)
         }
-        return super<Text>.accept(event)
     }
 
-    override fun accept(event: FocusedEvent): Boolean {
-        if (event is FocusedEvent.Gained) {
-            focused = true
-            caretPos()
-        }
-        if (event is FocusedEvent.Lost) {
-            clearSelection()
-            focused = false
-        }
-        if (event is FocusedEvent.KeyTyped) {
-            if (event.mods < 2) {
-                if (caret != select) {
-                    text = text.replace(selection, "")
-                    caret = if (select > caret) caret else select
-                    clearSelection()
-                }
-                text = text.substring(0, caret) + event.key + text.substring(caret)
-                caret++
-            } else if (event.hasModifier(KeyModifiers.LCONTROL) || event.hasModifier(KeyModifiers.RCONTROL)) {
-                when (event.key) {
-                    'V' -> {
-                        text = text.substring(0, caret) + (polyUI.clipboard ?: "") + text.substring(caret)
-                        caret += polyUI.clipboard?.length ?: 0
-                        clearSelection()
-                    }
+    fun accept(event: Event.Focused): Boolean {
+        when (event) {
+            is Event.Focused.Gained -> {
+                focused = true
+                caretPos()
+            }
 
-                    'C' -> {
-                        if (caret != select) {
-                            polyUI.clipboard = selection
-                        }
-                    }
+            is Event.Focused.Lost -> {
+                focused = false
+                clearSelection()
+            }
 
-                    'X' -> {
-                        polyUI.clipboard = null
+            is Event.Focused.KeyTyped -> {
+                if (event.mods < 2) {
+                    if (caret != select) {
                         text = text.replace(selection, "")
+                        caret = if (select > caret) caret else select
                         clearSelection()
                     }
+                    text = text.substring(0, caret) + event.key + text.substring(caret)
+                    caret++
+                } else if (event.hasModifier(KeyModifiers.LCONTROL) || event.hasModifier(KeyModifiers.RCONTROL)) {
+                    when (event.key) {
+                        'V' -> {
+                            text = text.substring(0, caret) + (polyUI.clipboard ?: "") + text.substring(caret)
+                            caret += polyUI.clipboard?.length ?: 0
+                            clearSelection()
+                        }
 
-                    'A' -> {
-                        caret = text.lastIndex + 1
-                        select = 0
+                        'C' -> {
+                            if (caret != select) {
+                                polyUI.clipboard = selection
+                            }
+                        }
+
+                        'X' -> {
+                            polyUI.clipboard = null
+                            text = text.replace(selection, "")
+                            clearSelection()
+                        }
+
+                        'A' -> {
+                            caret = text.lastIndex + 1
+                            select = 0
+                        }
                     }
                 }
             }
-        }
-        if (event is FocusedEvent.KeyPressed) {
-            val hasControl = event.hasModifier(KeyModifiers.LCONTROL) || event.hasModifier(KeyModifiers.RCONTROL)
-            val hasShift = event.hasModifier(KeyModifiers.LSHIFT) || event.hasModifier(KeyModifiers.RSHIFT)
-            when (event.key) {
-                Keys.BACKSPACE -> {
-                    if (select != caret) {
-                        val f: Int
-                        val t: Int
-                        if (select > caret) {
-                            f = caret
-                            t = select
+
+            is Event.Focused.KeyPressed -> {
+                val hasControl = event.hasModifier(KeyModifiers.LCONTROL) || event.hasModifier(KeyModifiers.RCONTROL)
+                val hasShift = event.hasModifier(KeyModifiers.LSHIFT) || event.hasModifier(KeyModifiers.RSHIFT)
+                when (event.key) {
+                    Keys.BACKSPACE -> {
+                        if (select != caret) {
+                            val f: Int
+                            val t: Int
+                            if (select > caret) {
+                                f = caret
+                                t = select
+                            } else {
+                                f = select
+                                t = caret
+                            }
+                            text = text.substring(0, f) + text.substring(t)
+                            caret = f
+                            clearSelection()
+                        } else if (!hasControl) {
+                            text = text.dropAt(caret, 1)
+                            if (caret != 0) caret--
                         } else {
-                            f = select
-                            t = caret
+                            dropToLastSpace()
                         }
-                        text = text.substring(0, f) + text.substring(t)
-                        caret = f
-                        clearSelection()
-                    } else if (!hasControl) {
-                        text = text.dropAt(caret, 1)
-                        if (caret != 0) caret--
-                    } else {
-                        dropToLastSpace()
                     }
-                }
 
-                Keys.TAB -> {
-                    text += "    "
-                }
-
-                Keys.DELETE -> {
-                    if (caret + 1 > text.length) return true
-                    text = text.dropAt(caret + 1, 1)
-                }
-
-                Keys.LEFT -> {
-                    selecting = hasShift
-                    if (hasControl) {
-                        toLastSpace()
-                    } else {
-                        back()
+                    Keys.TAB -> {
+                        text += "    "
                     }
-                }
 
-                Keys.RIGHT -> {
-                    selecting = hasShift
-                    if (hasControl) {
-                        toNextSpace()
-                    } else {
-                        forward()
+                    Keys.DELETE -> {
+                        if (caret + 1 > text.length) return true
+                        text = text.dropAt(caret + 1, 1)
                     }
-                }
 
-                Keys.UP -> {
-                    selecting = hasShift
-                    moveLine(false)
-                }
+                    Keys.LEFT -> {
+                        selecting = hasShift
+                        if (hasControl) {
+                            toLastSpace()
+                        } else {
+                            back()
+                        }
+                    }
 
-                Keys.DOWN -> {
-                    selecting = hasShift
-                    moveLine(true)
-                }
+                    Keys.RIGHT -> {
+                        selecting = hasShift
+                        if (hasControl) {
+                            toNextSpace()
+                        } else {
+                            forward()
+                        }
+                    }
 
-                Keys.ESCAPE -> {
-                    polyUI.unfocus()
-                }
+                    Keys.UP -> {
+                        selecting = hasShift
+                        moveLine(false)
+                    }
 
-                else -> {}
+                    Keys.DOWN -> {
+                        selecting = hasShift
+                        moveLine(true)
+                    }
+
+                    Keys.ESCAPE -> {
+                        polyUI.unfocus()
+                    }
+
+                    else -> {}
+                }
             }
         }
         caretPos()

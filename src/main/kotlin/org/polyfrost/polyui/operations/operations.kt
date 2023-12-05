@@ -73,7 +73,7 @@ class Rotate<S : Drawable>(
     private val tr = if (add) angleRad else angleRad - ir
 
     override fun apply(value: Float) {
-        self.rotation = ir + ((tr - ir) * value)
+        self.rotation = ir + (tr * value)
     }
 }
 
@@ -96,6 +96,7 @@ class Resize<S : Drawable>(
     override fun apply(value: Float) {
         self.size.x = ow + (tw * value)
         self.size.y = oh + (th * value)
+        self.clipDrawables()
     }
 }
 

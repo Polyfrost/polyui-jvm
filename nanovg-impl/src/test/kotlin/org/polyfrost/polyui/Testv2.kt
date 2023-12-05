@@ -30,9 +30,9 @@ import org.polyfrost.polyui.unit.Vec2
 
 fun main() {
     val i = PolyImage("icon.png")
-    val window = GLWindow("PolyUI Test v2", 800, 600)
+    val window = GLWindow("PolyUI Test v2", 800, 500)
     val polyUI = PolyUI(
-        renderer = NVGRenderer(Vec2(800f, 600f)),
+        renderer = NVGRenderer(Vec2(800f, 500f)),
         drawables = arrayOf(
             Group(
                 visibleSize = Vec2(100f, 100f),
