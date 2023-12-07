@@ -180,7 +180,7 @@ class Settings {
      */
     @get:JvmName("willCleanupAfterInit")
     @set:JvmName("enableInitCleanup")
-    var cleanupAfterInit = false
+    var cleanupAfterInit = true
 
     /**
      * This property will run the cleanup() method in a shutdown hook which will free memory used by PolyUI.

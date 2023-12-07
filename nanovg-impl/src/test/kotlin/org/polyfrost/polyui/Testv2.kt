@@ -25,49 +25,71 @@ import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.renderer.impl.GLWindow
 import org.polyfrost.polyui.renderer.impl.NVGRenderer
-import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
+import kotlin.random.Random
 
 fun main() {
-    val i = PolyImage("icon.png")
     val window = GLWindow("PolyUI Test v2", 800, 500)
-    val polyUI = PolyUI(
-        renderer = NVGRenderer(Vec2(800f, 500f)),
-        drawables = arrayOf(
-            Group(
-                visibleSize = Vec2(100f, 100f),
-                alignment = Align(mode = Align.Mode.Vertical),
-                children = arrayOf(
-                    Button("Test1", leftImage = PolyImage("chevron-down.svg"), rightImage = PolyImage("icon.png")),
-                    Button("Test2", leftImage = PolyImage("chevron-down.svg"), rightImage = PolyImage("icon.png")),
-                    Button("Test3", leftImage = PolyImage("chevron-down.svg"), rightImage = PolyImage("icon.png")),
-                    Button("Test4", leftImage = PolyImage("chevron-down.svg"), rightImage = PolyImage("icon.png")),
+    val polyUI =
+        PolyUI(
+            renderer = NVGRenderer(Vec2(800f, 500f)),
+            drawables =
+            arrayOf(
+                Image(PolyImage("polyfrost.png")),
+                Text("Flashbang mode", font = PolyUI.defaultFonts.medium, fontSize = 20f),
+                Group(
+                    children =
+                    arrayOf(
+                        Button(leftImage = PolyImage("moon.svg")),
+                        Button(leftImage = PolyImage("face-wink.svg"), text = "A simple button"),
+                        Switch(size = 28f),
+                    ),
+                ),
+                Dropdown(
+                    entries =
+                    arrayOf(
+                        null to "tomato",
+                        null to "orange",
+                        null to "banana",
+                        null to "lime",
+                    ),
+                ),
+                Block(
+                    children =
+                    arrayOf(
+                        Text("Title:"),
+                        TextInput(),
+                        Block(
+                            children =
+                            arrayOf(
+                                Text("px"),
+                            ),
+                        ),
+                    ),
+                ),
+                Group(
+                    visibleSize = Vec2(350f, 120f),
+                    children =
+                    Array(30) {
+                        Block(size = Vec2(32f + (Random.nextFloat() * 100f), 32f))
+                    },
+                ),
+                Group(
+                    children =
+                    arrayOf(
+                        Button(leftImage = PolyImage("shuffle.svg"), text = "Randomise order"),
+                        Button(text = "+", fontSize = 20f),
+                        Button(text = "-", fontSize = 20f),
+                    ),
+                ),
+                Group(
+                    children =
+                    Array(4) {
+                        Block(size = Vec2(72f, 32f))
+                    },
                 ),
             ),
-            Checkbox(size = 32f),
-            Switch(size = 32f),
-            Radiobutton(
-                entries = arrayOf(
-                    i to "hi",
-                    i to "amaze!",
-                    i to "bye",
-                    null to "cri g",
-                    i to "never",
-                ),
-            ),
-            Slider(),
-            TextInput(),
-            Dropdown(
-                entries = arrayOf(
-                    null to "hello",
-                    i to "test3",
-                    i to "very amazing",
-                    null to "crazy i was",
-                    i to "crazy once",
-                ),
-            ),
-        ),
-    )
+        )
 
     // window.setIcon("icon.png")
     window.open(polyUI)

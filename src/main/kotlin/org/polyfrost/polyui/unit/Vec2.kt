@@ -40,7 +40,13 @@ open class Vec2(open var x: Float = 0f, open var y: Float = 0f) : Comparable<Vec
             y = value
         }
 
+    @kotlin.internal.InlineOnly
     inline val isZero get() = x == 0f && y == 0f
+
+    @kotlin.internal.InlineOnly
+    inline val hasZero get() = x == 0f || y == 0f
+
+    @kotlin.internal.InlineOnly
     inline val isNegative get() = x < 0f && y < 0f
 
     /**

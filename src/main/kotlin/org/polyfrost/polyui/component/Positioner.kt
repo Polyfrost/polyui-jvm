@@ -22,9 +22,8 @@
 package org.polyfrost.polyui.component
 
 import org.polyfrost.polyui.unit.Align
-import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.makeRelative
-import org.polyfrost.polyui.utils.printInfo
+import org.polyfrost.polyui.utils.LinkedList
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -37,132 +36,181 @@ fun interface Positioner {
 
     class Default : Positioner {
         override fun position(drawable: Drawable) {
-            if (drawable.size.isZero) drawable.size = sizeCalculate(drawable)
-            if (drawable.children == null) return
+            val children = drawable.children
+            if (drawable.size.hasZero) {
+                val out = drawable.calculateSize()
+                if (out != null) drawable.size = out
+            }
+            val needsToCalcSize = drawable.size.hasZero
+            if (needsToCalcSize) {
+                require(!children.isNullOrEmpty()) { "Drawable $drawable has no size and no children" }
+            } else if (children.isNullOrEmpty()) {
+                return
+            }
 
-            val align = drawable.alignment
-            var maxMain = 0f
-            var ignored = 0
-            val horizontal = drawable.alignment.mode == Align.Mode.Horizontal
-            drawable.children!!.fastEach {
-                val at = it.at
-                if (it.size.isZero) it.size = sizeCalculate(it)
-                val sz = it.visibleSize
-                if (at is Vec2.Sourced && !at.sourced) at.source = drawable.size
-                if (sz is Vec2.Sourced && !sz.sourced) sz.source = drawable.size
+            // asm: there are definitely children at this point, so we need to place them
+            // we are unsure if there is a size at this point though
+            val main = if (drawable.alignment.mode == Align.Mode.Horizontal) 0 else 1
+            val crs = abs(main - 1)
+            val padding = drawable.alignment.padding
+
+            if (children.size == 1) {
+                // asm: fast path: set a square size with the object centered
+                val it = children.first()
                 it.at = it.at.makeRelative(drawable.at)
-//                if (sz > drawable.size) throw IllegalArgumentException("object is larger than container")
 
-                if (it.size.isNegative) {
-                    ignored++
-                    return@fastEach
+                if (it.size.hasZero) position(it)
+                it.at.x = padding[main]
+                it.at.y = padding[main]
+                if (drawable.size.isZero) {
+                    drawable.size.x = it.visibleSize.x + padding[main] * 2f
+                    drawable.size.y = it.visibleSize.y + padding[main] * 2f
                 }
-                maxMain += if (horizontal) sz.x else sz.y
+                return
             }
-            if (horizontal) maxMain += align.padding.x * (drawable.children!!.size - ignored)
-            align(drawable, maxMain)
-        }
-
-        fun align(drawable: Drawable, maxMain: Float) {
-            val size = drawable.size
-            val align: Align = drawable.alignment
-            val pad = align.padding
-            val crs = if (align.mode == Align.Mode.Horizontal) 1 else 0
-            val main = abs(crs - 1)
-            val children = drawable.children!!
-
-            when (align.main) {
-                Align.Main.Left -> {
-                    var current = pad[main]
-                    children.fastEach {
-                        if (it.at.isNegative) return@fastEach
-                        it.at[main] = current
-                        current += it.visibleSize[main] + pad[main]
-                        alignCross(align, it, crs, size, pad)
+            val willWrap = drawable.visibleSize[main] != 0f
+            if (willWrap) {
+                val rows = LinkedList<Pair<Pair<Float, Float>, LinkedList<Drawable>>>()
+                var maxMain = 0f
+                var maxCross = 0f
+                var rowMain = 0f
+                var rowCross = 0f
+                var currentRow = LinkedList<Drawable>()
+                children.fastEach {
+                    if (it.size.isNegative) return@fastEach
+                    if (it.size.hasZero) position(it)
+                    it.at = it.at.makeRelative(drawable.at)
+                    rowCross = max(rowCross, it.visibleSize[crs])
+                    if (rowMain + it.visibleSize[main] > drawable.visibleSize[main]) {
+                        rows.add((rowMain to rowCross) to currentRow)
+                        currentRow = LinkedList()
+                        maxMain = max(maxMain, rowMain)
+                        maxCross += rowCross + padding[crs]
+                        rowMain = 0f
+                        rowCross = 0f
                     }
+                    rowMain += it.visibleSize[main] + padding[main]
+                    currentRow.add(it)
                 }
-
-                Align.Main.Center -> {
-                    var current = (size[main] + pad[main]) / 2f - maxMain / 2f
-                    children.fastEach {
-                        if (it.at.isNegative) return@fastEach
-                        it.at[main] = current
-                        current += it.visibleSize[main] + pad[main]
-                        alignCross(align, it, crs, size, pad)
-                    }
+                if (currentRow.isNotEmpty()) {
+                    rows.add((rowMain to rowCross) to currentRow)
+                    maxMain = max(maxMain, rowMain)
+                    maxCross += rowCross + padding[crs]
                 }
-
-                Align.Main.Right -> {
-                    var current = size[main]
-                    children.fastEach {
-                        if (it.at.isNegative) return@fastEach
-                        it.at[main] = current
-                        current -= it.visibleSize[main]
-                        alignCross(align, it, crs, size, pad)
-                    }
+                if (needsToCalcSize) {
+                    drawable.size[main] = maxMain
+                    drawable.size[crs] = maxCross
                 }
-
-                Align.Main.Spread -> {
-                    val gapWidth = (size[main] - maxMain) / (children.size + 1)
-                    var current = 0f
-                    children.fastEach {
-                        if (it.at.isNegative) return@fastEach
-                        it.at[main] = current
-                        current += it.visibleSize[main] + gapWidth
-                        alignCross(align, it, crs, size, pad)
-                    }
+                rowCross = drawable.at[crs]
+                rows.fastEach { (rowData, row) ->
+                    val (theRowMain, theRowCross) = rowData
+                    align(drawable.alignment.cross, theRowCross, row, rowCross, padding[crs], crs)
+                    justify(drawable.alignment.main, theRowMain, row, drawable.at[main], drawable.visibleSize[main], padding[main], main)
+                    rowCross += theRowCross + padding[crs]
                 }
-            }
-        }
-
-        fun alignCross(align: Align, it: Drawable, crs: Int, size: Vec2, pad: Vec2) {
-            when (align.cross) {
-                Align.Cross.Top -> {}
-                Align.Cross.Middle -> {
-                    it.at[crs] = (size[crs]) / 2f - (it.visibleSize[crs] / 2f)
+            } else {
+                var rowMain = padding[main]
+                var rowCross = 0f
+                val pad = padding[crs] * 2f
+                children.fastEach {
+                    if (it.size.isNegative) return@fastEach
+                    if (it.size.hasZero) position(it)
+                    it.at = it.at.makeRelative(drawable.at)
+                    rowCross = max(rowCross, it.size[crs] + pad)
+                    rowMain += it.size[main] + padding[main]
                 }
-
-                Align.Cross.Bottom -> {
-                    it.at[crs] = size[crs] - (it.visibleSize[crs]) - pad[crs]
+                if (needsToCalcSize) {
+                    drawable.size[main] = rowMain
+                    drawable.size[crs] = rowCross
                 }
+                align(drawable.alignment.cross, rowCross, children, 0f, padding[crs], crs)
+                justify(drawable.alignment.main, rowMain, children, drawable.at[main], drawable.visibleSize[main], padding[main], main)
             }
         }
 
-        private fun sizeFromChildren(drawable: Drawable) {
-            val pad = drawable.alignment.padding
-            val crs = if (drawable.alignment.mode == Align.Mode.Horizontal) 1 else 0
-            val main = abs(crs - 1)
-            val totalSize = Vec2(pad[main], pad[crs])
-            drawable.children?.fastEach {
-                val sz = sizeCalculate(it)
-                if (it.at.isNegative) return@fastEach
-                val at = it.at
-                // should be safe:tm:
-                if (at.isZero) {
-                    totalSize[main] += sz[main] + pad[main]
-                } else {
-                    totalSize[main] = max(totalSize[main], at[main] + sz[main] + pad[main])
-                }
-                totalSize[crs] = max(totalSize[crs], sz[crs] + pad[crs])
-            } ?: throw IllegalArgumentException("no children")
-            drawable.size = totalSize
-        }
-
-        private fun sizeCalculate(it: Drawable): Vec2 {
-            if (it.size.isZero) {
-                val sz = it.calculateSize()
-                if (sz == null && it.children?.isNotEmpty() == true) {
-                    sizeFromChildren(it)
-                    // todo backlog: change this: allow other children to provide a size for it??
-                } else {
-                    if (sz == null) {
-                        it.printInfo()
-                        throw IllegalArgumentException("Cannot infer size of $it: does not implement calculateSize(), please specify a size")
+        fun align(
+            mode: Align.Cross,
+            rowCross: Float,
+            drawables: LinkedList<Drawable>,
+            min: Float,
+            padding: Float,
+            crs: Int,
+        ) {
+            when (mode) {
+                Align.Cross.Start -> {
+                    drawables.fastEach {
+                        it.at[crs] = min + padding
                     }
-                    it.size = sz
+                }
+
+                Align.Cross.Center -> {
+                    drawables.fastEach {
+                        it.at[crs] = min + (rowCross / 2f) - (it.visibleSize[crs] / 2f)
+                    }
+                }
+
+                Align.Cross.End -> {
+                    val max = min + rowCross
+                    drawables.fastEach {
+                        it.at[crs] = min + (max - it.visibleSize[crs] - padding)
+                    }
                 }
             }
-            return it.size
+        }
+    }
+
+    fun justify(
+        mode: Align.Main,
+        rowMain: Float,
+        drawables: LinkedList<Drawable>,
+        min: Float,
+        max: Float,
+        padding: Float,
+        main: Int,
+    ) {
+        when (mode) {
+            Align.Main.Start -> {
+                var current = min + padding
+                drawables.fastEach {
+                    it.at[main] = current
+                    current += it.visibleSize[main] + padding
+                }
+            }
+
+            Align.Main.Center -> {
+                var current = min + (max / 2f) - (rowMain / 2f)
+                drawables.fastEach {
+                    it.at[main] = current
+                    current += it.visibleSize[main] + padding
+                }
+            }
+
+            Align.Main.End -> {
+                var current = min + (max - padding)
+                drawables.fastEach {
+                    current -= it.visibleSize[main]
+                    it.at[main] = current
+                    current -= padding
+                }
+            }
+
+            Align.Main.SpaceBetween -> {
+                val gapWidth = max / (drawables.size - 1)
+                var current = min + padding
+                drawables.fastEach {
+                    it.at[main] = current
+                    current += gapWidth
+                }
+            }
+
+            Align.Main.SpaceEvenly -> {
+                val gapWidth = (max - rowMain) / (drawables.size + 1)
+                var current = min + gapWidth
+                drawables.fastEach {
+                    it.at[main] = current
+                    current += it.size[main] + gapWidth
+                }
+            }
         }
     }
 }

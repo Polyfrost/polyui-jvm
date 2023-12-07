@@ -32,7 +32,7 @@ import org.polyfrost.polyui.utils.LinkedList
 import org.polyfrost.polyui.utils.truncate
 import org.polyfrost.polyui.utils.wrap
 
-open class Text(text: String, font: Font = PolyUI.defaultFonts.regular, fontSize: Float = 12f, at: Vec2? = null, alignment: Align = AlignDefault, size: Vec2? = null, wrap: Float = 120f, focusable: Boolean = false, vararg children: Drawable?) :
+open class Text(text: String, font: Font = PolyUI.defaultFonts.regular, fontSize: Float = 12f, at: Vec2? = null, alignment: Align = AlignDefault, size: Vec2? = null, wrap: Float = fontSize * 10f, focusable: Boolean = false, vararg children: Drawable?) :
     Drawable(at, alignment, size, focusable = focusable, children = children) {
     @Transient
     protected val fixed = !this.size.isZero
@@ -93,11 +93,11 @@ open class Text(text: String, font: Font = PolyUI.defaultFonts.regular, fontSize
         needsRedraw = true
         var width = if (fixed) size.x else wrap
         var height = 0f
-        val len = renderer.textBounds(font, text, fontSize).x
-        if (len < width) {
+        val bounds = renderer.textBounds(font, text, fontSize)
+        if (bounds.x < width) {
             // asm: fast path: string shorter than wrap
-            width = len
-            height = fontSize
+            width = bounds.x
+            height = bounds.y
             lines.clear()
             lines.add(text)
         } else {

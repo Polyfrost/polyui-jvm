@@ -41,8 +41,6 @@ open class Image(image: PolyImage, at: Vec2? = null, alignment: Align = AlignDef
         renderer.image(image, x, y)
     }
 
-    override fun debugRender() {}
-
     override fun setup(polyUI: PolyUI) {
         polyUI.renderer.initImage(image)
         super.setup(polyUI)

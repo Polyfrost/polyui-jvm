@@ -37,12 +37,12 @@ import org.polyfrost.polyui.utils.asLinkedList
 import org.polyfrost.polyui.utils.radii
 import kotlin.math.PI
 
-fun Button(text: String? = null, leftImage: PolyImage? = null, rightImage: PolyImage? = null, at: Vec2? = null): Drawable {
+fun Button(text: String? = null, leftImage: PolyImage? = null, rightImage: PolyImage? = null, fontSize: Float = 12f, at: Vec2? = null): Drawable {
     return Block(
         at = at,
         children = arrayOf(
             if (leftImage != null) Image(leftImage) else null,
-            if (text != null) Text(text) else null,
+            if (text != null) Text(text, fontSize = fontSize) else null,
             if (rightImage != null) Image(rightImage) else null,
         ),
     ).onInit { _ ->
@@ -58,7 +58,7 @@ fun Switch(at: Vec2? = null, size: Float, padding: Float = 3f, lateralStretch: F
     return Block(
         at = at,
         size = Vec2(size * lateralStretch, size),
-        alignment = Align(main = Align.Main.Left, padding = Vec2(padding, padding)),
+        alignment = Align(main = Align.Main.Start, padding = Vec2(padding, padding)),
         radii = (size / 2f).radii(),
         children = arrayOf(
             Block(size = Vec2(circleSize, circleSize), radii = (circleSize / 2f).radii()).setPalette { text.primary },
@@ -162,8 +162,11 @@ fun Dropdown(at: Vec2? = null, size: Vec2? = null, entries: Array<Pair<PolyImage
         Event.Lifetime.PostInit then {
             parent?.addChild(dropdown)
         }
+        Event.Mouse.Clicked(0) then {
+            if (polyUI.eventManager.hasFocused) polyUI.unfocus()
+        }
     }.namedId("Dropdown").afterParentInit {
-        this.x = dropdown.x
+        dropdown.x = this.x
         this.width = dropdown.width
         this[1]!!.x = this.x + this.width - this[1]!!.width - alignment.padding.x
     }
@@ -178,7 +181,7 @@ fun Slider(at: Vec2? = null, size: Vec2? = null, min: Float = 0f, max: Float = 1
     return Group(
         at = at,
         size = realSize,
-        alignment = Align(Align.Main.Left, padding = Vec2.ZERO),
+        alignment = Align(Align.Main.Start, padding = Vec2.ZERO),
         children = arrayOf(
             Block(
                 size = Vec2(realSize.x, desiredHeight),

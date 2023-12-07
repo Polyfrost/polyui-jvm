@@ -26,12 +26,12 @@ package org.polyfrost.polyui.unit
  * @param cross the cross axis, for example the Y axis in a [Mode.Horizontal] autolayout.
  * @param mode the mode for the autolayout. Horizontal fills from left to right, and Vertical fills from top to bottom.
  */
-class Align(val main: Main = Main.Center, val cross: Cross = Cross.Middle, val mode: Mode = Mode.Horizontal, val padding: Vec2 = Vec2(6f, 2f)) {
+class Align(val main: Main = Main.Start, val cross: Cross = Cross.Center, val mode: Mode = Mode.Horizontal, val padding: Vec2 = Vec2(6f, 6f)) {
     enum class Main {
-        Left, Center, Right, Spread
+        Start, Center, End, SpaceBetween, SpaceEvenly
     }
     enum class Cross {
-        Top, Middle, Bottom
+        Start, Center, End
     }
     enum class Mode {
         Horizontal, Vertical

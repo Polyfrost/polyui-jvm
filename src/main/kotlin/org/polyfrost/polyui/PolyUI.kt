@@ -148,7 +148,7 @@ class PolyUI @JvmOverloads constructor(
     /**
      * This is the root layout of the UI. It is the parent of all other layouts.
      */
-    val master = Group(at = Vec2(), size = renderer.size, children = drawables, alignment = Align(mode = Align.Mode.Vertical))
+    val master = Group(at = Vec2(), size = renderer.size, children = drawables, alignment = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, padding = Vec2(20f, 16f)),)
     val eventManager = eventManager?.with(master.children) ?: EventManager(master.children, KeyBinder(this.settings), this.settings)
     inline val keyBinder get() = eventManager.keyBinder
     val translator = translator ?: Translator(this.settings, "")
