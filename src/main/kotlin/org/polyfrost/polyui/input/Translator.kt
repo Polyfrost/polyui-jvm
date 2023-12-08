@@ -54,7 +54,6 @@ import kotlin.collections.ArrayDeque
  *
  *  @see MessageFormat
  */
-// todo reimplement this
 class Translator(private val settings: Settings, private val translationDir: String) {
     private var resourcePath: String = if (System.getProperty("polyui.locale") != null) {
         "$translationDir/${System.getProperty("polyui.locale")}.lang"
@@ -87,7 +86,13 @@ class Translator(private val settings: Settings, private val translationDir: Str
     /** set the locale of this translator. All the keys are cleared, and PolyUI is reloaded. */
     fun setLocale(locale: String) {
         resourcePath = "$translationDir/$locale.lang"
-        map.forEach { (key, text) ->
+        @Suppress("unchecked_cast") // kotlin moment
+        val d = map.clone() as Map<String, Text>
+        map.clear()
+        d.forEach { (key, value) ->
+            val new = if (value is TextWithArgs) translate(key, *value.args) else translate(key)
+            value.string = new.string
+            map[key] = value
         }
     }
 
@@ -176,10 +181,12 @@ class Translator(private val settings: Settings, private val translationDir: Str
     open class Text(open var string: String) {
         override fun toString() = string
     }
-    class TextWithArgs(val text: Text, private vararg val args: Any?) : Text(text.string) {
+
+    class TextWithArgs(private val text: Text, vararg val args: Any?) : Text(text.string) {
         init {
             MessageFormat.format(string, *args)
         }
+
         override var string
             get() = text.string
             set(value) {

@@ -37,7 +37,7 @@ import org.polyfrost.polyui.utils.asLinkedList
 import org.polyfrost.polyui.utils.radii
 import kotlin.math.PI
 
-fun Button(text: String? = null, leftImage: PolyImage? = null, rightImage: PolyImage? = null, fontSize: Float = 12f, at: Vec2? = null): Drawable {
+fun Button(leftImage: PolyImage? = null, text: String? = null, rightImage: PolyImage? = null, fontSize: Float = 12f, at: Vec2? = null): Drawable {
     return Block(
         at = at,
         children = arrayOf(

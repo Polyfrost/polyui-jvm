@@ -128,14 +128,7 @@ fun interface Positioner {
             }
         }
 
-        fun align(
-            mode: Align.Cross,
-            rowCross: Float,
-            drawables: LinkedList<Drawable>,
-            min: Float,
-            padding: Float,
-            crs: Int,
-        ) {
+        fun align(mode: Align.Cross, rowCross: Float, drawables: LinkedList<Drawable>, min: Float, padding: Float, crs: Int) {
             when (mode) {
                 Align.Cross.Start -> {
                     drawables.fastEach {
@@ -159,15 +152,7 @@ fun interface Positioner {
         }
     }
 
-    fun justify(
-        mode: Align.Main,
-        rowMain: Float,
-        drawables: LinkedList<Drawable>,
-        min: Float,
-        max: Float,
-        padding: Float,
-        main: Int,
-    ) {
+    fun justify(mode: Align.Main, rowMain: Float, drawables: LinkedList<Drawable>, min: Float, max: Float, padding: Float, main: Int) {
         when (mode) {
             Align.Main.Start -> {
                 var current = min + padding

@@ -278,7 +278,6 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
          * @see [Gradient]
          */
         open fun recolor(target: Color, animation: Animation? = null) {
-            // todo fix the wierd bug where it colors wrong sometimes !!
             if (target == this) return
             // clear old animation
             this.animation = null

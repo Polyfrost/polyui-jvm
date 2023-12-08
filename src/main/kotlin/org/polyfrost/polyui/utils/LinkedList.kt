@@ -379,6 +379,10 @@ class LinkedList<T>() : MutableList<T> {
         }
     }
 
+    fun first(): T = start?.value ?: throw NoSuchElementException()
+
+    fun last(): T = end?.value ?: throw NoSuchElementException()
+
     @ApiStatus.Internal
     class Node<T>(var value: T, var next: Node<T>? = null, var prev: Node<T>? = null)
 }

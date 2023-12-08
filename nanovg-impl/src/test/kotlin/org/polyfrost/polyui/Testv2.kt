@@ -26,6 +26,7 @@ import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.renderer.impl.GLWindow
 import org.polyfrost.polyui.renderer.impl.NVGRenderer
 import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.utils.image
 import kotlin.random.Random
 
 fun main() {
@@ -36,12 +37,12 @@ fun main() {
             drawables =
             arrayOf(
                 Image(PolyImage("polyfrost.png")),
-                Text("Flashbang mode", font = PolyUI.defaultFonts.medium, fontSize = 20f),
+                Text("text.dark", font = PolyUI.defaultFonts.medium, fontSize = 20f),
                 Group(
                     children =
                     arrayOf(
                         Button(leftImage = PolyImage("moon.svg")),
-                        Button(leftImage = PolyImage("face-wink.svg"), text = "A simple button"),
+                        Button(leftImage = PolyImage("face-wink.svg"), text = "button.text"),
                         Switch(size = 28f),
                     ),
                 ),
@@ -77,9 +78,9 @@ fun main() {
                 Group(
                     children =
                     arrayOf(
-                        Button(leftImage = PolyImage("shuffle.svg"), text = "Randomise order"),
-                        Button(text = "+", fontSize = 20f),
-                        Button(text = "-", fontSize = 20f),
+                        Button(leftImage = PolyImage("shuffle.svg"), text = "button.randomize"),
+                        Button("minus.svg".image()),
+                        Button("plus.svg".image()),
                     ),
                 ),
                 Group(

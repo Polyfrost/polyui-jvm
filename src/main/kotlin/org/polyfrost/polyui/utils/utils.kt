@@ -28,6 +28,7 @@ import org.polyfrost.polyui.color.Color
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Modifiers
+import org.polyfrost.polyui.renderer.data.PolyImage
 import kotlin.experimental.and
 import kotlin.math.PI
 import kotlin.math.abs
@@ -259,6 +260,8 @@ inline fun <T> T.stdout(arg: Any? = null): T {
     println(this)
     return this
 }
+
+fun String.image() = PolyImage(this)
 
 @kotlin.internal.InlineOnly
 inline fun Any?.identityHashCode() = System.identityHashCode(this)

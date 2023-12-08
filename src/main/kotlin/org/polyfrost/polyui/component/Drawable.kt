@@ -271,7 +271,7 @@ abstract class Drawable(
     open val consumesHover get() = true
 
     /**
-     * Disabled flag for this component. Dispatches the [Disabled] and [Enabled] events.
+     * Disabled flag for this component. Dispatches the [Event.Lifetime.Disabled] and [Event.Lifetime.Enabled] events.
      *
      * @since 0.21.4
      */
@@ -322,20 +322,19 @@ abstract class Drawable(
         if (!renders) return
         needsRedraw = false
         // todo impl framebuffers
-        framebuffer?.let { renderer.bindFramebuffer(it) }
+//        framebuffer?.let { renderer.bindFramebuffer(it) }
         preRender()
         render()
         children?.fastEach {
             it.draw()
         }
         postRender()
-        framebuffer?.let { renderer.unbindFramebuffer(it) }
+//        framebuffer?.let { renderer.unbindFramebuffer(it) }
     }
 
     /**
      * pre-render functions, such as applying transforms.
      * In this method, you should set needsRedraw to true if you have something to redraw for the **next frame**.
-     * @param deltaTimeNanos the time in nanoseconds since the last frame. Use this for animations. It is the same as [PolyUI.delta].
      *
      * **make sure to call super [Drawable.preRender]!**
      */
@@ -444,7 +443,7 @@ abstract class Drawable(
     /** add a debug render overlay for this drawable. This is always rendered regardless of the layout re-rendering if debug mode is on. */
     protected open fun debugRender() {
         val color = if (inputState > INPUT_NONE) polyUI.colors.page.border20 else polyUI.colors.page.border10
-        renderer.hollowRect(x, y, width, height, color, 1f)
+        renderer.hollowRect(xScroll?.from ?: x, yScroll?.from ?: y, visibleWidth, visibleHeight, color, 1f)
     }
 
     /**
@@ -485,11 +484,10 @@ abstract class Drawable(
         return false
     }
 
-    /** give this a renderer reference and a PolyUI reference.
+    /** give this a PolyUI reference.
      *
-     * You can also use this method to do some calculations (such as text widths) that are not dependent on other sizes.
-     *
-     * If you need a method that has access to component's sizes, see [here][calculateBounds] or [here][calculateSize] (if you are operating on yourself only).
+     * You can also use this method to do some calculations (such as text widths) that are not dependent on other sizes,
+     * or operations that require access to PolyUI things, like [PolyUI.settings] or [PolyUI.translator]
      *
      * this method is called once, and only once.
      *

@@ -63,25 +63,21 @@ import kotlin.math.min
  * Most of the time, PolyUI will be drawing frame buffers to the screen instead of drawing directly to the screen, as long as they are [suitably complex][org.polyfrost.polyui.property.Settings.minDrawablesForFramebuffer] for it to be worth it; or [not drawing at all][drew]!
  * This allows us to have a very fast rendering pipeline, and allows us to have a lot of components on screen at once, without a performance hit.
  *
- * Rendering can be [requested][org.polyfrost.polyui.component.Component.wantRedraw] by components, and if so, it will be rendered during the next frame. This should only be requested if it is necessary, for example to do an animation or something.
+ * Rendering can be [requested][org.polyfrost.polyui.component.Drawable.needsRedraw] by components, and if so, it will be rendered during the next frame. This should only be requested if it is necessary, for example to do an animation or something.
  *
- * During a render cycle, PolyUI will systematically go through every layout, and [render][org.polyfrost.polyui.layout.Layout.reRenderIfNecessary] it to its framebuffer or to the screen. Each layout will then render its components and child layouts, and so on. Rendering happens in three steps:
- *  - [preRender][org.polyfrost.polyui.component.Component.preRender]: This will do pre-rendering logic, such as setting up transformations, updating animations, and more.
- *  - [render][org.polyfrost.polyui.component.Component.render]: This is where the actual rendering happens.
- *  - [postRender][org.polyfrost.polyui.component.Component.postRender]: This will do post-rendering logic, such as cleaning up transformations.
+ * During a render cycle, PolyUI will systematically go through every layout, and [render][org.polyfrost.polyui.component.Drawable.draw] it to its framebuffer or to the screen. Each layout will then render its components and child layouts, and so on. Rendering happens in three steps:
+ *  - [preRender][org.polyfrost.polyui.component.Drawable.preRender]: This will do pre-rendering logic, such as setting up transformations, updating animations, and more.
+ *  - [render][org.polyfrost.polyui.component.Drawable.render]: This is where the actual rendering happens.
+ *  - [postRender][org.polyfrost.polyui.component.Drawable.postRender]: This will do post-rendering logic, such as cleaning up transformations.
  *
- * Check out [some components][org.polyfrost.polyui.component.Component] to see how this works.
+ * Check out [some components][org.polyfrost.polyui.component.impl] to see how this works.
  *
  * ## How it Works
  * [Components][org.polyfrost.polyui.component.Drawable] are the interactive parts of the UI, such as buttons, text fields, etc.
  *
- * [Layouts][org.polyfrost.polyui.layout.Layout] are the containers for components, such as a grid layout, or a flex layout, etc. They are responsible for positioning and sizing the components.
+ * **Interactions** are driven by [events][EventManager], which thanks to Kotlin's inlining are a zero-overhead way of distributing events, such as [mouse clicks][org.polyfrost.polyui.event.Event.Mouse.Clicked], or [key presses][org.polyfrost.polyui.event.Event.Focused.KeyPressed].
  *
- * [Properties][org.polyfrost.polyui.property.Properties] are the shared states or tokens for the components. They describe default values, and can be overridden by the components.
- *
- * **Interactions** are driven by [events][EventManager], which thanks to Kotlin's inlining are a zero-overhead way of distributing events, such as [mouse clicks][org.polyfrost.polyui.event.MouseClicked], or [key presses][org.polyfrost.polyui.event.FocusedEvent.KeyPressed].
- *
- * PolyUI also supports a variety of [animations][org.polyfrost.polyui.animate.Animation] and transitions, which can be used to make your UI more dynamic, along with dynamically [adding][Layout.add] and [removing][Layout.remove] components.
+ * PolyUI also supports a variety of [animations][org.polyfrost.polyui.animate.Animation] and transitions, which can be used to make your UI more dynamic, along with dynamically [adding][Drawable.addChild] and [removing][Drawable.removeChild] components.
  */
 class PolyUI @JvmOverloads constructor(
     val renderer: Renderer,
@@ -188,7 +184,7 @@ class PolyUI @JvmOverloads constructor(
      * the time since the last frame, in nanoseconds. It is used internally a lot for animations, etc.
      * @see Clock
      * @see every
-     * @see org.polyfrost.polyui.component.Component.preRender
+     * @see org.polyfrost.polyui.component.Drawable.preRender
      * @see org.polyfrost.polyui.animate.Animation
      */
     var delta: Long = 0L
@@ -216,12 +212,12 @@ class PolyUI @JvmOverloads constructor(
 //        if (settings.framebuffersEnabled && renderer.supportsFramebuffers()) {
 //            if (settings.isMasterFrameBuffer) {
 //                if (settings.debug) LOGGER.info("Master is using framebuffer")
-//                master.fbo = renderer.createFramebuffer(width, height)
+//                master.framebuffer = renderer.createFramebuffer(master.width, master.height)
 //            }
 //            master.children?.fastEach {
-//                if (it.refuseFramebuffer || (it.children?.size ?: 0) < settings.minDrawablesForFramebuffer) return@fastEach
-//                it.fbo = renderer.createFramebuffer(it.visibleWidth, it.visibleHeight)
-//                if (settings.debug) LOGGER.info("Layout ${it.simpleName} (${it.children?.size} items) created with ${it.fbo}")
+//                if ((it.children?.size ?: 0) < settings.minDrawablesForFramebuffer) return@fastEach
+//                it.framebuffer = renderer.createFramebuffer(it.visibleWidth, it.visibleHeight)
+//                if (settings.debug) LOGGER.info("Layout ${it.simpleName} (${it.children?.size} items) created with ${it.framebuffer}")
 //            }
 //        }
 
@@ -542,9 +538,11 @@ class PolyUI @JvmOverloads constructor(
 
     /** cleanup the polyUI instance. This will delete all resources, and render this instance unusable. */
     fun cleanup() {
-        renderer.cleanup()
         unfocus()
+        renderer.cleanup()
+        preHooks.clear()
         hooks.clear()
+        executors.clear()
         master.children?.clear()
     }
 

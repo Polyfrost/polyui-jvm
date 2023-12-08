@@ -203,6 +203,7 @@ class Recolor<S : Drawable>(
 
     override fun apply() {
         self.color.update(self.polyUI.delta)
+        self.needsRedraw = true
     }
 
     @Suppress("unchecked_cast")
@@ -210,8 +211,10 @@ class Recolor<S : Drawable>(
         return if (self.color.updating) {
             false
         } else {
-            if (reset) self.color = toColor.toAnimatable()
-            self.color.hue = hueToReturnTo
+            if (reset) {
+                self.color = toColor.toAnimatable()
+                self.color.hue = hueToReturnTo
+            }
             onFinish?.invoke(this as S)
             true
         }

@@ -35,7 +35,7 @@ import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.*
 
 class TextInput(
-    text: String = "Write something...",
+    text: String = "polyui.textinput.placeholder",
     font: Font = PolyUI.defaultFonts.regular,
     fontSize: Float = 12f,
     at: Vec2? = null,
