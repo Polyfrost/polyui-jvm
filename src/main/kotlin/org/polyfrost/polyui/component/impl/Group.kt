@@ -19,41 +19,24 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.polyfrost.polyui.unit
+package org.polyfrost.polyui.component.impl
 
-enum class SlideDirection {
-    FromLeft, FromRight, FromTop, FromBottom
-}
-
-/** enum representing the type of animation to be used. */
-sealed class Transitions {
-    data object Fade : Transitions()
-    data class Slide(val direction: SlideDirection) : Transitions()
-}
-
-enum class TextAlign {
-    Left, Right, Center
-}
-
-enum class Direction {
-    Horizontal, Vertical
-}
-
-enum class Side {
-    Left, Right
-}
+import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.unit.Align
+import org.polyfrost.polyui.unit.AlignDefault
+import org.polyfrost.polyui.unit.Vec2
 
 /**
- * Represents a fixed-size gap between rows or columns, used in flex and grid layouts.
- *
- * @see [org.polyfrost.polyui.layout.impl.FlexLayout]
- * @see [org.polyfrost.polyui.layout.impl.GridLayout]
+ * A drawable that contains other drawables, and does not render anything itself.
  */
-data class Gap(val mainGap: Unit.Pixel, val crossGap: Unit.Pixel) {
-
-    companion object {
-        @JvmField
-        @Transient
-        val Default = Gap(5.px, 5.px)
-    }
+class Group(
+    at: Vec2? = null,
+    alignment: Align = AlignDefault,
+    size: Vec2? = null,
+    visibleSize: Vec2? = null,
+    vararg children: Drawable?,
+) : Drawable(at, alignment, size, visibleSize, children = children) {
+    override val consumesHover: Boolean
+        get() = false
+    override fun render() {}
 }

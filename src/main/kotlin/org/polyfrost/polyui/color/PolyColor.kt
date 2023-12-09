@@ -19,6 +19,8 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+@file:Suppress("invisible_member", "invisible_reference")
+
 package org.polyfrost.polyui.color
 
 import org.polyfrost.polyui.PolyUI
@@ -110,15 +112,19 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
     }
 
     /** red value of this color, from 0 to 255 */
+    @kotlin.internal.InlineOnly
     inline val r get() = argb shr 16 and 0xFF
 
     /** green value of this color, from 0 to 255 */
+    @kotlin.internal.InlineOnly
     inline val g get() = argb shr 8 and 0xFF
 
     /** blue value of this color, from 0 to 255 */
+    @kotlin.internal.InlineOnly
     inline val b get() = argb and 0xFF
 
     /** alpha value of this color, from 0 to 255 */
+    @kotlin.internal.InlineOnly
     inline val a get() = argb shr 24 and 0xFF
 
     /**
@@ -171,10 +177,6 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
         @JvmField
         @Transient
         val BLACK = rgba(0f, 0f, 0f, 1f)
-
-        @JvmField
-        @Transient
-        val TRANSPARENT_PALETTE = Colors.Palette(TRANSPARENT, TRANSPARENT, TRANSPARENT, TRANSPARENT)
 
         /**
          * Turn the given hex string into a color.
@@ -272,23 +274,23 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
          * recolor this color to the target color, with the given animation type and duration.
          *
          * **make sure to check if the color is a gradient, as this method may not have the expected result!**
-         * @param type animation type. if it is null, the color will be set to the target color immediately.
+         * @param animation animation to use. if it is null, the color will be set to the target color immediately.
          * @see [Gradient]
          */
-        open fun recolor(target: Color, type: Animation.Type? = null, durationNanos: Long = 1L.seconds) {
+        open fun recolor(target: Color, animation: Animation? = null) {
             if (target == this) return
             // clear old animation
-            animation = null
-            if (type != null) {
-                this.animation = type.create(durationNanos, 0f, 1f)
-                from = floatArrayOf(
+            this.animation = null
+            if (animation != null) {
+                this.animation = animation
+                val from = floatArrayOf(
                     this.r.toFloat(),
                     this.g.toFloat(),
                     this.b.toFloat(),
                     this.alpha,
                 )
-                val from = this.from!!
-                current = from.clone()
+                this.from = from
+                current = FloatArray(4)
                 to = floatArrayOf(
                     target.r.toFloat() - from[0],
                     target.g.toFloat() - from[1],
@@ -312,15 +314,7 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
         open fun update(deltaTimeNanos: Long): Boolean {
             if (animation != null) {
                 dirty = true
-                if (current == null) return false
                 val animation = this.animation ?: return false
-                if (animation.isFinished) {
-                    this.animation = null
-                    this.from = null
-                    this.to = null
-                    this.current = null
-                    return true
-                }
                 val from = this.from ?: return false
                 val to = this.to ?: return false
 
@@ -329,12 +323,21 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
                     (from[0] + to[0] * progress).toInt(),
                     (from[1] + to[1] * progress).toInt(),
                     (from[2] + to[2] * progress).toInt(),
-                    current,
+                    this.current,
                 )
-                this.hue = current!![0]
-                this.saturation = current!![1]
-                this.brightness = current!![2]
+                val current = this.current ?: return false
+                this.hue = current[0]
+                this.saturation = current[1]
+                this.brightness = current[2]
                 this.alpha = (from[3] + to[3] * progress)
+
+                if (animation.isFinished) {
+                    this.animation = null
+                    this.from = null
+                    this.to = null
+                    this.current = null
+                    return true
+                }
                 return false
             }
             return false
@@ -373,7 +376,7 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
             ) : Type() {
                 init {
                     require(innerRadius < outerRadius) { "innerRadius must be smaller than outerRadius! ($innerRadius < $outerRadius)" }
-                    if (innerRadius + 5 > outerRadius) PolyUI.LOGGER.warn("[Gradient] innerRadius and outerRadius are very close together, you may just get a circle in a box.")
+                    if (innerRadius + 5f > outerRadius) PolyUI.LOGGER.warn("[Gradient] innerRadius and outerRadius are very close together, you may just get a circle in a box.")
                 }
             }
 
@@ -417,10 +420,10 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
          * [Animated.recolor] this gradient color.
          * @param whichColor which color to recolor. 0 for the first color, 1 for the second color.
          */
-        fun recolor(whichColor: Int, target: Color, type: Animation.Type? = null, durationNanos: Long = 1L.seconds) {
+        fun recolor(whichColor: Int, target: Color, animation: Animation? = null) {
             when (whichColor) {
-                0 -> color1.recolor(target, type, durationNanos)
-                1 -> super.recolor(target, type, durationNanos)
+                0 -> color1.recolor(target, animation)
+                1 -> super.recolor(target, animation)
                 else -> throw IllegalArgumentException("Invalid color index")
             }
         }
@@ -431,14 +434,14 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
         }
 
         /**
-         * Deprecated, see [Component.recolor][org.polyfrost.polyui.component.Component.recolor] for how to animate gradients.
+         * Deprecated, see [Component.recolor][org.polyfrost.polyui.operations.Recolor] for how to animate gradients.
          */
         @Deprecated(
             "Gradient colors cannot be animated in this way. They can be animated separately using the given method.",
             ReplaceWith("recolor(0, target, type, durationNanos)"),
             DeprecationLevel.ERROR,
         )
-        override fun recolor(target: Color, type: Animation.Type?, durationNanos: Long) {
+        override fun recolor(target: Color, animation: Animation?) {
             // nop
         }
     }
@@ -472,7 +475,7 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
         private var time: Long = ((initialHue % 360f) * speedNanos.toFloat()).toLong()
 
         @Deprecated("Chroma colors cannot be animated.", level = DeprecationLevel.ERROR)
-        override fun recolor(target: Color, type: Animation.Type?, durationNanos: Long) {
+        override fun recolor(target: Color, animation: Animation?) {
             // nop
         }
 

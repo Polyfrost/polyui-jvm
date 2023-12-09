@@ -37,10 +37,7 @@ import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.data.Framebuffer
 import org.polyfrost.polyui.renderer.data.PolyImage
-import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.unit.px
-import org.polyfrost.polyui.utils.clearUsing
 import org.polyfrost.polyui.utils.toByteBuffer
 import java.io.InputStreamReader
 import java.nio.ByteBuffer
@@ -48,7 +45,7 @@ import java.util.*
 import kotlin.math.max
 import org.polyfrost.polyui.color.PolyColor as Color
 
-class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
+class NVGRenderer(size: Vec2) : Renderer(size) {
     private val nvgPaint: NVGPaint = NVGPaint.malloc()
     private val nvgColor: NVGColor = NVGColor.malloc()
     private val nvgColor2: NVGColor = NVGColor.malloc()
@@ -63,7 +60,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     }
 
     override fun beginFrame() {
-        nvgBeginFrame(vg, width, height, pixelRatio)
+        nvgBeginFrame(vg, size.x, size.y, pixelRatio)
     }
 
     override fun endFrame() = nvgEndFrame(vg)
@@ -91,7 +88,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     override fun popScissor() = nvgResetScissor(vg)
 
     override fun drawFramebuffer(fbo: Framebuffer, x: Float, y: Float, width: Float, height: Float) {
-        val framebuffer = fbos[fbo] ?: throw IllegalStateException("unknown framebuffer!")
+        val framebuffer = fbos[fbo] ?: throw IllegalStateException("cannot draw $fbo as it is not known by this renderer")
         nvgImagePattern(vg, x, y, fbo.width, fbo.height, 0f, framebuffer.image(), 1f, nvgPaint)
         nvgBeginPath(vg)
         nvgRect(vg, x, y, width, height)
@@ -108,7 +105,6 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         fontSize: Float,
     ) {
         if (color === Color.TRANSPARENT) return
-        // todo potentially ascend/descend?
         nvgBeginPath(vg)
         nvgFontSize(vg, fontSize)
         nvgFontFaceId(vg, getFont(font).id)
@@ -157,6 +153,8 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         nvgFill(vg)
     }
 
+    override fun supportsFramebuffers() = true
+
     override fun createFramebuffer(width: Float, height: Float): Framebuffer {
         val f = Framebuffer(width, height)
         fbos[f] = nvgluCreateFramebuffer(
@@ -204,8 +202,8 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     override fun unbindFramebuffer(fbo: Framebuffer?) {
         nvgEndFrame(vg)
         nvgluBindFramebuffer(vg, null)
-        glViewport(0, 0, (width * pixelRatio).toInt(), (height * pixelRatio).toInt())
-        nvgBeginFrame(vg, width, height, pixelRatio)
+        glViewport(0, 0, (size.x * pixelRatio).toInt(), (size.y * pixelRatio).toInt())
+        nvgBeginFrame(vg, size.x, size.y, pixelRatio)
     }
 
     override fun initImage(image: PolyImage) {
@@ -312,7 +310,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     }
 
     @Suppress("NAME_SHADOWING")
-    override fun textBounds(font: Font, text: String, fontSize: Float): Vec2<Unit.Pixel> {
+    override fun textBounds(font: Font, text: String, fontSize: Float): Vec2 {
         // nanovg trims single whitespace, so add an extra one (lol)
         var text = text
         if (text.endsWith(' ')) {
@@ -325,7 +323,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         nvgTextBounds(vg, 0f, 0f, text, out)
         val w = out[2] - out[0]
         val h = out[3] - out[1]
-        return Vec2(w.px, h.px)
+        return Vec2(w, h)
     }
 
     private fun color(color: Color) {
@@ -456,8 +454,9 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
             } else {
                 throw ExceptionInInitializerError("Failed to get image: ${image.resourcePath}")
             }
+            val type = if (!def) PolyUI.defaultImage.type else image.type
             val data: ByteBuffer
-            when (image.type) {
+            when (type) {
                 // let stb figure it out
                 PolyImage.Type.Unknown, PolyImage.Type.Raster -> {
                     val w = IntArray(1)
@@ -531,9 +530,6 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     }
 
     override fun cleanup() {
-        fbos.keys.clearUsing { delete(it) }
-        images.keys.clearUsing { delete(it) }
-        fonts.keys.clearUsing { delete(it) }
         nvgColor.free()
         nvgPaint.free()
         vg = -1

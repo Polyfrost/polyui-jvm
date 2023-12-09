@@ -21,35 +21,8 @@
 
 package org.polyfrost.polyui
 
-import org.polyfrost.polyui.animate.Animations
-import org.polyfrost.polyui.animate.keyframed
-import org.polyfrost.polyui.color.DarkTheme
-import org.polyfrost.polyui.color.LightTheme
-import org.polyfrost.polyui.component.Drawable
-import org.polyfrost.polyui.component.impl.*
-import org.polyfrost.polyui.event.MouseClicked
-import org.polyfrost.polyui.input.KeyBinder
-import org.polyfrost.polyui.input.Keys
-import org.polyfrost.polyui.input.Modifiers
-import org.polyfrost.polyui.input.Modifiers.Companion.mods
-import org.polyfrost.polyui.input.Mouse
-import org.polyfrost.polyui.input.Translator.Companion.localised
-import org.polyfrost.polyui.layout.Layout.Companion.drawables
-import org.polyfrost.polyui.layout.impl.FlexLayout
-import org.polyfrost.polyui.layout.impl.PixelLayout
-import org.polyfrost.polyui.property.impl.BlockProperties
-import org.polyfrost.polyui.renderer.data.PolyImage
-import org.polyfrost.polyui.renderer.impl.GLWindow
-import org.polyfrost.polyui.renderer.impl.NVGRenderer
-import org.polyfrost.polyui.renderer.impl.NoOpRenderer
-import org.polyfrost.polyui.renderer.impl.NoOpWindow
-import org.polyfrost.polyui.unit.*
-import org.polyfrost.polyui.utils.fastEach
-import org.polyfrost.polyui.utils.rgba
-import kotlin.random.Random
-import org.polyfrost.polyui.color.PolyColor as Color
-
 fun main() {
+    /*
     // use the no-op rendering implementation (for profiling of the system code)
     val useNoOp = false
 
@@ -254,4 +227,5 @@ fun main() {
     )
 
     window.open(polyUI)
+     */
 }

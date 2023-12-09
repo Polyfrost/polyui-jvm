@@ -19,48 +19,75 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+@file:Suppress("invisible_member", "invisible_reference")
+
 package org.polyfrost.polyui.component
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.MustBeInvokedByOverriders
+import org.jetbrains.annotations.NotNull
 import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
-import org.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
-import org.polyfrost.polyui.PolyUI.Companion.INIT_SETUP
+import org.polyfrost.polyui.PolyUI.Companion.INPUT_DISABLED
+import org.polyfrost.polyui.PolyUI.Companion.INPUT_NONE
 import org.polyfrost.polyui.animate.Animation
+import org.polyfrost.polyui.animate.Easing
 import org.polyfrost.polyui.color.Colors
-import org.polyfrost.polyui.event.Event
-import org.polyfrost.polyui.event.EventDSL
-import org.polyfrost.polyui.event.EventDSLMarker
-import org.polyfrost.polyui.layout.Layout
-import org.polyfrost.polyui.renderer.Renderer
-import org.polyfrost.polyui.renderer.data.FontFamily
+import org.polyfrost.polyui.color.PolyColor
+import org.polyfrost.polyui.event.*
+import org.polyfrost.polyui.operations.*
+import org.polyfrost.polyui.renderer.data.Framebuffer
 import org.polyfrost.polyui.unit.*
-import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.utils.*
 
 /**
  * # Drawable
  * The most basic thing in the PolyUI rendering system.
  *
- * This class is implemented for both [Layout] and [Drawable], and you should use them as bases if you are creating a UI in most cases.
+ * Supports recoloring, animations, and the entire event system.
  */
 abstract class Drawable(
-    /** position **relative** to the [parents][layout] position. */
-    open val at: Point<Unit>,
+    at: Vec2? = null,
+    var alignment: Align = AlignDefault,
+    size: Vec2? = null,
+    visibleSize: Vec2? = null,
+    palette: Colors.Palette? = null,
+    val focusable: Boolean = false,
+    vararg children: Drawable? = arrayOf(),
+) : Cloneable {
+    @set:Locking
+    var size = size ?: Vec2()
+        set(value) {
+            field = value
+            (visibleSize as? Vec2.Sourced)?.source = value
+        }
+
+    @set:Locking
+    var visibleSize: Vec2 = visibleSize ?: Vec2.Based(base = this.size)
+
+    @set:Locking
+    var parent: Drawable? = null
+        private set(value) {
+            if (value === field) return
+            if (field != null) {
+                PolyUI.LOGGER.info("transferring ownership of ${this.simpleName} from ${field!!.simpleName} to ${value?.simpleName}")
+            }
+            field = value
+        }
+
+    @set:Locking
+    var at = at ?: Vec2.Relative()
+
     /**
      * This property controls weather this drawable resizes "raw", meaning it will **not** respect the aspect ratio.
      *
      * By default, it is `false`, so when resized, the smallest increase is used for both width and height. This means that it will stay at the same aspect ratio.
      *
-     * @see org.polyfrost.polyui.layout.impl.FlexLayout - It uses this functionality to make itself larger without respect to the aspect ratio, but its children will.
      * @since 0.19.0
      */
-    val rawResize: Boolean = false,
-    acceptsInput: Boolean = true,
-) : Cloneable {
+    var rawResize = false
+
     @Transient
-    val eventHandlers = HashMap<Event, (Drawable.(Event) -> Boolean)>()
+    private var eventHandlers: HashMap<Event, LinkedList<(Drawable.(Event) -> Boolean)>>? = null
 
     /**
      * This is the name of this drawable, and it will be consistent over reboots of the program, so you can use it to get drawables from a layout by ID, e.g:
@@ -70,155 +97,198 @@ abstract class Drawable(
     @Transient
     open var simpleName = "${this::class.java.simpleName}@${Integer.toHexString(this.hashCode())}"
 
-    /** size of this drawable. */
-    abstract var size: Size<Unit>?
+    var children: LinkedList<Drawable>?
+        private set
 
-    @Transient
-    lateinit var renderer: Renderer
+    init {
+        if (children.isNotEmpty()) {
+            this.children = children.filterNotNull().asLinkedList().also { list ->
+                list.fastEach {
+                    it.parent = this
+                }
+            }
+        } else {
+            this.children = null
+        }
+    }
 
     @Transient
     lateinit var polyUI: PolyUI
+        private set
 
-    var acceptsInput = acceptsInput
-        get() = exists && field
+    @kotlin.internal.InlineOnly
+    inline val renderer get() = polyUI.renderer
+
+    @set:Locking
+    var framebuffer: Framebuffer? = null
 
     /**
-     * This is the initialization stage of this drawable.
-     * @see PolyUI.INIT_COMPLETE
-     * @see PolyUI.INIT_NOT_STARTED
-     * @see PolyUI.INIT_SETUP
-     * @since 0.19.0
+     * Setting of this value could have undesirable results, and the [PolyColor.Animated.recolor] method should be used instead.
      */
-    @Transient
-    var initStage = INIT_NOT_STARTED
-        internal set
+    @set:ApiStatus.Internal
+    @set:Locking
+    lateinit var color: PolyColor.Animated
 
-    /** weather or not the mouse is currently over this drawable.
+    @Transient
+    @set:Locking
+    var palette: Colors.Palette? = palette
+        set(@NotNull value) {
+            if (value == null) return
+            field = value
+            if (!::color.isInitialized) return
+            color.recolor(value.normal)
+        }
+
+    // InlineOnly makes it so that it doesn't add useless local variables called $i$f$getX or whatever
+    @kotlin.internal.InlineOnly
+    @set:Locking
+    inline var x: Float
+        get() = at.x
+        set(value) {
+            at.x = value
+        }
+
+    @kotlin.internal.InlineOnly
+    @set:Locking
+    inline var y: Float
+        get() = at.y
+        set(value) {
+            at.y = value
+        }
+
+    @kotlin.internal.InlineOnly
+    @set:Locking
+    inline var width: Float
+        get() = size.x
+        set(value) {
+            size.x = value
+        }
+
+    @kotlin.internal.InlineOnly
+    @set:Locking
+    inline var height: Float
+        get() = size.y
+        set(value) {
+            size.y = value
+        }
+
+    @kotlin.internal.InlineOnly
+    @set:Locking
+    inline var visibleWidth: Float
+        get() = visibleSize.x
+        set(value) {
+            visibleSize.x = value
+        }
+
+    @kotlin.internal.InlineOnly
+    @set:Locking
+    inline var visibleHeight: Float
+        get() = visibleSize.y
+        set(value) {
+            visibleSize.y = value
+        }
+
+    @Transient
+    @set:Locking
+    protected var xScroll: Animation? = null
+
+    @Transient
+    @set:Locking
+    protected var yScroll: Animation? = null
+
+    var needsRedraw = true
+        set(value) {
+            if (field == value) return
+            if (value) {
+                parent?.needsRedraw = true
+            }
+            field = value
+        }
+
+    protected open val shouldScroll get() = true
+
+    @Transient
+    var acceptsInput = false
+        get() = field && enabled
+
+    @Transient
+    var initialized = false
+        protected set
+
+    /**
+     * The current input state of this drawable. Note that this value is **not responsible** for dispatching events
+     * such as [Event.Mouse.Exited] or [Event.Mouse.Pressed]. It is just here for tracking purposes and for your benefit.
      *
-     * **DO NOT** modify this value. It is managed automatically by [org.polyfrost.polyui.event.EventManager].
-     * Changing this directly will not cause you to receive events.
+     * This value will be of [INPUT_DISABLED] (-1), [INPUT_NONE] (0), [INPUT_HOVERED] (1), or [INPUT_PRESSED] (2).
+     *
+     * **Do not** modify this value!
+     * @since 2.0.0
      */
     @Transient
-    var mouseOver = false
-        internal set
+    var inputState = INPUT_NONE
+        set(value) {
+            if (field == value) return
+
+            if (value == INPUT_DISABLED) {
+                accept(Event.Lifetime.Disabled)
+                field = value
+                return
+            }
+            if (field == INPUT_DISABLED) {
+                accept(Event.Lifetime.Enabled)
+            }
+
+            if (INPUT_NONE in field..<value) {
+                accept(Event.Mouse.Entered)
+            }
+            if (INPUT_NONE in value..<field) {
+                accept(Event.Mouse.Exited)
+            }
+            field = value
+        }
 
     /**
      * weather or not this drawable should be rendered.
      *
-     * This is controlled by [Layout.clipDrawables] to save resources by not drawing drawables which cannot be seen.
+     * This is controlled by [clipDrawables] to save resources by not drawing drawables which cannot be seen.
      *
-     * It is only respected by [Layout] by default. This means that if you are calling [render] yourself (which you really shouldn't), you should check this value.
-     * @see Layout.render
+     * if you are calling [render] yourself (which you really shouldn't), you should check this value.
+     * @see draw
      * @since 0.21.4
      */
     @Transient
+    @set:Locking
     open var renders = true
-        get() = field && exists
-
-    /**
-     * Reference to the layout encapsulating this drawable.
-     * For components, this is never null, but for layout, it can be null (meaning its parent is the polyui).
-     *
-     * In pretty much every situation it is safe to `!!` this, as any layout you create will have parent of [PolyUI.master]. If you are doing `this.layout.layout` or deeper, you should null-check.
-     */
-    abstract val layout: Layout?
+        get() = field && enabled
 
     /**
      * If this is `true`, the drawable will be the only drawable that is allowed to be hovered at once.
      *
-     * There are essentially two modes for hovering in PolyUI, and by default, components are in the "normal" (`false`) mode, where only one of them can be hovered as once
-     * as would be expected, but layouts are in the "group" (`true`) mode, so will still receive the events even if another drawable is hovered, for example scrolling.
+     * There are essentially two modes for hovering in PolyUI, and by default, components are in the "normal" (`true`) mode, where only one of them can be hovered as once
+     * as would be expected, but layouts are in the "group" (`false`) mode, so will still receive the events even if another drawable is hovered, for example scrolling.
      * @since 0.21.3
      */
-    abstract var consumesHover: Boolean
-
-    inline var x get() = at.a.px
-        set(value) {
-            at.a.px = value
-            trueX = trueX()
-        }
-
-    inline var y get() = at.b.px
-        set(value) {
-            at.b.px = value
-            trueY = trueY()
-        }
-
-    inline var width get() = size!!.a.px
-        set(value) {
-            size!!.a.px = value
-        }
-
-    inline var height get() = size!!.b.px
-        set(value) {
-            size!!.b.px = value
-        }
+    open val consumesHover get() = true
 
     /**
-     * This flag controls weather this drawable exists, meaning if it accepts events and renders.
+     * Disabled flag for this component. Dispatches the [Event.Lifetime.Disabled] and [Event.Lifetime.Enabled] events.
      *
-     * Additionally:
-     * - In layouts, they will display as empty (no drawables) if this is false.
-     * - In components, they will be excluded from calculations.
-     *
-     * @since 0.19.0
+     * @since 0.21.4
      */
-    var exists = true
-
-    /** true X value (i.e. not relative to the layout) */
-    @Transient
-    var trueX = 0f
-
-    /** true Y value (i.e. not relative to the layout) */
-    @Transient
-    var trueY = 0f
-
-    /**
-     * Calculate the true X value (i.e. not relative to the layout)
-     *
-     * This method will NOT assign the value to the [trueX] field.
-     * @since 0.19.0
-     */
-    open fun trueX(): Float {
-        var x = this.x
-        var parent = this.layout
-        while (parent != null) {
-            x += parent.x
-            parent = parent.layout
+    @kotlin.internal.InlineOnly
+    @set:Locking
+    inline var enabled
+        get() = inputState > INPUT_DISABLED
+        set(value) {
+            inputState = if (value) INPUT_NONE else INPUT_DISABLED
         }
-        return x
-    }
-
-    /**
-     * Calculate the true Y value (i.e. not relative to the layout)
-     *
-     * This method will NOT assign the value to the [trueY] field.
-     * @since 0.19.0
-     */
-    open fun trueY(): Float {
-        var y = this.y
-        var parent = this.layout
-        while (parent != null) {
-            y += parent.y
-            parent = parent.layout
-        }
-        return y
-    }
-
-    inline val atType: Unit.Type
-        get() = at.type
-    inline val sizeType: Unit.Type
-        get() = size!!.type
-
-    /**
-     * Returns `true` if this drawable has a dynamic size or position, or if the size is null.
-     */
-    inline val isDynamic get() = at.dynamic || size?.dynamic ?: true
 
     @Transient
-    protected val operations: ArrayList<Pair<DrawableOp, (Drawable.() -> kotlin.Unit)?>> = ArrayList(5)
+    protected var operations: LinkedList<DrawableOp>? = null
+        private set
 
     /** current rotation of this drawable (radians). */
+    @set:Locking
     var rotation: Double = 0.0
 
     /** current skew in x dimension of this drawable (radians). */
@@ -241,41 +311,50 @@ abstract class Drawable(
 
     /** **a**t **c**ache **x** for transformations. */
     @Transient
-    @ApiStatus.Internal
-    var acx = 0f
+    private var acx = 0f
 
     /** **a**t **c**ache **y** for transformations. */
     @Transient
-    @ApiStatus.Internal
-    var acy = 0f
+    private var acy = 0f
+
+    @Locking
+    fun draw() {
+        if (!renders) return
+        needsRedraw = false
+        // todo impl framebuffers
+//        framebuffer?.let { renderer.bindFramebuffer(it) }
+        preRender()
+        render()
+        children?.fastEach {
+            it.draw()
+        }
+        postRender()
+//        framebuffer?.let { renderer.unbindFramebuffer(it) }
+    }
 
     /**
      * pre-render functions, such as applying transforms.
      * In this method, you should set needsRedraw to true if you have something to redraw for the **next frame**.
-     * @param deltaTimeNanos the time in nanoseconds since the last frame. Use this for animations. It is the same as [PolyUI.delta].
      *
      * **make sure to call super [Drawable.preRender]!**
      */
     @MustBeInvokedByOverriders
-    open fun preRender(deltaTimeNanos: Long) {
-        if (initStage != INIT_COMPLETE) throw IllegalStateException("${this.simpleName} was attempted to be rendered before it was fully initialized (parent ${this.layout?.simpleName}; stage $initStage)")
+    protected open fun preRender() {
+        val renderer = renderer
         renderer.push()
-        operations.fastRemoveIf { (it, func) ->
-            it.update(deltaTimeNanos)
-            it.apply(renderer)
-            return@fastRemoveIf if (!it.isFinished) {
-                if (it !is DrawableOp.Persistent) layout?.needsRedraw = true
-                false
-            } else {
-                if (it is DrawableOp.Rotate) {
-                    if (rotation > 6.28 && rotation < 6.29) { // roughly 360 degrees, resets the rotation
-                        rotation = 0.0
-                    }
-                }
-                func?.invoke(this)
-                true
-            }
+        operations?.fastEach { it.apply() }
+
+        var ran = false
+        xScroll?.let {
+            x = it.update(polyUI.delta)
+            ran = true
         }
+        yScroll?.let {
+            y = it.update(polyUI.delta)
+            ran = true
+        }
+        if (ran) renderer.pushScissor(xScroll?.from ?: x, yScroll?.from ?: y, visibleSize.x, visibleSize.y)
+
         if (rotation != 0.0) {
             renderer.translate(x + width / 2f, y + height / 2f)
             renderer.rotate(rotation)
@@ -292,17 +371,19 @@ abstract class Drawable(
     }
 
     /** draw script for this drawable. */
-    abstract fun render()
+    protected abstract fun render()
 
     /**
      * Called after rendering, for functions such as removing transformations.
      *
      * **make sure to call super [Drawable.postRender]!**
      */
-    open fun postRender() {
-        operations.fastEachReversed {
-            it.first.unapply(renderer)
+    @MustBeInvokedByOverriders
+    protected open fun postRender() {
+        operations?.fastRemoveIfReversed {
+            it.unapply()
         }
+        if (xScroll != null || yScroll != null) renderer.popScissor()
         renderer.pop()
         if (rotation != 0.0) {
             x = acx
@@ -311,93 +392,160 @@ abstract class Drawable(
     }
 
     /**
-     * Calculate the position and size of this drawable. Make sure to call [doDynamicSize] in this method to avoid issues with sizing.
-     *
-     * This method is called once the [layout] is populated for children and component, and when a recalculation is requested.
-     *
-     * The value of [layout]'s bounds will be updated after this method is called, so **do not** use [layout]'s bounds as an updated value in this method.
-     */
-    abstract fun calculateBounds()
-
-    /**
      * Method that is called when the physical size of the total window area changes.
      */
+    @Locking
     open fun rescale(scaleX: Float, scaleY: Float) {
         if (rawResize) {
             at.scale(scaleX, scaleY)
-            size!!.scale(scaleX, scaleY)
+            size.scale(scaleX, scaleY)
+            visibleSize.scale(scaleX, scaleY)
         } else {
             val scale = cl1(scaleX, scaleY)
-            at.scale(scale, scale)
-            size!!.scale(scale, scale)
+            at *= scale
+            size *= scale
+            visibleSize *= scale
         }
-        trueX = trueX()
-        trueY = trueY()
+        children?.fastEach { it.rescale(scaleX, scaleY) }
+    }
+
+    fun clipDrawables() {
+        children?.fastEach {
+            it.renders = it.intersects(xScroll?.from ?: x, yScroll?.from ?: y, visibleSize.x, visibleSize.y)
+        }
+        needsRedraw = true
     }
 
     /** function that should return true if it is ready to be removed from its parent.
      *
      * This is used for drawables that need to wait for an animation to finish before being removed.
      */
-    // asm: don't check size == 0 as it checked in allAre
-    open fun canBeRemoved(): Boolean = operations.allAre { it.first is DrawableOp.Persistent }
+    open fun canBeRemoved(): Boolean = operations.isEmpty() && (children?.allAre { it.canBeRemoved() } ?: true)
 
-    /** add a debug render overlay for this drawable. This is always rendered regardless of the layout re-rendering if debug mode is on. */
-    open fun debugRender() {
-        // no-op
-    }
-
-    /** called when this drawable receives an event.
-     *
-     * **make sure to call [super.accept()][Drawable.accept]!**
-     *
-     * @return true if the event should be consumed (cancelled so no more handlers are called), false otherwise.
-     * */
-    @MustBeInvokedByOverriders
-    open fun accept(event: Event): Boolean {
-        return eventHandlers[event]?.let { it(this, event) } ?: false
-    }
-
-    @OverloadResolutionByLambdaReturnType
-    @Suppress("UNCHECKED_CAST")
-    fun <E : Event, S : Drawable> S.addEventHandler(event: E, handler: (S.(E) -> Boolean)) {
-        eventHandlers[event] = handler as Drawable.(Event) -> Boolean
-    }
-
-    @JvmName("addEventhandler")
-    @Suppress("UNCHECKED_CAST")
-    @OverloadResolutionByLambdaReturnType
-    fun <E : Event, S : Drawable> S.addEventHandler(event: E, handler: S.(E) -> kotlin.Unit) {
-        eventHandlers[event] = {
-            handler(this as S, it as E)
-            true
+    fun debugDraw() {
+        if (!renders) return
+        debugRender()
+        children?.fastEach {
+            if (!it.renders) return@fastEach
+            it.debugDraw()
         }
     }
 
-    @EventDSLMarker
-    fun <S : Drawable> S.events(dsl: EventDSL<S>.() -> kotlin.Unit) {
-        EventDSL(this).apply(dsl)
+    /**
+     * Use this function to calculate the size of this drawable. DO NOT include children in this calculation!
+     *
+     * This function is only called if no size is supplied to this drawable at initialization.
+     * A return value of `null` indicates this drawable is not able to infer its own size, as it is for example, a Block with no reference.
+     * A drawable such as Text on the other hand, is able to infer its own size.
+     */
+    open fun calculateSize(): Vec2? = null
+
+    /** add a debug render overlay for this drawable. This is always rendered regardless of the layout re-rendering if debug mode is on. */
+    protected open fun debugRender() {
+        val color = if (inputState > INPUT_NONE) polyUI.colors.page.border20 else polyUI.colors.page.border10
+        renderer.hollowRect(xScroll?.from ?: x, yScroll?.from ?: y, visibleWidth, visibleHeight, color, 1f)
     }
 
-    /** Use this function to reset your drawable's [PolyText][org.polyfrost.polyui.input.Translator] if it is using one. */
-    open fun reset() {
-        // no-op
+    /**
+     * called when this drawable receives an event.
+     *
+     * @return true if the event should be consumed (cancelled so no more handlers are called), false otherwise.
+     */
+    @MustBeInvokedByOverriders
+    open fun accept(event: Event): Boolean {
+        if (!enabled) return false
+        if (event is Event.Mouse.Scrolled) {
+            var ran = false
+            if (size.x - visibleSize.x > 0f) {
+                xScroll?.let {
+                    it.durationNanos = 0.6.seconds
+                    it.to += event.amountX
+                    it.to = it.to.coerceIn(it.from - (size.x - visibleSize.x), it.from)
+                }
+                ran = true
+            }
+            if (size.y - visibleSize.y > 0f) {
+                yScroll?.let {
+                    it.durationNanos = 0.6.seconds
+                    it.to += event.amountY
+                    it.to = it.to.coerceIn(it.from - (size.y - visibleSize.y), it.from)
+                }
+                ran = true
+            }
+            if (ran) {
+                polyUI.eventManager.recalculateMousePos()
+                clipDrawables()
+                return true
+            }
+        }
+        eventHandlers?.get(event)?.fastEach {
+            if (it(this, event)) return true
+        }
+        return false
     }
 
-    /** give this a renderer reference and a PolyUI reference.
+    /** give this a PolyUI reference.
      *
-     * You can also use this method to do some calculations (such as text widths) that are not dependent on other sizes.
-     *
-     * If you need a method that has access to component's sizes, see [here][calculateBounds] or [here][calculateSize] (if you are operating on yourself only).
+     * You can also use this method to do some calculations (such as text widths) that are not dependent on other sizes,
+     * or operations that require access to PolyUI things, like [PolyUI.settings] or [PolyUI.translator]
      *
      * this method is called once, and only once.
      *
-     * @see INIT_SETUP
+     * @see initialized
      */
-    open fun setup(renderer: Renderer, polyUI: PolyUI) {
-        require(initStage == INIT_NOT_STARTED) { "${this.simpleName} has already been setup!" }
-        this.renderer = renderer
+    @MustBeInvokedByOverriders
+    open fun setup(polyUI: PolyUI) {
+//        require(!initialized) { "${this.simpleName} has already been setup!" }
         this.polyUI = polyUI
+        if (palette == null) palette = polyUI.colors.component.bg
+        if (!::color.isInitialized) this.color = palette!!.normal.toAnimatable()
+        children?.fastEach {
+            it.setup(polyUI)
+        }
+        // asm: don't use accept as we don't want to dispatch to children
+        eventHandlers?.remove(Event.Lifetime.Init)?.let {
+            it.fastEach { handler ->
+                handler.invoke(this, Event.Lifetime.Init)
+            }
+            // help gc
+            it.clear()
+        }
+        polyUI.positioner.position(this)
+        children?.fastEach {
+            var scrolling = false
+            if (it.shouldScroll) {
+                if (it.size.x > it.visibleSize.x && it.xScroll == null) {
+                    scrolling = true
+                    it.xScroll = Easing.Expo(Easing.Type.Out, 0L, it.at.x, it.at.x)
+                }
+                if (it.size.y > it.visibleSize.y && it.yScroll == null) {
+                    scrolling = true
+                    it.yScroll = Easing.Expo(Easing.Type.Out, 0L, it.at.y, it.at.y)
+                }
+                if (scrolling) {
+                    it.acceptsInput = true
+                    if (polyUI.settings.debug) PolyUI.LOGGER.info("Enabled scrolling for ${it.simpleName}")
+                }
+            }
+        }
+
+//        if (polyUI.settings.debug) {
+//            children?.fastEach {
+//                require(!it.size.isZero) { "No size property after init on ${it.simpleName} (child of $simpleName)" }
+//            }
+//        }
+
+        initialized = true
+        eventHandlers?.remove(Event.Lifetime.PostInit)?.let {
+            it.fastEach { handler ->
+                handler.invoke(this, Event.Lifetime.PostInit)
+            }
+            // help gc
+            it.clear()
+        }
+        // following all init events being removed, if it is empty, we can set it to null
+        if (eventHandlers.isNullOrEmpty()) eventHandlers = null
+        clipDrawables()
     }
 
     /** debug print for this drawable.*/
@@ -405,28 +553,12 @@ abstract class Drawable(
         // noop
     }
 
-    /**
-     * This function is called when initialization of a drawable is complete, so it has been fully calculated.
-     *
-     * This function is called once, and only once.
-     * @see onParentInitComplete
-     * @see INIT_COMPLETE
-     * @since 0.19.0
-     */
-    open fun onInitComplete() {
-        trueX = trueX()
-        trueY = trueY()
-    }
-
-    /**
-     * This function is called when initialization of this parent is complete.
-     *
-     * This function is called once, and only once.
-     * @see onInitComplete
-     * @see INIT_COMPLETE
-     * @since 0.19.0
-     */
-    open fun onParentInitComplete() {
+    @ApiStatus.Experimental
+    fun reset() {
+        this.x = 0f
+        this.y = 0f
+        this.initialized = false
+        children?.fastEach { it.reset() }
     }
 
     /**
@@ -434,22 +566,10 @@ abstract class Drawable(
      * @see intersects
      * @see isInside(Float, Float, Float, Float)
      */
-    open fun isInside(x: Float, y: Float): Boolean {
-        val tx = trueX
-        val ty = trueY
-        return x in tx..tx + width && y in ty..ty + height
-    }
-
-    /**
-     * @return `true` if all the points of this drawable are inside the given box (x, y, width, height).
-     * @since 0.21.4
-     * @see intersects
-     * @see isInside
-     */
-    open fun isInside(x: Float, y: Float, width: Float, height: Float): Boolean {
-        val tx = trueX
-        val ty = trueY
-        return tx in x..x + width && ty in y..y + height && tx + this.width in x..x + width && ty + this.height in y..y + height
+    fun isInside(x: Float, y: Float): Boolean {
+        val tx = this.xScroll?.from ?: this.x
+        val ty = this.yScroll?.from ?: this.y
+        return x in tx..tx + visibleSize.x && y in ty..ty + visibleSize.y
     }
 
     /**
@@ -457,46 +577,10 @@ abstract class Drawable(
      * @since 0.21.4
      * @see isInside
      */
-    open fun intersects(x: Float, y: Float, width: Float, height: Float): Boolean {
-        val tx = trueX
-        val ty = trueY
-        return (x < tx + this.width && tx < x + width) && (y < ty + this.height && ty < y + height)
-    }
-
-    fun doDynamicSize() {
-        doDynamicSize(at)
-        if (size != null) doDynamicSize(size!!)
-    }
-
-    /**
-     * Return the layout of the highest order (the one inside the [master layout][PolyUI.master]) that contains this drawable.
-     *
-     * If this is the master layout, it is returned.
-     *
-     * @since 0.23.2
-     */
-    fun getContainingLayout(): Layout {
-        if (this === polyUI.master) return this
-        var layout = if (this is Layout) this else this.layout
-        while (layout?.layout?.layout != null) {
-            layout = layout.layout
-        }
-        return layout!!
-    }
-
-    protected fun doDynamicSize(upon: Vec2<Unit>) {
-        val a = layout?.size?.a ?: throw IllegalStateException("Dynamic unit only work on parents with a set size! (${this.simpleName}; parent ${this.layout?.simpleName})")
-        val b = layout?.size?.b ?: throw IllegalStateException("Dynamic unit only work on parents with a set size! (${this.simpleName}; parent ${this.layout?.simpleName})")
-        if (upon.a is Unit.Dynamic) {
-            upon.a.set(a)
-        } else if (upon.a is Unit.Dynamic2) {
-            upon.a.set(a, size?.a ?: at.a)
-        }
-        if (upon.b is Unit.Dynamic) {
-            upon.b.set(b)
-        } else if (upon.b is Unit.Dynamic2) {
-            upon.b.set(b, size?.b ?: at.b)
-        }
+    fun intersects(x: Float, y: Float, width: Float, height: Float): Boolean {
+        val tx = this.xScroll?.from ?: this.x
+        val ty = this.yScroll?.from ?: this.y
+        return (x < tx + this.visibleSize.x && tx < x + width) && (y < ty + this.visibleSize.y && ty < y + height)
     }
 
     /**
@@ -508,274 +592,98 @@ abstract class Drawable(
      */
     public override fun clone(): Drawable = throw CloneNotSupportedException("Cloning is not supported for ${this.simpleName}!")
 
-    /**
-     * Implement this function to return the size of this drawable, if no size is specified during construction.
-     *
-     * This should be so that if the drawable can determine its own size (for example, it is an image), then the size parameter in the constructor can be omitted using:
-     *
-     * `size: Vec2<org.polyfrost.polyui.unit.Unit>? = null;` and this method **needs** to be implemented!
-     *
-     * Otherwise, the size parameter in the constructor must be specified.
-     * @throws UnsupportedOperationException if this method is not implemented, and the size parameter in the constructor is not specified. */
-    open fun calculateSize(): Size<Unit>? = null
-
-    /**
-     * Function that is called when the colors attached to this drawable change.
-     *
-     * If this is a layout, the colors will change, and all its children and components will be notified and updated accordingly.
-     *
-     * **Make sure to call** [super.onColorsChanged()][onColorsChanged] if you override this!
-     * @see Colors
-     * @see Component.recolor
-     * @see onFontsChanged
-     * @since 0.17.5
-     */
-    @MustBeInvokedByOverriders
-    abstract fun onColorsChanged(colors: Colors)
-
-    /**
-     * Function that is called when the fonts attached to this drawable change.
-     *
-     * If this is a layout, the fonts will change, and all its children and components will be notified and updated accordingly.
-     *
-     * **Make sure to call** [super.onFontsChanged()][onFontsChanged] if you override this!
-     * @see FontFamily
-     * @see onColorsChanged
-     * @since 0.22.0
-     */
-    @MustBeInvokedByOverriders
-    abstract fun onFontsChanged(fonts: FontFamily)
+    override fun toString() = "$simpleName($at, $size)"
 
     /** Add a [DrawableOp] to this drawable. */
-    open fun addOperation(drawableOp: DrawableOp, onFinish: (Drawable.() -> kotlin.Unit)? = null) {
-        if (this is Layout) {
-            needsRedraw = true
-        } else {
-            layout?.needsRedraw = true
-        }
-        operations.add(drawableOp to onFinish)
+    @Locking
+    fun addOperation(drawableOp: DrawableOp) {
+        if (operations == null) operations = LinkedList()
+        this.operations?.add(drawableOp)
+        needsRedraw = true
+    }
+
+    @Locking
+    fun addOperation(vararg drawableOps: DrawableOp) {
+        if (operations == null) operations = LinkedList()
+        operations?.addAll(drawableOps)
+        needsRedraw = true
     }
 
     /**
      * Remove an operation from this drawable.
      */
+    @Locking
     fun removeOperation(drawableOp: DrawableOp) {
-        operations.fastRemoveIfReversed { it.first == drawableOp }
+        this.operations?.remove(drawableOp)
+        needsRedraw = true
     }
 
-    /**
-     * Scale this drawable by the given amount, in the X and Y dimensions.
-     *
-     * Please note that this ignores all bounds, and will simply scale this drawable, meaning that it can be clipped by its layout, and overlap nearby drawable.
-     *
-     * @since 0.17.4
-     */
-    fun scaleBy(
-        xFactor: Float,
-        yFactor: Float,
-        animation: Animation.Type? = null,
-        durationNanos: Long = 1.seconds,
-        onFinish: (Drawable.() -> kotlin.Unit)? = null,
-    ) {
-        addOperation(DrawableOp.Scale(xFactor, yFactor, true, this, animation, durationNanos), onFinish)
+    @Locking
+    fun addChild(child: Drawable) {
+        child.accept(Event.Lifetime.Added)
+        val children = this.children ?: LinkedList()
+        children.add(child)
+        needsRedraw = true
     }
 
-    /**
-     * Scale this drawable to the given amount, in the X and Y dimensions.
-     *
-     * Please note that this ignores all bounds, and will simply scale this drawable, meaning that it can be clipped by its layout, and overlap nearby drawable.
-     *
-     * @since 0.17.4
-     */
-    fun scaleTo(
-        xFactor: Float,
-        yFactor: Float,
-        animation: Animation.Type? = null,
-        durationNanos: Long = 1.seconds,
-        onFinish: (Drawable.() -> kotlin.Unit)? = null,
-    ) {
-        addOperation(DrawableOp.Scale(xFactor, yFactor, false, this, animation, durationNanos), onFinish)
+    @Locking
+    fun addChild(vararg children: Drawable) {
+        for (child in children) addChild(child)
     }
 
-    /**
-     * Rotate this drawable to the given amount, in degrees. The amount is MOD 360 to return a value between 0-360 always.
-     *
-     * Please note that this ignores all bounds, and will simply scale this drawable, meaning that it can be clipped by its layout, and overlap nearby drawable.
-     * @see rotateBy
-     */
-    fun rotateTo(
-        degrees: Double,
-        animation: Animation.Type? = null,
-        durationNanos: Long = 1L.seconds,
-        onFinish: (Drawable.() -> kotlin.Unit)? = null,
-    ) {
-        addOperation(
-            DrawableOp.Rotate(degrees.toRadians(), false, this, animation, durationNanos),
-            onFinish,
-        )
+    @Locking
+    fun removeChild(child: Drawable) {
+        removeChild(this.children?.indexOf(child) ?: return)
+        needsRedraw = true
     }
 
-    /**
-     * Rotate this drawable by the given amount, in degrees.
-     *
-     * Please note that this ignores all bounds, and will simply scale this drawable, meaning that it can be clipped by its layout, and overlap nearby drawable.
-     * @see rotateTo
-     */
-    fun rotateBy(
-        degrees: Double,
-        animation: Animation.Type? = null,
-        durationNanos: Long = 1L.seconds,
-        onFinish: (Drawable.() -> kotlin.Unit)? = null,
-    ) {
-        addOperation(
-            DrawableOp.Rotate(degrees.toRadians(), true, this, animation, durationNanos),
-            onFinish,
-        )
+    @Locking
+    fun removeChild(index: Int) {
+        val children = this.children ?: return
+        children[index].accept(Event.Lifetime.Removed)
+        polyUI.forRemoval(children, index)
+        needsRedraw = true
     }
 
-    /**
-     * Skew this drawable to the given amount, in degrees.
-     *
-     * Please note that this ignores all bounds, and will simply scale this drawable, meaning that it can be clipped by its layout, and overlap nearby drawable.
-     * @see skewBy
-     */
-    fun skewTo(skewX: Double, skewY: Double, animation: Animation.Type?, durationNanos: Long) {
-        addOperation(DrawableOp.Skew(skewX.toRadians(), skewY.toRadians(), false, this, animation, durationNanos))
+    operator fun get(index: Int) = children?.get(index)
+
+    operator fun get(id: String): Drawable? {
+        val children = children ?: return null
+        children.fastEach {
+            if (it.simpleName == id) return it
+        }
+        return null
     }
 
-    /**
-     * Skew this drawable by the given amount, in degrees.
-     *
-     * Please note that this ignores all bounds, and will simply scale this drawable, meaning that it can be clipped by its layout, and overlap nearby drawable.
-     * @see skewTo
-     */
-    fun skewBy(skewX: Double, skewY: Double, animation: Animation.Type?, durationNanos: Long) {
-        addOperation(DrawableOp.Skew(skewX.toRadians(), skewY.toRadians(), true, this, animation, durationNanos))
+    operator fun get(x: Float, y: Float) = children?.firstOrNull { it.isInside(x, y) }
+
+    fun countChildren(): Int {
+        var i = children?.size ?: 0
+        children?.fastEach {
+            i += it.countChildren()
+        }
+        return i
     }
 
-    /**
-     * move this drawable to the provided [point][to].
-     *
-     * Please note that this ignores all bounds, and will simply scale this drawable, meaning that it can be clipped by its layout, and overlap nearby drawable.
-     *
-     * @see moveBy
-     */
-// todo this might change ^
-    fun moveTo(
-        to: Vec2<Unit>,
-        animation: Animation.Type? = null,
-        durationNanos: Long = 1L.seconds,
-        onFinish: (Drawable.() -> kotlin.Unit)? = null,
-    ) {
-        doDynamicSize(to)
-        addOperation(DrawableOp.Move(to, false, this, animation, durationNanos), onFinish)
+    @JvmName("addEventhandler")
+    @OverloadResolutionByLambdaReturnType
+    fun <E : Event, S : Drawable> S.addEventHandler(event: E, handler: S.(E) -> Unit?): S {
+        val s: S.(E) -> Boolean = {
+            handler(this, it)
+            true
+        }
+        addEventHandler(event, s)
+        return this
     }
 
-    /**
-     * move this drawable by the given amount.
-     *
-     * Please note that this ignores all bounds, and will simply scale this drawable, meaning that it can be clipped by its layout, and overlap nearby drawable.
-     *
-     * @see moveTo
-     */
-    fun moveBy(
-        by: Vec2<Unit>,
-        animation: Animation.Type? = null,
-        durationNanos: Long = 1L.seconds,
-        onFinish: (Drawable.() -> kotlin.Unit)? = null,
-    ) {
-        doDynamicSize(by)
-        addOperation(DrawableOp.Move(by, true, this, animation, durationNanos), onFinish)
-    }
-
-    /**
-     * Fade this drawable to the given alpha.
-     * @see fadeBy
-     */
-    fun fadeTo(
-        alpha: Float,
-        animation: Animation.Type? = null,
-        durationNanos: Long = 1L.seconds,
-        onFinish: (Drawable.() -> kotlin.Unit)? = null,
-    ) {
-        addOperation(DrawableOp.Fade(alpha, false, this, animation, durationNanos), onFinish)
-    }
-
-    /**
-     * Fade this drawable by the given amount.
-     * @see fadeTo
-     */
-    fun fadeBy(
-        alpha: Float,
-        animation: Animation.Type? = null,
-        durationNanos: Long = 1L.seconds,
-        onFinish: (Drawable.() -> kotlin.Unit)? = null,
-    ) {
-        addOperation(DrawableOp.Fade(alpha, true, this, animation, durationNanos), onFinish)
-    }
-
-    /**
-     * Bulk-add drawable operations to this drawable.
-     * @see moveTo
-     * @see resize
-     * @see rotateTo
-     * @see skewTo
-     * @see animateBy
-     * @see DrawableOp
-     */
-    fun animateTo(
-        to: Vec2<Unit>? = null,
-        size: Vec2<Unit>? = null,
-        degrees: Double = 0.0,
-        scaleX: Float = 1f,
-        scaleY: Float = 1f,
-        skewX: Double = 0.0,
-        skewY: Double = 0.0,
-        animation: Animation.Type? = null,
-        durationNanos: Long = 1L.seconds,
-    ) {
-        if (to != null) moveTo(to, animation, durationNanos)
-        if (size != null) resize(size, animation, durationNanos)
-        if (scaleX != 1f || scaleY != 1f) scaleTo(scaleX, scaleY, animation, durationNanos)
-        rotateTo(degrees, animation, durationNanos)
-        skewTo(skewX, skewY, animation, durationNanos)
-    }
-
-    /**
-     * Bulk-add drawable operations to this drawable.
-     * @see moveBy
-     * @see resize
-     * @see rotateBy
-     * @see skewBy
-     * @see animateTo
-     * @see DrawableOp
-     */
-    fun animateBy(
-        to: Vec2<Unit>? = null,
-        size: Vec2<Unit>? = null,
-        degrees: Double = 0.0,
-        scaleX: Float = 1f,
-        scaleY: Float = 1f,
-        skewX: Double = 0.0,
-        skewY: Double = 0.0,
-        animation: Animation.Type? = null,
-        durationNanos: Long = 1L.seconds,
-    ) {
-        if (to != null) moveBy(to, animation, durationNanos)
-        if (size != null) resize(size, animation, durationNanos)
-        if (scaleX != 1f || scaleY != 1f) scaleBy(scaleX, scaleY, animation, durationNanos)
-        rotateBy(degrees, animation, durationNanos)
-        skewBy(skewX, skewY, animation, durationNanos)
-    }
-
-    /** resize this drawable to the given size. */
-    fun resize(
-        toSize: Size<Unit>,
-        animation: Animation.Type? = null,
-        durationNanos: Long = 1L.seconds,
-        onFinish: (Drawable.() -> kotlin.Unit)? = null,
-    ) {
-        doDynamicSize(toSize)
-        addOperation(DrawableOp.Resize(toSize, this, animation, durationNanos), onFinish)
+    @OverloadResolutionByLambdaReturnType
+    @Suppress("UNCHECKED_CAST")
+    fun <E : Event, S : Drawable> S.addEventHandler(event: E, handler: S.(E) -> Boolean): S {
+        if (event !is Event.Lifetime) acceptsInput = true
+        val ev = eventHandlers ?: HashMap(8)
+        val ls = ev.getOrPut(event) { LinkedList() }
+        ls.add(handler as Drawable.(Event) -> Boolean)
+        eventHandlers = ev
+        return this
     }
 }

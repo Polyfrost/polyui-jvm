@@ -22,7 +22,7 @@
 package org.polyfrost.polyui.renderer.data
 
 import org.jetbrains.annotations.ApiStatus
-import org.polyfrost.polyui.utils.fastEach
+import org.polyfrost.polyui.utils.LinkedList
 import org.polyfrost.polyui.utils.getResourceStream
 import org.polyfrost.polyui.utils.getResourceStreamNullable
 import java.io.InputStream
@@ -45,15 +45,24 @@ abstract class Resource(val resourcePath: String) : AutoCloseable {
     private var initting = false
 
     @Transient
+    var resettable = false
+        private set
+
+    @Transient
     private var _stream: InputStream? = null
 
     @Transient
-    private val completionCallbacks = ArrayList<Resource.() -> Unit>(0)
+    private val completionCallbacks = LinkedList<Resource.() -> Unit>()
 
     val stream: InputStream?
         get() {
             if (!init) {
-                _stream = getResourceStreamNullable(resourcePath)
+                _stream = getResourceStreamNullable(resourcePath)?.apply {
+                    if (markSupported()) {
+                        mark(0)
+                        resettable = true
+                    }
+                }
                 init = true
             }
             return _stream
@@ -62,10 +71,14 @@ abstract class Resource(val resourcePath: String) : AutoCloseable {
     fun get() = stream ?: throw NullPointerException("Resource $resourcePath not found!")
 
     fun reset() {
-        _stream?.close()
-        _stream = null
-        initting = false
-        init = false
+        if (resettable) {
+            _stream?.reset()
+        } else {
+            _stream?.close()
+            _stream = null
+            initting = false
+            init = false
+        }
     }
 
     override fun close() {
@@ -124,7 +137,6 @@ abstract class Resource(val resourcePath: String) : AutoCloseable {
             it()
         }
         completionCallbacks.clear()
-        completionCallbacks.trimToSize()
     }
 
     override fun toString() = "Resource(file=$resourcePath, init=$init)"

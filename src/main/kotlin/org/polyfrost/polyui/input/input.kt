@@ -21,6 +21,7 @@
 
 package org.polyfrost.polyui.input
 
+import org.polyfrost.polyui.utils.LinkedList
 import kotlin.experimental.and
 import kotlin.experimental.or
 
@@ -213,7 +214,7 @@ enum class Modifiers(val keyName: String, val value: Short) {
         @JvmStatic
         fun fromModifierMerged(modifiers: Short): Array<Modifiers> {
             if (modifiers.toInt() == 0) return emptyArray()
-            val mods = arrayListOf<Modifiers>()
+            val mods = LinkedList<Modifiers>()
             for (mod in entries) {
                 if ((mod.value and modifiers).toInt() != 0) {
                     mods.add(mod)

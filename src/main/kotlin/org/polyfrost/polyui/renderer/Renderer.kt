@@ -26,7 +26,6 @@ import org.polyfrost.polyui.property.Settings
 import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.data.Framebuffer
 import org.polyfrost.polyui.renderer.data.PolyImage
-import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.unit.Vec2
 import kotlin.math.min
 
@@ -39,7 +38,7 @@ import kotlin.math.min
  * for these functions, such as [image] and [text], an initialized [Font] or [PolyImage] instance will be given.
  * You can access the data using [Resource.stream][org.polyfrost.polyui.renderer.data.Resource.stream], and cache it for future use (ideally).
  */
-abstract class Renderer(open var width: Float, open var height: Float) : AutoCloseable {
+abstract class Renderer(val size: Vec2) : AutoCloseable {
     /**
      * set a maximum alpha value for all future draw calls, in the range (0-1), until [reset][resetAlphaCap]. This is useful for fading in/out all of PolyUI, for example.
      *
@@ -55,7 +54,7 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
         internal set
 
     /** hook into this renderer. */
-    inline fun render(block: Renderer.() -> kotlin.Unit) = block()
+    inline fun render(block: Renderer.() -> Unit) = block()
 
     /**
      * This function is called during very early initialization, and should be used to prepare the renderer for use. This is always the first function called.
@@ -195,7 +194,7 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
     /** calculate the bounds of this text, per the given parameters.
      * @return a Vec2 containing the width and height of the given string. If your API does not support returning string heights, just return the font size. The discrepancy should be negligible.
      */
-    abstract fun textBounds(font: Font, text: String, fontSize: Float): Vec2<Unit.Pixel>
+    abstract fun textBounds(font: Font, text: String, fontSize: Float): Vec2
 
     /** Function that can be called to explicitly initialize an image. This is used mainly for getting the size of an image, or to ensure an SVG has been rasterized. */
     abstract fun initImage(image: PolyImage)
@@ -305,6 +304,14 @@ abstract class Renderer(open var width: Float, open var height: Float) : AutoClo
      * Draw a drop shadow to the screen, per the given parameters.
      */
     abstract fun dropShadow(x: Float, y: Float, width: Float, height: Float, blur: Float, spread: Float, radius: Float)
+
+    /**
+     * Return true if your rendering implementation supports usage of framebuffers.
+     *
+     * If this method returns `false`, you can be safe that [createFramebuffer] and [bindFramebuffer], etc. will never be called.
+     * @since 0.25.1
+     */
+    abstract fun supportsFramebuffers(): Boolean
 
     /** Create a new framebuffer. It is down to you (as a rendering implementation) to cache this, and dispose of it as necessary.
      * @return a PolyUI framebuffer object using the width and height passed to this method. This is used by PolyUI to identify it.

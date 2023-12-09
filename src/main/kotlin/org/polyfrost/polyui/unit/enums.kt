@@ -19,14 +19,21 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.polyfrost.polyui.property
+package org.polyfrost.polyui.unit
 
 /**
- * Enum to represent the three states a stated component can have in PolyUI.
- * @see org.polyfrost.polyui.property.impl.StateBlockProperties
- * @see org.polyfrost.polyui.color.Colors.State
- * @since 0.17.2
+ * @param main the main axis, for example the X axis in a [Mode.Horizontal] autolayout.
+ * @param cross the cross axis, for example the Y axis in a [Mode.Horizontal] autolayout.
+ * @param mode the mode for the autolayout. Horizontal fills from left to right, and Vertical fills from top to bottom.
  */
-enum class State {
-    Danger, Warning, Success
+class Align(val main: Main = Main.Start, val cross: Cross = Cross.Center, val mode: Mode = Mode.Horizontal, val padding: Vec2 = Vec2(6f, 6f)) {
+    enum class Main {
+        Start, Center, End, SpaceBetween, SpaceEvenly
+    }
+    enum class Cross {
+        Start, Center, End
+    }
+    enum class Mode {
+        Horizontal, Vertical
+    }
 }

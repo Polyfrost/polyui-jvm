@@ -74,26 +74,13 @@ class Settings {
     var isMasterFrameBuffer = false
 
     /**
-     * minimum number of drawables in a layout (and its children) before it will use a framebuffer.
+     * minimum number of drawables in a group before it will use a framebuffer.
      *
      * This value should be set to something relatively high, as the performance gain from using a framebuffer only works if there is a large amount of draw calls.
      *
-     * @see [org.polyfrost.polyui.layout.Layout.countDrawables]
+     * @see [org.polyfrost.polyui.component.Drawable.countChildren]
      */
     var minDrawablesForFramebuffer: Int = 30
-
-    /**
-     * Weather or not the system should promote dragging drawables to the top of the render queue. This means they are rendered last so look correct.
-     *
-     * They will still retain their order relative to each other.
-     *
-     * @since 0.18.2
-     * @see org.polyfrost.polyui.layout.Layout.draggable
-     * @see org.polyfrost.polyui.component.Component.draggable
-     */
-    @get:JvmName("areDraggablesOnTop")
-    @set:JvmName("enableDraggablesOnTop")
-    var draggablesOnTop = true
 
     /**
      * Enable or disable framebuffers. Please note that PolyUI is designed to work with framebuffers, so disabling them may cause performance issues.
@@ -112,7 +99,7 @@ class Settings {
      */
     @get:JvmName("isRenderPausingEnabled")
     @set:JvmName("enableRenderPausing")
-    var renderPausingEnabled = true
+    var renderPausingEnabled = false
 
     /**
      * If enabled, the command key on Mac will act as control inputs.
@@ -147,7 +134,7 @@ class Settings {
      * Scroll multiplier factor, which will multiply the returned value of the callback by this value.
      * First value is the X scroll multiplier, with the second being the Y scroll multiplier.
      */
-    var scrollMultiplier: Pair<Float, Float> = 10f to 10f
+    var scrollMultiplier: Pair<Float, Float> = 4f to 4f
 
     /** Weather to invert the scroll direction */
     @get:JvmName("isNaturalScrolling")

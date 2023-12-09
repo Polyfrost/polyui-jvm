@@ -9,19 +9,13 @@
 
 package org.polyfrost.polyui;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 
 import org.polyfrost.polyui.color.PolyColor;
 import org.polyfrost.polyui.component.Drawable;
 import org.polyfrost.polyui.component.impl.Block;
 import org.polyfrost.polyui.component.impl.Image;
 import org.polyfrost.polyui.component.impl.Text;
-import org.polyfrost.polyui.event.MouseClicked;
-import org.polyfrost.polyui.input.Translator;
-import org.polyfrost.polyui.layout.Layout;
-import org.polyfrost.polyui.layout.impl.FlexLayout;
-import org.polyfrost.polyui.property.impl.BlockProperties;
-import org.polyfrost.polyui.property.impl.TextProperties;
 import org.polyfrost.polyui.renderer.data.PolyImage;
 import org.polyfrost.polyui.renderer.impl.GLWindow;
 import org.polyfrost.polyui.renderer.impl.NVGRenderer;
@@ -31,7 +25,7 @@ import org.polyfrost.polyui.unit.Vec2;
 public class JavaTest {
 	public static void main(String[] args) {
 		//GLWindow window = new GLWindow("Java Window", 800, 800);
-		//ArrayList<Drawable> things = new ArrayList<>(50);
+		//LinkedList<Drawable> things = new LinkedList<>(50);
 		//for (int i = 0; i < 51; i++) { // creates 50 rectangles with random sizes
 		//	int finalI = i;
 		//	things.add(new Block(Units.flex(), new Vec2<>(Units.pixels(Math.random() * 40 + 40), Units.pixels(Math.random() * 40 + 40)), new MouseClicked(0).to(component -> {

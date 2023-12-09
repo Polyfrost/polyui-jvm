@@ -19,16 +19,16 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-@file:Suppress("NOTHING_TO_INLINE")
+@file:Suppress("NOTHING_TO_INLINE", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "UNUSED")
 @file:JvmName("Utils")
 
 package org.polyfrost.polyui.utils
 
 import org.polyfrost.polyui.color.Color
+import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Modifiers
-import org.polyfrost.polyui.renderer.Renderer
-import org.polyfrost.polyui.renderer.data.Font
+import org.polyfrost.polyui.renderer.data.PolyImage
 import kotlin.experimental.and
 import kotlin.math.PI
 import kotlin.math.abs
@@ -59,7 +59,7 @@ fun rgba(r: Int, g: Int, b: Int, a: Float = 1f): Color {
  *
  * The integer that is returned by [HSBtoRGB] encodes the
  * value of a color in bits 0-23 of an integer value that is the same
- * format used by the method [getARGB()][Color.argb]
+ * format used by the method getARGB().
  * This integer can be supplied as an argument to the
  * [toColor] method that takes a single integer argument to create a [Color].
  * @param hue the hue component of the color
@@ -174,15 +174,20 @@ fun RGBtoHSB(r: Int, g: Int, b: Int, out: FloatArray? = null): FloatArray {
  */
 fun Int.toColor() = Color(RGBtoHSB(this shr 16 and 0xFF, this shr 8 and 0xFF, this and 0xFF), this shr 24 and 0xFF)
 
+@kotlin.internal.InlineOnly
 inline val Int.red get() = this shr 16 and 0xFF
 
+@kotlin.internal.InlineOnly
 inline val Int.green get() = this shr 8 and 0xFF
 
+@kotlin.internal.InlineOnly
 inline val Int.blue get() = this and 0xFF
 
+@kotlin.internal.InlineOnly
 inline val Int.alpha get() = this shr 24 and 0xFF
 
-fun Double.toRadians() = (this % 360.0) * (PI / 180.0)
+@kotlin.internal.InlineOnly
+inline fun Double.toRadians() = (this % 360.0) * (PI / 180.0)
 
 /**
  * Calculate the greatest common denominator of two integers.
@@ -216,13 +221,8 @@ fun Pair<Int, Int>.simplifyRatio(): Pair<Int, Int> {
  *
  * If `a == b`, then the result is `a`.
  */
-inline fun cl0(a: Float, b: Float): Float {
-    return if (abs(a) <= abs(b)) {
-        a
-    } else {
-        b
-    }
-}
+@kotlin.internal.InlineOnly
+inline fun cl0(a: Float, b: Float) = if (abs(a) <= abs(b)) a else b
 
 /**
  * Returns the value closer to one.
@@ -231,13 +231,8 @@ inline fun cl0(a: Float, b: Float): Float {
  *
  * If `a == b`, then the result is `a`.
  */
-inline fun cl1(a: Float, b: Float): Float {
-    return if (abs(a - 1f) <= abs(b - 1f)) {
-        a
-    } else {
-        b
-    }
-}
+@kotlin.internal.InlineOnly
+inline fun cl1(a: Float, b: Float) = if (abs(a - 1f) <= abs(b - 1f)) a else b
 
 /**
  * Returns the minimum value among three given ints.
@@ -247,12 +242,15 @@ inline fun cl1(a: Float, b: Float): Float {
  * @param c the third value
  * @return the minimum value among a, b, and c
  */
-inline fun min(a: Int, b: Int, c: Int): Int = min(min(a, b), c)
+@kotlin.internal.InlineOnly
+inline fun min3(a: Int, b: Int, c: Int): Int = min(min(a, b), c)
 
 /** convert the given float into an array of 4 floats for radii. */
+@kotlin.internal.InlineOnly
 inline fun Number.radii() = floatArrayOf(this.toFloat(), this.toFloat(), this.toFloat(), this.toFloat())
 
 /** convert the given floats into an array of 4 floats for radii. */
+@kotlin.internal.InlineOnly
 inline fun radii(topLeft: Float, topRight: Float, bottomLeft: Float, bottomRight: Float) = floatArrayOf(topLeft, topRight, bottomLeft, bottomRight)
 
 /** print the object to stdout, then return it. */
@@ -263,230 +261,68 @@ inline fun <T> T.stdout(arg: Any? = null): T {
     return this
 }
 
+fun String.image() = PolyImage(this)
+
+@kotlin.internal.InlineOnly
+inline fun Any?.identityHashCode() = System.identityHashCode(this)
+
+/**
+ * Return true if the Collection is empty or null.
+ */
+@kotlin.internal.InlineOnly
+inline fun Collection<*>?.isEmpty() = this?.isEmpty() ?: true
+
 fun Short.fromModifierMerged(): Array<KeyModifiers> = KeyModifiers.fromModifierMerged(this)
 
-fun Short.hasModifier(mod: Modifiers): Boolean = this and mod.value != 0.toShort()
+@kotlin.internal.InlineOnly
+inline fun Short.hasModifier(mod: Modifiers): Boolean = this and mod.value != 0.toShort()
 
-fun Array<out KeyModifiers>.merge(): Short = KeyModifiers.merge(*this)
-
-// strutils.kt
+@kotlin.internal.InlineOnly
+inline fun Array<out KeyModifiers>.merge(): Short = KeyModifiers.merge(*this)
 
 /**
- * append the given [CharSequence][c] to this [StringBuilder], repeated [repeats] times.
+ * Moves the given element from the [from] index to the [to] index.
  *
- * This function is equivalent to doing [sb][StringBuilder]`.append(`[c].[repeat][CharSequence.repeat]`(`[repeats]`)`, but it uses an already existing StringBuilder.
- * @throws [IllegalArgumentException] when n < 0.
- */
-fun StringBuilder.append(c: CharSequence, repeats: Int): StringBuilder {
-    require(repeats >= 0) { "Count 'n' must be non-negative, but was $repeats." }
-    if (repeats == 0) return this
-    if (repeats == 1) {
-        this.append(c)
-    } else {
-        for (i in 1..repeats) {
-            this.append(c)
-        }
-    }
-    return this
-}
-
-fun String.dropAt(index: Int = lastIndex, amount: Int = 1): String {
-    if (index - amount == 0) return ""
-    if (index - amount < 0) return this
-    return substring(0, index - amount) + substring(index)
-}
-
-/** safe [substring] function.
- * - if [fromIndex] is negative, it will be set to 0
- * - if [toIndex] is greater than the length of the string, or negative, it will be set to the length of the string
- * - if [fromIndex] is greater than [toIndex], they will be swapped, then substring'd as normal
- */
-fun String.substringSafe(fromIndex: Int, toIndex: Int = lastIndex): String {
-    if (fromIndex > toIndex) {
-        return substringSafe(toIndex, fromIndex)
-    }
-    if (fromIndex < 0) {
-        return substringSafe(0, toIndex)
-    }
-    if (toIndex > length) {
-        return substringSafe(fromIndex, length)
-    }
-    return substring(fromIndex, toIndex)
-}
-
-/**
- * Limit the given string to a width.
- * If the string is too long, it will be cut to the width, and [limitText] will be appended to the end.
- * @since 0.22.0
- */
-fun String.truncate(
-    renderer: Renderer,
-    font: Font,
-    fontSize: Float,
-    width: Float,
-    limitText: String = "...",
-): String {
-    require(width != 0f) { "Cannot truncate to zero width" }
-    var resultWidth = renderer.textBounds(font, this, fontSize).width
-    if (resultWidth < width) return this
-    val delimiterWidth = renderer.textBounds(font, limitText, fontSize).width
-    var t = this
-    while (resultWidth + delimiterWidth > width) {
-        resultWidth = renderer.textBounds(font, t, fontSize).width
-        t = t.substring(0, t.length - 1)
-    }
-    t += limitText
-    return t
-}
-
-/** take the given string and cut it to the length, returning a pair of the string cut to the length, and the remainder.
+ * **Note**: this method makes absolutely no attempt to verify if the given
+ * indices are valid.
  *
- * if the string fits within the width, the first string will be the entire string, and the second will be empty.
+ * @param from the index of the element to move
+ * @param to the index to move the element to
  */
-fun String.substringToWidth(
-    renderer: Renderer,
-    font: Font,
-    fontSize: Float,
-    width: Float,
-): Pair<String, String> {
-    if (renderer.settings.debug && renderer.textBounds(
-            font,
-            "W",
-            fontSize,
-        ).width > width
-    ) { // this is enabled only on debug mode for performance in prod
-        throw RuntimeException("Text box maximum width is too small for the given font size! (string: $this, font: ${font.resourcePath}, fontSize: $fontSize, width: $width)")
-    }
-    if (renderer.textBounds(font, this, fontSize).width <= width) {
-        return this to ""
-    }
-
-    var left = 0
-    var right = length - 1
-    var result = ""
-    while (left <= right) {
-        val mid = (left + right) / 2
-        val substring = substring(0, mid + 1)
-        if (renderer.textBounds(font, substring, fontSize).width <= width) {
-            result = substring
-            left = mid + 1
-        } else {
-            right = mid - 1
-        }
-    }
-    return result to this.substring(result.length)
+@kotlin.internal.InlineOnly
+inline fun <E> Array<E>.moveElement(from: Int, to: Int) {
+    val item = this[from]
+    this[from] = this[to]
+    this[to] = item
 }
 
 /**
- * calculate the levenshtein distance between this string and the other string.
- * @see <a href="https://en.wikipedia.org/wiki/Levenshtein_distance">Levenshtein distance</a>
- * @since 0.19.1
+ * Return this collection as an LinkedList. **Note:** if it is already a LinkedList, it will be returned as-is.
  */
-fun String.levenshteinDistance(other: String): Int {
-    val d = Array(length + 1) { IntArray(other.length + 1) }
+@kotlin.internal.InlineOnly
+inline fun <T> Collection<T>.asLinkedList(): LinkedList<T> = if (this is LinkedList) this else LinkedList(this)
 
-    for (i in 0..length) {
-        d[i][0] = i
+@kotlin.internal.InlineOnly
+inline fun <T> Array<T>.asLinkedList(): LinkedList<T> = LinkedList(*this)
+
+fun Drawable.printInfo() {
+    var c: Drawable? = parent
+    var i = 0
+    val sb = StringBuilder().append("Tree for $this:\n")
+    while (c != null) {
+        sb.append("\t", i).append(c.toString()).append('\n')
+        c = c.parent
+        i++
     }
-
-    for (j in 0..other.length) {
-        d[0][j] = j
-    }
-
-    for (j in 1..other.length) {
-        for (i in 1..length) {
-            if (this[i - 1] == other[j - 1]) {
-                d[i][j] = d[i - 1][j - 1]
-            } else {
-                d[i][j] = min(
-                    d[i - 1][j] + 1, // deletion
-                    d[i][j - 1] + 1, // insertion
-                    d[i - 1][j - 1] + 1, // substitution
-                )
-            }
-        }
-    }
-
-    return d[length][other.length]
+    i++
+    sb.append("\t", i).append(polyUI.toString())
+    println(sb.toString())
 }
 
 /**
- * Wrap the given text to the given width, returning a list of lines.
+ * Perform the given function on both elements of this pair. The highest common type of both elements is used as the type of the parameter.
  */
-fun String.wrap(
-    maxWidth: Float,
-    renderer: Renderer,
-    font: Font,
-    fontSize: Float,
-): ArrayList<String> {
-    if (maxWidth == 0f) return arrayListOf(this)
-    val words = split(" ").asArrayList()
-    if (words.size == 0) return arrayListOf("")
-    val lines = arrayListOf<String>()
-    var currentLine = StringBuilder()
-
-    words.fastEach { word ->
-        val wordLength = renderer.textBounds(font, word, fontSize).width
-
-        if (wordLength > maxWidth) {
-            // ah. word is longer than the maximum wrap width
-            if (currentLine.isNotEmpty()) {
-                // Finish current line and start a new one with the long word
-                lines.add(currentLine.toString())
-                currentLine.clear()
-            }
-
-            // add the long word to the lines, splitting it up into smaller chunks if needed
-            var remainingWord = word
-            while (remainingWord.isNotEmpty()) {
-                val chunk = remainingWord.substringToWidth(renderer, font, fontSize, maxWidth)
-                lines.add(chunk.first)
-                remainingWord = chunk.second
-            }
-        } else if (currentLine.isEmpty()) {
-            currentLine.append(word)
-        } else if (renderer.textBounds(font, currentLine.toString(), fontSize).width + wordLength <= maxWidth) {
-            // ok!
-            currentLine.append(' ').append(word)
-        } else {
-            // asm: word doesn't fit in current line, wrap it to the next line
-            lines.add(currentLine.append(" ").toString())
-            currentLine = currentLine.clear().append(word)
-        }
-    }
-
-    // Add the last line
-    if (currentLine.isNotEmpty()) {
-        lines.add(currentLine.toString())
-    }
-
-    return lines
-}
-
-/**
- * Returns the closest character index from the given string to the given point [x].
- *
- * @return the index of the character closest to the given point [x], or `-1` if it could not be found.
- *
- * @since 0.18.5
- */
-fun String.closestToPoint(renderer: Renderer, font: Font, fontSize: Float, x: Float): Int {
-    var prev = 0f
-    for (c in this.indices) {
-        val w = renderer.textBounds(
-            font,
-            this.substring(0, c),
-            fontSize,
-        ).width
-        // get closest char (not necessarily more)
-        if (x < w) {
-            return if (x - prev < w - x) {
-                c - 1
-            } else {
-                c
-            }
-        }
-        prev = w
-    }
-    return -1
+inline fun <T> Pair<T, T>.both(func: (T) -> Unit) {
+    func(this.first)
+    func(this.second)
 }

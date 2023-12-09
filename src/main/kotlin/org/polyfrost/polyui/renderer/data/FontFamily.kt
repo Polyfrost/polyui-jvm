@@ -25,6 +25,7 @@ import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.utils.getResourceStreamNullable
 import org.polyfrost.polyui.utils.resourceExists
 import java.io.File
+import java.net.URI
 import java.util.zip.ZipInputStream
 
 /**
@@ -44,7 +45,7 @@ open class FontFamily(
 ) {
     @Transient
     val isZip = path.endsWith(".zip")
-    protected val dir by lazy {
+    protected val dir: URI by lazy {
         val start = System.nanoTime()
         val f = File(System.getProperty("java.io.tmpdir")).resolve("polyui-$name")
         f.deleteOnExit()

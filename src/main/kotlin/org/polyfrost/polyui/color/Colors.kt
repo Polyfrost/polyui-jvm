@@ -23,12 +23,16 @@
 
 package org.polyfrost.polyui.color
 
+import org.polyfrost.polyui.PolyUI.Companion.INPUT_DISABLED
+import org.polyfrost.polyui.PolyUI.Companion.INPUT_HOVERED
+import org.polyfrost.polyui.PolyUI.Companion.INPUT_NONE
+import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
+
 /**
  * # Colors
  *
  * Colors is the color storage for [PolyUI][org.polyfrost.polyui.PolyUI].
- * All PolyUI [components][org.polyfrost.polyui.component.Component] should use these colors
- * in their [properties][org.polyfrost.polyui.property.Properties], and this can be extended,
+ * All PolyUI [components][org.polyfrost.polyui.component.Drawable] use these colors.
  * or even changed on the fly using the [field][org.polyfrost.polyui.PolyUI.colors] in the PolyUI instance, bringing theming to PolyUI.
  *
  * @since 0.17.0
@@ -51,9 +55,19 @@ interface Colors {
     /**
      * # Colors.Palette
      *
-     * A color palette represents a set of four colors in PolyUI representing the four key states that a component can have. They are used widely by [Properties][org.polyfrost.polyui.property.Properties] for states of components.
+     * A color palette represents a set of four colors in PolyUI representing the four key states that a component can have.
      *
      * @since 0.20.0
      */
-    open class Palette(open val normal: Color, open val hovered: Color, open val pressed: Color, open val disabled: Color)
+    open class Palette(open val normal: Color, open val hovered: Color, open val pressed: Color, open val disabled: Color) {
+        fun get(state: Byte): Color {
+            return when (state) {
+                INPUT_NONE -> normal
+                INPUT_HOVERED -> hovered
+                INPUT_PRESSED -> pressed
+                INPUT_DISABLED -> disabled
+                else -> normal
+            }
+        }
+    }
 }

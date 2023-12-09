@@ -22,89 +22,27 @@
 package org.polyfrost.polyui.component.impl
 
 import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.PolyUI.Companion.INIT_COMPLETE
-import org.polyfrost.polyui.PolyUI.Companion.INIT_NOT_STARTED
-import org.polyfrost.polyui.color.Colors
-import org.polyfrost.polyui.component.Component
-import org.polyfrost.polyui.event.EventDSL
-import org.polyfrost.polyui.property.impl.ImageProperties
-import org.polyfrost.polyui.renderer.Renderer
+import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.renderer.data.PolyImage
-import org.polyfrost.polyui.unit.Unit
+import org.polyfrost.polyui.unit.Align
+import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.unit.px
-import org.polyfrost.polyui.utils.cl1
 
-@Suppress("UNCHECKED_CAST")
-open class Image @JvmOverloads constructor(
-    properties: ImageProperties? = null,
-    image: PolyImage,
-    at: Vec2<Unit>,
-    rawResize: Boolean = false,
-    acceptInput: Boolean = true,
-    events: EventDSL<Image>.() -> kotlin.Unit = {},
-) : Component(properties, at, null, rawResize, acceptInput, events as EventDSL<Component>.() -> kotlin.Unit) {
-    @Transient
-    val fixedSize = image.width != -1f && image.height != -1f
-    var image = image
+open class Image(image: PolyImage, at: Vec2? = null, alignment: Align = AlignDefault, visibleSize: Vec2? = null, vararg children: Drawable?) : Block(at, Vec2.Based(base = image.size), alignment, visibleSize, children = children) {
+    var image: PolyImage = image
         set(value) {
-            if (initStage == INIT_COMPLETE) {
-                if (value.width != field.width || value.height != field.height) {
-                    PolyUI.LOGGER.warn("$simpleName: New $value has different size to old $field, resizing. This may cause visual issues.")
-                    value.width = field.width
-                    value.height = field.height
-                }
-            }
             field = value
-            if (initStage != INIT_NOT_STARTED) {
-                wantRedraw()
-                size = calculateSize()
-                updateColor()
-            }
+            renderer.initImage(value)
         }
-    override val properties
-        get() = super.properties as ImageProperties
 
-    override fun setup(renderer: Renderer, polyUI: PolyUI) {
-        super.setup(renderer, polyUI)
-        updateColor()
-    }
-
-    protected open fun updateColor() {
-        color.recolor(
-            if (image.type == PolyImage.Type.Vector) {
-                properties.svgPalette.normal
-            } else {
-                properties.palette.normal
-            },
-        )
-    }
-
-    override fun onColorsChanged(colors: Colors) {
-        super.onColorsChanged(colors)
-        updateColor()
-    }
-
-    override fun rescale(scaleX: Float, scaleY: Float) {
-        super.rescale(scaleX, scaleY)
-        if (rawResize) {
-            image.width *= scaleX
-            image.height *= scaleY
-        } else {
-            val s = cl1(scaleX, scaleY)
-            image.width *= s
-            image.height *= s
-        }
-    }
+    override val shouldScroll get() = false
 
     override fun render() {
-        renderer.image(image, x, y, width, height, properties.cornerRadii, color.argb)
+        renderer.image(image, x, y)
     }
 
-    override fun calculateSize(): Vec2<Unit> {
-        if (image.width == -1f || image.height == -1f) {
-            renderer.initImage(image)
-        }
-        return Vec2(image.width.px, image.height.px)
+    override fun setup(polyUI: PolyUI) {
+        polyUI.renderer.initImage(image)
+        super.setup(polyUI)
     }
 }

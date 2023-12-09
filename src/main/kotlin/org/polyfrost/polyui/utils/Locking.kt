@@ -19,22 +19,15 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.polyfrost.polyui.property.impl
+package org.polyfrost.polyui.utils
+
+import org.jetbrains.annotations.ApiStatus
 
 /**
- * @param setInstantly if true, the slider [value][org.polyfrost.polyui.component.impl.Slider.value] will be updated as the user drags the slider.
- * Else, it will be updated when the slider is dropped.
+ * Marker class for future use, which will be used to indicate that the given function or property
+ * will block until the lock is freed (when it finishes the frame)
  */
-open class SliderProperties(open val setInstantly: Boolean = false) : BlockProperties(withStates = true) {
-    open val barColor get() = colors.component.bg
-    open val usedBarColor get() = colors.brand.fg
-
-    /**
-     * This value controls the ratio of the thickness of the bar to the size of the slider head.
-     *
-     * The size of the slider head is the same as the size of the slider, and this is used to calculate the thickness of the bar.
-     *
-     * Smaller values mean thicker bars, and larger values mean thinner bars.
-     */
-    open val thicknessRatio = 3f
-}
+@Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_SETTER)
+@Retention(AnnotationRetention.SOURCE)
+@ApiStatus.Experimental
+annotation class Locking
