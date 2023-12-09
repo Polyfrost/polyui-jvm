@@ -217,11 +217,8 @@ class EventManager @JvmOverloads constructor(
         drawables.fastEachReversed {
             val cc = processCandidate(it, x, y)
             if (cc != null) candidate = cc
-            if (it.isInside(x, y)) {
-                it.children?.fastEach { child ->
-                    val c = processCandidate(child, x, y)
-                    if (c != null) candidate = c
-                }
+            if (it.enabled && it.isInside(x, y)) {
+                processCandidates(it.children ?: return@fastEachReversed, x, y)?.let { candidate = it }
             }
         }
         return candidate

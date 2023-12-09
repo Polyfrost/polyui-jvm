@@ -77,9 +77,9 @@ fun interface Positioner {
                 var rowCross = 0f
                 var currentRow = LinkedList<Drawable>()
                 children.fastEach {
+                    it.at = it.at.makeRelative(drawable.at)
                     if (it.size.isNegative) return@fastEach
                     if (it.size.hasZero) position(it)
-                    it.at = it.at.makeRelative(drawable.at)
                     rowCross = max(rowCross, it.visibleSize[crs])
                     if (rowMain + it.visibleSize[main] > drawable.visibleSize[main]) {
                         rows.add((rowMain to rowCross) to currentRow)
@@ -113,9 +113,9 @@ fun interface Positioner {
                 var rowCross = 0f
                 val pad = padding[crs] * 2f
                 children.fastEach {
+                    it.at = it.at.makeRelative(drawable.at)
                     if (it.size.isNegative) return@fastEach
                     if (it.size.hasZero) position(it)
-                    it.at = it.at.makeRelative(drawable.at)
                     rowCross = max(rowCross, it.size[crs] + pad)
                     rowMain += it.size[main] + padding[main]
                 }
@@ -157,6 +157,7 @@ fun interface Positioner {
             Align.Main.Start -> {
                 var current = min + padding
                 drawables.fastEach {
+                    if(it.at.isNegative) return@fastEach
                     it.at[main] = current
                     current += it.visibleSize[main] + padding
                 }
@@ -165,6 +166,7 @@ fun interface Positioner {
             Align.Main.Center -> {
                 var current = min + (max / 2f) - (rowMain / 2f)
                 drawables.fastEach {
+                    if(it.at.isNegative) return@fastEach
                     it.at[main] = current
                     current += it.visibleSize[main] + padding
                 }
@@ -173,6 +175,7 @@ fun interface Positioner {
             Align.Main.End -> {
                 var current = min + (max - padding)
                 drawables.fastEach {
+                    if(it.at.isNegative) return@fastEach
                     current -= it.visibleSize[main]
                     it.at[main] = current
                     current -= padding
@@ -183,6 +186,7 @@ fun interface Positioner {
                 val gapWidth = max / (drawables.size - 1)
                 var current = min + padding
                 drawables.fastEach {
+                    if(it.at.isNegative) return@fastEach
                     it.at[main] = current
                     current += gapWidth
                 }
@@ -192,6 +196,7 @@ fun interface Positioner {
                 val gapWidth = (max - rowMain) / (drawables.size + 1)
                 var current = min + gapWidth
                 drawables.fastEach {
+                    if(it.at.isNegative) return@fastEach
                     it.at[main] = current
                     current += it.size[main] + gapWidth
                 }

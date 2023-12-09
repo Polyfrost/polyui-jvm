@@ -52,7 +52,7 @@ fun Button(leftImage: PolyImage? = null, text: String? = null, rightImage: PolyI
     }.withStates().namedId("Button")
 }
 
-fun Switch(at: Vec2? = null, size: Float, padding: Float = 3f, lateralStretch: Float = 1.8f): Drawable {
+fun Switch(at: Vec2? = null, size: Float, padding: Float = 3f, state: Boolean = false, lateralStretch: Float = 1.8f): Drawable {
     val circleSize = size - (padding + padding)
     val adjSize = size * (lateralStretch - 1f)
     return Block(
@@ -64,22 +64,31 @@ fun Switch(at: Vec2? = null, size: Float, padding: Float = 3f, lateralStretch: F
             Block(size = Vec2(circleSize, circleSize), radii = (circleSize / 2f).radii()).setPalette { text.primary },
         ),
     ).withStates().events {
-        var state = false
+        var switched = false
         Event.Mouse.Clicked(0) then {
             val circle = this[0]!!
-            val target = Vec2(if (state) -adjSize else adjSize, 0f)
-            state = !state
-            palette = if (state) polyUI.colors.brand.fg else polyUI.colors.component.bg
+            val target = Vec2(if (switched) -adjSize else adjSize, 0f)
+            switched = !switched
+            palette = if (switched) polyUI.colors.brand.fg else polyUI.colors.component.bg
             Move(circle, target, true, Animations.EaseInOutQuad.create(0.2.seconds)).add()
-            accept(Event.Change.State(state))
+            accept(Event.Change.State(switched))
             false
         }
-    }.namedId("Switch")
+    }.namedId("Switch").also {
+        if (state) {
+            it.setPalette { brand.fg }
+            it.afterParentInit(2) {
+                accept(Event.Mouse.Clicked(0))
+            }
+        }
+    }
 }
 
-fun Radiobutton(at: Vec2? = null, entries: Array<Pair<PolyImage?, String?>>): Drawable {
+fun Radiobutton(at: Vec2? = null, entries: Array<Pair<PolyImage?, String?>>, initial: Int = 0): Drawable {
+    val centerAlign = Align(Align.Main.Center)
     val buttons: LinkedList<Drawable> = entries.map { (img, text) ->
         Group(
+            alignment = centerAlign,
             children = arrayOf(
                 if (img != null) Image(img) else null,
                 if (text != null) Text(text) else null,
@@ -102,24 +111,24 @@ fun Radiobutton(at: Vec2? = null, entries: Array<Pair<PolyImage?, String?>>): Dr
         children = buttons.apply {
             add(0, Block(ignored, ignored))
         }.toTypedArray(),
-        alignment = Align(padding = Vec2(6f, 8f)),
+        alignment = centerAlign,
     ).afterInit { _ ->
         val it = this[0]!!
-        val first = this[1]!!
-        it.at.set(first.at)
-        it.size.set(first.size)
+        val target = this[initial + 1] ?: throw IndexOutOfBoundsException("Initial index $initial is out of bounds")
+        it.at.set(target.at)
+        it.size.set(target.size)
         it.palette = polyUI.colors.brand.fg
     }.namedId("Radiobutton")
 }
 
-fun Dropdown(at: Vec2? = null, size: Vec2? = null, entries: Array<Pair<PolyImage?, String>>): Drawable {
+fun Dropdown(at: Vec2? = null, size: Vec2? = null, entries: Array<Pair<PolyImage?, String>>, initial: Int = 0): Drawable {
     var targetHeight = 0f
     val it = Block(
         at,
         size,
         focusable = true,
         children = arrayOf(
-            Text(entries[0].second),
+            Text(entries[initial].second),
             Image(PolyImage("chevron-down.svg")),
         ),
     )
@@ -172,40 +181,39 @@ fun Dropdown(at: Vec2? = null, size: Vec2? = null, entries: Array<Pair<PolyImage
     }
 }
 
-fun Slider(at: Vec2? = null, size: Vec2? = null, min: Float = 0f, max: Float = 100f, scaleFactor: Float = 2f, floating: Boolean = true, instant: Boolean = false): Drawable {
-    val realSize = size ?: Vec2((max - min) * scaleFactor, 24f)
-    val desiredHeight = realSize.y / 2.8f
-    val rad = (desiredHeight / 2f).radii()
+fun Slider(at: Vec2? = null, min: Float = 0f, max: Float = 100f, initialValue: Float = 0f, ptrSize: Float = 24f, scaleFactor: Float = 2f, floating: Boolean = true, instant: Boolean = false): Drawable {
+    val barHeight = ptrSize / 2.8f
+    val barWidth = (max - min) * scaleFactor
+    val size = Vec2(barWidth + ptrSize, ptrSize)
+    val rad = (barHeight / 2f).radii()
 
-    val ptrAt = Rignored
     return Group(
         at = at,
-        size = realSize,
+        size = size,
         alignment = Align(Align.Main.Start, padding = Vec2.ZERO),
         children = arrayOf(
             Block(
-                size = Vec2(realSize.x, desiredHeight),
+                size = Vec2(barWidth, barHeight),
+                alignment = Align(Align.Main.Start, padding = Vec2.ZERO),
                 radii = rad,
                 children = arrayOf(
                     Block(
-                        at = ignored,
-                        size = Vec2.Relative(realSize.y, desiredHeight, ptrAt),
+                        size = Vec2.Based(1f, barHeight),
                         radii = rad,
-                    ).setPalette { brand.fg }.apply {
-                        afterParentInit(3) { (this.size as Vec2.Relative).zero() }
-                    },
+                    ).setPalette { brand.fg },
                 ),
             ),
             Block(
-                at = ptrAt,
-                size = Vec2(realSize.y, realSize.y),
-                radii = (realSize.y / 2f).radii(),
+                size = ptrSize.vec,
+                radii = (ptrSize / 2f).radii(),
             ).setPalette { text.primary }.draggable(withY = false) {
+                val ptr = this.parent!![1]!!
                 val bar = this.parent!![0]!!
                 val half = this.size.x / 2f
                 this.x = this.x.coerceIn(bar.x - half, bar.x + bar.size.x - half)
+                bar[0]!!.width = ptr.x - bar.x + half
                 if (instant) {
-                    val progress = (this.x + half - bar.x) / realSize.x
+                    val progress = (this.x + half - bar.x) / size.x
                     var value = (max - min) * progress
                     if (!floating) value = value.toInt().toFloat()
                     accept(Event.Change.Number(value))
@@ -218,33 +226,43 @@ fun Slider(at: Vec2? = null, size: Vec2? = null, min: Float = 0f, max: Float = 1
             val ptr = this[1]!!
             val half = ptr.size.x / 2f
             ptr.x = it.mouseX - half
+            ptr.x = ptr.x.coerceIn(bar.x - half, bar.x + bar.size.x - half)
+            bar[0]!!.width = ptr.x - bar.x + half
 
-            val progress = (ptr.x + half - bar.x) / realSize.x
+            val progress = (ptr.x + half - bar.x) / size.x
             var value = (max - min) * progress
             if (!floating) value = value.toInt().toFloat()
             accept(Event.Change.Number(value))
         }
+        addEventHandler(Event.Lifetime.PostInit) {
+            val bar = this[0]!!
+            val ptr = this[1]!!
+            ptr.x = bar.x + barWidth * (initialValue / (max - min))
+            bar.x += ptrSize / 2f
+            bar[0]!!.width = ptr.x - bar.x + (ptrSize / 2f)
+        }
     }.namedId("Slider")
 }
 
-fun Checkbox(at: Vec2? = null, size: Float): Drawable {
+fun Checkbox(at: Vec2? = null, size: Float, state: Boolean = false): Drawable {
     return Block(
         at = at,
         size = Vec2(size, size),
+        alignment = Align(padding = ((size - size / 1.25f) / 2f).vec),
         children = arrayOf(
             Image(
-                image = PolyImage("check.svg", Vec2(size / 1.25f, size / 1.25f)),
-            ).disable().also {
-                it.alpha = 0f
+                image = PolyImage("check.svg", size = (size / 1.25f).vec),
+            ).disable(!state).also {
+                if (!state) it.alpha = 0f
             },
         ),
     ).events {
-        var state = false
+        var checked = state
         Event.Mouse.Clicked(0) then {
             val check = this[0]!!
-            state = !state
-            palette = if (state) polyUI.colors.brand.fg else polyUI.colors.component.bg
-            if (state) {
+            checked = !checked
+            palette = if (checked) polyUI.colors.brand.fg else polyUI.colors.component.bg
+            if (checked) {
                 check.enabled = true
                 Fade(check, 1f, false, Animations.EaseInOutQuad.create(0.1.seconds)).add()
             } else {
@@ -252,7 +270,9 @@ fun Checkbox(at: Vec2? = null, size: Float): Drawable {
                     check.enabled = false
                 }.add()
             }
-            accept(Event.Change.State(state))
+            accept(Event.Change.State(checked))
         }
-    }.withStates().namedId("Checkbox")
+    }.withStates().namedId("Checkbox").also {
+        if (state) it.setPalette { brand.fg }
+    }
 }

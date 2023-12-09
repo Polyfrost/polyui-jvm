@@ -22,6 +22,7 @@
 package org.polyfrost.polyui
 
 import org.polyfrost.polyui.component.impl.*
+import org.polyfrost.polyui.component.withStates
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.renderer.impl.GLWindow
 import org.polyfrost.polyui.renderer.impl.NVGRenderer
@@ -44,6 +45,7 @@ fun main() {
                         Button(leftImage = PolyImage("moon.svg")),
                         Button(leftImage = PolyImage("face-wink.svg"), text = "button.text"),
                         Switch(size = 28f),
+                        Checkbox(size = 28f)
                     ),
                 ),
                 Dropdown(
@@ -72,7 +74,7 @@ fun main() {
                     visibleSize = Vec2(350f, 120f),
                     children =
                     Array(30) {
-                        Block(size = Vec2(32f + (Random.nextFloat() * 100f), 32f))
+                        Block(size = Vec2(32f + (Random.nextFloat() * 100f), 32f)).withStates()
                     },
                 ),
                 Group(
@@ -85,9 +87,13 @@ fun main() {
                 ),
                 Group(
                     children =
-                    Array(4) {
-                        Block(size = Vec2(72f, 32f))
-                    },
+                    arrayOf(
+                        Radiobutton(entries = arrayOf(
+                            null to "hello",
+                            null to "goodbye"
+                        )),
+                        Slider()
+                    )
                 ),
             ),
         )

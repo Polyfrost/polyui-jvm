@@ -51,6 +51,9 @@ inline val Number.hours get() = (toDouble() * 3_600_000_000_000.0).toLong()
 
 val AlignDefault = Align()
 
+@kotlin.internal.InlineOnly
+inline val Number.vec get() = Vec2(toFloat(), toFloat())
+
 fun Vec2.makeRelative(to: Vec2): Vec2 {
     return if (this is Vec2.Relative) {
         this.source = to
@@ -67,14 +70,8 @@ fun Vec2.makeRelative(to: Vec2): Vec2 {
 @kotlin.internal.InlineOnly
 inline val ignored: Vec2 get() = Vec2(-0.001f, -0.001f)
 
-/**
- * [ignored], but relative, meaning you can attach things to it.
- */
-@kotlin.internal.InlineOnly
-inline val Rignored: Vec2 get() = Vec2.Relative(-0.001f, -0.001f)
-
 @kotlin.internal.InlineOnly
 inline fun percent(percentX: Float, percentY: Float): Vec2 = Vec2.Percent(percentX, percentY)
 
 @kotlin.internal.InlineOnly
-inline operator fun Number.times(other: Number): Vec2 = Vec2(this.toFloat(), other.toFloat())
+inline infix fun Number.by(other: Number): Vec2 = Vec2(this.toFloat(), other.toFloat())
