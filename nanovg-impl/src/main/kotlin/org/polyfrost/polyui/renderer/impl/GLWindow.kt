@@ -310,7 +310,7 @@ class GLWindow @JvmOverloads constructor(
         GL.setCapabilities(null)
         Callbacks.glfwFreeCallbacks(handle)
         glfwTerminate()
-        glfwSetErrorCallback(null)!!.free()
+        glfwSetErrorCallback(null)?.free()
         return this
     }
 

@@ -97,7 +97,7 @@ abstract class Resource(val resourcePath: String) : AutoCloseable {
                 }.thenAcceptAsync {
                     _stream = it
                     init = true
-                    callback(it!!)
+                    callback(it)
                 }.exceptionally {
                     exceptionHandler(it)
                     initting = false
@@ -105,7 +105,7 @@ abstract class Resource(val resourcePath: String) : AutoCloseable {
                 }
             }
         } else {
-            callback(_stream!!)
+            callback(_stream ?: throw IllegalStateException("stream should not be null"))
         }
     }
 

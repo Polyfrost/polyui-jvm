@@ -66,10 +66,10 @@ fun Switch(at: Vec2? = null, size: Float, padding: Float = 3f, state: Boolean = 
     ).withStates().events {
         var switched = false
         Event.Mouse.Clicked(0) then {
-            val circle = this[0]!!
+            val circle = this[0]
             val target = Vec2(if (switched) -adjSize else adjSize, 0f)
             switched = !switched
-            palette = if (switched) polyUI.colors.brand.fg else polyUI.colors.component.bg
+            setPalette(if (switched) polyUI.colors.brand.fg else polyUI.colors.component.bg)
             Move(circle, target, true, Animations.EaseInOutQuad.create(0.2.seconds)).add()
             accept(Event.Change.State(switched))
             false
@@ -98,10 +98,11 @@ fun Radiobutton(at: Vec2? = null, entries: Array<Pair<PolyImage?, String?>>, ini
                 (this[0] as? Image)?.image?.size?.max(16f, 16f)
             }
             Event.Mouse.Clicked(0) then { _ ->
-                val it = parent?.children?.first()!!
+                val children = parent!!.children!!
+                val it = children.first()
                 Move(it, this.x, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
                 Resize(it, this.width, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
-                accept(Event.Change.Number(parent!!.children!!.indexOf(this) - 1))
+                accept(Event.Change.Number(children.indexOf(this) - 1))
                 true
             }
         }
@@ -113,11 +114,11 @@ fun Radiobutton(at: Vec2? = null, entries: Array<Pair<PolyImage?, String?>>, ini
         }.toTypedArray(),
         alignment = centerAlign,
     ).afterInit { _ ->
-        val it = this[0]!!
-        val target = this[initial + 1] ?: throw IndexOutOfBoundsException("Initial index $initial is out of bounds")
+        val it = this[0]
+        val target = this[initial + 1]
         it.at.set(target.at)
         it.size.set(target.size)
-        it.palette = polyUI.colors.brand.fg
+        it.setPalette(polyUI.colors.brand.fg)
     }.namedId("Radiobutton")
 }
 
@@ -144,7 +145,7 @@ fun Dropdown(at: Vec2? = null, size: Vec2? = null, entries: Array<Pair<PolyImage
             ).events {
                 Event.Mouse.Clicked(0) then { _ ->
                     val title = (it[0] as Text)
-                    val self = ((if (children!!.size == 2) this[1]!! else this[0]!!) as Text).text
+                    val self = ((if (children!!.size == 2) this[1] else this[0]) as Text).text
                     if (title.text == self) return@then false
                     title.text = self
                     accept(Event.Change.Number(parent!!.children!!.indexOf(this)))
@@ -159,14 +160,14 @@ fun Dropdown(at: Vec2? = null, size: Vec2? = null, entries: Array<Pair<PolyImage
             dropdown.enabled = true
             dropdown.y = this.y + this.size.y
             Resize(dropdown, height = targetHeight, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
-            Rotate(this[1]!!, PI, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
+            Rotate(this[1], PI, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
         }
         Event.Focused.Lost then {
             if (dropdown.height != 0f) targetHeight = dropdown.height
             Resize(dropdown, height = 0f, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)) {
                 dropdown.enabled = false
             }.add()
-            Rotate(this[1]!!, 0.0, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
+            Rotate(this[1], 0.0, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
         }
         Event.Lifetime.PostInit then {
             parent?.addChild(dropdown)
@@ -177,7 +178,7 @@ fun Dropdown(at: Vec2? = null, size: Vec2? = null, entries: Array<Pair<PolyImage
     }.namedId("Dropdown").afterParentInit {
         dropdown.x = this.x
         this.width = dropdown.width
-        this[1]!!.x = this.x + this.width - this[1]!!.width - alignment.padding.x
+        this[1].x = this.x + this.width - this[1].width - alignment.padding.x
     }
 }
 
@@ -207,11 +208,11 @@ fun Slider(at: Vec2? = null, min: Float = 0f, max: Float = 100f, initialValue: F
                 size = ptrSize.vec,
                 radii = (ptrSize / 2f).radii(),
             ).setPalette { text.primary }.draggable(withY = false) {
-                val ptr = this.parent!![1]!!
-                val bar = this.parent!![0]!!
+                val ptr = this.parent!![1]
+                val bar = this.parent!![0]
                 val half = this.size.x / 2f
                 this.x = this.x.coerceIn(bar.x - half, bar.x + bar.size.x - half)
-                bar[0]!!.width = ptr.x - bar.x + half
+                bar[0].width = ptr.x - bar.x + half
                 if (instant) {
                     val progress = (this.x + half - bar.x) / size.x
                     var value = (max - min) * progress
@@ -222,12 +223,12 @@ fun Slider(at: Vec2? = null, min: Float = 0f, max: Float = 100f, initialValue: F
         ),
     ).apply {
         addEventHandler(Event.Mouse.Clicked(0)) {
-            val bar = this[0]!!
-            val ptr = this[1]!!
+            val bar = this[0]
+            val ptr = this[1]
             val half = ptr.size.x / 2f
             ptr.x = it.mouseX - half
             ptr.x = ptr.x.coerceIn(bar.x - half, bar.x + bar.size.x - half)
-            bar[0]!!.width = ptr.x - bar.x + half
+            bar[0].width = ptr.x - bar.x + half
 
             val progress = (ptr.x + half - bar.x) / size.x
             var value = (max - min) * progress
@@ -235,11 +236,11 @@ fun Slider(at: Vec2? = null, min: Float = 0f, max: Float = 100f, initialValue: F
             accept(Event.Change.Number(value))
         }
         addEventHandler(Event.Lifetime.PostInit) {
-            val bar = this[0]!!
-            val ptr = this[1]!!
+            val bar = this[0]
+            val ptr = this[1]
             ptr.x = bar.x + barWidth * (initialValue / (max - min))
             bar.x += ptrSize / 2f
-            bar[0]!!.width = ptr.x - bar.x + (ptrSize / 2f)
+            bar[0].width = ptr.x - bar.x + (ptrSize / 2f)
         }
     }.namedId("Slider")
 }
@@ -259,9 +260,9 @@ fun Checkbox(at: Vec2? = null, size: Float, state: Boolean = false): Drawable {
     ).events {
         var checked = state
         Event.Mouse.Clicked(0) then {
-            val check = this[0]!!
+            val check = this[0]
             checked = !checked
-            palette = if (checked) polyUI.colors.brand.fg else polyUI.colors.component.bg
+            setPalette(if (checked) polyUI.colors.brand.fg else polyUI.colors.component.bg)
             if (checked) {
                 check.enabled = true
                 Fade(check, 1f, false, Animations.EaseInOutQuad.create(0.1.seconds)).add()

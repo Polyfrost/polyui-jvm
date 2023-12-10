@@ -25,7 +25,7 @@ import org.jetbrains.annotations.ApiStatus
 import kotlin.math.sqrt
 
 @Suppress("invisible_member", "invisible_reference")
-open class Vec2(open var x: Float = 0f, open var y: Float = 0f) : Comparable<Vec2> {
+open class Vec2(open var x: Float = 0f, open var y: Float = 0f) : Comparable<Vec2>, Cloneable {
     @kotlin.internal.InlineOnly
     inline var width
         get() = x
@@ -181,6 +181,8 @@ open class Vec2(open var x: Float = 0f, open var y: Float = 0f) : Comparable<Vec
 
     override fun toString() = "${x}x$y"
 
+    public override fun clone() = Vec2(x, y)
+
     abstract class Sourced(source: Vec2? = null) : Vec2() {
         @get:Deprecated("external access to the source value is bad practice.")
         var source: Vec2? = source
@@ -231,9 +233,38 @@ open class Vec2(open var x: Float = 0f, open var y: Float = 0f) : Comparable<Vec
             this.x = x
             this.y = y
         }
+
+        @Suppress("Deprecation")
+        override fun clone() = Relative(x + source(or = ZERO).x, y + source(or = ZERO).y, source)
     }
 
-    // Based.
+    /**
+     * ⣿⣿⣿⣿⣿⣿⣿⣿⡿⠿⠛⠛⠛⠋⠉⠈⠉⠉⠉⠉⠛⠻⢿⣿⣿⣿⣿⣿⣿⣿
+     * ⣿⣿⣿⣿⣿⡿⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⢿⣿⣿⣿⣿
+     * ⣿⣿⣿⣿⡏⣀⠀⠀⠀⠀⠀⠀⠀⣀⣤⣤⣤⣄⡀⠀⠀⠀⠀⠀⠀⠀⠙⢿⣿⣿
+     * ⣿⣿⣿⢏⣴⣿⣷⠀⠀⠀⠀⠀⢾⣿⣿⣿⣿⣿⣿⡆⠀⠀⠀⠀⠀⠀⠀⠈⣿⣿
+     * ⣿⣿⣟⣾⣿⡟⠁⠀⠀⠀⠀⠀⢀⣾⣿⣿⣿⣿⣿⣷⢢⠀⠀⠀⠀⠀⠀⠀⢸⣿
+     * ⣿⣿⣿⣿⣟⠀⡴⠄⠀⠀⠀⠀⠀⠀⠙⠻⣿⣿⣿⣿⣷⣄⠀⠀⠀⠀⠀⠀⠀⣿
+     * ⣿⣿⣿⠟⠻⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠶⢴⣿⣿⣿⣿⣿⣧⠀⠀⠀⠀⠀⠀⣿
+     * ⣿⣁⡀⠀⠀⢰⢠⣦⠀⠀⠀⠀⠀⠀⠀⠀⢀⣼⣿⣿⣿⣿⣿⡄⠀⣴⣶⣿⡄⣿
+     * ⣿⡋⠀⠀⠀⠎⢸⣿⡆⠀⠀⠀⠀⠀⠀⣴⣿⣿⣿⣿⣿⣿⣿⠗⢘⣿⣟⠛⠿⣼
+     * ⣿⣿⠋⢀⡌⢰⣿⡿⢿⡀⠀⠀⠀⠀⠀⠙⠿⣿⣿⣿⣿⣿⡇⠀⢸⣿⣿⣧⢀⣼
+     * ⣿⣿⣷⢻⠄⠘⠛⠋⠛⠃⠀⠀⠀⠀⠀⢿⣧⠈⠉⠙⠛⠋⠀⠀⠀⣿⣿⣿⣿⣿
+     * ⣿⣿⣧⠀⠈⢸⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠟⠀⠀⠀⠀⢀⢃⠀⠀⢸⣿⣿⣿⣿
+     * ⣿⣿⡿⠀⠴⢗⣠⣤⣴⡶⠶⠖⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⡸⠀⣿⣿⣿⣿
+     * ⣿⣿⣿⡀⢠⣾⣿⠏⠀⠠⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠛⠉⠀⣿⣿⣿⣿
+     * ⣿⣿⣿⣧⠈⢹⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⣿⣿⣿⣿
+     * ⣿⣿⣿⣿⡄⠈⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⣴⣾⣿⣿⣿⣿⣿
+     * ⣿⣿⣿⣿⣧⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿
+     * ⣿⣿⣿⣿⣷⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+     * ⣿⣿⣿⣿⣿⣦⣄⣀⣀⣀⣀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+     * ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⡄⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+     * ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⠀⠀⠀⠙⣿⣿⡟⢻⣿⣿⣿⣿⣿⣿⣿⣿⣿
+     * ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠀⠁⠀⠀⠹⣿⠃⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿
+     * ⣿⣿⣿⣿⣿⣿⣿⣿⡿⠛⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⢐⣿⣿⣿⣿⣿⣿⣿⣿⣿
+     * ⣿⣿⣿⣿⠿⠛⠉⠉⠁⠀⢻⣿⡇⠀⠀⠀⠀⠀⠀⢀⠈⣿⣿⡿⠉⠛⠛⠛⠉⠉
+     * ⣿⡿⠋⠁⠀⠀⢀⣀⣠⡴⣸⣿⣇⡄⠀⠀⠀⠀⢀⡿⠄⠙⠛⠀⣀⣠⣤⣤⠄⠀
+     */
     class Based(x: Float = 0f, y: Float = 0f, base: Vec2? = null) : Sourced(base) {
         override var x: Float
             get() = super.x + source(or = ZERO).x
@@ -251,6 +282,9 @@ open class Vec2(open var x: Float = 0f, open var y: Float = 0f) : Comparable<Vec
             this.x = x
             this.y = y
         }
+
+        @Suppress("Deprecation")
+        override fun clone() = Based(x, y, source)
     }
 
     class Percent(percentX: Float, percentY: Float, source: Vec2? = null) : Sourced(source) {
@@ -263,6 +297,9 @@ open class Vec2(open var x: Float = 0f, open var y: Float = 0f) : Comparable<Vec
             this.x = percentX
             this.y = percentY
         }
+
+        @Suppress("Deprecation")
+        override fun clone() = Percent(x, y, source)
     }
 
     /**
@@ -286,6 +323,9 @@ open class Vec2(open var x: Float = 0f, open var y: Float = 0f) : Comparable<Vec
 
         override val magnitude2 = x * x + y * y
         override val magnitude = sqrt(magnitude2)
+
+        // asm: no point allocating a new one as it cannot be changed anyway
+        override fun clone() = this
     }
 
     companion object {

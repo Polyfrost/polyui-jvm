@@ -108,21 +108,21 @@ class KeyBinder(private val settings: Settings) {
 
     @ApiStatus.Internal
     fun completeRecording() {
-        if (recording == null) return
+        val recording = recording ?: return
         val b = Bind(
             if (downUnmappedKeys.size == 0) null else downUnmappedKeys.toIntArray(),
             if (downKeys.size == 0) null else downKeys.toTypedArray(),
             if (downMouseButtons.size == 0) null else downMouseButtons.toIntArray(),
             modifiers,
             recordingTime,
-            recordingFunc!!,
+            recordingFunc ?: throw ConcurrentModificationException("recording function has been removed"),
         )
         if (listeners.contains(b)) {
-            recording!!.completeExceptionally(IllegalStateException("Duplicate keybind: $b"))
+            recording.completeExceptionally(IllegalStateException("Duplicate keybind: $b"))
             release()
             return
         }
-        recording!!.complete(b)
+        recording.complete(b)
         this.recording = null
         this.recordingTime = 0L
         this.recordingFunc = null
@@ -159,14 +159,13 @@ class KeyBinder(private val settings: Settings) {
         if (settings.debug) {
             PolyUI.LOGGER.info("Recording keybind began")
         }
-        if (recording != null) {
-            recording!!.completeExceptionally(CancellationException("New recording was started"))
-        }
+        recording?.completeExceptionally(CancellationException("New recording was started"))
         release()
-        recording = CompletableFuture<Bind>()
+        val recording = CompletableFuture<Bind>()
         recordingTime = holdDurationNanos
         recordingFunc = function
-        return recording!!.thenApply {
+        this.recording = recording
+        return recording.thenApply {
             if (settings.debug) {
                 PolyUI.LOGGER.info("Bind created: $it")
             }
@@ -176,7 +175,7 @@ class KeyBinder(private val settings: Settings) {
             it
         }.exceptionally {
             PolyUI.LOGGER.warn("Keybind recording cancelled: ${it.message}")
-            recording = null
+            this.recording = null
             recordingTime = 0L
             recordingFunc = null
             null

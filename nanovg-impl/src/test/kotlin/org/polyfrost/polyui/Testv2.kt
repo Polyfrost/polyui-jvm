@@ -21,8 +21,10 @@
 
 package org.polyfrost.polyui
 
+import org.polyfrost.polyui.component.events
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.component.withStates
+import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.renderer.impl.GLWindow
 import org.polyfrost.polyui.renderer.impl.NVGRenderer
@@ -82,16 +84,28 @@ fun main() {
                     arrayOf(
                         Button(leftImage = PolyImage("shuffle.svg"), text = "button.randomize"),
                         Button("minus.svg".image()),
-                        Button("plus.svg".image()),
+                        Button("plus.svg".image()).events {
+                            Event.Mouse.Clicked(0) then {
+                                parent!!.parent!![5] = Group(
+                                    visibleSize = Vec2(350f, 120f),
+                                    children =
+                                    Array(30) {
+                                        Block(size = Vec2(32f + (Random.nextFloat() * 100f), 32f)).withStates()
+                                    },
+                                )
+                            }
+                        },
                     ),
                 ),
                 Group(
                     children =
                     arrayOf(
-                        Radiobutton(entries = arrayOf(
-                            null to "hello",
-                            null to "goodbye"
-                        )),
+                        Radiobutton(
+                            entries = arrayOf(
+                                null to "hello",
+                                null to "goodbye"
+                            )
+                        ),
                         Slider()
                     )
                 ),

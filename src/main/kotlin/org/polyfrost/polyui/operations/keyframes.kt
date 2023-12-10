@@ -83,8 +83,6 @@ class KeyFrames<T : Drawable>(self: T, animation: Animation) : DrawableOp.Animat
         percent { frame() }
     }
 
-    private fun percentToTime(percent: Float) = (animation!!.durationNanos.toFloat() * (percent / 100f)).toLong()
-
     fun begin() {
         keyframes.sortBy { it.start }
         add()

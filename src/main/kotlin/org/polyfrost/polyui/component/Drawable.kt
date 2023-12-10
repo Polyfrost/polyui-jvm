@@ -25,11 +25,11 @@ package org.polyfrost.polyui.component
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.MustBeInvokedByOverriders
-import org.jetbrains.annotations.NotNull
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_DISABLED
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_NONE
 import org.polyfrost.polyui.animate.Animation
+import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.animate.Easing
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.color.PolyColor
@@ -65,11 +65,13 @@ abstract class Drawable(
     var visibleSize: Vec2 = visibleSize ?: Vec2.Based(base = this.size)
 
     @set:Locking
+    @Transient
     var parent: Drawable? = null
         private set(value) {
             if (value === field) return
             if (field != null) {
-                PolyUI.LOGGER.info("transferring ownership of ${this.simpleName} from ${field!!.simpleName} to ${value?.simpleName}")
+                if (value != null) PolyUI.LOGGER.info("transferring ownership of $simpleName from ${field?.simpleName} to ${value.simpleName}")
+//                else PolyUI.LOGGER.warn("$simpleName has no path to root, deleted?")
             }
             field = value
         }
@@ -130,14 +132,23 @@ abstract class Drawable(
     lateinit var color: PolyColor.Animated
 
     @Transient
-    @set:Locking
-    var palette: Colors.Palette? = palette
-        set(@NotNull value) {
-            if (value == null) return
-            field = value
-            if (!::color.isInitialized) return
-            color.recolor(value.normal)
-        }
+    @set:JvmName("_setPalette")
+    lateinit var palette: Colors.Palette
+        protected set
+
+    /**
+     * For some reason, you can't have custom setters on lateinit properties, so this is a workaround.
+     * @since 1.0.1
+     */
+    @Locking
+    fun setPalette(palette: Colors.Palette) {
+        this.palette = palette
+        this.color.recolor(palette.get(this.inputState))
+    }
+
+    init {
+        if (palette != null) this.palette = palette
+    }
 
     // InlineOnly makes it so that it doesn't add useless local variables called $i$f$getX or whatever
     @kotlin.internal.InlineOnly
@@ -196,6 +207,7 @@ abstract class Drawable(
     @set:Locking
     protected var yScroll: Animation? = null
 
+    @Transient
     var needsRedraw = true
         set(value) {
             if (field == value) return
@@ -495,10 +507,10 @@ abstract class Drawable(
      */
     @MustBeInvokedByOverriders
     open fun setup(polyUI: PolyUI) {
-//        require(!initialized) { "${this.simpleName} has already been setup!" }
+        if (initialized) return
         this.polyUI = polyUI
-        if (palette == null) palette = polyUI.colors.component.bg
-        if (!::color.isInitialized) this.color = palette!!.normal.toAnimatable()
+        if (!::palette.isInitialized) palette = polyUI.colors.component.bg
+        if (!::color.isInitialized) this.color = palette.normal.toAnimatable()
         children?.fastEach {
             it.setup(polyUI)
         }
@@ -512,21 +524,7 @@ abstract class Drawable(
         }
         polyUI.positioner.position(this)
         children?.fastEach {
-            var scrolling = false
-            if (it.shouldScroll) {
-                if (it.size.x > it.visibleSize.x && it.xScroll == null) {
-                    scrolling = true
-                    it.xScroll = Easing.Expo(Easing.Type.Out, 0L, it.at.x, it.at.x)
-                }
-                if (it.size.y > it.visibleSize.y && it.yScroll == null) {
-                    scrolling = true
-                    it.yScroll = Easing.Expo(Easing.Type.Out, 0L, it.at.y, it.at.y)
-                }
-                if (scrolling) {
-                    it.acceptsInput = true
-                    if (polyUI.settings.debug) PolyUI.LOGGER.info("Enabled scrolling for ${it.simpleName}")
-                }
-            }
+            it.tryMakeScrolling()
         }
 
 //        if (polyUI.settings.debug) {
@@ -546,6 +544,24 @@ abstract class Drawable(
         // following all init events being removed, if it is empty, we can set it to null
         if (eventHandlers.isNullOrEmpty()) eventHandlers = null
         clipDrawables()
+    }
+
+    protected fun tryMakeScrolling() {
+        var scrolling = false
+        if (shouldScroll) {
+            if (size.x > visibleSize.x && xScroll == null) {
+                scrolling = true
+                xScroll = Easing.Expo(Easing.Type.Out, 0L, at.x, at.x)
+            }
+            if (size.y > visibleSize.y && yScroll == null) {
+                scrolling = true
+                yScroll = Easing.Expo(Easing.Type.Out, 0L, at.y, at.y)
+            }
+            if (scrolling) {
+                acceptsInput = true
+                if (polyUI.settings.debug) PolyUI.LOGGER.info("Enabled scrolling for $simpleName")
+            }
+        }
     }
 
     /** debug print for this drawable.*/
@@ -621,6 +637,8 @@ abstract class Drawable(
     @Locking
     fun addChild(child: Drawable) {
         child.accept(Event.Lifetime.Added)
+        child.setup(polyUI)
+        child.parent = this
         val children = this.children ?: LinkedList()
         children.add(child)
         needsRedraw = true
@@ -631,31 +649,69 @@ abstract class Drawable(
         for (child in children) addChild(child)
     }
 
-    @Locking
     fun removeChild(child: Drawable) {
-        removeChild(this.children?.indexOf(child) ?: return)
+        require(initialized) { "$this is not setup" }
+        removeChild(this.children?.indexOf(child) ?: throw NullPointerException("no children"))
         needsRedraw = true
     }
 
-    @Locking
     fun removeChild(index: Int) {
-        val children = this.children ?: return
-        children[index].accept(Event.Lifetime.Removed)
+        require(initialized) { "$this is not setup" }
+        val children = this.children ?: throw NullPointerException("no children")
+        val it = children[index]
+        it.accept(Event.Lifetime.Removed)
+        it.parent = null
         polyUI.forRemoval(children, index)
         needsRedraw = true
     }
 
-    operator fun get(index: Int) = children?.get(index)
+    operator fun get(index: Int) = children?.get(index) ?: throw IndexOutOfBoundsException("index: $index, length: ${children?.size ?: 0}")
 
-    operator fun get(id: String): Drawable? {
-        val children = children ?: return null
+    operator fun get(id: String): Drawable {
+        val children = children ?: throw NullPointerException("no children on $this")
         children.fastEach {
             if (it.simpleName == id) return it
         }
-        return null
+        throw NoSuchElementException("no child with id $id")
     }
 
-    operator fun get(x: Float, y: Float) = children?.firstOrNull { it.isInside(x, y) }
+    /**
+     * Replace a child of this drawable with another drawable.
+     *
+     * This will add a nice, smooth [Fade] animation to the transition.
+     * @since 1.0.1
+     */
+    @Locking
+    operator fun set(old: Drawable, new: Drawable?) {
+        require(initialized) { "$this is not setup" }
+        val children = children ?: throw NullPointerException("no children on $this")
+        val index = children.indexOf(old)
+        require(index != -1) { "Drawable $old is not a child of $this" }
+        if (new == null) {
+            removeChild(old)
+            return
+        }
+        new.at = old.at.clone()
+        new.x -= (old.x - (old.xScroll?.from ?: old.x))
+        new.y -= (old.y - (old.yScroll?.from ?: old.y))
+        new.setup(polyUI)
+        new.tryMakeScrolling()
+        Fade(old, 0f, false, Animations.EaseInOutQuad.create(0.3.seconds)) {
+            old.enabled = false
+            old.parent = null
+            children.remove(old)
+        }.add()
+        if (new.visibleSize != old.visibleSize) PolyUI.LOGGER.warn("replacing drawable $old with $new, but sizes are different: ${old.size} -> ${new.size}")
+        children.add(index, new)
+        new.enabled = true
+        new.alpha = 0f
+        Fade(new, 1f, false, Animations.EaseInOutQuad.create(0.3.seconds)).add()
+    }
+
+    @Locking
+    operator fun set(old: Int, new: Drawable) = set(this[old], new)
+
+    operator fun get(x: Float, y: Float) = children?.first { it.isInside(x, y) } ?: throw NullPointerException("no children on $this")
 
     fun countChildren(): Int {
         var i = children?.size ?: 0

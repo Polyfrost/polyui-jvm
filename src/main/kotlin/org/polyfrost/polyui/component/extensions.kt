@@ -104,28 +104,28 @@ fun <S : Drawable> S.disable(state: Boolean = true): S {
  */
 fun <S : Drawable> S.setPalette(palette: Colors.() -> Colors.Palette): S {
     addEventHandler(Event.Lifetime.Init) {
-        this.palette = palette(polyUI.colors)
+        this.setPalette(polyUI.colors.palette())
     }
     return this
 }
 
 fun <S : Drawable> S.withStates(showClicker: Boolean = true, animation: (() -> Animation)? = { Animations.EaseInOutQuad.create(0.08.seconds) }): S {
     addEventHandler(Event.Mouse.Entered) {
-        Recolor(this, this.palette!!.hovered, animation?.invoke()).add()
+        Recolor(this, this.palette.hovered, animation?.invoke()).add()
         if (showClicker) polyUI.cursor = Cursor.Clicker
         false
     }
     addEventHandler(Event.Mouse.Exited) {
-        Recolor(this, this.palette!!.normal, animation?.invoke()).add()
+        Recolor(this, this.palette.normal, animation?.invoke()).add()
         polyUI.cursor = Cursor.Pointer
         false
     }
     addEventHandler(Event.Mouse.Pressed(0)) {
-        Recolor(this, this.palette!!.pressed, animation?.invoke()).add()
+        Recolor(this, this.palette.pressed, animation?.invoke()).add()
         false
     }
     addEventHandler(Event.Mouse.Released(0)) {
-        Recolor(this, this.palette!!.hovered, animation?.invoke()).add()
+        Recolor(this, this.palette.hovered, animation?.invoke()).add()
         false
     }
     return this
@@ -136,12 +136,12 @@ fun <S : Drawable> S.withStates(showClicker: Boolean = true, animation: (() -> A
  * @param state the state to set. One of [DANGER]/0 (red), [WARNING]/1 (yellow), [SUCCESS]/2 (green).
  */
 fun <S : Drawable> S.setState(state: Byte): S {
-    palette = when (state) {
+    setPalette(when (state) {
         DANGER -> polyUI.colors.state.danger
         WARNING -> polyUI.colors.state.warning
         SUCCESS -> polyUI.colors.state.success
         else -> throw IllegalArgumentException("Invalid state: $state")
-    }
+    })
     return this
 }
 
@@ -173,7 +173,7 @@ fun <S : Drawable> S.afterInit(function: S.(Event.Lifetime.PostInit) -> Unit): S
  * Add an event handler to this drawable's parent, and (optionally) it's parent's parent ([depth]).
  *
  * This is used to run functions that may move or resize this drawable,
- * as if they were ran under this [PostInitialization] they would be overwritten by the positioning logic.
+ * as if they were ran under this [Event.Lifetime.PostInit] they would be overwritten by the positioning logic.
  */
 fun <S : Drawable> S.afterParentInit(depth: Int = 1, handler: S.() -> Unit): S {
     this.addEventHandler(Event.Lifetime.PostInit) { _ ->

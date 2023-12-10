@@ -225,7 +225,7 @@ class PolyUI @JvmOverloads constructor(
             this.keyBinder?.add(
                 KeyBinder.Bind('I', mods = mods(KeyModifiers.LCONTROL, KeyModifiers.LSHIFT)) {
                     settings.debug = !settings.debug
-                    // master.needsRedraw = true
+                    master.needsRedraw = true
                     LOGGER.info(
                         "Debug mode {}",
                         if (settings.debug) {
