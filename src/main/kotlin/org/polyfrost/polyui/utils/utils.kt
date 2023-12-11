@@ -305,6 +305,13 @@ inline fun <T> Collection<T>.asLinkedList(): LinkedList<T> = if (this is LinkedL
 @kotlin.internal.InlineOnly
 inline fun <T> Array<T>.asLinkedList(): LinkedList<T> = LinkedList(*this)
 
+/**
+ * Returns the value of the given [key] in the map, and if [shouldRemove] is `true` the value is also removed from the map.
+ * @since 1.0.2
+ */
+@kotlin.internal.InlineOnly
+inline fun <K, V> MutableMap<K, V>.maybeRemove(key: K, shouldRemove: Boolean) = if (shouldRemove) remove(key) else get(key)
+
 fun Drawable.printInfo() {
     var c: Drawable? = parent
     var i = 0

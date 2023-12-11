@@ -19,6 +19,8 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+@file:Suppress("invisible_member", "invisible_reference")
+
 package org.polyfrost.polyui.utils
 
 import org.jetbrains.annotations.ApiStatus
@@ -125,37 +127,63 @@ class LinkedList<T>() : MutableList<T> {
 
     override fun isEmpty() = start == null && end == null
 
-    @Deprecated("This list is designed around not using this method.", level = DeprecationLevel.ERROR)
-    override fun iterator(): MutableIterator<T> {
-//        PolyUI.LOGGER.warn("Using iterator() on LinkedList is not recommended, use fastEach() instead.", Exception("stack trace"))
-        return object : MutableIterator<T> {
-            var current = start
+    @Suppress("Deprecation")
+    @Deprecated("This list is designed around not using this method.", ReplaceWith("fastEach"))
+    override fun iterator() = listIterator(0)
+
+    @Suppress("Deprecation")
+    @Deprecated("This list is designed around not using this method.", ReplaceWith("fastEach"))
+    override fun listIterator() = listIterator(0)
+
+    @Deprecated("This list is designed around not using this method.", ReplaceWith("fastEach"))
+    override fun listIterator(index: Int): MutableListIterator<T> {
+        return object : MutableListIterator<T> {
+            var current: Node<T>? = _get(index)
+            var idx = index - 1
             override fun hasNext() = current != null
 
             override fun next(): T {
                 val n = current ?: throw NoSuchElementException()
                 current = n.next
+                idx++
                 return n.value
+            }
+
+            override fun hasPrevious() = current?.prev != null
+
+            override fun previous(): T {
+                val n = current?.prev ?: throw NoSuchElementException()
+                current = n
+                idx--
+                return n.value
+            }
+
+            override fun nextIndex() = idx + 1
+
+            override fun previousIndex() = idx - 1
+
+            override fun add(element: T) {
+                val n = Node(element, current, current?.prev)
+                current?.prev?.next = n
+                current?.prev = n
+                size++
             }
 
             override fun remove() {
                 val n = current ?: throw NoSuchElementException()
+                if (current === end) end = n.prev
+                else if (current === start) start = n.next
                 current = n.next
                 n.prev?.next = n.next
                 n.next?.prev = n.prev
                 size--
             }
+
+            override fun set(element: T) {
+                val n = current?.prev ?: end ?: throw NullPointerException("list empty?")
+                n.value = element
+            }
         }
-    }
-
-    @Deprecated("Not implemented", level = DeprecationLevel.ERROR)
-    override fun listIterator(): MutableListIterator<T> {
-        throw UnsupportedOperationException()
-    }
-
-    @Deprecated("Not implemented", level = DeprecationLevel.ERROR)
-    override fun listIterator(index: Int): MutableListIterator<T> {
-        throw UnsupportedOperationException()
     }
 
     override fun removeAt(index: Int): T {
@@ -252,6 +280,7 @@ class LinkedList<T>() : MutableList<T> {
         return false
     }
 
+    @kotlin.internal.InlineOnly
     inline fun fastEach(action: (T) -> Unit) {
         var current = start
         while (current != null) {
@@ -260,6 +289,7 @@ class LinkedList<T>() : MutableList<T> {
         }
     }
 
+    @kotlin.internal.InlineOnly
     inline fun fastEachIndexed(action: (Int, T) -> Unit) {
         var current = start
         var i = 0
@@ -269,7 +299,7 @@ class LinkedList<T>() : MutableList<T> {
             i++
         }
     }
-
+    @kotlin.internal.InlineOnly
     inline fun fastEachReversed(action: (T) -> Unit) {
         var current = end
         while (current != null) {
@@ -278,6 +308,7 @@ class LinkedList<T>() : MutableList<T> {
         }
     }
 
+    @kotlin.internal.InlineOnly
     inline fun fastRemoveIf(predicate: (T) -> Boolean): Boolean {
         var current = start
         var out = false
@@ -291,6 +322,7 @@ class LinkedList<T>() : MutableList<T> {
         return out
     }
 
+    @kotlin.internal.InlineOnly
     inline fun fastRemoveIfIndexed(predicate: (Int, T) -> Boolean): Boolean {
         var current = start
         var i = 0
@@ -306,6 +338,7 @@ class LinkedList<T>() : MutableList<T> {
         return out
     }
 
+    @kotlin.internal.InlineOnly
     inline fun fastRemoveIfReversed(predicate: (T) -> Boolean): Boolean {
         var current = end
         var out = false
@@ -347,6 +380,7 @@ class LinkedList<T>() : MutableList<T> {
      * **Note this function** will return `true` if the list is empty, according to the principle of [Vacuous truth](https://en.wikipedia.org/wiki/Vacuous_truth),
      * and the fact that there are no elements that don't match the given predicate.
      */
+    @kotlin.internal.InlineOnly
     inline fun allAre(predicate: (T) -> Boolean): Boolean {
         var current = start
         while (current != null) {
@@ -379,8 +413,10 @@ class LinkedList<T>() : MutableList<T> {
         }
     }
 
+    @kotlin.internal.InlineOnly
     fun first(): T = start?.value ?: throw NoSuchElementException()
 
+    @kotlin.internal.InlineOnly
     fun last(): T = end?.value ?: throw NoSuchElementException()
 
     @ApiStatus.Internal

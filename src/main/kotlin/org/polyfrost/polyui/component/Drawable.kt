@@ -262,7 +262,7 @@ abstract class Drawable(
     /**
      * weather or not this drawable should be rendered.
      *
-     * This is controlled by [clipDrawables] to save resources by not drawing drawables which cannot be seen.
+     * This is controlled by [clipChildren] to save resources by not drawing drawables which cannot be seen.
      *
      * if you are calling [render] yourself (which you really shouldn't), you should check this value.
      * @see draw
@@ -421,7 +421,7 @@ abstract class Drawable(
         children?.fastEach { it.rescale(scaleX, scaleY) }
     }
 
-    fun clipDrawables() {
+    fun clipChildren() {
         children?.fastEach {
             it.renders = it.intersects(xScroll?.from ?: x, yScroll?.from ?: y, visibleSize.x, visibleSize.y)
         }
@@ -486,7 +486,7 @@ abstract class Drawable(
             }
             if (ran) {
                 polyUI.eventManager.recalculateMousePos()
-                clipDrawables()
+                clipChildren()
                 return true
             }
         }
@@ -515,7 +515,7 @@ abstract class Drawable(
             it.setup(polyUI)
         }
         // asm: don't use accept as we don't want to dispatch to children
-        eventHandlers?.remove(Event.Lifetime.Init)?.let {
+        eventHandlers?.maybeRemove(Event.Lifetime.Init, polyUI.settings.aggressiveCleanup)?.let {
             it.fastEach { handler ->
                 handler.invoke(this, Event.Lifetime.Init)
             }
@@ -534,7 +534,7 @@ abstract class Drawable(
 //        }
 
         initialized = true
-        eventHandlers?.remove(Event.Lifetime.PostInit)?.let {
+        eventHandlers?.maybeRemove(Event.Lifetime.PostInit, polyUI.settings.aggressiveCleanup)?.let {
             it.fastEach { handler ->
                 handler.invoke(this, Event.Lifetime.PostInit)
             }
@@ -543,7 +543,7 @@ abstract class Drawable(
         }
         // following all init events being removed, if it is empty, we can set it to null
         if (eventHandlers.isNullOrEmpty()) eventHandlers = null
-        clipDrawables()
+        clipChildren()
     }
 
     protected fun tryMakeScrolling() {
@@ -570,11 +570,24 @@ abstract class Drawable(
     }
 
     @ApiStatus.Experimental
-    fun reset() {
+    @MustBeInvokedByOverriders
+    open fun reset() {
+        if (!initialized) return
         this.x = 0f
         this.y = 0f
         this.initialized = false
         children?.fastEach { it.reset() }
+    }
+
+    /**
+     * Reposition all the children of this drawable.
+     * @since 1.0.2
+     */
+    @ApiStatus.Experimental
+    fun repositionChildren() {
+        children?.fastEach { it.reset() } ?: return
+        polyUI.positioner.position(this)
+        clipChildren()
     }
 
     /**

@@ -444,7 +444,7 @@ class NVGRenderer(size: Vec2) : Renderer(size) {
     private fun getImage(image: PolyImage): NVGImage {
         return images.getOrPut(image) {
             var def = true
-            val stream = image.stream ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) {
+            val stream = image.stream ?: if (settings.resourcePolicy != Settings.ResourcePolicy.CRASH) {
                 PolyUI.LOGGER.warn(
                     "Failed to get image: {}, falling back to default image!",
                     image.resourcePath,

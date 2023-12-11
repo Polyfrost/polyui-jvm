@@ -37,9 +37,10 @@ import org.polyfrost.polyui.utils.asLinkedList
 import org.polyfrost.polyui.utils.radii
 import kotlin.math.PI
 
-fun Button(leftImage: PolyImage? = null, text: String? = null, rightImage: PolyImage? = null, fontSize: Float = 12f, at: Vec2? = null): Drawable {
+fun Button(leftImage: PolyImage? = null, text: String? = null, rightImage: PolyImage? = null, fontSize: Float = 12f, at: Vec2? = null, size: Vec2? = null): Drawable {
     return Block(
         at = at,
+        size = size,
         children = arrayOf(
             if (leftImage != null) Image(leftImage) else null,
             if (text != null) Text(text, fontSize = fontSize) else null,
@@ -84,18 +85,19 @@ fun Switch(at: Vec2? = null, size: Float, padding: Float = 3f, state: Boolean = 
     }
 }
 
-fun Radiobutton(at: Vec2? = null, entries: Array<Pair<PolyImage?, String?>>, initial: Int = 0): Drawable {
+fun Radiobutton(at: Vec2? = null, entries: Array<Pair<PolyImage?, String?>>, initial: Int = 0, fontSize: Float = 12f): Drawable {
     val centerAlign = Align(Align.Main.Center)
+    val maxImageSize = fontSize * 1.3f
     val buttons: LinkedList<Drawable> = entries.map { (img, text) ->
         Group(
             alignment = centerAlign,
             children = arrayOf(
                 if (img != null) Image(img) else null,
-                if (text != null) Text(text) else null,
+                if (text != null) Text(text, fontSize = fontSize) else null,
             ),
         ).events {
             Event.Lifetime.Init then {
-                (this[0] as? Image)?.image?.size?.max(16f, 16f)
+                (this[0] as? Image)?.image?.size?.max(maxImageSize, maxImageSize)
             }
             Event.Mouse.Clicked(0) then { _ ->
                 val children = parent!!.children!!
@@ -122,14 +124,14 @@ fun Radiobutton(at: Vec2? = null, entries: Array<Pair<PolyImage?, String?>>, ini
     }.namedId("Radiobutton")
 }
 
-fun Dropdown(at: Vec2? = null, size: Vec2? = null, entries: Array<Pair<PolyImage?, String>>, initial: Int = 0): Drawable {
-    var targetHeight = 0f
+fun Dropdown(at: Vec2? = null, size: Vec2? = null, entries: Array<Pair<PolyImage?, String>>, fontSize: Float = 12f, initial: Int = 0): Drawable {
+    var heightTracker = 0f
     val it = Block(
         at,
         size,
         focusable = true,
         children = arrayOf(
-            Text(entries[initial].second),
+            Text(entries[initial].second, fontSize = fontSize),
             Image(PolyImage("chevron-down.svg")),
         ),
     )
@@ -140,7 +142,7 @@ fun Dropdown(at: Vec2? = null, size: Vec2? = null, entries: Array<Pair<PolyImage
             Group(
                 children = arrayOf(
                     if (img != null) Image(img) else null,
-                    Text(text),
+                    Text(text, fontSize = fontSize),
                 ),
             ).events {
                 Event.Mouse.Clicked(0) then { _ ->
@@ -155,15 +157,15 @@ fun Dropdown(at: Vec2? = null, size: Vec2? = null, entries: Array<Pair<PolyImage
     ).disable()
     return it.events {
         Event.Focused.Gained then {
-            if (dropdown.height != 0f) targetHeight = dropdown.height
+            if (dropdown.height != 0f) heightTracker = dropdown.height
             dropdown.height = 0f
             dropdown.enabled = true
             dropdown.y = this.y + this.size.y
-            Resize(dropdown, height = targetHeight, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
+            Resize(dropdown, height = heightTracker, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
             Rotate(this[1], PI, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
         }
         Event.Focused.Lost then {
-            if (dropdown.height != 0f) targetHeight = dropdown.height
+            if (dropdown.height != 0f) heightTracker = dropdown.height
             Resize(dropdown, height = 0f, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)) {
                 dropdown.enabled = false
             }.add()

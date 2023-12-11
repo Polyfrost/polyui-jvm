@@ -96,7 +96,7 @@ class Resize<S : Drawable>(
     override fun apply(value: Float) {
         self.size.x = ow + (tw * value)
         self.size.y = oh + (th * value)
-        self.clipDrawables()
+        self.clipChildren()
     }
 }
 

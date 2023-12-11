@@ -82,7 +82,13 @@ fun main() {
                 Group(
                     children =
                     arrayOf(
-                        Button(leftImage = PolyImage("shuffle.svg"), text = "button.randomize"),
+                        Button(leftImage = PolyImage("shuffle.svg"), text = "button.randomize").events {
+                            Event.Mouse.Clicked(0) then { _ ->
+                                val it = parent!!.parent!![5]
+                                it.children?.shuffle()
+                                it.repositionChildren()
+                            }
+                        },
                         Button("minus.svg".image()),
                         Button("plus.svg".image()).events {
                             Event.Mouse.Clicked(0) then {
