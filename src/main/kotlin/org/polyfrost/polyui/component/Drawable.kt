@@ -285,7 +285,7 @@ abstract class Drawable(
         }
 
     /**
-     * weather or not this drawable should be rendered.
+     * Whether or not this drawable should be rendered.
      *
      * This is controlled by [clipChildren] to save resources by not drawing drawables which cannot be seen.
      *
