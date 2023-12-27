@@ -21,8 +21,11 @@
 
 package org.polyfrost.polyui.event
 
+import org.polyfrost.polyui.event.Event.*
+import org.polyfrost.polyui.event.Event.Lifetime.*
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
+import java.io.File
 import kotlin.experimental.and
 
 /**
@@ -162,10 +165,29 @@ interface Event {
     /**
      * Events related to specific things that occur in some components, for example
      * when a switch is toggled, a slider is moved or a text is changed.
+     *
+     * These events can be cancelled, meaning that the change in state will not occur.
+     * @since 1.0.3
      */
-    interface Change : Event {
-        class Text(val text: String) : Change {
+    abstract class Change : Event {
+        /**
+         * Weather the event has been cancelled.
+         * @since 1.0.3
+         */
+        var cancelled: Boolean = false
+            private set
+
+        /**
+         * Cancel this event.
+         * @since 1.0.3
+         */
+        fun cancel() {
+            cancelled = true
+        }
+
+        class Text(val text: String) : Change() {
             constructor() : this("")
+
             override fun hashCode() = 859347809
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
@@ -173,8 +195,9 @@ interface Event {
             }
         }
 
-        class Number(val amount: kotlin.Number) : Change {
+        class Number(val amount: kotlin.Number) : Change() {
             constructor() : this(0)
+
             override fun hashCode() = 57328903
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
@@ -182,8 +205,9 @@ interface Event {
             }
         }
 
-        class State(val state: Boolean) : Change {
+        class State(val state: Boolean) : Change() {
             constructor() : this(false)
+
             override fun hashCode() = 38294781
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
@@ -294,6 +318,7 @@ interface Event {
 
         class UnmappedInput(val code: Int, val down: Boolean) : Focused {
             constructor() : this(0, false)
+
             override fun toString(): String = "UnmappedInput(key=$code, down=$down)"
 
             override fun hashCode(): Int {
@@ -305,6 +330,25 @@ interface Event {
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
                 return other is UnmappedInput
+            }
+        }
+
+        /**
+         * This event is dispatched when files are dropped into this PolyUI instance.
+         *
+         * In order to receive it, your drawable must have focus at the time of drop.
+         * @since 1.0.3
+         */
+        class FileDrop internal constructor(val files: Array<File>) : Focused {
+            constructor() : this(arrayOf())
+
+            override fun toString() = "FileDrop($files)"
+
+            override fun hashCode() = 453646123
+
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                return other is FileDrop
             }
         }
     }

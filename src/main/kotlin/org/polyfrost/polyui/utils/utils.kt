@@ -28,6 +28,7 @@ import org.polyfrost.polyui.color.Color
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Modifiers
+import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.renderer.data.PolyImage
 import kotlin.experimental.and
 import kotlin.math.PI
@@ -261,7 +262,14 @@ inline fun <T> T.stdout(arg: Any? = null): T {
     return this
 }
 
-fun String.image() = PolyImage(this)
+@kotlin.internal.InlineOnly
+inline fun String.image() = PolyImage(this)
+
+@kotlin.internal.InlineOnly
+inline fun String.translated(vararg args: Any?) = Translator.Text.Formatted(Translator.Text.Simple(this), *args)
+
+@kotlin.internal.InlineOnly
+inline fun String.translated(): Translator.Text = Translator.Text.Simple(this)
 
 @kotlin.internal.InlineOnly
 inline fun Any?.identityHashCode() = System.identityHashCode(this)

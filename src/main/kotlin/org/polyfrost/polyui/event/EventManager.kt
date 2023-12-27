@@ -33,6 +33,7 @@ import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.property.Settings
 import org.polyfrost.polyui.utils.LinkedList
+import java.io.File
 import kotlin.experimental.and
 import kotlin.experimental.inv
 import kotlin.experimental.or
@@ -79,6 +80,15 @@ class EventManager @JvmOverloads constructor(
     fun with(drawables: LinkedList<Drawable>?): EventManager {
         this.drawables = drawables
         return this
+    }
+
+    /**
+     * Call this method when files are dropped onto this window. The [Event.Focused.FileDrop] is then dispatched to the currently focused drawable.
+     * @see focus
+     * @since 1.0.3
+     */
+    fun filesDropped(files: Array<File>) {
+        focused?.accept(Event.Focused.FileDrop(files))
     }
 
     /** This method should be called when a printable key is typed. This key should be **mapped to the user's keyboard layout!** */
@@ -136,7 +146,7 @@ class EventManager @JvmOverloads constructor(
      * Internal function that will forcefully drop the given drawable from event tracking.
      */
     @ApiStatus.Internal
-    fun drop(drawable: Drawable, withChildren: Boolean = false) {
+    fun drop(drawable: Drawable) {
         if (drawable === mouseOver) {
             drawable.inputState = INPUT_NONE
             mouseOver = null
@@ -148,9 +158,6 @@ class EventManager @JvmOverloads constructor(
             } else {
                 false
             }
-        }
-        if (withChildren) {
-            drawable.children?.fastEach { drop(it) }
         }
     }
 
@@ -198,13 +205,15 @@ class EventManager @JvmOverloads constructor(
         var candidate: Drawable? = null
         if (drawable.acceptsInput) {
             if (drawable.isInside(x, y)) {
-                if (drawable.inputState == INPUT_NONE) drawable.inputState = INPUT_HOVERED
                 if (!drawable.consumesHover) {
-                    mouseOvers.add(drawable)
-                    return null
-                } else {
-                    candidate = drawable
-                }
+                    if (drawable.inputState == INPUT_NONE) {
+                        drawable.inputState = INPUT_HOVERED
+                        if (!mouseOvers.contains(drawable)) {
+                            mouseOvers.add(drawable)
+                        } else PolyUI.LOGGER.warn("$this is already tracked for events?")
+                        return null
+                    }
+                } else candidate = drawable
             } else {
                 drawable.inputState = INPUT_NONE
             }
@@ -214,12 +223,9 @@ class EventManager @JvmOverloads constructor(
 
     private fun processCandidates(drawables: LinkedList<Drawable>, x: Float, y: Float): Drawable? {
         var candidate: Drawable? = null
-        drawables.fastEachReversed {
-            val cc = processCandidate(it, x, y)
-            if (cc != null) candidate = cc
-            if (it.enabled && it.isInside(x, y)) {
-                processCandidates(it.children ?: return@fastEachReversed, x, y)?.let { candidate = it }
-            }
+        drawables.fastEachReversed a@{ drawable ->
+            processCandidate(drawable, x, y)?.let { candidate = it }
+            processCandidates(drawable.children ?: return@a, x, y)?.let { candidate = it }
         }
         return candidate
     }
@@ -233,21 +239,16 @@ class EventManager @JvmOverloads constructor(
         if (mouseDown) return
         val candidate = processCandidates(drawables ?: return, x, y)
         if (candidate != null) {
-            mouseOver = candidate
-        } else {
+            candidate.inputState = INPUT_HOVERED
             mouseOver?.let {
-                if (!it.acceptsInput) mouseOver = null
-                if (!it.isInside(x, y)) {
+                if (it !== candidate) {
                     it.inputState = INPUT_NONE
-                    mouseOver = null
                 }
             }
-        }
-        mouseOvers.fastRemoveIfReversed {
-            val b = !it.isInside(x, y)
-            if (b && it.acceptsInput) it.inputState = INPUT_NONE
-            b
-        }
+            mouseOver = candidate
+        } else if (mouseOver?.inputState == INPUT_NONE) mouseOver = null
+
+        mouseOvers.fastRemoveIfReversed { it.inputState == INPUT_NONE }
     }
 
     fun mousePressed(button: Int) {
@@ -260,6 +261,7 @@ class EventManager @JvmOverloads constructor(
     fun mouseReleased(button: Int) {
         if (button == 0) {
             mouseDown = false
+            recalculateMousePos()
         }
         if (clickedButton != button) {
             clickedButton = button
@@ -276,20 +278,17 @@ class EventManager @JvmOverloads constructor(
                 clickAmount = 1
             }
             clickTimer = curr
-            if (focused != null) {
-                if ((focused as Drawable).inputState == INPUT_NONE) {
-                    unfocus()
-                }
-            }
+        }
+        if (focused?.inputState == INPUT_NONE) {
+            unfocus()
         }
         val release = Event.Mouse.Released(button, mouseX, mouseY, keyModifiers)
         val click = Event.Mouse.Clicked(button, mouseX, mouseY, clickAmount, keyModifiers)
-        if (button == 0) {
-            mouseOvers.fastEach { if (tryFocus(it)) return }
-            if (tryFocus(mouseOver)) return
-        }
-        dispatch(click)
         dispatchPress(release, INPUT_HOVERED)
+        if (!dispatch(click) && button == 0) {
+            if (tryFocus(mouseOver)) return
+            mouseOvers.fastEach { if (tryFocus(it)) return }
+        }
     }
 
     /**

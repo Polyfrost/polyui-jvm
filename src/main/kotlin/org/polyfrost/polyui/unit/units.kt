@@ -54,13 +54,16 @@ val AlignDefault = Align()
 @kotlin.internal.InlineOnly
 inline val Number.vec get() = Vec2(toFloat(), toFloat())
 
-fun Vec2.makeRelative(to: Vec2): Vec2 {
+fun Vec2.makeRelative(to: Vec2? = null): Vec2.Relative {
     return if (this is Vec2.Relative) {
         this.source = to
         this
+    } else if (to == null) {
+        Vec2.Relative(this.x, this.y)
     } else {
         Vec2.Relative(this.x - to.x, this.y - to.y, to)
     }
+
 }
 
 /**

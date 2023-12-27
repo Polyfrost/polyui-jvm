@@ -171,13 +171,13 @@ fun String.wrap(
     lines: LinkedList<String>?,
 ): LinkedList<String> {
     val ls = lines ?: LinkedList()
-    ls.clear()
     if (maxWidth == 0f) {
         ls.add(this)
         return ls
     }
     val words = split(" ")
     if (words.isEmpty()) {
+        ls.clear()
         return ls
     }
     var currentLine = StringBuilder()
@@ -220,6 +220,17 @@ fun String.wrap(
     return ls
 }
 
+fun String.splitTo(delim: Char, ignoreCase: Boolean = false, dest: MutableList<String>) {
+    var start = 0
+    var end = indexOf(delim, 0, ignoreCase)
+    while (end != -1) {
+        dest.add(substring(start, end))
+        start = end + 1
+        end = indexOf(delim, start, ignoreCase)
+    }
+    dest.add(substring(start))
+}
+
 /**
  * Returns the closest character index from the given string to the given point [x].
  *
@@ -227,7 +238,7 @@ fun String.wrap(
  *
  * @since 0.18.5
  */
-fun String.closestToPoint(renderer: Renderer, font: Font, fontSize: Float, x: Float): Int {
+fun CharSequence.closestToPoint(renderer: Renderer, font: Font, fontSize: Float, x: Float): Int {
     var prev = 0f
     for (c in this.indices) {
         val w = renderer.textBounds(

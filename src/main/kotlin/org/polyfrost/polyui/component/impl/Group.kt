@@ -30,11 +30,11 @@ import org.polyfrost.polyui.unit.Vec2
  * A drawable that contains other drawables, and does not render anything itself.
  */
 class Group(
+    vararg children: Drawable?,
     at: Vec2? = null,
     alignment: Align = AlignDefault,
     size: Vec2? = null,
     visibleSize: Vec2? = null,
-    vararg children: Drawable?,
 ) : Drawable(at, alignment, size, visibleSize, children = children) {
     override val consumesHover: Boolean
         get() = false

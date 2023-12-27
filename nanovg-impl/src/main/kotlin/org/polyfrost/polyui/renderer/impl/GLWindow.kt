@@ -23,6 +23,7 @@ package org.polyfrost.polyui.renderer.impl
 
 import org.lwjgl.glfw.Callbacks
 import org.lwjgl.glfw.GLFW.*
+import org.lwjgl.glfw.GLFWDropCallback
 import org.lwjgl.glfw.GLFWErrorCallback
 import org.lwjgl.glfw.GLFWImage
 import org.lwjgl.opengl.GL
@@ -40,6 +41,7 @@ import org.polyfrost.polyui.renderer.data.Cursor
 import org.polyfrost.polyui.utils.getResourceStream
 import org.polyfrost.polyui.utils.simplifyRatio
 import org.polyfrost.polyui.utils.toByteBuffer
+import java.io.File
 import kotlin.math.max
 
 class GLWindow @JvmOverloads constructor(
@@ -232,11 +234,12 @@ class GLWindow @JvmOverloads constructor(
             polyUI.eventManager.mouseScrolled(x.toFloat(), y.toFloat())
         }
 
-//        glfwSetDropCallback(handle) { _, count, names ->
-//            val files = Array(count) {
-//                File(GLFWDropCallback.getName(names, it))
-//            }
-//        }
+        glfwSetDropCallback(handle) { _, count, names ->
+            val files = Array(count) {
+                File(GLFWDropCallback.getName(names, it))
+            }
+            polyUI.eventManager.filesDropped(files)
+        }
 
         glfwSetWindowFocusCallback(handle) { _, focused ->
             if (polyUI.settings.unfocusedFPS != 0) {

@@ -90,7 +90,7 @@ class Translator(private val settings: Settings, private val translationDir: Str
         val d = map.clone() as Map<String, Text>
         map.clear()
         d.forEach { (key, value) ->
-            val new = if (value is TextWithArgs) translate(key, *value.args) else translate(key)
+            val new = if (value is Text.Formatted) translate(key, *value.args) else translate(key)
             value.string = new.string
             map[key] = value
         }
@@ -125,7 +125,7 @@ class Translator(private val settings: Settings, private val translationDir: Str
                     PolyUI.LOGGER.warn("Duplicate key: '${split[0]}', overwriting with $resource -> ${split[1]}")
                     v.string = split[1]
                 } else {
-                    map[split[0]] = Text(split[1])
+                    map[split[0]] = Text.Simple(split[1])
                 }
             } ?: PolyUI.LOGGER.warn("\t\t> Table not found!")
             PolyUI.LOGGER.info("\t\t> took ${(System.nanoTime() - start) / 1_000_000f}ms")
@@ -172,27 +172,34 @@ class Translator(private val settings: Settings, private val translationDir: Str
     fun addKey(key: String, value: String) {
         val v = map[key]
         if (v == null) {
-            map[key] = Text(value)
+            map[key] = Text.Simple(value)
         } else {
             v.string = value
         }
     }
 
-    open class Text(open var string: String) {
-        override fun toString() = string
-    }
-
-    class TextWithArgs(private val text: Text, vararg val args: Any?) : Text(text.string) {
-        init {
-            MessageFormat.format(string, *args)
+    interface Text {
+        var string: String
+        class Simple(override var string: String) : Text {
+            override fun toString() = string
         }
 
-        override var string
-            get() = text.string
-            set(value) {
-                text.string = value
+        class Formatted(private val text: Text, vararg val args: Any?) : Text by text {
+            init {
+                try {
+                    string = MessageFormat.format(string, *args)
+                } catch (e: Exception) {
+                    PolyUI.LOGGER.error("Failed to format $string with ${args.contentToString()}!", e)
+                }
+
             }
+            override fun toString() = string
+        }
     }
+
+
+
+
 
     /** translate the provided key, returning the key as per the translation table.
      *
@@ -201,6 +208,8 @@ class Translator(private val settings: Settings, private val translationDir: Str
      * @throws IllegalArgumentException if multiple values exist for the same key.
      */
     fun translate(key: String): Text {
+        if (key.isEmpty()) return Text.Simple("")
+        var ran = false
         val text = map.getOrPut(key) {
             while (queue.isNotEmpty()) {
                 loadKeys(queue.removeFirst(), true)
@@ -227,13 +236,14 @@ class Translator(private val settings: Settings, private val translationDir: Str
                 val v = map[key]
                 if (v != null) return@getOrPut v
             }
-            Text(key)
+            ran = true
+            Text.Simple(key)
         }
-        if (!dontWarn && text.string == key) PolyUI.LOGGER.warn("No translation for '$key'!")
+        if (!dontWarn && ran && text.string == key && key.contains('.')) PolyUI.LOGGER.warn("No translation for '$key'!")
         return text
     }
 
-    fun translate(key: String, vararg args: Any?) = TextWithArgs(translate(key), *args)
+    fun translate(key: String, vararg args: Any?) = Text.Formatted(translate(key), *args)
 }
 
 /** # [click here][Translator] */

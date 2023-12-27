@@ -35,7 +35,7 @@ import java.net.URL
 class Font @JvmOverloads constructor(
     resourcePath: String,
     val letterSpacing: Float = 0f,
-    val lineSpacing: Float = 1.2f,
+    val lineSpacing: Float = 1.4f,
 ) : Resource(resourcePath) {
     @Transient
     val name: String = resourcePath.substringAfterLast('/')

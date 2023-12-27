@@ -44,8 +44,7 @@ abstract class DrawableOp(protected val self: Drawable) {
      */
     abstract class Animatable<T : Drawable>(self: T, protected val animation: Animation? = null, var onFinish: (T.() -> Unit)? = null) :
         DrawableOp(self) {
-
-        final override fun apply() {
+        override fun apply() {
             if (isFinished) return
             apply(animation?.update(self.polyUI.delta) ?: 1f)
             self.needsRedraw = true
@@ -53,7 +52,7 @@ abstract class DrawableOp(protected val self: Drawable) {
         }
 
         @Suppress("unchecked_cast")
-        final override fun unapply(): Boolean {
+        override fun unapply(): Boolean {
             if (isFinished) return true
             unapply(animation?.value ?: 1f)
             if (animation?.isFinished != false) {
@@ -64,6 +63,16 @@ abstract class DrawableOp(protected val self: Drawable) {
             } else {
                 return false
             }
+        }
+
+        fun reset() {
+            animation?.reset()
+            isFinished = false
+        }
+
+        fun reverse() {
+            animation?.reverse()
+            isFinished = false
         }
 
         /** apply this drawable operation.

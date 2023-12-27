@@ -22,6 +22,7 @@
 package org.polyfrost.polyui.component
 
 import org.polyfrost.polyui.PolyUI.Companion.DANGER
+import org.polyfrost.polyui.PolyUI.Companion.INPUT_HOVERED
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
 import org.polyfrost.polyui.PolyUI.Companion.SUCCESS
 import org.polyfrost.polyui.PolyUI.Companion.WARNING
@@ -29,17 +30,23 @@ import org.polyfrost.polyui.animate.Animation
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.color.PolyColor
-import org.polyfrost.polyui.event.*
+import org.polyfrost.polyui.component.impl.Block
+import org.polyfrost.polyui.component.impl.Text
+import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.event.EventDSL
+import org.polyfrost.polyui.event.EventDSLMarker
 import org.polyfrost.polyui.operations.*
 import org.polyfrost.polyui.renderer.data.Cursor
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.seconds
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * Make this component draggable.
  * @param consumesEvent weather beginning/ending dragging should cancel the corresponding mouse event
  */
-fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, consumesEvent: Boolean = false, onDrag: (S.() -> Unit)? = null): S {
+fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, consumesEvent: Boolean = false, onDrag: (S.() -> Unit)? = null, onDrop: (S.() -> Unit)? = null): S {
     if (!withX && !withY) return this
     var pressed = false
     var px = 0f
@@ -58,6 +65,7 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, con
         override fun apply() {
             if (pressed) {
                 if (self.inputState != INPUT_PRESSED) {
+                    onDrop?.invoke(this@draggable)
                     pressed = false
                     return
                 }
@@ -84,6 +92,58 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, con
     return this
 }
 
+/**
+ * Add some text that is shown when the mouse is left still over this drawable
+ * for 1 second or more.
+ * @since 1.0.3
+ */
+fun <S : Drawable> S.addHoverInfo(text: String?): S {
+    if (text == null) return this
+    val obj = Block(
+        children = arrayOf(Text(text))
+    ).hide()
+    obj.alpha = 0f
+    onInit {
+        obj.setup(polyUI)
+        parent!!.addChild(obj)
+        acceptsInput = true
+    }
+    var mx = 0f
+    var open = false
+    addOperation(object : DrawableOp.Animatable<S>(this, Animations.Linear.create(1.seconds)) {
+        override fun apply() {
+            if (self.inputState == INPUT_HOVERED) {
+                super.apply()
+            }
+            if (open && mx != self.polyUI.mouseX) {
+                animation!!.reset()
+                open = false
+                Fade(obj, 0f, false, Animations.EaseInOutQuad.create(0.1.seconds)) {
+                    renders = false
+                }.add()
+            }
+        }
+
+        override fun apply(value: Float) {
+            if (!open && value == 1f) {
+                mx = self.polyUI.mouseX
+                obj.x = min(max(0f, mx - obj.width / 2f), self.polyUI.size.x - obj.width)
+                obj.y = min(max(0f, self.polyUI.mouseY - obj.height - 4f), self.polyUI.size.y)
+                obj.renders = true
+                open = true
+                Fade(obj, 1f, false, Animations.EaseInOutQuad.create(0.1.seconds)).add()
+            }
+        }
+
+        override fun unapply(): Boolean {
+            super.unapply()
+            isFinished = false
+            return false
+        }
+    })
+    return this
+}
+
 fun <S : Drawable> S.namedId(name: String): S {
     this.simpleName = "$name@${this.simpleName.substringAfterLast('@')}"
     return this
@@ -99,6 +159,11 @@ fun <S : Drawable> S.disable(state: Boolean = true): S {
     return this
 }
 
+fun <S : Drawable> S.hide(state: Boolean = true): S {
+    this.renders = !state
+    return this
+}
+
 /**
  * Set the color palette of this drawable during initialization, using the PolyUI colors instance.
  */
@@ -108,6 +173,13 @@ fun <S : Drawable> S.setPalette(palette: Colors.() -> Colors.Palette): S {
     }
     return this
 }
+
+fun <S : Text> S.secondary(): S {
+    setPalette { text.secondary }
+    return this
+}
+
+fun <S : Drawable> S.setDestructivePalette() = setPalette { Colors.Palette(text.primary.normal, state.danger.hovered, state.danger.pressed, text.primary.disabled) }
 
 fun <S : Drawable> S.withStates(showClicker: Boolean = true, animation: (() -> Animation)? = { Animations.EaseInOutQuad.create(0.08.seconds) }): S {
     addEventHandler(Event.Mouse.Entered) {
@@ -131,29 +203,45 @@ fun <S : Drawable> S.withStates(showClicker: Boolean = true, animation: (() -> A
     return this
 }
 
+fun <S : Block> S.withBoarder(color: PolyColor, width: Float = 1f): S {
+    this.boarderColor = color
+    this.boarderWidth = width
+    return this
+}
+
+fun <S : Block> S.withBoarder(width: Float = 1f, color: (Colors.() -> PolyColor) = { page.border5 }): S {
+    onInit {
+        this.boarderColor = polyUI.colors.color()
+        this.boarderWidth = width
+    }
+    return this
+}
+
 /**
  * Set the palette of this drawable according to one of the three possible component states in PolyUI.
  * @param state the state to set. One of [DANGER]/0 (red), [WARNING]/1 (yellow), [SUCCESS]/2 (green).
  */
 fun <S : Drawable> S.setState(state: Byte): S {
-    setPalette(when (state) {
-        DANGER -> polyUI.colors.state.danger
-        WARNING -> polyUI.colors.state.warning
-        SUCCESS -> polyUI.colors.state.success
-        else -> throw IllegalArgumentException("Invalid state: $state")
-    })
+    setPalette(
+        when (state) {
+            DANGER -> polyUI.colors.state.danger
+            WARNING -> polyUI.colors.state.warning
+            SUCCESS -> polyUI.colors.state.success
+            else -> throw IllegalArgumentException("Invalid state: $state")
+        }
+    )
     return this
 }
 
 /**
  * Prioritize this drawable, meaning it will, in relation to its siblings:
- * - drawn last
+ * - be drawn last
  * - receive events first
- * @since 2.0.0
+ * @since 1.0.0
  */
 fun <S : Drawable> S.prioritize(): S {
     val children = parent?.children ?: return this
-    if (children[children.lastIndex] === this) return this
+    if (children.last() === this) return this
     children.remove(this)
     children.add(this)
     return this
@@ -179,7 +267,7 @@ fun <S : Drawable> S.afterParentInit(depth: Int = 1, handler: S.() -> Unit): S {
     this.addEventHandler(Event.Lifetime.PostInit) { _ ->
         var it: Drawable = this
         repeat(depth) { _ ->
-            it = it.parent ?: throw IllegalArgumentException("Cannot add event handler to parent of ${this.simpleName} as it has no parent (depth $depth)")
+            it = it.parent ?: it
         }
         it.addEventHandler(Event.Lifetime.PostInit) {
             handler(this@afterParentInit)
@@ -193,6 +281,11 @@ fun <S : Drawable> S.afterParentInit(depth: Int = 1, handler: S.() -> Unit): S {
 @EventDSLMarker
 fun <S : Drawable> S.events(dsl: EventDSL<S>.() -> Unit): S {
     EventDSL(this).apply(dsl)
+    return this
+}
+
+fun <S : Drawable> S.onClick(func: S.(Event.Mouse.Clicked) -> Unit?): S {
+    addEventHandler(Event.Mouse.Clicked(0), func)
     return this
 }
 

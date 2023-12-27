@@ -77,6 +77,16 @@ open class Vec2(open var x: Float = 0f, open var y: Float = 0f) : Comparable<Vec
         }
     }
 
+    fun ensureSmallerThan(other: Vec2) {
+        this.x = kotlin.math.min(other.x, this.x)
+        this.y = kotlin.math.min(other.y, this.y)
+    }
+
+    fun ensureLargerThan(other: Vec2) {
+        this.x = kotlin.math.max(other.x, this.x)
+        this.y = kotlin.math.max(other.y, this.y)
+    }
+
     fun max(x: Float, y: Float, respectRatio: Boolean = true) {
         if (this.x > x || this.y > y) {
             resize(x, y, respectRatio)
@@ -99,25 +109,19 @@ open class Vec2(open var x: Float = 0f, open var y: Float = 0f) : Comparable<Vec
         }
     }
 
-    fun scale(xScale: Float, yScale: Float) {
+    open fun scale(xScale: Float, yScale: Float) {
         x *= xScale
         y *= yScale
     }
 
     operator fun timesAssign(other: Vec2?) {
         if (other == null) return
-        this.x *= other.x
-        this.y *= other.y
+        scale(other.x, other.y)
     }
 
-    operator fun timesAssign(other: Float) {
-        this.x *= other
-        this.y *= other
-    }
+    operator fun timesAssign(other: Float) = scale(other, other)
 
-    operator fun plus(vec2: Vec2): Vec2 {
-        return Vec2(this.x + vec2.x, this.y + vec2.y)
-    }
+    operator fun divAssign(other: Float) = scale(1f / other, 1f / other)
 
     operator fun plusAssign(other: Vec2?) {
         if (other == null) return
@@ -224,9 +228,18 @@ open class Vec2(open var x: Float = 0f, open var y: Float = 0f) : Comparable<Vec
         /**
          * Effectively make this vector equal to the [source].
          */
-        fun zero() {
+        fun zero(): Relative {
             x -= source(or = ZERO).x
             y -= source(or = ZERO).y
+            return this
+        }
+
+        override fun scale(xScale: Float, yScale: Float) {
+            // asm: if we didn't zero it, it would scale the source as well, making it effectively square itself each time
+            zero()
+            super.scale(xScale, yScale)
+            x += source(or = ZERO).x
+            y += source(or = ZERO).y
         }
 
         init {
@@ -235,7 +248,7 @@ open class Vec2(open var x: Float = 0f, open var y: Float = 0f) : Comparable<Vec
         }
 
         @Suppress("Deprecation")
-        override fun clone() = Relative(x + source(or = ZERO).x, y + source(or = ZERO).y, source)
+        override fun clone() = Relative(x, y, source)
     }
 
     /**
@@ -281,6 +294,15 @@ open class Vec2(open var x: Float = 0f, open var y: Float = 0f) : Comparable<Vec
         init {
             this.x = x
             this.y = y
+        }
+
+        override fun scale(xScale: Float, yScale: Float) {
+            var sx = x - source(or = ZERO).x
+            var sy = y - source(or = ZERO).y
+            sx *= xScale
+            sy *= yScale
+            x = sx
+            y = sy
         }
 
         @Suppress("Deprecation")
@@ -334,5 +356,14 @@ open class Vec2(open var x: Float = 0f, open var y: Float = 0f) : Comparable<Vec
 
         @JvmField
         val ZERO = Immutable(0f, 0f)
+
+        @JvmField
+        val RES_1080P = Immutable(1920f, 1080f)
+
+        @JvmField
+        val RES_1440P = Immutable(2560f, 1440f)
+
+        @JvmField
+        val RES_4K = Immutable(3840f, 2160f)
     }
 }

@@ -32,7 +32,7 @@ annotation class EventDSLMarker
  * DSL for events.
  * @since 0.23.2
  */
-class EventDSL<S : Drawable>(private val self: S) {
+class EventDSL<S : Drawable>(val self: S) {
 
     /** specify a handler for this event.
      *

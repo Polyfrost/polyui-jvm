@@ -112,7 +112,8 @@ fun main() {
                                 null to "goodbye"
                             )
                         ),
-                        Slider()
+                        Slider(),
+                        Text("blink three times when u feel it kicking in")
                     )
                 ),
             ),

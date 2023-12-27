@@ -22,6 +22,7 @@
 package org.polyfrost.polyui.utils
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Blocking
 
 /**
  * Marker class for future use, which will be used to indicate that the given function or property
@@ -29,5 +30,6 @@ import org.jetbrains.annotations.ApiStatus
  */
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_SETTER)
 @Retention(AnnotationRetention.SOURCE)
+@Blocking
 @ApiStatus.Experimental
 annotation class Locking

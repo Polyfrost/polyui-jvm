@@ -502,16 +502,17 @@ class NVGRenderer(size: Vec2) : Renderer(size) {
                 }
 
                 PolyImage.Type.Vector -> {
+                    val RASTER_SCALE = 2f
                     val d = InputStreamReader(stream).readText()
                     val svg = NanoSVG.nsvgParse(d, "px", 96f) ?: throw Exception("Failed to open SVG: $image (invalid data?)")
                     val raster = NanoSVG.nsvgCreateRasterizer()
                     val scale = if (image.width != -1f || image.height != -1f) {
-                        max(image.width / svg.width(), image.height / svg.height())
+                        max(image.width / svg.width(), image.height / svg.height()) * RASTER_SCALE
                     } else {
-                        1f
+                        RASTER_SCALE
                     }
-                    image.width = (svg.width() * scale).toInt().toFloat()
-                    image.height = (svg.height() * scale).toInt().toFloat()
+                    image.width = svg.width() * scale
+                    image.height = svg.height() * scale
                     data = MemoryUtil.memAlloc(image.width.toInt() * image.height.toInt() * 4)
                     NanoSVG.nsvgRasterize(
                         raster, svg,
@@ -520,6 +521,13 @@ class NVGRenderer(size: Vec2) : Renderer(size) {
                         image.width.toInt(), image.height.toInt(),
                         image.width.toInt() * 4,
                     )
+                    STBImageResize.stbir_resize_uint8(
+                        data, image.width.toInt(), image.height.toInt(),
+                        0, data,
+                        (image.width / RASTER_SCALE).toInt(), (image.height / RASTER_SCALE).toInt(),
+                        0, 4,
+                    )
+                    image.size /= RASTER_SCALE
                     NanoSVG.nsvgDeleteRasterizer(raster)
                     NanoSVG.nsvgDelete(svg)
                 }

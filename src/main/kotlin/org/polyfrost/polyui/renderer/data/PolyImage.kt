@@ -46,6 +46,16 @@ class PolyImage @JvmOverloads constructor(
         set(value) {
             size.y = value
         }
+    private val prevScaleAmount = Vec2()
+
+    // asm: fix for when objects are sharing an image, and it gets scaled multiple times
+    fun rescale(scaleX: Float, scaleY: Float) {
+        if (prevScaleAmount.x == scaleX && prevScaleAmount.y == scaleY) return
+        width *= scaleX
+        height *= scaleY
+        prevScaleAmount.x = scaleX
+        prevScaleAmount.y = scaleY
+    }
 
     override fun toString(): String {
         return "$type Image($resourcePath, $size)"
@@ -82,6 +92,7 @@ class PolyImage @JvmOverloads constructor(
      * Styles for [Google Material icons](https://github.com/google/material-design-icons)
      * @see getMaterialIcon
      */
+    @Suppress("unused")
     enum class MaterialStyle(val style: String) {
         OUTLINED("materialiconsoutlined"),
         ROUND("materialiconsround"),

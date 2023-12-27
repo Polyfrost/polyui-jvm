@@ -24,26 +24,32 @@ package org.polyfrost.polyui.component.impl
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Drawable
-import org.polyfrost.polyui.event.*
+import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
+import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.renderer.data.Cursor
 import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.utils.*
+import org.polyfrost.polyui.utils.LinkedList
+import org.polyfrost.polyui.utils.closestToPoint
+import org.polyfrost.polyui.utils.dropAt
+import org.polyfrost.polyui.utils.substringSafe
+import kotlin.math.min
 
 class TextInput(
-    text: String = "polyui.textinput.placeholder",
+    text: String = "",
+    placeholder: String = "polyui.textinput.placeholder",
     font: Font = PolyUI.defaultFonts.regular,
     fontSize: Float = 12f,
     at: Vec2? = null,
     alignment: Align = AlignDefault,
-    size: Vec2? = null,
-    wrap: Float = 120f,
+    visibleSize: Vec2? = null,
+    wrap: Float = 0f,
     vararg children: Drawable?,
-) : Text(text, font, fontSize, at, alignment, size, wrap, true, *children) {
+) : Text(text, font, fontSize, at, alignment, wrap, visibleSize, true, *children) {
     @Transient
     private val linesData = LinkedList<Float>()
 
@@ -80,6 +86,8 @@ class TextInput(
 
     val selection get() = text.substringSafe(caret, select)
 
+    private var _placeholder: Translator.Text = Translator.Text.Simple(placeholder)
+
     init {
         acceptsInput = true
     }
@@ -96,10 +104,14 @@ class TextInput(
         } else {
             alpha = 0.8f
         }
-        super.render()
+        if (text.isEmpty()) {
+            alpha = 0.6f
+            renderer.text(font, x, y, _placeholder.string, color, fontSize)
+        } else super.render()
     }
 
     override fun accept(event: Event): Boolean {
+        if (!enabled) return false
         return when (event) {
             is Event.Mouse.Entered -> {
                 polyUI.cursor = Cursor.Text
@@ -116,12 +128,14 @@ class TextInput(
                 return when (event.clicks) {
                     1 -> {
                         caretFromMouse(event.mouseX, event.mouseY)
-                        true
+                        focused
                     }
+
                     2 -> {
                         selectWordAroundCaret()
-                        true
+                        focused
                     }
+
                     else -> false
                 }
             }
@@ -294,6 +308,7 @@ class TextInput(
     }
 
     private fun getLineByIndex(index: Int): Triple<String, Int, Int> {
+        require(index > -1) { "Index must not be negative" }
         var i = 0
         lines.fastEachIndexed { li, it ->
             if (index < i + it.length) {
@@ -333,7 +348,7 @@ class TextInput(
 
     private fun caretFromMouse(mouseX: Float, mouseY: Float) {
         val line = ((mouseY - y) / (fontSize + spacing)).toInt()
-        val p = lines[line].closestToPoint(renderer, font, fontSize, mouseX - x)
+        val p = lines[min(line, lines.lastIndex)].closestToPoint(renderer, font, fontSize, mouseX - x)
         caret = if (p == -1) text.length else p
         caretPos()
     }
@@ -400,6 +415,14 @@ class TextInput(
         selecting = false
         select = caret
         selectBoxes.clear()
+    }
+
+    override fun setup(polyUI: PolyUI): Boolean {
+        if (!super.setup(polyUI)) return false
+        _placeholder = polyUI.translator.translate(_placeholder.string)
+        val bounds = renderer.textBounds(font, _placeholder.string, fontSize)
+        size.ensureLargerThan(bounds)
+        return true
     }
 
     override fun calculateSize(): Vec2 {

@@ -45,6 +45,10 @@ abstract class Resource(val resourcePath: String) : AutoCloseable {
     private var initting = false
 
     @Transient
+    var errored = false
+        protected set
+
+    @Transient
     var resettable = false
         private set
 
@@ -57,7 +61,12 @@ abstract class Resource(val resourcePath: String) : AutoCloseable {
     val stream: InputStream?
         get() {
             if (!init) {
-                _stream = getResourceStreamNullable(resourcePath)?.apply {
+                val s = getResourceStreamNullable(resourcePath)
+                if(s == null) {
+                    errored = true
+                    return null
+                }
+                _stream = s.apply {
                     if (markSupported()) {
                         mark(0)
                         resettable = true
@@ -78,6 +87,7 @@ abstract class Resource(val resourcePath: String) : AutoCloseable {
             _stream = null
             initting = false
             init = false
+            errored = false
         }
     }
 

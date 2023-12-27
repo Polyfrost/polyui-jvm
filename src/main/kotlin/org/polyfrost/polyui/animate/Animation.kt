@@ -84,7 +84,6 @@ abstract class Animation(var durationNanos: Long, var from: Float, var to: Float
         /** create an animation based on the type.
          * @see Animations */
         fun create(durationNanos: Long, start: Float = 0f, end: Float = 1f): Animation {
-            require(start < end) { "animation start must be less than end! ($start->$end)" }
             return when (this) {
                 Linear -> Linear(durationNanos, start, end)
 

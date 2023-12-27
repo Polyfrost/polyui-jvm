@@ -35,7 +35,6 @@ import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.event.*
 import org.polyfrost.polyui.operations.*
-import org.polyfrost.polyui.renderer.data.Framebuffer
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.*
 
@@ -47,13 +46,14 @@ import org.polyfrost.polyui.utils.*
  */
 abstract class Drawable(
     at: Vec2? = null,
-    var alignment: Align = AlignDefault,
+    val alignment: Align = AlignDefault,
     size: Vec2? = null,
     visibleSize: Vec2? = null,
     palette: Colors.Palette? = null,
     val focusable: Boolean = false,
     vararg children: Drawable? = arrayOf(),
 ) : Cloneable {
+
     @set:Locking
     var size = size ?: Vec2()
         set(value) {
@@ -61,8 +61,7 @@ abstract class Drawable(
             (visibleSize as? Vec2.Sourced)?.source = value
         }
 
-    @set:Locking
-    var visibleSize: Vec2 = visibleSize ?: Vec2.Based(base = this.size)
+    val visibleSize: Vec2 = visibleSize ?: Vec2.Based(base = this.size)
 
     @set:Locking
     @Transient
@@ -77,7 +76,13 @@ abstract class Drawable(
         }
 
     @set:Locking
-    var at = at ?: Vec2.Relative()
+    var at: Vec2
+    init {
+        if (at != null) {
+            if (at !is Vec2.Sourced) this.at = at.makeRelative()
+            else this.at = at
+        } else this.at = Vec2.Relative()
+    }
 
     /**
      * This property controls weather this drawable resizes "raw", meaning it will **not** respect the aspect ratio.
@@ -121,8 +126,14 @@ abstract class Drawable(
     @kotlin.internal.InlineOnly
     inline val renderer get() = polyUI.renderer
 
-    @set:Locking
-    var framebuffer: Framebuffer? = null
+    /**
+     * `true` if this drawable has any operations.
+     * @since 1.0.3
+     */
+    val operating get() = !operations.isNullOrEmpty()
+
+//    @set:Locking
+//    var framebuffer: Framebuffer? = null
 
     /**
      * Setting of this value could have undesirable results, and the [PolyColor.Animated.recolor] method should be used instead.
@@ -202,10 +213,12 @@ abstract class Drawable(
     @Transient
     @set:Locking
     protected var xScroll: Animation? = null
+        private set
 
     @Transient
     @set:Locking
     protected var yScroll: Animation? = null
+        private set
 
     @Transient
     var needsRedraw = true
@@ -234,7 +247,7 @@ abstract class Drawable(
      * This value will be of [INPUT_DISABLED] (-1), [INPUT_NONE] (0), [INPUT_HOVERED] (1), or [INPUT_PRESSED] (2).
      *
      * **Do not** modify this value!
-     * @since 2.0.0
+     * @since 1.0.0
      */
     @Transient
     var inputState = INPUT_NONE
@@ -243,6 +256,12 @@ abstract class Drawable(
 
             if (value == INPUT_DISABLED) {
                 accept(Event.Lifetime.Disabled)
+                // asm: drop all children when this is disabled
+                children?.fastEach {
+                    if (it.inputState > INPUT_NONE) {
+                        it.inputState = INPUT_NONE
+                    }
+                }
                 field = value
                 return
             }
@@ -255,6 +274,12 @@ abstract class Drawable(
             }
             if (INPUT_NONE in value..<field) {
                 accept(Event.Mouse.Exited)
+                // asm: drop all children when mouse exits parent
+                children?.fastEach {
+                    if (it.inputState > INPUT_NONE) {
+                        it.inputState = INPUT_NONE
+                    }
+                }
             }
             field = value
         }
@@ -271,7 +296,6 @@ abstract class Drawable(
     @Transient
     @set:Locking
     open var renders = true
-        get() = field && enabled
 
     /**
      * If this is `true`, the drawable will be the only drawable that is allowed to be hovered at once.
@@ -377,6 +401,7 @@ abstract class Drawable(
             y = 0f
         }
         if (alpha != 1f) renderer.globalAlpha(alpha)
+        else if (!enabled) renderer.globalAlpha(0.8f)
         if (skewX != 0.0) renderer.skewX(skewX)
         if (skewY != 0.0) renderer.skewY(skewY)
         if (scaleX != 1f || scaleY != 1f) renderer.scale(scaleX, scaleY)
@@ -412,8 +437,12 @@ abstract class Drawable(
             at.scale(scaleX, scaleY)
             size.scale(scaleX, scaleY)
             visibleSize.scale(scaleX, scaleY)
+            xScroll?.let { it.from *= scaleX; it.to *= scaleX }
+            yScroll?.let { it.from *= scaleY; it.to *= scaleY }
         } else {
             val scale = cl1(scaleX, scaleY)
+            xScroll?.let { it.from *= scale; it.to *= scale }
+            yScroll?.let { it.from *= scale; it.to *= scale }
             at *= scale
             size *= scale
             visibleSize *= scale
@@ -423,7 +452,9 @@ abstract class Drawable(
 
     fun clipChildren() {
         children?.fastEach {
+            if (!it.enabled) return@fastEach
             it.renders = it.intersects(xScroll?.from ?: x, yScroll?.from ?: y, visibleSize.x, visibleSize.y)
+            it.clipChildren()
         }
         needsRedraw = true
     }
@@ -506,8 +537,8 @@ abstract class Drawable(
      * @see initialized
      */
     @MustBeInvokedByOverriders
-    open fun setup(polyUI: PolyUI) {
-        if (initialized) return
+    open fun setup(polyUI: PolyUI): Boolean {
+        if (initialized) return false
         this.polyUI = polyUI
         if (!::palette.isInitialized) palette = polyUI.colors.component.bg
         if (!::color.isInitialized) this.color = palette.normal.toAnimatable()
@@ -515,40 +546,21 @@ abstract class Drawable(
             it.setup(polyUI)
         }
         // asm: don't use accept as we don't want to dispatch to children
-        eventHandlers?.maybeRemove(Event.Lifetime.Init, polyUI.settings.aggressiveCleanup)?.let {
-            it.fastEach { handler ->
-                handler.invoke(this, Event.Lifetime.Init)
-            }
-            // help gc
-            it.clear()
-        }
+        eventHandlers?.maybeRemove(Event.Lifetime.Init, polyUI.settings.aggressiveCleanup)?.fastEach { it(this, Event.Lifetime.Init) }
         polyUI.positioner.position(this)
-        children?.fastEach {
-            it.tryMakeScrolling()
-        }
-
-//        if (polyUI.settings.debug) {
-//            children?.fastEach {
-//                require(!it.size.isZero) { "No size property after init on ${it.simpleName} (child of $simpleName)" }
-//            }
-//        }
 
         initialized = true
-        eventHandlers?.maybeRemove(Event.Lifetime.PostInit, polyUI.settings.aggressiveCleanup)?.let {
-            it.fastEach { handler ->
-                handler.invoke(this, Event.Lifetime.PostInit)
-            }
-            // help gc
-            it.clear()
-        }
+        eventHandlers?.maybeRemove(Event.Lifetime.PostInit, polyUI.settings.aggressiveCleanup)?.fastEach { it(this, Event.Lifetime.PostInit) }
+
         // following all init events being removed, if it is empty, we can set it to null
         if (eventHandlers.isNullOrEmpty()) eventHandlers = null
         clipChildren()
+        return true
     }
 
-    protected fun tryMakeScrolling() {
-        var scrolling = false
+    fun tryMakeScrolling() {
         if (shouldScroll) {
+            var scrolling = false
             if (size.x > visibleSize.x && xScroll == null) {
                 scrolling = true
                 xScroll = Easing.Expo(Easing.Type.Out, 0L, at.x, at.x)
@@ -561,6 +573,13 @@ abstract class Drawable(
                 acceptsInput = true
                 if (polyUI.settings.debug) PolyUI.LOGGER.info("Enabled scrolling for $simpleName")
             }
+        }
+    }
+
+    fun onAllChildren(func: (Drawable) -> Unit) {
+        children?.fastEach {
+            func(it)
+            it.onAllChildren(func)
         }
     }
 
@@ -585,8 +604,17 @@ abstract class Drawable(
      */
     @ApiStatus.Experimental
     fun repositionChildren() {
-        children?.fastEach { it.reset() } ?: return
+        val oldX = this.x
+        val oldY = this.y
+        this.x = 0f
+        this.y = 0f
+        children?.fastEach {
+            it.x = 0f
+            it.y = 0f
+        }
         polyUI.positioner.position(this)
+        this.x = oldX
+        this.y = oldY
         clipChildren()
     }
 
@@ -609,7 +637,7 @@ abstract class Drawable(
     fun intersects(x: Float, y: Float, width: Float, height: Float): Boolean {
         val tx = this.xScroll?.from ?: this.x
         val ty = this.yScroll?.from ?: this.y
-        return (x < tx + this.visibleSize.x && tx < x + width) && (y < ty + this.visibleSize.y && ty < y + height)
+        return (x <= tx + this.visibleSize.x && tx <= x + width) && (y <= ty + this.visibleSize.y && ty <= y + height)
     }
 
     /**
@@ -649,12 +677,16 @@ abstract class Drawable(
 
     @Locking
     fun addChild(child: Drawable) {
-        child.accept(Event.Lifetime.Added)
-        child.setup(polyUI)
         child.parent = this
         val children = this.children ?: LinkedList()
         children.add(child)
-        needsRedraw = true
+        if (initialized) {
+            if (child.setup(polyUI)) {
+                child.rescale(polyUI.scaleChanges.x, polyUI.scaleChanges.y)
+            }
+            child.accept(Event.Lifetime.Added)
+            needsRedraw = true
+        }
     }
 
     @Locking
@@ -663,19 +695,21 @@ abstract class Drawable(
     }
 
     fun removeChild(child: Drawable) {
-        require(initialized) { "$this is not setup" }
-        removeChild(this.children?.indexOf(child) ?: throw NullPointerException("no children"))
-        needsRedraw = true
+        removeChild(this.children?.indexOf(child) ?: throw NullPointerException("no children on $this"))
     }
 
     fun removeChild(index: Int) {
-        require(initialized) { "$this is not setup" }
         val children = this.children ?: throw NullPointerException("no children")
-        val it = children[index]
-        it.accept(Event.Lifetime.Removed)
+        val it = children.getOrNull(index) ?: throw IndexOutOfBoundsException("index: $index, length: ${children.size}")
         it.parent = null
-        polyUI.forRemoval(children, index)
-        needsRedraw = true
+        polyUI.eventManager.drop(it)
+        if (initialized) {
+            it.accept(Event.Lifetime.Removed)
+            polyUI.forRemoval(children, index)
+            needsRedraw = true
+        } else {
+            children.remove(it)
+        }
     }
 
     operator fun get(index: Int) = children?.get(index) ?: throw IndexOutOfBoundsException("index: $index, length: ${children?.size ?: 0}")
@@ -704,19 +738,24 @@ abstract class Drawable(
             removeChild(old)
             return
         }
-        new.at = old.at.clone()
-        new.x -= (old.x - (old.xScroll?.from ?: old.x))
-        new.y -= (old.y - (old.yScroll?.from ?: old.y))
-        new.setup(polyUI)
+        @Suppress("deprecation")
+        new.at = new.at.makeRelative((old.at as? Vec2.Sourced)?.source).zero()
+        val isNew = new.setup(polyUI)
+        new.x = old.x - (old.x - (old.xScroll?.from ?: old.x))
+        new.y = old.y - (old.y - (old.yScroll?.from ?: old.y))
         new.tryMakeScrolling()
         Fade(old, 0f, false, Animations.EaseInOutQuad.create(0.3.seconds)) {
-            old.enabled = false
-            old.parent = null
-            children.remove(old)
+            enabled = false
+            children.remove(this)
+            parent = null
+            polyUI.eventManager.drop(this)
         }.add()
-        if (new.visibleSize != old.visibleSize) PolyUI.LOGGER.warn("replacing drawable $old with $new, but sizes are different: ${old.size} -> ${new.size}")
+        if (new.visibleSize != old.visibleSize) PolyUI.LOGGER.warn("replacing drawable $old with $new, but visible sizes are different: ${old.visibleSize} -> ${new.visibleSize}")
         children.add(index, new)
         new.enabled = true
+        if (isNew) {
+            new.rescale(polyUI.scaleChanges.x, polyUI.scaleChanges.y)
+        }
         new.alpha = 0f
         Fade(new, 1f, false, Animations.EaseInOutQuad.create(0.3.seconds)).add()
     }

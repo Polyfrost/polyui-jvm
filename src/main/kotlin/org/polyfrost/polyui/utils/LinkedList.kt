@@ -28,18 +28,22 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Implementation of the [MutableList] interface for PolyUI.
  *
- * This is a minor-ly modified version of [java.util.LinkedList], with "fast" methods:
+ * This is a doubly-linked list, with special "fast" methods:
  * - [fastEach]
  * - [fastEachIndexed]
  * - [fastEachReversed]
  * - [fastRemoveIf]
  * - [fastRemoveIfIndexed]
  * - [fastRemoveIfReversed]
+ *
  * these methods are all designed to avoid the allocation of an Iterator object, as otherwise PolyUI would create a lot of garbage.
  *
- * Being a LinkedList, the random get and put operations are not the best. However, this operation is rare in PolyUI, so it's okay to use this.
+ * this collection, unlike most of the collections in the Java Collections Framework, does **not** make any effort to check against [concurrent modification][ConcurrentModificationException].
+ *
+ * Being a linked list, the random get and put operations are not the best. However, this operation is rare in PolyUI, so it's okay to use this.
+ * @since 1.0.0
  */
-class LinkedList<T>() : MutableList<T> {
+class LinkedList<T>() : MutableList<T>, Cloneable {
     constructor(elements: Collection<T>) : this() {
         addAll(elements)
     }
@@ -67,20 +71,32 @@ class LinkedList<T>() : MutableList<T> {
         return true
     }
 
-    override fun clear() {
+    override fun clear() = clear(unlink = false)
+
+    fun clear(unlink: Boolean) {
+        if (unlink) {
+            var current = start
+            while (current != null) {
+                val n = current.next
+                current.next = null
+                current.prev = null
+                current = n
+            }
+        }
         start = null
         end = null
         size = 0
     }
 
     override fun addAll(elements: Collection<T>): Boolean {
-        if (elements is LinkedList) {
-            this.end?.next = elements.start
-            elements.start?.prev = this.end
-            this.end = elements.end
-            this.size += elements.size
+        if (elements is LinkedList<T>) {
+            elements.fastEach {
+                add(it)
+            }
         } else {
-            for (element in elements) add(element)
+            for (element in elements) {
+                add(element)
+            }
         }
         return true
     }
@@ -113,7 +129,7 @@ class LinkedList<T>() : MutableList<T> {
 
     override fun add(element: T): Boolean {
         val n = Node(element)
-        if (start == null) {
+        if (size == 0) {
             start = n
             end = n
         } else {
@@ -125,7 +141,7 @@ class LinkedList<T>() : MutableList<T> {
         return true
     }
 
-    override fun isEmpty() = start == null && end == null
+    override fun isEmpty() = size == 0
 
     @Suppress("Deprecation")
     @Deprecated("This list is designed around not using this method.", ReplaceWith("fastEach"))
@@ -194,8 +210,13 @@ class LinkedList<T>() : MutableList<T> {
 
     override fun subList(fromIndex: Int, toIndex: Int): MutableList<T> {
         val out = LinkedList<T>()
-        out.start = _get(fromIndex)
-        out.end = _get(toIndex)
+        var i = fromIndex
+        var current = _get(fromIndex)
+        while (i < toIndex) {
+            out.add(current.value)
+            current = current.next ?: throw IndexOutOfBoundsException("Index: $i, Size: $size")
+            i++
+        }
         return out
     }
 
@@ -212,24 +233,28 @@ class LinkedList<T>() : MutableList<T> {
 
     override fun retainAll(elements: Collection<T>): Boolean {
         var current = start
+        var out = false
         while (current != null) {
             if (current.value !in elements) {
                 _remove(current)
+                out = true
             }
             current = current.next
         }
-        return false
+        return out
     }
 
     override fun removeAll(elements: Collection<T>): Boolean {
         var current = start
+        var out = false
         while (current != null) {
             if (current.value in elements) {
                 _remove(current)
+                out = true
             }
             current = current.next
         }
-        return true
+        return out
     }
 
     override fun remove(element: T): Boolean {
@@ -271,14 +296,7 @@ class LinkedList<T>() : MutableList<T> {
         return old
     }
 
-    override fun contains(element: T): Boolean {
-        var current = start
-        while (current != null) {
-            if (current.value == element) return true
-            current = current.next
-        }
-        return false
-    }
+    override fun contains(element: T) = indexOf(element) != -1
 
     @kotlin.internal.InlineOnly
     inline fun fastEach(action: (T) -> Unit) {
@@ -299,6 +317,7 @@ class LinkedList<T>() : MutableList<T> {
             i++
         }
     }
+
     @kotlin.internal.InlineOnly
     inline fun fastEachReversed(action: (T) -> Unit) {
         var current = end
@@ -365,6 +384,29 @@ class LinkedList<T>() : MutableList<T> {
         return null
     }
 
+    /**
+     * Sublist this list in the range of [from] to [to], discarding any elements outside of that range.
+     *
+     * This function is effectively equal to [subList], but it effects this list, rather than returning a new one.
+     *
+     * @param from the start index, must be more than 0 and less than [to]
+     * @param to the end index, must be less than [size] and more than [from]
+     */
+    fun cut(from: Int, to: Int) {
+        require(from < to) { "from must be less than to ($from..$to)" }
+        val start = _get(from)
+        val end = _get(to)
+        this.start = start
+        this.end = end
+        start.prev = null
+        end.next = null
+        size = to - from + 1
+    }
+
+    /**
+     * Remove a node from a LinkedList.
+     * Note that if the node does not belong in this list, the behaviour is undefined.
+     */
     @ApiStatus.Internal
     fun _remove(node: Node<T>) {
         if (node === start) start = node.next
@@ -391,6 +433,8 @@ class LinkedList<T>() : MutableList<T> {
     }
 
     private fun _get(index: Int): Node<T> {
+        if (index < 0) throw IndexOutOfBoundsException("Index: $index, Size: $size")
+        if (index >= size) throw IndexOutOfBoundsException("Index: $index, Size: $size")
         val diff = size - index
         if (diff < index) {
             var current = end
@@ -414,11 +458,60 @@ class LinkedList<T>() : MutableList<T> {
     }
 
     @kotlin.internal.InlineOnly
-    fun first(): T = start?.value ?: throw NoSuchElementException()
+    fun first(): T = start?.value ?: throw NoSuchElementException("list is empty.")
 
     @kotlin.internal.InlineOnly
-    fun last(): T = end?.value ?: throw NoSuchElementException()
+    inline fun first(predicate: (T) -> Boolean): T {
+        var current = start
+        while (current != null) {
+            if (predicate(current.value)) return current.value
+            current = current.next
+        }
+        throw NoSuchElementException("No element found matching the given predicate.")
+    }
+
+    @kotlin.internal.InlineOnly
+    fun last(): T = end?.value ?: throw NoSuchElementException("list is empty.")
 
     @ApiStatus.Internal
     class Node<T>(var value: T, var next: Node<T>? = null, var prev: Node<T>? = null)
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is Collection<*>) return false
+        if (other.size != size) return false
+        var current = start
+        for (value in other) {
+            if (current?.value != value) return false
+            current = current?.next ?: return false
+        }
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var current = start
+        var i = 0
+        var out = 0
+        while (current != null) {
+            out += current.value.hashCode() * i
+            current = current.next
+            i++
+        }
+        return out
+    }
+
+    fun copy() = LinkedList(this)
+
+    public override fun clone() = LinkedList(this)
+
+    override fun toString(): String {
+        val out = StringBuilder("[")
+        var current = start
+        while (current != null) {
+            out.append(current.value)
+            current = current.next
+            if (current != null) out.append(", ")
+        }
+        out.append("]")
+        return out.toString()
+    }
 }

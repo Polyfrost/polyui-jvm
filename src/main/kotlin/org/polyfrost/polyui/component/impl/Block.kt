@@ -34,13 +34,15 @@ open class Block @JvmOverloads constructor(
     alignment: Align = AlignDefault,
     visibleSize: Vec2? = null,
     focusable: Boolean = false,
+    color: PolyColor? = null,
     var radii: FloatArray = 8f.radii(),
-    var boarderColor: PolyColor? = null,
-    var boarderWidth: Float = 2f,
     vararg children: Drawable?,
 ) : Drawable(at, alignment, size, visibleSize, focusable = focusable, children = children) {
+    var boarderColor: PolyColor? = null
+    var boarderWidth: Float = 2f
     init {
         require(radii.size == 4) { "Corner radius array must be 4 values" }
+        if(color != null) this.color = color.toAnimatable()
     }
 
     override fun render() {

@@ -45,6 +45,7 @@ fun interface Positioner {
             if (needsToCalcSize) {
                 require(!children.isNullOrEmpty()) { "Drawable $drawable has no size and no children" }
             } else if (children.isNullOrEmpty()) {
+                fixVisibleSize(drawable)
                 return
             }
 
@@ -59,25 +60,29 @@ fun interface Positioner {
                 val it = children.first()
                 it.at = it.at.makeRelative(drawable.at)
                 if (it.size.hasZero) position(it)
-                if (drawable.size.isZero) {
+                if (!it.at.isZero) return
+                if (needsToCalcSize) {
                     drawable.size.x = it.visibleSize.x + padding[main] * 2f
-                    drawable.size.y = it.visibleSize.y + padding[main] * 2f
+                    drawable.size.y = it.visibleSize.y + padding[crs] * 2f
                 }
+                fixVisibleSize(drawable)
                 it.at[main] = when (drawable.alignment.main) {
                     Align.Main.Start -> padding[main]
-                    Align.Main.End -> drawable.size[main] - it.visibleSize[main] - padding[main]
-                    else -> (drawable.size[main] - it.visibleSize[main]) / 2f
+                    Align.Main.End -> drawable.visibleSize[main] - it.visibleSize[main] - padding[main]
+                    else -> (drawable.visibleSize[main] - it.visibleSize[main]) / 2f
                 }
                 it.at[crs] = when (drawable.alignment.cross) {
                     Align.Cross.Start -> padding[crs]
                     Align.Cross.End -> drawable.size[crs] - it.visibleSize[crs] - padding[crs]
-                    else -> (drawable.size[crs] - it.visibleSize[crs]) / 2f
+                    else -> (drawable.visibleSize[crs] - it.visibleSize[crs]) / 2f
                 }
                 return
             }
             val willWrap = drawable.visibleSize[main] != 0f
             if (willWrap) {
                 val rows = LinkedList<Pair<Pair<Float, Float>, LinkedList<Drawable>>>()
+                val maxRowSize = drawable.alignment.maxRowSize
+                require(maxRowSize > 0) { "Drawable $drawable has max row size of $maxRowSize, needs to be greater than 0" }
                 var maxMain = 0f
                 var maxCross = padding[crs]
                 var rowMain = padding[main]
@@ -85,10 +90,9 @@ fun interface Positioner {
                 var currentRow = LinkedList<Drawable>()
                 children.fastEach {
                     it.at = it.at.makeRelative(drawable.at)
-                    if (it.at.isNegative) return@fastEach
+                    if (it.at.isNegative || !it.renders) return@fastEach
                     if (it.size.hasZero) position(it)
-                    rowCross = max(rowCross, it.visibleSize[crs])
-                    if (rowMain + it.visibleSize[main] > drawable.visibleSize[main]) {
+                    if (currentRow.size != 0 && (rowMain + it.visibleSize[main] + padding[main] > drawable.visibleSize[main] || currentRow.size == maxRowSize)) {
                         rows.add((rowMain to rowCross) to currentRow)
                         currentRow = LinkedList()
                         maxMain = max(maxMain, rowMain)
@@ -97,6 +101,7 @@ fun interface Positioner {
                         rowCross = 0f
                     }
                     rowMain += it.visibleSize[main] + padding[main]
+                    rowCross = max(rowCross, it.visibleSize[crs])
                     currentRow.add(it)
                 }
                 if (currentRow.isNotEmpty()) {
@@ -108,6 +113,7 @@ fun interface Positioner {
                     drawable.size[main] = maxMain
                     drawable.size[crs] = maxCross
                 }
+                fixVisibleSize(drawable)
                 rowCross = drawable.at[crs]
                 if (rows.size == 1) {
                     // asm: in this situation, the user specified a size, and as there is only 1 row, so we should
@@ -129,7 +135,7 @@ fun interface Positioner {
                 val pad = padding[crs] * 2f
                 children.fastEach {
                     it.at = it.at.makeRelative(drawable.at)
-                    if (it.size.isNegative) return@fastEach
+                    if (it.size.isNegative || !it.renders) return@fastEach
                     if (it.size.hasZero) position(it)
                     rowCross = max(rowCross, it.size[crs] + pad)
                     rowMain += it.size[main] + padding[main]
@@ -138,6 +144,7 @@ fun interface Positioner {
                     drawable.size[main] = rowMain
                     drawable.size[crs] = rowCross
                 }
+                fixVisibleSize(drawable)
                 align(drawable.alignment.cross, rowCross, children, 0f, padding[crs], crs)
                 justify(drawable.alignment.main, rowMain, children, drawable.at[main], drawable.size[main], padding[main], main)
             }
@@ -168,56 +175,62 @@ fun interface Positioner {
                 }
             }
         }
-    }
 
-    fun justify(mode: Align.Main, rowMain: Float, drawables: LinkedList<Drawable>, min: Float, max: Float, padding: Float, main: Int) {
-        when (mode) {
-            Align.Main.Start -> {
-                var current = min + padding
-                drawables.fastEach {
-                    if (it.at.isNegative) return@fastEach
-                    it.at[main] = current
-                    current += it.visibleSize[main] + padding
+        fun justify(mode: Align.Main, rowMain: Float, drawables: LinkedList<Drawable>, min: Float, max: Float, padding: Float, main: Int) {
+            when (mode) {
+                Align.Main.Start -> {
+                    var current = min + padding
+                    drawables.fastEach {
+                        if (it.at.isNegative) return@fastEach
+                        it.at[main] = current
+                        current += it.visibleSize[main] + padding
+                    }
+                }
+
+                Align.Main.Center -> {
+                    var current = min + (max / 2f) - (rowMain / 2f) + padding
+                    drawables.fastEach {
+                        if (it.at.isNegative) return@fastEach
+                        it.at[main] = current
+                        current += it.visibleSize[main] + padding
+                    }
+                }
+
+                Align.Main.End -> {
+                    var current = min + max
+                    drawables.fastEach {
+                        if (it.at.isNegative) return@fastEach
+                        current -= it.visibleSize[main] + padding
+                        it.at[main] = current
+                    }
+                }
+
+                Align.Main.SpaceBetween -> {
+                    val gapWidth = (max - rowMain) / (drawables.size - 1)
+                    var current = min + padding
+                    drawables.fastEach {
+                        if (it.at.isNegative) return@fastEach
+                        it.at[main] = current
+                        current += gapWidth + it.visibleSize[main] + padding
+                    }
+                }
+
+                Align.Main.SpaceEvenly -> {
+                    val gapWidth = (max - rowMain) / (drawables.size + 1)
+                    var current = min + padding + gapWidth
+                    drawables.fastEach {
+                        if (it.at.isNegative) return@fastEach
+                        it.at[main] = current
+                        current += gapWidth + it.visibleSize[main] + padding
+                    }
                 }
             }
+        }
 
-            Align.Main.Center -> {
-                var current = min + (max / 2f) - (rowMain / 2f) + padding
-                drawables.fastEach {
-                    if (it.at.isNegative) return@fastEach
-                    it.at[main] = current
-                    current += it.visibleSize[main] + padding
-                }
-            }
-
-            Align.Main.End -> {
-                var current = min + max
-                drawables.fastEach {
-                    if (it.at.isNegative) return@fastEach
-                    current -= it.visibleSize[main] + padding
-                    it.at[main] = current
-                }
-            }
-
-            Align.Main.SpaceBetween -> {
-                val gapWidth = (max - rowMain) / (drawables.size - 1)
-                var current = min + padding
-                drawables.fastEach {
-                    if (it.at.isNegative) return@fastEach
-                    it.at[main] = current
-                    current += gapWidth + it.visibleSize[main] + padding
-                }
-            }
-
-            Align.Main.SpaceEvenly -> {
-                val gapWidth = (max - rowMain) / (drawables.size + 1)
-                var current = min + padding + gapWidth
-                drawables.fastEach {
-                    if (it.at.isNegative) return@fastEach
-                    it.at[main] = current
-                    current += gapWidth + it.visibleSize[main] + padding
-                }
-            }
+        fun fixVisibleSize(drawable: Drawable): Drawable {
+            if (drawable.visibleSize.x > drawable.size.x) drawable.visibleSize.x = drawable.size.x
+            if (drawable.visibleSize.y > drawable.size.y) drawable.visibleSize.y = drawable.size.y
+            return drawable
         }
     }
 }

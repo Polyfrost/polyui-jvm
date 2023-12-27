@@ -23,8 +23,10 @@ package org.polyfrost.polyui
 
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.color.DarkTheme
+import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.Positioner
+import org.polyfrost.polyui.component.impl.Block
 import org.polyfrost.polyui.component.impl.Group
 import org.polyfrost.polyui.event.EventManager
 import org.polyfrost.polyui.input.KeyBinder
@@ -39,7 +41,9 @@ import org.polyfrost.polyui.renderer.data.Cursor
 import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.data.FontFamily
 import org.polyfrost.polyui.renderer.data.PolyImage
-import org.polyfrost.polyui.unit.*
+import org.polyfrost.polyui.unit.Align
+import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -84,6 +88,8 @@ class PolyUI @JvmOverloads constructor(
     settings: Settings? = null,
     eventManager: EventManager? = null,
     translator: Translator? = null,
+    backgroundColor: PolyColor? = null,
+    masterAlignment: Align? = null,
     colors: Colors = DarkTheme(),
     vararg drawables: Drawable,
 ) {
@@ -144,7 +150,18 @@ class PolyUI @JvmOverloads constructor(
     /**
      * This is the root layout of the UI. It is the parent of all other layouts.
      */
-    val master = Group(at = Vec2(), size = renderer.size, children = drawables, alignment = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, padding = Vec2(20f, 16f)),)
+    val master: Drawable
+    init {
+        val align = masterAlignment ?: Align(cross = Align.Cross.Start, padding = Vec2.ZERO)
+        master = if(backgroundColor == null) {
+            Group(at = Vec2(), size = renderer.size, children = drawables, alignment = align)
+        } else {
+            Block(at = Vec2(), size = renderer.size, children = drawables, alignment = align).also {
+                it.color = backgroundColor.toAnimatable()
+            }
+        }
+    }
+
     val eventManager = eventManager?.with(master.children) ?: EventManager(master.children, KeyBinder(this.settings), this.settings)
     inline val keyBinder get() = eventManager.keyBinder
     val translator = translator ?: Translator(this.settings, "")
@@ -177,6 +194,7 @@ class PolyUI @JvmOverloads constructor(
             window.setCursor(value)
         }
     inline val size: Vec2 get() = renderer.size
+    val scaleChanges = Vec2()
     private val hooks = LinkedList<Renderer.() -> Boolean>()
     private val preHooks = LinkedList<Renderer.() -> Boolean>()
 
@@ -207,6 +225,9 @@ class PolyUI @JvmOverloads constructor(
         LOGGER.info("PolyUI initializing...")
         master.simpleName += " [Master]"
         master.setup(this)
+        master.onAllChildren {
+            it.tryMakeScrolling()
+        }
         @Suppress("NAME_SHADOWING")
         val settings = this.settings
 //        if (settings.framebuffersEnabled && renderer.supportsFramebuffers()) {
@@ -340,11 +361,12 @@ class PolyUI @JvmOverloads constructor(
 
         if (settings.debug) LOGGER.info("resize: {}x{}", newWidth, newHeight)
 
-        // todo rescaling
-//        master.rescale(
-//            newWidth / this.size.x,
-//            newHeight / this.size.y,
-//        )
+
+        val sx = newWidth / size.x
+        val sy = newHeight / size.y
+        scaleChanges.x = sx
+        scaleChanges.y = sy
+        master.rescale(sx, sy)
 
 //        master.onAllLayouts {
 //            if (fbo != null) {
@@ -389,9 +411,10 @@ class PolyUI @JvmOverloads constructor(
                     if (eventManager.keyModifiers.hasModifier(Modifiers.LSHIFT)) {
                         val s = "${eventManager.mouseX}x${eventManager.mouseY}"
                         val ww = renderer.textBounds(monospaceFont, s, 10f).width
-                        val ppos = min(mouseX + 10f, this.size.y - ww - 10f)
-                        renderer.rect(ppos, mouseY, ww + 10f, 14f, colors.component.bg.hovered)
-                        renderer.text(monospaceFont, ppos + 5f, mouseY + 4f, text = s, colors.text.primary.normal, 10f)
+                        val ppos = min(max(0f, mouseX + 10f), this.size.x - ww - 10f)
+                        val pposy = min(max(0f, mouseY), this.size.y - 14f)
+                        renderer.rect(ppos, pposy, ww + 10f, 14f, colors.component.bg.hovered)
+                        renderer.text(monospaceFont, ppos + 5f, pposy + 4f, text = s, colors.text.primary.normal, 10f)
                         master.needsRedraw = true
                     }
                 }
