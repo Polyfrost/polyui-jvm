@@ -1,7 +1,7 @@
 [versions]
 kotlin = "1.9.21"
 lwjgl = "3.3.3"
-slf4j = "2.0.9"
+slf4j = "2.0.10"
 annotations = "24.1.0"
 kotlinter = "4.1.0"
 textile = "2.0.1"
