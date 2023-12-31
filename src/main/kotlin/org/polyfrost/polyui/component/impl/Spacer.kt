@@ -28,9 +28,6 @@ class Spacer(at: Vec2? = null, size: Vec2) : Drawable(at = at, size = size) {
     init {
         acceptsInput = false
     }
-
-    override val consumesHover: Boolean
-        get() = false
     override val shouldScroll: Boolean
         get() = false
     override fun preRender() {}

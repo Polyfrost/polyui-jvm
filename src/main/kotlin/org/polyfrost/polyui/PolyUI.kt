@@ -398,7 +398,7 @@ class PolyUI @JvmOverloads constructor(
                 drawDebugOverlay(0f, size.y - 11f)
                 if (!eventManager.hasFocused) {
                     if (eventManager.keyModifiers.hasModifier(Modifiers.LCONTROL)) {
-                        val obj = eventManager.mouseOver ?: eventManager.primaryCandidate
+                        val obj = eventManager.primaryCandidate
                         if (obj != null) {
                             val os = obj.toString()
                             val w = renderer.textBounds(monospaceFont, os, 10f).width

@@ -16,7 +16,7 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.licenser)
     alias(libs.plugins.kotlinter)
-    alias(libs.plugins.git.hooks)
+//    alias(libs.plugins.git.hooks)
     alias(libs.plugins.dokka)
     `maven-publish`
 }
@@ -198,6 +198,6 @@ publishing {
     }
 }
 
-gitHooks {
-    setHooks(mapOf("pre-commit" to "format"))
-}
+//gitHooks {
+//    setHooks(mapOf("pre-commit" to "format"))
+//}

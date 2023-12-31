@@ -77,6 +77,7 @@ abstract class Drawable(
 
     @set:Locking
     var at: Vec2
+
     init {
         if (at != null) {
             if (at !is Vec2.Sourced) this.at = at.makeRelative()
@@ -148,7 +149,7 @@ abstract class Drawable(
         protected set
 
     /**
-     * For some reason, you can't have custom setters on lateinit properties, so this is a workaround.
+     * For some reason, you can't have custom setters on `lateinit` properties, so this is a workaround.
      * @since 1.0.1
      */
     @Locking
@@ -257,11 +258,7 @@ abstract class Drawable(
             if (value == INPUT_DISABLED) {
                 accept(Event.Lifetime.Disabled)
                 // asm: drop all children when this is disabled
-                children?.fastEach {
-                    if (it.inputState > INPUT_NONE) {
-                        it.inputState = INPUT_NONE
-                    }
-                }
+                if (initialized) polyUI.eventManager.drop(this)
                 field = value
                 return
             }
@@ -274,18 +271,12 @@ abstract class Drawable(
             }
             if (INPUT_NONE in value..<field) {
                 accept(Event.Mouse.Exited)
-                // asm: drop all children when mouse exits parent
-                children?.fastEach {
-                    if (it.inputState > INPUT_NONE) {
-                        it.inputState = INPUT_NONE
-                    }
-                }
             }
             field = value
         }
 
     /**
-     * Whether or not this drawable should be rendered.
+     * Whether this drawable should be rendered.
      *
      * This is controlled by [clipChildren] to save resources by not drawing drawables which cannot be seen.
      *
@@ -296,15 +287,6 @@ abstract class Drawable(
     @Transient
     @set:Locking
     open var renders = true
-
-    /**
-     * If this is `true`, the drawable will be the only drawable that is allowed to be hovered at once.
-     *
-     * There are essentially two modes for hovering in PolyUI, and by default, components are in the "normal" (`true`) mode, where only one of them can be hovered as once
-     * as would be expected, but layouts are in the "group" (`false`) mode, so will still receive the events even if another drawable is hovered, for example scrolling.
-     * @since 0.21.3
-     */
-    open val consumesHover get() = true
 
     /**
      * Disabled flag for this component. Dispatches the [Event.Lifetime.Disabled] and [Event.Lifetime.Enabled] events.
@@ -738,7 +720,7 @@ abstract class Drawable(
             removeChild(old)
             return
         }
-        @Suppress("deprecation")
+        @Suppress("DEPRECATION")
         new.at = new.at.makeRelative((old.at as? Vec2.Sourced)?.source).zero()
         val isNew = new.setup(polyUI)
         new.x = old.x - (old.x - (old.xScroll?.from ?: old.x))
@@ -771,6 +753,15 @@ abstract class Drawable(
             i += it.countChildren()
         }
         return i
+    }
+
+    fun hasParentOf(drawable: Drawable): Boolean {
+        var parent = this.parent
+        while (parent != null) {
+            if (parent === drawable) return true
+            parent = parent.parent
+        }
+        return false
     }
 
     @JvmName("addEventhandler")

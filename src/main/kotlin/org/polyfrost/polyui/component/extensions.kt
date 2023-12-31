@@ -168,7 +168,7 @@ fun <S : Drawable> S.hide(state: Boolean = true): S {
  * Set the color palette of this drawable during initialization, using the PolyUI colors instance.
  */
 fun <S : Drawable> S.setPalette(palette: Colors.() -> Colors.Palette): S {
-    addEventHandler(Event.Lifetime.Init) {
+    onInit {
         this.setPalette(polyUI.colors.palette())
     }
     return this

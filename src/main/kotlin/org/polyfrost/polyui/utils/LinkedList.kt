@@ -371,6 +371,18 @@ class LinkedList<T>() : MutableList<T>, Cloneable {
         return out
     }
 
+    @kotlin.internal.InlineOnly
+    inline fun clearing(function: (T) -> Unit): Boolean {
+        if (size == 0) return false
+        var current = start
+        while (current != null) {
+            function(current.value)
+            current = current.next
+        }
+        clear()
+        return true
+    }
+
     fun addOrReplace(element: T): T? {
         var current = start
         while (current != null) {

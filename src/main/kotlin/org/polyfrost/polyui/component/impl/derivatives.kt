@@ -229,7 +229,7 @@ fun Slider(at: Vec2? = null, min: Float = 0f, max: Float = 100f, initialValue: F
             Block(
                 size = ptrSize.vec,
                 radii = (ptrSize / 2f).radii(),
-            ).setPalette { text.primary }.withStates().draggable(withY = false) {
+            ).setPalette { text.primary }.withStates().draggable(withY = false, onDrag = {
                 val ptr = this.parent!![1]
                 val bar = this.parent!![0]
                 val half = this.size.x / 2f
@@ -241,7 +241,7 @@ fun Slider(at: Vec2? = null, min: Float = 0f, max: Float = 100f, initialValue: F
                     if (!floating) value = value.toInt().toFloat()
                     accept(Event.Change.Number(value))
                 }
-            }.events {
+            }).events {
                 val op = object : DrawableOp.Animatable<Block>(self, Animations.EaseInOutQuad.create(0.15.seconds, 1f, 0f)) {
                     override fun apply(value: Float) {}
                     override fun unapply(value: Float) {

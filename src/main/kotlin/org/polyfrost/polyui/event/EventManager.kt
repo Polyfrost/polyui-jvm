@@ -51,9 +51,7 @@ class EventManager @JvmOverloads constructor(
     var keyBinder: KeyBinder?,
     private val settings: Settings,
 ) {
-    private val mouseOvers = LinkedList<Drawable>() // asm: it is not expected to have many of this type under hover at once
-    var mouseOver: Drawable? = null
-        private set
+    private val mouseOvers = LinkedList<Drawable>()
     val primaryCandidate get() = mouseOvers.lastOrNull()
     var mouseX: Float = 0f
         private set
@@ -131,33 +129,30 @@ class EventManager @JvmOverloads constructor(
     }
 
     /**
-     * Internal function that will force the mouse position to be updated.
+     * force the mouse position to be updated.
      * @since 0.18.5
      */
-    @ApiStatus.Internal
-    fun recalculateMousePos() {
-        // force update
-        val mouseX = mouseX
-        this.mouseX = 0f
-        mouseMoved(mouseX, mouseY)
-    }
+    fun recalculateMousePos() = mouseMoved(mouseX, mouseY)
 
     /**
      * Internal function that will forcefully drop the given drawable from event tracking.
      */
     @ApiStatus.Internal
     fun drop(drawable: Drawable) {
-        if (drawable === mouseOver) {
-            drawable.inputState = INPUT_NONE
-            mouseOver = null
-        }
         mouseOvers.fastRemoveIfReversed {
-            if (it === drawable) {
+            if (it === drawable || it.hasParentOf(drawable)) {
                 it.inputState = INPUT_NONE
                 true
             } else {
                 false
             }
+        }
+    }
+
+    @ApiStatus.Internal
+    fun drop() {
+        mouseOvers.clearing {
+            it.inputState = INPUT_NONE
         }
     }
 
@@ -201,67 +196,60 @@ class EventManager @JvmOverloads constructor(
      * This is used for event dispatching.
      */
     @ApiStatus.Internal
-    fun processCandidate(drawable: Drawable, x: Float, y: Float): Drawable? {
-        var candidate: Drawable? = null
-        if (drawable.acceptsInput) {
-            if (drawable.isInside(x, y)) {
-                if (!drawable.consumesHover) {
-                    if (drawable.inputState == INPUT_NONE) {
-                        drawable.inputState = INPUT_HOVERED
-                        if (!mouseOvers.contains(drawable)) {
-                            mouseOvers.add(drawable)
-                        } else PolyUI.LOGGER.warn("$this is already tracked for events?")
-                        return null
-                    }
-                } else candidate = drawable
-            } else {
-                drawable.inputState = INPUT_NONE
+    fun processCandidate(drawable: Drawable, x: Float, y: Float): Boolean {
+        if (!drawable.acceptsInput) return true
+        return when (drawable.inputState) {
+            INPUT_NONE -> {
+                if (drawable.isInside(x, y)) {
+                    drawable.inputState = INPUT_HOVERED
+//                    if (mouseOvers.contains(drawable)) throw IllegalArgumentException()
+                    mouseOvers.add(drawable)
+                    true
+                } else false
             }
+
+            INPUT_HOVERED -> {
+                if (!drawable.isInside(x, y)) {
+                    drawable.inputState = INPUT_NONE
+                    mouseOvers.remove(drawable)
+                    false
+                } else true
+            }
+
+            else -> true
         }
-        return candidate
     }
 
-    private fun processCandidates(drawables: LinkedList<Drawable>, x: Float, y: Float): Drawable? {
-        var candidate: Drawable? = null
-        drawables.fastEachReversed a@{ drawable ->
-            processCandidate(drawable, x, y)?.let { candidate = it }
-            processCandidates(drawable.children ?: return@a, x, y)?.let { candidate = it }
+
+    private fun processCandidates(drawables: LinkedList<Drawable>, x: Float, y: Float) {
+        drawables.fastEachReversed a@{
+            val inside = processCandidate(it, x, y)
+            val children = it.children ?: return@a
+            if (inside) {
+                processCandidates(children, x, y)
+            } else {
+                drop(it)
+            }
         }
-        return candidate
     }
 
     /** call this function to update the mouse position. */
     fun mouseMoved(x: Float, y: Float) {
-        if (mouseX == x && mouseY == y) return
         mouseX = x
         mouseY = y
-
-        if (mouseDown) return
-        val candidate = processCandidates(drawables ?: return, x, y)
-        if (candidate != null) {
-            candidate.inputState = INPUT_HOVERED
-            mouseOver?.let {
-                if (it !== candidate) {
-                    it.inputState = INPUT_NONE
-                }
-            }
-            mouseOver = candidate
-        } else if (mouseOver?.inputState == INPUT_NONE) mouseOver = null
-
-        mouseOvers.fastRemoveIfReversed { it.inputState == INPUT_NONE }
+        processCandidates(drawables ?: return, x, y)
     }
 
     fun mousePressed(button: Int) {
         if (button == 0) mouseDown = true
         val event = Event.Mouse.Pressed(button, mouseX, mouseY, keyModifiers)
-        dispatchPress(event, INPUT_PRESSED)
+        dispatchPress(event, true)
     }
 
     /** call this function when a mouse button is released. */
     fun mouseReleased(button: Int) {
         if (button == 0) {
             mouseDown = false
-            recalculateMousePos()
         }
         if (clickedButton != button) {
             clickedButton = button
@@ -284,19 +272,21 @@ class EventManager @JvmOverloads constructor(
         }
         val release = Event.Mouse.Released(button, mouseX, mouseY, keyModifiers)
         val click = Event.Mouse.Clicked(button, mouseX, mouseY, clickAmount, keyModifiers)
-        dispatchPress(release, INPUT_HOVERED)
+        dispatchPress(release, false)
         if (!dispatch(click) && button == 0) {
-            if (tryFocus(mouseOver)) return
-            mouseOvers.fastEach { if (tryFocus(it)) return }
+            mouseOvers.fastEachReversed { if (focusCatching(it)) return }
         }
     }
 
     /**
-     * try to focus a drawable, and return true if it was successful.
+     * try to focus a drawable, without throwing an exception.
+     * @return `true` if the drawable was focused successfully, and `false` if it is not [Drawable.focusable], or if it is already focused.
+     * @see focus
+     * @since 1.0.4
      */
-    fun tryFocus(drawable: Drawable?): Boolean {
+    fun focusCatching(drawable: Drawable?): Boolean {
         if (drawable == null) return false
-        if (drawable.inputState > INPUT_NONE && drawable.focusable) {
+        if (drawable.focusable) {
             return focus(drawable)
         }
         return false
@@ -322,9 +312,6 @@ class EventManager @JvmOverloads constructor(
      */
     fun dispatch(event: Event): Boolean {
         if (keyBinder?.accept(event) == true) return true
-        if (mouseOver?.accept(event) == true) {
-            return true
-        }
         mouseOvers.fastEachReversed {
             if (it.accept(event)) {
                 return true
@@ -333,16 +320,11 @@ class EventManager @JvmOverloads constructor(
         return false
     }
 
-    private fun dispatchPress(event: Event, state: Byte): Boolean {
+    private fun dispatchPress(event: Event, state: Boolean): Boolean {
         if (keyBinder?.accept(event) == true) return true
-        mouseOver?.let {
-            it.inputState = state
-            if (it.accept(event)) {
-                return true
-            }
-        }
+        val mode = if (state) INPUT_PRESSED else INPUT_HOVERED
         mouseOvers.fastEachReversed {
-            it.inputState = state
+            it.inputState = mode
             if (it.accept(event)) {
                 return true
             }
@@ -351,10 +333,12 @@ class EventManager @JvmOverloads constructor(
     }
 
     /**
-     * Sets the focus to the specified focusable element.
+     * Sets the focus to the specified focusable element, throwing an exception if the provided element is not focusable.
      *
+     * @throws IllegalArgumentException if the provided drawable is not [Drawable.focusable]
      * @param focusable the element to set focus on
      * @return true if focus was successfully set, false if the provided focusable is already focused
+     * @see focusCatching
      */
     fun focus(focusable: Drawable?): Boolean {
         if (focusable === focused) return false
