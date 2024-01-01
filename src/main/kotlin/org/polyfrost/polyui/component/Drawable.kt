@@ -658,7 +658,7 @@ abstract class Drawable(
     }
 
     @Locking
-    fun addChild(child: Drawable) {
+    fun addChild(child: Drawable, reposition: Boolean = true) {
         child.parent = this
         val children = this.children ?: LinkedList()
         children.add(child)
@@ -666,6 +666,7 @@ abstract class Drawable(
             if (child.setup(polyUI)) {
                 child.rescale(polyUI.scaleChanges.x, polyUI.scaleChanges.y)
             }
+            if (reposition && child.at.hasZero) repositionChildren()
             child.accept(Event.Lifetime.Added)
             needsRedraw = true
         }

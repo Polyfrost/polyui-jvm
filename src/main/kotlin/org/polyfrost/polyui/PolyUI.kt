@@ -156,7 +156,7 @@ class PolyUI @JvmOverloads constructor(
         master = if(backgroundColor == null) {
             Group(at = Vec2(), size = renderer.size, children = drawables, alignment = align)
         } else {
-            Block(at = Vec2(), size = renderer.size, children = drawables, alignment = align).also {
+            Block(at = Vec2(), size = renderer.size, children = drawables, alignment = align, radii = 0f.radii()).also {
                 it.color = backgroundColor.toAnimatable()
             }
         }
