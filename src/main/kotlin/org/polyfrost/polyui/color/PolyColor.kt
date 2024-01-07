@@ -39,7 +39,8 @@ import org.polyfrost.polyui.utils.rgba
  * @see [PolyColor.Gradient]
  * @see [PolyColor.Chroma]
  */
-open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, brightness: Float, alpha: Float = 1f) : Cloneable {
+open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, brightness: Float, alpha: Float = 1f) :
+    Cloneable {
 
     var hue = hue
         set(value) {
@@ -103,7 +104,12 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
     constructor(r: Int, g: Int, b: Int, alpha: Int = 255) : this(RGBtoHSB(r, g, b), alpha)
     constructor(r: Int, g: Int, b: Int, alpha: Float = 1f) : this(RGBtoHSB(r, g, b), alpha)
 
-    constructor(hue: Float, saturation: Float, brightness: Float, alpha: Int = 255) : this(hue, saturation, brightness, alpha.toFloat() / 255f)
+    constructor(hue: Float, saturation: Float, brightness: Float, alpha: Int = 255) : this(
+        hue,
+        saturation,
+        brightness,
+        alpha.toFloat() / 255f
+    )
 
     init {
         require(saturation in 0f..1f) { "Saturation must be between 0 and 1" }
@@ -223,6 +229,10 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
         @JvmStatic
         fun from(hex: String, alpha: Float = 1f) = from(hex, (alpha * 255).toInt())
 
+        /** Utility function to convert Java.awt.Color to PolyColor **/
+        @JvmStatic
+        fun from(color: java.awt.Color) = Color(color.red, color.green, color.blue, color.alpha)
+
         @JvmStatic
         fun hexOf(color: Color): String {
             val r = color.r.toString(16).padStart(2, '0')
@@ -267,7 +277,10 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
         @Transient
         private var current: FloatArray? = null
 
-        @Deprecated("This would convert an animatable color to an animatable one.", replaceWith = ReplaceWith("clone()"))
+        @Deprecated(
+            "This would convert an animatable color to an animatable one.",
+            replaceWith = ReplaceWith("clone()")
+        )
         override fun toAnimatable() = clone()
 
         /**

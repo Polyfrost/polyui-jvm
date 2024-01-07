@@ -7,6 +7,11 @@ kotlinter = "4.1.0"
 textile = "2.0.1"
 dokka = "1.9.10"
 
+# Markdown
+minemark = "1.0-SNAPSHOT92"
+commonmark = "0.21.0"
+tagsoup = "1.2.1"
+
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 licenser = { id = "org.quiltmc.gradle.licenser", version.ref = "textile" }
@@ -28,7 +33,15 @@ kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "
 kotlin-annotations = { module = "org.jetbrains:annotations", version.ref = "annotations" }
 dokka_base = { module = "org.jetbrains.dokka:dokka-base", version.ref = "dokka" }
 
+# Markdown
+minemark = { module = "dev.dediamondpro:minemark-core", version.ref = "minemark" }
+commonmark = { module = "org.commonmark:commonmark", version.ref = "commonmark" }
+commonmark_ext_striketrough = { module = "org.commonmark:commonmark-ext-gfm-strikethrough", version.ref = "commonmark" }
+commonmark_ext_tables = { module = "org.commonmark:commonmark-ext-gfm-tables", version.ref = "commonmark" }
+tagsoup = { module = "org.ccil.cowan.tagsoup:tagsoup", version.ref = "tagsoup" }
+
 [bundles]
 lwjgl = ["lwjgl", "lwjgl-nanovg", "lwjgl-opengl", "lwjgl-stb", "lwjgl-glfw"]
 slf4j = ["slf4j-api", "slf4j-simple"]
 kotlin = ["kotlin-stdlib", "kotlin-annotations"]
+markdown = ["minemark", "commonmark", "commonmark_ext_striketrough", "commonmark_ext_tables", "tagsoup"]
