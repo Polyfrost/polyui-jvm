@@ -20,8 +20,8 @@ class MarkdownStyle @JvmOverloads constructor(
         HeadingLevelStyleConfig(13f, 4f)
     ),
     private val horizontalRuleStyle: HorizontalRuleStyleConfig = HorizontalRuleStyleConfig(2f, 4f, LINE_COLOR),
-    private val imageStyle: ImageStyleConfig = ImageStyleConfig(DefaultImageProvider.INSTANCE),
-    private val listStyle: ListStyleConfig = ListStyleConfig(16f, 6f),
+    private val imageStyle: ImageStyleConfig = ImageStyleConfig(MarkdownImageProvider),
+    private val listStyle: ListStyleConfig = ListStyleConfig(32f, 6f),
     private val blockquoteBlockStyle: BlockquoteStyleConfig = BlockquoteStyleConfig(6f, 4f, 2f, 10f, LINE_COLOR),
     private val codeBlockStyle: CodeBlockStyleConfig = CodeBlockStyleConfig(2f, 1f, 6f, 6f, LINE_COLOR)
 ) : Style {

@@ -34,7 +34,21 @@ fun main() {
             drawables =
             arrayOf(
                 MarkdownComponent(
-                    markdown = "Test **string** *with* a<br>newline because why not and also a [link](https://polyfrost.org), this should also automatically wrap if I make this text long enough",
+                    markdown = "Test **string** *with* a<br>newline <u>because</u> ~~why~~ not and also a [link](https://polyfrost.org), this should also automatically wrap if I make this text long enough<br>"
+                            + "Polyfrost logo: ![](polyfrost.png)"
+                            + "\n# Heading 1"
+                            + "\n## Heading 2"
+                            + "\n### Heading 3"
+                            + "\n#### Heading 4"
+                            + "\n##### Heading 5"
+                            + "\n---"
+                            + "\nThis `is an inline` codeblock!"
+                            + "\n```\nAnd this one isn't     inline\nand has multiple lines!\n```"
+                            + "\n> And this is a blockquote<br>because why not?"
+                            + "\n1. And an ordered list"
+                            + "\n   - With an unordered list inside"
+                            + "\n   - like this"
+                            + "\n2. :)",
                     at = Vec2(150f, 0f),
                     size = Vec2(500f, 800f)
                 )

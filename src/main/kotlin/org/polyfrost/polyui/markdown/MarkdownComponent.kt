@@ -1,11 +1,12 @@
 package org.polyfrost.polyui.markdown
 
 import dev.dediamondpro.minemark.MineMarkCore
+import dev.dediamondpro.minemark.MineMarkCoreBuilder
 import dev.dediamondpro.minemark.elements.Elements
 import dev.dediamondpro.minemark.utils.MouseButton
 import org.commonmark.ext.gfm.strikethrough.StrikethroughExtension
 import org.commonmark.ext.gfm.tables.TablesExtension
-import org.polyfrost.polyui.markdown.elements.MarkdownTextElement
+import org.polyfrost.polyui.markdown.elements.*
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.events
 import org.polyfrost.polyui.event.Event
@@ -49,7 +50,7 @@ class MarkdownComponent(
     }
 
     override fun render() {
-        markdownElement.draw(x, y, width,  polyUI.mouseX, polyUI.mouseY, renderer)
+        markdownElement.draw(x, y, width, polyUI.mouseX, polyUI.mouseY, renderer)
     }
 
     private fun layoutCallback(newHeight: Float) {
@@ -60,7 +61,17 @@ class MarkdownComponent(
         private val defaultCore = MineMarkCore.builder<MarkdownStyle, Renderer>()
             .addExtension(StrikethroughExtension.create())
             .addExtension(TablesExtension.create())
-            .addElement(Elements.TEXT, ::MarkdownTextElement)
+            .addPolyUIExtensions()
             .build()
     }
+}
+
+fun MineMarkCoreBuilder<MarkdownStyle, Renderer>.addPolyUIExtensions(): MineMarkCoreBuilder<MarkdownStyle, Renderer> {
+    return this.addElement(Elements.TEXT, ::MarkdownTextElement)
+        .addElement(Elements.IMAGE, ::MarkdownImageElement)
+        .addElement(Elements.HEADING, ::MarkdownHeadingElement)
+        .addElement(Elements.HORIZONTAL_RULE, ::MarkdownHorizontalRuleElement)
+        .addElement(Elements.CODE_BLOCK, ::MarkdownCodeBlockElement)
+        .addElement(Elements.BLOCKQUOTE, ::MarkdownBlockquoteElement)
+        .addElement(Elements.LIST_ELEMENT, ::MarkdownListElement)
 }
