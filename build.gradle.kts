@@ -51,6 +51,7 @@ allprojects {
     dependencies {
         implementation(rootProject.libs.bundles.kotlin)
         implementation(rootProject.libs.bundles.slf4j)
+        implementation(rootProject.libs.bundles.markdown)
     }
 
     java {
