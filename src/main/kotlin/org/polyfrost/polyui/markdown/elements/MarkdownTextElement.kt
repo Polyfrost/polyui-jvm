@@ -33,12 +33,13 @@ import java.awt.Color
 import kotlin.math.floor
 
 class MarkdownTextElement(
+    text: String,
     style: MarkdownStyle,
     layoutStyle: LayoutStyle,
     parent: Element<MarkdownStyle, Renderer>?,
     qName: String,
     attributes: Attributes?,
-) : TextElement<MarkdownStyle, Renderer>(style, layoutStyle, parent, qName, attributes) {
+) : TextElement<MarkdownStyle, Renderer>(text, style, layoutStyle, parent, qName, attributes) {
     private val textColor: PolyColor = PolyColor.from(layoutStyle.textColor)
     private val codeBlockColor: PolyColor = PolyColor.from(style.codeBlockStyle.color)
     private val font =

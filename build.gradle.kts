@@ -47,6 +47,7 @@ allprojects {
         mavenCentral()
         mavenLocal()
         maven("https://repo.polyfrost.org/releases")
+        maven("https://maven.dediamondpro.dev/releases")
     }
 
     dependencies {

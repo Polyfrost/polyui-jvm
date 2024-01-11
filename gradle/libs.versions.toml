@@ -8,7 +8,7 @@ textile = "2.0.1"
 dokka = "1.9.10"
 
 # Markdown
-minemark = "1.0-SNAPSHOT94"
+minemark = "1.0.0"
 commonmark = "0.21.0"
 tagsoup = "1.2.1"
 

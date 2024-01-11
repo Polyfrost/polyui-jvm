@@ -79,21 +79,21 @@ class MarkdownComponent(
     }
 
     companion object {
-        private val defaultCore =
-            MineMarkCore.builder<MarkdownStyle, Renderer>()
-                .addExtension(StrikethroughExtension.create())
-                .addExtension(TablesExtension.create())
-                .addPolyUIExtensions()
-                .build()
+        private val defaultCore = MineMarkCore.builder<MarkdownStyle, Renderer>()
+            .addExtension(StrikethroughExtension.create())
+            .addExtension(TablesExtension.create())
+            .addPolyUIExtensions()
+            .build()
     }
 }
 
 fun MineMarkCoreBuilder<MarkdownStyle, Renderer>.addPolyUIExtensions(): MineMarkCoreBuilder<MarkdownStyle, Renderer> {
-    return this.addElement(Elements.TEXT, ::MarkdownTextElement)
+    return this.setTextElement(::MarkdownTextElement)
         .addElement(Elements.IMAGE, ::MarkdownImageElement)
         .addElement(Elements.HEADING, ::MarkdownHeadingElement)
         .addElement(Elements.HORIZONTAL_RULE, ::MarkdownHorizontalRuleElement)
         .addElement(Elements.CODE_BLOCK, ::MarkdownCodeBlockElement)
         .addElement(Elements.BLOCKQUOTE, ::MarkdownBlockquoteElement)
         .addElement(Elements.LIST_ELEMENT, ::MarkdownListElement)
+        .addElement(Elements.TABLE_CELL, ::MarkdownTableCellElement)
 }

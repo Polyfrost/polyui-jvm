@@ -48,7 +48,12 @@ fun main() {
                             + "\n1. And an ordered list"
                             + "\n   - With an unordered list inside"
                             + "\n   - like this"
-                            + "\n2. :)",
+                            + "\n2. :)"
+                            + "\n\n| Hi | Test | E       | E | E |\n" +
+                            "|----|------|---------|---|---|\n" +
+                            "| E  | E    | E       | E |   |\n" +
+                            "| E  | E    | EEEEEEE |   | E |\n" +
+                            "| E  | E    | E       | E |   |",
                     at = Vec2(150f, 0f),
                     size = Vec2(500f, 800f)
                 )
