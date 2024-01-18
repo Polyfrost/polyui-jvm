@@ -1,27 +1,31 @@
-dependencies {
-    // Depend on LWJGL3 and its NanoVG bindings, as well as OpenGL
-    implementation(libs.bundles.lwjgl)
-    implementation(libs.slf4j.api)
+// version of LWJGL to use. Recommended to be latest.
+val lwjglVersion = "3.3.3"
 
-    // Add LWJGL modules' native bindings to the test runtime
-    val nativePlatforms = listOf("windows", "linux", "macos", "macos-arm64")
-    val modules = listOf("lwjgl", "lwjgl-nanovg", "lwjgl-opengl", "lwjgl-glfw", "lwjgl-stb")
-    modules.forEach { module ->
-        nativePlatforms.forEach { platform ->
-            testRuntimeOnly("org.lwjgl:$module:3.3.1:natives-$platform")
+// list of modules that this implementation needs to work.
+val lwjglModules = listOf("nanovg", "opengl", "stb", "glfw", null)
+
+// list of platforms that this implementation will support.
+val nativePlatforms = listOf("windows", "linux", "macos", "macos-arm64")
+
+dependencies {
+    for (module in lwjglModules) {
+        val dep = if(module == null) "org.lwjgl:lwjgl:$lwjglVersion" else "org.lwjgl:lwjgl-$module:$lwjglVersion"
+        implementation(dep)
+        for (platform in nativePlatforms) {
+            runtimeOnly("$dep:natives-$platform")
         }
     }
 }
 
-tasks.jar {
+tasks.register<Jar>("testJar") {
     dependsOn(":jar")
     manifest {
-        attributes["Main-Class"] = "org.polyfrost.polyui.Test2Kt"
+        attributes["Main-Class"] = "org.polyfrost.polyui.Testv2Kt"
     }
     from(sourceSets.test.get().output)
     from(sourceSets.main.get().output)
-    from(configurations.runtimeClasspath.get().mapNotNull { if(!it.exists()) null else if (it.isDirectory) it else zipTree(it) })
-    from(configurations.testRuntimeClasspath.get().mapNotNull { if(!it.exists()) null else if (it.isDirectory) it else zipTree(it) })
+    from(configurations.runtimeClasspath.get().mapNotNull { if (!it.exists()) null else if (it.isDirectory) it else zipTree(it) })
+    from(configurations.testRuntimeClasspath.get().mapNotNull { if (!it.exists()) null else if (it.isDirectory) it else zipTree(it) })
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 

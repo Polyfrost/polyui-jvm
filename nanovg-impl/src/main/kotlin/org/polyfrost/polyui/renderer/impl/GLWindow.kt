@@ -26,13 +26,12 @@ import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWDropCallback
 import org.lwjgl.glfw.GLFWErrorCallback
 import org.lwjgl.glfw.GLFWImage
-import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL.createCapabilities
-import org.lwjgl.opengl.GL11.*
+import org.lwjgl.opengl.GL.setCapabilities
+import org.lwjgl.opengl.GL20C.*
 import org.lwjgl.stb.STBImage
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
-import org.lwjgl.system.Platform
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
@@ -53,12 +52,13 @@ class GLWindow @JvmOverloads constructor(
     decorated: Boolean = true,
 ) : Window(width, height) {
 
-    override var height: Int = height
+    override var height: Int
+        get() = super.height
         set(value) {
             val h = IntArray(1)
             glfwGetFramebufferSize(handle, null, h)
             offset = h[0] - value
-            field = value
+            super.height = value
         }
 
     /**
@@ -68,10 +68,6 @@ class GLWindow @JvmOverloads constructor(
      */
     private var offset = 0
     val handle: Long
-    var contentScaleX = 1f
-        private set
-    var contentScaleY = 1f
-        private set
     lateinit var polyUI: PolyUI
         private set
     var fpsCap: Double = 0.0
@@ -86,6 +82,10 @@ class GLWindow @JvmOverloads constructor(
         }
 
     init {
+        // asm: this fix removes the need for -XstartOnFirstThread on macOS
+        // see the doc of the org.lwjgl.glfw package for more info
+        // if (Platform.get() == Platform.MACOSX) Configuration.GLFW_LIBRARY_NAME.set("glfw_async")
+
         GLFWErrorCallback.createPrint().set()
         if (!glfwInit()) throw RuntimeException("Failed to init GLFW")
 
@@ -121,106 +121,96 @@ class GLWindow @JvmOverloads constructor(
         glfwSetTime(0.0)
     }
 
-    override fun createCallbacks() {
+    fun createCallbacks(polyUI: PolyUI) {
         // Add some callbacks for window resizing and content scale
         glfwSetFramebufferSizeCallback(handle) { _, width, height ->
             this.width = width
             this.height = height
-            polyUI.resize((width.toFloat() / polyUI.renderer.pixelRatio), (height.toFloat() / polyUI.renderer.pixelRatio))
+            val r = polyUI.renderer.pixelRatio
+            polyUI.resize(width.toFloat() / r, height.toFloat() / r)
         }
 
         glfwSetWindowContentScaleCallback(handle) { _, xScale, yScale ->
             val pixelRatio = max(xScale, yScale)
             if (polyUI.settings.debug) PolyUI.LOGGER.info("Pixel ratio: $pixelRatio")
-            polyUI.resize((width.toFloat() / pixelRatio), (height.toFloat() / pixelRatio), pixelRatio)
+            polyUI.resize(width.toFloat() / pixelRatio, height.toFloat() / pixelRatio, pixelRatio)
         }
 
         glfwSetMouseButtonCallback(handle) { _, button, action, _ ->
             if (action == GLFW_PRESS) {
-                polyUI.eventManager.mousePressed(button)
+                polyUI.inputManager.mousePressed(button)
             } else if (action == GLFW_RELEASE) {
-                polyUI.eventManager.mouseReleased(button)
+                polyUI.inputManager.mouseReleased(button)
             }
         }
 
         glfwSetCursorPosCallback(handle) { _, x, y ->
-            @Suppress("NAME_SHADOWING")
-            var x = x.toFloat()
-
-            @Suppress("NAME_SHADOWING")
-            var y = y.toFloat()
-            if (polyUI.renderer.pixelRatio != 1f) {
-                if (Platform.get() == Platform.WINDOWS) {
-                    x /= polyUI.renderer.pixelRatio
-                    y /= polyUI.renderer.pixelRatio
-                }
-            }
-            polyUI.eventManager.mouseMoved(x, y)
+            polyUI.inputManager.mouseMoved(x.toFloat(), y.toFloat())
         }
 
         glfwSetKeyCallback(handle) { _, keyCode, _, action, mods ->
             if (action == GLFW_REPEAT) return@glfwSetKeyCallback
             if (keyCode < 255 && mods > 1) {
                 // accept modded chars, as glfwSetCharModsCallback is deprecated and doesn't work with control
-                polyUI.eventManager.keyTyped(keyCode.toChar())
+                polyUI.inputManager.keyTyped((keyCode + 32).toChar())
             }
             // p.s. I have performance tested this; and it is very fast (doesn't even show up on profiler). kotlin is good at int ranges lol
             if (keyCode in 255..348) {
                 if (keyCode < 340) {
                     val key: Keys = (
-                        when (keyCode) {
-                            // insert, pg down, etc
-                            in 256..261 -> Keys.fromValue(keyCode - 156)
-                            in 266..269 -> Keys.fromValue(keyCode - 160)
-                            // arrows
-                            in 262..265 -> Keys.fromValue(keyCode - 62)
-                            // function keys
-                            in 290..314 -> Keys.fromValue(keyCode - 289)
-                            else -> Keys.UNKNOWN
-                        }
-                        )
+                            when (keyCode) {
+                                // insert, pg down, etc
+                                in 256..261 -> Keys.fromValue(keyCode - 156)
+                                in 266..269 -> Keys.fromValue(keyCode - 160)
+                                // arrows
+                                in 262..265 -> Keys.fromValue(keyCode - 62)
+                                // function keys
+                                in 290..314 -> Keys.fromValue(keyCode - 289)
+                                else -> Keys.UNKNOWN
+                            }
+                            )
                     if (action == GLFW_PRESS) {
-                        polyUI.eventManager.keyDown(key)
+                        polyUI.inputManager.keyDown(key)
                     } else {
-                        polyUI.eventManager.keyUp(key)
+                        polyUI.inputManager.keyUp(key)
                     }
-                } else if (keyCode < 348) {
+                } else {
                     val key: KeyModifiers = (
-                        when (keyCode) {
-                            340 -> KeyModifiers.LSHIFT
-                            341 -> KeyModifiers.LCONTROL
-                            342 -> KeyModifiers.LALT
-                            343 -> KeyModifiers.LMETA
-                            344 -> KeyModifiers.RSHIFT
-                            345 -> KeyModifiers.RCONTROL
-                            346 -> KeyModifiers.RALT
-                            347 -> KeyModifiers.RMETA
-                            else -> KeyModifiers.UNKNOWN
-                        }
-                        )
+                            when (keyCode) {
+                                GLFW_KEY_LEFT_SHIFT -> KeyModifiers.LSHIFT
+                                GLFW_KEY_LEFT_CONTROL -> KeyModifiers.LCONTROL
+                                GLFW_KEY_LEFT_ALT -> KeyModifiers.LALT
+                                GLFW_KEY_LEFT_SUPER -> KeyModifiers.LMETA
+                                GLFW_KEY_RIGHT_SHIFT -> KeyModifiers.RSHIFT
+                                GLFW_KEY_RIGHT_CONTROL -> KeyModifiers.RCONTROL
+                                GLFW_KEY_RIGHT_ALT -> KeyModifiers.RALT
+                                GLFW_KEY_RIGHT_SUPER -> KeyModifiers.RMETA
+                                else -> KeyModifiers.UNKNOWN
+                            }
+                            )
                     if (action == GLFW_PRESS) {
-                        polyUI.eventManager.addModifier(key.value)
+                        polyUI.inputManager.addModifier(key.value)
                     } else {
-                        polyUI.eventManager.removeModifier(key.value)
+                        polyUI.inputManager.removeModifier(key.value)
                     }
                 }
                 return@glfwSetKeyCallback
             }
             if (action == GLFW_PRESS) {
-                polyUI.eventManager.keyDown(keyCode)
+                polyUI.inputManager.keyDown(keyCode)
             } else {
-                polyUI.eventManager.keyUp(keyCode)
+                polyUI.inputManager.keyUp(keyCode)
             }
         }
 
         glfwSetMouseButtonCallback(handle) { _, button, action, _ ->
             if (action == GLFW_PRESS) {
-                polyUI.eventManager.mousePressed(button)
-            } else if (action == GLFW_RELEASE) polyUI.eventManager.mouseReleased(button)
+                polyUI.inputManager.mousePressed(button)
+            } else if (action == GLFW_RELEASE) polyUI.inputManager.mouseReleased(button)
         }
 
         glfwSetCharCallback(handle) { _, codepoint ->
-            polyUI.eventManager.keyTyped(codepoint.toChar())
+            polyUI.inputManager.keyTyped(codepoint.toChar())
         }
 
         var ran = false
@@ -231,14 +221,14 @@ class GLWindow @JvmOverloads constructor(
                 polyUI.settings.naturalScrolling = true
             }
             ran = true
-            polyUI.eventManager.mouseScrolled(x.toFloat(), y.toFloat())
+            polyUI.inputManager.mouseScrolled(x.toFloat(), y.toFloat())
         }
 
         glfwSetDropCallback(handle) { _, count, names ->
             val files = Array(count) {
                 File(GLFWDropCallback.getName(names, it))
             }
-            polyUI.eventManager.filesDropped(files)
+            polyUI.inputManager.filesDropped(files)
         }
 
         glfwSetWindowFocusCallback(handle) { _, focused ->
@@ -256,27 +246,28 @@ class GLWindow @JvmOverloads constructor(
         polyUI.window = this
         glfwSwapInterval(if (polyUI.renderer.settings.enableVSync) 1 else 0)
 
-        createCallbacks()
+        createCallbacks(polyUI)
 
         MemoryStack.stackPush().use {
-            val w = it.mallocInt(1)
-            val h = it.mallocInt(1)
-            val contentScaleX = it.mallocFloat(1)
-            val contentScaleY = it.mallocFloat(1)
-            glfwGetFramebufferSize(handle, w, h)
-            glfwGetWindowContentScale(handle, contentScaleX, contentScaleY)
-
-            this.contentScaleX = contentScaleX[0]
-            this.contentScaleY = contentScaleY[0]
-
-            this.width = w[0]
-            this.height = h[0]
+            val wbuf = it.mallocInt(1)
+            val hbuf = it.mallocInt(1)
+            val sxbuf = it.mallocFloat(1)
+            val sybuf = it.mallocFloat(1)
+            glfwGetWindowContentScale(handle, sxbuf, sybuf)
+            glfwGetFramebufferSize(handle, wbuf, hbuf)
+            val sx = sxbuf[0]
+            val sy = sybuf[0]
+            val w = wbuf[0]
+            val h = hbuf[0]
 
             polyUI.resize(
-                (this.width / this.contentScaleX),
-                (this.height / this.contentScaleY),
-                max(this.contentScaleX, this.contentScaleY),
+                w.toFloat() / sx,
+                h.toFloat() / sy,
+                max(sx, sy),
             )
+
+            this.width = w
+            this.height = h
         }
 
         val (minW, minH) = polyUI.settings.minimumWindowSize
@@ -293,9 +284,9 @@ class GLWindow @JvmOverloads constructor(
         var t = glfwGetTime()
         fpsCap = polyUI.settings.maxFPS.toDouble()
         while (!glfwWindowShouldClose(handle)) {
-            glViewport(0, offset, width, height)
+            if (offset != 0) glViewport(0, offset, width, height)
             glClearColor(0f, 0f, 0f, 0f)
-            glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
+            glClear(GL_COLOR_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
 
             this.polyUI.render()
             if (fpsCap != 0.0) {
@@ -310,7 +301,7 @@ class GLWindow @JvmOverloads constructor(
         }
 
         polyUI.cleanup()
-        GL.setCapabilities(null)
+        setCapabilities(null)
         Callbacks.glfwFreeCallbacks(handle)
         glfwTerminate()
         glfwSetErrorCallback(null)?.free()

@@ -26,7 +26,7 @@ import org.polyfrost.polyui.event.Event.Lifetime.*
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
 import java.io.File
-import kotlin.experimental.and
+import org.polyfrost.polyui.input.Mouse as MouseUtils
 
 /**
  * Events are how PolyUI communicates between components and to the user.
@@ -36,10 +36,10 @@ import kotlin.experimental.and
  * and [destruction][Lifetime.Removed] of components are communicated through events.
  *
  * Some events are specific, requiring [constructor parameters][Mouse.Clicked.button] to ensure that for example, only single,
- * left-click events are handled by any given handler, whereas others are non-specific, like [Focused.UnmappedInput] and recieve
+ * left-click events are handled by any given handler, whereas others are non-specific, like [Focused.UnmappedInput] and receive
  * any matching event of the type.
  *
- * These events can be dispatched by your own components, and you can add your own events - though PolyUI comes with 21 events by default.
+ * These events can be dispatched by your own components, and you can add your own events - though PolyUI comes with 22 events by default.
  *
  */
 interface Event {
@@ -55,8 +55,8 @@ interface Event {
      * @see Mouse.Exited
      */
     interface Mouse : Event {
-        class Pressed internal constructor(val button: Int, val x: Float, val y: Float, val mods: Short = 0) : Mouse {
-            constructor(button: Int) : this(button, 0f, 0f)
+        class Pressed internal constructor(val button: Int, val x: Float, val y: Float, mods: Short) : Mouse, WithMods(mods) {
+            constructor(button: Int) : this(button, 0f, 0f, 0)
 
             override fun hashCode(): Int {
                 var result = button + 500
@@ -65,7 +65,7 @@ interface Event {
             }
 
             override fun toString(): String =
-                "MousePressed(($x, $y), ${org.polyfrost.polyui.input.Mouse.toStringPretty(org.polyfrost.polyui.input.Mouse.fromValue(button), mods)})"
+                "MousePressed(($x, $y), ${MouseUtils.toStringPretty(MouseUtils.fromValue(button), mods)})"
 
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
@@ -76,8 +76,8 @@ interface Event {
             }
         }
 
-        class Released internal constructor(val button: Int, val x: Float, val y: Float, val mods: Short = 0) : Mouse {
-            constructor(button: Int) : this(button, 0f, 0f)
+        class Released internal constructor(val button: Int, val x: Float, val y: Float, mods: Short) : Mouse, WithMods(mods) {
+            constructor(button: Int) : this(button, 0f, 0f, 0)
 
             override fun hashCode(): Int {
                 var result = button + 5000 // avoid conflicts with MousePressed
@@ -86,7 +86,7 @@ interface Event {
             }
 
             override fun toString(): String =
-                "MouseReleased(($x, $y), ${org.polyfrost.polyui.input.Mouse.toStringPretty(org.polyfrost.polyui.input.Mouse.fromValue(button), mods)})"
+                "MouseReleased(($x, $y), ${MouseUtils.toStringPretty(MouseUtils.fromValue(button), mods)})"
 
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
@@ -97,11 +97,11 @@ interface Event {
             }
         }
 
-        class Clicked internal constructor(val button: Int, val mouseX: Float, val mouseY: Float, val clicks: Int, val mods: Short) : Mouse {
+        class Clicked internal constructor(val button: Int, val mouseX: Float, val mouseY: Float, val clicks: Int, mods: Short) : Mouse, WithMods(mods) {
             @JvmOverloads
             constructor(button: Int, amountClicks: Int = 1, mods: Short = 0) : this(button, 0f, 0f, amountClicks, mods)
 
-            override fun toString(): String = "MouseClicked x$clicks($mouseX x $mouseY, ${org.polyfrost.polyui.input.Mouse.toStringPretty(org.polyfrost.polyui.input.Mouse.fromValue(button), mods)})"
+            override fun toString(): String = "MouseClicked x$clicks($mouseX x $mouseY, ${MouseUtils.toStringPretty(MouseUtils.fromValue(button), mods)})"
             override fun hashCode(): Int {
                 var result = button
                 result = 31 * result + clicks
@@ -119,8 +119,8 @@ interface Event {
             }
         }
 
-        class Scrolled internal constructor(val amountX: Float, val amountY: Float, val mods: Short = 0) : Mouse {
-            constructor() : this(0f, 0f)
+        class Scrolled internal constructor(val amountX: Float, val amountY: Float, mods: Short) : Mouse, WithMods(mods) {
+            constructor() : this(0f, 0f, 0)
 
             override fun hashCode() = 893402779
 
@@ -239,12 +239,8 @@ interface Event {
          * @see [KeyModifiers]
          * @see [org.polyfrost.polyui.utils.fromModifierMerged]
          */
-        class KeyTyped(val key: Char, val mods: Short = 0, val isRepeat: Boolean = false) : Focused {
+        class KeyTyped(val key: Char, mods: Short) : Focused, WithMods(mods) {
             override fun toString() = "KeyTyped(${Keys.toStringPretty(key, mods)})"
-
-            inline val modifiers: Array<KeyModifiers> get() = KeyModifiers.fromModifierMerged(mods)
-
-            fun hasModifier(modifier: KeyModifiers): Boolean = (mods and modifier.value).toInt() != 0
 
             override fun hashCode(): Int {
                 var result = key.hashCode() + 500
@@ -268,14 +264,10 @@ interface Event {
          * @see [KeyModifiers]
          * @see [org.polyfrost.polyui.input.Modifiers.fromModifierMerged]
          */
-        class KeyPressed(val key: Keys, val mods: Short = 0) : Focused {
+        class KeyPressed(val key: Keys, mods: Short) : Focused, WithMods(mods) {
             override fun toString(): String = "KeyPressed(${Keys.toString(key, mods)})"
 
             fun toStringPretty(): String = "KeyPressed(${Keys.toStringPretty(key, mods)})"
-
-            inline val modifiers get() = KeyModifiers.fromModifierMerged(mods)
-
-            fun hasModifier(modifier: KeyModifiers): Boolean = (mods and modifier.value).toInt() != 0
 
             override fun hashCode(): Int {
                 var result = key.hashCode() + 5000
@@ -292,14 +284,10 @@ interface Event {
             }
         }
 
-        class KeyReleased(val key: Keys, val mods: Short) : Focused {
+        class KeyReleased(val key: Keys, mods: Short) : Focused, WithMods(mods) {
             override fun toString(): String = "KeyReleased(${Keys.toString(key, mods)})"
 
             fun toStringPretty(): String = "KeyReleased(${Keys.toStringPretty(key, mods)})"
-
-            inline val modifiers get() = KeyModifiers.fromModifierMerged(mods)
-
-            fun hasModifier(modifier: KeyModifiers): Boolean = (mods and modifier.value).toInt() != 0
 
             override fun hashCode(): Int {
                 var result = key.hashCode() + 50000
@@ -316,8 +304,8 @@ interface Event {
             }
         }
 
-        class UnmappedInput(val code: Int, val down: Boolean) : Focused {
-            constructor() : this(0, false)
+        class UnmappedInput(val code: Int, val down: Boolean, mods: Short) : Focused, WithMods(mods) {
+            constructor() : this(0, false, 0)
 
             override fun toString(): String = "UnmappedInput(key=$code, down=$down)"
 
@@ -351,5 +339,27 @@ interface Event {
                 return other is FileDrop
             }
         }
+    }
+
+    /**
+     * Extend this class if your event has modifiers attached to it.
+     *
+     * Provides various utility methods to check for modifiers.
+     *
+     * @since 1.0.5
+     */
+    abstract class WithMods(val mods: Short) : Event {
+
+        val modifiers: Array<KeyModifiers> by lazy { KeyModifiers.fromModifierMerged(mods) }
+
+        fun hasModifier(modifier: KeyModifiers): Boolean = (mods.toInt() and modifier.value.toInt()) != 0
+
+        fun hasControl() = (mods.toInt() and 0b1100) != 0 // || (PolyUI.isOnMac && hasMeta())
+
+        fun hasAlt() = (mods.toInt() and 0b110000) != 0
+
+        fun hasShift() = (mods.toInt() and 0b11) != 0
+
+        fun hasMeta() = (mods.toInt() and 0b11000000) != 0
     }
 }

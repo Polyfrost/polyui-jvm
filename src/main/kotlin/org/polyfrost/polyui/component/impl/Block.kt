@@ -26,6 +26,8 @@ import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.utils.areEqual
+import org.polyfrost.polyui.utils.cl1
 import org.polyfrost.polyui.utils.radii
 
 open class Block @JvmOverloads constructor(
@@ -35,19 +37,30 @@ open class Block @JvmOverloads constructor(
     visibleSize: Vec2? = null,
     focusable: Boolean = false,
     color: PolyColor? = null,
-    var radii: FloatArray = 8f.radii(),
+    val radii: FloatArray = 8f.radii(),
     vararg children: Drawable?,
 ) : Drawable(at, alignment, size, visibleSize, focusable = focusable, children = children) {
     var boarderColor: PolyColor? = null
     var boarderWidth: Float = 2f
+
     init {
         require(radii.size == 4) { "Corner radius array must be 4 values" }
-        if(color != null) this.color = color.toAnimatable()
+        if (color != null) this.color = color.toAnimatable()
     }
 
     override fun render() {
         renderer.rect(x, y, width, height, color, radii)
         val outlineColor = boarderColor ?: return
         renderer.hollowRect(x, y, width, height, outlineColor, boarderWidth, radii)
+    }
+
+    override fun rescale(scaleX: Float, scaleY: Float, position: Boolean) {
+        super.rescale(scaleX, scaleY, position)
+        if (radii.areEqual()) {
+            val scale = cl1(scaleX, scaleY)
+            for (i in 0..3) {
+                radii[i] *= scale
+            }
+        }
     }
 }

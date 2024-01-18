@@ -27,6 +27,7 @@ import org.polyfrost.polyui.PolyUI.Companion.INPUT_HOVERED
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_NONE
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
 import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.component.hasParentOf
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
@@ -39,15 +40,13 @@ import kotlin.experimental.inv
 import kotlin.experimental.or
 
 /**
- * # EventManager
- * Handles all events and passes them to the correct components/layouts.
- * @param drawables the layout to create this event manager for. marked as internal as should not be accessed.
- * @param drawables the key binder to use for this event manager. marked as internal as should not be accessed.
+ * # InputManager
+ * Handles input events and passes them to the correct components/layouts.
+ * @param master the layout to create this event manager for. marked as internal as should not be accessed.
+ * @param keyBinder the key binder to use for this event manager. marked as internal as should not be accessed.
  */
-class EventManager @JvmOverloads constructor(
-    @get:ApiStatus.Internal
-    var drawables: LinkedList<Drawable>? = null,
-    @get:ApiStatus.Internal
+class InputManager(
+    private var master: Drawable,
     var keyBinder: KeyBinder?,
     private val settings: Settings,
 ) {
@@ -75,8 +74,8 @@ class EventManager @JvmOverloads constructor(
     var mouseDown = false
         private set
 
-    fun with(drawables: LinkedList<Drawable>?): EventManager {
-        this.drawables = drawables
+    fun with(drawables: Drawable): InputManager {
+        this.master = drawables
         return this
     }
 
@@ -115,7 +114,7 @@ class EventManager @JvmOverloads constructor(
      */
     fun keyDown(code: Int) {
         if (keyBinder?.accept(code, true) == true) return
-        focused?.accept(Event.Focused.UnmappedInput(code, true))
+        focused?.accept(Event.Focused.UnmappedInput(code, true, keyModifiers))
     }
 
     /**
@@ -125,14 +124,14 @@ class EventManager @JvmOverloads constructor(
      */
     fun keyUp(code: Int) {
         if (keyBinder?.accept(code, false) == true) return
-        focused?.accept(Event.Focused.UnmappedInput(code, false))
+        focused?.accept(Event.Focused.UnmappedInput(code, false, keyModifiers))
     }
 
     /**
      * force the mouse position to be updated.
      * @since 0.18.5
      */
-    fun recalculateMousePos() = mouseMoved(mouseX, mouseY)
+    fun recalculate() = mouseMoved(mouseX, mouseY)
 
     /**
      * Internal function that will forcefully drop the given drawable from event tracking.
@@ -197,10 +196,11 @@ class EventManager @JvmOverloads constructor(
      */
     @ApiStatus.Internal
     fun processCandidate(drawable: Drawable, x: Float, y: Float): Boolean {
+        if (!drawable.enabled) return false
         if (!drawable.acceptsInput) return true
         return when (drawable.inputState) {
             INPUT_NONE -> {
-                if (drawable.isInside(x, y)) {
+                if (!mouseDown && drawable.isInside(x, y)) {
                     drawable.inputState = INPUT_HOVERED
 //                    if (mouseOvers.contains(drawable)) throw IllegalArgumentException()
                     mouseOvers.add(drawable)
@@ -237,7 +237,7 @@ class EventManager @JvmOverloads constructor(
     fun mouseMoved(x: Float, y: Float) {
         mouseX = x
         mouseY = y
-        processCandidates(drawables ?: return, x, y)
+        processCandidates(master.children ?: return, x, y)
     }
 
     fun mousePressed(button: Int) {
@@ -274,7 +274,7 @@ class EventManager @JvmOverloads constructor(
         val click = Event.Mouse.Clicked(button, mouseX, mouseY, clickAmount, keyModifiers)
         dispatchPress(release, false)
         if (!dispatch(click) && button == 0) {
-            mouseOvers.fastEachReversed { if (focusCatching(it)) return }
+            mouseOvers.fastEachReversed { if (safeFocus(it)) return }
         }
     }
 
@@ -284,7 +284,7 @@ class EventManager @JvmOverloads constructor(
      * @see focus
      * @since 1.0.4
      */
-    fun focusCatching(drawable: Drawable?): Boolean {
+    fun safeFocus(drawable: Drawable?): Boolean {
         if (drawable == null) return false
         if (drawable.focusable) {
             return focus(drawable)
@@ -338,7 +338,7 @@ class EventManager @JvmOverloads constructor(
      * @throws IllegalArgumentException if the provided drawable is not [Drawable.focusable]
      * @param focusable the element to set focus on
      * @return true if focus was successfully set, false if the provided focusable is already focused
-     * @see focusCatching
+     * @see safeFocus
      */
     fun focus(focusable: Drawable?): Boolean {
         if (focusable === focused) return false

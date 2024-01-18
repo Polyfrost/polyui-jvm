@@ -27,7 +27,7 @@ import org.lwjgl.nanovg.NVGPaint
 import org.lwjgl.nanovg.NanoSVG
 import org.lwjgl.nanovg.NanoVG.*
 import org.lwjgl.nanovg.NanoVGGL3.*
-import org.lwjgl.opengl.GL11.*
+import org.lwjgl.opengl.GL20C.*
 import org.lwjgl.stb.STBImage
 import org.lwjgl.stb.STBImageResize
 import org.lwjgl.system.MemoryUtil
@@ -104,7 +104,7 @@ class NVGRenderer(size: Vec2) : Renderer(size) {
         color: Color,
         fontSize: Float,
     ) {
-        if (color === Color.TRANSPARENT) return
+        if (color.transparent) return
         nvgBeginPath(vg)
         nvgFontSize(vg, fontSize)
         nvgFontFaceId(vg, getFont(font).id)
@@ -195,7 +195,7 @@ class NVGRenderer(size: Vec2) : Renderer(size) {
         nvgluBindFramebuffer(vg, fbos[fbo] ?: throw NullPointerException("Cannot bind: $fbo does not exist!"))
         glViewport(0, 0, fbo.width.toInt(), fbo.height.toInt())
         glClearColor(0f, 0f, 0f, 0f)
-        glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
+        glClear(GL_COLOR_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
         nvgBeginFrame(vg, fbo.width, fbo.height, pixelRatio)
     }
 
@@ -221,7 +221,7 @@ class NVGRenderer(size: Vec2) : Renderer(size) {
         bottomLeftRadius: Float,
         bottomRightRadius: Float,
     ) {
-        if (color === Color.TRANSPARENT) return
+        if (color.transparent) return
         // note: nvg checks params and draws classic rect if 0, so we don't need to
         nvgBeginPath(vg)
         nvgRoundedRectVarying(
@@ -255,7 +255,7 @@ class NVGRenderer(size: Vec2) : Renderer(size) {
         bottomLeftRadius: Float,
         bottomRightRadius: Float,
     ) {
-        if (color === Color.TRANSPARENT) return
+        if (color.transparent) return
         nvgBeginPath(vg)
         nvgRoundedRectVarying(
             vg,
@@ -278,7 +278,7 @@ class NVGRenderer(size: Vec2) : Renderer(size) {
     }
 
     override fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float) {
-        if (color === Color.TRANSPARENT) return
+        if (color.transparent) return
         nvgBeginPath(vg)
         nvgMoveTo(vg, x1, y1)
         nvgLineTo(vg, x2, y2)

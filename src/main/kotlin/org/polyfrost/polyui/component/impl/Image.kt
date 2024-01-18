@@ -22,6 +22,7 @@
 package org.polyfrost.polyui.component.impl
 
 import org.polyfrost.polyui.PolyUI
+import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Align
@@ -36,6 +37,7 @@ open class Image(
     alignment: Align = AlignDefault,
     visibleSize: Vec2? = null,
     radii: FloatArray = 0f.radii(),
+    var backgroundColor: PolyColor? = null,
     vararg children: Drawable?
 ) :
     Block(at, Vec2.Based(base = image.size), alignment, visibleSize, false, null, radii, *children) {
@@ -49,12 +51,13 @@ open class Image(
 
     override fun render() {
         renderer.image(image, x, y, radii = radii, colorMask = color.argb)
+        backgroundColor?.let { renderer.rect(x, y, width, height, color, radii) }
         val outlineColor = boarderColor ?: return
         renderer.hollowRect(x, y, width, height, outlineColor, boarderWidth, radii)
     }
 
-    override fun rescale(scaleX: Float, scaleY: Float) {
-        super.rescale(scaleX, scaleY)
+    override fun rescale(scaleX: Float, scaleY: Float, position: Boolean) {
+        super.rescale(scaleX, scaleY, position)
         if (rawResize) {
             image.rescale(scaleX, scaleY)
         } else {

@@ -39,9 +39,11 @@ import org.jetbrains.annotations.ApiStatus
  * these methods are all designed to avoid the allocation of an Iterator object, as otherwise PolyUI would create a lot of garbage.
  *
  * this collection, unlike most of the collections in the Java Collections Framework, does **not** make any effort to check against [concurrent modification][ConcurrentModificationException].
+ * this allows you to do some "quirky" things, such as iterating over the list and removing elements at the same time.
  *
  * Being a linked list, the random get and put operations are not the best. However, this operation is rare in PolyUI, so it's okay to use this.
  * @since 1.0.0
+ * @see java.util.LinkedList
  */
 class LinkedList<T>() : MutableList<T>, Cloneable {
     constructor(elements: Collection<T>) : this() {
@@ -101,6 +103,12 @@ class LinkedList<T>() : MutableList<T>, Cloneable {
         return true
     }
 
+    fun addAll(elements: Array<out T>) {
+        for (element in elements) {
+            add(element)
+        }
+    }
+
     override fun add(index: Int, element: T) {
         when (index) {
             0 -> {
@@ -143,64 +151,14 @@ class LinkedList<T>() : MutableList<T>, Cloneable {
 
     override fun isEmpty() = size == 0
 
-    @Suppress("Deprecation")
     @Deprecated("This list is designed around not using this method.", ReplaceWith("fastEach"))
-    override fun iterator() = listIterator(0)
-
-    @Suppress("Deprecation")
-    @Deprecated("This list is designed around not using this method.", ReplaceWith("fastEach"))
-    override fun listIterator() = listIterator(0)
+    override fun iterator(): MutableListIterator<T> = LLIterator(this, 0)
 
     @Deprecated("This list is designed around not using this method.", ReplaceWith("fastEach"))
-    override fun listIterator(index: Int): MutableListIterator<T> {
-        return object : MutableListIterator<T> {
-            var current: Node<T>? = _get(index)
-            var idx = index - 1
-            override fun hasNext() = current != null
+    override fun listIterator(): MutableListIterator<T> = LLIterator(this, 0)
 
-            override fun next(): T {
-                val n = current ?: throw NoSuchElementException()
-                current = n.next
-                idx++
-                return n.value
-            }
-
-            override fun hasPrevious() = current?.prev != null
-
-            override fun previous(): T {
-                val n = current?.prev ?: throw NoSuchElementException()
-                current = n
-                idx--
-                return n.value
-            }
-
-            override fun nextIndex() = idx + 1
-
-            override fun previousIndex() = idx - 1
-
-            override fun add(element: T) {
-                val n = Node(element, current, current?.prev)
-                current?.prev?.next = n
-                current?.prev = n
-                size++
-            }
-
-            override fun remove() {
-                val n = current ?: throw NoSuchElementException()
-                if (current === end) end = n.prev
-                else if (current === start) start = n.next
-                current = n.next
-                n.prev?.next = n.next
-                n.next?.prev = n.prev
-                size--
-            }
-
-            override fun set(element: T) {
-                val n = current?.prev ?: end ?: throw NullPointerException("list empty?")
-                n.value = element
-            }
-        }
-    }
+    @Deprecated("This list is designed around not using this method.", ReplaceWith("fastEach"))
+    override fun listIterator(index: Int): MutableListIterator<T> = LLIterator(this, index)
 
     override fun removeAt(index: Int): T {
         val n = _get(index)
@@ -258,6 +216,10 @@ class LinkedList<T>() : MutableList<T>, Cloneable {
     }
 
     override fun remove(element: T): Boolean {
+        if (end?.value == element) {
+            _remove(end ?: return false)
+            return true
+        }
         var current = start
         while (current != null) {
             if (current.value == element) {
@@ -383,7 +345,14 @@ class LinkedList<T>() : MutableList<T>, Cloneable {
         return true
     }
 
-    fun addOrReplace(element: T): T? {
+    /**
+     * Adds or replaces an element in the list. If the element is already in the list (using [equals]), it will be replaced, otherwise it will be added.
+     *
+     * If it is replaced, the old element will be returned, otherwise `null` will be returned.
+     *
+     * @param element the element to add or replace. `null` is disallowed by the `T & Any` type.
+     */
+    fun addOrReplace(element: T & Any): T? {
         var current = start
         while (current != null) {
             if (current.value == element) {
@@ -470,7 +439,10 @@ class LinkedList<T>() : MutableList<T>, Cloneable {
     }
 
     @kotlin.internal.InlineOnly
-    fun first(): T = start?.value ?: throw NoSuchElementException("list is empty.")
+    inline fun first(): T = start?.value ?: throw NoSuchElementException("list is empty.")
+
+    @kotlin.internal.InlineOnly
+    inline fun firstOrNull(): T? = start?.value
 
     @kotlin.internal.InlineOnly
     inline fun first(predicate: (T) -> Boolean): T {
@@ -483,10 +455,10 @@ class LinkedList<T>() : MutableList<T>, Cloneable {
     }
 
     @kotlin.internal.InlineOnly
-    fun last(): T = end?.value ?: throw NoSuchElementException("list is empty.")
+    inline fun last(): T = end?.value ?: throw NoSuchElementException("list is empty.")
 
-    @ApiStatus.Internal
-    class Node<T>(var value: T, var next: Node<T>? = null, var prev: Node<T>? = null)
+    @kotlin.internal.InlineOnly
+    inline fun lastOrNull(): T? = end?.value
 
     override fun equals(other: Any?): Boolean {
         if (other !is Collection<*>) return false
@@ -525,5 +497,64 @@ class LinkedList<T>() : MutableList<T>, Cloneable {
         }
         out.append("]")
         return out.toString()
+    }
+
+    @ApiStatus.Internal
+    class Node<T>(var value: T, var next: Node<T>? = null, var prev: Node<T>? = null)
+
+    /**
+     * iterator for [LinkedList].
+     */
+    class LLIterator<T>(private val it: LinkedList<T>, startIndex: Int) : MutableListIterator<T> {
+        private var current: Node<T>? = it._get(startIndex)
+        private var idx: Int = startIndex - 1
+        override fun hasNext() = current != null
+
+        override fun next(): T {
+            val n = current ?: throw NoSuchElementException("no more elements")
+            current = n.next
+            idx++
+            return n.value
+        }
+
+        fun reset(toIndex: Int = 0) {
+            current = it._get(toIndex)
+            idx = toIndex - 1
+        }
+
+        override fun hasPrevious() = current?.prev != null
+
+        override fun previous(): T {
+            val n = current?.prev ?: throw NoSuchElementException("no less elements")
+            current = n
+            idx--
+            return n.value
+        }
+
+        override fun nextIndex() = idx + 1
+
+        override fun previousIndex() = idx - 1
+
+        override fun add(element: T) {
+            val n = Node(element, current, current?.prev)
+            current?.prev?.next = n
+            current?.prev = n
+            it.size++
+        }
+
+        override fun remove() {
+            val n = current ?: throw NoSuchElementException("list is empty")
+            if (current === it.end) it.end = n.prev
+            if (current === it.start) it.start = n.next
+            current = n.next
+            n.prev?.next = n.next
+            n.next?.prev = n.prev
+            it.size--
+        }
+
+        override fun set(element: T) {
+            val n = current?.prev ?: it.end ?: throw IllegalStateException("invalid, list empty?")
+            n.value = element
+        }
     }
 }

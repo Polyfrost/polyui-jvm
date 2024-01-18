@@ -36,5 +36,11 @@ class Group(
     size: Vec2? = null,
     visibleSize: Vec2? = null,
 ) : Drawable(at, alignment, size, visibleSize, children = children) {
+    override var renders: Boolean
+        get() = super.renders && !children.isNullOrEmpty()
+        set(value) {
+            super.renders = value
+        }
+
     override fun render() {}
 }

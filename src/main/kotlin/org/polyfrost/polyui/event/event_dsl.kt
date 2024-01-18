@@ -23,11 +23,6 @@ package org.polyfrost.polyui.event
 
 import org.polyfrost.polyui.component.Drawable
 
-/** marker class for preventing illegal nesting. */
-@Target(AnnotationTarget.CLASS, AnnotationTarget.TYPE, AnnotationTarget.FUNCTION)
-@DslMarker
-annotation class EventDSLMarker
-
 /**
  * DSL for events.
  * @since 0.23.2
@@ -63,4 +58,9 @@ class EventDSL<S : Drawable>(val self: S) {
     infix fun <E : Event> E.then(handler: S.(E) -> Unit?) = self.run {
         addEventHandler(this@then, handler)
     }
+
+    /** marker class for preventing illegal nesting. */
+    @Target(AnnotationTarget.CLASS, AnnotationTarget.TYPE, AnnotationTarget.FUNCTION)
+    @DslMarker
+    annotation class Marker
 }

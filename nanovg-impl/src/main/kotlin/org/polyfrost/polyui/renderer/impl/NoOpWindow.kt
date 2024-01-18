@@ -35,9 +35,6 @@ class NoOpWindow(title: String, width: Int, height: Int) : Window(width, height)
     override fun close() {
     }
 
-    override fun createCallbacks() {
-    }
-
     override fun getClipboard(): String? = null
 
     override fun setClipboard(text: String?) {

@@ -25,9 +25,9 @@ import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.event.Event
-import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Translator
+import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.Cursor
 import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.unit.Align
@@ -161,35 +161,37 @@ class TextInput(
             }
 
             is Event.Focused.KeyTyped -> {
-                if (event.mods < 2) {
+                if (event.mods < 2 /* mods == 0 || hasShift() */) {
                     if (caret != select) {
                         text = text.replace(selection, "")
                         caret = if (select > caret) caret else select
                         clearSelection()
                     }
+                    val tl = text.length
                     text = text.substring(0, caret) + event.key + text.substring(caret)
-                    caret++
-                } else if (event.hasModifier(KeyModifiers.LCONTROL) || event.hasModifier(KeyModifiers.RCONTROL)) {
+                    if (text.length != tl) caret++
+                } else if (event.hasControl()) {
                     when (event.key) {
-                        'V' -> {
+                        'v', 'V' -> {
+                            val tl = text.length
                             text = text.substring(0, caret) + (polyUI.clipboard ?: "") + text.substring(caret)
-                            caret += polyUI.clipboard?.length ?: 0
+                            if (text.length != tl) caret += polyUI.clipboard?.length ?: 0
                             clearSelection()
                         }
 
-                        'C' -> {
+                        'c', 'C' -> {
                             if (caret != select) {
                                 polyUI.clipboard = selection
                             }
                         }
 
-                        'X' -> {
-                            polyUI.clipboard = null
+                        'x', 'X' -> {
                             text = text.replace(selection, "")
+                            polyUI.clipboard = selection
                             clearSelection()
                         }
 
-                        'A' -> {
+                        'a', 'A' -> {
                             caret = text.lastIndex + 1
                             select = 0
                         }
@@ -198,8 +200,6 @@ class TextInput(
             }
 
             is Event.Focused.KeyPressed -> {
-                val hasControl = event.hasModifier(KeyModifiers.LCONTROL) || event.hasModifier(KeyModifiers.RCONTROL)
-                val hasShift = event.hasModifier(KeyModifiers.LSHIFT) || event.hasModifier(KeyModifiers.RSHIFT)
                 when (event.key) {
                     Keys.BACKSPACE -> {
                         if (select != caret) {
@@ -212,19 +212,23 @@ class TextInput(
                                 f = select
                                 t = caret
                             }
+                            val tl = text.length
                             text = text.substring(0, f) + text.substring(t)
-                            caret = f
+                            if (tl != text.length) caret = f
                             clearSelection()
-                        } else if (!hasControl) {
+                        } else if (!event.hasControl()) {
+                            val tl = text.length
                             text = text.dropAt(caret, 1)
-                            if (caret != 0) caret--
+                            if (caret != 0 && tl != text.length) caret--
                         } else {
                             dropToLastSpace()
                         }
                     }
 
                     Keys.TAB -> {
+                        val tl = text.length
                         text += "    "
+                        if (tl != text.length) caret += 4
                     }
 
                     Keys.DELETE -> {
@@ -233,8 +237,8 @@ class TextInput(
                     }
 
                     Keys.LEFT -> {
-                        selecting = hasShift
-                        if (hasControl) {
+                        selecting = event.hasShift()
+                        if (event.hasControl()) {
                             toLastSpace()
                         } else {
                             back()
@@ -242,8 +246,8 @@ class TextInput(
                     }
 
                     Keys.RIGHT -> {
-                        selecting = hasShift
-                        if (hasControl) {
+                        selecting = event.hasShift()
+                        if (event.hasControl()) {
                             toNextSpace()
                         } else {
                             forward()
@@ -251,12 +255,12 @@ class TextInput(
                     }
 
                     Keys.UP -> {
-                        selecting = hasShift
+                        selecting = event.hasShift()
                         moveLine(false)
                     }
 
                     Keys.DOWN -> {
-                        selecting = hasShift
+                        selecting = event.hasShift()
                         moveLine(true)
                     }
 
@@ -370,15 +374,17 @@ class TextInput(
     }
 
     fun dropToLastSpace() {
-        val c = caret
+        val tl = text.length
+        val c: Int
         text.trimEnd().lastIndexOf(' ', caret).let {
-            caret = if (it != -1) {
+            c = if (it != -1) {
                 it
             } else {
                 0
             }
         }
         text = text.substring(0, caret) + text.substring(c)
+        if (tl != text.length) caret = c
     }
 
     fun toNextSpace() {
@@ -425,13 +431,16 @@ class TextInput(
         return true
     }
 
-    override fun calculateSize(): Vec2 {
-        val out = super.calculateSize()
+    override fun updateTextBounds(renderer: Renderer) {
+        super.updateTextBounds(renderer)
         linesData.clear()
         lines.fastEach {
             val size = renderer.textBounds(font, it, fontSize)
             linesData.add(size.x)
         }
-        return out
+        if (text.isEmpty()) {
+            val bounds = renderer.textBounds(font, _placeholder.string, fontSize)
+            size.ensureLargerThan(bounds)
+        }
     }
 }

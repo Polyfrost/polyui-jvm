@@ -28,8 +28,9 @@ import org.jetbrains.annotations.Blocking
  * Marker class for future use, which will be used to indicate that the given function or property
  * will block until the lock is freed (when it finishes the frame)
  */
-@Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_SETTER)
-@Retention(AnnotationRetention.SOURCE)
+@Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.BINARY)
 @Blocking
+@MustBeDocumented
 @ApiStatus.Experimental
 annotation class Locking

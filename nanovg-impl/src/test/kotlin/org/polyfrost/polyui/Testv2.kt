@@ -21,9 +21,8 @@
 
 package org.polyfrost.polyui
 
-import org.polyfrost.polyui.component.events
+import org.polyfrost.polyui.component.*
 import org.polyfrost.polyui.component.impl.*
-import org.polyfrost.polyui.component.withStates
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.renderer.impl.GLWindow
@@ -76,7 +75,7 @@ fun main() {
                     visibleSize = Vec2(350f, 120f),
                     children =
                     Array(30) {
-                        Block(size = Vec2(32f + (Random.nextFloat() * 100f), 32f)).withStates()
+                        Block(size = Vec2(32f + (Random.nextFloat() * 100f), 32f)).withStates().onInit { color.makeChroma() }
                     },
                 ),
                 Group(
@@ -93,11 +92,10 @@ fun main() {
                         Button("plus.svg".image()).events {
                             Event.Mouse.Clicked(0) then {
                                 parent!!.parent!![5] = Group(
-                                    visibleSize = Vec2(350f, 120f),
-                                    children =
-                                    Array(30) {
+                                    *Array(30) {
                                         Block(size = Vec2(32f + (Random.nextFloat() * 100f), 32f)).withStates()
                                     },
+                                    visibleSize = Vec2(350f, 120f),
                                 )
                             }
                         },

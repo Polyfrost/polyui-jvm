@@ -1,26 +1,21 @@
 [versions]
-kotlin = "1.9.21"
-lwjgl = "3.3.3"
-slf4j = "2.0.9"
+kotlin = "1.9.22"
+slf4j = "2.0.10"
 annotations = "24.1.0"
-kotlinter = "4.1.0"
+kotlinter = "4.2.0"
+kotlin-abi = "0.13.2"
 textile = "2.0.1"
 dokka = "1.9.10"
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-abi = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "kotlin-abi" }
 licenser = { id = "org.quiltmc.gradle.licenser", version.ref = "textile" }
 kotlinter = { id = "org.jmailen.kotlinter", version.ref = "kotlinter" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 git_hooks = { id = "com.github.jakemarsden.git-hooks", version = "0.0.2" }
 
 [libraries]
-lwjgl = { module = "org.lwjgl:lwjgl", version.ref = "lwjgl" }
-lwjgl-nanovg = { module = "org.lwjgl:lwjgl-nanovg", version.ref = "lwjgl" }
-lwjgl-opengl = { module = "org.lwjgl:lwjgl-opengl", version.ref = "lwjgl" }
-lwjgl-stb = { module = "org.lwjgl:lwjgl-stb", version.ref = "lwjgl" }
-lwjgl-glfw = { module = "org.lwjgl:lwjgl-glfw", version.ref = "lwjgl" }
-
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 
@@ -29,6 +24,4 @@ kotlin-annotations = { module = "org.jetbrains:annotations", version.ref = "anno
 dokka_base = { module = "org.jetbrains.dokka:dokka-base", version.ref = "dokka" }
 
 [bundles]
-lwjgl = ["lwjgl", "lwjgl-nanovg", "lwjgl-opengl", "lwjgl-stb", "lwjgl-glfw"]
-slf4j = ["slf4j-api", "slf4j-simple"]
 kotlin = ["kotlin-stdlib", "kotlin-annotations"]

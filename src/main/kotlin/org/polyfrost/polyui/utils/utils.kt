@@ -24,27 +24,22 @@
 
 package org.polyfrost.polyui.utils
 
-import org.polyfrost.polyui.color.Color
-import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.renderer.data.PolyImage
+import org.polyfrost.polyui.unit.Vec2
 import kotlin.experimental.and
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.min
 
-fun rgba(r: Float, g: Float, b: Float, a: Float): Color {
-    return Color((r * 255f).toInt(), (g * 255f).toInt(), (b * 255f).toInt(), a)
-}
 
-/** figma copy-paste accessor */
+/** create a color from the given red, green, and blue integer values, and an alpha value `0f..1f` */
 @JvmOverloads
-fun rgba(r: Int, g: Int, b: Int, a: Float = 1f): Color {
-    return Color(r, g, b, (a * 255f).toInt())
-}
+fun rgba(r: Int, g: Int, b: Int, a: Float = 1f) = PolyColor(r, g, b, a)
 
 /**
  * Converts the components of a color, as specified by the HSB
@@ -71,13 +66,13 @@ fun rgba(r: Int, g: Int, b: Int, a: Float = 1f): Color {
  */
 @Suppress("FunctionName")
 fun HSBtoRGB(hue: Float, saturation: Float, brightness: Float): Int {
-    var r = 0
-    var g = 0
-    var b = 0
+    val r: Int
+    val g: Int
+    val b: Int
     if (saturation == 0f) {
-        b = (brightness * 255.0f + 0.5f).toInt()
-        g = b
-        r = g
+        r = (brightness * 255.0f + 0.5f).toInt()
+        g = r
+        b = r
     } else {
         val h = (hue - floor(hue)) * 6.0f
         val f = h - floor(h)
@@ -120,9 +115,15 @@ fun HSBtoRGB(hue: Float, saturation: Float, brightness: Float): Int {
                 g = (p * 255.0f + 0.5f).toInt()
                 b = (q * 255.0f + 0.5f).toInt()
             }
+
+            else -> {
+                r = 0
+                g = 0
+                b = 0
+            }
         }
     }
-    return -0x1000000 or (r shl 16) or (g shl 8) or (b shl 0)
+    return -0x1000000 or (r shl 16) or (g shl 8) or b
 }
 
 /**
@@ -151,18 +152,19 @@ fun RGBtoHSB(r: Int, g: Int, b: Int, out: FloatArray? = null): FloatArray {
     if (b > cmax) cmax = b
     var cmin = if (r < g) r else g
     if (b < cmin) cmin = b
+    val diff = (cmax - cmin).toFloat()
 
     brightness = cmax.toFloat() / 255.0f
-    saturation = if (cmax != 0) (cmax - cmin).toFloat() / cmax.toFloat() else 0f
+    saturation = if (cmax != 0) diff / cmax.toFloat() else 0f
     if (saturation == 0f) {
         hue = 0f
     } else {
-        val redc = (cmax - r).toFloat() / (cmax - cmin).toFloat()
-        val greenc = (cmax - g).toFloat() / (cmax - cmin).toFloat()
-        val bluec = (cmax - b).toFloat() / (cmax - cmin).toFloat()
+        val redc = (cmax - r).toFloat() / diff
+        val greenc = (cmax - g).toFloat() / diff
+        val bluec = (cmax - b).toFloat() / diff
         hue = if (r == cmax) bluec - greenc else if (g == cmax) 2.0f + redc - bluec else 4.0f + greenc - redc
         hue /= 6.0f
-        if (hue < 0) hue += 1.0f
+        if (hue < 0f) hue += 1.0f
     }
     out[0] = hue
     out[1] = saturation
@@ -173,7 +175,7 @@ fun RGBtoHSB(r: Int, g: Int, b: Int, out: FloatArray? = null): FloatArray {
 /**
  * Takes an ARGB integer color and returns a [Color] object.
  */
-fun Int.toColor() = Color(RGBtoHSB(this shr 16 and 0xFF, this shr 8 and 0xFF, this and 0xFF), this shr 24 and 0xFF)
+fun Int.toColor() = PolyColor(RGBtoHSB(this shr 16 and 0xFF, this shr 8 and 0xFF, this and 0xFF), (this shr 24 and 0xFF) / 255f)
 
 @kotlin.internal.InlineOnly
 inline val Int.red get() = this shr 16 and 0xFF
@@ -214,6 +216,11 @@ fun Pair<Int, Int>.simplifyRatio(): Pair<Int, Int> {
     val gcd = first.gcd(second)
     return Pair(first / gcd, second / gcd)
 }
+
+/**
+ * Return an immutable copy of this vector.
+ */
+fun Vec2.makeImmutable() = Vec2.Immutable(this.x, this.y)
 
 /**
  * Returns the value closer to zero.
@@ -274,19 +281,13 @@ inline fun String.translated(): Translator.Text = Translator.Text.Simple(this)
 @kotlin.internal.InlineOnly
 inline fun Any?.identityHashCode() = System.identityHashCode(this)
 
-/**
- * Return true if the Collection is empty or null.
- */
-@kotlin.internal.InlineOnly
-inline fun Collection<*>?.isEmpty() = this?.isEmpty() ?: true
-
 fun Short.fromModifierMerged(): Array<KeyModifiers> = KeyModifiers.fromModifierMerged(this)
 
 @kotlin.internal.InlineOnly
 inline fun Short.hasModifier(mod: Modifiers): Boolean = this and mod.value != 0.toShort()
 
 @kotlin.internal.InlineOnly
-inline fun Array<out KeyModifiers>.merge(): Short = KeyModifiers.merge(*this)
+inline fun Array<KeyModifiers>.merge(): Short = KeyModifiers.merge(*this)
 
 /**
  * Moves the given element from the [from] index to the [to] index.
@@ -304,6 +305,15 @@ inline fun <E> Array<E>.moveElement(from: Int, to: Int) {
     this[to] = item
 }
 
+fun FloatArray.areEqual(): Boolean {
+    if (isEmpty()) return true
+    val first = this[0]
+    for (i in 1 until size) {
+        if (this[i] != first) return false
+    }
+    return true
+}
+
 /**
  * Return this collection as an LinkedList. **Note:** if it is already a LinkedList, it will be returned as-is.
  */
@@ -318,21 +328,7 @@ inline fun <T> Array<T>.asLinkedList(): LinkedList<T> = LinkedList(*this)
  * @since 1.0.2
  */
 @kotlin.internal.InlineOnly
-inline fun <K, V> MutableMap<K, V>.maybeRemove(key: K, shouldRemove: Boolean) = if (shouldRemove) remove(key) else get(key)
-
-fun Drawable.printInfo() {
-    var c: Drawable? = parent
-    var i = 0
-    val sb = StringBuilder().append("Tree for $this:\n")
-    while (c != null) {
-        sb.append("\t", i).append(c.toString()).append('\n')
-        c = c.parent
-        i++
-    }
-    i++
-    sb.append("\t", i).append(polyUI.toString())
-    println(sb.toString())
-}
+inline fun <K, V> MutableMap<K, V>.maybeRemove(key: K, shouldRemove: Boolean): V? = if (shouldRemove) remove(key) else get(key)
 
 /**
  * Perform the given function on both elements of this pair. The highest common type of both elements is used as the type of the parameter.

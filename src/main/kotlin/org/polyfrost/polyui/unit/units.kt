@@ -24,6 +24,8 @@
 
 package org.polyfrost.polyui.unit
 
+import kotlin.jvm.internal.Ref.LongRef
+
 /** note that the smallest unit of time in PolyUI is 1 nanosecond. */
 @get:JvmName("nanoseconds")
 @kotlin.internal.InlineOnly
@@ -53,6 +55,9 @@ val AlignDefault = Align()
 
 @kotlin.internal.InlineOnly
 inline val Number.vec get() = Vec2(toFloat(), toFloat())
+
+@kotlin.internal.InlineOnly
+inline fun Long.toChromaSpeed() = LongRef().also { it.element = this }
 
 fun Vec2.makeRelative(to: Vec2? = null): Vec2.Relative {
     return if (this is Vec2.Relative) {

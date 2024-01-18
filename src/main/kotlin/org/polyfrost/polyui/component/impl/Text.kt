@@ -36,6 +36,7 @@ import org.polyfrost.polyui.utils.cl1
 import org.polyfrost.polyui.utils.splitTo
 import org.polyfrost.polyui.utils.wrap
 import kotlin.math.max
+import kotlin.math.min
 
 open class Text(text: Translator.Text, font: Font = PolyUI.defaultFonts.regular, fontSize: Float = 12f, at: Vec2? = null, alignment: Align = AlignDefault, wrap: Float = 0f, visibleSize: Vec2? = null, focusable: Boolean = false, vararg children: Drawable?) :
     Drawable(at, alignment, visibleSize = visibleSize, focusable = focusable, children = children) {
@@ -108,10 +109,11 @@ open class Text(text: Translator.Text, font: Font = PolyUI.defaultFonts.regular,
         }
     }
 
-    override fun rescale(scaleX: Float, scaleY: Float) {
-        super.rescale(scaleX, scaleY)
+    override fun rescale(scaleX: Float, scaleY: Float, position: Boolean) {
+        super.rescale(scaleX, scaleY, position)
         val scale = cl1(scaleX, scaleY)
         fontSize *= scale
+        spacing *= scale
     }
 
     @Suppress("deprecation_error")
@@ -130,7 +132,7 @@ open class Text(text: Translator.Text, font: Font = PolyUI.defaultFonts.regular,
         return true
     }
 
-    fun updateTextBounds(renderer: Renderer = this.renderer) {
+    open fun updateTextBounds(renderer: Renderer = this.renderer) {
         val wrap = if (!hasVisibleSize) wrap else visibleSize.x
         lines.clear()
         text.splitTo('\n', dest = lines)
@@ -158,9 +160,9 @@ open class Text(text: Translator.Text, font: Font = PolyUI.defaultFonts.regular,
             it.wrap(wrap, renderer, font, fontSize, lines)
         }
         val new = lines.size * (fontSize + spacing) - spacing
-        if (visibleSize.y != 0f && new > visibleSize.y) {
+        if (lines.size > 1 && visibleSize.y != 0f && new > visibleSize.y) {
             // asm: text is larger than its box, cut off the last lines, but a minimum of 1 line
-            lines.cut(0, max((visibleSize.y / (fontSize + spacing)).toInt(), 1))
+            lines.cut(0, min(lines.size - 1, (visibleSize.y / (fontSize + spacing)).toInt()))
             size.y = visibleSize.y
         } else size.y = new
         size.x = wrap

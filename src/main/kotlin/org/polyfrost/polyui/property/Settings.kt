@@ -35,7 +35,7 @@ class Settings {
      * It can be enabled using `-Dpolyui.debug=true` in the JVM arguments, or by pressing Ctrl+Shift+I in the application [if enabled][enableDebugKeybind].
      */
     @get:JvmName("isDebugMode")
-    @set:JvmName("enableDebug")
+    @set:JvmName("enableDebugMode")
     var debug = System.getProperty("polyui.debug", "true").toBoolean()
 
     /** enable the debug keybind in the window (Ctrl+Shift+I)

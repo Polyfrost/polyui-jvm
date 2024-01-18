@@ -40,6 +40,15 @@ abstract class Animation(var durationNanos: Long, var from: Float, var to: Float
             field = value
         }
 
+    /**
+     * finish the animation now.
+     * @since 1.0.5
+     */
+    fun finishNow() {
+        passedTime = durationNanos.toFloat()
+        update(0L)
+    }
+
     fun reset() {
         passedTime = 0f
         value = from

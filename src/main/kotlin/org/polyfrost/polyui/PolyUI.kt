@@ -26,9 +26,10 @@ import org.polyfrost.polyui.color.DarkTheme
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.Positioner
+import org.polyfrost.polyui.component.countChildren
 import org.polyfrost.polyui.component.impl.Block
 import org.polyfrost.polyui.component.impl.Group
-import org.polyfrost.polyui.event.EventManager
+import org.polyfrost.polyui.event.InputManager
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Modifiers
@@ -47,6 +48,7 @@ import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.text.DecimalFormat
 import kotlin.math.max
 import kotlin.math.min
 
@@ -79,14 +81,14 @@ import kotlin.math.min
  * ## How it Works
  * [Components][org.polyfrost.polyui.component.Drawable] are the interactive parts of the UI, such as buttons, text fields, etc.
  *
- * **Interactions** are driven by [events][EventManager], which thanks to Kotlin's inlining are a zero-overhead way of distributing events, such as [mouse clicks][org.polyfrost.polyui.event.Event.Mouse.Clicked], or [key presses][org.polyfrost.polyui.event.Event.Focused.KeyPressed].
+ * **Interactions** are driven by [events][InputManager], which thanks to Kotlin's inlining are a zero-overhead way of distributing events, such as [mouse clicks][org.polyfrost.polyui.event.Event.Mouse.Clicked], or [key presses][org.polyfrost.polyui.event.Event.Focused.KeyPressed].
  *
  * PolyUI also supports a variety of [animations][org.polyfrost.polyui.animate.Animation] and transitions, which can be used to make your UI more dynamic, along with dynamically [adding][Drawable.addChild] and [removing][Drawable.removeChild] components.
  */
 class PolyUI @JvmOverloads constructor(
     val renderer: Renderer,
     settings: Settings? = null,
-    eventManager: EventManager? = null,
+    inputManager: InputManager? = null,
     translator: Translator? = null,
     backgroundColor: PolyColor? = null,
     masterAlignment: Align? = null,
@@ -151,9 +153,10 @@ class PolyUI @JvmOverloads constructor(
      * This is the root layout of the UI. It is the parent of all other layouts.
      */
     val master: Drawable
+
     init {
         val align = masterAlignment ?: Align(cross = Align.Cross.Start, padding = Vec2.ZERO)
-        master = if(backgroundColor == null) {
+        master = if (backgroundColor == null) {
             Group(at = Vec2(), size = renderer.size, children = drawables, alignment = align)
         } else {
             Block(at = Vec2(), size = renderer.size, children = drawables, alignment = align, radii = 0f.radii()).also {
@@ -162,8 +165,14 @@ class PolyUI @JvmOverloads constructor(
         }
     }
 
-    val eventManager = eventManager?.with(master.children) ?: EventManager(master.children, KeyBinder(this.settings), this.settings)
-    inline val keyBinder get() = eventManager.keyBinder
+    val inputManager = inputManager?.with(master) ?: InputManager(master, KeyBinder(this.settings), this.settings)
+
+    /**
+     * Get the [KeyBinder] for this PolyUI instance.
+     *
+     * This value may be null as the key binder is optional.
+     */
+    inline val keyBinder get() = inputManager.keyBinder
     val translator = translator ?: Translator(this.settings, "")
     var positioner: Positioner = Positioner.Default()
 
@@ -180,9 +189,9 @@ class PolyUI @JvmOverloads constructor(
         private set
     private val clock = Clock()
     private val executors: LinkedList<Clock.Executor> = LinkedList()
-    inline val mouseX get() = eventManager.mouseX
-    inline val mouseY get() = eventManager.mouseY
-    inline val mouseDown get() = eventManager.mouseDown
+    inline val mouseX get() = inputManager.mouseX
+    inline val mouseY get() = inputManager.mouseY
+    inline val mouseDown get() = inputManager.mouseDown
 
     /**
      * The cursor currently being displayed.
@@ -193,8 +202,14 @@ class PolyUI @JvmOverloads constructor(
             field = value
             window.setCursor(value)
         }
-    inline val size: Vec2 get() = renderer.size
-    val scaleChanges = Vec2()
+    inline val size: Vec2 get() = master.size
+
+    /**
+     * this property stores the initial size of this PolyUI instance.
+     * It is used to make sure that new objects experience the same resizing as others.
+     * @since 1.0.5
+     */
+    val iSize = size.makeImmutable()
     private val hooks = LinkedList<Renderer.() -> Boolean>()
     private val preHooks = LinkedList<Renderer.() -> Boolean>()
 
@@ -223,13 +238,10 @@ class PolyUI @JvmOverloads constructor(
 
     init {
         LOGGER.info("PolyUI initializing...")
+        if (master.children.isNullOrEmpty()) LOGGER.warn("PolyUI initialized with no children!")
         master.simpleName += " [Master]"
         master.setup(this)
-        master.onAllChildren {
-            it.tryMakeScrolling()
-        }
-        @Suppress("NAME_SHADOWING")
-        val settings = this.settings
+        master.tryMakeScrolling()
 //        if (settings.framebuffersEnabled && renderer.supportsFramebuffers()) {
 //            if (settings.isMasterFrameBuffer) {
 //                if (settings.debug) LOGGER.info("Master is using framebuffer")
@@ -242,14 +254,14 @@ class PolyUI @JvmOverloads constructor(
 //            }
 //        }
 
-        if (settings.enableDebugKeybind) {
+        if (this.settings.enableDebugKeybind) {
             this.keyBinder?.add(
                 KeyBinder.Bind('I', mods = mods(KeyModifiers.LCONTROL, KeyModifiers.LSHIFT)) {
-                    settings.debug = !settings.debug
+                    this.settings.debug = !this.settings.debug
                     master.needsRedraw = true
                     LOGGER.info(
                         "Debug mode {}",
-                        if (settings.debug) {
+                        if (this.settings.debug) {
                             frames = 0
                             "enabled"
                         } else {
@@ -261,7 +273,7 @@ class PolyUI @JvmOverloads constructor(
             )
             this.keyBinder?.add(
                 KeyBinder.Bind('P', mods = mods(KeyModifiers.LCONTROL)) {
-                    debugPrint()
+                    println(debugPrint())
                     true
                 },
             )
@@ -273,13 +285,14 @@ class PolyUI @JvmOverloads constructor(
                 true
             },
         )
+        val f = DecimalFormat("#.###")
 //        var td = System.nanoTime()
         every(1.seconds) {
-//            val diff = (System.nanoTime() - td) / 1_000_000_000f
+//            val diff = (System.nanoTime() - td) / 1_000_000_000.0
 //            td = System.nanoTime()
-//            LOGGER.info("took $diff sec (accuracy = ${100f - (diff - 1f) * 100f}%)")
-            if (settings.debug && drew) {
-                perf = "fps: $fps, avg/max/min: ${"%.4f".format(avgFrame)}ms; ${"%.4f".format(longestFrame)}ms; ${"%.4f".format(shortestFrame)}ms"
+//            LOGGER.info("took $diff sec (accuracy = ${100.0 - (diff - 1.0) * 100.0}%)")
+            if (this.settings.debug && drew) {
+                perf = "fps: $fps, avg/max/min: ${f.format(avgFrame.toDouble())}ms; ${f.format(longestFrame.toDouble())}ms; ${f.format(shortestFrame.toDouble())}ms"
                 longestFrame = 0f
                 shortestFrame = 100f
                 avgFrame = timeInFrames / fps
@@ -289,8 +302,8 @@ class PolyUI @JvmOverloads constructor(
                 LOGGER.info(perf)
             }
         }
-        if (settings.debug) debugPrint()
-        if (settings.cleanupOnShutdown) {
+        if (this.settings.debug) println(debugPrint())
+        if (this.settings.cleanupOnShutdown) {
             Runtime.getRuntime().addShutdownHook(
                 Thread {
                     LOGGER.info("Quitting!")
@@ -298,7 +311,7 @@ class PolyUI @JvmOverloads constructor(
                 },
             )
         }
-        if (settings.cleanupAfterInit) {
+        if (this.settings.cleanupAfterInit) {
             val currentUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
             timed("Running Post-init Cleanup...") {
                 Runtime.getRuntime().gc()
@@ -359,13 +372,11 @@ class PolyUI @JvmOverloads constructor(
             }
         }
 
-        if (settings.debug) LOGGER.info("resize: {}x{}", newWidth, newHeight)
+        if (settings.debug) LOGGER.info("resize: ${newWidth}x${newHeight}")
 
 
         val sx = newWidth / size.x
         val sy = newHeight / size.y
-        scaleChanges.x = sx
-        scaleChanges.y = sy
         master.rescale(sx, sy)
 
 //        master.onAllLayouts {
@@ -396,9 +407,9 @@ class PolyUI @JvmOverloads constructor(
                 if (frameTime < shortestFrame) shortestFrame = frameTime
                 frames++
                 drawDebugOverlay(0f, size.y - 11f)
-                if (!eventManager.hasFocused) {
-                    if (eventManager.keyModifiers.hasModifier(Modifiers.LCONTROL)) {
-                        val obj = eventManager.primaryCandidate
+                if (!inputManager.hasFocused) {
+                    if (inputManager.keyModifiers.hasModifier(Modifiers.LCONTROL)) {
+                        val obj = inputManager.primaryCandidate
                         if (obj != null) {
                             val os = obj.toString()
                             val w = renderer.textBounds(monospaceFont, os, 10f).width
@@ -408,8 +419,8 @@ class PolyUI @JvmOverloads constructor(
                             master.needsRedraw = true
                         }
                     }
-                    if (eventManager.keyModifiers.hasModifier(Modifiers.LSHIFT)) {
-                        val s = "${eventManager.mouseX}x${eventManager.mouseY}"
+                    if (inputManager.keyModifiers.hasModifier(Modifiers.LSHIFT)) {
+                        val s = "${inputManager.mouseX}x${inputManager.mouseY}"
                         val ww = renderer.textBounds(monospaceFont, s, 10f).width
                         val ppos = min(max(0f, mouseX + 10f), this.size.x - ww - 10f)
                         val pposy = min(max(0f, mouseY), this.size.y - 14f)
@@ -426,7 +437,7 @@ class PolyUI @JvmOverloads constructor(
         } else {
             drew = false
         }
-        keyBinder?.update(delta, eventManager.keyModifiers)
+        keyBinder?.update(delta, inputManager.keyModifiers)
         executors.fastRemoveIfReversed { it.tick(delta) }
     }
 
@@ -455,17 +466,6 @@ class PolyUI @JvmOverloads constructor(
     }
 
     /**
-     * Remove a drawable on the next frame where [Drawable.canBeRemoved] returns true.
-     *
-     * Once this function is called, it cannot be revoked. Calling this function twice with the same drawable will break.
-     */
-    fun forRemoval(children: LinkedList<Drawable>, index: Int) {
-        hooks.add {
-            children.fastRemoveIfIndexed { i, it -> i == index && it.canBeRemoved() }
-        }
-    }
-
-    /**
      * Add a function to be executed just before a render cycle begins.
      *
      * Any modifications to the renderer at this point such as transformations will affect the rendering of the entire UI.
@@ -476,10 +476,31 @@ class PolyUI @JvmOverloads constructor(
         preHooks.add(func)
     }
 
-    /** add a function that is called every [nanos] nanoseconds. */
-    fun every(nanos: Long, repeats: Int = 0, func: () -> Unit): PolyUI {
-        executors.add(Clock.FixedTimeExecutor(nanos, repeats, func))
-        return this
+    /**
+     * add a function that is called every [nanos] nanoseconds.
+     *
+     * Note that the requested time is not guaranteed to be accurate, especially on small values (less than 5ms).
+     * It will be executed at the end of the next frame. The executor will overshoot much more often that it will undershoot.
+     *
+     * From testing, a requested time of 1 second is about 99.3% accurate. `(+7ms, -0.01ms)`
+     *
+     * @see removeExecutor
+     */
+    fun every(nanos: Long, repeats: Int = 0, func: () -> Unit): Clock.Executor {
+        val exec = Clock.FixedTimeExecutor(nanos, repeats, func)
+        executors.add(exec)
+        return exec
+    }
+
+    /**
+     * Remove a clock-based executor from this PolyUI instance.
+     * @return `true` if the executor was successfully removed.
+     * @see every
+     * @since 1.0.5
+     */
+    fun removeExecutor(executor: Clock.Executor?): Boolean {
+        if (executor == null) return false
+        return executors.remove(executor)
     }
 
     /**
@@ -488,9 +509,9 @@ class PolyUI @JvmOverloads constructor(
      * @param focusable the element to set focus on
      * @return true if focus was successfully set, false if the provided focusable is already focused
      */
-    fun focus(focusable: Drawable?) = eventManager.focus(focusable)
+    fun focus(focusable: Drawable?) = inputManager.focus(focusable)
 
-    fun unfocus() = eventManager.unfocus()
+    fun unfocus() = inputManager.unfocus()
 
     /**
      * Return the key name for the given key code.
@@ -498,7 +519,7 @@ class PolyUI @JvmOverloads constructor(
     fun getKeyName(key: Int) = window.getKeyName(key)
 
     /**
-     * print this PolyUI instance's components and children in a list, like this:
+     * return a string of this PolyUI instance's components and children in a list, like this:
      * ```
      * PolyUI(800.0 x 800.0) with 0 components and 2 layouts:
      *   PixelLayout@5bcab519 [Draggable](20.0x570.0, 540.0 x 150.0)
@@ -513,22 +534,19 @@ class PolyUI @JvmOverloads constructor(
      * 	 Block@6574b225(132.02026x30.0, 52.75415x52.59597)
      * 	 Block@2669b199(189.77441x30.0, 76.59671x45.275665)
      * ```
-     * The string is also returned.
      */
     fun debugPrint(): String {
         val sb = StringBuilder().append(toString())
         val children = master.children ?: run {
-            sb.append(" with 0 components")
-            @Suppress("DEPRECATION")
-            return sb.toString().stdout()
+            sb.append(" with 0 children, totalling 0 components.")
+            return sb.toString()
         }
         sb.append(" with ${children.size} children, totalling ${master.countChildren()} components:")
         children.fastEach {
             sb.append("\n\t").append(it.toString())
             debugPrint(it.children ?: return@fastEach, 1, sb)
         }
-        @Suppress("DEPRECATION")
-        return sb.toString().stdout()
+        return sb.toString()
     }
 
     private fun debugPrint(list: LinkedList<Drawable>, depth: Int, sb: StringBuilder) {
@@ -548,7 +566,7 @@ class PolyUI @JvmOverloads constructor(
      * Time the [block] and return how long it took, as well as logging with the [msg] if [debug][org.polyfrost.polyui.property.Settings.debug] is active.
      * @since 0.18.5
      */
-    fun timed(msg: String? = null, block: () -> Unit): Long {
+    inline fun timed(msg: String? = null, block: () -> Unit): Long {
         if (msg != null && settings.debug) LOGGER.info(msg)
         val now = System.nanoTime()
         block()
