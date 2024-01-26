@@ -27,6 +27,7 @@ import org.polyfrost.polyui.renderer.data.Cursor
 
 class NoOpWindow(title: String, width: Int, height: Int) : Window(width, height) {
     override fun open(polyUI: PolyUI): Window {
+        polyUI.window = this
         while (true) {
             polyUI.render()
         }

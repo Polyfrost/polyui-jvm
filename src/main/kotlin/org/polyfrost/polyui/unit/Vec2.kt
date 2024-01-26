@@ -187,50 +187,37 @@ open class Vec2(open var x: Float = 0f, open var y: Float = 0f) : Comparable<Vec
 
     public override fun clone() = Vec2(x, y)
 
-    abstract class Sourced(source: Vec2? = null) : Vec2() {
-        @get:Deprecated("external access to the source value is bad practice.")
-        var source: Vec2? = source
+    abstract class Sourced(source: Vec2 = ZERO) : Vec2() {
+        var source: Vec2 = source
             set(value) {
-                if (value == null) return
-                if (value == field) return
                 sourceChanged(value)
                 field = value
             }
 
-        @get:Suppress("Deprecation")
-        inline val sourced get() = source != null
+        inline val sourced get() = source !== ZERO
 
         protected open fun sourceChanged(source: Vec2) {}
-
-        protected fun source(): Vec2 {
-            @Suppress("Deprecation")
-            return source ?: throw UninitializedPropertyAccessException("source vector not initialized")
-        }
-
-        protected fun source(or: Vec2): Vec2 {
-            @Suppress("Deprecation")
-            return source ?: or
-        }
     }
 
-    class Relative(x: Float = 0f, y: Float = 0f, parent: Vec2? = null) : Sourced(parent) {
+    class Relative(x: Float = 0f, y: Float = 0f, parent: Vec2 = ZERO) : Sourced(parent) {
+        // todo OPTIMIZE this is fucking slow
         override var x: Float
-            get() = super.x + source(or = ZERO).x
+            get() = super.x + source.x
             set(value) {
-                super.x = value - source(or = ZERO).x
+                super.x = value - source.x
             }
         override var y: Float
-            get() = super.y + source(or = ZERO).y
+            get() = super.y + source.y
             set(value) {
-                super.y = value - source(or = ZERO).y
+                super.y = value - source.y
             }
 
         /**
          * Effectively make this vector equal to the [source].
          */
         fun zero(): Relative {
-            x -= source(or = ZERO).x
-            y -= source(or = ZERO).y
+            x -= source.x
+            y -= source.y
             return this
         }
 
@@ -238,8 +225,8 @@ open class Vec2(open var x: Float = 0f, open var y: Float = 0f) : Comparable<Vec
             // asm: if we didn't zero it, it would scale the source as well, making it effectively square itself each time
             zero()
             super.scale(xScale, yScale)
-            x += source(or = ZERO).x
-            y += source(or = ZERO).y
+            x += source.x
+            y += source.y
         }
 
         init {
@@ -247,7 +234,6 @@ open class Vec2(open var x: Float = 0f, open var y: Float = 0f) : Comparable<Vec
             this.y = y
         }
 
-        @Suppress("Deprecation")
         override fun clone() = Relative(x, y, source)
     }
 
@@ -278,15 +264,15 @@ open class Vec2(open var x: Float = 0f, open var y: Float = 0f) : Comparable<Vec
      * ⣿⣿⣿⣿⠿⠛⠉⠉⠁⠀⢻⣿⡇⠀⠀⠀⠀⠀⠀⢀⠈⣿⣿⡿⠉⠛⠛⠛⠉⠉
      * ⣿⡿⠋⠁⠀⠀⢀⣀⣠⡴⣸⣿⣇⡄⠀⠀⠀⠀⢀⡿⠄⠙⠛⠀⣀⣠⣤⣤⠄⠀
      */
-    class Based(x: Float = 0f, y: Float = 0f, base: Vec2? = null) : Sourced(base) {
+    class Based(x: Float = 0f, y: Float = 0f, base: Vec2 = ZERO) : Sourced(base) {
         override var x: Float
-            get() = super.x + source(or = ZERO).x
+            get() = super.x + source.x
             set(value) {
                 super.x = value
             }
 
         override var y: Float
-            get() = super.y + source(or = ZERO).y
+            get() = super.y + source.y
             set(value) {
                 super.y = value
             }
@@ -297,23 +283,22 @@ open class Vec2(open var x: Float = 0f, open var y: Float = 0f) : Comparable<Vec
         }
 
         override fun scale(xScale: Float, yScale: Float) {
-            var sx = x - source(or = ZERO).x
-            var sy = y - source(or = ZERO).y
+            var sx = x - source.x
+            var sy = y - source.y
             sx *= xScale
             sy *= yScale
             x = sx
             y = sy
         }
 
-        @Suppress("Deprecation")
         override fun clone() = Based(x, y, source)
     }
 
-    class Percent(percentX: Float, percentY: Float, source: Vec2? = null) : Sourced(source) {
+    class Percent(percentX: Float, percentY: Float, source: Vec2 = ZERO) : Sourced(source) {
         override var x: Float
-            get() = super.x * source(or = ZERO).x
+            get() = super.x * source.x
         override var y: Float
-            get() = super.y * source(or = ZERO).y
+            get() = super.y * source.y
 
         init {
             this.x = percentX

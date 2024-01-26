@@ -44,16 +44,16 @@ class NoOpRenderer(size: Vec2) : Renderer(size) {
     override fun translate(x: Float, y: Float) {
     }
 
-    override fun scale(x: Float, y: Float) {
+    override fun scale(sx: Float, sy: Float, px: Float, py: Float) {
     }
 
-    override fun rotate(angleRadians: Double) {
+    override fun rotate(angleRadians: Double, px: Float, py: Float) {
     }
 
-    override fun skewX(angleRadians: Double) {
+    override fun skewX(angleRadians: Double, px: Float, py: Float) {
     }
 
-    override fun skewY(angleRadians: Double) {
+    override fun skewY(angleRadians: Double, px: Float, py: Float) {
     }
 
     override fun pushScissor(x: Float, y: Float, width: Float, height: Float) {
@@ -81,7 +81,7 @@ class NoOpRenderer(size: Vec2) : Renderer(size) {
     ) {
     }
 
-    override fun textBounds(font: Font, text: String, fontSize: Float) = Vec2.ZERO
+    override fun textBounds(font: Font, text: String, fontSize: Float) = Vec2.ONE
 
     override fun initImage(image: PolyImage) {
     }
@@ -167,4 +167,6 @@ class NoOpRenderer(size: Vec2) : Renderer(size) {
     }
 
     override fun supportsFramebuffers() = false
+
+    override fun transformsWithPoint() = false
 }

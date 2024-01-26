@@ -69,13 +69,15 @@ class NVGRenderer(size: Vec2) : Renderer(size) {
 
     override fun translate(x: Float, y: Float) = nvgTranslate(vg, x, y)
 
-    override fun scale(x: Float, y: Float) = nvgScale(vg, x, y)
+    override fun scale(sx: Float, sy: Float, px: Float, py: Float) = nvgScale(vg, sx, sy)
 
-    override fun rotate(angleRadians: Double) = nvgRotate(vg, angleRadians.toFloat())
+    override fun rotate(angleRadians: Double, px: Float, py: Float) = nvgRotate(vg, angleRadians.toFloat())
 
-    override fun skewX(angleRadians: Double) = nvgSkewX(vg, angleRadians.toFloat())
+    override fun skewX(angleRadians: Double, px: Float, py: Float) = nvgSkewX(vg, angleRadians.toFloat())
 
-    override fun skewY(angleRadians: Double) = nvgSkewY(vg, angleRadians.toFloat())
+    override fun skewY(angleRadians: Double, px: Float, py: Float) = nvgSkewY(vg, angleRadians.toFloat())
+
+    override fun transformsWithPoint() = false
 
     override fun push() = nvgSave(vg)
 
@@ -328,13 +330,13 @@ class NVGRenderer(size: Vec2) : Renderer(size) {
 
     private fun color(color: Color) {
         if (color is Color.Gradient) {
-            nvgRGBA(color.r.toByte(), color.g.toByte(), color.b.toByte(), color.a.toByte(), nvgColor2)
+            nvgRGBA(color.r.toByte(), color.g.toByte(), color.b.toByte(), color.a.toByte(), nvgColor)
             nvgRGBA(
-                color.color1.r.toByte(),
-                color.color1.g.toByte(),
-                color.color1.b.toByte(),
-                color.color1.a.toByte(),
-                nvgColor,
+                color.color2.r.toByte(),
+                color.color2.g.toByte(),
+                color.color2.b.toByte(),
+                color.color2.a.toByte(),
+                nvgColor2,
             )
         } else {
             nvgRGBA(color.r.toByte(), color.g.toByte(), color.b.toByte(), color.a.toByte(), nvgColor)
@@ -396,13 +398,14 @@ class NVGRenderer(size: Vec2) : Renderer(size) {
             )
 
             is Color.Gradient.Type.Radial -> {
+                val type = color.type as Color.Gradient.Type.Radial
                 nvgRadialGradient(
                     vg,
                     // smart-cast impossible: [x] is a public API property declared in different module (bit cringe)
-                    if ((color.type as Color.Gradient.Type.Radial).centerX == -1f) x + (width / 2f) else (color.type as Color.Gradient.Type.Radial).centerX,
-                    if ((color.type as Color.Gradient.Type.Radial).centerY == -1f) y + (height / 2f) else (color.type as Color.Gradient.Type.Radial).centerY,
-                    (color.type as Color.Gradient.Type.Radial).innerRadius,
-                    (color.type as Color.Gradient.Type.Radial).outerRadius,
+                    if (type.centerX == -1f) x + (width / 2f) else type.centerX,
+                    if (type.centerY == -1f) y + (height / 2f) else type.centerY,
+                    type.innerRadius,
+                    type.outerRadius,
                     nvgColor,
                     nvgColor2,
                     nvgPaint,

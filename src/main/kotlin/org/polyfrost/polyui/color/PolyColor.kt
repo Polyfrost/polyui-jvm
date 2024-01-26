@@ -241,8 +241,11 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
         fun from(hex: String, alpha: Float = 1f) = from(hex, (alpha * 255).toInt())
 
         @JvmStatic
-        fun hexOf(color: Color): String {
-            return "#${Integer.toHexString(color.argb).uppercase()}"
+        fun hexOf(color: Color, alpha: Boolean = true): String {
+            if (alpha) {
+                return "#${Integer.toHexString(color.argb).uppercase()}"
+            }
+            return "#${Integer.toHexString(color.argb and 0x00FFFFFF).uppercase()}"
         }
     }
 
@@ -352,17 +355,34 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
 
     /** A gradient color. */
     class Gradient @JvmOverloads constructor(color1: Color, color2: Color, val type: Type = Type.TopLeftToBottomRight) :
-        Animated(color2.hue, color2.saturation, color2.brightness, color2.alpha) {
-        val color1 = if (color1 !is Animated) color1.toAnimatable() else color1
+        Animated(color1.hue, color1.saturation, color1.brightness, color1.alpha) {
+
+        /** `this` */
+        var color1: Animated
+            inline get() = this
+            set(value) {
+                hue = value.hue
+                saturation = value.saturation
+                brightness = value.brightness
+                alpha = value.alpha
+            }
+
+        var color2 = if (color2 !is Animated) color2.toAnimatable() else color2
+
+        @get:JvmName("getARGB1")
+        val argb1 get() = super.argb
+
+        @get:JvmName("getARGB2")
+        val argb2 get() = color2.argb
 
         override val transparent: Boolean
-            get() = super.transparent && color1.transparent
+            get() = super.transparent && color2.transparent
 
         override val updating: Boolean
-            get() = super.updating || color1.updating
+            get() = super.updating || color2.updating
 
         init {
-            require(this.color1 !== this) { "color1 and color2 must be different objects" }
+            require(this.color2 !== this) { "color1 and color2 must be different objects" }
         }
 
         @Suppress("ConvertObjectToDataObject")
@@ -408,28 +428,22 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
 
         operator fun get(index: Int): Color {
             return when (index) {
-                0 -> color1
-                1 -> this
+                0 -> this
+                1 -> color2
                 else -> throw IndexOutOfBoundsException("index must be 0 or 1")
             }
         }
 
         operator fun set(index: Int, color: Color) = recolor(index, color)
 
-        @get:JvmName("getARGB1")
-        val argb1 get() = color1.argb
-
-        @get:JvmName("getARGB2")
-        val argb2 get() = super.argb
-
         override fun hashCode(): Int {
             var result = super.hashCode()
-            result = 31 * result + color1.hashCode()
+            result = 31 * result + color2.hashCode()
             result = 31 * result + type.hashCode()
             return result
         }
 
-        override fun clone() = Gradient(color1, this, type)
+        override fun clone() = Gradient(this, color2, type)
 
         /**
          * [Animated.recolor] this gradient color.
@@ -437,15 +451,14 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
          */
         fun recolor(whichColor: Int, target: Color, animation: Animation? = null) {
             when (whichColor) {
-                0 -> color1.recolor(target, animation)
-                1 -> super.recolor(target, animation)
+                0 -> super.recolor(target, animation)
+                1 -> color2.recolor(target, animation)
                 else -> throw IndexOutOfBoundsException("Invalid color index $whichColor: must be 0 or 1")
             }
         }
 
         override fun update(deltaTimeNanos: Long): Boolean {
-            color1.update(deltaTimeNanos)
-            return super.update(deltaTimeNanos)
+            return super.update(deltaTimeNanos) or color2.update(deltaTimeNanos)
         }
 
         /**

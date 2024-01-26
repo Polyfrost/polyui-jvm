@@ -49,7 +49,7 @@ abstract class DrawableOp(protected val self: Drawable) {
         override fun apply() {
             if (isFinished) return
             apply(animation?.update(self.polyUI.delta) ?: 1f)
-            self.needsRedraw = true
+            if (animation?.isFinished == false) self.needsRedraw = true
             return
         }
 

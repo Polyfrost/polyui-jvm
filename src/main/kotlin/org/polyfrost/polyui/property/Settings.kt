@@ -21,7 +21,6 @@
 
 package org.polyfrost.polyui.property
 
-import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.unit.milliseconds
 
 /** Settings for PolyUI.
@@ -99,7 +98,7 @@ class Settings {
      */
     @get:JvmName("isRenderPausingEnabled")
     @set:JvmName("enableRenderPausing")
-    var renderPausingEnabled = false
+    var renderPausingEnabled = true
 
     /**
      * If enabled, the command key on Mac will act as control inputs.

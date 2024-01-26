@@ -21,8 +21,11 @@
 
 package org.polyfrost.polyui
 
-import org.polyfrost.polyui.component.*
+import org.polyfrost.polyui.component.events
 import org.polyfrost.polyui.component.impl.*
+import org.polyfrost.polyui.component.makeChroma
+import org.polyfrost.polyui.component.onInit
+import org.polyfrost.polyui.component.withStates
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.renderer.impl.GLWindow
@@ -85,7 +88,7 @@ fun main() {
                             Event.Mouse.Clicked(0) then { _ ->
                                 val it = parent!!.parent!![5]
                                 it.children?.shuffle()
-                                it.repositionChildren()
+                                it.recalculateChildren()
                             }
                         },
                         Button("minus.svg".image()),

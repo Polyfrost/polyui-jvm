@@ -103,36 +103,36 @@ abstract class Renderer(val size: Vec2) : AutoCloseable {
     abstract fun translate(x: Float, y: Float)
 
     /**
-     * scales all future draw calls by the given amount.
+     * scales all future draw calls by the given amount, around the given point, [px] and [py] (if [supported][transformsWithPoint])
      *
      * **you must** do all your transforms inside a [push], [pop] pair!
      */
-    abstract fun scale(x: Float, y: Float)
+    abstract fun scale(sx: Float, sy: Float, px: Float, py: Float)
 
     /**
-     * rotate all future draw calls by the given amount.
+     * rotate all future draw calls by the given amount, around the given point, [px] and [py] (if [supported][transformsWithPoint])
      *
      * **you must** do all your transforms inside a [push], [pop] pair!
      */
-    abstract fun rotate(angleRadians: Double)
+    abstract fun rotate(angleRadians: Double, px: Float, py: Float)
 
     /**
-     * Skew all future draw calls by the given amount.
+     * Skew all future draw calls by the given amount, around the given point, [px] and [py] (if [supported][transformsWithPoint])
      *
      * **you must** do all your transforms inside a [push], [pop] pair!
      *
      * @since 0.16.1
      */
-    abstract fun skewX(angleRadians: Double)
+    abstract fun skewX(angleRadians: Double, px: Float, py: Float)
 
     /**
-     * Skew all future draw calls by the given amount.
+     * Skew all future draw calls by the given amount, around the given point, [px] and [py] (if [supported][transformsWithPoint])
      *
      * **you must** do all your transforms inside a [push], [pop] pair!
      *
      * @since 0.16.1
      */
-    abstract fun skewY(angleRadians: Double)
+    abstract fun skewY(angleRadians: Double, px: Float, py: Float)
 
     /**
      * begin a scissor rectangle, that will clip rendering to the given rectangle.
@@ -312,6 +312,16 @@ abstract class Renderer(val size: Vec2) : AutoCloseable {
      * @since 0.25.1
      */
     abstract fun supportsFramebuffers(): Boolean
+
+
+    /**
+     * Return `true` if your rendering implementation supports usage of `x` and `y` parameters on [scale], [rotate], [skewX], and [skewY].
+     *
+     * If you return `false`, PolyUI will automatically using [translate] to mimic this behavior.
+     *
+     * @since 1.0.8
+     */
+    abstract fun transformsWithPoint(): Boolean
 
     /** Create a new framebuffer. It is down to you (as a rendering implementation) to cache this, and dispose of it as necessary.
      * @return a PolyUI framebuffer object using the width and height passed to this method. This is used by PolyUI to identify it.

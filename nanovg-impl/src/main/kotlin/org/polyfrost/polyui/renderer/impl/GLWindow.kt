@@ -30,8 +30,10 @@ import org.lwjgl.opengl.GL.createCapabilities
 import org.lwjgl.opengl.GL.setCapabilities
 import org.lwjgl.opengl.GL20C.*
 import org.lwjgl.stb.STBImage
+import org.lwjgl.system.Configuration
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
+import org.lwjgl.system.Platform
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
@@ -41,6 +43,7 @@ import org.polyfrost.polyui.utils.getResourceStream
 import org.polyfrost.polyui.utils.simplifyRatio
 import org.polyfrost.polyui.utils.toByteBuffer
 import java.io.File
+import java.lang.invoke.MethodHandles
 import kotlin.math.max
 
 class GLWindow @JvmOverloads constructor(
@@ -81,10 +84,30 @@ class GLWindow @JvmOverloads constructor(
             glfwSetWindowTitle(handle, new)
         }
 
+    var enableMacOSFix = System.getProperty("polyui.glfwnomacfix", "true").toBoolean()
+
     init {
-        // asm: this fix removes the need for -XstartOnFirstThread on macOS
-        // see the doc of the org.lwjgl.glfw package for more info
-        // if (Platform.get() == Platform.MACOSX) Configuration.GLFW_LIBRARY_NAME.set("glfw_async")
+        if (Platform.get() == Platform.MACOSX && enableMacOSFix) {
+            val now = System.nanoTime()
+            PolyUI.LOGGER.warn("macOS detected: checking isMainThread()... (disable with -Dpolyui.glfwnomacfix)")
+            try {
+                // cheeky way to reflect out the method using the unsafe + IMPL_LOOKUP
+                // used as reflection does not work Java 9+
+                val ufield = sun.misc.Unsafe::class.java.getDeclaredField("theUnsafe")
+                ufield.setAccessible(true)
+                val unsafe = ufield.get(null) as sun.misc.Unsafe
+                val lfield = MethodHandles.Lookup::class.java.getDeclaredField("IMPL_LOOKUP")
+                val lookup = unsafe.getObject(unsafe.staticFieldBase(lfield), unsafe.staticFieldOffset(lfield)) as MethodHandles.Lookup
+                val isMainThread = lookup.unreflect(Class.forName("org.lwjgl.glfw.EventLoop").getDeclaredMethod("isMainThread")).invokeExact() as Boolean
+                if (!isMainThread) {
+                    PolyUI.LOGGER.warn("VM option -XstartOnMainThread is required on macOS. glfw_async has been set to avoid crashing.")
+                    Configuration.GLFW_LIBRARY_NAME.set("glfw_async")
+                }
+            } catch (e: Exception) {
+                PolyUI.LOGGER.error("Failed to check if isMainThread, may crash!", e)
+            }
+            PolyUI.LOGGER.warn("\t > took: ${(System.nanoTime() - now) / 1_000_000f}ms")
+        }
 
         GLFWErrorCallback.createPrint().set()
         if (!glfwInit()) throw RuntimeException("Failed to init GLFW")

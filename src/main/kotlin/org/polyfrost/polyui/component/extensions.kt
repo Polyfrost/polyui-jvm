@@ -55,12 +55,12 @@ const val MIN_DRAG = 3f
  *
  */
 fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, free: Boolean = false, onStart: (S.() -> Unit)? = null, onDrag: (S.() -> Unit)? = null, onDrop: (S.() -> Unit)? = null): S {
-    if (!withX && !withY) return this
     var pressed = false
     var px = 0f
     var py = 0f
     addEventHandler(Event.Mouse.Pressed(0)) {
         if (dragging) return@addEventHandler false
+        needsRedraw = true
         dragging = true
         pressed = true
         px = it.x - x
@@ -86,13 +86,14 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, fre
                     pressed = false
                     return
                 }
+                self.needsRedraw = true
                 if (!started) {
                     // asm: only start dragging if it has moved at least MIN_DRAG
-                    if (abs(px + x - polyUI.inputManager.mouseX) > MIN_DRAG || abs(py + y - polyUI.inputManager.mouseY) > MIN_DRAG) {
+                    if (abs(px + x - self.polyUI.inputManager.mouseX) > MIN_DRAG || abs(py + y - self.polyUI.inputManager.mouseY) > MIN_DRAG) {
                         started = true
-                        self.polyUI.unfocus()
                         onStart?.invoke(this@draggable)
                         if (free && self.parent !== self.polyUI.master) {
+                            if(self.polyUI.inputManager.focused !== self) self.polyUI.unfocus()
                             self.parent!!.children!!.remove(self)
                             self.polyUI.master.children!!.add(self)
                         }
@@ -101,15 +102,14 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, fre
                 val mx = self.polyUI.inputManager.mouseX
                 val my = self.polyUI.inputManager.mouseY
                 var i = false
-                if (withX && prevX != mx) {
-                    self.x = mx - px
+                if (prevX != mx) {
+                    if (withX) self.x = mx - px
                     i = true
                 }
-                if (withY && prevY != my) {
-                    self.y = my - py
+                if (prevY != my) {
+                    if (withY) self.y = my - py
                     i = true
                 }
-                needsRedraw = i
                 if (i) onDrag?.invoke(this@draggable)
                 prevX = mx
                 prevY = my
@@ -135,6 +135,7 @@ fun <S : Drawable> S.addHoverInfo(text: String?): S {
     onInit {
         obj.setup(polyUI)
         (parent ?: polyUI.master).addChild(obj, reposition = false)
+        obj.renders = false
         acceptsInput = true
     }
     var mx = 0f
@@ -199,6 +200,63 @@ fun <S : Drawable> S.setAlpha(alpha: Float): S {
 }
 
 /**
+ * Add a listener for changes to the given String-type property.
+ *
+ * In PolyUI, this is for [Text] and [TextInput][org.polyfrost.polyui.component.impl.TextInput] only.
+ * @since 1.0.6
+ */
+@JvmName("onChangeString")
+fun <S : Text> S.onChange(func: S.(String) -> Unit): S {
+    addEventHandler(Event.Change.Text()) {
+        func.invoke(this, it.text)
+    }
+    return this
+}
+
+
+/**
+ * Add a listener for changes to the given Boolean-type property.
+ *
+ * In PolyUI, this is for [Checkbox][org.polyfrost.polyui.component.impl.Checkbox] and [Switch][org.polyfrost.polyui.component.impl.Switch] only.
+ * @since 1.0.6
+ */
+@JvmName("onChangeState")
+fun <S : Drawable> S.onChange(func: S.(Boolean) -> Unit): S {
+    addEventHandler(Event.Change.State()) {
+        func.invoke(this, it.state)
+    }
+    return this
+}
+
+/**
+ * Add a listener for changes to the given Int-type property.
+ *
+ * In PolyUI, this is for [Radiobutton][org.polyfrost.polyui.component.impl.Radiobutton], and [Dropdown][org.polyfrost.polyui.component.impl.Dropdown] only.
+ * @since 1.0.6
+ */
+@JvmName("onChangeIndex")
+fun <S : Drawable> S.onChange(func: S.(Int) -> Unit): S {
+    addEventHandler(Event.Change.Number()) {
+        func.invoke(this, it.amount.toInt())
+    }
+    return this
+}
+
+/**
+ * Add a listener for changes to the given Float-type property.
+ *
+ * In PolyUI, this is for [Slider][org.polyfrost.polyui.component.impl.Slider] only.
+ * @since 1.0.6
+ */
+@JvmName("onChangeNumber")
+fun <S : Drawable> S.onChange(func: S.(Float) -> Unit): S {
+    addEventHandler(Event.Change.Number()) {
+        func.invoke(this, it.amount.toFloat())
+    }
+    return this
+}
+
+/**
  * Set the color palette of this drawable during initialization, using the PolyUI colors instance.
  */
 fun <S : Drawable> S.setPalette(palette: Colors.() -> Colors.Palette): S {
@@ -248,6 +306,16 @@ fun <S : Drawable> S.withStates(consume: Boolean = false, showClicker: Boolean =
     addEventHandler(Event.Mouse.Released(0)) {
         Recolor(this, this.palette.hovered, animation?.invoke()).add()
         consume
+    }
+    return this
+}
+
+fun <S : Drawable> S.withCursor(cursor: Cursor = Cursor.Clicker): S {
+    addEventHandler(Event.Mouse.Entered) {
+        polyUI.cursor = cursor
+    }
+    addEventHandler(Event.Mouse.Exited) {
+        polyUI.cursor = Cursor.Pointer
     }
     return this
 }
@@ -329,6 +397,7 @@ fun Drawable.hasParentOf(drawable: Drawable): Boolean {
 fun Drawable.hasChildIn(x: Float, y: Float, width: Float, height: Float): Boolean {
     val children = this.children ?: return false
     children.fastEach {
+        if (!it.renders) return@fastEach
         if (it.intersects(x, y, width, height)) return true
     }
     return false

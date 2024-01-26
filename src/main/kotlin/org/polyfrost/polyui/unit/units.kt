@@ -60,15 +60,14 @@ inline val Number.vec get() = Vec2(toFloat(), toFloat())
 inline fun Long.toChromaSpeed() = LongRef().also { it.element = this }
 
 fun Vec2.makeRelative(to: Vec2? = null): Vec2.Relative {
-    return if (this is Vec2.Relative) {
-        this.source = to
-        this
-    } else if (to == null) {
-        Vec2.Relative(this.x, this.y)
-    } else {
-        Vec2.Relative(this.x - to.x, this.y - to.y, to)
-    }
-
+    return if (to != null) {
+        if (this is Vec2.Relative) {
+            this.source = to
+            this
+        } else {
+            Vec2.Relative(this.x - to.x, this.y - to.y, to)
+        }
+    } else Vec2.Relative(this.x, this.y)
 }
 
 /**

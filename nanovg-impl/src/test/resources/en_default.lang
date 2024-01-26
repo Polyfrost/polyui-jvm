@@ -1,6 +1,10 @@
 polyui.test=Kotlin...        {}!    and image
 polyui.button=I am a button.
 polyui.textinput.placeholder=Write something...
+polyui.color.solid=Solid color
+polyui.color.gradient=Gradient color
+polyui.color.chroma=Chroma color
+polyui.color.hex=HEX
 polyfrost.copyright=© Polyfrost 2023. All rights reserved.
 button.randomize=Randomize order
 text.light=Flashbang mode

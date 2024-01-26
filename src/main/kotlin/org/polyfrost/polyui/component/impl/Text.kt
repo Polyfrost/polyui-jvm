@@ -39,16 +39,26 @@ import kotlin.math.max
 import kotlin.math.min
 
 open class Text(text: Translator.Text, font: Font = PolyUI.defaultFonts.regular, fontSize: Float = 12f, at: Vec2? = null, alignment: Align = AlignDefault, wrap: Float = 0f, visibleSize: Vec2? = null, focusable: Boolean = false, vararg children: Drawable?) :
-    Drawable(at, alignment, visibleSize = visibleSize, focusable = focusable, children = children) {
+    Drawable(children = children, at, alignment, visibleSize = visibleSize, focusable = focusable) {
 
     constructor(text: String, font: Font = PolyUI.defaultFonts.regular, fontSize: Float = 12f, at: Vec2? = null, alignment: Align = AlignDefault, wrap: Float = 0f, visibleSize: Vec2? = null, focusable: Boolean = false, vararg children: Drawable?) :
-            this(Translator.Text.Simple(text), font, fontSize, at, alignment, wrap, visibleSize, focusable, *children)
+            this(Translator.Text.Simple(text), font, fontSize, at, alignment, wrap, visibleSize, focusable, children = children)
 
     private val hasVisibleSize = visibleSize != null
 
     init {
         require(fontSize > 0f) { "Font size must be greater than 0" }
     }
+
+    /**
+     * @since 1.0.6
+     */
+    var strikethrough = false
+
+    /**
+     * @since 1.0.6
+     */
+    var underline = false
 
     var wrap: Float = wrap
         set(value) {
@@ -89,6 +99,40 @@ open class Text(text: Translator.Text, font: Font = PolyUI.defaultFonts.regular,
             updateTextBounds()
         }
 
+    /**
+     * The weight of the [font].
+     *
+     * Setting of this value only works if this font is a member of a family.
+     * @since 1.0.7
+     */
+    var fontWeight: Font.Weight
+        inline get() = font.weight
+        set(value) {
+            val fam = font.family
+            if (fam == null) {
+                PolyUI.LOGGER.error("cannot set font weight on $this: Font was not created in a family")
+                return
+            }
+            font = fam.get(value, italic)
+        }
+
+    /**
+     * `true` if [font] is italic
+     *
+     * Setting of this value only works if this font is a member of a family.
+     * @since 1.0.7
+     */
+    var italic: Boolean
+        inline get() = font.italic
+        set(value) {
+            val fam = font.family
+            if (fam == null) {
+                PolyUI.LOGGER.error("cannot set italic on $this: Font was not created in a family")
+                return
+            }
+            font = fam.get(fontWeight, value)
+        }
+
     @Transient
     var fontSize = fontSize
         set(value) {
@@ -103,8 +147,18 @@ open class Text(text: Translator.Text, font: Font = PolyUI.defaultFonts.regular,
 
     override fun render() {
         var y = this.y
+        val strikethrough = strikethrough
+        val underline = underline
         lines.fastEach {
             renderer.text(font, x, y, it, color, fontSize)
+            if (strikethrough) {
+                val hf = y + fontSize / 2f
+                renderer.line(x, hf, x + width, hf, color, 1f)
+            }
+            if (underline) {
+                val ff = y + fontSize - spacing + 1f
+                renderer.line(x, ff, x + width, ff, color, 1f)
+            }
             y += fontSize + spacing
         }
     }

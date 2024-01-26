@@ -35,7 +35,7 @@ class Group(
     alignment: Align = AlignDefault,
     size: Vec2? = null,
     visibleSize: Vec2? = null,
-) : Drawable(at, alignment, size, visibleSize, children = children) {
+) : Drawable(children = children, at, alignment, size, visibleSize) {
     override var renders: Boolean
         get() = super.renders && !children.isNullOrEmpty()
         set(value) {

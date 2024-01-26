@@ -40,7 +40,7 @@ open class Image(
     var backgroundColor: PolyColor? = null,
     vararg children: Drawable?
 ) :
-    Block(at, Vec2.Based(base = image.size), alignment, visibleSize, false, null, radii, *children) {
+    Block(children = children, at, Vec2.Based(base = image.size), alignment, visibleSize, false, null, radii) {
     var image: PolyImage = image
         set(value) {
             field = value

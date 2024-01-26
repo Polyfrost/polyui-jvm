@@ -31,6 +31,7 @@ import org.polyfrost.polyui.utils.cl1
 import org.polyfrost.polyui.utils.radii
 
 open class Block @JvmOverloads constructor(
+    vararg children: Drawable?,
     at: Vec2? = null,
     size: Vec2? = null,
     alignment: Align = AlignDefault,
@@ -38,8 +39,7 @@ open class Block @JvmOverloads constructor(
     focusable: Boolean = false,
     color: PolyColor? = null,
     val radii: FloatArray = 8f.radii(),
-    vararg children: Drawable?,
-) : Drawable(at, alignment, size, visibleSize, focusable = focusable, children = children) {
+) : Drawable(children = children, at, alignment, size, visibleSize, focusable = focusable) {
     var boarderColor: PolyColor? = null
     var boarderWidth: Float = 2f
 

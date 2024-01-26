@@ -22,18 +22,17 @@
 package org.polyfrost.polyui.event
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Contract
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_HOVERED
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_NONE
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
 import org.polyfrost.polyui.component.Drawable
-import org.polyfrost.polyui.component.hasParentOf
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.property.Settings
-import org.polyfrost.polyui.utils.LinkedList
 import java.io.File
 import kotlin.experimental.and
 import kotlin.experimental.inv
@@ -50,8 +49,14 @@ class InputManager(
     var keyBinder: KeyBinder?,
     private val settings: Settings,
 ) {
-    private val mouseOvers = LinkedList<Drawable>()
-    val primaryCandidate get() = mouseOvers.lastOrNull()
+    var mouseOver: Drawable? = null
+        private set(value) {
+            if (field === value) return
+            field?.inputState = INPUT_NONE
+            value?.inputState = INPUT_HOVERED
+            field = value
+        }
+
     var mouseX: Float = 0f
         private set
     var mouseY: Float = 0f
@@ -67,15 +72,16 @@ class InputManager(
 
     /** tracker for the combo */
     private var clickedButton: Int = 0
-    private var focused: Drawable? = null
-    val hasFocused get() = focused != null
+
+    var focused: Drawable? = null
+        private set
 
     /** weather or not the left button/primary click is DOWN (aka repeating) */
     var mouseDown = false
         private set
 
-    fun with(drawables: Drawable): InputManager {
-        this.master = drawables
+    fun with(master: Drawable): InputManager {
+        this.master = master
         return this
     }
 
@@ -133,26 +139,17 @@ class InputManager(
      */
     fun recalculate() = mouseMoved(mouseX, mouseY)
 
+
     /**
-     * Internal function that will forcefully drop the given drawable from event tracking.
+     * Drop the current mouse over drawable.
      */
     @ApiStatus.Internal
-    fun drop(drawable: Drawable) {
-        mouseOvers.fastRemoveIfReversed {
-            if (it === drawable || it.hasParentOf(drawable)) {
-                it.inputState = INPUT_NONE
-                true
-            } else {
-                false
+    fun drop(it: Drawable? = null) {
+        if (it != null) {
+            if (it === mouseOver) {
+                mouseOver = null
             }
-        }
-    }
-
-    @ApiStatus.Internal
-    fun drop() {
-        mouseOvers.clearing {
-            it.inputState = INPUT_NONE
-        }
+        } else mouseOver = null
     }
 
     /**
@@ -189,61 +186,43 @@ class InputManager(
         keyModifiers = 0
     }
 
+
     /**
-     * Internal method for drawables, tracking it if it does not consume the events.
+     * perform a recursive ray check on the drawable.
+     * Each drawable will be checked with [Drawable.enabled], then [Drawable.isInside], then finally [Drawable.acceptsInput]
+     * before it is considered a valid candidate.
      *
-     * This is used for event dispatching.
+     * Note that this functions inclusion in public API is experimental.
+     *
+     * @since 1.0.7
      */
-    @ApiStatus.Internal
-    fun processCandidate(drawable: Drawable, x: Float, y: Float): Boolean {
-        if (!drawable.enabled) return false
-        if (!drawable.acceptsInput) return true
-        return when (drawable.inputState) {
-            INPUT_NONE -> {
-                if (!mouseDown && drawable.isInside(x, y)) {
-                    drawable.inputState = INPUT_HOVERED
-//                    if (mouseOvers.contains(drawable)) throw IllegalArgumentException()
-                    mouseOvers.add(drawable)
-                    true
-                } else false
-            }
-
-            INPUT_HOVERED -> {
-                if (!drawable.isInside(x, y)) {
-                    drawable.inputState = INPUT_NONE
-                    mouseOvers.remove(drawable)
-                    false
-                } else true
-            }
-
-            else -> true
-        }
-    }
-
-
-    private fun processCandidates(drawables: LinkedList<Drawable>, x: Float, y: Float) {
-        drawables.fastEachReversed a@{
-            val inside = processCandidate(it, x, y)
-            val children = it.children ?: return@a
-            if (inside) {
-                processCandidates(children, x, y)
-            } else {
-                drop(it)
+    @ApiStatus.Experimental
+    @Contract(pure = true)
+    fun rayCheck(it: Drawable, x: Float, y: Float): Drawable? {
+        var c: Drawable? = null
+        if (it.enabled && it.isInside(x, y)) {
+            if (it.acceptsInput) c = it
+            it.children?.fastEach {
+                val n = rayCheck(it, x, y)
+                if (n != null) c = n
             }
         }
+        return c
     }
 
     /** call this function to update the mouse position. */
     fun mouseMoved(x: Float, y: Float) {
         mouseX = x
         mouseY = y
-        processCandidates(master.children ?: return, x, y)
+        if (mouseDown) return
+        mouseOver = rayCheck(master, x, y)
     }
 
     fun mousePressed(button: Int) {
         if (button == 0) mouseDown = true
         val event = Event.Mouse.Pressed(button, mouseX, mouseY, keyModifiers)
-        dispatchPress(event, true)
+        mouseOver?.inputState = INPUT_PRESSED
+        dispatch(event)
     }
 
     /** call this function when a mouse button is released. */
@@ -267,14 +246,15 @@ class InputManager(
             }
             clickTimer = curr
         }
-        if (focused?.inputState == INPUT_NONE) {
+        if (focused?.isInside(mouseX, mouseY) != true) {
             unfocus()
         }
         val release = Event.Mouse.Released(button, mouseX, mouseY, keyModifiers)
         val click = Event.Mouse.Clicked(button, mouseX, mouseY, clickAmount, keyModifiers)
-        dispatchPress(release, false)
+        mouseOver?.inputState = INPUT_HOVERED
+        dispatch(release)
         if (!dispatch(click) && button == 0) {
-            mouseOvers.fastEachReversed { if (safeFocus(it)) return }
+            safeFocus(mouseOver)
         }
     }
 
@@ -308,29 +288,22 @@ class InputManager(
     }
 
     /**
-     * Dispatch an event to this PolyUI instance, and it will be given to any tracked drawable.
+     * Dispatch an event to the provided drawable.
+     *
+     * If the candidate drawable does not accept the event (returns `false`), it will be given to the parent, and so on.
+     *
+     * **Note that changing of the [to] parameter is experimental.**
      */
-    fun dispatch(event: Event): Boolean {
+    fun dispatch(event: Event, to: Drawable? = mouseOver): Boolean {
         if (keyBinder?.accept(event) == true) return true
-        mouseOvers.fastEachReversed {
-            if (it.accept(event)) {
-                return true
-            }
+        var candidate = to
+        while (candidate != null) {
+            if (candidate.accept(event)) return true
+            candidate = candidate.parent
         }
         return false
     }
 
-    private fun dispatchPress(event: Event, state: Boolean): Boolean {
-        if (keyBinder?.accept(event) == true) return true
-        val mode = if (state) INPUT_PRESSED else INPUT_HOVERED
-        mouseOvers.fastEachReversed {
-            it.inputState = mode
-            if (it.accept(event)) {
-                return true
-            }
-        }
-        return false
-    }
 
     /**
      * Sets the focus to the specified focusable element, throwing an exception if the provided element is not focusable.
@@ -342,7 +315,7 @@ class InputManager(
      */
     fun focus(focusable: Drawable?): Boolean {
         if (focusable === focused) return false
-        require(focusable?.focusable ?: true) { "Cannot focus un-focusable drawable!" }
+        require(focusable?.focusable != false) { "Cannot focus un-focusable drawable!" }
         focused?.accept(Event.Focused.Lost)
         focused = focusable
         return focused?.accept(Event.Focused.Gained) == true

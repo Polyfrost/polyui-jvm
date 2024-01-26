@@ -19,6 +19,8 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+@file:Suppress("invisible_member", "invisible_reference")
+
 package org.polyfrost.polyui
 
 import org.polyfrost.polyui.color.Colors
@@ -76,7 +78,7 @@ import kotlin.math.min
  *  - [render][org.polyfrost.polyui.component.Drawable.render]: This is where the actual rendering happens.
  *  - [postRender][org.polyfrost.polyui.component.Drawable.postRender]: This will do post-rendering logic, such as cleaning up transformations.
  *
- * Check out [some components][org.polyfrost.polyui.component.impl] to see how this works.
+ * Check out [some components][org.polyfrost.polyui.component.impl.Block] to see how this works.
  *
  * ## How it Works
  * [Components][org.polyfrost.polyui.component.Drawable] are the interactive parts of the UI, such as buttons, text fields, etc.
@@ -145,7 +147,8 @@ class PolyUI @JvmOverloads constructor(
      *
      * @since 0.18.3
      */
-    var clipboard: String?
+    @kotlin.internal.InlineOnly
+    inline var clipboard: String?
         get() = window.getClipboard()
         set(value) = window.setClipboard(value)
 
@@ -172,6 +175,7 @@ class PolyUI @JvmOverloads constructor(
      *
      * This value may be null as the key binder is optional.
      */
+    @kotlin.internal.InlineOnly
     inline val keyBinder get() = inputManager.keyBinder
     val translator = translator ?: Translator(this.settings, "")
     var positioner: Positioner = Positioner.Default()
@@ -189,8 +193,14 @@ class PolyUI @JvmOverloads constructor(
         private set
     private val clock = Clock()
     private val executors: LinkedList<Clock.Executor> = LinkedList()
+
+    @kotlin.internal.InlineOnly
     inline val mouseX get() = inputManager.mouseX
+
+    @kotlin.internal.InlineOnly
     inline val mouseY get() = inputManager.mouseY
+
+    @kotlin.internal.InlineOnly
     inline val mouseDown get() = inputManager.mouseDown
 
     /**
@@ -202,6 +212,8 @@ class PolyUI @JvmOverloads constructor(
             field = value
             window.setCursor(value)
         }
+
+    @kotlin.internal.InlineOnly
     inline val size: Vec2 get() = master.size
 
     /**
@@ -227,6 +239,7 @@ class PolyUI @JvmOverloads constructor(
     var fps: Int = 1
         private set
     private var frames = 0
+    private var nframes = 0L
     var longestFrame = 0f
         private set
     var shortestFrame = 100f
@@ -293,12 +306,17 @@ class PolyUI @JvmOverloads constructor(
 //            LOGGER.info("took $diff sec (accuracy = ${100.0 - (diff - 1.0) * 100.0}%)")
             if (this.settings.debug && drew) {
                 perf = "fps: $fps, avg/max/min: ${f.format(avgFrame.toDouble())}ms; ${f.format(longestFrame.toDouble())}ms; ${f.format(shortestFrame.toDouble())}ms"
+                if (this.settings.renderPausingEnabled && window.supportsRenderPausing()) {
+                    val skipPercent = (1.0 - (frames.toDouble() / nframes)) * 100.0
+                    perf += ", skip=${f.format(skipPercent)}%"
+                }
                 longestFrame = 0f
                 shortestFrame = 100f
                 avgFrame = timeInFrames / fps
                 timeInFrames = 0f
                 fps = frames
                 frames = 0
+                nframes = 0
                 LOGGER.info(perf)
             }
         }
@@ -392,6 +410,7 @@ class PolyUI @JvmOverloads constructor(
 
     fun render() {
         delta = clock.delta
+        nframes++
         if (master.needsRedraw) {
             renderer.beginFrame()
             preHooks.fastRemoveIfReversed { it(renderer) }
@@ -407,9 +426,9 @@ class PolyUI @JvmOverloads constructor(
                 if (frameTime < shortestFrame) shortestFrame = frameTime
                 frames++
                 drawDebugOverlay(0f, size.y - 11f)
-                if (!inputManager.hasFocused) {
+                if (inputManager.focused == null) {
                     if (inputManager.keyModifiers.hasModifier(Modifiers.LCONTROL)) {
-                        val obj = inputManager.primaryCandidate
+                        val obj = inputManager.mouseOver
                         if (obj != null) {
                             val os = obj.toString()
                             val w = renderer.textBounds(monospaceFont, os, 10f).width

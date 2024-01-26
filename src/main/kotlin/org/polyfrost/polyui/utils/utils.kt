@@ -30,7 +30,9 @@ import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Vec2
+import kotlin.enums.EnumEntries
 import kotlin.experimental.and
+import kotlin.jvm.internal.Ref
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.floor
@@ -57,7 +59,7 @@ fun rgba(r: Int, g: Int, b: Int, a: Float = 1f) = PolyColor(r, g, b, a)
  * value of a color in bits 0-23 of an integer value that is the same
  * format used by the method getARGB().
  * This integer can be supplied as an argument to the
- * [toColor] method that takes a single integer argument to create a [Color].
+ * [toColor] method that takes a single integer argument to create a [PolyColor].
  * @param hue the hue component of the color
  * @param saturation the saturation of the color
  * @param brightness the brightness of the color
@@ -139,7 +141,7 @@ fun HSBtoRGB(hue: Float, saturation: Float, brightness: Float): Int {
  * @param b the blue component of the color
  * @param out the array used to return the three HSB values, or `null`
  * @return an array of three elements containing the hue, saturation, and brightness (in that order), of the color with the indicated red, green, and blue components.
- * @see Color
+ * @see PolyColor
  * @since 0.18.2
  */
 @Suppress("FunctionName", "NAME_SHADOWING")
@@ -173,7 +175,7 @@ fun RGBtoHSB(r: Int, g: Int, b: Int, out: FloatArray? = null): FloatArray {
 }
 
 /**
- * Takes an ARGB integer color and returns a [Color] object.
+ * Takes an ARGB integer color and returns a [PolyColor] object.
  */
 fun Int.toColor() = PolyColor(RGBtoHSB(this shr 16 and 0xFF, this shr 8 and 0xFF, this and 0xFF), (this shr 24 and 0xFF) / 255f)
 
@@ -207,6 +209,22 @@ fun Int.gcd(b: Int): Int {
     }
     return a
 }
+
+/**
+ * Get an enum constant by its name, or `null` if [name] is `null`; or does not match any of this enum's constants.
+ */
+fun <E : Enum<E>> EnumEntries<E>.getByName(name: String?, ignoreCase: Boolean = false): E? {
+    if (name == null) return null
+    for (entry in this) {
+        if (entry.name.equals(name, ignoreCase)) return entry
+    }
+    return null
+}
+
+/**
+ * Return a list of the names of the entries in this enum.
+ */
+fun EnumEntries<*>.names() = this.map { it.name }
 
 /**
  * Simplify a ratio of two integers.
@@ -312,6 +330,35 @@ fun FloatArray.areEqual(): Boolean {
         if (this[i] != first) return false
     }
     return true
+}
+
+/**
+ * Ensure that this list is at least [size] elements long, and if it is not, add elements to it using the given [initializer].
+ * @since 1.0.7
+ */
+fun <T> MutableList<T>.ensureSize(size: Int, initializer: (Int) -> T): MutableList<T> {
+    if (this.size < size) {
+        for (i in this.size until size) {
+            this.add(initializer(i))
+        }
+    }
+    return this
+}
+
+/**
+ * Box the given value into a [Ref.ObjectRef].
+ */
+fun <T> T.ref(): Ref.ObjectRef<T> {
+    val ref = Ref.ObjectRef<T>()
+    ref.element = this
+    return ref
+}
+
+/**
+ * Return the value of this [Ref.ObjectRef].
+ */
+fun <T> Ref.ObjectRef<T>.deref(): T {
+    return this.element
 }
 
 /**

@@ -44,8 +44,8 @@ fun getResourceStream(resourcePath: String) =
     getResourceStreamNullable(resourcePath)
         ?: throw FileNotFoundException(
             "Resource $resourcePath not found " +
-                "(check your Properties, and make sure the file " +
-                "is in the resources folder/on classpath; or the URL is valid)",
+                    "(check your Properties, and make sure the file " +
+                    "is in the resources folder/on classpath; or the URL is valid)",
         )
 
 /**
@@ -85,6 +85,7 @@ fun getResourceStreamNullable(resourcePath: String): InputStream? {
     return i
 }
 
+@Deprecated("This method is rather wasteful, and usage should be avoided.")
 fun resourceExists(resourcePath: String): Boolean {
     val s = getResourceStreamNullable(resourcePath)?.close()
     return s != null

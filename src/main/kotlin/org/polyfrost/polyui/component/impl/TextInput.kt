@@ -39,7 +39,7 @@ import org.polyfrost.polyui.utils.dropAt
 import org.polyfrost.polyui.utils.substringSafe
 import kotlin.math.min
 
-class TextInput(
+open class TextInput(
     text: String = "",
     placeholder: String = "polyui.textinput.placeholder",
     font: Font = PolyUI.defaultFonts.regular,
@@ -112,6 +112,7 @@ class TextInput(
 
     override fun accept(event: Event): Boolean {
         if (!enabled) return false
+        needsRedraw = true
         return when (event) {
             is Event.Mouse.Entered -> {
                 polyUI.cursor = Cursor.Text
@@ -433,11 +434,6 @@ class TextInput(
 
     override fun updateTextBounds(renderer: Renderer) {
         super.updateTextBounds(renderer)
-        linesData.clear()
-        lines.fastEach {
-            val size = renderer.textBounds(font, it, fontSize)
-            linesData.add(size.x)
-        }
         if (text.isEmpty()) {
             val bounds = renderer.textBounds(font, _placeholder.string, fontSize)
             size.ensureLargerThan(bounds)
