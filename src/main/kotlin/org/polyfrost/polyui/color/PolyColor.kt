@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -36,7 +36,6 @@ import org.polyfrost.polyui.utils.rgba
  * @see [PolyColor.Gradient]
  */
 open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, brightness: Float, alpha: Float = 1f) : Cloneable {
-
     /**
      * The hue of this color. Can be any value, but is `mod 360`, so values are always between 0 and 360.
      */
@@ -252,7 +251,6 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
         brightness: Float,
         alpha: Float,
     ) : Color(hue, saturation, brightness, alpha) {
-
         /** return if the color is still updating (i.e. it has an animation to finish) */
         open val updating get() = animation != null
 
@@ -350,7 +348,6 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
     /** A gradient color. */
     class Gradient @JvmOverloads constructor(color1: Color, color2: Color, val type: Type = Type.TopLeftToBottomRight) :
         Animated(color1.hue, color1.saturation, color1.brightness, color1.alpha) {
-
         /** `this` */
         var color1: Animated
             inline get() = this
@@ -382,8 +379,11 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
         @Suppress("ConvertObjectToDataObject")
         sealed interface Type {
             object TopToBottom : Type
+
             object LeftToRight : Type
+
             object TopLeftToBottomRight : Type
+
             object BottomLeftToTopRight : Type
 
             /**

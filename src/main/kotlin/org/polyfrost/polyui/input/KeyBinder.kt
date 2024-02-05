@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -201,12 +201,37 @@ class KeyBinder(private val settings: Settings) {
     }
 
     class Bind(val unmappedKeys: IntArray? = null, val keys: Array<Keys>? = null, val mouse: IntArray? = null, val mods: Modifiers = Modifiers(0), val durationNanos: Long = 0L, @Transient val action: () -> Boolean) {
+        constructor(chars: CharArray? = null, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: () -> Boolean) : this(
+            chars?.map {
+                it.code
+            }?.toIntArray(),
+            keys, mouse, mods, durationNanos, action,
+        )
 
-        constructor(chars: CharArray? = null, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: () -> Boolean) : this(chars?.map { it.code }?.toIntArray(), keys, mouse, mods, durationNanos, action)
         constructor(char: Char, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: () -> Boolean) : this(intArrayOf(char.code), keys, mouse, mods, durationNanos, action)
-        constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Array<Mouse>? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: () -> Boolean) : this(unmappedKeys, keys, mouse?.map { it.value.toInt() }?.toIntArray(), mods, durationNanos, action)
-        constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Mouse? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: () -> Boolean) : this(unmappedKeys, keys, mouse?.value?.let { intArrayOf(it.toInt()) }, mods, durationNanos, action)
-        constructor(unmappedKeys: IntArray? = null, key: Keys? = null, mouse: Array<Mouse>? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: () -> Boolean) : this(unmappedKeys, key?.let { arrayOf(it) }, mouse, mods, durationNanos, action)
+        constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Array<Mouse>? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: () -> Boolean) : this(
+            unmappedKeys, keys,
+            mouse?.map {
+                it.value.toInt()
+            }?.toIntArray(),
+            mods, durationNanos, action,
+        )
+
+        constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Mouse? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: () -> Boolean) : this(
+            unmappedKeys, keys,
+            mouse?.value?.let {
+                intArrayOf(it.toInt())
+            },
+            mods, durationNanos, action,
+        )
+
+        constructor(unmappedKeys: IntArray? = null, key: Keys? = null, mouse: Array<Mouse>? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: () -> Boolean) : this(
+            unmappedKeys,
+            key?.let {
+                arrayOf(it)
+            },
+            mouse, mods, durationNanos, action,
+        )
 
         @Transient
         private var time = 0L

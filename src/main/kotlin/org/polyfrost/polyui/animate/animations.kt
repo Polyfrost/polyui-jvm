@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -34,7 +34,9 @@ class Linear(durationNanos: Long, start: Float, end: Float) :
 abstract class Easing(val type: Type, durationNanos: Long, start: Float, end: Float) :
     Animation(durationNanos, start, end) {
     abstract fun getValueInOut(percent: Float): Float
+
     abstract fun getValueIn(percent: Float): Float
+
     abstract fun getValueOut(percent: Float): Float
 
     final override fun getValue(percent: Float): Float {
@@ -56,6 +58,7 @@ abstract class Easing(val type: Type, durationNanos: Long, start: Float, end: Fl
         private inline val overshoot get() = 1.70158f
         private inline val overshoot2 get() = 2.70158f
         private inline val overshoot3 get() = overshoot * 1.525f
+
         override fun getValueOut(percent: Float): Float {
             return 1f + overshoot2 * (percent - 1f).pow(3f) + overshoot * (percent - 1f).pow(2f)
         }
@@ -77,7 +80,6 @@ abstract class Easing(val type: Type, durationNanos: Long, start: Float, end: Fl
 
     class Bump(type: Type, durationNanos: Long, start: Float, end: Float) :
         Easing(type, durationNanos, start, end) {
-
         override fun getValueOut(percent: Float): Float {
             return (3.7 * (percent - 1.0).pow(3.0) + 1.7 * 1.2 * (percent - 1.0).pow(2.0)).toFloat()
         }

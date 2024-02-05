@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -258,7 +258,7 @@ class LinkedList<T>() : MutableList<T>, Cloneable {
 
     override fun contains(element: T) = indexOf(element) != -1
 
-        inline fun fastEach(action: (T) -> Unit) {
+    inline fun fastEach(action: (T) -> Unit) {
         var current = start
         while (current != null) {
             action(current.value)
@@ -266,7 +266,7 @@ class LinkedList<T>() : MutableList<T>, Cloneable {
         }
     }
 
-        inline fun fastEachIndexed(action: (Int, T) -> Unit) {
+    inline fun fastEachIndexed(action: (Int, T) -> Unit) {
         var current = start
         var i = 0
         while (current != null) {
@@ -276,7 +276,7 @@ class LinkedList<T>() : MutableList<T>, Cloneable {
         }
     }
 
-        inline fun fastEachReversed(action: (T) -> Unit) {
+    inline fun fastEachReversed(action: (T) -> Unit) {
         var current = end
         while (current != null) {
             action(current.value)
@@ -284,7 +284,7 @@ class LinkedList<T>() : MutableList<T>, Cloneable {
         }
     }
 
-        inline fun fastRemoveIf(predicate: (T) -> Boolean): Boolean {
+    inline fun fastRemoveIf(predicate: (T) -> Boolean): Boolean {
         var current = start
         var out = false
         while (current != null) {
@@ -297,7 +297,7 @@ class LinkedList<T>() : MutableList<T>, Cloneable {
         return out
     }
 
-        inline fun fastRemoveIfIndexed(predicate: (Int, T) -> Boolean): Boolean {
+    inline fun fastRemoveIfIndexed(predicate: (Int, T) -> Boolean): Boolean {
         var current = start
         var i = 0
         var out = false
@@ -312,7 +312,7 @@ class LinkedList<T>() : MutableList<T>, Cloneable {
         return out
     }
 
-        inline fun fastRemoveIfReversed(predicate: (T) -> Boolean): Boolean {
+    inline fun fastRemoveIfReversed(predicate: (T) -> Boolean): Boolean {
         var current = end
         var out = false
         while (current != null) {
@@ -325,7 +325,7 @@ class LinkedList<T>() : MutableList<T>, Cloneable {
         return out
     }
 
-        inline fun clearing(function: (T) -> Unit): Boolean {
+    inline fun clearing(function: (T) -> Unit): Boolean {
         if (size == 0) return false
         var current = start
         while (current != null) {
@@ -394,7 +394,7 @@ class LinkedList<T>() : MutableList<T>, Cloneable {
      * **Note this function** will return `true` if the list is empty, according to the principle of [Vacuous truth](https://en.wikipedia.org/wiki/Vacuous_truth),
      * and the fact that there are no elements that don't match the given predicate.
      */
-        inline fun allAre(predicate: (T) -> Boolean): Boolean {
+    inline fun allAre(predicate: (T) -> Boolean): Boolean {
         var current = start
         while (current != null) {
             if (!predicate(current.value)) return false
@@ -428,11 +428,11 @@ class LinkedList<T>() : MutableList<T>, Cloneable {
         }
     }
 
-        inline fun first(): T = start?.value ?: throw NoSuchElementException("list is empty.")
+    inline fun first(): T = start?.value ?: throw NoSuchElementException("list is empty.")
 
-        inline fun firstOrNull(): T? = start?.value
+    inline fun firstOrNull(): T? = start?.value
 
-        inline fun first(predicate: (T) -> Boolean): T {
+    inline fun first(predicate: (T) -> Boolean): T {
         var current = start
         while (current != null) {
             if (predicate(current.value)) return current.value
@@ -441,9 +441,9 @@ class LinkedList<T>() : MutableList<T>, Cloneable {
         throw NoSuchElementException("No element found matching the given predicate.")
     }
 
-        inline fun last(): T = end?.value ?: throw NoSuchElementException("list is empty.")
+    inline fun last(): T = end?.value ?: throw NoSuchElementException("list is empty.")
 
-        inline fun lastOrNull(): T? = end?.value
+    inline fun lastOrNull(): T? = end?.value
 
     override fun equals(other: Any?): Boolean {
         if (other !is Collection<*>) return false
@@ -493,6 +493,7 @@ class LinkedList<T>() : MutableList<T>, Cloneable {
     class LLIterator<T>(private val it: LinkedList<T>, startIndex: Int) : MutableListIterator<T> {
         private var current: Node<T>? = it._get(startIndex)
         private var idx: Int = startIndex - 1
+
         override fun hasNext() = current != null
 
         override fun next(): T {

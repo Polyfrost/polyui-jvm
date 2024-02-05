@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -51,7 +51,8 @@ open class FontFamily(
         f.deleteOnExit()
         PolyUI.LOGGER.info("Extracting font $name to temporary directory... ($f)")
         f.mkdirs()
-        val zip = ZipInputStream(getResourceStreamNullable(path)?.buffered() ?: throw IllegalArgumentException("Font zip file $path not found!"))
+        val zip =
+            ZipInputStream(getResourceStreamNullable(path)?.buffered() ?: throw IllegalArgumentException("Font zip file $path not found!"))
         while (true) {
             val entry = zip.nextEntry ?: break
             val file = f.resolve(entry.name)

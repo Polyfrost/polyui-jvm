@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -18,6 +18,7 @@
  *   You should have received a copy of the GNU Lesser General Public
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
+
 @file:Suppress("EqualsOrHashCode")
 
 package org.polyfrost.polyui.operations
@@ -64,6 +65,7 @@ class Fade<S : Drawable>(
 ) : DrawableOp.Animatable<S>(drawable, animation, onFinish) {
     private val ia = self.alpha
     private val ta = if (add) alpha else alpha - ia
+
     override fun apply(value: Float) {
         self.alpha = ia + (ta * value)
     }

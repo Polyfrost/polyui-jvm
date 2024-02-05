@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -38,7 +38,6 @@ open class DarkTheme : Colors {
             rgba(17, 23, 28, 0.5f),
         ),
         bgOverlay = rgba(255, 255, 255, 0.1f),
-
         fg = Colors.Palette(
             Color.TRANSPARENT,
             rgba(26, 34, 41),
@@ -46,7 +45,6 @@ open class DarkTheme : Colors {
             rgba(26, 34, 41, 0.5f),
         ),
         fgOverlay = rgba(255, 255, 255, 0.1f),
-
         border20 = rgba(255, 255, 255, 0.2f),
         border10 = rgba(255, 255, 255, 0.1f),
         border5 = rgba(255, 255, 255, 0.05f),
@@ -59,7 +57,6 @@ open class DarkTheme : Colors {
             rgba(57, 87, 255),
             rgba(57, 87, 255, 0.5f),
         ),
-
         accent = Colors.Palette(
             rgba(15, 28, 51),
             rgba(12, 23, 41),
@@ -75,7 +72,6 @@ open class DarkTheme : Colors {
             rgba(225, 229, 255),
             rgba(225, 229, 255, 0.5f),
         ),
-
         accent = Colors.Palette(
             rgba(63, 124, 228),
             rgba(63, 124, 228, 0.85f),
@@ -91,14 +87,12 @@ open class DarkTheme : Colors {
             rgba(255, 86, 86),
             rgba(255, 68, 68, 0.5f),
         ),
-
         warning = Colors.Palette(
             rgba(255, 171, 29),
             rgba(233, 156, 27),
             rgba(255, 178, 49),
             rgba(255, 171, 29, 0.5f),
         ),
-
         success = Colors.Palette(
             rgba(35, 154, 96),
             rgba(26, 135, 82),

@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -45,7 +45,6 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
-
 private var dragging = false
 const val MIN_DRAG = 3f
 
@@ -77,6 +76,7 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, fre
         private var prevX = 0f
         private var prevY = 0f
         private var started = false
+
         override fun apply() {
             if (pressed) {
                 if (self.inputState != INPUT_PRESSED) {
@@ -98,7 +98,7 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, fre
                         started = true
                         onStart?.invoke(this@draggable)
                         if (free && self.parent !== self.polyUI.master) {
-                            if(self.polyUI.inputManager.focused !== self) self.polyUI.unfocus()
+                            if (self.polyUI.inputManager.focused !== self) self.polyUI.unfocus()
                             self.parent!!.children!!.remove(self)
                             self.polyUI.master.children!!.add(self)
                         }
@@ -134,7 +134,7 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, fre
 fun <S : Drawable> S.addHoverInfo(text: String?): S {
     if (text == null) return this
     val obj = Block(
-        children = arrayOf(Text(text))
+        children = arrayOf(Text(text)),
     ).hide()
     obj.alpha = 0f
     onInit {
@@ -218,7 +218,6 @@ fun <S : Text> S.onChange(func: S.(String) -> Unit): S {
     return this
 }
 
-
 /**
  * Add a listener for changes to the given Boolean-type property.
  *
@@ -291,9 +290,16 @@ fun <S : Text> S.addValidationFunction(func: S.(String) -> Boolean): S {
     return this
 }
 
-fun <S : Drawable> S.setDestructivePalette() = setPalette { Colors.Palette(text.primary.normal, state.danger.hovered, state.danger.pressed, text.primary.disabled) }
+fun <S : Drawable> S.setDestructivePalette() = setPalette {
+    Colors.Palette(text.primary.normal, state.danger.hovered, state.danger.pressed, text.primary.disabled)
+}
 
-fun <S : Drawable> S.withStates(consume: Boolean = false, showClicker: Boolean = true, animation: (() -> Animation)? = { Animations.EaseInOutQuad.create(0.08.seconds) }): S {
+fun <S : Drawable> S.withStates(
+    consume: Boolean = false, showClicker: Boolean = true,
+    animation: (() -> Animation)? = {
+        Animations.EaseInOutQuad.create(0.08.seconds)
+    },
+): S {
     addEventHandler(Event.Mouse.Entered) {
         Recolor(this, this.palette.hovered, animation?.invoke()).add()
         if (showClicker) polyUI.cursor = Cursor.Clicker
@@ -350,7 +356,7 @@ fun <S : Drawable> S.setState(state: Byte): S {
             WARNING -> polyUI.colors.state.warning
             SUCCESS -> polyUI.colors.state.success
             else -> throw IllegalArgumentException("Invalid state: $state")
-        }
+        },
     )
     return this
 }
@@ -472,6 +478,7 @@ context(S)
 fun <S : Drawable> PolyColor.makeChroma(speedNanos: LongRef = 5.seconds.toChromaSpeed()): DrawableOp {
     val p = object : DrawableOp(this@S) {
         private var time = ((hue % 360f) * speedNanos.element.toFloat()).toLong()
+
         override fun apply() {
             time += polyUI.delta
             val speed = speedNanos.element

@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -64,7 +64,6 @@ fun interface Positioner {
             val mainPad = padding[main] * totalSm
             val crossPad = padding[crs] * totalSc
 
-            require(children != null) { "https://youtrack.jetbrains.com/issue/KT-60958" }
             if (children.size == 1) {
                 // asm: fast path: set a square size with the object centered
                 val it = children.first()
@@ -77,18 +76,20 @@ fun interface Positioner {
                 }
                 fixVisibleSize(drawable)
                 it.at(
-                    main, when (drawable.alignment.main) {
+                    main,
+                        when (drawable.alignment.main) {
                         Align.Main.Start -> mainPad
                         Align.Main.End -> vs[main] - ivs[main] - mainPad
                         else -> (vs[main] - ivs[main]) / 2f
-                    }
+                    },
                 )
                 it.at(
-                    crs, when (drawable.alignment.cross) {
+                    crs,
+                        when (drawable.alignment.cross) {
                         Align.Cross.Start -> crossPad
                         Align.Cross.End -> drawable.size[crs] - ivs[crs] - crossPad
                         else -> (vs[crs] - ivs[crs]) / 2f
-                    }
+                    },
                 )
                 return
             }
@@ -136,7 +137,7 @@ fun interface Positioner {
                     place(
                         drawable.alignment, row,
                         vs[crs], 0f, crossPad, crs,
-                        rowData.first, vs[main], mainPad, main
+                        rowData.first, vs[main], mainPad, main,
                     )
                 } else {
                     rows.fastEach { (rowData, row) ->
@@ -144,7 +145,7 @@ fun interface Positioner {
                         place(
                             drawable.alignment, row,
                             theRowCross, rowCross, crossPad, crs,
-                            theRowMain, vs[main], mainPad, main
+                            theRowMain, vs[main], mainPad, main,
                         )
                         rowCross += theRowCross + crossPad
                     }
@@ -167,7 +168,7 @@ fun interface Positioner {
                 place(
                     drawable.alignment, children,
                     rowCross, 0f, crossPad, crs,
-                    rowMain, drawable.size[main], mainPad, main
+                    rowMain, drawable.size[main], mainPad, main,
                 )
             }
         }
@@ -175,7 +176,7 @@ fun interface Positioner {
         private fun place(
             align: Align, row: LinkedList<Drawable>,
             rowCross: Float, minCross: Float, padCross: Float, crs: Int,
-            rowMain: Float, maxMain: Float, padMain: Float, main: Int
+            rowMain: Float, maxMain: Float, padMain: Float, main: Int,
         ) {
             val aligner = when (align.cross) {
                 Align.Cross.Start -> cStart
@@ -212,11 +213,11 @@ fun interface Positioner {
             fun justify(current: Float, it: Drawable, padding: Float, main: Int, gap: Float): Float
         }
 
-        private val cStart = Aligner { rowCross, it, min, padding, crs ->
+        private val cStart = Aligner { _, it, min, padding, crs ->
             it.at(crs, min + padding)
         }
 
-        private val cCenter = Aligner { rowCross, it, min, padding, crs ->
+        private val cCenter = Aligner { rowCross, it, min, _, crs ->
             it.at(crs, min + (rowCross / 2f) - (it.visibleSize[crs] / 2f))
         }
 
@@ -224,15 +225,15 @@ fun interface Positioner {
             it.at(crs, (min + rowCross) - it.visibleSize[crs] - padding)
         }
 
-        private val mProgressive = Justifier { current, it, padding, main, gap ->
+        private val mProgressive = Justifier { current, it, padding, main, _ ->
             it.at(main, current)
             return@Justifier current + it.visibleSize[main] + padding
         }
 
-        private val mBackwards = Justifier { current, it, padding, main, gap ->
-            val current = current - it.visibleSize[main] - padding
-            it.at(main, current)
-            return@Justifier current
+        private val mBackwards = Justifier { current, it, padding, main, _ ->
+            val cur = current - it.visibleSize[main] - padding
+            it.at(main, cur)
+            return@Justifier cur
         }
 
         private val mSpace = Justifier { current, it, padding, main, gap ->
@@ -241,7 +242,7 @@ fun interface Positioner {
         }
 
         private fun fixVisibleSize(drawable: Drawable): Drawable {
-            if (drawable.hasVisibleSize) return drawable
+            if (!drawable.hasVisibleSize) return drawable
             val vs = drawable.visibleSize
             if (vs.x > drawable.size.x) vs.x = drawable.size.x
             if (vs.y > drawable.size.y) vs.y = drawable.size.y

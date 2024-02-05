@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -49,6 +49,7 @@ val AlignDefault = Align()
 inline val Number.vec get() = Vec2(toFloat(), toFloat())
 
 fun Long.toChromaSpeed() = LongRef().also { it.element = this }
+
 /**
  * A vec2 of zero which, when used as the position of a component, will be ignored during layout.
  * @see org.polyfrost.polyui.component.Positioner.Default
@@ -57,6 +58,6 @@ inline val ignored: Vec2.Mut get() = Vec2.Mut(0f, 0f)
 
 inline infix fun Number.by(other: Number) = Vec2.Mut(this.toFloat(), other.toFloat())
 
-fun Vec2.mutable(): Vec2.Mut = if(this is Vec2.Mut) this else Vec2.Mut(x, y)
+fun Vec2.mutable(): Vec2.Mut = if (this is Vec2.Mut) this else Vec2.Mut(x, y)
 
-fun Vec2.immutable(): Vec2 = if(this is Vec2.Mut) Vec2(x, y) else this
+fun Vec2.immutable(): Vec2 = if (this is Vec2.Mut) Vec2(x, y) else this

@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -46,10 +46,15 @@ interface Colors {
     val text: Text
 
     class Page(val bg: Palette, val bgOverlay: Color, val fg: Palette, val fgOverlay: Color, val border20: Color, val border10: Color, val border5: Color)
+
     class Brand(val fg: Palette, val accent: Palette)
+
     class OnBrand(val fg: Palette, val accent: Palette)
+
     class State(val danger: Palette, val warning: Palette, val success: Palette)
+
     class Component(val bg: Palette, val bgDeselected: Color)
+
     class Text(val primary: Palette, val secondary: Palette)
 
     /**

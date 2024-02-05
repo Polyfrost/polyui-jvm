@@ -1,3 +1,24 @@
+/*
+ * This file is part of PolyUI
+ * PolyUI - Fast and lightweight UI framework
+ * Copyright (C) 2024 Polyfrost and its contributors.
+ *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *     PolyUI is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation,
+ * AND the simple request that you adequately accredit us if you use PolyUI.
+ * See details here <https://github.com/Polyfrost/polyui-jvm/ACCREDITATION.md>.
+ *     This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package org.polyfrost.polyui.component.impl
 
 import org.polyfrost.polyui.PolyUI
@@ -13,7 +34,6 @@ import org.polyfrost.polyui.utils.mapToArray
 import org.polyfrost.polyui.utils.radii
 import kotlin.jvm.internal.Ref
 
-
 fun ColorPicker(color: Ref.ObjectRef<PolyColor.Animated>, faves: MutableList<PolyColor>, recents: MutableList<PolyColor>, polyUI: PolyUI?, openNow: Boolean = true, position: Point = Point.At): Block {
     faves.ensureSize(6) {
         PolyColor.TRANSPARENT
@@ -28,7 +48,7 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Animated>, faves: MutableList<Pol
                 this.polyUI.unfocus()
             },
             size = 280f by 40f,
-            alignment = Align(main = Align.Main.SpaceBetween)
+            alignment = Align(main = Align.Main.SpaceBetween),
         ),
         Group(
             ColorPickingBox(color),
@@ -40,8 +60,8 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Animated>, faves: MutableList<Pol
                         val parent = parent!!
                         y = y.coerceIn(parent.y, parent.y + parent.height - height)
                         color.element.hue = (y - parent.y) / (parent.height - height)
-                    }).withBoarder(PolyColor.WHITE, 2f)
-                )
+                    }).withBoarder(PolyColor.WHITE, 2f),
+                ),
             ),
             Image(
                 PolyImage("alpha.png", 16f by 200f),
@@ -51,24 +71,24 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Animated>, faves: MutableList<Pol
                         val parent = parent!!
                         y = y.coerceIn(parent.y, parent.y + parent.height - height)
                         color.element.alpha = 1f - (y - parent.y) / (parent.height - height)
-                    }).withBoarder(PolyColor.WHITE, 2f)
-                )
+                    }).withBoarder(PolyColor.WHITE, 2f),
+                ),
             ),
-            alignment = Align(padding = 16f by 8f)
+            alignment = Align(padding = 16f by 8f),
         ),
         Block(
             Text("polyui.color.hex"),
-            size = 48f by 32f
+            size = 48f by 32f,
         ),
         BoxedTextInput(
             placeholder = "#FFFFFF",
             initialValue = PolyColor.hexOf(color.element, alpha = false),
-            size = 82f by 32f
+            size = 82f by 32f,
         ),
         BoxedTextInput(
             placeholder = "100%",
             initialValue = "${(color.element.alpha * 100f).toInt()}%",
-            size = 72f by 32f
+            size = 72f by 32f,
         ),
         Block(Image("info.svg".image()), size = 48f by 32f),
         Block(Image("info.svg".image()), size = 32f by 32f),
@@ -79,7 +99,7 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Animated>, faves: MutableList<Pol
         align = Align(padding = 8f by 8f),
         polyUI = polyUI,
         openNow = openNow,
-        position = position
+        position = position,
     ).namedId("ColorPicker")
     if (openNow) assign(p, color.element)
     else p.afterInit { assign(p, color.element) }
@@ -102,9 +122,8 @@ private fun assign(p: Block, col: PolyColor) {
     s2Blob.y = (1f - col.alpha) * (s2.height - s2Blob.height) + s2.y
 }
 
-
 private class ColorPickingBox(
-    val theColor: Ref.ObjectRef<PolyColor.Animated>
+    val theColor: Ref.ObjectRef<PolyColor.Animated>,
 ) : Block(
     Block(size = 10f by 10f, radii = 5f.radii(), color = PolyColor.TRANSPARENT).draggable(
         onDrag = {
@@ -114,19 +133,19 @@ private class ColorPickingBox(
             y = y.coerceIn(parent.y - hf, parent.y + parent.height - hf)
             theColor.element.saturation = (x - parent.x + hf) / parent.width
             theColor.element.brightness = (y - parent.y + hf) / parent.height
-        }
+        },
     ).withBoarder(PolyColor.WHITE, 2f),
     size = 200f by 200f,
 ) {
     val grad1 = PolyColor.Gradient(
         PolyColor.WHITE,
         theColor.element,
-        PolyColor.Gradient.Type.LeftToRight
+        PolyColor.Gradient.Type.LeftToRight,
     )
     val grad2 = PolyColor.Gradient(
         PolyColor.TRANSPARENT,
         PolyColor.BLACK,
-        PolyColor.Gradient.Type.TopToBottom
+        PolyColor.Gradient.Type.TopToBottom,
     )
 
     override fun render() {
@@ -144,7 +163,5 @@ private class ColorPickingBox(
         col.alpha = oa
 
         renderer.rect(x, y, width, height, grad2, radii)
-
     }
 }
-

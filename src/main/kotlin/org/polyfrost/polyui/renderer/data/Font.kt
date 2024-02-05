@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -43,7 +43,7 @@ class Font @JvmOverloads constructor(
     val lineSpacing: Float = 1.4f,
     val family: FontFamily? = null,
     val italic: Boolean = resourcePath.contains("italic", ignoreCase = true),
-    val weight: Weight = Weight.entries.getByName(resourcePath.findLastAnyOf(Weight.entries.names(), ignoreCase = true)?.second) ?: Weight.Regular
+    val weight: Weight = Weight.entries.getByName(resourcePath.findLastAnyOf(Weight.entries.names(), ignoreCase = true)?.second) ?: Weight.Regular,
 ) : Resource(resourcePath) {
     @Transient
     val name: String = resourcePath.substringAfterLast('/')
@@ -84,7 +84,7 @@ class Font @JvmOverloads constructor(
         Black(900, ExtraBold),
 
         ExtraLight(200, Light),
-        Thin(100, ExtraLight);
+        Thin(100, ExtraLight),
     }
 
     companion object {

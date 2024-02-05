@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -22,6 +22,7 @@
 package org.polyfrost.polyui.event
 
 import org.polyfrost.polyui.event.Event.*
+import org.polyfrost.polyui.event.Event.Lifetime.*
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Modifiers
 import java.io.File
@@ -42,7 +43,6 @@ import org.polyfrost.polyui.input.Mouse as MouseUtils
  *
  */
 interface Event {
-
     /**
      * Events related to the mouse.
      *
@@ -100,6 +100,7 @@ interface Event {
             constructor(button: Int, amountClicks: Int = 1, mods: Modifiers = Modifiers(0)) : this(button, 0f, 0f, amountClicks, mods)
 
             override fun toString(): String = "MouseClicked x$clicks($mouseX x $mouseY, ${MouseUtils.toStringPretty(MouseUtils.fromValue(button), mods)})"
+
             override fun hashCode(): Int {
                 var result = button
                 result = 31 * result + clicks
@@ -155,6 +156,7 @@ interface Event {
      */
     interface Lifetime : Event {
         object Added : Lifetime
+
         object Removed : Lifetime
 
         object Init : Lifetime
@@ -193,6 +195,7 @@ interface Event {
             constructor() : this("")
 
             override fun hashCode() = 859347809
+
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
                 return other is Text
@@ -203,6 +206,7 @@ interface Event {
             constructor() : this(0)
 
             override fun hashCode() = 57328903
+
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
                 return other is Number
@@ -213,6 +217,7 @@ interface Event {
             constructor() : this(false)
 
             override fun hashCode() = 38294781
+
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
                 return other is State
@@ -234,6 +239,7 @@ interface Event {
      */
     interface Focused : Event {
         object Gained : Focused
+
         object Lost : Focused
 
         /**

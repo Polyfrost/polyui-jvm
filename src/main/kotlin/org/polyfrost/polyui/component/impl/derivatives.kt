@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -171,7 +171,7 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2? = null, fontSiz
         Image(PolyImage("chevron-down.svg")),
         at = at,
         focusable = true,
-        alignment = Align(main = Align.Main.SpaceBetween, padding = Vec2(12f, 6f))
+        alignment = Align(main = Align.Main.SpaceBetween, padding = Vec2(12f, 6f)),
     ).withStates().withBoarder()
     val dropdown = Block(
         alignment = Align(mode = Align.Mode.Vertical, padding = Vec2(padding, 6f)),
@@ -285,6 +285,7 @@ fun Slider(at: Vec2? = null, min: Float = 0f, max: Float = 100f, initialValue: F
             }).events {
                 val op = object : DrawableOp.Animatable<Block>(self, Animations.EaseInOutQuad.create(0.15.seconds, 1f, 0f)) {
                     override fun apply(value: Float) {}
+
                     override fun unapply(value: Float) {
                         self.apply {
                             val maxRadius = this.size.x / 2.8f
@@ -396,7 +397,7 @@ fun PopupMenu(vararg children: Drawable, size: Vec2? = null, align: Align = Alig
         focusable = true,
         size = size,
         alignment = align,
-        children = children
+        children = children,
     ).events {
         Event.Focused.Gained then {
             when (position) {

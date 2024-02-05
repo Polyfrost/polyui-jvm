@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -53,6 +53,7 @@ import kotlin.math.min
 import kotlin.system.measureNanoTime
 
 // todo rewrite this doc
+
 /**
  * # PolyUI
  *
@@ -98,7 +99,7 @@ class PolyUI @JvmOverloads constructor(
     val settings = settings ?: Settings()
 
     init {
-        //require(renderer.size > 0f) { "width/height must be greater than 0 (${renderer.size})" }
+        // require(renderer.size > 0f) { "width/height must be greater than 0 (${renderer.size})" }
         renderer.settings = this.settings
         renderer.init()
     }
@@ -383,8 +384,7 @@ class PolyUI @JvmOverloads constructor(
             }
         }
 
-        if (settings.debug) LOGGER.info("resize: ${newWidth}x${newHeight}")
-
+        if (settings.debug) LOGGER.info("resize: ${newWidth}x$newHeight")
 
         val sx = newWidth / size.x
         val sy = newHeight / size.y

@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -38,7 +38,7 @@ open class Image(
     radii: FloatArray = 0f.radii(),
     var backgroundColor: PolyColor? = null,
     alignment: Align = AlignDefault,
-    vararg children: Drawable?
+    vararg children: Drawable?,
 ) :
     Block(children = children, at, image.size.clone(), alignment, visibleSize, false, null, radii) {
     var image: PolyImage = image

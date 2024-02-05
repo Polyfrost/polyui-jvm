@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -312,7 +312,6 @@ abstract class Renderer(val size: Vec2.Mut) : AutoCloseable {
      * @since 0.25.1
      */
     abstract fun supportsFramebuffers(): Boolean
-
 
     /**
      * Return `true` if your rendering implementation supports usage of `x` and `y` parameters on [scale], [rotate], [skewX], and [skewY].

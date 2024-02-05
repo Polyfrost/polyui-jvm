@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -61,7 +61,7 @@ open class Vec2(open val x: Float, open val y: Float) : Cloneable {
         return super.clone() as Vec2
     }
 
-    override fun toString() = "${x}x${y}"
+    override fun toString() = "${x}x$y"
 
     /**
      * Mutable extension of [Vec2].

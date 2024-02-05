@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -68,7 +68,6 @@ enum class Keys(val keyName: String, val value: Short) {
     ;
 
     companion object {
-
         /** get the key from the given value. */
         @JvmStatic
         fun fromValue(value: Int): Keys {
@@ -227,7 +226,7 @@ enum class KeyModifiers(val value: Byte) {
     RMETA(-0b10000000),
 
     /** you will never receive this value. */
-    UNKNOWN(0);
+    UNKNOWN(0),
 }
 
 /**

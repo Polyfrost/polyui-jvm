@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -28,6 +28,9 @@ import org.polyfrost.polyui.component.Drawable
  * @since 0.23.2
  */
 class EventDSL<S : Drawable>(val self: S) {
+    // kotlin bug: resolution error means self.run {} has to be used
+    // target fix is set for 2.1.0
+    // https://youtrack.jetbrains.com/issue/KT-63581/
 
     /** specify a handler for this event.
      *
@@ -37,9 +40,6 @@ class EventDSL<S : Drawable>(val self: S) {
      * @see then
      * @since 0.19.2
      * */
-    // kotlin bug: resolution error means self.run {} has to be used
-    // target fix is set for 2.1.0
-    // https://youtrack.jetbrains.com/issue/KT-63581/
     @OverloadResolutionByLambdaReturnType
     infix fun <E : Event> E.then(handler: S.(E) -> Boolean) = self.run {
         addEventHandler(this@then, handler)

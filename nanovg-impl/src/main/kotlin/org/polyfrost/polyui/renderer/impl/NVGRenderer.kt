@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -548,5 +548,6 @@ class NVGRenderer(size: Vec2.Mut) : Renderer(size) {
 
     // used to ensure that the data is not discarded by the GC
     data class NVGImage(val id: Int, val width: Float, val height: Float, val data: ByteBuffer)
+
     data class NVGFont(val id: Int, val data: ByteBuffer)
 }

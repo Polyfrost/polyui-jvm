@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -180,6 +180,7 @@ class Translator(private val settings: Settings, private val translationDir: Str
 
     interface Text {
         var string: String
+
         class Simple(override var string: String) : Text {
             override fun toString() = string
         }
@@ -191,15 +192,11 @@ class Translator(private val settings: Settings, private val translationDir: Str
                 } catch (e: Exception) {
                     PolyUI.LOGGER.error("Failed to format $string with ${args.contentToString()}!", e)
                 }
-
             }
+
             override fun toString() = string
         }
     }
-
-
-
-
 
     /** translate the provided key, returning the key as per the translation table.
      *

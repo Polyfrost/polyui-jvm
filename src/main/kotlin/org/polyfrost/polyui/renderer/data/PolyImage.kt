@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -22,6 +22,7 @@
 package org.polyfrost.polyui.renderer.data
 
 import org.polyfrost.polyui.PolyUI
+import org.polyfrost.polyui.renderer.data.PolyImage.Type
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.mutable
 
@@ -132,7 +133,7 @@ class PolyImage @JvmOverloads constructor(
             style: MaterialStyle = MaterialStyle.NORMAL,
         ) = PolyImage(
             "https://raw.githubusercontent.com/google/material-design-icons/master/src/" +
-                "${icon.replace('.', '/')}/${style.style}/24px.svg",
+                    "${icon.replace('.', '/')}/${style.style}/24px.svg",
             size,
             Type.Vector,
         )

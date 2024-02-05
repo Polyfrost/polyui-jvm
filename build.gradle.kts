@@ -1,7 +1,8 @@
+
 import org.jetbrains.dokka.base.DokkaBase
 import org.jetbrains.dokka.base.DokkaBaseConfiguration
 import org.jetbrains.dokka.gradle.AbstractDokkaTask
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.archivesName
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import java.time.Year
 
 plugins {
@@ -23,7 +24,7 @@ buildscript {
 
 group = "org.polyfrost"
 version = project.findProperty("version") as String
-val targetKotlinVersion = project.findProperty("kotlin.target") as String? ?: "1.9"
+val targetKotlinVersion = KotlinVersion.fromVersion(project.findProperty("kotlin.target") as String? ?: "1.9")
 val jvmToolchainVersion = (project.findProperty("jvm.toolchain") as String? ?: "8").toInt()
 
 allprojects {
@@ -53,14 +54,10 @@ allprojects {
     }
 
     kotlin {
-        sourceSets.all {
-            languageSettings.apply {
-                optIn("kotlin.experimental.ExperimentalTypeInference")
-                languageVersion = targetKotlinVersion
-                apiVersion = targetKotlinVersion
-            }
-        }
         compilerOptions {
+            languageVersion = targetKotlinVersion
+            apiVersion = targetKotlinVersion
+            optIn.add("kotlin.experimental.ExperimentalTypeInference")
             freeCompilerArgs = listOf(
                 "-Xcontext-receivers",
                 "-Xjvm-default=all-compatibility",
@@ -132,7 +129,9 @@ subprojects {
         api(project.rootProject)
     }
 
-    archivesName = "${rootProject.name}-${project.name}"
+    tasks.jar {
+        archiveBaseName = "${rootProject.name}-${project.name}"
+    }
 
     tasks.named<Jar>("dokkaJavadocJar") {
         archiveBaseName = "polyui-${project.name}"
