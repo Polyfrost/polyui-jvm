@@ -22,9 +22,8 @@
 package org.polyfrost.polyui.event
 
 import org.polyfrost.polyui.event.Event.*
-import org.polyfrost.polyui.event.Event.Lifetime.*
-import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
+import org.polyfrost.polyui.input.Modifiers
 import java.io.File
 import org.polyfrost.polyui.input.Mouse as MouseUtils
 
@@ -55,12 +54,12 @@ interface Event {
      * @see Mouse.Exited
      */
     interface Mouse : Event {
-        class Pressed internal constructor(val button: Int, val x: Float, val y: Float, mods: Short) : Mouse, WithMods(mods) {
-            constructor(button: Int) : this(button, 0f, 0f, 0)
+        class Pressed internal constructor(val button: Int, val x: Float, val y: Float, val mods: Modifiers) : Mouse {
+            constructor(button: Int) : this(button, 0f, 0f, Modifiers(0))
 
             override fun hashCode(): Int {
                 var result = button + 500
-                result = 31 * result + mods
+                result = 31 * result + mods.value
                 return result
             }
 
@@ -76,12 +75,12 @@ interface Event {
             }
         }
 
-        class Released internal constructor(val button: Int, val x: Float, val y: Float, mods: Short) : Mouse, WithMods(mods) {
-            constructor(button: Int) : this(button, 0f, 0f, 0)
+        class Released internal constructor(val button: Int, val x: Float, val y: Float, val mods: Modifiers) : Mouse {
+            constructor(button: Int) : this(button, 0f, 0f, Modifiers(0))
 
             override fun hashCode(): Int {
                 var result = button + 5000 // avoid conflicts with MousePressed
-                result = 31 * result + mods
+                result = 31 * result + mods.value
                 return result
             }
 
@@ -97,15 +96,14 @@ interface Event {
             }
         }
 
-        class Clicked internal constructor(val button: Int, val mouseX: Float, val mouseY: Float, val clicks: Int, mods: Short) : Mouse, WithMods(mods) {
-            @JvmOverloads
-            constructor(button: Int, amountClicks: Int = 1, mods: Short = 0) : this(button, 0f, 0f, amountClicks, mods)
+        class Clicked internal constructor(val button: Int, val mouseX: Float, val mouseY: Float, val clicks: Int, val mods: Modifiers) : Mouse {
+            constructor(button: Int, amountClicks: Int = 1, mods: Modifiers = Modifiers(0)) : this(button, 0f, 0f, amountClicks, mods)
 
             override fun toString(): String = "MouseClicked x$clicks($mouseX x $mouseY, ${MouseUtils.toStringPretty(MouseUtils.fromValue(button), mods)})"
             override fun hashCode(): Int {
                 var result = button
                 result = 31 * result + clicks
-                result = 31 * result + mods
+                result = 31 * result + mods.value
                 return result
             }
 
@@ -119,8 +117,8 @@ interface Event {
             }
         }
 
-        class Scrolled internal constructor(val amountX: Float, val amountY: Float, mods: Short) : Mouse, WithMods(mods) {
-            constructor() : this(0f, 0f, 0)
+        class Scrolled internal constructor(val amountX: Float, val amountY: Float, val mods: Modifiers) : Mouse {
+            constructor() : this(0f, 0f, Modifiers(0))
 
             override fun hashCode() = 893402779
 
@@ -137,6 +135,12 @@ interface Event {
         /** acceptable by component and layout, when the mouse leaves this drawable.
          * @see Entered */
         object Exited : Mouse
+
+        /**
+         * dispatched when the mouse is moved while left click is down. Use `polyUI.mouseX` and `polyUI.mouseY` to get the current position.
+         * @since 1.0.8
+         */
+        object Dragged : Mouse
     }
 
     /**
@@ -236,15 +240,14 @@ interface Event {
          * called when a key is typed (and modifiers) is pressed.
          *
          * @see [Keys]
-         * @see [KeyModifiers]
-         * @see [org.polyfrost.polyui.utils.fromModifierMerged]
+         * @see [Modifiers]
          */
-        class KeyTyped(val key: Char, mods: Short) : Focused, WithMods(mods) {
+        class KeyTyped(val key: Char, val mods: Modifiers) : Focused {
             override fun toString() = "KeyTyped(${Keys.toStringPretty(key, mods)})"
 
             override fun hashCode(): Int {
                 var result = key.hashCode() + 500
-                result = 31 * result + mods
+                result = 31 * result + mods.value
                 return result
             }
 
@@ -261,17 +264,16 @@ interface Event {
          * called when a non-printable key (and modifiers) is pressed.
          *
          * @see [Keys]
-         * @see [KeyModifiers]
-         * @see [org.polyfrost.polyui.input.Modifiers.fromModifierMerged]
+         * @see [Modifiers]
          */
-        class KeyPressed(val key: Keys, mods: Short) : Focused, WithMods(mods) {
+        class KeyPressed(val key: Keys, val mods: Modifiers) : Focused {
             override fun toString(): String = "KeyPressed(${Keys.toString(key, mods)})"
 
             fun toStringPretty(): String = "KeyPressed(${Keys.toStringPretty(key, mods)})"
 
             override fun hashCode(): Int {
                 var result = key.hashCode() + 5000
-                result = 31 * result + mods
+                result = 31 * result + mods.value
                 return result
             }
 
@@ -284,14 +286,14 @@ interface Event {
             }
         }
 
-        class KeyReleased(val key: Keys, mods: Short) : Focused, WithMods(mods) {
+        class KeyReleased(val key: Keys, val mods: Modifiers) : Focused {
             override fun toString(): String = "KeyReleased(${Keys.toString(key, mods)})"
 
             fun toStringPretty(): String = "KeyReleased(${Keys.toStringPretty(key, mods)})"
 
             override fun hashCode(): Int {
                 var result = key.hashCode() + 50000
-                result = 31 * result + mods
+                result = 31 * result + mods.value
                 return result
             }
 
@@ -304,8 +306,8 @@ interface Event {
             }
         }
 
-        class UnmappedInput(val code: Int, val down: Boolean, mods: Short) : Focused, WithMods(mods) {
-            constructor() : this(0, false, 0)
+        class UnmappedInput(val code: Int, val down: Boolean, val mods: Modifiers) : Focused {
+            constructor() : this(0, false, Modifiers(0))
 
             override fun toString(): String = "UnmappedInput(key=$code, down=$down)"
 
@@ -339,27 +341,5 @@ interface Event {
                 return other is FileDrop
             }
         }
-    }
-
-    /**
-     * Extend this class if your event has modifiers attached to it.
-     *
-     * Provides various utility methods to check for modifiers.
-     *
-     * @since 1.0.5
-     */
-    abstract class WithMods(val mods: Short) : Event {
-
-        val modifiers: Array<KeyModifiers> by lazy { KeyModifiers.fromModifierMerged(mods) }
-
-        fun hasModifier(modifier: KeyModifiers): Boolean = (mods.toInt() and modifier.value.toInt()) != 0
-
-        fun hasControl() = (mods.toInt() and 0b1100) != 0 // || (PolyUI.isOnMac && hasMeta())
-
-        fun hasAlt() = (mods.toInt() and 0b110000) != 0
-
-        fun hasShift() = (mods.toInt() and 0b11) != 0
-
-        fun hasMeta() = (mods.toInt() and 0b11000000) != 0
     }
 }

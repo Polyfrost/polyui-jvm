@@ -19,8 +19,6 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-@file:Suppress("invisible_member", "invisible_reference")
-
 package org.polyfrost.polyui
 
 import org.polyfrost.polyui.color.Colors
@@ -34,8 +32,6 @@ import org.polyfrost.polyui.component.impl.Group
 import org.polyfrost.polyui.event.InputManager
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.KeyModifiers
-import org.polyfrost.polyui.input.Modifiers
-import org.polyfrost.polyui.input.Modifiers.Companion.mods
 import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.property.Settings
 import org.polyfrost.polyui.renderer.Renderer
@@ -46,6 +42,7 @@ import org.polyfrost.polyui.renderer.data.FontFamily
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.unit.immutable
 import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.*
 import org.slf4j.Logger
@@ -53,6 +50,7 @@ import org.slf4j.LoggerFactory
 import java.text.DecimalFormat
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.system.measureNanoTime
 
 // todo rewrite this doc
 /**
@@ -100,7 +98,7 @@ class PolyUI @JvmOverloads constructor(
     val settings = settings ?: Settings()
 
     init {
-        require(renderer.size > 0f) { "width/height must be greater than 0 (${renderer.size})" }
+        //require(renderer.size > 0f) { "width/height must be greater than 0 (${renderer.size})" }
         renderer.settings = this.settings
         renderer.init()
     }
@@ -147,7 +145,6 @@ class PolyUI @JvmOverloads constructor(
      *
      * @since 0.18.3
      */
-    @kotlin.internal.InlineOnly
     inline var clipboard: String?
         get() = window.getClipboard()
         set(value) = window.setClipboard(value)
@@ -175,7 +172,6 @@ class PolyUI @JvmOverloads constructor(
      *
      * This value may be null as the key binder is optional.
      */
-    @kotlin.internal.InlineOnly
     inline val keyBinder get() = inputManager.keyBinder
     val translator = translator ?: Translator(this.settings, "")
     var positioner: Positioner = Positioner.Default()
@@ -194,13 +190,10 @@ class PolyUI @JvmOverloads constructor(
     private val clock = Clock()
     private val executors: LinkedList<Clock.Executor> = LinkedList()
 
-    @kotlin.internal.InlineOnly
     inline val mouseX get() = inputManager.mouseX
 
-    @kotlin.internal.InlineOnly
     inline val mouseY get() = inputManager.mouseY
 
-    @kotlin.internal.InlineOnly
     inline val mouseDown get() = inputManager.mouseDown
 
     /**
@@ -213,15 +206,14 @@ class PolyUI @JvmOverloads constructor(
             window.setCursor(value)
         }
 
-    @kotlin.internal.InlineOnly
-    inline val size: Vec2 get() = master.size
+    inline val size: Vec2.Mut get() = master.size
 
     /**
      * this property stores the initial size of this PolyUI instance.
      * It is used to make sure that new objects experience the same resizing as others.
      * @since 1.0.5
      */
-    val iSize = size.makeImmutable()
+    val iSize = size.immutable()
     private val hooks = LinkedList<Renderer.() -> Boolean>()
     private val preHooks = LinkedList<Renderer.() -> Boolean>()
 
@@ -294,7 +286,7 @@ class PolyUI @JvmOverloads constructor(
         this.keyBinder?.add(
             KeyBinder.Bind('R', mods = mods(KeyModifiers.LCONTROL)) {
                 LOGGER.info("Reloading PolyUI")
-                resize(size.width, size.height, renderer.pixelRatio, true)
+                resize(size.x, size.y, renderer.pixelRatio, true)
                 true
             },
         )
@@ -304,7 +296,7 @@ class PolyUI @JvmOverloads constructor(
 //            val diff = (System.nanoTime() - td) / 1_000_000_000.0
 //            td = System.nanoTime()
 //            LOGGER.info("took $diff sec (accuracy = ${100.0 - (diff - 1.0) * 100.0}%)")
-            if (this.settings.debug && drew) {
+            if (this.settings.debug) {
                 perf = "fps: $fps, avg/max/min: ${f.format(avgFrame.toDouble())}ms; ${f.format(longestFrame.toDouble())}ms; ${f.format(shortestFrame.toDouble())}ms"
                 if (this.settings.renderPausingEnabled && window.supportsRenderPausing()) {
                     val skipPercent = (1.0 - (frames.toDouble() / nframes)) * 100.0
@@ -317,7 +309,8 @@ class PolyUI @JvmOverloads constructor(
                 fps = frames
                 frames = 0
                 nframes = 0
-                LOGGER.info(perf)
+                master.needsRedraw = true
+                if (drew) LOGGER.info(perf)
             }
         }
         if (this.settings.debug) println(debugPrint())
@@ -349,7 +342,7 @@ class PolyUI @JvmOverloads constructor(
             LOGGER.error("Cannot resize to zero size: {}x{}", newWidth, newHeight)
             return
         }
-        if (!force && newWidth == size.x && newHeight == size.height && pixelRatio == this.renderer.pixelRatio) {
+        if (!force && newWidth == size.x && newHeight == size.y && pixelRatio == this.renderer.pixelRatio) {
             LOGGER.warn("PolyUI was resized to the same size. Ignoring.")
             return
         }
@@ -420,27 +413,28 @@ class PolyUI @JvmOverloads constructor(
 
             // telemetry
             if (settings.debug) {
-                val frameTime = (System.nanoTime() - clock.now) / 1_000_000f
+                val frameTime = (clock.peek()) / 1_000_000f
                 timeInFrames += frameTime
                 if (frameTime > longestFrame) longestFrame = frameTime
                 if (frameTime < shortestFrame) shortestFrame = frameTime
                 frames++
                 drawDebugOverlay(0f, size.y - 11f)
                 if (inputManager.focused == null) {
-                    if (inputManager.keyModifiers.hasModifier(Modifiers.LCONTROL)) {
+                    val mods = inputManager.keyModifiers
+                    if (mods.hasControl) {
                         val obj = inputManager.mouseOver
                         if (obj != null) {
                             val os = obj.toString()
-                            val w = renderer.textBounds(monospaceFont, os, 10f).width
+                            val w = renderer.textBounds(monospaceFont, os, 10f).x
                             val pos = min(max(0f, mouseX - w / 2f), this.size.x - w - 10f)
                             renderer.rect(pos, mouseY - 14f, w + 10f, 14f, colors.component.bg.hovered)
                             renderer.text(monospaceFont, pos + 5f, mouseY - 10f, text = os, colors.text.primary.normal, 10f)
                             master.needsRedraw = true
                         }
                     }
-                    if (inputManager.keyModifiers.hasModifier(Modifiers.LSHIFT)) {
+                    if (mods.hasShift) {
                         val s = "${inputManager.mouseX}x${inputManager.mouseY}"
-                        val ww = renderer.textBounds(monospaceFont, s, 10f).width
+                        val ww = renderer.textBounds(monospaceFont, s, 10f).x
                         val ppos = min(max(0f, mouseX + 10f), this.size.x - ww - 10f)
                         val pposy = min(max(0f, mouseY), this.size.y - 14f)
                         renderer.rect(ppos, pposy, ww + 10f, 14f, colors.component.bg.hovered)
@@ -456,7 +450,7 @@ class PolyUI @JvmOverloads constructor(
         } else {
             drew = false
         }
-        keyBinder?.update(delta, inputManager.keyModifiers)
+        keyBinder?.update(delta, inputManager.mods)
         executors.fastRemoveIfReversed { it.tick(delta) }
     }
 
@@ -585,11 +579,9 @@ class PolyUI @JvmOverloads constructor(
      * Time the [block] and return how long it took, as well as logging with the [msg] if [debug][org.polyfrost.polyui.property.Settings.debug] is active.
      * @since 0.18.5
      */
-    inline fun timed(msg: String? = null, block: () -> Unit): Long {
+    inline fun timed(msg: String? = null, crossinline block: () -> Unit): Long {
         if (msg != null && settings.debug) LOGGER.info(msg)
-        val now = System.nanoTime()
-        block()
-        val time = System.nanoTime() - now
+        val time = measureNanoTime(block)
         if (settings.debug) LOGGER.info("${if (msg != null) "\t\t> " else ""}took ${time / 1_000_000.0}ms")
         return time
     }

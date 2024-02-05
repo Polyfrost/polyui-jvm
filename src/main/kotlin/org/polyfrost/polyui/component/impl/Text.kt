@@ -32,6 +32,7 @@ import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.LinkedList
+import org.polyfrost.polyui.utils.MutablePair
 import org.polyfrost.polyui.utils.cl1
 import org.polyfrost.polyui.utils.splitTo
 import org.polyfrost.polyui.utils.wrap
@@ -43,8 +44,6 @@ open class Text(text: Translator.Text, font: Font = PolyUI.defaultFonts.regular,
 
     constructor(text: String, font: Font = PolyUI.defaultFonts.regular, fontSize: Float = 12f, at: Vec2? = null, alignment: Align = AlignDefault, wrap: Float = 0f, visibleSize: Vec2? = null, focusable: Boolean = false, vararg children: Drawable?) :
             this(Translator.Text.Simple(text), font, fontSize, at, alignment, wrap, visibleSize, focusable, children = children)
-
-    private val hasVisibleSize = visibleSize != null
 
     init {
         require(fontSize > 0f) { "Font size must be greater than 0" }
@@ -89,8 +88,11 @@ open class Text(text: Translator.Text, font: Font = PolyUI.defaultFonts.regular,
             if (initialized) updateTextBounds()
         }
 
+    /**
+     * A list of the lines of this text, and their corresponding width.
+     */
     @Transient
-    protected val lines = LinkedList<String>()
+    protected val lines = LinkedList<MutablePair<String, Float>>()
 
     @Transient
     var font: Font = font
@@ -149,7 +151,7 @@ open class Text(text: Translator.Text, font: Font = PolyUI.defaultFonts.regular,
         var y = this.y
         val strikethrough = strikethrough
         val underline = underline
-        lines.fastEach {
+        lines.fastEach { (it, width) ->
             renderer.text(font, x, y, it, color, fontSize)
             if (strikethrough) {
                 val hf = y + fontSize / 2f
@@ -190,7 +192,7 @@ open class Text(text: Translator.Text, font: Font = PolyUI.defaultFonts.regular,
         val wrap = if (!hasVisibleSize) wrap else visibleSize.x
         lines.clear()
         text.splitTo('\n', dest = lines)
-        if (lines.isEmpty() || (lines.size == 1 && lines[0].isEmpty())) {
+        if (lines.isEmpty() || (lines.size == 1 && lines[0].first.isEmpty())) {
             size.x = 1f
             size.y = fontSize
             return
@@ -199,7 +201,8 @@ open class Text(text: Translator.Text, font: Font = PolyUI.defaultFonts.regular,
             var mx = 0f
             var ty = -spacing
             lines.fastEach {
-                val bounds = renderer.textBounds(font, it, fontSize)
+                val bounds = renderer.textBounds(font, it.first, fontSize)
+                it.second = bounds.x
                 mx = max(mx, bounds.x)
                 ty += bounds.y + spacing
             }
@@ -210,7 +213,7 @@ open class Text(text: Translator.Text, font: Font = PolyUI.defaultFonts.regular,
         }
         val cp = lines.copy()
         lines.clear()
-        cp.fastEach {
+        cp.fastEach { (it, _) ->
             it.wrap(wrap, renderer, font, fontSize, lines)
         }
         val new = lines.size * (fontSize + spacing) - spacing

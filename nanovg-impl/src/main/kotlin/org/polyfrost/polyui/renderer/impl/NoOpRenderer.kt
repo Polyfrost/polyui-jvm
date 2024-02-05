@@ -28,7 +28,7 @@ import org.polyfrost.polyui.renderer.data.Framebuffer
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Vec2
 
-class NoOpRenderer(size: Vec2) : Renderer(size) {
+class NoOpRenderer(size: Vec2.Mut) : Renderer(size) {
     override fun init() {
     }
 
@@ -84,6 +84,8 @@ class NoOpRenderer(size: Vec2) : Renderer(size) {
     override fun textBounds(font: Font, text: String, fontSize: Float) = Vec2.ONE
 
     override fun initImage(image: PolyImage) {
+        if (image.width == -1f) image.width = 18f
+        if (image.height == -1f) image.height = 18f
     }
 
     override fun image(

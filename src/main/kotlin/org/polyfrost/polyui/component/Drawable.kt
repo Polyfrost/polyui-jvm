@@ -19,8 +19,6 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-@file:Suppress("invisible_member", "invisible_reference")
-
 package org.polyfrost.polyui.component
 
 import org.jetbrains.annotations.ApiStatus
@@ -46,21 +44,56 @@ import org.polyfrost.polyui.utils.*
  */
 abstract class Drawable(
     vararg children: Drawable? = arrayOf(),
-    at: Vec2? = null,
+    x: Float = -1f,
+    y: Float = -1f,
     val alignment: Align = AlignDefault,
     size: Vec2? = null,
     visibleSize: Vec2? = null,
     palette: Colors.Palette? = null,
     val focusable: Boolean = false,
 ) : Cloneable {
+    constructor(
+        vararg children: Drawable? = arrayOf(),
+        at: Vec2? = null,
+        alignment: Align = AlignDefault,
+        size: Vec2? = null,
+        visibleSize: Vec2? = null,
+        palette: Colors.Palette? = null,
+        focusable: Boolean = false,
+    ) : this(children = children, at?.x ?: -1f, at?.y ?: -1f, alignment, size, visibleSize, palette, focusable)
 
-    var size = size ?: Vec2()
+    var size: Vec2.Mut = size?.mutable() ?: Vec2.Mut()
+
+    /**
+     * internal field for [visibleSize].
+     * @since 1.1.0
+     */
+    @ApiStatus.Internal
+    var visibleSize0: Vec2.Mut? = visibleSize?.mutable()
+
+    /**
+     * The visible size of this drawable. This is used for clipping and scrolling.
+     *
+     * Unless set, this will return **the same object as** [size]. This may have unintended side effects, depending on what you are doing.
+     *
+     * Note that due to how this is implemented, it is recommended that you use this in the following way:
+     * ```
+     * val vs = drawable.visibleSize
+     * // now use vs.x and vs.y, etc.
+     * ```
+     *
+     * @since 1.1.0
+     */
+    inline var visibleSize: Vec2.Mut
+        get() = visibleSize0 ?: size
         set(value) {
-            field = value
-            (visibleSize as? Vec2.Sourced)?.source = value
+            visibleSize0 = value
         }
 
-    val visibleSize: Vec2 = visibleSize ?: Vec2.Based(base = this.size)
+    /**
+     * Returns `true` if this drawable has a visible size set.
+     */
+    inline val hasVisibleSize get() = visibleSize0 != null
 
     @Transient
     var parent: Drawable? = null
@@ -72,49 +105,6 @@ abstract class Drawable(
             }
             field = value
         }
-
-    /**
-     * Setting this value is not recommended, as it may break relative positioning to the parent.
-     * If you want to move this drawable with an animation, use the [Move] drawable operation.
-     *
-     * If you want to just move it programmatically, use the [Vec2.x] and [Vec2.y] fields or [x] or [y] (they are equal)
-     *
-     * The current implementation of this method is the following:
-     * - if the new value is a [Vec2.Sourced], and its source is `null`, it will be set to the parent's [at] property. It is assumed that that is what you want.
-     * - if the new value is a [Vec2.Relative], but its source is not the parent's [at] property, it will be set to the parent's [at] property, and a warning will be logged.
-     * - if the new value is not a [Vec2.Sourced], but the parent's [at] property is, it will be set to a [Vec2.Relative] with the parent's [at] property as its source, and a warning will be logged.
-     */
-    @set:ApiStatus.Experimental
-    var at: Vec2 = Vec2.Relative()
-        set(value) {
-            if (value === field) return
-
-            val fieldSource = (field as? Vec2.Sourced)?.source
-
-            if (value is Vec2.Sourced) {
-                if (!value.sourced) {
-                    value.source = parent?.at ?: Vec2.ZERO
-                    field = value
-                } else if (value is Vec2.Relative && value.source !== parent?.at && fieldSource === parent?.at) {
-                    PolyUI.LOGGER.warn("setting $simpleName.at which is relative to parent, but the new value is relative to something else, forcing!")
-                    field = value.makeRelative()
-                } else {
-                    field = value
-                }
-            } else if (fieldSource === parent?.at) {
-                PolyUI.LOGGER.warn("setting $simpleName.at which is relative to parent, but the new value is not relative, forcing!")
-                field = value.makeRelative()
-            } else {
-                field = value
-            }
-        }
-
-    init {
-        if (at != null) {
-            if (at !is Vec2.Sourced) this.at = at.makeRelative()
-            else this.at = at
-        }
-    }
 
     /**
      * This property controls weather this drawable resizes "raw", meaning it will **not** respect the aspect ratio.
@@ -155,7 +145,6 @@ abstract class Drawable(
     lateinit var polyUI: PolyUI
         private set
 
-    @kotlin.internal.InlineOnly
     inline val renderer get() = polyUI.renderer
 
     /**
@@ -192,48 +181,87 @@ abstract class Drawable(
         if (palette != null) this.palette = palette
     }
 
-    // InlineOnly makes it so that it doesn't add useless local variables called $i$f$getX or whatever
-    @kotlin.internal.InlineOnly
-    inline var x: Float
-        get() = at.x
+    /**
+     * Internal [x] position of this drawable.
+     * @since 1.1.0
+     */
+    @ApiStatus.Internal
+    var _x = x
+
+    /**
+     * Internal [y] position of this drawable.
+     * @since 1.1.0
+     */
+    @ApiStatus.Internal
+    var _y = y
+
+    var x: Float
+        inline get() = _x
         set(value) {
-            at.x = value
+            if (value == _x) return
+            val d = value - _x
+            _x = value
+            children?.fastEach {
+                it.x += d
+            }
         }
 
-    @kotlin.internal.InlineOnly
-    inline var y: Float
-        get() = at.y
+    var y: Float
+        inline get() = _y
         set(value) {
-            at.y = value
+            if (value == _y) return
+            val d = value - _y
+            _y = value
+            children?.fastEach {
+                it.y += d
+            }
         }
 
-    @kotlin.internal.InlineOnly
     inline var width: Float
         get() = size.x
         set(value) {
             size.x = value
         }
 
-    @kotlin.internal.InlineOnly
     inline var height: Float
         get() = size.y
         set(value) {
             size.y = value
         }
 
-    @kotlin.internal.InlineOnly
-    inline var visibleWidth: Float
-        get() = visibleSize.x
-        set(value) {
-            visibleSize.x = value
-        }
+    /**
+     * returns `true` if the size of this drawable is valid (not zero)
+     * @since 1.1.0
+     */
+    inline val sizeValid get() = width > 0f && height > 0f
 
-    @kotlin.internal.InlineOnly
-    inline var visibleHeight: Float
-        get() = visibleSize.y
-        set(value) {
-            visibleSize.y = value
+    /**
+     * returns `true` if the position of this drawable is valid (not negative)
+     * @since 1.1.0
+     */
+    inline val atValid get() = x >= 0f && y >= 0f
+
+    /**
+     * Return the position of this drawable as if it were a [Vec2].
+     * @since 1.1.0
+     */
+    fun at(index: Int) = when (index) {
+        0 -> x
+        1 -> y
+        else -> throw IndexOutOfBoundsException("Index: $index")
+    }
+
+    /**
+     * Set the position of this drawable as if it were a [Vec2].
+     * @since 1.1.0
+     */
+    fun at(index: Int, value: Float) {
+        when (index) {
+            0 -> x = value
+            1 -> y = value
+            else -> throw IndexOutOfBoundsException("Index: $index")
         }
+    }
 
     @Transient
     @Locking
@@ -323,7 +351,6 @@ abstract class Drawable(
      *
      * @since 0.21.4
      */
-    @kotlin.internal.InlineOnly
     inline var enabled
         get() = inputState > INPUT_DISABLED
         set(value) {
@@ -441,7 +468,8 @@ abstract class Drawable(
             ran = true
         }
         if (ran) {
-            renderer.pushScissor(xScroll?.from ?: x, yScroll?.from ?: y, visibleSize.x, visibleSize.y)
+            val vs = visibleSize
+            renderer.pushScissor(xScroll?.from ?: x, yScroll?.from ?: y, vs.x, vs.y)
             if (x != px) {
                 needsRedraw = true
             }
@@ -508,33 +536,38 @@ abstract class Drawable(
     @MustBeInvokedByOverriders
     @Synchronized
     open fun rescale(scaleX: Float, scaleY: Float, position: Boolean = true) {
+        val sx: Float
+        val sy: Float
         if (rawResize) {
-            if (position) {
-                at.scale(scaleX, scaleY)
-                xScroll?.let { it.from *= scaleX; it.to *= scaleX }
-                yScroll?.let { it.from *= scaleY; it.to *= scaleY }
-            }
-            size.scale(scaleX, scaleY)
-            visibleSize.scale(scaleX, scaleY)
+            sx = scaleX
+            sy = scaleY
         } else {
-            val scale = cl1(scaleX, scaleY)
-            if (position) {
-                at *= scale
-                xScroll?.let { it.from *= scale; it.to *= scale }
-                yScroll?.let { it.from *= scale; it.to *= scale }
-            }
-            size *= scale
-            visibleSize *= scale
+            val s = cl1(scaleX, scaleY)
+            sx = s
+            sy = s
         }
+
+        if (position) {
+            _x *= sx
+            _y *= sy
+            xScroll?.let { it.from *= sx; it.to *= sx }
+            yScroll?.let { it.from *= sy; it.to *= sy }
+        }
+        size.scale(sx, sy)
+        visibleSize0?.scale(sx, sy)
+
         children?.fastEach { it.rescale(scaleX, scaleY) }
     }
 
     fun clipChildren() {
         val tx = xScroll?.from ?: x
         val ty = yScroll?.from ?: y
+        val vs = visibleSize
+        val tw = vs.x
+        val th = vs.y
         children?.fastEach {
             if (!it.enabled) return@fastEach
-            it.renders = it.intersects(tx, ty, visibleSize.x, visibleSize.y)
+            it.renders = it.intersects(tx, ty, tw, th)
             it.clipChildren()
         }
         needsRedraw = true
@@ -544,7 +577,7 @@ abstract class Drawable(
      *
      * This is used for drawables that need to wait for an animation to finish before being removed.
      */
-    open fun canBeRemoved(): Boolean = operations.isNullOrEmpty() && (children?.allAre { it.canBeRemoved() } ?: true)
+    open fun canBeRemoved(): Boolean = operations.isNullOrEmpty() && (children?.allAre { it.canBeRemoved() } != false)
 
     fun debugDraw() {
         if (!renders) return
@@ -567,7 +600,8 @@ abstract class Drawable(
     /** add a debug render overlay for this drawable. This is always rendered regardless of the layout re-rendering if debug mode is on. */
     protected open fun debugRender() {
         val color = if (inputState > INPUT_NONE) polyUI.colors.page.border20 else polyUI.colors.page.border10
-        renderer.hollowRect(xScroll?.from ?: x, yScroll?.from ?: y, visibleWidth, visibleHeight, color, 1f)
+        val vs = visibleSize
+        renderer.hollowRect(xScroll?.from ?: x, yScroll?.from ?: y, vs.x, vs.y, color, 1f)
     }
 
     /**
@@ -578,11 +612,12 @@ abstract class Drawable(
     @MustBeInvokedByOverriders
     open fun accept(event: Event): Boolean {
         if (!enabled) return false
-        if (event is Event.Mouse.Scrolled) {
+        if (hasVisibleSize && event is Event.Mouse.Scrolled) {
             var ran = false
             xScroll?.let {
                 it.durationNanos = 0.6.seconds
-                it.to += event.amountX
+                it.to += if (yScroll == null && event.amountX == 0f) event.amountY
+                else event.amountX
                 it.to = it.to.coerceIn(it.from - (size.x - visibleSize.x), it.from)
                 ran = true
             }
@@ -628,7 +663,9 @@ abstract class Drawable(
         }
         // asm: don't use accept as we don't want to dispatch to children
         eventHandlers?.maybeRemove(Event.Lifetime.Init, polyUI.settings.aggressiveCleanup)?.fastEach { it(this, Event.Lifetime.Init) }
-        polyUI.positioner.position(this)
+        if (atValid) {
+            recalculateChildren()
+        } else polyUI.positioner.position(this)
 
         eventHandlers?.maybeRemove(Event.Lifetime.PostInit, polyUI.settings.aggressiveCleanup)?.fastEach { it(this, Event.Lifetime.PostInit) }
 
@@ -640,15 +677,15 @@ abstract class Drawable(
 
     @Locking
     fun tryMakeScrolling() {
-        if (shouldScroll) {
+        if (shouldScroll && hasVisibleSize) {
             var scrolling = false
             if (size.x > visibleSize.x && xScroll == null) {
                 scrolling = true
-                xScroll = Easing.Expo(Easing.Type.Out, 0L, at.x, at.x)
+                xScroll = Easing.Expo(Easing.Type.Out, 0L, x, x)
             }
             if (size.y > visibleSize.y && yScroll == null) {
                 scrolling = true
-                yScroll = Easing.Expo(Easing.Type.Out, 0L, at.y, at.y)
+                yScroll = Easing.Expo(Easing.Type.Out, 0L, y, y)
             }
             if (scrolling) {
                 acceptsInput = true
@@ -664,8 +701,8 @@ abstract class Drawable(
     @Synchronized
     open fun reset() {
         if (!initialized) return
-        this.x = 0f
-        this.y = 0f
+        this.x = -1f
+        this.y = -1f
         this.initialized = false
         children?.fastEach { it.reset() }
     }
@@ -680,11 +717,11 @@ abstract class Drawable(
     fun recalculateChildren() {
         val oldX = this.x
         val oldY = this.y
-        this.x = 0f
-        this.y = 0f
+        this.x = -1f
+        this.y = -1f
         children?.fastEach {
-            it.x = 0f
-            it.y = 0f
+            it.x = -1f
+            it.y = -1f
         }
         polyUI.positioner.position(this)
         this.x = oldX
@@ -700,20 +737,9 @@ abstract class Drawable(
     @Locking
     @Synchronized
     fun recalculate() {
-        val oldX = this.x
-        val oldY = this.y
-        this.x = 0f
-        this.y = 0f
         this.size.x = 0f
         this.size.y = 0f
-        children?.fastEach {
-            it.x = 0f
-            it.y = 0f
-        }
-        polyUI.positioner.position(this)
-        this.x = oldX
-        this.y = oldY
-        clipChildren()
+        recalculateChildren()
     }
 
     /**
@@ -723,14 +749,8 @@ abstract class Drawable(
      * @since 1.0.5
      */
     fun resetScroll() {
-        xScroll?.let {
-            it.from = at.x
-            it.to = at.x
-        }
-        yScroll?.let {
-            it.from = at.y
-            it.to = at.y
-        }
+        xScroll?.let { it.from = x; it.to = x }
+        yScroll?.let { it.from = y; it.to = y }
         children?.fastEach { it.resetScroll() }
     }
 
@@ -742,7 +762,8 @@ abstract class Drawable(
     fun isInside(x: Float, y: Float): Boolean {
         val tx = this.xScroll?.from ?: this.x
         val ty = this.yScroll?.from ?: this.y
-        return x in tx..tx + visibleSize.x && y in ty..ty + visibleSize.y
+        val vs = this.visibleSize
+        return x in tx..tx + vs.x && y in ty..ty + vs.y
     }
 
     /**
@@ -753,8 +774,9 @@ abstract class Drawable(
     fun intersects(x: Float, y: Float, width: Float, height: Float): Boolean {
         val tx = this.xScroll?.from ?: this.x
         val ty = this.yScroll?.from ?: this.y
-        val tw = this.visibleSize.x
-        val th = this.visibleSize.y
+        val vs = this.visibleSize
+        val tw = vs.x
+        val th = vs.y
         return (x <= tx + tw && tx <= x + width) && (y <= ty + th && ty <= y + height)
     }
 
@@ -764,7 +786,7 @@ abstract class Drawable(
      */
     public override fun clone() = (super.clone() as Drawable)
 
-    override fun toString() = "$simpleName($at, $size)"
+    override fun toString() = "$simpleName(${x}x${y}, $size)"
 
     /**
      * Add a [DrawableOp] to this drawable.
@@ -799,19 +821,24 @@ abstract class Drawable(
     @Locking
     @Synchronized
     fun addChild(child: Drawable, reposition: Boolean = true) {
-        child.parent = this
         if (children == null) children = LinkedList()
         val children = this.children ?: throw ConcurrentModificationException("well, this sucks")
+        child.parent = this
         children.add(child)
         if (initialized) {
             if (child.setup(polyUI)) {
-                child.at = child.at.makeRelative(this.at)
                 val totalSx = polyUI.size.x / polyUI.iSize.x
                 val totalSy = polyUI.size.y / polyUI.iSize.y
                 child.rescale(totalSx, totalSy, position = true)
                 child.tryMakeScrolling()
             }
-            if (reposition && child.at.hasZero) recalculateChildren()
+            if (!child.atValid) {
+                if (reposition) recalculateChildren()
+                else {
+                    child.x += x
+                    child.y += y
+                }
+            }
             child.accept(Event.Lifetime.Added)
             needsRedraw = true
         }
@@ -872,10 +899,8 @@ abstract class Drawable(
             removeChild(old)
             return
         }
-        new.at = new.at.makeRelative((old.at as? Vec2.Sourced)?.source).zero()
+        new.parent = this
         val isNew = new.setup(polyUI)
-        new.x = old.x - (old.x - (old.xScroll?.from ?: old.x))
-        new.y = old.y - (old.y - (old.yScroll?.from ?: old.y))
         Fade(old, 0f, false, Animations.EaseInOutQuad.create(0.3.seconds)) {
             enabled = false
             children.remove(this)
@@ -885,14 +910,15 @@ abstract class Drawable(
         if (polyUI.settings.debug && new.visibleSize != old.visibleSize) PolyUI.LOGGER.warn("replacing drawable $old with $new, but visible sizes are different: ${old.visibleSize} -> ${new.visibleSize}")
         children.add(index, new)
         new.enabled = true
-        new.parent = this
         if (isNew) {
             val totalSx = polyUI.size.x / polyUI.iSize.x
             val totalSy = polyUI.size.y / polyUI.iSize.y
             new.rescale(totalSx, totalSy, position = false)
-            new.tryMakeScrolling()
         }
         new.alpha = 0f
+        new.x = old.x - (old.x - (old.xScroll?.from ?: old.x))
+        new.y = old.y - (old.y - (old.yScroll?.from ?: old.y))
+        if (isNew) new.tryMakeScrolling()
         Fade(new, 1f, false, Animations.EaseInOutQuad.create(0.3.seconds)).add()
     }
 

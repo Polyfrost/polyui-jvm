@@ -38,7 +38,7 @@ import kotlin.math.min
  * for these functions, such as [image] and [text], an initialized [Font] or [PolyImage] instance will be given.
  * You can access the data using [Resource.stream][org.polyfrost.polyui.renderer.data.Resource.stream], and cache it for future use (ideally).
  */
-abstract class Renderer(val size: Vec2) : AutoCloseable {
+abstract class Renderer(val size: Vec2.Mut) : AutoCloseable {
     /**
      * set a maximum alpha value for all future draw calls, in the range (0-1), until [reset][resetAlphaCap]. This is useful for fading in/out all of PolyUI, for example.
      *

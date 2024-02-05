@@ -29,7 +29,7 @@ import org.polyfrost.polyui.renderer.data.Font
 /**
  * append the given [CharSequence][c] to this [StringBuilder], repeated [repeats] times.
  *
- * This function is equivalent to doing [sb][StringBuilder]`.append(`[c].[repeat][CharSequence.repeat]`(`[repeats]`)`, but it uses an already existing StringBuilder.
+ * This function is equivalent to doing [sb][StringBuilder]`.append(c.repeat(`[repeats]`))`, but it uses an already existing StringBuilder.
  * @throws [IllegalArgumentException] when n < 0.
  */
 fun StringBuilder.append(c: CharSequence, repeats: Int): StringBuilder {
@@ -77,12 +77,12 @@ fun String.truncate(
     limitText: String = "...",
 ): String {
     require(width != 0f) { "Cannot truncate to zero width" }
-    var resultWidth = renderer.textBounds(font, this, fontSize).width
+    var resultWidth = renderer.textBounds(font, this, fontSize).x
     if (resultWidth < width) return this
-    val delimiterWidth = renderer.textBounds(font, limitText, fontSize).width
+    val delimiterWidth = renderer.textBounds(font, limitText, fontSize).x
     var t = this
     while (resultWidth + delimiterWidth > width) {
-        resultWidth = renderer.textBounds(font, t, fontSize).width
+        resultWidth = renderer.textBounds(font, t, fontSize).x
         t = t.substring(0, t.length - 1)
     }
     t += limitText
@@ -103,11 +103,11 @@ fun String.substringToWidth(
             font,
             "W",
             fontSize,
-        ).width > width
+        ).x > width
     ) { // this is enabled only on debug mode for performance in prod
         throw RuntimeException("Text box maximum width is too small for the given font size! (string: $this, font: ${font.resourcePath}, fontSize: $fontSize, width: $width)")
     }
-    if (renderer.textBounds(font, this, fontSize).width <= width) {
+    if (renderer.textBounds(font, this, fontSize).x <= width) {
         return this to ""
     }
 
@@ -117,7 +117,7 @@ fun String.substringToWidth(
     while (left <= right) {
         val mid = (left + right) / 2
         val substring = substring(0, mid + 1)
-        if (renderer.textBounds(font, substring, fontSize).width <= width) {
+        if (renderer.textBounds(font, substring, fontSize).x <= width) {
             result = substring
             left = mid + 1
         } else {
@@ -168,11 +168,11 @@ fun String.wrap(
     renderer: Renderer,
     font: Font,
     fontSize: Float,
-    lines: LinkedList<String>?,
-): LinkedList<String> {
+    lines: LinkedList<MutablePair<String, Float>>?,
+): LinkedList<MutablePair<String, Float>> {
     val ls = lines ?: LinkedList()
     if (maxWidth == 0f) {
-        ls.add(this)
+        ls.add(this with renderer.textBounds(font, this, fontSize).x)
         return ls
     }
     val words = split(" ")
@@ -183,13 +183,14 @@ fun String.wrap(
     var currentLine = StringBuilder()
 
     words.forEach { word ->
-        val wordLength = renderer.textBounds(font, word, fontSize).width
+        val wordLength = renderer.textBounds(font, word, fontSize).x
 
         if (wordLength > maxWidth) {
             // ah. word is longer than the maximum wrap width
             if (currentLine.isNotEmpty()) {
                 // Finish current line and start a new one with the long word
-                ls.add(currentLine.toString())
+                val out = currentLine.toString()
+                ls.add(out with renderer.textBounds(font, out, fontSize).x)
                 currentLine.clear()
             }
 
@@ -197,38 +198,43 @@ fun String.wrap(
             var remainingWord = word
             while (remainingWord.isNotEmpty()) {
                 val chunk = remainingWord.substringToWidth(renderer, font, fontSize, maxWidth)
-                ls.add(chunk.first)
+                ls.add(chunk.first with renderer.textBounds(font, chunk.first, fontSize).x)
                 remainingWord = chunk.second
             }
         } else if (currentLine.isEmpty()) {
             currentLine.append(word)
-        } else if (renderer.textBounds(font, currentLine.toString(), fontSize).width + wordLength <= maxWidth) {
+        } else if (renderer.textBounds(font, currentLine.toString(), fontSize).x + wordLength <= maxWidth) {
             // ok!
             currentLine.append(' ').append(word)
         } else {
             // asm: word doesn't fit in current line, wrap it to the next line
-            ls.add(currentLine.append(" ").toString())
+            val out = currentLine.append(' ').toString()
+            ls.add(out with renderer.textBounds(font, out, fontSize).x)
             currentLine = currentLine.clear().append(word)
         }
     }
 
     // Add the last line
     if (currentLine.isNotEmpty()) {
-        ls.add(currentLine.toString())
+        val out = currentLine.toString()
+        ls.add(out with renderer.textBounds(font, out, fontSize).x)
     }
 
     return ls
 }
 
-fun String.splitTo(delim: Char, ignoreCase: Boolean = false, dest: MutableList<String>) {
+/**
+ * [split], putting the data into the given [dest] list.
+ */
+fun String.splitTo(delim: Char, ignoreCase: Boolean = false, dest: MutableList<MutablePair<String, Float>>) {
     var start = 0
     var end = indexOf(delim, 0, ignoreCase)
     while (end != -1) {
-        dest.add(substring(start, end))
+        dest.add(substring(start, end) with 0f)
         start = end + 1
         end = indexOf(delim, start, ignoreCase)
     }
-    dest.add(substring(start))
+    dest.add(substring(start) with 0f)
 }
 
 /**
@@ -245,7 +251,7 @@ fun CharSequence.closestToPoint(renderer: Renderer, font: Font, fontSize: Float,
             font,
             this.substring(0, c),
             fontSize,
-        ).width
+        ).x
         // get closest char (not necessarily more)
         if (x < w) {
             return if (x - prev < w - x) {

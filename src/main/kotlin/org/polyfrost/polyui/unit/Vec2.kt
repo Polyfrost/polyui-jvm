@@ -21,334 +21,155 @@
 
 package org.polyfrost.polyui.unit
 
-import org.jetbrains.annotations.ApiStatus
-import kotlin.math.sqrt
+/**
+ * Class that represents a 2D vector.
+ * @since 1.1.0
+ */
+open class Vec2(open val x: Float, open val y: Float) : Cloneable {
+    constructor() : this(0f, 0f)
 
-@Suppress("invisible_member", "invisible_reference")
-open class Vec2(open var x: Float = 0f, open var y: Float = 0f) : Comparable<Vec2>, Cloneable {
-    @kotlin.internal.InlineOnly
-    inline var width
-        get() = x
-        set(value) {
-            x = value
-        }
+    // rewrite counter: 3
 
-    @kotlin.internal.InlineOnly
-    inline var height
-        get() = y
-        set(value) {
-            y = value
-        }
-
-    @kotlin.internal.InlineOnly
-    inline val isZero get() = x == 0f && y == 0f
-
-    @kotlin.internal.InlineOnly
-    inline val hasZero get() = x == 0f || y == 0f
-
-    @kotlin.internal.InlineOnly
-    inline val isNegative get() = x < 0f && y < 0f
-
-    /**
-     * Magnitude² (squared) of the vector
-     * @see magnitude
-     */
-    open val magnitude2 get() = (x * x) + (y * y)
-
-    /**
-     * Magnitude of the vector.
-     * @see magnitude2
-     */
-    open val magnitude get() = sqrt(magnitude2)
-
-    /**
-     * Normalize this vector.
-     */
-    @ApiStatus.Experimental
-    fun normalize() {
-        val mag = magnitude
-        x /= mag
-        y /= mag
+    operator fun get(index: Int): Float = when (index) {
+        0 -> x
+        1 -> y
+        else -> throw IndexOutOfBoundsException("Index: $index")
     }
 
-    fun min(x: Float, y: Float, respectRatio: Boolean = true) {
-        if (this.x < x || this.y < y) {
-            resize(x, y, respectRatio)
-        }
-    }
+    operator fun plus(other: Vec2) = Vec2(x + other.x, y + other.y)
 
-    fun ensureSmallerThan(other: Vec2) {
-        this.x = kotlin.math.min(other.x, this.x)
-        this.y = kotlin.math.min(other.y, this.y)
-    }
+    operator fun minus(other: Vec2) = Vec2(x - other.x, y - other.y)
 
-    fun ensureLargerThan(other: Vec2) {
-        this.x = kotlin.math.max(other.x, this.x)
-        this.y = kotlin.math.max(other.y, this.y)
-    }
+    operator fun times(other: Vec2) = Vec2(x * other.x, y * other.y)
 
-    fun max(x: Float, y: Float, respectRatio: Boolean = true) {
-        if (this.x > x || this.y > y) {
-            resize(x, y, respectRatio)
-        }
-    }
-
-    fun resize(x: Float, y: Float, respectRatio: Boolean = true) {
-        if (respectRatio) {
-            val ratio = this.x / this.y
-            if (x / y > ratio) {
-                this.x = y * ratio
-                this.y = y
-            } else {
-                this.x = x
-                this.y = x / ratio
-            }
-        } else {
-            this.x = x
-            this.y = y
-        }
-    }
-
-    open fun scale(xScale: Float, yScale: Float) {
-        x *= xScale
-        y *= yScale
-    }
-
-    operator fun timesAssign(other: Vec2?) {
-        if (other == null) return
-        scale(other.x, other.y)
-    }
-
-    operator fun timesAssign(other: Float) = scale(other, other)
-
-    operator fun divAssign(other: Float) = scale(1f / other, 1f / other)
-
-    operator fun plusAssign(other: Vec2?) {
-        if (other == null) return
-        this.x += other.x
-        this.y += other.y
-    }
-
-    operator fun minusAssign(other: Vec2?) {
-        if (other == null) return
-        this.x -= other.x
-        this.y -= other.y
-    }
-
-    operator fun set(index: Int, value: Float) {
-        when (index) {
-            0 -> this.x = value
-            1 -> this.y = value
-            else -> throw IndexOutOfBoundsException(index.toString())
-        }
-    }
-
-    fun set(other: Vec2) {
-        this.x = other.x
-        this.y = other.y
-    }
-
-    operator fun get(index: Int): Float {
-        return when (index) {
-            0 -> this.x
-            1 -> this.y
-            else -> throw IndexOutOfBoundsException(index.toString())
-        }
-    }
-
-    /**
-     * Compares the two Vec2 instances according to the magnitude of the vectors.
-     * A positive number is returned if this magnitude is larger than [other], negative if it is smaller than [other], and 0 if it is equal to [other].
-     *
-     * Note that two different vectors can have the same magnitude.
-     * @see [Float.compareTo]
-     */
-    override operator fun compareTo(other: Vec2) = this.magnitude2.compareTo(other.magnitude2)
-
-    /**
-     * Compares the magnitude of this to the given float, which should be a magnitude of a vector itself.
-     * @see compareTo
-     */
-    operator fun compareTo(fl: Float) = magnitude.compareTo(fl)
+    operator fun div(other: Vec2) = Vec2(x / other.x, y / other.y)
 
     override fun equals(other: Any?): Boolean {
-        if (other === this) return true
+        if (this === other) return true
         if (other !is Vec2) return false
+
         return this.x == other.x && this.y == other.y
     }
 
     override fun hashCode(): Int {
-        var res = x.hashCode()
-        res = 31 * res + y.hashCode()
-        return res
+        var result = x.hashCode()
+        result = 31 * result + y.hashCode()
+        return result
     }
 
-    override fun toString() = "${x}x$y"
-
-    public override fun clone() = Vec2(x, y)
-
-    abstract class Sourced(source: Vec2 = ZERO) : Vec2() {
-        var source: Vec2 = source
-            set(value) {
-                sourceChanged(value)
-                field = value
-            }
-
-        inline val sourced get() = source !== ZERO
-
-        protected open fun sourceChanged(source: Vec2) {}
+    public override fun clone(): Vec2 {
+        return super.clone() as Vec2
     }
 
-    class Relative(x: Float = 0f, y: Float = 0f, parent: Vec2 = ZERO) : Sourced(parent) {
-        // todo OPTIMIZE this is fucking slow
-        override var x: Float
-            get() = super.x + source.x
-            set(value) {
-                super.x = value - source.x
+    override fun toString() = "${x}x${y}"
+
+    /**
+     * Mutable extension of [Vec2].
+     */
+    open class Mut(override var x: Float, override var y: Float) : Vec2(x, y) {
+        constructor() : this(0f, 0f)
+
+        operator fun set(index: Int, value: Float) {
+            when (index) {
+                0 -> x = value
+                1 -> y = value
+                else -> throw IndexOutOfBoundsException("Index: $index")
             }
-        override var y: Float
-            get() = super.y + source.y
-            set(value) {
-                super.y = value - source.y
+        }
+
+        fun min(x: Float, y: Float, respectRatio: Boolean = true) {
+            if (this.x < x || this.y < y) {
+                resize(x, y, respectRatio)
             }
+        }
+
+        fun max(x: Float, y: Float, respectRatio: Boolean = true) {
+            if (this.x > x || this.y > y) {
+                resize(x, y, respectRatio)
+            }
+        }
+
+        fun resize(x: Float, y: Float, respectRatio: Boolean = true) {
+            if (respectRatio) {
+                val ratio = this.x / this.y
+                if (x / y > ratio) {
+                    this.x = y * ratio
+                    this.y = y
+                } else {
+                    this.x = x
+                    this.y = x / ratio
+                }
+            } else {
+                this.x = x
+                this.y = y
+            }
+        }
+
+        open fun scale(xScale: Float, yScale: Float) {
+            x *= xScale
+            y *= yScale
+        }
+
+        operator fun timesAssign(other: Vec2?) {
+            if (other == null) return
+            scale(other.x, other.y)
+        }
+
+        operator fun timesAssign(other: Float) = scale(other, other)
+
+        operator fun divAssign(other: Float) = scale(1f / other, 1f / other)
+
+        operator fun plusAssign(other: Vec2?) {
+            if (other == null) return
+            this.x += other.x
+            this.y += other.y
+        }
+
+        operator fun minusAssign(other: Vec2?) {
+            if (other == null) return
+            this.x -= other.x
+            this.y -= other.y
+        }
+
+        fun set(other: Vec2) {
+            this.x = other.x
+            this.y = other.y
+        }
 
         /**
-         * Effectively make this vector equal to the [source].
+         * simple [min] function.
          */
-        fun zero(): Relative {
-            x -= source.x
-            y -= source.y
-            return this
+        fun smin(other: Vec2) {
+            this.x = kotlin.math.min(other.x, this.x)
+            this.y = kotlin.math.min(other.y, this.y)
         }
 
-        override fun scale(xScale: Float, yScale: Float) {
-            // asm: if we didn't zero it, it would scale the source as well, making it effectively square itself each time
-            zero()
-            super.scale(xScale, yScale)
-            x += source.x
-            y += source.y
+        /**
+         * simple [max] function.
+         */
+        fun smax(other: Vec2) {
+            this.x = kotlin.math.max(other.x, this.x)
+            this.y = kotlin.math.max(other.y, this.y)
         }
-
-        init {
-            this.x = x
-            this.y = y
-        }
-
-        override fun clone() = Relative(x, y, source)
     }
 
-    /**
-     * ⣿⣿⣿⣿⣿⣿⣿⣿⡿⠿⠛⠛⠛⠋⠉⠈⠉⠉⠉⠉⠛⠻⢿⣿⣿⣿⣿⣿⣿⣿
-     * ⣿⣿⣿⣿⣿⡿⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⢿⣿⣿⣿⣿
-     * ⣿⣿⣿⣿⡏⣀⠀⠀⠀⠀⠀⠀⠀⣀⣤⣤⣤⣄⡀⠀⠀⠀⠀⠀⠀⠀⠙⢿⣿⣿
-     * ⣿⣿⣿⢏⣴⣿⣷⠀⠀⠀⠀⠀⢾⣿⣿⣿⣿⣿⣿⡆⠀⠀⠀⠀⠀⠀⠀⠈⣿⣿
-     * ⣿⣿⣟⣾⣿⡟⠁⠀⠀⠀⠀⠀⢀⣾⣿⣿⣿⣿⣿⣷⢢⠀⠀⠀⠀⠀⠀⠀⢸⣿
-     * ⣿⣿⣿⣿⣟⠀⡴⠄⠀⠀⠀⠀⠀⠀⠙⠻⣿⣿⣿⣿⣷⣄⠀⠀⠀⠀⠀⠀⠀⣿
-     * ⣿⣿⣿⠟⠻⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠶⢴⣿⣿⣿⣿⣿⣧⠀⠀⠀⠀⠀⠀⣿
-     * ⣿⣁⡀⠀⠀⢰⢠⣦⠀⠀⠀⠀⠀⠀⠀⠀⢀⣼⣿⣿⣿⣿⣿⡄⠀⣴⣶⣿⡄⣿
-     * ⣿⡋⠀⠀⠀⠎⢸⣿⡆⠀⠀⠀⠀⠀⠀⣴⣿⣿⣿⣿⣿⣿⣿⠗⢘⣿⣟⠛⠿⣼
-     * ⣿⣿⠋⢀⡌⢰⣿⡿⢿⡀⠀⠀⠀⠀⠀⠙⠿⣿⣿⣿⣿⣿⡇⠀⢸⣿⣿⣧⢀⣼
-     * ⣿⣿⣷⢻⠄⠘⠛⠋⠛⠃⠀⠀⠀⠀⠀⢿⣧⠈⠉⠙⠛⠋⠀⠀⠀⣿⣿⣿⣿⣿
-     * ⣿⣿⣧⠀⠈⢸⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠟⠀⠀⠀⠀⢀⢃⠀⠀⢸⣿⣿⣿⣿
-     * ⣿⣿⡿⠀⠴⢗⣠⣤⣴⡶⠶⠖⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⡸⠀⣿⣿⣿⣿
-     * ⣿⣿⣿⡀⢠⣾⣿⠏⠀⠠⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠛⠉⠀⣿⣿⣿⣿
-     * ⣿⣿⣿⣧⠈⢹⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⣿⣿⣿⣿
-     * ⣿⣿⣿⣿⡄⠈⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⣴⣾⣿⣿⣿⣿⣿
-     * ⣿⣿⣿⣿⣧⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿
-     * ⣿⣿⣿⣿⣷⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-     * ⣿⣿⣿⣿⣿⣦⣄⣀⣀⣀⣀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-     * ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⡄⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-     * ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⠀⠀⠀⠙⣿⣿⡟⢻⣿⣿⣿⣿⣿⣿⣿⣿⣿
-     * ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠀⠁⠀⠀⠹⣿⠃⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿
-     * ⣿⣿⣿⣿⣿⣿⣿⣿⡿⠛⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⢐⣿⣿⣿⣿⣿⣿⣿⣿⣿
-     * ⣿⣿⣿⣿⠿⠛⠉⠉⠁⠀⢻⣿⡇⠀⠀⠀⠀⠀⠀⢀⠈⣿⣿⡿⠉⠛⠛⠛⠉⠉
-     * ⣿⡿⠋⠁⠀⠀⢀⣀⣠⡴⣸⣿⣇⡄⠀⠀⠀⠀⢀⡿⠄⠙⠛⠀⣀⣠⣤⣤⠄⠀
-     */
-    class Based(x: Float = 0f, y: Float = 0f, base: Vec2 = ZERO) : Sourced(base) {
-        override var x: Float
-            get() = super.x + source.x
-            set(value) {
-                super.x = value
-            }
-
-        override var y: Float
-            get() = super.y + source.y
-            set(value) {
-                super.y = value
-            }
-
-        init {
-            this.x = x
-            this.y = y
-        }
-
-        override fun scale(xScale: Float, yScale: Float) {
-            var sx = x - source.x
-            var sy = y - source.y
-            sx *= xScale
-            sy *= yScale
-            x = sx
-            y = sy
-        }
-
-        override fun clone() = Based(x, y, source)
-    }
-
-    class Percent(percentX: Float, percentY: Float, source: Vec2 = ZERO) : Sourced(source) {
-        override var x: Float
-            get() = super.x * source.x
-        override var y: Float
-            get() = super.y * source.y
-
-        init {
-            this.x = percentX
-            this.y = percentY
-        }
-
-        @Suppress("Deprecation")
-        override fun clone() = Percent(x, y, source)
-    }
-
-    /**
-     * Immutable Vec2 wrapper.
-     * Attempts to set will result in a compilation [error][DeprecationLevel.ERROR] in Kotlin, and an [UnsupportedOperationException].
-     */
-    class Immutable(x: Float, y: Float) : Vec2(x, y) {
-        @set:Deprecated("Cannot set immutable Vec2", level = DeprecationLevel.ERROR)
-        override var x: Float
-            get() = super.x
-            set(_) {
-                throw UnsupportedOperationException("vec2 is immutable")
-            }
-
-        @set:Deprecated("Cannot set immutable Vec2", level = DeprecationLevel.ERROR)
-        override var y: Float
-            get() = super.y
-            set(_) {
-                throw UnsupportedOperationException("vec2 is immutable")
-            }
-
-        override val magnitude2 = x * x + y * y
-        override val magnitude = sqrt(magnitude2)
-
-        // asm: no point allocating a new one as it cannot be changed anyway
-        override fun clone() = this
-    }
-
-    companion object {
+    companion object Constants {
         @JvmField
-        val ONE = Immutable(1f, 1f)
+        val ONE = Vec2(1f, 1f)
 
         @JvmField
-        val ZERO = Immutable(0f, 0f)
+        val ZERO = Vec2(0f, 0f)
 
         @JvmField
-        val RES_1080P = Immutable(1920f, 1080f)
+        val M1 = Vec2(-1f, -1f)
 
         @JvmField
-        val RES_1440P = Immutable(2560f, 1440f)
+        val RES_1080P = Vec2(1920f, 1080f)
 
         @JvmField
-        val RES_4K = Immutable(3840f, 2160f)
+        val RES_1440P = Vec2(2560f, 1440f)
+
+        @JvmField
+        val RES_4K = Vec2(3840f, 2160f)
     }
 }

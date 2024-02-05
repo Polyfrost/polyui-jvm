@@ -19,7 +19,7 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-@file:Suppress("NOTHING_TO_INLINE", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "UNUSED")
+@file:Suppress("UNUSED", "NOTHING_TO_INLINE")
 @file:JvmName("Utils")
 
 package org.polyfrost.polyui.utils
@@ -29,9 +29,7 @@ import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.renderer.data.PolyImage
-import org.polyfrost.polyui.unit.Vec2
 import kotlin.enums.EnumEntries
-import kotlin.experimental.and
 import kotlin.jvm.internal.Ref
 import kotlin.math.PI
 import kotlin.math.abs
@@ -179,19 +177,14 @@ fun RGBtoHSB(r: Int, g: Int, b: Int, out: FloatArray? = null): FloatArray {
  */
 fun Int.toColor() = PolyColor(RGBtoHSB(this shr 16 and 0xFF, this shr 8 and 0xFF, this and 0xFF), (this shr 24 and 0xFF) / 255f)
 
-@kotlin.internal.InlineOnly
 inline val Int.red get() = this shr 16 and 0xFF
 
-@kotlin.internal.InlineOnly
 inline val Int.green get() = this shr 8 and 0xFF
 
-@kotlin.internal.InlineOnly
 inline val Int.blue get() = this and 0xFF
 
-@kotlin.internal.InlineOnly
 inline val Int.alpha get() = this shr 24 and 0xFF
 
-@kotlin.internal.InlineOnly
 inline fun Double.toRadians() = (this % 360.0) * (PI / 180.0)
 
 /**
@@ -236,18 +229,12 @@ fun Pair<Int, Int>.simplifyRatio(): Pair<Int, Int> {
 }
 
 /**
- * Return an immutable copy of this vector.
- */
-fun Vec2.makeImmutable() = Vec2.Immutable(this.x, this.y)
-
-/**
  * Returns the value closer to zero.
  *
  * If either value is `NaN`, then the result is `NaN`.
  *
  * If `a == b`, then the result is `a`.
  */
-@kotlin.internal.InlineOnly
 inline fun cl0(a: Float, b: Float) = if (abs(a) <= abs(b)) a else b
 
 /**
@@ -257,7 +244,6 @@ inline fun cl0(a: Float, b: Float) = if (abs(a) <= abs(b)) a else b
  *
  * If `a == b`, then the result is `a`.
  */
-@kotlin.internal.InlineOnly
 inline fun cl1(a: Float, b: Float) = if (abs(a - 1f) <= abs(b - 1f)) a else b
 
 /**
@@ -268,15 +254,12 @@ inline fun cl1(a: Float, b: Float) = if (abs(a - 1f) <= abs(b - 1f)) a else b
  * @param c the third value
  * @return the minimum value among a, b, and c
  */
-@kotlin.internal.InlineOnly
 inline fun min3(a: Int, b: Int, c: Int): Int = min(min(a, b), c)
 
 /** convert the given float into an array of 4 floats for radii. */
-@kotlin.internal.InlineOnly
 inline fun Number.radii() = floatArrayOf(this.toFloat(), this.toFloat(), this.toFloat(), this.toFloat())
 
 /** convert the given floats into an array of 4 floats for radii. */
-@kotlin.internal.InlineOnly
 inline fun radii(topLeft: Float, topRight: Float, bottomLeft: Float, bottomRight: Float) = floatArrayOf(topLeft, topRight, bottomLeft, bottomRight)
 
 /** print the object to stdout, then return it. */
@@ -287,25 +270,21 @@ inline fun <T> T.stdout(arg: Any? = null): T {
     return this
 }
 
-@kotlin.internal.InlineOnly
 inline fun String.image() = PolyImage(this)
 
-@kotlin.internal.InlineOnly
 inline fun String.translated(vararg args: Any?) = Translator.Text.Formatted(Translator.Text.Simple(this), *args)
 
-@kotlin.internal.InlineOnly
 inline fun String.translated(): Translator.Text = Translator.Text.Simple(this)
 
-@kotlin.internal.InlineOnly
 inline fun Any?.identityHashCode() = System.identityHashCode(this)
 
-fun Short.fromModifierMerged(): Array<KeyModifiers> = KeyModifiers.fromModifierMerged(this)
-
-@kotlin.internal.InlineOnly
-inline fun Short.hasModifier(mod: Modifiers): Boolean = this and mod.value != 0.toShort()
-
-@kotlin.internal.InlineOnly
-inline fun Array<KeyModifiers>.merge(): Short = KeyModifiers.merge(*this)
+fun mods(vararg mods: KeyModifiers): Modifiers {
+    var i = 0
+    for (mod in mods) {
+        i = i or mod.value.toInt()
+    }
+    return Modifiers(i.toByte())
+}
 
 /**
  * Moves the given element from the [from] index to the [to] index.
@@ -316,11 +295,51 @@ inline fun Array<KeyModifiers>.merge(): Short = KeyModifiers.merge(*this)
  * @param from the index of the element to move
  * @param to the index to move the element to
  */
-@kotlin.internal.InlineOnly
 inline fun <E> Array<E>.moveElement(from: Int, to: Int) {
     val item = this[from]
     this[from] = this[to]
     this[to] = item
+}
+
+/**
+ * Perform the given [transform] on every element in this array, and return a new array with the results.
+ *
+ * Equivalent to `this.map { transform(it) }.toTypedArray()`, but saves on the creation of an intermediate list.
+ */
+inline fun <T, reified R> Array<T>.mapToArray(transform: (T) -> R): Array<R> {
+    return Array(size) {
+        transform(this[it])
+    }
+}
+
+/**
+ * Perform the given [transform] on every element in this list, and return a new array with the results.
+ *
+ * Equivalent to `this.map { transform(it) }.toTypedArray()`, but saves on the creation of an intermediate list.
+ */
+inline fun <T, reified R> List<T>.mapToArray(transform: (T) -> R): Array<R> {
+    val out = arrayOfNulls<R>(size)
+    var i = 0
+    for (element in this) {
+        out[i] = transform(element)
+        i++
+    }
+    @Suppress("UNCHECKED_CAST")
+    return out as Array<R>
+}
+
+/**
+ * Perform the given [transform] on every element in this list, and return a new array with the results.
+ *
+ * Equivalent to `this.map { transform(it) }.toTypedArray()`, but saves on the creation of an intermediate list.
+ */
+inline fun <T, reified R> LinkedList<T>.mapToArray(transform: (T) -> R): Array<R> {
+    val out = arrayOfNulls<R>(size)
+    this.fastEachIndexed { i, it ->
+        out[i] = transform(it)
+    }
+    @Suppress("UNCHECKED_CAST")
+    return out as Array<R>
 }
 
 fun FloatArray.areEqual(): Boolean {
@@ -364,17 +383,14 @@ fun <T> Ref.ObjectRef<T>.deref(): T {
 /**
  * Return this collection as an LinkedList. **Note:** if it is already a LinkedList, it will be returned as-is.
  */
-@kotlin.internal.InlineOnly
 inline fun <T> Collection<T>.asLinkedList(): LinkedList<T> = if (this is LinkedList) this else LinkedList(this)
 
-@kotlin.internal.InlineOnly
 inline fun <T> Array<T>.asLinkedList(): LinkedList<T> = LinkedList(*this)
 
 /**
  * Returns the value of the given [key] in the map, and if [shouldRemove] is `true` the value is also removed from the map.
  * @since 1.0.2
  */
-@kotlin.internal.InlineOnly
 inline fun <K, V> MutableMap<K, V>.maybeRemove(key: K, shouldRemove: Boolean): V? = if (shouldRemove) remove(key) else get(key)
 
 /**
@@ -384,3 +400,8 @@ inline fun <T> Pair<T, T>.both(func: (T) -> Unit) {
     func(this.first)
     func(this.second)
 }
+
+/**
+ * Mutable version of [to].
+ */
+infix fun <A, B> A.with(that: B) = MutablePair(this, that)

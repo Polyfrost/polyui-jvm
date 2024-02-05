@@ -50,8 +50,6 @@ open class TextInput(
     wrap: Float = 0f,
     vararg children: Drawable?,
 ) : Text(text, font, fontSize, at, alignment, wrap, visibleSize, true, *children) {
-    @Transient
-    private val linesData = LinkedList<Float>()
 
     @Transient
     private val selectBoxes = LinkedList<Pair<Pair<Float, Float>, Pair<Float, Float>>>()
@@ -162,7 +160,7 @@ open class TextInput(
             }
 
             is Event.Focused.KeyTyped -> {
-                if (event.mods < 2 /* mods == 0 || hasShift() */) {
+                if (event.mods.value < 2 /* mods == 0 || hasShift() */) {
                     if (caret != select) {
                         text = text.replace(selection, "")
                         caret = if (select > caret) caret else select
@@ -171,7 +169,7 @@ open class TextInput(
                     val tl = text.length
                     text = text.substring(0, caret) + event.key + text.substring(caret)
                     if (text.length != tl) caret++
-                } else if (event.hasControl()) {
+                } else if (event.mods.hasControl) {
                     when (event.key) {
                         'v', 'V' -> {
                             val tl = text.length
@@ -217,7 +215,7 @@ open class TextInput(
                             text = text.substring(0, f) + text.substring(t)
                             if (tl != text.length) caret = f
                             clearSelection()
-                        } else if (!event.hasControl()) {
+                        } else if (!event.mods.hasControl) {
                             val tl = text.length
                             text = text.dropAt(caret, 1)
                             if (caret != 0 && tl != text.length) caret--
@@ -238,8 +236,8 @@ open class TextInput(
                     }
 
                     Keys.LEFT -> {
-                        selecting = event.hasShift()
-                        if (event.hasControl()) {
+                        selecting = event.mods.hasShift
+                        if (event.mods.hasControl) {
                             toLastSpace()
                         } else {
                             back()
@@ -247,8 +245,8 @@ open class TextInput(
                     }
 
                     Keys.RIGHT -> {
-                        selecting = event.hasShift()
-                        if (event.hasControl()) {
+                        selecting = event.mods.hasShift
+                        if (event.mods.hasControl) {
                             toNextSpace()
                         } else {
                             forward()
@@ -256,12 +254,12 @@ open class TextInput(
                     }
 
                     Keys.UP -> {
-                        selecting = event.hasShift()
+                        selecting = event.mods.hasShift
                         moveLine(false)
                     }
 
                     Keys.DOWN -> {
-                        selecting = event.hasShift()
+                        selecting = event.mods.hasShift
                         moveLine(true)
                     }
 
@@ -284,7 +282,7 @@ open class TextInput(
             font,
             line.substring(0, idx),
             fontSize,
-        ).width + x
+        ).x + this.x
         cposy = lni * (fontSize + spacing) + y
     }
 
@@ -315,13 +313,13 @@ open class TextInput(
     private fun getLineByIndex(index: Int): Triple<String, Int, Int> {
         require(index > -1) { "Index must not be negative" }
         var i = 0
-        lines.fastEachIndexed { li, it ->
+        lines.fastEachIndexed { li, (it, _) ->
             if (index < i + it.length) {
                 return Triple(it, index - i, li)
             }
             i += it.length
         }
-        val l = lines.last()
+        val l = lines.last().first
         return Triple(l, l.length, lines.lastIndex)
     }
 
@@ -338,7 +336,7 @@ open class TextInput(
         }
         val lh = fontSize + spacing
         for (i in sli + 1 until eli) {
-            selectBoxes.add((x - 1f to y + (i.toFloat() * lh)) to (linesData[i] to lh))
+            selectBoxes.add((x - 1f to y + (i.toFloat() * lh)) to (lines[i].second to lh))
         }
         selection(sl, si, sl.length, sli)
         selection(el, 0, ei, eli)
@@ -353,7 +351,7 @@ open class TextInput(
 
     private fun caretFromMouse(mouseX: Float, mouseY: Float) {
         val line = ((mouseY - y) / (fontSize + spacing)).toInt()
-        val p = lines[min(line, lines.lastIndex)].closestToPoint(renderer, font, fontSize, mouseX - x)
+        val p = lines[min(line, lines.lastIndex)].first.closestToPoint(renderer, font, fontSize, mouseX - x)
         caret = if (p == -1) text.length else p
         caretPos()
     }
@@ -428,7 +426,7 @@ open class TextInput(
         if (!super.setup(polyUI)) return false
         _placeholder = polyUI.translator.translate(_placeholder.string)
         val bounds = renderer.textBounds(font, _placeholder.string, fontSize)
-        size.ensureLargerThan(bounds)
+        size.smax(bounds)
         return true
     }
 
@@ -436,7 +434,7 @@ open class TextInput(
         super.updateTextBounds(renderer)
         if (text.isEmpty()) {
             val bounds = renderer.textBounds(font, _placeholder.string, fontSize)
-            size.ensureLargerThan(bounds)
+             size.smax(bounds)
         }
     }
 }

@@ -31,7 +31,6 @@ import java.net.MalformedURLException
 import java.net.URL
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import kotlin.system.measureNanoTime
 
 /**
  * return a stream of the given resource or throws an exception.
@@ -40,8 +39,8 @@ import kotlin.system.measureNanoTime
  * @throws FileNotFoundException if the URL is invalid and/or the resource is not found
  * @see getResourceStreamNullable
  */
-fun getResourceStream(resourcePath: String) =
-    getResourceStreamNullable(resourcePath)
+fun getResourceStream(resourcePath: String, caller: Class<*> = PolyUI::class.java) =
+    getResourceStreamNullable(resourcePath, caller)
         ?: throw FileNotFoundException(
             "Resource $resourcePath not found " +
                     "(check your Properties, and make sure the file " +
@@ -49,40 +48,33 @@ fun getResourceStream(resourcePath: String) =
         )
 
 /**
- * return a stream of the given resource or null. The time the fetch took is printed to the [PolyUI.LOGGER] at debug level.
+ * return a stream of the given resource, or null.
  * @param resourcePath the path to the resource. Can either be a valid [URL] (including file URL), or a [resource path][Class.getResourceAsStream].
  * @throws java.io.IOException if an IO error occurs.
  * @see getResourceStream
  */
-fun getResourceStreamNullable(resourcePath: String): InputStream? {
-    PolyUI.LOGGER.debug("Getting resource {}...", resourcePath)
-    val i: InputStream?
-    val t = measureNanoTime {
-        i = try {
-            val url = URL(resourcePath)
-            return if (url.protocol == "file") {
-                url.openStream()
-            } else {
-                val connection = url.openConnection() as HttpURLConnection
-                connection.requestMethod = "GET"
-                connection.useCaches = true
-                connection.addRequestProperty("User-Agent", "Mozilla/5.0 (PolyUI)")
-                connection.readTimeout = 5000
-                connection.connectTimeout = 5000
-                connection.doOutput = true
-                connection.inputStream
-            }
-        } catch (e: Exception) {
-            if (e !is MalformedURLException) {
-                PolyUI.LOGGER.error("Failed to get resource: {}", e.message)
-            }
-            PolyUI::class.java.getResourceAsStream(resourcePath)
-                ?: PolyUI::class.java.getResourceAsStream("/$resourcePath")
-                ?: PolyUI::class.java.getResourceAsStream("/resources/$resourcePath")
+fun getResourceStreamNullable(resourcePath: String, caller: Class<*> = PolyUI::class.java): InputStream? {
+    return try {
+        val url = URL(resourcePath)
+        return if (url.protocol == "file") {
+            url.openStream()
+        } else {
+            val connection = url.openConnection() as HttpURLConnection
+            connection.requestMethod = "GET"
+            connection.useCaches = true
+            connection.addRequestProperty("User-Agent", "Mozilla/5.0 (PolyUI)")
+            connection.readTimeout = 5000
+            connection.connectTimeout = 5000
+            connection.doOutput = true
+            connection.inputStream
         }
+    } catch (e: Exception) {
+        if (e !is MalformedURLException) {
+            PolyUI.LOGGER.error("Failed to get resource: {}", e.message)
+        }
+        caller.getResourceAsStream(resourcePath)
+            ?: caller.getResourceAsStream("/$resourcePath")
     }
-    PolyUI.LOGGER.debug("\t\t> took {}ms", t / 1_000_000f)
-    return i
 }
 
 @Deprecated("This method is rather wasteful, and usage should be avoided.")

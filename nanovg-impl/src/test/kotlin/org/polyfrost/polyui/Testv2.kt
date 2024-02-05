@@ -23,22 +23,22 @@ package org.polyfrost.polyui
 
 import org.polyfrost.polyui.component.events
 import org.polyfrost.polyui.component.impl.*
-import org.polyfrost.polyui.component.makeChroma
-import org.polyfrost.polyui.component.onInit
 import org.polyfrost.polyui.component.withStates
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.renderer.data.PolyImage
-import org.polyfrost.polyui.renderer.impl.GLWindow
+import org.polyfrost.polyui.renderer.impl.GLFWWindow
 import org.polyfrost.polyui.renderer.impl.NVGRenderer
 import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.utils.image
 import kotlin.random.Random
 
 fun main() {
-    val window = GLWindow("PolyUI Test v2", 800, 500)
+    val window = GLFWWindow("PolyUI Test v2", 800, 500)
+    val renderer = NVGRenderer(800f by 500f)
     val polyUI =
         PolyUI(
-            renderer = NVGRenderer(Vec2(800f, 500f)),
+            renderer = renderer,
             drawables =
             arrayOf(
                 Image(PolyImage("polyfrost.png")),
@@ -78,7 +78,7 @@ fun main() {
                     visibleSize = Vec2(350f, 120f),
                     children =
                     Array(30) {
-                        Block(size = Vec2(32f + (Random.nextFloat() * 100f), 32f)).withStates().onInit { color.makeChroma() }
+                        Block(size = Vec2(32f + (Random.nextFloat() * 100f), 32f)).withStates()//.onInit { color.makeChroma() }
                     },
                 ),
                 Group(
@@ -107,12 +107,12 @@ fun main() {
                 Group(
                     children =
                     arrayOf(
-                        Radiobutton(
-                            entries = arrayOf(
-                                null to "hello",
-                                null to "goodbye"
-                            )
-                        ),
+//                        Radiobutton(
+//                            entries = arrayOf(
+//                                null to "hello",
+//                                null to "goodbye"
+//                            )
+//                        ),
                         Slider(),
                         Text("blink three times when u feel it kicking in")
                     )

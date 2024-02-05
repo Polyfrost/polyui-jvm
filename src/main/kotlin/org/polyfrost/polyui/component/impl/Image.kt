@@ -34,13 +34,13 @@ import org.polyfrost.polyui.utils.radii
 open class Image(
     image: PolyImage,
     at: Vec2? = null,
-    alignment: Align = AlignDefault,
     visibleSize: Vec2? = null,
     radii: FloatArray = 0f.radii(),
     var backgroundColor: PolyColor? = null,
+    alignment: Align = AlignDefault,
     vararg children: Drawable?
 ) :
-    Block(children = children, at, Vec2.Based(base = image.size), alignment, visibleSize, false, null, radii) {
+    Block(children = children, at, image.size.clone(), alignment, visibleSize, false, null, radii) {
     var image: PolyImage = image
         set(value) {
             field = value
@@ -69,6 +69,7 @@ open class Image(
     override fun setup(polyUI: PolyUI): Boolean {
         if (initialized) return false
         polyUI.renderer.initImage(image)
+        size.set(image.size)
         palette = polyUI.colors.text.primary
         return super.setup(polyUI)
     }

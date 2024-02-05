@@ -23,7 +23,7 @@ package org.polyfrost.polyui.input
 
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.event.*
+import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.property.Settings
 import org.polyfrost.polyui.utils.LinkedList
 import java.util.concurrent.CancellationException
@@ -45,7 +45,7 @@ class KeyBinder(private val settings: Settings) {
     private val downKeys = LinkedList<Keys>()
     private var recording: CompletableFuture<Bind>? = null
     private var recordingTime = 0L
-    private var modifiers: Short = 0
+    private var modifiers: Byte = 0
     private var recordingFunc: (() -> Boolean)? = null
 
     /**
@@ -57,7 +57,7 @@ class KeyBinder(private val settings: Settings) {
     fun accept(event: Event): Boolean {
         when (event) {
             is Event.Mouse.Pressed -> {
-                if (event.mods == 0.toShort()) {
+                if (event.mods.isEmpty) {
                     recording?.completeExceptionally(IllegalStateException("Cannot bind to just left click"))
                     return false
                 }
@@ -101,7 +101,7 @@ class KeyBinder(private val settings: Settings) {
         return update(0L, modifiers)
     }
 
-    fun update(deltaTimeNanos: Long, keyModifiers: Short): Boolean {
+    fun update(deltaTimeNanos: Long, keyModifiers: Byte): Boolean {
         modifiers = keyModifiers
         listeners.fastEach {
             if (it.update(downUnmappedKeys, downKeys, downMouseButtons, keyModifiers, deltaTimeNanos)) {
@@ -118,7 +118,7 @@ class KeyBinder(private val settings: Settings) {
             if (downUnmappedKeys.size == 0) null else downUnmappedKeys.toIntArray(),
             if (downKeys.size == 0) null else downKeys.toTypedArray(),
             if (downMouseButtons.size == 0) null else downMouseButtons.toIntArray(),
-            modifiers,
+            Modifiers(modifiers),
             recordingTime,
             recordingFunc ?: throw ConcurrentModificationException("recording function has been removed"),
         )
@@ -200,13 +200,13 @@ class KeyBinder(private val settings: Settings) {
         downUnmappedKeys.clear()
     }
 
-    class Bind @JvmOverloads constructor(val unmappedKeys: IntArray? = null, val keys: Array<Keys>? = null, val mouse: IntArray? = null, val mods: Short = 0, val durationNanos: Long = 0L, @Transient val action: () -> Boolean) {
-        constructor(chars: CharArray? = null, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Short = 0, durationNanos: Long = 0L, action: () -> Boolean) : this(chars?.map { it.code }?.toIntArray(), keys, mouse, mods, durationNanos, action)
+    class Bind(val unmappedKeys: IntArray? = null, val keys: Array<Keys>? = null, val mouse: IntArray? = null, val mods: Modifiers = Modifiers(0), val durationNanos: Long = 0L, @Transient val action: () -> Boolean) {
 
-        @JvmOverloads constructor(char: Char, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Short = 0, durationNanos: Long = 0L, action: () -> Boolean) : this(intArrayOf(char.code), keys, mouse, mods, durationNanos, action)
-        constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Array<Mouse>? = null, mods: Short = 0, durationNanos: Long = 0L, action: () -> Boolean) : this(unmappedKeys, keys, mouse?.map { it.value.toInt() }?.toIntArray(), mods, durationNanos, action)
-        constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Mouse? = null, mods: Short = 0, durationNanos: Long = 0L, action: () -> Boolean) : this(unmappedKeys, keys, mouse?.value?.let { intArrayOf(it.toInt()) }, mods, durationNanos, action)
-        constructor(unmappedKeys: IntArray? = null, key: Keys? = null, mouse: Array<Mouse>? = null, mods: Short = 0, durationNanos: Long = 0L, action: () -> Boolean) : this(unmappedKeys, key?.let { arrayOf(it) }, mouse, mods, durationNanos, action)
+        constructor(chars: CharArray? = null, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: () -> Boolean) : this(chars?.map { it.code }?.toIntArray(), keys, mouse, mods, durationNanos, action)
+        constructor(char: Char, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: () -> Boolean) : this(intArrayOf(char.code), keys, mouse, mods, durationNanos, action)
+        constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Array<Mouse>? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: () -> Boolean) : this(unmappedKeys, keys, mouse?.map { it.value.toInt() }?.toIntArray(), mods, durationNanos, action)
+        constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Mouse? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: () -> Boolean) : this(unmappedKeys, keys, mouse?.value?.let { intArrayOf(it.toInt()) }, mods, durationNanos, action)
+        constructor(unmappedKeys: IntArray? = null, key: Keys? = null, mouse: Array<Mouse>? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: () -> Boolean) : this(unmappedKeys, key?.let { arrayOf(it) }, mouse, mods, durationNanos, action)
 
         @Transient
         private var time = 0L
@@ -214,8 +214,8 @@ class KeyBinder(private val settings: Settings) {
         @Transient
         private var ran = false
 
-        fun update(c: LinkedList<Int>, k: LinkedList<Keys>, m: LinkedList<Int>, mods: Short, deltaTimeNanos: Long): Boolean {
-            if (unmappedKeys?.matches(c) != false && keys?.matches(k) != false && mouse?.matches(m) != false && this.mods == mods) {
+        fun update(c: LinkedList<Int>, k: LinkedList<Keys>, m: LinkedList<Int>, mods: Byte, deltaTimeNanos: Long): Boolean {
+            if (unmappedKeys?.matches(c) != false && keys?.matches(k) != false && mouse?.matches(m) != false && this.mods.equal(mods)) {
                 if (!ran) {
                     if (durationNanos != 0L) {
                         time += deltaTimeNanos
@@ -245,10 +245,8 @@ class KeyBinder(private val settings: Settings) {
 
         fun keysToString(): String {
             val sb = StringBuilder()
-            val s = Modifiers.toStringPretty(mods)
-            if (s.isNotEmpty()) {
-                sb.append(s)
-            }
+            val s = mods.prettyName
+            sb.append(s)
             if (unmappedKeys != null) {
                 if (s.isNotEmpty()) sb.append(" + ")
                 for (c in unmappedKeys) {

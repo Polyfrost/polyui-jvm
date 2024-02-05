@@ -19,8 +19,6 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-@file:Suppress("invisible_member", "invisible_reference")
-
 package org.polyfrost.polyui.color
 
 import org.polyfrost.polyui.PolyUI
@@ -125,22 +123,18 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
     }
 
     /** red value of this color, from 0 to 255 */
-    @kotlin.internal.InlineOnly
     @get:JvmName("red")
     inline val r get() = argb shr 16 and 0xFF
 
     /** green value of this color, from 0 to 255 */
-    @kotlin.internal.InlineOnly
     @get:JvmName("green")
     inline val g get() = argb shr 8 and 0xFF
 
     /** blue value of this color, from 0 to 255 */
-    @kotlin.internal.InlineOnly
     @get:JvmName("blue")
     inline val b get() = argb and 0xFF
 
     /** alpha value of this color, from 0 to 255 */
-    @kotlin.internal.InlineOnly
     @get:JvmName("alpha")
     inline val a get() = argb shr 24 and 0xFF
 

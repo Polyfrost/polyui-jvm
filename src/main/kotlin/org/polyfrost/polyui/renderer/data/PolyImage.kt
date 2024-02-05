@@ -23,6 +23,7 @@ package org.polyfrost.polyui.renderer.data
 
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.unit.mutable
 
 /**
  * Image representation in PolyUI. The image is lazily-loaded from the [resourcePath].
@@ -35,7 +36,7 @@ class PolyImage @JvmOverloads constructor(
     size: Vec2? = null,
     val type: Type = from(resourcePath),
 ) : Resource(resourcePath) {
-    val size = size ?: Vec2(-1f, -1f)
+    val size = size?.mutable() ?: Vec2.Mut(-1f, -1f)
     inline var width: Float
         get() = size.x
         set(value) {
@@ -46,7 +47,7 @@ class PolyImage @JvmOverloads constructor(
         set(value) {
             size.y = value
         }
-    private val prevScaleAmount = Vec2()
+    private val prevScaleAmount = Vec2.Mut()
 
     // asm: fix for when objects are sharing an image, and it gets scaled multiple times
     fun rescale(scaleX: Float, scaleY: Float) {

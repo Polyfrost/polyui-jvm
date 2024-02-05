@@ -67,6 +67,12 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, fre
         py = it.y - y
         false
     }
+    addEventHandler(Event.Mouse.Dragged) {
+        if (dragging) {
+            needsRedraw = true
+        }
+        false
+    }
     addOperation(object : DrawableOp(this) {
         private var prevX = 0f
         private var prevY = 0f
@@ -86,7 +92,6 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, fre
                     pressed = false
                     return
                 }
-                self.needsRedraw = true
                 if (!started) {
                     // asm: only start dragging if it has moved at least MIN_DRAG
                     if (abs(px + x - self.polyUI.inputManager.mouseX) > MIN_DRAG || abs(py + y - self.polyUI.inputManager.mouseY) > MIN_DRAG) {
@@ -515,7 +520,8 @@ fun Drawable.animateBy(
  * See the [animateBy] method for the "by" equivalent, which adds each value to the current one of this drawable.
  */
 fun Drawable.animateTo(
-    at: Vec2 = this.at,
+    tx: Float = this.x,
+    ty: Float = this.y,
     size: Vec2 = this.size,
     rotation: Double = this.rotation,
     skewX: Double = this.skewX,
@@ -525,7 +531,7 @@ fun Drawable.animateTo(
     color: PolyColor = this.color,
     animation: Animation? = null,
 ) {
-    if (at != this.at) Move(this, at, false, animation).add()
+    if (tx != this.x || ty != this.y) Move(this, tx, ty, false, animation).add()
     if (size != this.size) Resize(this, size, false, animation).add()
     if (rotation != this.rotation) Rotate(this, rotation, false, animation).add()
     if (skewX != this.skewX || skewY != this.skewY) Skew(this, skewX, skewY, false, animation).add()

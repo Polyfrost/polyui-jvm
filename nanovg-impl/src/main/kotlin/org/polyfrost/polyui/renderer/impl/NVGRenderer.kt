@@ -45,7 +45,7 @@ import java.util.*
 import kotlin.math.max
 import org.polyfrost.polyui.color.PolyColor as Color
 
-class NVGRenderer(size: Vec2) : Renderer(size) {
+class NVGRenderer(size: Vec2.Mut) : Renderer(size) {
     private val nvgPaint: NVGPaint = NVGPaint.malloc()
     private val nvgColor: NVGColor = NVGColor.malloc()
     private val nvgColor2: NVGColor = NVGColor.malloc()

@@ -9,6 +9,7 @@ import org.polyfrost.polyui.unit.Point
 import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.utils.ensureSize
 import org.polyfrost.polyui.utils.image
+import org.polyfrost.polyui.utils.mapToArray
 import org.polyfrost.polyui.utils.radii
 import kotlin.jvm.internal.Ref
 
@@ -71,9 +72,9 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Animated>, faves: MutableList<Pol
         ),
         Block(Image("info.svg".image()), size = 48f by 32f),
         Block(Image("info.svg".image()), size = 32f by 32f),
-        *faves.map { Block(size = 32f by 32f, color = it).withBoarder() }.toTypedArray(),
+        *faves.mapToArray { Block(size = 32f by 32f, color = it).withBoarder() },
         Block(Image("info.svg".image()), size = 32f by 32f),
-        *recents.map { Block(size = 32f by 32f, color = it).withBoarder() }.toTypedArray(),
+        *recents.mapToArray { Block(size = 32f by 32f, color = it).withBoarder() },
         size = 296f by 0f,
         align = Align(padding = 8f by 8f),
         polyUI = polyUI,

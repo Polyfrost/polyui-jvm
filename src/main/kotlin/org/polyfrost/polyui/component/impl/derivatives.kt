@@ -33,6 +33,7 @@ import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.LinkedList
+import org.polyfrost.polyui.utils.mapToArray
 import org.polyfrost.polyui.utils.radii
 import kotlin.math.PI
 import kotlin.math.max
@@ -61,7 +62,7 @@ fun Switch(at: Vec2? = null, size: Float, padding: Float = 3f, state: Boolean = 
     return Block(
         at = at,
         size = Vec2(size * lateralStretch, size),
-        alignment = Align(main = Align.Main.Start, padding = Vec2(padding, padding)),
+        alignment = Align(main = Align.Main.Start, cross = Align.Cross.Start, padding = Vec2(padding, padding)),
         radii = (size / 2f).radii(),
         children = arrayOf(
             Block(size = Vec2(circleSize, circleSize), radii = (circleSize / 2f).radii()).setPalette { text.primary },
@@ -95,7 +96,7 @@ fun Switch(at: Vec2? = null, size: Float, padding: Float = 3f, state: Boolean = 
  * For both strings and images, use `Image to "string"`.
  */
 fun Radiobutton(vararg entries: String, at: Vec2? = null, initial: Int = 0, fontSize: Float = 12f, optionLateralPadding: Float = 6f, optionVerticalPadding: Float = 6f): Block {
-    return Radiobutton(entries = entries.map { null to it }.toTypedArray(), at, initial, fontSize, optionLateralPadding, optionVerticalPadding)
+    return Radiobutton(entries = entries.mapToArray { null to it }, at, initial, fontSize, optionLateralPadding, optionVerticalPadding)
 }
 
 /**
@@ -104,7 +105,7 @@ fun Radiobutton(vararg entries: String, at: Vec2? = null, initial: Int = 0, font
  * For both strings and images, use `Image to "string"`.
  */
 fun Radiobutton(vararg entries: PolyImage, at: Vec2? = null, initial: Int = 0, fontSize: Float = 12f, optionLateralPadding: Float = 6f, optionVerticalPadding: Float = 6f): Block {
-    return Radiobutton(entries = entries.map { it to null }.toTypedArray(), at, initial, fontSize, optionLateralPadding, optionVerticalPadding)
+    return Radiobutton(entries = entries.mapToArray { it to null }, at, initial, fontSize, optionLateralPadding, optionVerticalPadding)
 }
 
 /**
@@ -116,7 +117,6 @@ fun Radiobutton(vararg entries: PolyImage, at: Vec2? = null, initial: Int = 0, f
  */
 fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2? = null, initial: Int = 0, fontSize: Float = 12f, optionLateralPadding: Float = 6f, optionVerticalPadding: Float = 6f): Block {
     val optAlign = Align(Align.Main.Center, padding = Vec2(optionLateralPadding, optionVerticalPadding))
-    val maxImageSize = fontSize * 1.3f
     val buttons: LinkedList<Drawable> = entries.mapTo(LinkedList()) { (img, text) ->
         require(img != null || text != null) { "image and text cannot both be null on Radiobutton" }
         Group(
@@ -127,6 +127,7 @@ fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2? = null, ini
             ),
         ).events {
             Event.Lifetime.Init then {
+                val maxImageSize = fontSize * 1.3f
                 (this[0] as? Image)?.image?.size?.max(maxImageSize, maxImageSize)
             }
             Event.Mouse.Clicked(0) then { _ ->
@@ -144,12 +145,13 @@ fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2? = null, ini
     return Block(
         at = at,
         children = buttons.apply {
-            add(0, Block(at = ignored, size = ignored))
+            add(0, Block(at = ignored, size = Vec2.ONE))
         }.toTypedArray(),
     ).afterInit { _ ->
         val it = this[0]
         val target = this[initial + 1]
-        it.at.set(target.at)
+        it.x = target.x
+        it.y = target.y
         it.size.set(target.size)
         it.setPalette(polyUI.colors.brand.fg)
     }.namedId("Radiobutton")
@@ -159,7 +161,7 @@ fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2? = null, ini
  * For images, use `Image to "string"` for each entry.
  */
 fun Dropdown(vararg entries: String, at: Vec2? = null, fontSize: Float = 12f, initial: Int = 0, padding: Float = 12f): Block {
-    return Dropdown(entries = entries.map { null to it }.toTypedArray(), at, fontSize, initial, padding)
+    return Dropdown(entries = entries.mapToArray { null to it }, at, fontSize, initial, padding)
 }
 
 fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2? = null, fontSize: Float = 12f, initial: Int = 0, padding: Float = 12f): Block {
@@ -173,7 +175,7 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2? = null, fontSiz
     ).withStates().withBoarder()
     val dropdown = Block(
         alignment = Align(mode = Align.Mode.Vertical, padding = Vec2(padding, 6f)),
-        children = entries.map { (img, text) ->
+        children = entries.mapToArray { (img, text) ->
             Group(
                 children = arrayOf(
                     if (img != null) Image(img) else null,
@@ -191,7 +193,7 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2? = null, fontSiz
                     true
                 }
             }
-        }.toTypedArray(),
+        },
     ).namedId("DropdownMenu").hide().disable()
     it.afterParentInit(Int.MAX_VALUE) {
         polyUI.master.addChild(dropdown, reposition = false)
@@ -199,11 +201,11 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2? = null, fontSiz
     return it.events {
         Event.Focused.Gained then {
             dropdown.x = this.x
+            dropdown.y = this.y + this.size.y
             if (dropdown.height != 0f) heightTracker = dropdown.height
             dropdown.height = 0f
             dropdown.renders = true
             dropdown.enabled = true
-            dropdown.y = this.y + this.size.y
             prioritize()
             Resize(dropdown, height = heightTracker, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
             Rotate(this[1], PI, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
@@ -218,6 +220,7 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2? = null, fontSiz
         }
         Event.Lifetime.Init then {
             dropdown.setup(polyUI)
+            if (polyUI.master.initialized) polyUI.master.addChild(dropdown, reposition = false)
             dropdown.width += padding
             dropdown.recalculateChildren()
             this.width = dropdown.width

@@ -21,9 +21,7 @@
 
 package org.polyfrost.polyui.input
 
-import org.polyfrost.polyui.utils.LinkedList
-import kotlin.experimental.and
-import kotlin.experimental.or
+import org.polyfrost.polyui.PolyUI
 
 /**
  * PolyUI's mapping for unprintable key codes.
@@ -51,22 +49,22 @@ enum class Keys(val keyName: String, val value: Short) {
     F11("F11", 11),
     F12("F12", 12),
 
-    ESCAPE("Escape", 100),
+    ESCAPE("Escape", 20),
 
-    ENTER("Enter", 101),
-    TAB("Tab", 102),
-    BACKSPACE("Backspace", 103),
-    INSERT("Insert", 104),
-    DELETE("Delete", 105),
-    PAGE_UP("Page Up", 106),
-    PAGE_DOWN("Page Down", 107),
-    HOME("Home", 108),
-    END("End", 109),
+    ENTER("Enter", 21),
+    TAB("Tab", 22),
+    BACKSPACE("Backspace", 23),
+    INSERT("Insert", 24),
+    DELETE("Delete", 25),
+    PAGE_UP("Page Up", 26),
+    PAGE_DOWN("Page Down", 27),
+    HOME("Home", 28),
+    END("End", 29),
 
-    RIGHT("Right", 200),
-    LEFT("Left", 201),
-    DOWN("Down", 202),
-    UP("Up", 203),
+    RIGHT("Right", 30),
+    LEFT("Left", 31),
+    DOWN("Down", 32),
+    UP("Up", 33),
     ;
 
     companion object {
@@ -74,68 +72,94 @@ enum class Keys(val keyName: String, val value: Short) {
         /** get the key from the given value. */
         @JvmStatic
         fun fromValue(value: Int): Keys {
-            val v = value.toShort()
-            for (key in entries) {
-                if (key.value == v) {
-                    return key
-                }
+            return when (value) {
+                1 -> F1
+                2 -> F2
+                3 -> F3
+                4 -> F4
+                5 -> F5
+                6 -> F6
+                7 -> F7
+                8 -> F8
+                9 -> F9
+                10 -> F10
+                11 -> F11
+                12 -> F12
+
+                20 -> ESCAPE
+
+                21 -> ENTER
+                22 -> TAB
+                23 -> BACKSPACE
+                24 -> INSERT
+                25 -> DELETE
+                26 -> PAGE_UP
+                27 -> PAGE_DOWN
+                28 -> HOME
+                29 -> END
+
+                30 -> RIGHT
+                31 -> LEFT
+                32 -> DOWN
+                33 -> UP
+
+                else -> UNKNOWN
             }
-            return UNKNOWN
         }
 
         /**
          * return a string representation of this key combo.
          *
-         * For example, [LSHIFT][Modifiers.LSHIFT] + [LCONTROL][Modifiers.LCONTROL] + [INSERT][Keys.INSERT] would return `"LSHIFT+LCONTROL+INSERT"`
+         * For example, [LSHIFT][KeyModifiers.LSHIFT] + [LCONTROL][KeyModifiers.LCONTROL] + [INSERT][Keys.INSERT] would return `"LSHIFT+LCONTROL+INSERT"`
          * */
         @JvmStatic
-        fun toString(key: Keys, modifiers: Short = 0): String {
-            return if (modifiers.toInt() == 0) {
+        fun toString(key: Keys, modifiers: Modifiers = Modifiers(0)): String {
+            return if (modifiers.isEmpty) {
                 key.name
             } else {
-                "${Modifiers.toString(modifiers)}+${key.name}"
+                "${modifiers.name}+${key.name}"
             }
         }
 
         /**
          * return a string representation of this key combo.
          *
-         * For example, [LSHIFT][Modifiers.LSHIFT] + [LCONTROL][Modifiers.LCONTROL] + `a` would return `"LSHIFT+LCONTROL+a"`
+         * For example, [LSHIFT][KeyModifiers.LSHIFT] + [LCONTROL][KeyModifiers.LCONTROL] + `a` would return `"LSHIFT+LCONTROL+a"`
          */
         @JvmStatic
-        fun toString(key: Char, modifiers: Short = 0): String {
-            return if (modifiers.toInt() == 0) {
+        fun toString(key: Char, modifiers: Modifiers = Modifiers(0)): String {
+            return if (modifiers.isEmpty) {
                 key.toString()
             } else {
-                "${Modifiers.toString(modifiers)}+$key"
+                "${modifiers.name}+$key"
             }
         }
 
         /**
          * return a pretty string representation of this key combo.
          *
-         * For example, [LSHIFT][Modifiers.LSHIFT] + [LCONTROL][Modifiers.LCONTROL] + [INSERT][Keys.INSERT] would return `"Left Shift + Left Control + Insert"`
+         * For example, [LSHIFT][KeyModifiers.LSHIFT] + [LCONTROL][KeyModifiers.LCONTROL] + [INSERT][Keys.INSERT] would return `"Left Shift + Left Control + Insert"`
          */
         @JvmStatic
-        fun toStringPretty(key: Keys, modifiers: Short = 0): String {
-            return if (modifiers.toInt() == 0) {
+        fun toStringPretty(key: Keys, modifiers: Modifiers = Modifiers(0)): String {
+            return if (modifiers.isEmpty) {
                 key.keyName
             } else {
-                "${Modifiers.toStringPretty(modifiers)} + ${key.keyName}"
+                "${modifiers.prettyName} + ${key.keyName}"
             }
         }
 
         /**
          * return a pretty string representation of this key combo.
          *
-         * For example, [LSHIFT][Modifiers.LSHIFT] + [LCONTROL][Modifiers.LCONTROL] + `a` would return `"Left Shift + Left Control + a"`
+         * For example, [LSHIFT][KeyModifiers.LSHIFT] + [LCONTROL][KeyModifiers.LCONTROL] + `a` would return `"Left Shift + Left Control + a"`
          */
         @JvmStatic
-        fun toStringPretty(key: Char, modifiers: Short = 0): String {
-            return if (modifiers.toInt() == 0) {
+        fun toStringPretty(key: Char, modifiers: Modifiers = Modifiers(0)): String {
+            return if (modifiers.isEmpty) {
                 key.toString()
             } else {
-                "${Modifiers.toStringPretty(modifiers)} + $key"
+                "${modifiers.prettyName} + $key"
             }
         }
     }
@@ -154,30 +178,32 @@ enum class Mouse(val keyName: String, val value: Short) {
     companion object {
         @JvmStatic
         fun fromValue(value: Int): Mouse {
-            val v = value.toShort()
-            for (btn in entries) {
-                if (btn.value == v) {
-                    return btn
-                }
+            return when (value) {
+                0 -> LEFT_MOUSE
+                1 -> RIGHT_MOUSE
+                2 -> MIDDLE_MOUSE
+                3 -> MOUSE_3
+                4 -> MOUSE_4
+                5 -> MOUSE_5
+                else -> UNKNOWN
             }
-            return UNKNOWN
         }
 
         @JvmStatic
-        fun toString(button: Mouse, modifiers: Short = 0): String {
-            return if (modifiers.toInt() == 0) {
+        fun toString(button: Mouse, modifiers: Modifiers = Modifiers(0)): String {
+            return if (modifiers.isEmpty) {
                 button.name
             } else {
-                "${Modifiers.toString(modifiers)}+${button.name}"
+                "${modifiers.name}+${button.name}"
             }
         }
 
         @JvmStatic
-        fun toStringPretty(button: Mouse, modifiers: Short = 0): String {
-            return if (modifiers.toInt() == 0) {
+        fun toStringPretty(button: Mouse, modifiers: Modifiers = Modifiers(0)): String {
+            return if (modifiers.isEmpty) {
                 button.keyName
             } else {
-                "${Modifiers.toStringPretty(modifiers)} + ${button.keyName}"
+                "${modifiers.prettyName} + ${button.keyName}"
             }
         }
     }
@@ -185,83 +211,83 @@ enum class Mouse(val keyName: String, val value: Short) {
 
 /**
  * PolyUI's mapping for modifier keys, in binary form so logical OR can be used to check for multiple modifiers.
- *
- * @see fromModifierMerged
- * @see merge
+ * @see Modifiers
  */
-enum class Modifiers(val keyName: String, val value: Short) {
-    LSHIFT("Left Shift", 0b00000001),
-    RSHIFT("Right Shift", 0b00000010),
+enum class KeyModifiers(val value: Byte) {
+    LSHIFT(0b00000001),
+    RSHIFT(0b00000010),
 
-    LCONTROL("Left Control", 0b00000100),
-    RCONTROL("Right Control", 0b00001000),
+    LCONTROL(0b00000100),
+    RCONTROL(0b00001000),
 
-    LALT("Left Alt", 0b00010000),
-    RALT("Right Alt", 0b00100000),
+    LALT(0b00010000),
+    RALT(0b00100000),
 
-    LMETA("Left Meta", 0b01000000),
-    RMETA("Right Meta", 0b10000000),
+    LMETA(0b01000000),
+    RMETA(-0b10000000),
 
     /** you will never receive this value. */
-    UNKNOWN("Unknown", 0),
-    ;
-
-    companion object {
-        /**
-         * take the given short-merged modifiers and return a list of the modifiers.
-         * @see merge
-         */
-        @JvmStatic
-        fun fromModifierMerged(modifiers: Short): Array<Modifiers> {
-            if (modifiers.toInt() == 0) return emptyArray()
-            val mods = LinkedList<Modifiers>()
-            for (mod in entries) {
-                if ((mod.value and modifiers).toInt() != 0) {
-                    mods.add(mod)
-                }
-            }
-            return mods.toTypedArray()
-        }
-
-        /**
-         * merge the given modifiers into a single short.
-         * @see fromModifierMerged
-         */
-        @JvmStatic
-        fun merge(vararg modifiers: Modifiers): Short {
-            var merged: Short = 0
-            for (mod in modifiers) {
-                merged = merged or mod.value
-            }
-            return merged
-        }
-
-        /**
-         * equal to: [merge]
-         */
-        @JvmStatic
-        fun of(vararg modifiers: Modifiers): Short = merge(*modifiers)
-
-        /**
-         * equal to: [merge]
-         */
-        @JvmStatic
-        fun mods(vararg modifiers: Modifiers): Short = merge(*modifiers)
-
-        @JvmStatic
-        @Suppress("NOTHING_TO_INLINE")
-        inline fun toString(modifiers: Short) = toString(*fromModifierMerged(modifiers))
-
-        @JvmStatic
-        @Suppress("NOTHING_TO_INLINE")
-        inline fun toStringPretty(modifiers: Short) = toStringPretty(*fromModifierMerged(modifiers))
-
-        @JvmStatic
-        fun toString(vararg modifiers: Modifiers) = modifiers.joinToString("+") { it.name }
-
-        @JvmStatic
-        fun toStringPretty(vararg modifiers: Modifiers) = modifiers.joinToString(" + ") { it.keyName }
-    }
+    UNKNOWN(0);
 }
 
-typealias KeyModifiers = Modifiers
+/**
+ * PolyUI's mapping for modifier keys, in binary form so logical OR can be used to check for multiple modifiers.
+ * @see KeyModifiers
+ */
+@JvmInline
+value class Modifiers(val value: Byte) {
+    val lShift get() = value.toInt() and 0b00000001 != 0
+    val rShift get() = value.toInt() and 0b00000010 != 0
+    val lCtrl get() = value.toInt() and 0b00000100 != 0
+    val rCtrl get() = value.toInt() and 0b00001000 != 0
+    val lAlt get() = value.toInt() and 0b00010000 != 0
+    val rAlt get() = value.toInt() and 0b00100000 != 0
+    val lMeta get() = value.toInt() and 0b01000000 != 0
+    val rMeta get() = value.toInt() and 0b10000000 != 0
+
+    val isEmpty get() = value.toInt() == 0
+    val hasShift get() = value.toInt() and 0b00000011 != 0
+    val hasControl get() = value.toInt() and 0b00001100 != 0 || (PolyUI.isOnMac && value.toInt() and 0b11000000 != 0)
+    val hasAlt get() = value.toInt() and 0b00110000 != 0
+    val hasMeta get() = value.toInt() and 0b11000000 != 0
+
+    val prettyName: String
+        get() {
+            val sb = StringBuilder()
+            if (lShift) sb.append("Left Shift + ")
+            if (rShift) sb.append("Right Shift + ")
+            if (lCtrl) sb.append("Left Control + ")
+            if (rCtrl) sb.append("Right Control + ")
+            if (lAlt) sb.append("Left Alt + ")
+            if (rAlt) sb.append("Right Alt + ")
+            if (lMeta) sb.append("Left Meta + ")
+            if (rMeta) sb.append("Right Meta + ")
+            return sb.substring(0, sb.length - 3)
+        }
+
+    val name: String
+        get() {
+            val sb = StringBuilder()
+            if (lShift) sb.append("LSHIFT+")
+            if (rShift) sb.append("RSHIFT+")
+            if (lCtrl) sb.append("LCONTROL+")
+            if (rCtrl) sb.append("RCONTROL+")
+            if (lAlt) sb.append("LALT+")
+            if (rAlt) sb.append("RALT+")
+            if (lMeta) sb.append("LMETA+")
+            if (rMeta) sb.append("RMETA+")
+            return sb.substring(0, sb.length - 1)
+        }
+
+    fun equal(other: Modifiers): Boolean {
+        return this.equal(other.value)
+    }
+
+    fun equal(other: Byte): Boolean {
+        if (PolyUI.isOnMac && this.hasControl) {
+            val i = other.toInt()
+            return value.toInt() == i and 0b00111111 or (i shr 4)
+        }
+        return other == value
+    }
+}

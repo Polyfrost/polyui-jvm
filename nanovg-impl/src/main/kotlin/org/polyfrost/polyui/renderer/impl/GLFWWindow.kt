@@ -28,12 +28,10 @@ import org.lwjgl.glfw.GLFWErrorCallback
 import org.lwjgl.glfw.GLFWImage
 import org.lwjgl.opengl.GL.createCapabilities
 import org.lwjgl.opengl.GL.setCapabilities
-import org.lwjgl.opengl.GL20C.*
+import org.lwjgl.opengl.GL21C.*
 import org.lwjgl.stb.STBImage
-import org.lwjgl.system.Configuration
-import org.lwjgl.system.MemoryStack
-import org.lwjgl.system.MemoryUtil
-import org.lwjgl.system.Platform
+import org.lwjgl.system.*
+import org.lwjgl.system.macosx.ObjCRuntime
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
@@ -43,10 +41,18 @@ import org.polyfrost.polyui.utils.getResourceStream
 import org.polyfrost.polyui.utils.simplifyRatio
 import org.polyfrost.polyui.utils.toByteBuffer
 import java.io.File
-import java.lang.invoke.MethodHandles
 import kotlin.math.max
 
-class GLWindow @JvmOverloads constructor(
+/**
+ * reference implementation of a PolyUI window using GLFW, which registers an OpenGL context, supporting all PolyUI API features.
+ *
+ * For it to work across on macOS, *forwards compatibility is enabled.* This means that only Core profiles are supported, so **only use GL classes with the `C` suffix.**
+ *
+ * On macOS, this class is equipped with a workaround to allow it to run without `-XstartOnMainThread`. It can be disabled with `-Dpolyui.glfwnomacfix`, or setting [enableMacOSFix].
+ *
+ * @param gl2 if true, the window will be registered with OpenGL [2.1C+][org.lwjgl.opengl.GL21C], else, it will use OpenGL [3.2C+][org.lwjgl.opengl.GL32C].
+ */
+class GLFWWindow @JvmOverloads constructor(
     title: String,
     width: Int,
     height: Int,
@@ -91,14 +97,10 @@ class GLWindow @JvmOverloads constructor(
             val now = System.nanoTime()
             PolyUI.LOGGER.warn("macOS detected: checking isMainThread()... (disable with -Dpolyui.glfwnomacfix)")
             try {
-                // cheeky way to reflect out the method using the unsafe + IMPL_LOOKUP
-                // used as reflection does not work Java 9+
-                val ufield = sun.misc.Unsafe::class.java.getDeclaredField("theUnsafe")
-                ufield.setAccessible(true)
-                val unsafe = ufield.get(null) as sun.misc.Unsafe
-                val lfield = MethodHandles.Lookup::class.java.getDeclaredField("IMPL_LOOKUP")
-                val lookup = unsafe.getObject(unsafe.staticFieldBase(lfield), unsafe.staticFieldOffset(lfield)) as MethodHandles.Lookup
-                val isMainThread = lookup.unreflect(Class.forName("org.lwjgl.glfw.EventLoop").getDeclaredMethod("isMainThread")).invokeExact() as Boolean
+                // kotlin copy of org.lwjgl.glfw.EventLoop.isMainThread()
+                val msgSend = ObjCRuntime.getLibrary().getFunctionAddress("objc_msgSend")
+                val currentThread = JNI.invokePPP(ObjCRuntime.objc_getClass("NSThread"), ObjCRuntime.sel_getUid("currentThread"), msgSend)
+                val isMainThread = JNI.invokePPZ(currentThread, ObjCRuntime.sel_getUid("isMainThread"), msgSend)
                 if (!isMainThread) {
                     PolyUI.LOGGER.warn("VM option -XstartOnMainThread is required on macOS. glfw_async has been set to avoid crashing.")
                     Configuration.GLFW_LIBRARY_NAME.set("glfw_async")
@@ -136,7 +138,7 @@ class GLWindow @JvmOverloads constructor(
         glfwMakeContextCurrent(handle)
         createCapabilities()
         println("System Information:")
-        println("\tGPU: ${glGetString(GL_RENDERER)}")
+        println("\tGPU: ${glGetString(GL_RENDERER)}; ${glGetString(GL_VENDOR)}")
         println("\tDriver version: ${glGetString(GL_VERSION)}")
         println("\tOS: ${System.getProperty("os.name")} v${System.getProperty("os.version")}; ${System.getProperty("os.arch")}")
         println("\tJava version: ${System.getProperty("java.version")}; ${System.getProperty("java.vm.name")} from ${System.getProperty("java.vendor")} (${System.getProperty("java.vendor.url")})")
@@ -180,18 +182,40 @@ class GLWindow @JvmOverloads constructor(
             // p.s. I have performance tested this; and it is very fast (doesn't even show up on profiler). kotlin is good at int ranges lol
             if (keyCode in 255..348) {
                 if (keyCode < 340) {
-                    val key: Keys = (
-                            when (keyCode) {
-                                // insert, pg down, etc
-                                in 256..261 -> Keys.fromValue(keyCode - 156)
-                                in 266..269 -> Keys.fromValue(keyCode - 160)
-                                // arrows
-                                in 262..265 -> Keys.fromValue(keyCode - 62)
-                                // function keys
-                                in 290..314 -> Keys.fromValue(keyCode - 289)
-                                else -> Keys.UNKNOWN
-                            }
-                            )
+                    val key: Keys = when (keyCode) {
+                        GLFW_KEY_F1 -> Keys.F1
+                        GLFW_KEY_F2 -> Keys.F2
+                        GLFW_KEY_F3 -> Keys.F3
+                        GLFW_KEY_F4 -> Keys.F4
+                        GLFW_KEY_F5 -> Keys.F5
+                        GLFW_KEY_F6 -> Keys.F6
+                        GLFW_KEY_F7 -> Keys.F7
+                        GLFW_KEY_F8 -> Keys.F8
+                        GLFW_KEY_F9 -> Keys.F9
+                        GLFW_KEY_F10 -> Keys.F10
+                        GLFW_KEY_F11 -> Keys.F11
+                        GLFW_KEY_F12 -> Keys.F12
+
+                        GLFW_KEY_ESCAPE -> Keys.ESCAPE
+
+                        GLFW_KEY_ENTER -> Keys.ENTER
+                        GLFW_KEY_TAB -> Keys.TAB
+                        GLFW_KEY_BACKSPACE -> Keys.BACKSPACE
+                        GLFW_KEY_INSERT -> Keys.INSERT
+                        GLFW_KEY_DELETE -> Keys.DELETE
+                        GLFW_KEY_PAGE_UP -> Keys.PAGE_UP
+                        GLFW_KEY_PAGE_DOWN -> Keys.PAGE_DOWN
+                        GLFW_KEY_HOME -> Keys.HOME
+                        GLFW_KEY_END -> Keys.END
+
+                        GLFW_KEY_RIGHT -> Keys.RIGHT
+                        GLFW_KEY_LEFT -> Keys.LEFT
+                        GLFW_KEY_DOWN -> Keys.DOWN
+                        GLFW_KEY_UP -> Keys.UP
+
+                        else -> Keys.UNKNOWN
+                    }
+
                     if (action == GLFW_PRESS) {
                         polyUI.inputManager.keyDown(key)
                     } else {
@@ -334,6 +358,8 @@ class GLWindow @JvmOverloads constructor(
     override fun close() = glfwSetWindowShouldClose(handle, true)
 
     /** set the icon of this window according to the given [icon] path. This should be a resource path that can be used by [getResourceStream].
+     *
+     * **Does not work on macOS.** This is a limitation of GLFW, and is not a bug in PolyUI.
      *
      * The icon should be a PNG, BMP or JPG, and in a 2x size (i.e. 16x16, 32x32, 128x128, etc)
      * @throws Exception if the image does not exist, or a different IO error occurs.

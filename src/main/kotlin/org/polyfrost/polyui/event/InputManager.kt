@@ -23,20 +23,15 @@ package org.polyfrost.polyui.event
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
-import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_HOVERED
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_NONE
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.input.KeyBinder
-import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.property.Settings
 import java.io.File
-import kotlin.experimental.and
-import kotlin.experimental.inv
-import kotlin.experimental.or
 
 /**
  * # InputManager
@@ -45,7 +40,7 @@ import kotlin.experimental.or
  * @param keyBinder the key binder to use for this event manager. marked as internal as should not be accessed.
  */
 class InputManager(
-    private var master: Drawable,
+    private var master: Drawable?,
     var keyBinder: KeyBinder?,
     private val settings: Settings,
 ) {
@@ -64,7 +59,11 @@ class InputManager(
     private var clickTimer: Long = 0L
 
     /** @see org.polyfrost.polyui.input.Modifiers */
-    var keyModifiers: Short = 0
+    val keyModifiers get() = Modifiers(mods)
+
+    /** the current key modifiers (raw). */
+    @ApiStatus.Internal
+    var mods: Byte = 0
         private set
 
     /** amount of clicks in the current combo */
@@ -80,7 +79,7 @@ class InputManager(
     var mouseDown = false
         private set
 
-    fun with(master: Drawable): InputManager {
+    fun with(master: Drawable?): InputManager {
         this.master = master
         return this
     }
@@ -154,36 +153,28 @@ class InputManager(
 
     /**
      * add a modifier to the current keyModifiers.
-     * @see KeyModifiers
+     * @see Modifiers
      */
-    fun addModifier(modifier: Short) {
-        keyModifiers = if (PolyUI.isOnMac && settings.commandActsAsControl && modifier == Modifiers.LMETA.value) {
-            keyModifiers or Modifiers.LCONTROL.value
-        } else {
-            keyModifiers or modifier
-        }
+    fun addModifier(modifier: Byte) {
+        mods = (mods.toInt() or modifier.toInt()).toByte()
     }
 
     /**
      * remove a modifier from the current keyModifiers.
-     * @see KeyModifiers
+     * @see Modifiers
      */
-    fun removeModifier(modifier: Short) {
-        keyModifiers = if (PolyUI.isOnMac && settings.commandActsAsControl && modifier == Modifiers.LMETA.value) {
-            keyModifiers and (Modifiers.LCONTROL.value).inv()
-        } else {
-            keyModifiers and modifier.inv()
-        }
+    fun removeModifier(modifier: Byte) {
+        mods = (mods.toInt() and modifier.toInt().inv()).toByte()
     }
 
     /**
      * Clear the current keyModifiers.
-     * @see KeyModifiers
+     * @see Modifiers
      * @see addModifier
      * @since 0.20.1
      */
     fun clearModifiers() {
-        keyModifiers = 0
+        mods = 0
     }
 
 
@@ -214,8 +205,11 @@ class InputManager(
     fun mouseMoved(x: Float, y: Float) {
         mouseX = x
         mouseY = y
-        if (mouseDown) return
-        mouseOver = rayCheck(master, x, y)
+        if (mouseDown) {
+            dispatch(Event.Mouse.Dragged)
+            return
+        }
+        master?.let { mouseOver = rayCheck(it, x, y) }
     }
 
     fun mousePressed(button: Int) {
@@ -277,7 +271,7 @@ class InputManager(
     fun mouseScrolled(amountX: Float, amountY: Float) {
         var amountX = if (settings.naturalScrolling) amountX else -amountX
         var amountY = if (settings.naturalScrolling) amountY else -amountY
-        if ((keyModifiers and KeyModifiers.LSHIFT.value).toInt() != 0) {
+        if (keyModifiers.hasShift) {
             val t = amountX
             amountX = amountY
             amountY = t
