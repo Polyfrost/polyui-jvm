@@ -211,9 +211,11 @@ fun <S : Drawable> S.setAlpha(alpha: Float): S {
  * @since 1.0.6
  */
 @JvmName("onChangeString")
-fun <S : Text> S.onChange(func: S.(String) -> Unit): S {
+fun <S : Text> S.onChange(func: S.(String) -> Boolean): S {
     addEventHandler(Event.Change.Text()) {
-        func.invoke(this, it.text)
+        val res = func.invoke(this, it.text)
+        it.cancelled = res
+        res
     }
     return this
 }
@@ -225,9 +227,11 @@ fun <S : Text> S.onChange(func: S.(String) -> Unit): S {
  * @since 1.0.6
  */
 @JvmName("onChangeState")
-fun <S : Drawable> S.onChange(func: S.(Boolean) -> Unit): S {
+fun <S : Drawable> S.onChange(func: S.(Boolean) -> Boolean): S {
     addEventHandler(Event.Change.State()) {
-        func.invoke(this, it.state)
+        val res = func.invoke(this, it.state)
+        it.cancelled = res
+        res
     }
     return this
 }
@@ -239,9 +243,11 @@ fun <S : Drawable> S.onChange(func: S.(Boolean) -> Unit): S {
  * @since 1.0.6
  */
 @JvmName("onChangeIndex")
-fun <S : Drawable> S.onChange(func: S.(Int) -> Unit): S {
+fun <S : Drawable> S.onChange(func: S.(Int) -> Boolean): S {
     addEventHandler(Event.Change.Number()) {
-        func.invoke(this, it.amount.toInt())
+        val res = func.invoke(this, it.amount.toInt())
+        it.cancelled = res
+        res
     }
     return this
 }
@@ -253,9 +259,11 @@ fun <S : Drawable> S.onChange(func: S.(Int) -> Unit): S {
  * @since 1.0.6
  */
 @JvmName("onChangeNumber")
-fun <S : Drawable> S.onChange(func: S.(Float) -> Unit): S {
+fun <S : Drawable> S.onChange(func: S.(Float) -> Boolean): S {
     addEventHandler(Event.Change.Number()) {
-        func.invoke(this, it.amount.toFloat())
+        val res = func.invoke(this, it.amount.toFloat())
+        it.cancelled = res
+        res
     }
     return this
 }
@@ -292,6 +300,36 @@ fun <S : Text> S.addValidationFunction(func: S.(String) -> Boolean): S {
 
 fun <S : Drawable> S.setDestructivePalette() = setPalette {
     Colors.Palette(text.primary.normal, state.danger.hovered, state.danger.pressed, text.primary.disabled)
+}
+
+private val defEnter: Drawable.(Event.Mouse.Entered) -> Boolean = {
+    Recolor(this, this.palette.hovered, Animations.EaseInOutQuad.create(0.08.seconds)).add()
+    polyUI.cursor = Cursor.Clicker
+    false
+}
+
+private val defExit: Drawable.(Event.Mouse.Exited) -> Boolean = {
+    Recolor(this, this.palette.normal, Animations.EaseInOutQuad.create(0.08.seconds)).add()
+    polyUI.cursor = Cursor.Pointer
+    false
+}
+
+private val defPressed: Drawable.(Event.Mouse.Pressed) -> Boolean = {
+    Recolor(this, this.palette.pressed, Animations.EaseInOutQuad.create(0.08.seconds)).add()
+    false
+}
+
+private val defReleased: Drawable.(Event.Mouse.Released) -> Boolean = {
+    Recolor(this, this.palette.hovered, Animations.EaseInOutQuad.create(0.08.seconds)).add()
+    false
+}
+
+fun <S : Drawable> S.withStates(): S {
+    addEventHandler(Event.Mouse.Entered, defEnter)
+    addEventHandler(Event.Mouse.Exited, defExit)
+    addEventHandler(Event.Mouse.Pressed(0), defPressed)
+    addEventHandler(Event.Mouse.Released(0), defReleased)
+    return this
 }
 
 fun <S : Drawable> S.withStates(

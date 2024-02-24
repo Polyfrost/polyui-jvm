@@ -70,7 +70,7 @@ fun getResourceStreamNullable(resourcePath: String, caller: Class<*> = PolyUI::c
         }
     } catch (e: Exception) {
         if (e !is MalformedURLException) {
-            PolyUI.LOGGER.error("Failed to get resource: {}", e.message)
+            PolyUI.LOGGER.error("Failed to get resource: ${e.message}")
         }
         caller.getResourceAsStream(resourcePath)
             ?: caller.getResourceAsStream("/$resourcePath")

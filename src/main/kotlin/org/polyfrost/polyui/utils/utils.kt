@@ -386,6 +386,8 @@ inline fun <T> Collection<T>.asLinkedList(): LinkedList<T> = if (this is LinkedL
 
 inline fun <T> Array<T>.asLinkedList(): LinkedList<T> = LinkedList(*this)
 
+fun <T> linkedListOf(vararg elements: T): LinkedList<T> = LinkedList(*elements)
+
 /**
  * Returns the value of the given [key] in the map, and if [shouldRemove] is `true` the value is also removed from the map.
  * @since 1.0.2

@@ -21,6 +21,7 @@
 
 package org.polyfrost.polyui.property
 
+import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.unit.milliseconds
 
 /** Settings for PolyUI.
@@ -69,6 +70,7 @@ class Settings {
      * @see minDrawablesForFramebuffer
      * @since 0.18.0
      */
+    @ApiStatus.Experimental
     var isMasterFrameBuffer = false
 
     /**
@@ -76,9 +78,10 @@ class Settings {
      *
      * This value should be set to something relatively high, as the performance gain from using a framebuffer only works if there is a large amount of draw calls.
      *
-     * @see [org.polyfrost.polyui.component.Drawable.countChildren]
+     * @see [org.polyfrost.polyui.component.countChildren]
      */
-    var minDrawablesForFramebuffer: Int = 30
+    @ApiStatus.Experimental
+    var minDrawablesForFramebuffer: Int = Int.MAX_VALUE
 
     /**
      * Enable or disable framebuffers. Please note that PolyUI is designed to work with framebuffers, so disabling them may cause performance issues.
@@ -92,7 +95,7 @@ class Settings {
     /**
      * This optimization enables "render pausing", or allowing the renderer to pause rendering when there are no changes to the UI.
      *
-     * This requires a setup such as `if (`[polyUI.drew][PolyUI.drew]`) glfwSwapBuffers(handle)` in your main loop.
+     * This requires a setup such as `if (polyUI.drew) glfwSwapBuffers(handle)` in your main loop.
      * @since 0.12.0
      */
     @get:JvmName("isRenderPausingEnabled")
@@ -205,14 +208,6 @@ class Settings {
     @get:JvmName("shouldLoadTranslationsOnInit")
     @set:JvmName("enableTranslationLoadingOnInit")
     var loadTranslationsOnInit = true
-
-    /**
-     * Enable parallel loading of translation files.
-     * @since 0.21.1
-     */
-    @get:JvmName("isParallelLoadingEnabled")
-    @set:JvmName("enableParallelLoading")
-    var parallelLoading = false
 
     /** How to handle resource (image and font) loading errors.
      * @see resourcePolicy

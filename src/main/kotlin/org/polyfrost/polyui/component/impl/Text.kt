@@ -228,4 +228,11 @@ open class Text(text: Translator.Text, font: Font = PolyUI.defaultFonts.regular,
         updateTextBounds(renderer)
         return size
     }
+
+    override fun debugString() =
+        """
+lines: ${lines.size}
+underline=$underline;  strike=$strikethrough;  italic=$italic
+font: ${font.resourcePath.substringAfterLast('/')}; size: $fontSize;  weight: $fontWeight
+        """
 }

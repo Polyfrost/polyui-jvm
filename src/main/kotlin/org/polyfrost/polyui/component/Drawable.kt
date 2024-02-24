@@ -33,6 +33,7 @@ import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.event.*
 import org.polyfrost.polyui.operations.*
+import org.polyfrost.polyui.renderer.data.Framebuffer
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.*
 
@@ -62,14 +63,14 @@ abstract class Drawable(
         focusable: Boolean = false,
     ) : this(children = children, at?.x ?: -1f, at?.y ?: -1f, alignment, size, visibleSize, palette, focusable)
 
-    var size: Vec2.Mut = size?.mutable() ?: Vec2.Mut()
+    var size: Vec2 = size?.mutable() ?: Vec2()
 
     /**
      * internal field for [visibleSize].
      * @since 1.1.0
      */
     @ApiStatus.Internal
-    var visibleSize0: Vec2.Mut? = visibleSize?.mutable()
+    var visibleSize0: Vec2? = visibleSize?.mutable()
 
     /**
      * The visible size of this drawable. This is used for clipping and scrolling.
@@ -84,7 +85,7 @@ abstract class Drawable(
      *
      * @since 1.1.0
      */
-    inline var visibleSize: Vec2.Mut
+    inline var visibleSize: Vec2
         get() = visibleSize0 ?: size
         set(value) {
             visibleSize0 = value
@@ -153,8 +154,14 @@ abstract class Drawable(
      */
     val operating get() = !operations.isNullOrEmpty()
 
-//    @set:Locking
-//    var framebuffer: Framebuffer? = null
+    @Locking
+    @set:Synchronized
+    var framebuffer: Framebuffer? = null
+
+    /**
+     * internal counter for framebuffer render count
+     */
+    private var fbc = 0
 
     /**
      * Setting of this value could have undesirable results, and the [PolyColor.Animated.recolor] method should be used instead.
@@ -430,18 +437,34 @@ abstract class Drawable(
     @Locking
     @Synchronized
     fun draw() {
-        needsRedraw = false
         if (!renders) return
         require(initialized) { "Drawable $simpleName is not initialized!" }
-        // todo impl framebuffers
-//        framebuffer?.let { renderer.bindFramebuffer(it) }
+
+        val framebuffer = framebuffer
+        val binds = framebuffer != null && fbc < 3
+        if (binds) {
+            if (!needsRedraw) {
+                renderer.drawFramebuffer(framebuffer!!, x, y)
+                return
+            }
+            renderer.bindFramebuffer(framebuffer!!)
+            fbc++
+        }
+
+//        if (!needsRedraw) return
+        needsRedraw = false
         preRender()
         render()
         children?.fastEach {
             it.draw()
         }
         postRender()
-//        framebuffer?.let { renderer.unbindFramebuffer(it) }
+
+        if (fbc > 0) fbc--
+        if (binds) {
+            renderer.unbindFramebuffer()
+            renderer.drawFramebuffer(framebuffer!!, x, y)
+        }
     }
 
     /**
@@ -557,6 +580,10 @@ abstract class Drawable(
         visibleSize0?.scale(sx, sy)
 
         children?.fastEach { it.rescale(scaleX, scaleY) }
+        framebuffer?.let {
+            renderer.delete(it)
+            framebuffer = renderer.createFramebuffer(size.x, size.y)
+        }
     }
 
     fun clipChildren() {
@@ -565,12 +592,28 @@ abstract class Drawable(
         val vs = visibleSize
         val tw = vs.x
         val th = vs.y
-        children?.fastEach {
-            if (!it.enabled) return@fastEach
-            it.renders = it.intersects(tx, ty, tw, th)
-            it.clipChildren()
-        }
+        _clipChildren(null, children ?: return, tx, ty, tw, th)
         needsRedraw = true
+    }
+
+    protected fun _clipChildren(self: Drawable?, children: LinkedList<Drawable>, tx: Float, ty: Float, tw: Float, th: Float) {
+        children.fastEach {
+            if (!it.enabled) return@fastEach
+            // asm: successful clip ONLY if it intersects the parent as well as the provided box
+            it.renders = if (it.intersects(tx, ty, tw, th)) {
+                // null signals that the boxes will be the same, no point checking
+                if (self == null) true
+                else {
+                    val sx = self.xScroll?.from ?: self.x
+                    val sy = self.yScroll?.from ?: self.y
+                    val vs = self.visibleSize
+                    val sw = vs.x
+                    val sh = vs.y
+                    it.intersects(sx, sy, sw, sh)
+                }
+            } else false
+            it._clipChildren(it, it.children ?: return@fastEach, tx, ty, tw, th)
+        }
     }
 
     /** function that should return true if it is ready to be removed from its parent.
@@ -672,6 +715,10 @@ abstract class Drawable(
         // following all init events being removed, if it is empty, we can set it to null
         if (eventHandlers.isNullOrEmpty()) eventHandlers = null
         clipChildren()
+        if (countChildren() > polyUI.settings.minDrawablesForFramebuffer) {
+            framebuffer = renderer.createFramebuffer(size.x, size.y)
+            if (polyUI.settings.debug) PolyUI.LOGGER.info("Drawable ${this.simpleName} created with $framebuffer")
+        }
         return true
     }
 
@@ -786,7 +833,19 @@ abstract class Drawable(
      */
     public override fun clone() = (super.clone() as Drawable)
 
-    override fun toString() = "$simpleName(${x}x$y, $size)"
+    override fun toString(): String {
+        return if (initialized) {
+            if (sizeValid) {
+                "$simpleName(${x}x$y, $size)"
+            } else "$simpleName(being initialized)"
+        } else "$simpleName(not initialized)"
+    }
+
+    /**
+     * Override this function to add things to the debug display of this drawable.
+     * @since 1.1.1
+     */
+    open fun debugString(): String? = null
 
     /**
      * Add a [DrawableOp] to this drawable.
@@ -795,6 +854,10 @@ abstract class Drawable(
     @Locking
     @Synchronized
     fun addOperation(drawableOp: DrawableOp): Boolean {
+        if (!drawableOp.verify()) {
+            if (polyUI.settings.debug) PolyUI.LOGGER.warn("Dodged invalid op $drawableOp on ${this.simpleName}")
+            return false
+        }
         if (operations == null) operations = LinkedList()
         needsRedraw = true
         return operations?.addOrReplace(drawableOp) == null
@@ -851,7 +914,7 @@ abstract class Drawable(
 
     @Locking
     fun removeChild(child: Drawable) {
-        val i = children?.indexOf(child) ?: throw NullPointerException("no children on $this")
+        val i = children?.indexOf(child) ?: throw NoSuchElementException("no children on $this")
         require(i != -1) { "Drawable $child is not a child of $this" }
         removeChild(i)
     }
@@ -859,7 +922,7 @@ abstract class Drawable(
     @Locking
     @Synchronized
     fun removeChild(index: Int) {
-        val children = this.children ?: throw NullPointerException("no children on $this")
+        val children = this.children ?: throw NoSuchElementException("no children on $this")
         val it = children.getOrNull(index) ?: throw IndexOutOfBoundsException("index: $index, length: ${children.size}")
         it.parent = null
         polyUI.inputManager.drop(it)
@@ -875,7 +938,7 @@ abstract class Drawable(
     operator fun get(index: Int) = children?.get(index) ?: throw IndexOutOfBoundsException("index: $index, length: ${children?.size ?: 0}")
 
     operator fun get(id: String): Drawable {
-        val children = children ?: throw NullPointerException("no children on $this")
+        val children = children ?: throw NoSuchElementException("no children on $this")
         children.fastEach {
             if (it.simpleName == id) return it
         }
@@ -892,7 +955,7 @@ abstract class Drawable(
     @Synchronized
     operator fun set(old: Drawable, new: Drawable?) {
         require(initialized) { "$this must be setup at this point!" }
-        val children = children ?: throw NullPointerException("no children on $this")
+        val children = children ?: throw NoSuchElementException("no children on $this")
         val index = children.indexOf(old)
         require(index != -1) { "Drawable $old is not a child of $this" }
         if (new == null) {
@@ -925,18 +988,7 @@ abstract class Drawable(
     @Locking
     operator fun set(old: Int, new: Drawable) = set(this[old], new)
 
-    operator fun get(x: Float, y: Float) = children?.first { it.isInside(x, y) } ?: throw NullPointerException("no children on $this")
-
-    @JvmName("addEventhandler")
-    @OverloadResolutionByLambdaReturnType
-    fun <E : Event, S : Drawable> S.addEventHandler(event: E, handler: S.(E) -> Unit?): S {
-        val s: S.(E) -> Boolean = {
-            handler(this, it)
-            true
-        }
-        addEventHandler(event, s)
-        return this
-    }
+    operator fun get(x: Float, y: Float) = children?.first { it.isInside(x, y) } ?: throw NoSuchElementException("no children on $this")
 
     @OverloadResolutionByLambdaReturnType
     @Suppress("UNCHECKED_CAST")
@@ -948,6 +1000,11 @@ abstract class Drawable(
         eventHandlers = ev
         return this
     }
+
+    @JvmName("addEventhandler")
+    @OverloadResolutionByLambdaReturnType
+    inline fun <E : Event, S : Drawable> S.addEventHandler(event: E, crossinline handler: S.(E) -> Unit): S =
+        addEventHandler(event) { handler(this, it); true }
 
     /**
      * Forward the events that this drawable receives to the given drawable.

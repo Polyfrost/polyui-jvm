@@ -26,8 +26,6 @@ import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.property.Settings
 import org.polyfrost.polyui.utils.getResourceStreamNullable
 import java.text.MessageFormat
-import java.util.*
-import kotlin.collections.ArrayDeque
 
 /**
  * # PolyTranslator
@@ -55,11 +53,13 @@ import kotlin.collections.ArrayDeque
  *  @see MessageFormat
  */
 class Translator(private val settings: Settings, private val translationDir: String) {
-    private var resourcePath: String = if (System.getProperty("polyui.locale") != null) {
-        "$translationDir/${System.getProperty("polyui.locale")}.lang"
-    } else {
-        "$translationDir/${Locale.getDefault().language}_${Locale.getDefault().country}.lang"
-    }
+    private var resourcePath = System.getProperty("polyui.locale")?.let { "$translationDir/$it.lang" }
+        ?: run {
+            val locale = java.util.Locale.getDefault()
+            "$translationDir/${locale.language}_${locale.country}.lang"
+        }
+
+
     private val map = HashMap<String, Text>()
     private val queue = ArrayDeque<String>(4)
 //    var master: Layout? = null
@@ -73,6 +73,7 @@ class Translator(private val settings: Settings, private val translationDir: Str
      */
     @ApiStatus.Internal
     var dontWarn: Boolean = false
+        get() = field || !settings.debug
 
     /** default file loading tracker */
     private var loadState = 0
@@ -110,14 +111,8 @@ class Translator(private val settings: Settings, private val translationDir: Str
         } else {
             PolyUI.LOGGER.info("Loading translation table $resource...")
             val start = System.nanoTime()
-            getResourceStreamNullable(resource)?.bufferedReader()?.lines()?.run {
-                if (settings.parallelLoading) {
-                    parallel()
-                } else {
-                    this
-                }
-            }?.forEach {
-                if (it.isEmpty()) return@forEach
+            getResourceStreamNullable(resource)?.reader()?.forEachLine {
+                if (it.isEmpty()) return@forEachLine
                 val split = it.split("=")
                 require(split.size == 2) { "Invalid key-value pair in $resource: $it" }
                 val v = map[split[0]]
@@ -236,7 +231,7 @@ class Translator(private val settings: Settings, private val translationDir: Str
             ran = true
             Text.Simple(key)
         }
-        if (!dontWarn && ran && text.string == key && key.contains('.')) PolyUI.LOGGER.warn("No translation for '$key'!")
+        if (!dontWarn && ran && text.string == key && '.' in key) PolyUI.LOGGER.warn("No translation for '$key'!")
         return text
     }
 

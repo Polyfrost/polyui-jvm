@@ -55,7 +55,7 @@ class EventDSL<S : Drawable>(val self: S) {
      * */
     @JvmName("to")
     @OverloadResolutionByLambdaReturnType
-    infix fun <E : Event> E.then(handler: S.(E) -> Unit?) = self.run {
+    infix fun <E : Event> E.then(handler: S.(E) -> Unit) = self.run {
         addEventHandler(this@then, handler)
     }
 

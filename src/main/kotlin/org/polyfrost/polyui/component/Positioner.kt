@@ -24,6 +24,7 @@ package org.polyfrost.polyui.component
 import org.polyfrost.polyui.component.Positioner.Default.Aligner
 import org.polyfrost.polyui.component.Positioner.Default.Justifier
 import org.polyfrost.polyui.unit.Align
+import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.utils.LinkedList
 import kotlin.math.max
 
@@ -46,7 +47,7 @@ fun interface Positioner {
             }
             val needsToCalcSize = !drawable.sizeValid
             if (needsToCalcSize) {
-                require(!children.isNullOrEmpty()) { "Drawable $drawable has no size and no children ${drawable.polyUI.debugPrint()}" }
+                require(!children.isNullOrEmpty()) { "Drawable $drawable has no size and no children\nBacktrace: ${drawable.polyUI.debugPrint()}" }
             } else if (children.isNullOrEmpty()) {
                 fixVisibleSize(drawable)
                 return
@@ -93,7 +94,7 @@ fun interface Positioner {
                 )
                 return
             }
-            val willWrap = vs[main] != 0f
+            val willWrap = vs[main] != 0f || drawable.alignment.maxRowSize != AlignDefault.maxRowSize
             if (willWrap) {
                 val rows = LinkedList<Pair<Pair<Float, Float>, LinkedList<Drawable>>>()
                 val maxRowSize = drawable.alignment.maxRowSize

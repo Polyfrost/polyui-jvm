@@ -40,6 +40,13 @@ import java.util.concurrent.CompletableFuture
  */
 class KeyBinder(private val settings: Settings) {
     private val listeners = LinkedList<Bind>()
+
+    /**
+     * Property which enables an optimization where the KeyBinder will only update after every frame if there are time-sensitive listeners.
+     * @since 1.1.1
+     */
+    var hasTimeSensitiveListeners = false
+        private set
     private val downMouseButtons = LinkedList<Int>()
     private val downUnmappedKeys = LinkedList<Int>()
     private val downKeys = LinkedList<Keys>()
@@ -81,6 +88,8 @@ class KeyBinder(private val settings: Settings) {
             is Event.Focused.KeyReleased -> {
                 downKeys.remove(event.key)
             }
+
+            else -> return false
         }
         return update(0L, modifiers)
     }
@@ -101,8 +110,10 @@ class KeyBinder(private val settings: Settings) {
         return update(0L, modifiers)
     }
 
+    @ApiStatus.Internal
     fun update(deltaTimeNanos: Long, keyModifiers: Byte): Boolean {
         modifiers = keyModifiers
+        if (!hasTimeSensitiveListeners && deltaTimeNanos > 0L) return false
         listeners.fastEach {
             if (it.update(downUnmappedKeys, downKeys, downMouseButtons, keyModifiers, deltaTimeNanos)) {
                 return true
@@ -122,7 +133,7 @@ class KeyBinder(private val settings: Settings) {
             recordingTime,
             recordingFunc ?: throw ConcurrentModificationException("recording function has been removed"),
         )
-        if (listeners.contains(b)) {
+        if (b in listeners) {
             recording.completeExceptionally(IllegalStateException("Duplicate keybind: $b"))
             release()
             return
@@ -139,6 +150,7 @@ class KeyBinder(private val settings: Settings) {
      * @since 0.21.0
      */
     fun add(bind: Bind) {
+        if (bind.durationNanos > 0L) hasTimeSensitiveListeners = true
         val old = listeners.addOrReplace(bind)
         if (old != null && old !== bind) {
             PolyUI.LOGGER.warn("Keybind replaced: $bind")
@@ -147,6 +159,15 @@ class KeyBinder(private val settings: Settings) {
 
     fun remove(bind: Bind) {
         listeners.remove(bind)
+        if (hasTimeSensitiveListeners) {
+            hasTimeSensitiveListeners = false
+            listeners.fastEach {
+                if (it.durationNanos > 0L) {
+                    hasTimeSensitiveListeners = true
+                    return
+                }
+            }
+        }
     }
 
     /**
@@ -161,9 +182,7 @@ class KeyBinder(private val settings: Settings) {
      * @since 0.24.0
      */
     fun record(holdDurationNanos: Long = 0L, function: () -> Boolean): CompletableFuture<Bind> {
-        if (settings.debug) {
-            PolyUI.LOGGER.info("Recording keybind began")
-        }
+        if (settings.debug) PolyUI.LOGGER.info("Recording keybind began")
         recording?.completeExceptionally(CancellationException("New recording was started"))
         release()
         val recording = CompletableFuture<Bind>()
@@ -171,12 +190,8 @@ class KeyBinder(private val settings: Settings) {
         recordingFunc = function
         this.recording = recording
         return recording.thenApply {
-            if (settings.debug) {
-                PolyUI.LOGGER.info("Bind created: $it")
-            }
-            if (listeners.addOrReplace(it) != null) {
-                PolyUI.LOGGER.warn("Keybind replaced: $it")
-            }
+            if (settings.debug) PolyUI.LOGGER.info("Bind created: $it")
+            add(it)
             it
         }.exceptionally {
             PolyUI.LOGGER.warn("Keybind recording cancelled: ${it.message}")
@@ -240,6 +255,7 @@ class KeyBinder(private val settings: Settings) {
         private var ran = false
 
         fun update(c: LinkedList<Int>, k: LinkedList<Keys>, m: LinkedList<Int>, mods: Byte, deltaTimeNanos: Long): Boolean {
+            if (durationNanos == 0L && deltaTimeNanos > 0L) return false
             if (unmappedKeys?.matches(c) != false && keys?.matches(k) != false && mouse?.matches(m) != false && this.mods.equal(mods)) {
                 if (!ran) {
                     if (durationNanos != 0L) {
@@ -319,7 +335,7 @@ class KeyBinder(private val settings: Settings) {
         private fun <T> Array<T>.matches(other: LinkedList<T>): Boolean {
             if (other.size == 0) return false
             for (i in this) {
-                if (!other.contains(i)) return false
+                if (i !in other) return false
             }
             return true
         }
@@ -327,7 +343,7 @@ class KeyBinder(private val settings: Settings) {
         private fun IntArray.matches(other: LinkedList<Int>): Boolean {
             if (other.size == 0) return false
             for (i in this) {
-                if (!other.contains(i)) return false
+                if (i !in other) return false
             }
             return true
         }

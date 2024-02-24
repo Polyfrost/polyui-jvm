@@ -38,7 +38,7 @@ import kotlin.math.min
  * for these functions, such as [image] and [text], an initialized [Font] or [PolyImage] instance will be given.
  * You can access the data using [Resource.stream][org.polyfrost.polyui.renderer.data.Resource.stream], and cache it for future use (ideally).
  */
-abstract class Renderer(val size: Vec2.Mut) : AutoCloseable {
+abstract class Renderer(val size: Vec2) : AutoCloseable {
     /**
      * set a maximum alpha value for all future draw calls, in the range (0-1), until [reset][resetAlphaCap]. This is useful for fading in/out all of PolyUI, for example.
      *
@@ -52,9 +52,6 @@ abstract class Renderer(val size: Vec2.Mut) : AutoCloseable {
     /** the pixel ratio of the screen, used mainly on Apple screens which use high-dpi. */
     var pixelRatio: Float = 1f
         internal set
-
-    /** hook into this renderer. */
-    inline fun render(block: Renderer.() -> Unit) = block()
 
     /**
      * This function is called during very early initialization, and should be used to prepare the renderer for use. This is always the first function called.
@@ -327,11 +324,11 @@ abstract class Renderer(val size: Vec2.Mut) : AutoCloseable {
      */
     abstract fun createFramebuffer(width: Float, height: Float): Framebuffer
 
-    /** Bind the given framebuffer. Ignore if null. */
-    abstract fun bindFramebuffer(fbo: Framebuffer?)
+    /** Bind the given framebuffer. */
+    abstract fun bindFramebuffer(fbo: Framebuffer)
 
-    /** Unbind the given framebuffer. if it is null, unbind everything. */
-    abstract fun unbindFramebuffer(fbo: Framebuffer?)
+    /** Unbind the currently bound framebuffer. */
+    abstract fun unbindFramebuffer()
 
     /** draw the given framebuffer to the screen. */
     abstract fun drawFramebuffer(
@@ -362,7 +359,11 @@ abstract class Renderer(val size: Vec2.Mut) : AutoCloseable {
     abstract fun cleanup()
 
     /** @see cleanup */
-    override fun close() {
+    final override fun close() {
+        cleanup()
+    }
+
+    protected fun finalize() {
         cleanup()
     }
 }

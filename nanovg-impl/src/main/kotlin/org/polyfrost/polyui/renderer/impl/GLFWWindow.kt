@@ -28,7 +28,7 @@ import org.lwjgl.glfw.GLFWErrorCallback
 import org.lwjgl.glfw.GLFWImage
 import org.lwjgl.opengl.GL.createCapabilities
 import org.lwjgl.opengl.GL.setCapabilities
-import org.lwjgl.opengl.GL21C.*
+import org.lwjgl.opengl.GL20C.*
 import org.lwjgl.stb.STBImage
 import org.lwjgl.system.*
 import org.lwjgl.system.macosx.ObjCRuntime
@@ -50,7 +50,7 @@ import kotlin.math.max
  *
  * On macOS, this class is equipped with a workaround to allow it to run without `-XstartOnMainThread`. It can be disabled with `-Dpolyui.glfwnomacfix`, or setting [enableMacOSFix].
  *
- * @param gl2 if true, the window will be registered with OpenGL [2.1C+][org.lwjgl.opengl.GL21C], else, it will use OpenGL [3.2C+][org.lwjgl.opengl.GL32C].
+ * @param gl2 if true, the window will be registered with OpenGL [2.0C+][org.lwjgl.opengl.GL20C], else, it will use OpenGL [3.2C+][org.lwjgl.opengl.GL32C].
  */
 class GLFWWindow @JvmOverloads constructor(
     title: String,
@@ -115,7 +115,7 @@ class GLFWWindow @JvmOverloads constructor(
 
         if (gl2) {
             glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2)
-            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1)
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0)
         } else {
             glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3)
             glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2)
@@ -322,7 +322,7 @@ class GLFWWindow @JvmOverloads constructor(
 
         if (polyUI.settings.windowAspectRatio.first == 0 || polyUI.settings.windowAspectRatio.second == 0) {
             val ratio = (width to height).simplifyRatio()
-            PolyUI.LOGGER.info("Inferred aspect ratio: {}:{}", ratio.first, ratio.second)
+            PolyUI.LOGGER.info("Inferred aspect ratio: ${ratio.first}:${ratio.second}")
             polyUI.settings.windowAspectRatio = ratio
         }
         glfwSetWindowAspectRatio(handle, polyUI.settings.windowAspectRatio.first, polyUI.settings.windowAspectRatio.second)
@@ -332,7 +332,6 @@ class GLFWWindow @JvmOverloads constructor(
         while (!glfwWindowShouldClose(handle)) {
             if (offset != 0) glViewport(0, offset, width, height)
             glClearColor(0f, 0f, 0f, 0f)
-            glClear(GL_COLOR_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
 
             this.polyUI.render()
             if (fpsCap != 0.0) {

@@ -21,15 +21,16 @@
 
 package org.polyfrost.polyui.renderer.impl
 
+import org.lwjgl.nanovg.NSVGImage
 import org.lwjgl.nanovg.NVGColor
 import org.lwjgl.nanovg.NVGLUFramebuffer
 import org.lwjgl.nanovg.NVGPaint
-import org.lwjgl.nanovg.NanoSVG
+import org.lwjgl.nanovg.NanoSVG.*
 import org.lwjgl.nanovg.NanoVG.*
 import org.lwjgl.nanovg.NanoVGGL3.*
 import org.lwjgl.opengl.GL20C.*
-import org.lwjgl.stb.STBImage
-import org.lwjgl.stb.STBImageResize
+import org.lwjgl.stb.STBImage.stbi_failure_reason
+import org.lwjgl.stb.STBImage.stbi_load_from_memory
 import org.lwjgl.system.MemoryUtil
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.property.Settings
@@ -38,25 +39,29 @@ import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.data.Framebuffer
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.utils.cl1
 import org.polyfrost.polyui.utils.toByteBuffer
-import java.io.InputStreamReader
 import java.nio.ByteBuffer
-import java.util.*
-import kotlin.math.max
+import java.util.IdentityHashMap
 import org.polyfrost.polyui.color.PolyColor as Color
 
-class NVGRenderer(size: Vec2.Mut) : Renderer(size) {
+class NVGRenderer(size: Vec2) : Renderer(size) {
     private val nvgPaint: NVGPaint = NVGPaint.malloc()
     private val nvgColor: NVGColor = NVGColor.malloc()
     private val nvgColor2: NVGColor = NVGColor.malloc()
-    private val fbos = IdentityHashMap<Framebuffer, NVGLUFramebuffer>()
-    private val images = IdentityHashMap<PolyImage, NVGImage>()
+    private val fbos = IdentityHashMap<Framebuffer, NVGFBO>(4)
+    private val images = HashMap<PolyImage, Int>()
+    private val svgs = HashMap<PolyImage, Pair<NSVGImage, HashMap<Int, Int>>>()
     private val fonts = IdentityHashMap<Font, NVGFont>()
-    private var vg: Long = -1
+    private var fstack: NVGFBO? = null
+    private var vg: Long = -1L
+    private var raster: Long = -1L
 
     override fun init() {
         vg = nvgCreate(if (settings.useAntialiasing) NVG_ANTIALIAS else 0)
+        raster = nsvgCreateRasterizer()
         require(vg != -1L) { "Could not initialize NanoVG" }
+        require(raster != -1L) { "Could not initialize NanoSVG" }
     }
 
     override fun beginFrame() {
@@ -91,7 +96,7 @@ class NVGRenderer(size: Vec2.Mut) : Renderer(size) {
 
     override fun drawFramebuffer(fbo: Framebuffer, x: Float, y: Float, width: Float, height: Float) {
         val framebuffer = fbos[fbo] ?: throw IllegalStateException("cannot draw $fbo as it is not known by this renderer")
-        nvgImagePattern(vg, x, y, fbo.width, fbo.height, 0f, framebuffer.image(), 1f, nvgPaint)
+        nvgImagePattern(vg, 0f, 0f, fbo.width, fbo.height, 0f, framebuffer.it.image(), 1f, nvgPaint)
         nvgBeginPath(vg)
         nvgRect(vg, x, y, width, height)
         nvgFillPaint(vg, nvgPaint)
@@ -128,16 +133,9 @@ class NVGRenderer(size: Vec2.Mut) : Renderer(size) {
         bottomLeftRadius: Float,
         bottomRightRadius: Float,
     ) {
-        val img = getImage(image)
-        nvgImagePattern(vg, x, y, width, height, 0f, img.id, 1f, nvgPaint)
+        nvgImagePattern(vg, x, y, width, height, 0f, getImage(image, width, height), 1f, nvgPaint)
         if (colorMask != 0) {
-            nvgRGBA(
-                (colorMask shr 16 and 0xFF).toByte(),
-                (colorMask shr 8 and 0xFF).toByte(),
-                (colorMask and 0xFF).toByte(),
-                (colorMask shr 24 and 0xFF).toByte(),
-                nvgPaint.innerColor(),
-            )
+            nvgARGB(colorMask, nvgPaint.innerColor())
         }
         nvgBeginPath(vg)
         nvgRoundedRectVarying(
@@ -159,12 +157,12 @@ class NVGRenderer(size: Vec2.Mut) : Renderer(size) {
 
     override fun createFramebuffer(width: Float, height: Float): Framebuffer {
         val f = Framebuffer(width, height)
-        fbos[f] = nvgluCreateFramebuffer(
+        fbos[f] = NVGFBO(nvgluCreateFramebuffer(
             vg,
-            width.toInt(),
-            height.toInt(),
+            (f.width * pixelRatio).toInt(),
+            (f.height * pixelRatio).toInt(),
             0,
-        ) ?: throw ExceptionInInitializerError("Could not create: $f (possibly an invalid sized layout?)")
+        ) ?: throw ExceptionInInitializerError("Could not create: $f (possibly an invalid sized layout?)"), null, f)
         return f
     }
 
@@ -174,7 +172,7 @@ class NVGRenderer(size: Vec2.Mut) : Renderer(size) {
                 PolyUI.LOGGER.error("Framebuffer not found when deleting it, already cleaned?")
                 return
             }
-            nvgluDeleteFramebuffer(vg, it)
+            nvgluDeleteFramebuffer(vg, it.it)
         }
     }
 
@@ -185,31 +183,59 @@ class NVGRenderer(size: Vec2.Mut) : Renderer(size) {
     override fun delete(image: PolyImage?) {
         images.remove(image).also {
             if (it != null) {
-                nvgDeleteImage(vg, it.id)
-                MemoryUtil.memFree(it.data)
+                nvgDeleteImage(vg, it)
+                return
+            }
+        }
+        svgs.remove(image).also {
+            if (it != null) {
+                nsvgDelete(it.first)
+                it.second.values.forEach { handle ->
+                    nvgDeleteImage(vg, handle)
+                }
             }
         }
     }
 
-    override fun bindFramebuffer(fbo: Framebuffer?) {
-        if (fbo == null) return
+    override fun bindFramebuffer(fbo: Framebuffer) {
+        val p = fbos[fbo] ?: throw NullPointerException("Cannot bind: $fbo does not exist!")
+        if (fstack === p) {
+            nvgEndFrame(vg)
+            nvgluBindFramebuffer(vg, null)
+            glViewport(0, 0, (size.x * pixelRatio).toInt(), (size.y * pixelRatio).toInt())
+            nvgBeginFrame(vg, size.x, size.y, pixelRatio)
+            return
+        }
+        p.prev = fstack
+        fstack = p
         nvgEndFrame(vg)
-        nvgluBindFramebuffer(vg, fbos[fbo] ?: throw NullPointerException("Cannot bind: $fbo does not exist!"))
-        glViewport(0, 0, fbo.width.toInt(), fbo.height.toInt())
+        nvgluBindFramebuffer(vg, p.it)
+        glViewport(0, 0, (fbo.width * pixelRatio).toInt(), (fbo.height * pixelRatio).toInt())
+        glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
         glClearColor(0f, 0f, 0f, 0f)
-        glClear(GL_COLOR_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
         nvgBeginFrame(vg, fbo.width, fbo.height, pixelRatio)
     }
 
-    override fun unbindFramebuffer(fbo: Framebuffer?) {
-        nvgEndFrame(vg)
-        nvgluBindFramebuffer(vg, null)
-        glViewport(0, 0, (size.x * pixelRatio).toInt(), (size.y * pixelRatio).toInt())
-        nvgBeginFrame(vg, size.x, size.y, pixelRatio)
+    override fun unbindFramebuffer() {
+        val f = fstack?.prev
+        if (f == null) {
+            nvgEndFrame(vg)
+            nvgluBindFramebuffer(vg, null)
+            glViewport(0, 0, (size.x * pixelRatio).toInt(), (size.y * pixelRatio).toInt())
+            nvgBeginFrame(vg, size.x, size.y, pixelRatio)
+        } else {
+            nvgEndFrame(vg)
+            nvgluBindFramebuffer(vg, f.it)
+            glViewport(0, 0, (f.ptr.width * pixelRatio).toInt(), (f.ptr.height * pixelRatio).toInt())
+            glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
+            glClearColor(0f, 0f, 0f, 0f)
+            nvgBeginFrame(vg, f.ptr.width, f.ptr.height, pixelRatio)
+            fstack = f
+        }
     }
 
     override fun initImage(image: PolyImage) {
-        getImage(image)
+        getImage(image, 0f, 0f)
     }
 
     override fun rect(
@@ -329,18 +355,21 @@ class NVGRenderer(size: Vec2.Mut) : Renderer(size) {
     }
 
     private fun color(color: Color) {
+        nvgARGB(color.argb, nvgColor)
         if (color is Color.Gradient) {
-            nvgRGBA(color.r.toByte(), color.g.toByte(), color.b.toByte(), color.a.toByte(), nvgColor)
-            nvgRGBA(
-                color.color2.r.toByte(),
-                color.color2.g.toByte(),
-                color.color2.b.toByte(),
-                color.color2.a.toByte(),
-                nvgColor2,
-            )
-        } else {
-            nvgRGBA(color.r.toByte(), color.g.toByte(), color.b.toByte(), color.a.toByte(), nvgColor)
+            nvgARGB(color.argb2, nvgColor2)
         }
+    }
+
+    private fun nvgARGB(argb: Int, ptr: NVGColor) {
+        nvgRGBA(
+            (argb shr 16 and 0xFF).toByte(),
+            (argb shr 8 and 0xFF).toByte(),
+            (argb and 0xFF).toByte(),
+            (argb shr 24 and 0xFF).toByte(),
+            ptr
+        )
+
     }
 
     private fun color(
@@ -401,7 +430,6 @@ class NVGRenderer(size: Vec2.Mut) : Renderer(size) {
                 val type = color.type as Color.Gradient.Type.Radial
                 nvgRadialGradient(
                     vg,
-                    // smart-cast impossible: [x] is a public API property declared in different module (bit cringe)
                     if (type.centerX == -1f) x + (width / 2f) else type.centerX,
                     if (type.centerY == -1f) y + (height / 2f) else type.centerY,
                     type.innerRadius,
@@ -431,10 +459,7 @@ class NVGRenderer(size: Vec2.Mut) : Renderer(size) {
     private fun getFont(font: Font): NVGFont {
         return fonts.getOrPut(font) {
             val data = font.stream?.toByteBuffer() ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) {
-                PolyUI.LOGGER.warn(
-                    "Failed to get font: {}, falling back to default font!",
-                    font.resourcePath,
-                )
+                PolyUI.LOGGER.warn("Failed to get font: ${font.resourcePath}, falling back to default font!")
                 PolyUI.defaultFonts.regular.get().toByteBuffer(false)
             } else {
                 throw ExceptionInInitializerError("Failed to get font: ${font.resourcePath}")
@@ -444,110 +469,73 @@ class NVGRenderer(size: Vec2.Mut) : Renderer(size) {
         }
     }
 
-    private fun getImage(image: PolyImage): NVGImage {
-        return images.getOrPut(image) {
-            var def = true
-            val stream = image.stream ?: if (settings.resourcePolicy != Settings.ResourcePolicy.CRASH) {
-                PolyUI.LOGGER.warn(
-                    "Failed to get image: {}, falling back to default image!",
-                    image.resourcePath,
-                )
-                def = false
-                PolyUI.defaultImage.stream ?: throw IllegalStateException("Default image not found!")
-            } else {
-                throw ExceptionInInitializerError("Failed to get image: ${image.resourcePath}")
+    private fun getImage(image: PolyImage, width: Float, height: Float): Int {
+        val vec = fixImage(image)
+        return when (image.type) {
+            PolyImage.Type.Vector -> {
+                val (svg, map) = svgs[image] ?: return svgLoad(image, vec)
+                if (image.invalid) image.size = Vec2.Immutable(svg.width(), svg.height())
+                map.getOrPut(width.hashCode() * 31 + height.hashCode()) { svgResize(svg, width, height) }
             }
-            val type = if (!def) PolyUI.defaultImage.type else image.type
-            val data: ByteBuffer
-            when (type) {
-                // let stb figure it out
-                PolyImage.Type.Unknown, PolyImage.Type.Raster -> {
-                    val w = IntArray(1)
-                    val h = IntArray(1)
-                    data = STBImage.stbi_load_from_memory(
-                        stream.toByteBuffer(def),
-                        w,
-                        h,
-                        IntArray(1),
-                        4,
-                    ).also {
-                        if (it == null) {
-                            PolyUI.LOGGER.error("STB error: ${STBImage.stbi_failure_reason()}")
-                            throw Exception("Failed to initialize $image")
-                        }
-                        if (image.width == -1f || image.height == -1f) {
-                            val sh = image.height != -1f
-                            val sw = image.width != -1f
-                            if (!sw) {
-                                if (!sh) {
-                                    image.width = w[0].toFloat()
-                                    image.height = h[0].toFloat()
-                                    return@also
-                                } else {
-                                    // !sw, sh
-                                    val ratio = image.height / h[0].toFloat()
-                                    image.width = w[0].toFloat() * ratio
-                                }
-                            } else {
-                                // !sh, sw
-                                val ratio = image.width / w[0].toFloat()
-                                image.height = h[0].toFloat() * ratio
-                            }
-                        }
-                        PolyUI.LOGGER.info("resizing image ${image.resourcePath}: ${w[0]}x${h[0]} -> ${image.width}x${image.height}")
-                        STBImageResize.stbir_resize_uint8(
-                            it, w[0], h[0],
-                            0, it,
-                            image.width.toInt(), image.height.toInt(),
-                            0, 4,
-                        )
-                    } ?: throw Exception("Failed to initialize $image")
-                }
 
-                PolyImage.Type.Vector -> {
-                    val RASTER_SCALE = 2f
-                    val d = InputStreamReader(stream).readText()
-                    val svg = NanoSVG.nsvgParse(d, "px", 96f) ?: throw Exception("Failed to open SVG: $image (invalid data?)")
-                    val raster = NanoSVG.nsvgCreateRasterizer()
-                    val scale = if (image.width != -1f || image.height != -1f) {
-                        max(image.width / svg.width(), image.height / svg.height()) * RASTER_SCALE
-                    } else {
-                        RASTER_SCALE
-                    }
-                    image.width = svg.width() * scale
-                    image.height = svg.height() * scale
-                    data = MemoryUtil.memAlloc(image.width.toInt() * image.height.toInt() * 4)
-                    NanoSVG.nsvgRasterize(
-                        raster, svg,
-                        0f, 0f,
-                        scale, data,
-                        image.width.toInt(), image.height.toInt(),
-                        image.width.toInt() * 4,
-                    )
-                    STBImageResize.stbir_resize_uint8(
-                        data, image.width.toInt(), image.height.toInt(),
-                        0, data,
-                        (image.width / RASTER_SCALE).toInt(), (image.height / RASTER_SCALE).toInt(),
-                        0, 4,
-                    )
-                    image.size /= RASTER_SCALE
-                    NanoSVG.nsvgDeleteRasterizer(raster)
-                    NanoSVG.nsvgDelete(svg)
-                }
+            PolyImage.Type.Raster -> {
+                images.getOrPut(image) { loadImage(image) }
             }
-            val img = nvgCreateImageRGBA(vg, image.width.toInt(), image.height.toInt(), 0, data)
-            NVGImage(img, image.width, image.height, data).also { images[image] = it }
+
+            else -> throw NoWhenBranchMatchedException("Impossible")
         }
+    }
+
+    private fun svgLoad(image: PolyImage, vec: String?): Int {
+        val raw = vec ?: image.stream?.bufferedReader()?.readText() ?: throw NullPointerException()
+        val svg = nsvgParse(raw, "px", 96f) ?: throw IllegalStateException("Failed to parse SVG: ${image.resourcePath}")
+        image.size = Vec2.Immutable(svg.width(), svg.height())
+        val map = HashMap<Int, Int>(2)
+        val o = svgResize(svg, svg.width(), svg.height())
+        map[image.size.hashCode()] = o
+        svgs[image] = svg to map
+        return o
+    }
+
+    private fun svgResize(svg: NSVGImage, width: Float, height: Float): Int {
+        val wi = (width * 2f).toInt()
+        val hi = (height * 2f).toInt()
+        val dst = MemoryUtil.memAlloc(wi * hi * 4)
+        val scale = cl1(width / svg.width(), height / svg.height()) * 2f
+        nsvgRasterize(raster, svg, 0f, 0f, scale, dst, wi, hi, wi * 4)
+        return nvgCreateImageRGBA(vg, wi, hi, 0, dst)
+    }
+
+    private fun fixImage(image: PolyImage): String? {
+        if (image.type != PolyImage.Type.Unknown) return null
+        val stream = image.stream ?: throw NullPointerException()
+        val vec = stream.bufferedReader().readText()
+        return if (vec.startsWith("<svg")) {
+            image.type = PolyImage.Type.Vector
+            vec
+        } else {
+            image.type = PolyImage.Type.Raster
+            null
+        }
+    }
+
+    private fun loadImage(image: PolyImage): Int {
+        val stream = image.stream ?: throw NullPointerException()
+        val w = IntArray(1)
+        val h = IntArray(1)
+        val d = stbi_load_from_memory(stream.toByteBuffer(true), w, h, IntArray(1), 4) ?: throw IllegalStateException("Failed to load image ${image.resourcePath}: ${stbi_failure_reason()}")
+        image.size = Vec2.Immutable(w[0].toFloat(), h[0].toFloat())
+        return nvgCreateImageRGBA(vg, w[0], h[0], 0, d)
     }
 
     override fun cleanup() {
         nvgColor.free()
         nvgPaint.free()
-        vg = -1
+        nsvgDeleteRasterizer(raster)
+        nvgDelete(vg)
     }
 
-    // used to ensure that the data is not discarded by the GC
-    data class NVGImage(val id: Int, val width: Float, val height: Float, val data: ByteBuffer)
+    class NVGFBO(val it: NVGLUFramebuffer, var prev: NVGFBO?, val ptr: Framebuffer)
 
     data class NVGFont(val id: Int, val data: ByteBuffer)
 }

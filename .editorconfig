@@ -27,6 +27,7 @@ indent_size = 2
 indent_style = space
 indent_size = 4
 
+# noinspection EditorConfigKeyCorrectness
 [*.{kt,kts}]
 ij_kotlin_code_style_defaults = KOTLIN_OFFICIAL
 ktlint_standard_no-wildcard-imports = disabled
@@ -53,6 +54,3 @@ ktlint_standard_function-signature = disabled
 ktlint_standard_string-template-indent = disabled
 ktlint_standard_value-parameter-comment = disabled
 ktlint_standard_value-argument-comment = disabled
-
-
-

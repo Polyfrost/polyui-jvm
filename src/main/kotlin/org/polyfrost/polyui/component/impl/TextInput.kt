@@ -125,7 +125,7 @@ open class TextInput(
                 clearSelection()
                 return when (event.clicks) {
                     1 -> {
-                        caretFromMouse(event.mouseX, event.mouseY)
+                        caretFromMouse(event.x, event.y)
                         focused
                     }
 
@@ -436,4 +436,6 @@ open class TextInput(
             size.smax(bounds)
         }
     }
+
+    override fun debugString() = "placeholder: ${_placeholder.string}\ncaret: $caret;  select: $select;  selecting=$selecting\n${super.debugString()}"
 }

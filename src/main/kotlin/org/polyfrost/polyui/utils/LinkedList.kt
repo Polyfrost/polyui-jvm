@@ -231,7 +231,7 @@ class LinkedList<T>() : MutableList<T>, Cloneable {
 
     override fun containsAll(elements: Collection<T>): Boolean {
         for (element in elements) {
-            if (!contains(element)) return false
+            if (element !in this) return false
         }
         return true
     }
@@ -256,7 +256,7 @@ class LinkedList<T>() : MutableList<T>, Cloneable {
         return old
     }
 
-    override fun contains(element: T) = indexOf(element) != -1
+    override operator fun contains(element: T) = indexOf(element) != -1
 
     inline fun fastEach(action: (T) -> Unit) {
         var current = start

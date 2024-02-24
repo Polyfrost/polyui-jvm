@@ -64,7 +64,8 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Animated>, faves: MutableList<Pol
                 ),
             ),
             Image(
-                PolyImage("alpha.png", 16f by 200f),
+                PolyImage("alpha.png"),
+                size = 16f by 200f,
                 radii = 8f.radii(),
                 children = arrayOf(
                     Block(at = 3f by 0f, size = 10f by 10f, radii = 5f.radii(), color = PolyColor.TRANSPARENT).draggable(withX = false, onDrag = {

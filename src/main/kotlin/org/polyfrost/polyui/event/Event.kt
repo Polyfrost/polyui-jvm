@@ -96,10 +96,10 @@ interface Event {
             }
         }
 
-        class Clicked internal constructor(val button: Int, val mouseX: Float, val mouseY: Float, val clicks: Int, val mods: Modifiers) : Mouse {
+        class Clicked internal constructor(val button: Int, val x: Float, val y: Float, val clicks: Int, val mods: Modifiers) : Mouse {
             constructor(button: Int, amountClicks: Int = 1, mods: Modifiers = Modifiers(0)) : this(button, 0f, 0f, amountClicks, mods)
 
-            override fun toString(): String = "MouseClicked x$clicks($mouseX x $mouseY, ${MouseUtils.toStringPretty(MouseUtils.fromValue(button), mods)})"
+            override fun toString(): String = "MouseClicked x$clicks($x x $y, ${MouseUtils.toStringPretty(MouseUtils.fromValue(button), mods)})"
 
             override fun hashCode(): Int {
                 var result = button
@@ -181,7 +181,6 @@ interface Event {
          * @since 1.0.3
          */
         var cancelled: Boolean = false
-            private set
 
         /**
          * Cancel this event.

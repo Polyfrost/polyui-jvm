@@ -30,6 +30,14 @@ abstract class DrawableOp(protected val self: Drawable) {
 
     abstract fun unapply(): Boolean
 
+    /**
+     * override this function to verify that this operation is valid, which is run before it is applied. (default: always `true`)
+     *
+     * @return `true` if this operation is deemed to be valid.
+     * @since 1.1.1
+     */
+    open fun verify(): Boolean = true
+
     fun add() {
         self.addOperation(this)
     }

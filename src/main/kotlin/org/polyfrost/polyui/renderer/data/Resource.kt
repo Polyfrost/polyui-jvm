@@ -56,7 +56,7 @@ abstract class Resource(val resourcePath: String) : AutoCloseable {
     private var _stream: InputStream? = null
 
     @Transient
-    private val completionCallbacks = LinkedList<Resource.() -> Unit>()
+    private var completionCallbacks: LinkedList<Resource.() -> Unit>? = null
 
     val stream: InputStream?
         get() {
@@ -142,11 +142,21 @@ abstract class Resource(val resourcePath: String) : AutoCloseable {
         }
     }
 
-    private fun runCallbacks() {
-        completionCallbacks.fastEach {
-            it()
+    fun addCompletionCallback(callback: Resource.() -> Unit) {
+        if (init) {
+            callback()
+        } else {
+            val c = completionCallbacks ?: LinkedList<Resource.() -> Unit>().also { completionCallbacks = it }
+            c.add(callback)
         }
-        completionCallbacks.clear()
+    }
+
+    private fun runCallbacks() {
+        if(resettable) {
+            completionCallbacks?.fastEach { it() }
+        } else {
+            completionCallbacks?.clearing { it() }
+        }
     }
 
     override fun toString() = "Resource(file=$resourcePath, init=$init)"

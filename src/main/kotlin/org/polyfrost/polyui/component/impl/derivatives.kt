@@ -52,7 +52,7 @@ fun Button(leftImage: PolyImage? = null, text: String? = null, rightImage: PolyI
         ),
     ).onInit { _ ->
         this.children?.fastEach {
-            (it as? Image)?.image?.size?.max(32f, 32f)
+            (it as? Image)?.size?.max(32f, 32f)
         }
     }.withStates().namedId("Button")
 }
@@ -128,7 +128,8 @@ fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2? = null, ini
         ).events {
             Event.Lifetime.Init then {
                 val maxImageSize = fontSize * 1.3f
-                (this[0] as? Image)?.image?.size?.max(maxImageSize, maxImageSize)
+                (this[0] as? Image)?.size?.max(maxImageSize, maxImageSize)
+                true
             }
             Event.Mouse.Clicked(0) then { _ ->
                 val children = parent!!.children!!
@@ -317,7 +318,7 @@ fun Slider(at: Vec2? = null, min: Float = 0f, max: Float = 100f, initialValue: F
             val bar = this[0]
             val ptr = this[1]
             val half = ptr.size.x / 2f
-            ptr.x = it.mouseX - half
+            ptr.x = it.x - half
             ptr.x = ptr.x.coerceIn(bar.x - half, bar.x + bar.size.x - half)
             bar[0].width = ptr.x - bar.x + half
 
@@ -343,7 +344,8 @@ fun Checkbox(at: Vec2? = null, size: Float, state: Boolean = false): Drawable {
         alignment = Align(padding = ((size - size / 1.25f) / 2f).vec),
         children = arrayOf(
             Image(
-                image = PolyImage("check.svg", size = (size / 1.25f).vec),
+                image = PolyImage("check.svg"),
+                size = (size / 1.25f).vec,
             ).disable(!state).also {
                 if (!state) it.alpha = 0f
             },
@@ -412,8 +414,8 @@ fun PopupMenu(vararg children: Drawable, size: Vec2? = null, align: Align = Alig
                 }
 
                 Point.Below -> {
-                    x = max(min(this.polyUI.mouseX - (this.size.x / 2f), this.polyUI.size.x), 0f)
-                    y = max(min(this.polyUI.mouseY + 12f, this.polyUI.size.y), 0f)
+                    x = max(min(this.polyUI.mouseX - (this.size.x / 2f), this.polyUI.size.x - this.size.x), 0f)
+                    y = max(min(this.polyUI.mouseY + 12f, this.polyUI.size.y - this.size.y), 0f)
                 }
             }
             Fade(this, 1f, false, Animations.EaseInOutQuad.create(0.2.seconds)).add()

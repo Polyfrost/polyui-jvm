@@ -199,6 +199,23 @@ class InputManager(
         return c
     }
 
+    /** same as [rayCheck], but does not check for [Drawable.acceptsInput] or [Drawable.enabled]. */
+    @ApiStatus.Experimental
+    @Contract(pure = true)
+    fun rayCheckUnsafe(it: Drawable, x: Float, y: Float): Drawable? {
+        var c: Drawable? = null
+        if (it.isInside(x, y)) {
+            c = it
+            it.children?.fastEach {
+                val n = rayCheckUnsafe(it, x, y)
+                if (n != null) c = n
+            }
+        }
+        return c
+    }
+
+
+
     /** call this function to update the mouse position. */
     fun mouseMoved(x: Float, y: Float) {
         mouseX = x
@@ -214,7 +231,7 @@ class InputManager(
         if (button == 0) mouseDown = true
         val event = Event.Mouse.Pressed(button, mouseX, mouseY, keyModifiers)
         mouseOver?.inputState = INPUT_PRESSED
-        dispatch(event)
+        dispatch(event, true)
     }
 
     /** call this function when a mouse button is released. */
@@ -244,7 +261,7 @@ class InputManager(
         val release = Event.Mouse.Released(button, mouseX, mouseY, keyModifiers)
         val click = Event.Mouse.Clicked(button, mouseX, mouseY, clickAmount, keyModifiers)
         mouseOver?.inputState = INPUT_HOVERED
-        dispatch(release)
+        dispatch(release, true)
         if (!dispatch(click) && button == 0) {
             safeFocus(mouseOver)
         }
@@ -285,9 +302,12 @@ class InputManager(
      * If the candidate drawable does not accept the event (returns `false`), it will be given to the parent, and so on.
      *
      * **Note that changing of the [to] parameter is experimental.**
+     * @param bindable (*mostly internal parameter*) if `true`, the event will be given to the [keyBinder] for processing of keybindings,
+     * **before** being given to the candidate drawable. It will consume the event if a keybinding matches and accepts it.
+     *
      */
-    fun dispatch(event: Event, to: Drawable? = mouseOver): Boolean {
-        if (keyBinder?.accept(event) == true) return true
+    fun dispatch(event: Event, bindable: Boolean = false, to: Drawable? = mouseOver): Boolean {
+        if (bindable && keyBinder?.accept(event) == true) return true
         var candidate = to
         while (candidate != null) {
             if (candidate.accept(event)) return true

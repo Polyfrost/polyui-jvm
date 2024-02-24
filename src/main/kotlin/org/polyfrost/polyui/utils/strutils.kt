@@ -34,12 +34,33 @@ import org.polyfrost.polyui.renderer.data.Font
  */
 fun StringBuilder.append(c: CharSequence, repeats: Int): StringBuilder {
     require(repeats >= 0) { "Count 'n' must be non-negative, but was $repeats." }
-    if (repeats == 0) return this
-    if (repeats == 1) {
-        this.append(c)
-    } else {
-        for (i in 1..repeats) {
-            this.append(c)
+    when(repeats) {
+        0 -> return this
+        1 -> this.append(c)
+        else -> {
+            for (i in 1..repeats) {
+                this.append(c)
+            }
+        }
+    }
+    return this
+}
+
+/**
+ * append the given [Char][c] to this [StringBuilder], repeated [repeats] times.
+ *
+ * This function is equivalent to doing [sb][StringBuilder]`.append(c.repeat(`[repeats]`))`, but it uses an already existing StringBuilder.
+ * @throws [IllegalArgumentException] when n < 0.
+ */
+fun StringBuilder.append(c: Char, repeats: Int): StringBuilder {
+    require(repeats >= 0) { "Count 'n' must be non-negative, but was $repeats." }
+    when(repeats) {
+        0 -> return this
+        1 -> this.append(c)
+        else -> {
+            for (i in 1..repeats) {
+                this.append(c)
+            }
         }
     }
     return this

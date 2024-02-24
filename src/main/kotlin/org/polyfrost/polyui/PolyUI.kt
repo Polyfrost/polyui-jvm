@@ -189,7 +189,6 @@ class PolyUI @JvmOverloads constructor(
     var drew = false
         private set
     private val clock = Clock()
-    private val executors: LinkedList<Clock.Executor> = LinkedList()
 
     inline val mouseX get() = inputManager.mouseX
 
@@ -207,7 +206,7 @@ class PolyUI @JvmOverloads constructor(
             window.setCursor(value)
         }
 
-    inline val size: Vec2.Mut get() = master.size
+    inline val size: Vec2 get() = master.size
 
     /**
      * this property stores the initial size of this PolyUI instance.
@@ -217,6 +216,7 @@ class PolyUI @JvmOverloads constructor(
     val iSize = size.immutable()
     private val hooks = LinkedList<Renderer.() -> Boolean>()
     private val preHooks = LinkedList<Renderer.() -> Boolean>()
+    private val executors: LinkedList<Clock.Executor> = LinkedList()
 
     /**
      * the time since the last frame, in nanoseconds. It is used internally a lot for animations, etc.
@@ -232,13 +232,13 @@ class PolyUI @JvmOverloads constructor(
     var fps: Int = 1
         private set
     private var frames = 0
-    private var nframes = 0L
-    var longestFrame = 0f
+    private var nframes = 0
+    var longestFrame = 0.0
         private set
-    var shortestFrame = 100f
+    var shortestFrame = 100.0
         private set
-    private var timeInFrames = 0f
-    var avgFrame = 0f
+    private var timeInFrames = 0.0
+    var avgFrame = 0.0
         private set
     private var perf: String = ""
 
@@ -260,30 +260,6 @@ class PolyUI @JvmOverloads constructor(
 //            }
 //        }
 
-        if (this.settings.enableDebugKeybind) {
-            this.keyBinder?.add(
-                KeyBinder.Bind('I', mods = mods(KeyModifiers.LCONTROL, KeyModifiers.LSHIFT)) {
-                    this.settings.debug = !this.settings.debug
-                    master.needsRedraw = true
-                    LOGGER.info(
-                        "Debug mode {}",
-                        if (this.settings.debug) {
-                            frames = 0
-                            "enabled"
-                        } else {
-                            "disabled"
-                        },
-                    )
-                    true
-                },
-            )
-            this.keyBinder?.add(
-                KeyBinder.Bind('P', mods = mods(KeyModifiers.LCONTROL)) {
-                    println(debugPrint())
-                    true
-                },
-            )
-        }
         this.keyBinder?.add(
             KeyBinder.Bind('R', mods = mods(KeyModifiers.LCONTROL)) {
                 LOGGER.info("Reloading PolyUI")
@@ -291,30 +267,39 @@ class PolyUI @JvmOverloads constructor(
                 true
             },
         )
-        val f = DecimalFormat("#.###")
-//        var td = System.nanoTime()
-        every(1.seconds) {
+        if (this.settings.debug) {
+            addDebug(this.settings.enableDebugKeybind)
+            val f = DecimalFormat("#.###")
+//            var td = System.nanoTime()
+            every(1.seconds) {
 //            val diff = (System.nanoTime() - td) / 1_000_000_000.0
 //            td = System.nanoTime()
 //            LOGGER.info("took $diff sec (accuracy = ${100.0 - (diff - 1.0) * 100.0}%)")
-            if (this.settings.debug) {
-                perf = "fps: $fps, avg/max/min: ${f.format(avgFrame.toDouble())}ms; ${f.format(longestFrame.toDouble())}ms; ${f.format(shortestFrame.toDouble())}ms"
-                if (this.settings.renderPausingEnabled && window.supportsRenderPausing()) {
-                    val skipPercent = (1.0 - (frames.toDouble() / nframes)) * 100.0
-                    perf += ", skip=${f.format(skipPercent)}%"
+                if (this.settings.debug) {
+                    val sb = StringBuilder(64)
+                    sb.append("fps: ").append(fps)
+                        .append(", avg/max/min: ")
+                        .append(f.format(avgFrame)).append("ms; ")
+                        .append(f.format(longestFrame)).append("ms; ")
+                        .append(f.format(shortestFrame)).append("ms")
+                    if (this.settings.renderPausingEnabled && window.supportsRenderPausing()) {
+                        val skipPercent = (1.0 - (frames.toDouble() / nframes)) * 100.0
+                        sb.append(", skip=").append(f.format(skipPercent)).append('%')
+                    }
+                    perf = sb.toString()
+                    longestFrame = 0.0
+                    shortestFrame = 100.0
+                    avgFrame = timeInFrames / fps
+                    timeInFrames = 0.0
+                    fps = frames
+                    frames = 0
+                    nframes = 0
+                    master.needsRedraw = true
+                    if (drew) LOGGER.info(perf)
                 }
-                longestFrame = 0f
-                shortestFrame = 100f
-                avgFrame = timeInFrames / fps
-                timeInFrames = 0f
-                fps = frames
-                frames = 0
-                nframes = 0
-                master.needsRedraw = true
-                if (drew) LOGGER.info(perf)
             }
+            println(debugPrint())
         }
-        if (this.settings.debug) println(debugPrint())
         if (this.settings.cleanupOnShutdown) {
             Runtime.getRuntime().addShutdownHook(
                 Thread {
@@ -329,7 +314,7 @@ class PolyUI @JvmOverloads constructor(
                 Runtime.getRuntime().gc()
             }
             val newUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
-            LOGGER.info("\t\t> Freed {}KB of memory", (currentUsage - newUsage) / 1024L)
+            LOGGER.info("\t\t> Freed ${(currentUsage - newUsage) / 1024L}KB of memory")
         }
         LOGGER.info("PolyUI initialized!")
     }
@@ -340,7 +325,7 @@ class PolyUI @JvmOverloads constructor(
     @Suppress("NAME_SHADOWING")
     fun resize(newWidth: Float, newHeight: Float, pixelRatio: Float = renderer.pixelRatio, force: Boolean = false) {
         if (newWidth == 0f || newHeight == 0f) {
-            LOGGER.error("Cannot resize to zero size: {}x{}", newWidth, newHeight)
+            LOGGER.error("Cannot resize to zero size: ${newWidth}x${newHeight}")
             return
         }
         if (!force && newWidth == size.x && newHeight == size.y && pixelRatio == this.renderer.pixelRatio) {
@@ -354,14 +339,14 @@ class PolyUI @JvmOverloads constructor(
         val (minW, minH) = settings.minimumWindowSize
         val (maxW, maxH) = settings.maximumWindowSize
         if ((minW != -1 && newWidth < minW) || (minH != -1 && newHeight < minH)) {
-            LOGGER.warn("Cannot resize to size smaller than minimum: {}x{}", newWidth, newHeight)
+            LOGGER.warn("Cannot resize to size smaller than minimum: ${newWidth}x${newHeight}")
             newWidth = minW.toFloat().coerceAtLeast(newWidth)
             newHeight = minH.toFloat().coerceAtLeast(newHeight)
             window.width = newWidth.toInt()
             window.height = newHeight.toInt()
         }
         if ((maxW != -1 && newWidth > maxW) || (maxH != -1 && newHeight > maxH)) {
-            LOGGER.warn("Cannot resize to size larger than maximum: {}x{}", newWidth, newHeight)
+            LOGGER.warn("Cannot resize to size larger than maximum: ${newWidth}x${newHeight}")
             newWidth = maxW.toFloat().coerceAtMost(newWidth)
             newHeight = maxH.toFloat().coerceAtMost(newHeight)
             window.width = newWidth.toInt()
@@ -372,7 +357,7 @@ class PolyUI @JvmOverloads constructor(
         if (num != -1 && denom != -1) {
             val aspectRatio = num.toFloat() / denom.toFloat()
             if (newWidth / newHeight != aspectRatio) {
-                LOGGER.warn("Cannot resize to size with incorrect aspect ratio: {}x{}, forcing changes, this may cause visual issues!", newWidth, newHeight)
+                LOGGER.warn("Cannot resize to size with incorrect aspect ratio: ${newWidth}x${newHeight}, forcing changes, this may cause visual issues!")
                 val newAspectRatio = newWidth / newHeight
                 if (newAspectRatio > aspectRatio) {
                     newWidth = (newHeight * aspectRatio)
@@ -399,6 +384,7 @@ class PolyUI @JvmOverloads constructor(
 //        }
         this.size.x = newWidth
         this.size.y = newHeight
+        master.needsRedraw = true
     }
 
     fun render() {
@@ -413,7 +399,7 @@ class PolyUI @JvmOverloads constructor(
 
             // telemetry
             if (settings.debug) {
-                val frameTime = (clock.peek()) / 1_000_000f
+                val frameTime = (clock.peek()) / 1_000_000.0
                 timeInFrames += frameTime
                 if (frameTime > longestFrame) longestFrame = frameTime
                 if (frameTime < shortestFrame) shortestFrame = frameTime
@@ -564,15 +550,20 @@ class PolyUI @JvmOverloads constructor(
 
     private fun debugPrint(list: LinkedList<Drawable>, depth: Int, sb: StringBuilder) {
         var i = 0
+        var ii = 0
+        val ndepth = depth + 1
         list.fastEach {
-            sb.append("\n").append("\t", depth + 1).append(it.toString())
-            i++
+            if (it.initialized) {
+                sb.append('\n').append('\t', ndepth).append(it.toString())
+                debugPrint(it.children ?: return@fastEach, ndepth, sb)
+                i++
+            } else ii += it.countChildren() + 1
             if (i >= 10) {
-                sb.append("\n").append("\t", depth + 2).append("... ").append(list.size - i).append(" more")
+                sb.append('\n').append('\t', ndepth).append("... ").append(list.size - i).append(" more")
                 return
             }
-            debugPrint(it.children ?: return@fastEach, depth + 1, sb)
         }
+        if (ii != 0) sb.append('\n').append('\t', ndepth).append("... (").append(ii).append(" uninitialized)")
     }
 
     /**

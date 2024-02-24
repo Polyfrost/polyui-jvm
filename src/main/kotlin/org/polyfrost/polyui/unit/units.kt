@@ -54,10 +54,13 @@ fun Long.toChromaSpeed() = LongRef().also { it.element = this }
  * A vec2 of zero which, when used as the position of a component, will be ignored during layout.
  * @see org.polyfrost.polyui.component.Positioner.Default
  */
-inline val ignored: Vec2.Mut get() = Vec2.Mut(0f, 0f)
+inline val ignored: Vec2 get() = Vec2(0f, 0f)
 
-inline infix fun Number.by(other: Number) = Vec2.Mut(this.toFloat(), other.toFloat())
+// float specific optimization
+inline infix fun Float.by(other: Float) = Vec2(this, other)
 
-fun Vec2.mutable(): Vec2.Mut = if (this is Vec2.Mut) this else Vec2.Mut(x, y)
+inline infix fun Number.by(other: Number) = Vec2(this.toFloat(), other.toFloat())
 
-fun Vec2.immutable(): Vec2 = if (this is Vec2.Mut) Vec2(x, y) else this
+fun Vec2.mutable() = if (this is Vec2.Immutable) Vec2(x, y) else this
+
+fun Vec2.immutable() = if (this !is Vec2.Immutable) Vec2.Immutable(x, y) else this

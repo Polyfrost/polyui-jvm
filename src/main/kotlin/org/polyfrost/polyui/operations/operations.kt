@@ -51,6 +51,10 @@ class Move<S : Drawable>(
         self.resetScroll()
     }
 
+    override fun verify(): Boolean {
+        return tx != 0f || ty != 0f
+    }
+
     override fun equals(other: Any?): Boolean {
         return other is Move<*> && other.self === self
     }
@@ -73,6 +77,10 @@ class Fade<S : Drawable>(
     override fun equals(other: Any?): Boolean {
         return other is Fade<*> && other.self === self
     }
+
+    override fun verify(): Boolean {
+        return ta != 0f
+    }
 }
 
 class Rotate<S : Drawable>(
@@ -91,6 +99,10 @@ class Rotate<S : Drawable>(
 
     override fun equals(other: Any?): Boolean {
         return other is Rotate<*> && other.self === self
+    }
+
+    override fun verify(): Boolean {
+        return tr != 0.0
     }
 }
 
@@ -119,6 +131,10 @@ class Resize<S : Drawable>(
     override fun equals(other: Any?): Boolean {
         return other is Resize<*> && other.self === self
     }
+
+    override fun verify(): Boolean {
+        return tw != 0f || th != 0f
+    }
 }
 
 class Scale<S : Drawable>(
@@ -142,6 +158,10 @@ class Scale<S : Drawable>(
     override fun equals(other: Any?): Boolean {
         return other is Scale<*> && other.self === self
     }
+
+    override fun verify(): Boolean {
+        return tx != 0f || ty != 0f
+    }
 }
 
 class Skew<S : Drawable>(
@@ -164,6 +184,10 @@ class Skew<S : Drawable>(
 
     override fun equals(other: Any?): Boolean {
         return other is Skew<*> && other.self === self
+    }
+
+    override fun verify(): Boolean {
+        return tx != 0.0 || ty != 0.0
     }
 }
 
@@ -215,6 +239,10 @@ class Recolor<S : Drawable>(
             }
         }
         reset = shouldReset
+    }
+
+    override fun verify(): Boolean {
+        return toColor != self.color
     }
 
     override fun apply() {

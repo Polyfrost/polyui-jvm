@@ -21,6 +21,7 @@
 
 package org.polyfrost.polyui.renderer.impl
 
+import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.Color
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.Font
@@ -28,8 +29,9 @@ import org.polyfrost.polyui.renderer.data.Framebuffer
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Vec2
 
-class NoOpRenderer(size: Vec2.Mut) : Renderer(size) {
+class NoOpRenderer(size: Vec2) : Renderer(size) {
     override fun init() {
+        PolyUI.LOGGER.warn("renderer is a no-op implementation")
     }
 
     override fun beginFrame() {
@@ -84,8 +86,7 @@ class NoOpRenderer(size: Vec2.Mut) : Renderer(size) {
     override fun textBounds(font: Font, text: String, fontSize: Float) = Vec2.ONE
 
     override fun initImage(image: PolyImage) {
-        if (image.width == -1f) image.width = 18f
-        if (image.height == -1f) image.height = 18f
+        if (image.invalid) image.size = Vec2.Immutable(18f, 18f)
     }
 
     override fun image(
@@ -156,10 +157,10 @@ class NoOpRenderer(size: Vec2.Mut) : Renderer(size) {
     override fun delete(image: PolyImage?) {
     }
 
-    override fun bindFramebuffer(fbo: Framebuffer?) {
+    override fun bindFramebuffer(fbo: Framebuffer) {
     }
 
-    override fun unbindFramebuffer(fbo: Framebuffer?) {
+    override fun unbindFramebuffer() {
     }
 
     override fun drawFramebuffer(fbo: Framebuffer, x: Float, y: Float, width: Float, height: Float) {
