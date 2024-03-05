@@ -5,7 +5,7 @@ annotations = "24.1.0"
 kotlinter = "4.2.0"
 kotlin-abi = "0.14.0"
 textile = "2.0.1"
-dokka = "1.9.10"
+dokka = "1.9.20"
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
