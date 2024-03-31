@@ -177,15 +177,12 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
          * `if (color == TRANSPARENT) return`
          */
         @JvmField
-        @Transient
         val TRANSPARENT = rgba(0, 0, 0, 0f)
 
         @JvmField
-        @Transient
         val WHITE = rgba(255, 255, 255, 1f)
 
         @JvmField
-        @Transient
         val BLACK = rgba(0, 0, 0, 1f)
 
         /**
@@ -348,7 +345,15 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
     /** A gradient color. */
     class Gradient @JvmOverloads constructor(color1: Color, color2: Color, val type: Type = Type.TopLeftToBottomRight) :
         Animated(color1.hue, color1.saturation, color1.brightness, color1.alpha) {
-        /** `this` */
+        /**
+         * **WARNING:** the following code will NOT behave as expected:
+         * ```
+         * val colorToSet = rgba(...)
+         * myGradient.color1 = colorToSet
+         * assert(myGradient.color1 === colorToSet) // this will fail!
+         * ```
+         * this is due to how gradient colors are implemented. use the equals operator instead (`==`) to compare colors.
+         */
         var color1: Animated
             inline get() = this
             set(value) {

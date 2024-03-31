@@ -34,28 +34,22 @@ import java.util.concurrent.CompletableFuture
  * @since 0.21.1
  */
 abstract class Resource(val resourcePath: String) : AutoCloseable {
-    @Transient
     var init = false
         private set(value) {
             field = value
             if (value) runCallbacks()
         }
 
-    @Transient
     private var initting = false
 
-    @Transient
     var errored = false
         protected set
 
-    @Transient
     var resettable = false
         private set
 
-    @Transient
     private var _stream: InputStream? = null
 
-    @Transient
     private var completionCallbacks: LinkedList<Resource.() -> Unit>? = null
 
     val stream: InputStream?

@@ -29,13 +29,12 @@ import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.renderer.impl.GLFWWindow
 import org.polyfrost.polyui.renderer.impl.NVGRenderer
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.utils.image
 import kotlin.random.Random
 
 fun main() {
     val window = GLFWWindow("PolyUI Test v2", 800, 500)
-    val renderer = NVGRenderer(800f by 500f)
+    val renderer = NVGRenderer
     val polyUI =
         PolyUI(
             renderer = renderer,

@@ -40,7 +40,7 @@ import org.polyfrost.polyui.renderer.data.Cursor
  *  - callbacks for [InputManager.keyTyped]
  *  - callbacks for [InputManager.filesDropped]
  */
-abstract class Window(open var width: Int, open var height: Int) {
+abstract class Window(open var width: Int, open var height: Int, open var pixelRatio: Float = 1f) {
     /**
      * open the window with the specified [PolyUI] instance, and then start the rendering loop. It may be blocking or non-blocking.
      * Every frame, call the [PolyUI.render] function to render the UI.
@@ -49,6 +49,20 @@ abstract class Window(open var width: Int, open var height: Int) {
 
     /** destroy the window. */
     abstract fun close()
+
+    /**
+     * this function hooks into the rendering loop. it is ran before a render cycle.
+     * @see postRender
+     * @since 1.1.3
+     */
+    open fun preRender(renderer: Renderer) {}
+
+    /**
+     * this function hooks into the rendering loop. it is ran after a render cycle.
+     * @see preRender
+     * @since 1.1.3
+     */
+    open fun postRender(renderer: Renderer) {}
 
     /**
      * Return true if your window supports "render pausing", a optimization technique which will not render any frames if not necessary.

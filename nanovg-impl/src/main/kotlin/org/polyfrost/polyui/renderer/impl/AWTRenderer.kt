@@ -37,7 +37,7 @@ import java.nio.ByteOrder
 import java.util.IdentityHashMap
 import javax.imageio.ImageIO
 
-class AWTRenderer(size: Vec2) : Renderer(size) {
+class AWTRenderer : Renderer {
     lateinit var g2d: Graphics2D
     var prev: AffineTransform? = null
     val colors = HashMap<Color, java.awt.Color>()
@@ -57,16 +57,20 @@ class AWTRenderer(size: Vec2) : Renderer(size) {
 
     override fun init() {}
 
-    override fun beginFrame() {
-        g2d.clearRect(0, 0, size.x.toInt(), size.y.toInt())
+    override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {
+        g2d.clearRect(0, 0, width.toInt(), height.toInt())
         g2d.composite = AlphaComposite.SrcOver
     }
 
     override fun endFrame() {
     }
 
-    override fun gblAlpha(alpha: Float) {
+    override fun globalAlpha(alpha: Float) {
         g2d.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha)
+    }
+
+    override fun setAlphaCap(cap: Float) {
+        //ok
     }
 
     override fun translate(x: Float, y: Float) {

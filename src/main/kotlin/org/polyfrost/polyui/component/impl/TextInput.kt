@@ -42,7 +42,7 @@ import kotlin.math.min
 open class TextInput(
     text: String = "",
     placeholder: String = "polyui.textinput.placeholder",
-    font: Font = PolyUI.defaultFonts.regular,
+    font: Font? = null,
     fontSize: Float = 12f,
     at: Vec2? = null,
     alignment: Align = AlignDefault,
@@ -50,35 +50,28 @@ open class TextInput(
     wrap: Float = 0f,
     vararg children: Drawable?,
 ) : Text(text, font, fontSize, at, alignment, wrap, visibleSize, true, *children) {
-    @Transient
+
     private val selectBoxes = LinkedList<Pair<Pair<Float, Float>, Pair<Float, Float>>>()
 
     // todo the old error stuff?
 
-    @Transient
     var focused = false
         private set
 
-    @Transient
     private val caretColor = PolyColor.WHITE
 
-    @Transient
     private var cposx = 0f
 
-    @Transient
     private var cposy = 0f
 
-    @Transient
     private var caret = 0
         set(value) {
             field = value
             if (!selecting) select = value
         }
 
-    @Transient
     private var select = 0
 
-    @Transient
     private var selecting = false
 
     val selection get() = text.substringSafe(caret, select)

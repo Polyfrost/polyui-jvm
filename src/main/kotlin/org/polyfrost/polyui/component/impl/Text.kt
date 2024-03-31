@@ -35,9 +35,9 @@ import org.polyfrost.polyui.utils.*
 import kotlin.math.max
 import kotlin.math.min
 
-open class Text(text: Translator.Text, font: Font = PolyUI.defaultFonts.regular, fontSize: Float = 12f, at: Vec2? = null, alignment: Align = AlignDefault, wrap: Float = 0f, visibleSize: Vec2? = null, focusable: Boolean = false, vararg children: Drawable?) :
+open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f, at: Vec2? = null, alignment: Align = AlignDefault, wrap: Float = 0f, visibleSize: Vec2? = null, focusable: Boolean = false, vararg children: Drawable?) :
     Drawable(children = children, at, alignment, visibleSize = visibleSize, focusable = focusable) {
-    constructor(text: String, font: Font = PolyUI.defaultFonts.regular, fontSize: Float = 12f, at: Vec2? = null, alignment: Align = AlignDefault, wrap: Float = 0f, visibleSize: Vec2? = null, focusable: Boolean = false, vararg children: Drawable?) :
+    constructor(text: String, font: Font? = null, fontSize: Float = 12f, at: Vec2? = null, alignment: Align = AlignDefault, wrap: Float = 0f, visibleSize: Vec2? = null, focusable: Boolean = false, vararg children: Drawable?) :
             this(Translator.Text.Simple(text), font, fontSize, at, alignment, wrap, visibleSize, focusable, children = children)
 
     init {
@@ -86,14 +86,19 @@ open class Text(text: Translator.Text, font: Font = PolyUI.defaultFonts.regular,
     /**
      * A list of the lines of this text, and their corresponding width.
      */
-    @Transient
     protected val lines = LinkedList<MutablePair<String, Float>>()
 
-    @Transient
-    var font: Font = font
+    private var _font: Font? = font
         set(value) {
             field = value
-            updateTextBounds()
+            if (initialized) updateTextBounds()
+        }
+
+    var font: Font
+        get() = _font ?: throw UninitializedPropertyAccessException("font")
+        set(value) {
+            _font = value
+            spacing = (font.lineSpacing - 1f) * fontSize
         }
 
     /**
@@ -130,7 +135,6 @@ open class Text(text: Translator.Text, font: Font = PolyUI.defaultFonts.regular,
             font = fam.get(fontWeight, value)
         }
 
-    @Transient
     var fontSize = fontSize
         set(value) {
             field = value
@@ -138,8 +142,7 @@ open class Text(text: Translator.Text, font: Font = PolyUI.defaultFonts.regular,
             updateTextBounds()
         }
 
-    @Transient
-    protected var spacing = (font.lineSpacing - 1f) * fontSize
+    protected var spacing = 0f
         private set
 
     override fun render() {
@@ -178,6 +181,7 @@ open class Text(text: Translator.Text, font: Font = PolyUI.defaultFonts.regular,
         }
         // asm: in translation files \\n is used for new line for some reason
         text = text.replace("\\n", "\n")
+        if (_font == null) _font = polyUI.fonts.regular
         updateTextBounds(polyUI.renderer)
         super.setup(polyUI)
         return true

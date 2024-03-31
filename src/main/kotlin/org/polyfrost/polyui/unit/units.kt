@@ -56,10 +56,19 @@ fun Long.toChromaSpeed() = LongRef().also { it.element = this }
  */
 inline val ignored: Vec2 get() = Vec2(0f, 0f)
 
-// float specific optimization
+// so much more efficient to do it this way //
 inline infix fun Float.by(other: Float) = Vec2(this, other)
+inline infix fun Float.by(other: Int) = Vec2(this, other.toFloat())
+inline infix fun Float.by(other: Double) = Vec2(this, other.toFloat())
 
-inline infix fun Number.by(other: Number) = Vec2(this.toFloat(), other.toFloat())
+inline infix fun Int.by(other: Float) = Vec2(this.toFloat(), other)
+inline infix fun Int.by(other: Int) = Vec2(this.toFloat(), other.toFloat())
+inline infix fun Int.by(other: Double) = Vec2(this.toFloat(), other.toFloat())
+
+inline infix fun Double.by(other: Float) = Vec2(this.toFloat(), other)
+inline infix fun Double.by(other: Int) = Vec2(this.toFloat(), other.toFloat())
+inline infix fun Double.by(other: Double) = Vec2(this.toFloat(), other.toFloat())
+
 
 fun Vec2.mutable() = if (this is Vec2.Immutable) Vec2(x, y) else this
 

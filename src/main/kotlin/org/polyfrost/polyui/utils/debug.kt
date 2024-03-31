@@ -28,7 +28,7 @@ fun PolyUI.addDebug(keybinds: Boolean): PolyUI {
         )
         this.keyBinder?.add(
             KeyBinder.Bind('P', mods = mods(KeyModifiers.LCONTROL)) {
-                if (settings.debug) println(debugPrint())
+                if (settings.debug) println(debugString())
                 true
             },
         )

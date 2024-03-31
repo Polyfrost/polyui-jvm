@@ -119,8 +119,9 @@ fun String.substringToWidth(
     font: Font,
     fontSize: Float,
     width: Float,
+    debug: Boolean = false,
 ): Pair<String, String> {
-    if (renderer.settings.debug && renderer.textBounds(
+    if (debug && renderer.textBounds(
             font,
             "W",
             fontSize,

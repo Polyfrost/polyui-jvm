@@ -29,6 +29,8 @@ open class Vec2(open var x: Float, open var y: Float) : Cloneable, Comparable<Ve
     constructor() : this(0f, 0f)
 
     // rewrite counter: 3
+    @get:JvmName("isNegative")
+    val negative get() = x < 0f || y < 0f
 
     operator fun get(index: Int): Float = when (index) {
         0 -> x
@@ -67,6 +69,11 @@ open class Vec2(open var x: Float, open var y: Float) : Cloneable, Comparable<Ve
             resize(x, y, respectRatio)
         }
     }
+
+    // &bruh is this really only automatic for data classes??
+    operator fun component1() = x
+
+    operator fun component2() = y
 
     fun resize(x: Float, y: Float, respectRatio: Boolean = true) {
         if (respectRatio) {
@@ -176,6 +183,9 @@ open class Vec2(open var x: Float, open var y: Float) : Cloneable, Comparable<Ve
 
         @JvmField
         val ZERO = Vec2(0f, 0f)
+
+        @JvmField
+        val i_ONE = ONE.immutable()
 
         @JvmField
         val M1 = Vec2(-1f, -1f)

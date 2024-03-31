@@ -96,7 +96,6 @@ abstract class Drawable(
      */
     inline val hasVisibleSize get() = visibleSize0 != null
 
-    @Transient
     var parent: Drawable? = null
         private set(value) {
             if (value === field) return
@@ -116,7 +115,7 @@ abstract class Drawable(
      */
     var rawResize = false
 
-    @Transient
+    
     private var eventHandlers: MutableMap<Event, LinkedList<(Drawable.(Event) -> Boolean)>>? = null
 
     /**
@@ -124,7 +123,7 @@ abstract class Drawable(
      *
      * `val text = myLayout["Text@4cf777e8"] as Text`
      */
-    @Transient
+    
     open var simpleName = "${this::class.java.simpleName}@${Integer.toHexString(this.hashCode())}"
 
     var children: LinkedList<Drawable>?
@@ -142,7 +141,6 @@ abstract class Drawable(
         }
     }
 
-    @Transient
     lateinit var polyUI: PolyUI
         private set
 
@@ -169,7 +167,6 @@ abstract class Drawable(
     @set:ApiStatus.Experimental
     lateinit var color: PolyColor.Animated
 
-    @Transient
     @set:JvmName("_setPalette")
     lateinit var palette: Colors.Palette
         protected set
@@ -270,13 +267,11 @@ abstract class Drawable(
         }
     }
 
-    @Transient
     @Locking
     @set:Synchronized
     protected var xScroll: Animation? = null
         private set
 
-    @Transient
     @Locking
     @set:Synchronized
     protected var yScroll: Animation? = null
@@ -284,7 +279,6 @@ abstract class Drawable(
 
     val scrolling get() = xScroll != null || yScroll != null
 
-    @Transient
     var needsRedraw = true
         set(value) {
             if (value && !field) {
@@ -295,10 +289,8 @@ abstract class Drawable(
 
     protected open val shouldScroll get() = true
 
-    @Transient
     var acceptsInput = false
 
-    @Transient
     var initialized = false
         protected set
 
@@ -311,7 +303,6 @@ abstract class Drawable(
      * **Do not** modify this value!
      * @since 1.0.0
      */
-    @Transient
     var inputState = INPUT_NONE
         set(value) {
             if (field == value) return
@@ -346,7 +337,6 @@ abstract class Drawable(
      * @see draw
      * @since 0.21.4
      */
-    @Transient
     open var renders = true
         set(value) {
             field = value
@@ -364,7 +354,6 @@ abstract class Drawable(
             inputState = if (value) INPUT_NONE else INPUT_DISABLED
         }
 
-    @Transient
     protected var operations: LinkedList<DrawableOp>? = null
         private set
 
@@ -427,11 +416,9 @@ abstract class Drawable(
     var alpha = 1f
 
     /** **a**t **c**ache **x** for transformations. */
-    @Transient
     private var acx = 0f
 
     /** **a**t **c**ache **y** for transformations. */
-    @Transient
     private var acy = 0f
 
     @Locking

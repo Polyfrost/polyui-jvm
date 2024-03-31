@@ -22,6 +22,7 @@
 package org.polyfrost.polyui.property
 
 import org.jetbrains.annotations.ApiStatus
+import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.unit.milliseconds
 
 /** Settings for PolyUI.
@@ -51,10 +52,6 @@ class Settings {
 
     /** set this to something other than 0 to change the framerate from the current [maxFPS] to this value when it is unfocused. */
     var unfocusedFPS = 10
-
-    @get:JvmName("isAntialiasingEnabled")
-    @set:JvmName("enableAntialiasing")
-    var useAntialiasing = true
 
     @get:JvmName("isVSyncEnabled")
     @set:JvmName("enableVSync")
@@ -143,33 +140,33 @@ class Settings {
     var naturalScrolling = false
 
     /**
-     * Set the minimum window size (width by height) that the window can be resized to.
+     * Set the minimum renderer size (width by height) that this instance can be resized to.
      *
      * Set to `-1` to disable an axis.
-     * @see maximumWindowSize
+     * @see maximumSize
      * @since 0.18.4
      */
-    var minimumWindowSize: Pair<Int, Int> = 100 to 100
+    var minimumSize = 100f by 100f
 
     /**
-     * Set the maximum window size (width by height) that the window can be resized to.
+     * Set the maximum renderer size (width by height) that this instance can be resized to.
      *
      * Set to `-1` to disable an axis.
-     * @see minimumWindowSize
+     * @see minimumSize
      * @since 0.18.4
      */
-    var maximumWindowSize: Pair<Int, Int> = -1 to -1
+    var maximumSize = -1f by -1f
 
     /**
-     * Set the window aspect ratio, with the ratio being width:height, e.g. `16 to 9` = `16:9`.
+     * Set the renderer aspect ratio, with the ratio being width:height, e.g. `16 to 9` = `16:9`.
      *
-     * While PolyUI will resize the content to this aspect ratio, if the window is not at this aspect ratio it may look odd (content smaller than the window).
+     * While PolyUI will resize the content to this aspect ratio, if the renderer is not at this aspect ratio it may look odd (content smaller than the window).
      * To prevent this, you must ensure that the window implementation is only allowing resizes to this aspect ratio.
      *
      * Set to `-1` to disable, or `0` to infer it automatically. Any other value is the aspect ratio.
      * @since 0.18.4
      */
-    var windowAspectRatio: Pair<Int, Int> = -1 to -1
+    var aspectRatio: Pair<Int, Int> = -1 to -1
 
     /**
      * This property will explicitly clean up after the initialization of PolyUI,

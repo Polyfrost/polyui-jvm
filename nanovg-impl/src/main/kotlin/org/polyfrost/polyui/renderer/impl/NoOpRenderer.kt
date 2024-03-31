@@ -29,18 +29,21 @@ import org.polyfrost.polyui.renderer.data.Framebuffer
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Vec2
 
-class NoOpRenderer(size: Vec2) : Renderer(size) {
+object NoOpRenderer : Renderer {
     override fun init() {
         PolyUI.LOGGER.warn("renderer is a no-op implementation")
     }
 
-    override fun beginFrame() {
+    override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {
     }
 
     override fun endFrame() {
     }
 
-    override fun gblAlpha(alpha: Float) {
+    override fun globalAlpha(alpha: Float) {
+    }
+
+    override fun setAlphaCap(cap: Float) {
     }
 
     override fun translate(x: Float, y: Float) {

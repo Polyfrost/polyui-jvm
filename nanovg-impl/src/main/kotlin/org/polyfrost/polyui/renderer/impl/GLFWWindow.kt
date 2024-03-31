@@ -150,14 +150,14 @@ class GLFWWindow @JvmOverloads constructor(
         glfwSetFramebufferSizeCallback(handle) { _, width, height ->
             this.width = width
             this.height = height
-            val r = polyUI.renderer.pixelRatio
-            polyUI.resize(width.toFloat() / r, height.toFloat() / r)
+            polyUI.resize(width.toFloat() / pixelRatio, height.toFloat() / pixelRatio)
         }
 
         glfwSetWindowContentScaleCallback(handle) { _, xScale, yScale ->
             val pixelRatio = max(xScale, yScale)
             if (polyUI.settings.debug) PolyUI.LOGGER.info("Pixel ratio: $pixelRatio")
-            polyUI.resize(width.toFloat() / pixelRatio, height.toFloat() / pixelRatio, pixelRatio)
+            this.pixelRatio = pixelRatio
+            polyUI.resize(width.toFloat() / pixelRatio, height.toFloat() / pixelRatio)
         }
 
         glfwSetMouseButtonCallback(handle) { _, button, action, _ ->
@@ -290,7 +290,7 @@ class GLFWWindow @JvmOverloads constructor(
     override fun open(polyUI: PolyUI): Window {
         this.polyUI = polyUI
         polyUI.window = this
-        glfwSwapInterval(if (polyUI.renderer.settings.enableVSync) 1 else 0)
+        glfwSwapInterval(if (polyUI.settings.enableVSync) 1 else 0)
 
         createCallbacks(polyUI)
 
@@ -306,26 +306,26 @@ class GLFWWindow @JvmOverloads constructor(
             val w = wbuf[0]
             val h = hbuf[0]
 
+            pixelRatio = max(sx, sy)
             polyUI.resize(
                 w.toFloat() / sx,
-                h.toFloat() / sy,
-                max(sx, sy),
+                h.toFloat() / sy
             )
 
             this.width = w
             this.height = h
         }
 
-        val (minW, minH) = polyUI.settings.minimumWindowSize
-        val (maxW, maxH) = polyUI.settings.maximumWindowSize
-        glfwSetWindowSizeLimits(handle, minW, minH, maxW, maxH)
+        val (minW, minH) = polyUI.settings.minimumSize
+        val (maxW, maxH) = polyUI.settings.maximumSize
+        glfwSetWindowSizeLimits(handle, minW.toInt(), minH.toInt(), maxW.toInt(), maxH.toInt())
 
-        if (polyUI.settings.windowAspectRatio.first == 0 || polyUI.settings.windowAspectRatio.second == 0) {
+        if (polyUI.settings.aspectRatio.first == 0 || polyUI.settings.aspectRatio.second == 0) {
             val ratio = (width to height).simplifyRatio()
             PolyUI.LOGGER.info("Inferred aspect ratio: ${ratio.first}:${ratio.second}")
-            polyUI.settings.windowAspectRatio = ratio
+            polyUI.settings.aspectRatio = ratio
         }
-        glfwSetWindowAspectRatio(handle, polyUI.settings.windowAspectRatio.first, polyUI.settings.windowAspectRatio.second)
+        glfwSetWindowAspectRatio(handle, polyUI.settings.aspectRatio.first, polyUI.settings.aspectRatio.second)
 
         var t = glfwGetTime()
         fpsCap = polyUI.settings.maxFPS.toDouble()

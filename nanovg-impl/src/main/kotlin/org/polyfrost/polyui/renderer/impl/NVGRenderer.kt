@@ -23,17 +23,14 @@ package org.polyfrost.polyui.renderer.impl
 
 import org.lwjgl.nanovg.NSVGImage
 import org.lwjgl.nanovg.NVGColor
-import org.lwjgl.nanovg.NVGLUFramebuffer
 import org.lwjgl.nanovg.NVGPaint
 import org.lwjgl.nanovg.NanoSVG.*
 import org.lwjgl.nanovg.NanoVG.*
 import org.lwjgl.nanovg.NanoVGGL3.*
-import org.lwjgl.opengl.GL20C.*
 import org.lwjgl.stb.STBImage.stbi_failure_reason
 import org.lwjgl.stb.STBImage.stbi_load_from_memory
 import org.lwjgl.system.MemoryUtil
 import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.property.Settings
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.data.Framebuffer
@@ -43,34 +40,47 @@ import org.polyfrost.polyui.utils.cl1
 import org.polyfrost.polyui.utils.toByteBuffer
 import java.nio.ByteBuffer
 import java.util.IdentityHashMap
+import kotlin.math.min
 import org.polyfrost.polyui.color.PolyColor as Color
 
-class NVGRenderer(size: Vec2) : Renderer(size) {
+object NVGRenderer : Renderer {
     private val nvgPaint: NVGPaint = NVGPaint.malloc()
     private val nvgColor: NVGColor = NVGColor.malloc()
     private val nvgColor2: NVGColor = NVGColor.malloc()
-    private val fbos = IdentityHashMap<Framebuffer, NVGFBO>(4)
     private val images = HashMap<PolyImage, Int>()
     private val svgs = HashMap<PolyImage, Pair<NSVGImage, HashMap<Int, Int>>>()
     private val fonts = IdentityHashMap<Font, NVGFont>()
-    private var fstack: NVGFBO? = null
+    private var alphaCap = 1f
     private var vg: Long = -1L
     private var raster: Long = -1L
+    private var drawing = false
 
     override fun init() {
-        vg = nvgCreate(if (settings.useAntialiasing) NVG_ANTIALIAS else 0)
+        vg = nvgCreate(NVG_ANTIALIAS)
         raster = nsvgCreateRasterizer()
         require(vg != -1L) { "Could not initialize NanoVG" }
         require(raster != -1L) { "Could not initialize NanoSVG" }
     }
 
-    override fun beginFrame() {
-        nvgBeginFrame(vg, size.x, size.y, pixelRatio)
+    override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {
+        if (drawing) throw IllegalStateException("Already drawing")
+        nvgBeginFrame(vg, width, height, pixelRatio)
+        drawing = true
     }
 
-    override fun endFrame() = nvgEndFrame(vg)
+    override fun endFrame() {
+        if (!drawing) throw IllegalStateException("Not drawing")
+        nvgEndFrame(vg)
+        drawing = false
+    }
 
-    override fun gblAlpha(alpha: Float) = nvgGlobalAlpha(vg, alpha)
+    override fun globalAlpha(alpha: Float) {
+        nvgGlobalAlpha(vg, min(alpha.coerceIn(0f, 1f), alphaCap))
+    }
+
+    override fun setAlphaCap(cap: Float) {
+        alphaCap = cap.coerceIn(0f, 1f)
+    }
 
     override fun translate(x: Float, y: Float) = nvgTranslate(vg, x, y)
 
@@ -95,12 +105,6 @@ class NVGRenderer(size: Vec2) : Renderer(size) {
     override fun popScissor() = nvgResetScissor(vg)
 
     override fun drawFramebuffer(fbo: Framebuffer, x: Float, y: Float, width: Float, height: Float) {
-        val framebuffer = fbos[fbo] ?: throw IllegalStateException("cannot draw $fbo as it is not known by this renderer")
-        nvgImagePattern(vg, 0f, 0f, fbo.width, fbo.height, 0f, framebuffer.it.image(), 1f, nvgPaint)
-        nvgBeginPath(vg)
-        nvgRect(vg, x, y, width, height)
-        nvgFillPaint(vg, nvgPaint)
-        nvgFill(vg)
     }
 
     override fun text(
@@ -153,27 +157,13 @@ class NVGRenderer(size: Vec2) : Renderer(size) {
         nvgFill(vg)
     }
 
-    override fun supportsFramebuffers() = true
+    override fun supportsFramebuffers() = false
 
     override fun createFramebuffer(width: Float, height: Float): Framebuffer {
-        val f = Framebuffer(width, height)
-        fbos[f] = NVGFBO(nvgluCreateFramebuffer(
-            vg,
-            (f.width * pixelRatio).toInt(),
-            (f.height * pixelRatio).toInt(),
-            0,
-        ) ?: throw ExceptionInInitializerError("Could not create: $f (possibly an invalid sized layout?)"), null, f)
-        return f
+        return Framebuffer(width, height)
     }
 
     override fun delete(fbo: Framebuffer?) {
-        fbos.remove(fbo).also {
-            if (it == null) {
-                PolyUI.LOGGER.error("Framebuffer not found when deleting it, already cleaned?")
-                return
-            }
-            nvgluDeleteFramebuffer(vg, it.it)
-        }
     }
 
     override fun delete(font: Font?) {
@@ -198,40 +188,9 @@ class NVGRenderer(size: Vec2) : Renderer(size) {
     }
 
     override fun bindFramebuffer(fbo: Framebuffer) {
-        val p = fbos[fbo] ?: throw NullPointerException("Cannot bind: $fbo does not exist!")
-        if (fstack === p) {
-            nvgEndFrame(vg)
-            nvgluBindFramebuffer(vg, null)
-            glViewport(0, 0, (size.x * pixelRatio).toInt(), (size.y * pixelRatio).toInt())
-            nvgBeginFrame(vg, size.x, size.y, pixelRatio)
-            return
-        }
-        p.prev = fstack
-        fstack = p
-        nvgEndFrame(vg)
-        nvgluBindFramebuffer(vg, p.it)
-        glViewport(0, 0, (fbo.width * pixelRatio).toInt(), (fbo.height * pixelRatio).toInt())
-        glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
-        glClearColor(0f, 0f, 0f, 0f)
-        nvgBeginFrame(vg, fbo.width, fbo.height, pixelRatio)
     }
 
     override fun unbindFramebuffer() {
-        val f = fstack?.prev
-        if (f == null) {
-            nvgEndFrame(vg)
-            nvgluBindFramebuffer(vg, null)
-            glViewport(0, 0, (size.x * pixelRatio).toInt(), (size.y * pixelRatio).toInt())
-            nvgBeginFrame(vg, size.x, size.y, pixelRatio)
-        } else {
-            nvgEndFrame(vg)
-            nvgluBindFramebuffer(vg, f.it)
-            glViewport(0, 0, (f.ptr.width * pixelRatio).toInt(), (f.ptr.height * pixelRatio).toInt())
-            glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
-            glClearColor(0f, 0f, 0f, 0f)
-            nvgBeginFrame(vg, f.ptr.width, f.ptr.height, pixelRatio)
-            fstack = f
-        }
     }
 
     override fun initImage(image: PolyImage) {
@@ -458,11 +417,9 @@ class NVGRenderer(size: Vec2) : Renderer(size) {
 
     private fun getFont(font: Font): NVGFont {
         return fonts.getOrPut(font) {
-            val data = font.stream?.toByteBuffer() ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) {
+            val data = font.stream?.toByteBuffer() ?: run {
                 PolyUI.LOGGER.warn("Failed to get font: ${font.resourcePath}, falling back to default font!")
                 PolyUI.defaultFonts.regular.get().toByteBuffer(false)
-            } else {
-                throw ExceptionInInitializerError("Failed to get font: ${font.resourcePath}")
             }
             val ft = nvgCreateFontMem(vg, font.name, data, false)
             NVGFont(ft, data)
@@ -520,7 +477,7 @@ class NVGRenderer(size: Vec2) : Renderer(size) {
     }
 
     private fun loadImage(image: PolyImage): Int {
-        val stream = image.stream ?: throw NullPointerException()
+        val stream = image.stream ?: PolyUI.defaultImage.stream ?: throw NullPointerException("default not available")
         val w = IntArray(1)
         val h = IntArray(1)
         val d = stbi_load_from_memory(stream.toByteBuffer(true), w, h, IntArray(1), 4) ?: throw IllegalStateException("Failed to load image ${image.resourcePath}: ${stbi_failure_reason()}")
@@ -530,12 +487,11 @@ class NVGRenderer(size: Vec2) : Renderer(size) {
 
     override fun cleanup() {
         nvgColor.free()
+        nvgColor2.free()
         nvgPaint.free()
         nsvgDeleteRasterizer(raster)
         nvgDelete(vg)
     }
 
-    class NVGFBO(val it: NVGLUFramebuffer, var prev: NVGFBO?, val ptr: Framebuffer)
-
-    data class NVGFont(val id: Int, val data: ByteBuffer)
+    private data class NVGFont(val id: Int, val data: ByteBuffer)
 }

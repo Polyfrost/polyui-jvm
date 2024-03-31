@@ -47,7 +47,7 @@ fun interface Positioner {
             }
             val needsToCalcSize = !drawable.sizeValid
             if (needsToCalcSize) {
-                require(!children.isNullOrEmpty()) { "Drawable $drawable has no size and no children\nBacktrace: ${drawable.polyUI.debugPrint()}" }
+                require(!children.isNullOrEmpty()) { "Drawable $drawable has no size and no children\nBacktrace: ${drawable.polyUI.debugString()}" }
             } else if (children.isNullOrEmpty()) {
                 fixVisibleSize(drawable)
                 return
@@ -78,7 +78,7 @@ fun interface Positioner {
                 fixVisibleSize(drawable)
                 it.at(
                     main,
-                        when (drawable.alignment.main) {
+                    when (drawable.alignment.main) {
                         Align.Main.Start -> mainPad
                         Align.Main.End -> vs[main] - ivs[main] - mainPad
                         else -> (vs[main] - ivs[main]) / 2f
@@ -86,7 +86,7 @@ fun interface Positioner {
                 )
                 it.at(
                     crs,
-                        when (drawable.alignment.cross) {
+                    when (drawable.alignment.cross) {
                         Align.Cross.Start -> crossPad
                         Align.Cross.End -> drawable.size[crs] - ivs[crs] - crossPad
                         else -> (vs[crs] - ivs[crs]) / 2f

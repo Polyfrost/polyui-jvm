@@ -37,6 +37,8 @@ import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.event.EventDSL
 import org.polyfrost.polyui.operations.*
 import org.polyfrost.polyui.renderer.data.Cursor
+import org.polyfrost.polyui.renderer.data.Font
+import org.polyfrost.polyui.renderer.data.FontFamily
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.unit.toChromaSpeed
@@ -274,6 +276,17 @@ fun <S : Drawable> S.onChange(func: S.(Float) -> Boolean): S {
 fun <S : Drawable> S.setPalette(palette: Colors.() -> Colors.Palette): S {
     onInit {
         this.setPalette(polyUI.colors.palette())
+    }
+    return this
+}
+
+/**
+ * Set the font of this text component during initialization, using the PolyUI fonts instance.
+ * @since 1.1.3
+ */
+fun <S : Text> S.setFont(font: FontFamily.() -> Font): S {
+    onInit {
+        this.font = polyUI.fonts.font()
     }
     return this
 }

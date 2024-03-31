@@ -93,16 +93,15 @@ class PolyUI @JvmOverloads constructor(
     translator: Translator? = null,
     backgroundColor: PolyColor? = null,
     masterAlignment: Align? = null,
+    size: Vec2? = null,
     colors: Colors = DarkTheme(),
     vararg drawables: Drawable,
 ) {
-    val settings = settings ?: Settings()
-
     init {
-        // require(renderer.size > 0f) { "width/height must be greater than 0 (${renderer.size})" }
-        renderer.settings = this.settings
         renderer.init()
     }
+
+    val settings = settings ?: Settings()
 
     /** Colors attached to this PolyUI instance. This contains all the colors needed for the UI.
      *
@@ -119,7 +118,7 @@ class PolyUI @JvmOverloads constructor(
 //            }
 //        }
 
-    /** Fonts attached to this PolyUI instance. This contains all the colors needed for the UI.
+    /** Fonts attached to this PolyUI instance. This contains all the fonts needed for the UI.
      *
      * **Note that changing this value** can be an expensive operation while the UI is running, as it has to update all the components.
      * @since 0.22.0
@@ -135,11 +134,27 @@ class PolyUI @JvmOverloads constructor(
 //        }
 
     /**
+     * Monospace font attached to this PolyUI instance. This is used for debugging and other purposes.
+     */
+    var monospaceFont = PolyUI.monospaceFont
+
+    /**
      * The window this polyUI was opened with.
+     *
+     * Since `v1.1.3`, a window is not required to be set. If it is not set, the clipboard, cursor and render [hooks][Window.preRender] will not work.
      *
      * @since 0.18.3
      */
-    lateinit var window: Window
+    var window: Window? = null
+
+    /**
+     * returns `true` if render pausing is possible.
+     * @see Settings.renderPausingEnabled
+     * @since 1.1.3
+     */
+    inline val canPauseRendering get() = settings.renderPausingEnabled && window?.supportsRenderPausing() == true
+
+    inline val pixelRatio get() = window?.pixelRatio ?: 1f
 
     /**
      * Access the system clipboard as a string.
@@ -147,8 +162,10 @@ class PolyUI @JvmOverloads constructor(
      * @since 0.18.3
      */
     inline var clipboard: String?
-        get() = window.getClipboard()
-        set(value) = window.setClipboard(value)
+        get() = window?.getClipboard()
+        set(value) {
+            window?.setClipboard(value)
+        }
 
     /**
      * This is the root layout of the UI. It is the parent of all other layouts.
@@ -158,11 +175,9 @@ class PolyUI @JvmOverloads constructor(
     init {
         val align = masterAlignment ?: Align(cross = Align.Cross.Start, padding = Vec2.ZERO)
         master = if (backgroundColor == null) {
-            Group(at = Vec2(), size = renderer.size, children = drawables, alignment = align)
+            Group(at = Vec2(), size = size, children = drawables, alignment = align)
         } else {
-            Block(at = Vec2(), size = renderer.size, children = drawables, alignment = align, radii = 0f.radii()).also {
-                it.color = backgroundColor.toAnimatable()
-            }
+            Block(at = Vec2(), size = size, children = drawables, alignment = align, color = backgroundColor, radii = 0f.radii())
         }
     }
 
@@ -203,19 +218,25 @@ class PolyUI @JvmOverloads constructor(
     var cursor: Cursor = Cursor.Pointer
         set(value) {
             field = value
-            window.setCursor(value)
+            window?.setCursor(value)
         }
 
     inline val size: Vec2 get() = master.size
+
+    private var _iSize: Vec2.Immutable? = null
 
     /**
      * this property stores the initial size of this PolyUI instance.
      * It is used to make sure that new objects experience the same resizing as others.
      * @since 1.0.5
      */
-    val iSize = size.immutable()
-    private val hooks = LinkedList<Renderer.() -> Boolean>()
-    private val preHooks = LinkedList<Renderer.() -> Boolean>()
+    val iSize: Vec2.Immutable
+        get() {
+            return if (master.sizeValid) {
+                if (_iSize == null) _iSize = master.size.immutable()
+                _iSize!!
+            } else Vec2.i_ONE
+        }
     private val executors: LinkedList<Clock.Executor> = LinkedList()
 
     /**
@@ -248,22 +269,11 @@ class PolyUI @JvmOverloads constructor(
         master.simpleName += " [Master]"
         master.setup(this)
         master.tryMakeScrolling()
-//        if (settings.framebuffersEnabled && renderer.supportsFramebuffers()) {
-//            if (settings.isMasterFrameBuffer) {
-//                if (settings.debug) LOGGER.info("Master is using framebuffer")
-//                master.framebuffer = renderer.createFramebuffer(master.width, master.height)
-//            }
-//            master.children?.fastEach {
-//                if ((it.children?.size ?: 0) < settings.minDrawablesForFramebuffer) return@fastEach
-//                it.framebuffer = renderer.createFramebuffer(it.visibleWidth, it.visibleHeight)
-//                if (settings.debug) LOGGER.info("Layout ${it.simpleName} (${it.children?.size} items) created with ${it.framebuffer}")
-//            }
-//        }
 
         this.keyBinder?.add(
             KeyBinder.Bind('R', mods = mods(KeyModifiers.LCONTROL)) {
                 LOGGER.info("Reloading PolyUI")
-                resize(size.x, size.y, renderer.pixelRatio, true)
+                resize(this.size.x, this.size.y, true)
                 true
             },
         )
@@ -282,7 +292,7 @@ class PolyUI @JvmOverloads constructor(
                         .append(f.format(avgFrame)).append("ms; ")
                         .append(f.format(longestFrame)).append("ms; ")
                         .append(f.format(shortestFrame)).append("ms")
-                    if (this.settings.renderPausingEnabled && window.supportsRenderPausing()) {
+                    if (canPauseRendering) {
                         val skipPercent = (1.0 - (frames.toDouble() / nframes)) * 100.0
                         sb.append(", skip=").append(f.format(skipPercent)).append('%')
                     }
@@ -298,7 +308,7 @@ class PolyUI @JvmOverloads constructor(
                     if (drew) LOGGER.info(perf)
                 }
             }
-            println(debugPrint())
+            println(debugString())
         }
         if (this.settings.cleanupOnShutdown) {
             Runtime.getRuntime().addShutdownHook(
@@ -323,37 +333,41 @@ class PolyUI @JvmOverloads constructor(
      * Resize this PolyUI instance.
      */
     @Suppress("NAME_SHADOWING")
-    fun resize(newWidth: Float, newHeight: Float, pixelRatio: Float = renderer.pixelRatio, force: Boolean = false) {
+    fun resize(newWidth: Float, newHeight: Float, force: Boolean = false) {
+        // step 1: check if the new size is valid (not same or zero)
         if (newWidth == 0f || newHeight == 0f) {
             LOGGER.error("Cannot resize to zero size: ${newWidth}x${newHeight}")
             return
         }
-        if (!force && newWidth == size.x && newHeight == size.y && pixelRatio == this.renderer.pixelRatio) {
+        if (!force && newWidth == size.x && newHeight == size.y) {
             LOGGER.warn("PolyUI was resized to the same size. Ignoring.")
             return
         }
 
-        renderer.pixelRatio = pixelRatio
+
+        // step 2: check if the new size is within the bounds
         var newWidth = newWidth
         var newHeight = newHeight
-        val (minW, minH) = settings.minimumWindowSize
-        val (maxW, maxH) = settings.maximumWindowSize
-        if ((minW != -1 && newWidth < minW) || (minH != -1 && newHeight < minH)) {
+        val (minW, minH) = settings.minimumSize
+        if (newWidth < minW || newHeight < minH) {
             LOGGER.warn("Cannot resize to size smaller than minimum: ${newWidth}x${newHeight}")
-            newWidth = minW.toFloat().coerceAtLeast(newWidth)
-            newHeight = minH.toFloat().coerceAtLeast(newHeight)
-            window.width = newWidth.toInt()
-            window.height = newHeight.toInt()
+            newWidth = minW.coerceAtLeast(newWidth)
+            newHeight = minH.coerceAtLeast(newHeight)
+            window?.width = newWidth.toInt()
+            window?.height = newHeight.toInt()
         }
-        if ((maxW != -1 && newWidth > maxW) || (maxH != -1 && newHeight > maxH)) {
-            LOGGER.warn("Cannot resize to size larger than maximum: ${newWidth}x${newHeight}")
-            newWidth = maxW.toFloat().coerceAtMost(newWidth)
-            newHeight = maxH.toFloat().coerceAtMost(newHeight)
-            window.width = newWidth.toInt()
-            window.height = newHeight.toInt()
+        if (!settings.maximumSize.negative) {
+            val (maxW, maxH) = settings.maximumSize
+            if (newWidth > maxW || newHeight > maxH) {
+                LOGGER.warn("Cannot resize to size larger than maximum: ${newWidth}x${newHeight}")
+                newWidth = maxW.coerceAtMost(newWidth)
+                newHeight = maxH.coerceAtMost(newHeight)
+                window?.width = newWidth.toInt()
+                window?.height = newHeight.toInt()
+            }
         }
 
-        val (num, denom) = settings.windowAspectRatio
+        val (num, denom) = settings.aspectRatio
         if (num != -1 && denom != -1) {
             val aspectRatio = num.toFloat() / denom.toFloat()
             if (newWidth / newHeight != aspectRatio) {
@@ -361,11 +375,11 @@ class PolyUI @JvmOverloads constructor(
                 val newAspectRatio = newWidth / newHeight
                 if (newAspectRatio > aspectRatio) {
                     newWidth = (newHeight * aspectRatio)
+                    window?.width = newWidth.toInt()
                 } else {
                     newHeight = (newWidth / aspectRatio)
+                    window?.height = newHeight.toInt()
                 }
-                window.width = newWidth.toInt()
-                window.height = newHeight.toInt()
             }
         }
 
@@ -374,16 +388,6 @@ class PolyUI @JvmOverloads constructor(
         val sx = newWidth / size.x
         val sy = newHeight / size.y
         master.rescale(sx, sy)
-
-//        master.onAllLayouts {
-//            if (fbo != null) {
-//                renderer.delete(fbo)
-//                fbo = renderer.createFramebuffer(width, height)
-//            }
-//            needsRedraw = true // lol that was funny to debug
-//        }
-        this.size.x = newWidth
-        this.size.y = newHeight
         master.needsRedraw = true
     }
 
@@ -391,11 +395,11 @@ class PolyUI @JvmOverloads constructor(
         delta = clock.delta
         nframes++
         if (master.needsRedraw) {
-            renderer.beginFrame()
-            preHooks.fastRemoveIfReversed { it(renderer) }
+            val sz = master.size
+            renderer.beginFrame(sz.x, sz.y, pixelRatio)
+            window?.preRender(renderer)
             master.draw()
-
-            hooks.fastRemoveIfReversed { it(renderer) }
+            window?.postRender(renderer)
 
             // telemetry
             if (settings.debug) {
@@ -432,7 +436,7 @@ class PolyUI @JvmOverloads constructor(
 
             renderer.endFrame()
             drew = true
-            if (!window.supportsRenderPausing() || !settings.renderPausingEnabled) master.needsRedraw = true
+            if (!canPauseRendering || !settings.renderPausingEnabled) master.needsRedraw = true
         } else {
             drew = false
         }
@@ -451,28 +455,6 @@ class PolyUI @JvmOverloads constructor(
             fontSize = 10f,
         )
         master.debugDraw()
-    }
-
-    /**
-     * add a function to be executed on the main thread, after rendering the UI. a renderer is provided if you want to do any rendering.
-     *
-     * @return `true` at any time to remove the hook.
-     * @see beforeRender
-     * @since 0.18.5
-     */
-    fun addHook(func: Renderer.() -> Boolean) {
-        hooks.add(func)
-    }
-
-    /**
-     * Add a function to be executed just before a render cycle begins.
-     *
-     * Any modifications to the renderer at this point such as transformations will affect the rendering of the entire UI.
-     * @since 0.24.3
-     * @see addHook
-     */
-    fun beforeRender(func: Renderer.() -> Boolean) {
-        preHooks.add(func)
     }
 
     /**
@@ -513,9 +495,9 @@ class PolyUI @JvmOverloads constructor(
     fun unfocus() = inputManager.unfocus()
 
     /**
-     * Return the key name for the given key code.
+     * Return the key name for the given key code, or "Unknown" if the key is not mapped / no window is present.
      */
-    fun getKeyName(key: Int) = window.getKeyName(key)
+    fun getKeyName(key: Int) = window?.getKeyName(key) ?: "Unknown"
 
     /**
      * return a string of this PolyUI instance's components and children in a list, like this:
@@ -534,7 +516,7 @@ class PolyUI @JvmOverloads constructor(
      * 	 Block@2669b199(189.77441x30.0, 76.59671x45.275665)
      * ```
      */
-    fun debugPrint(): String {
+    fun debugString(): String {
         val sb = StringBuilder().append(toString())
         val children = master.children ?: run {
             sb.append(" with 0 children, totalling 0 components.")
@@ -543,19 +525,19 @@ class PolyUI @JvmOverloads constructor(
         sb.append(" with ${children.size} children, totalling ${master.countChildren()} components:")
         children.fastEach {
             sb.append("\n\t").append(it.toString())
-            debugPrint(it.children ?: return@fastEach, 1, sb)
+            debugString(it.children ?: return@fastEach, 1, sb)
         }
         return sb.toString()
     }
 
-    private fun debugPrint(list: LinkedList<Drawable>, depth: Int, sb: StringBuilder) {
+    private fun debugString(list: LinkedList<Drawable>, depth: Int, sb: StringBuilder) {
         var i = 0
         var ii = 0
         val ndepth = depth + 1
         list.fastEach {
             if (it.initialized) {
                 sb.append('\n').append('\t', ndepth).append(it.toString())
-                debugPrint(it.children ?: return@fastEach, ndepth, sb)
+                debugString(it.children ?: return@fastEach, ndepth, sb)
                 i++
             } else ii += it.countChildren() + 1
             if (i >= 10) {
@@ -583,8 +565,6 @@ class PolyUI @JvmOverloads constructor(
     fun cleanup() {
         unfocus()
         renderer.cleanup()
-        preHooks.clear()
-        hooks.clear()
         executors.clear()
         master.children?.clear()
     }
