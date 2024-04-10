@@ -216,7 +216,7 @@ class PolyUI @JvmOverloads constructor(
 
     inline val size: Vec2 get() = master.size
 
-    private var _iSize: Vec2.Immutable? = null
+    internal var _iSize: Vec2.Immutable? = null
 
     /**
      * this property stores the initial size of this PolyUI instance.

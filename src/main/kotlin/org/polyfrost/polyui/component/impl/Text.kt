@@ -33,7 +33,6 @@ import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.*
 import kotlin.math.max
-import kotlin.math.min
 
 open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f, at: Vec2? = null, alignment: Align = AlignDefault, wrap: Float = 0f, visibleSize: Vec2? = null, focusable: Boolean = false, vararg children: Drawable?) :
     Drawable(children = children, at, alignment, visibleSize = visibleSize, focusable = focusable) {
@@ -218,7 +217,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         val new = lines.size * (fontSize + spacing) - spacing
         if (lines.size > 1 && visibleSize.y != 0f && new > visibleSize.y) {
             // asm: text is larger than its box, cut off the last lines, but a minimum of 1 line
-            lines.cut(0, min(lines.size - 1, (visibleSize.y / (fontSize + spacing)).toInt()))
+            lines.cut(0, max(1, (visibleSize.y / (fontSize + spacing)).toInt()))
             size.y = visibleSize.y
         } else size.y = new
         size.x = wrap
