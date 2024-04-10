@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.0.0-Beta3"
+kotlin = "2.0.0-Beta5"
 slf4j = "2.0.12"
 annotations = "24.1.0"
 kotlinter = "4.3.0"

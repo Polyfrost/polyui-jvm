@@ -92,9 +92,9 @@ class PolyUI @JvmOverloads constructor(
     inputManager: InputManager? = null,
     translator: Translator? = null,
     backgroundColor: PolyColor? = null,
-    masterAlignment: Align? = null,
-    size: Vec2? = null,
+    masterAlignment: Align = Align(cross = Align.Cross.Start, padding = Vec2.ZERO),
     colors: Colors = DarkTheme(),
+    size: Vec2? = null,
     vararg drawables: Drawable,
 ) {
     init {
@@ -170,16 +170,9 @@ class PolyUI @JvmOverloads constructor(
     /**
      * This is the root layout of the UI. It is the parent of all other layouts.
      */
-    val master: Drawable
+    val master = if (backgroundColor == null) Group(at = Vec2(), size = size, children = drawables, alignment = masterAlignment)
+    else Block(at = Vec2(), size = size, children = drawables, alignment = masterAlignment, color = backgroundColor, radii = 0f.radii())
 
-    init {
-        val align = masterAlignment ?: Align(cross = Align.Cross.Start, padding = Vec2.ZERO)
-        master = if (backgroundColor == null) {
-            Group(at = Vec2(), size = size, children = drawables, alignment = align)
-        } else {
-            Block(at = Vec2(), size = size, children = drawables, alignment = align, color = backgroundColor, radii = 0f.radii())
-        }
-    }
 
     val inputManager = inputManager?.with(master) ?: InputManager(master, KeyBinder(this.settings), this.settings)
 

@@ -62,7 +62,7 @@ fun Switch(at: Vec2? = null, size: Float, padding: Float = 3f, state: Boolean = 
     return Block(
         at = at,
         size = Vec2(size * lateralStretch, size),
-        alignment = Align(main = Align.Main.Start, cross = Align.Cross.Start, padding = Vec2(padding, padding)),
+        alignment = Align(main = Align.Main.Start, padding = Vec2(padding, 0f)),
         radii = (size / 2f).radii(),
         children = arrayOf(
             Block(size = Vec2(circleSize, circleSize), radii = (circleSize / 2f).radii()).setPalette { text.primary },
@@ -146,7 +146,7 @@ fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2? = null, ini
     return Block(
         at = at,
         children = buttons.apply {
-            add(0, Block(at = ignored, size = Vec2.ONE))
+            add(0, Block(size = 1f by 1f))
         }.toTypedArray(),
     ).afterInit { _ ->
         val it = this[0]

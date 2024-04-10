@@ -50,12 +50,6 @@ inline val Number.vec get() = Vec2(toFloat(), toFloat())
 
 fun Long.toChromaSpeed() = LongRef().also { it.element = this }
 
-/**
- * A vec2 of zero which, when used as the position of a component, will be ignored during layout.
- * @see org.polyfrost.polyui.component.Positioner.Default
- */
-inline val ignored: Vec2 get() = Vec2(0f, 0f)
-
 // so much more efficient to do it this way //
 inline infix fun Float.by(other: Float) = Vec2(this, other)
 inline infix fun Float.by(other: Int) = Vec2(this, other.toFloat())

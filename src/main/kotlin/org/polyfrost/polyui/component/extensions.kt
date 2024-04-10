@@ -281,6 +281,22 @@ fun <S : Drawable> S.setPalette(palette: Colors.() -> Colors.Palette): S {
 }
 
 /**
+ * Call this function to ignore this drawable during the calculation of the parent's positioning and size.
+ * It is equivalent to the following:
+ * ```
+ * renders = false
+ * afterParentInit { renders = true }
+ * ```
+ *
+ * @since 1.1.4
+ */
+fun <S : Drawable> S.ignoreLayout(): S {
+    renders = false
+    afterParentInit { renders = true }
+    return this
+}
+
+/**
  * Set the font of this text component during initialization, using the PolyUI fonts instance.
  * @since 1.1.3
  */

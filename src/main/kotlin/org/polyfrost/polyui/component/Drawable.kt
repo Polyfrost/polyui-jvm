@@ -61,7 +61,7 @@ abstract class Drawable(
         visibleSize: Vec2? = null,
         palette: Colors.Palette? = null,
         focusable: Boolean = false,
-    ) : this(children = children, at?.x ?: -1f, at?.y ?: -1f, alignment, size, visibleSize, palette, focusable)
+    ) : this(children = children, at?.x ?: 0f, at?.y ?: 0f, alignment, size, visibleSize, palette, focusable)
 
     var size: Vec2 = size?.mutable() ?: Vec2()
 
@@ -115,7 +115,6 @@ abstract class Drawable(
      */
     var rawResize = false
 
-    
     private var eventHandlers: MutableMap<Event, LinkedList<(Drawable.(Event) -> Boolean)>>? = null
 
     /**
@@ -123,7 +122,6 @@ abstract class Drawable(
      *
      * `val text = myLayout["Text@4cf777e8"] as Text`
      */
-    
     open var simpleName = "${this::class.java.simpleName}@${Integer.toHexString(this.hashCode())}"
 
     var children: LinkedList<Drawable>?
@@ -202,6 +200,7 @@ abstract class Drawable(
     var x: Float
         inline get() = _x
         set(value) {
+            atValid = true
             if (value == _x) return
             val d = value - _x
             _x = value
@@ -213,6 +212,7 @@ abstract class Drawable(
     var y: Float
         inline get() = _y
         set(value) {
+            atValid = true
             if (value == _y) return
             val d = value - _y
             _y = value
@@ -240,10 +240,11 @@ abstract class Drawable(
     inline val sizeValid get() = width > 0f && height > 0f
 
     /**
-     * returns `true` if the position of this drawable is valid (not negative)
+     * returns `true` if the position of this drawable is valid (has been set)
      * @since 1.1.0
      */
-    inline val atValid get() = x >= 0f && y >= 0f
+    var atValid = false
+        private set
 
     /**
      * Return the position of this drawable as if it were a [Vec2].

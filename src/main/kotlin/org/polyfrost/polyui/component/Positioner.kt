@@ -88,7 +88,7 @@ fun interface Positioner {
                     crs,
                     when (drawable.alignment.cross) {
                         Align.Cross.Start -> crossPad
-                        Align.Cross.End -> drawable.size[crs] - ivs[crs] - crossPad
+                        Align.Cross.End -> vs[crs] - ivs[crs] - crossPad
                         else -> (vs[crs] - ivs[crs]) / 2f
                     },
                 )
