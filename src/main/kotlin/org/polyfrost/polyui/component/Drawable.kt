@@ -45,8 +45,8 @@ import org.polyfrost.polyui.utils.*
  */
 abstract class Drawable(
     vararg children: Drawable? = arrayOf(),
-    x: Float = -1f,
-    y: Float = -1f,
+    x: Float = 0f,
+    y: Float = 0f,
     val alignment: Align = AlignDefault,
     size: Vec2? = null,
     visibleSize: Vec2? = null,
@@ -736,8 +736,9 @@ abstract class Drawable(
     @Synchronized
     open fun reset() {
         if (!initialized) return
-        this.x = -1f
-        this.y = -1f
+        this.x = 0f
+        this.y = 0f
+        this.atValid = false
         this.initialized = false
         children?.fastEach { it.reset() }
     }
@@ -752,11 +753,13 @@ abstract class Drawable(
     fun recalculateChildren() {
         val oldX = this.x
         val oldY = this.y
-        this.x = -1f
-        this.y = -1f
+        this.x = 0f
+        this.y = 0f
+        this.atValid = false
         children?.fastEach {
-            it.x = -1f
-            it.y = -1f
+            it.x = 0f
+            it.y = 0f
+            it.atValid = false
         }
         polyUI.positioner.position(this)
         this.x = oldX
