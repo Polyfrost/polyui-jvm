@@ -68,7 +68,7 @@ fun Switch(at: Vec2? = null, size: Float, padding: Float = 3f, state: Boolean = 
             Block(size = Vec2(circleSize, circleSize), radii = (circleSize / 2f).radii()).setPalette { text.primary },
         ),
     ).withStates().events {
-        var switched = false
+        var switched = state
         Event.Mouse.Clicked(0) then {
             val ev = Event.Change.State(switched)
             accept(ev)
@@ -84,7 +84,7 @@ fun Switch(at: Vec2? = null, size: Float, padding: Float = 3f, state: Boolean = 
         if (state) {
             it.setPalette { brand.fg }
             it.afterParentInit(2) {
-                accept(Event.Mouse.Clicked(0))
+                this[0].x += this.height * (lateralStretch - 1f)
             }
         }
     }

@@ -575,32 +575,21 @@ abstract class Drawable(
     }
 
     fun clipChildren() {
+        val children = children ?: return
         val tx = xScroll?.from ?: x
         val ty = yScroll?.from ?: y
         val vs = visibleSize
         val tw = vs.x
         val th = vs.y
-        _clipChildren(null, children ?: return, tx, ty, tw, th)
+        _clipChildren(children, tx, ty, tw, th)
         needsRedraw = true
     }
 
-    protected fun _clipChildren(self: Drawable?, children: LinkedList<Drawable>, tx: Float, ty: Float, tw: Float, th: Float) {
+    private fun _clipChildren(children: LinkedList<Drawable>, tx: Float, ty: Float, tw: Float, th: Float) {
         children.fastEach {
             if (!it.enabled) return@fastEach
-            // asm: successful clip ONLY if it intersects the parent as well as the provided box
-            it.renders = if (it.intersects(tx, ty, tw, th)) {
-                // null signals that the boxes will be the same, no point checking
-                if (self == null) true
-                else {
-                    val sx = self.xScroll?.from ?: self.x
-                    val sy = self.yScroll?.from ?: self.y
-                    val vs = self.visibleSize
-                    val sw = vs.x
-                    val sh = vs.y
-                    it.intersects(sx, sy, sw, sh)
-                }
-            } else false
-            it._clipChildren(it, it.children ?: return@fastEach, tx, ty, tw, th)
+            it.renders = it.intersects(tx, ty, tw, th)
+            it._clipChildren(it.children ?: return@fastEach, tx, ty, tw, th)
         }
     }
 
@@ -685,7 +674,6 @@ abstract class Drawable(
     @MustBeInvokedByOverriders
     open fun setup(polyUI: PolyUI): Boolean {
         if (initialized) return false
-        initialized = true
         this.polyUI = polyUI
         if (!::palette.isInitialized) palette = polyUI.colors.component.bg
         if (!::color.isInitialized) this.color = palette.normal.toAnimatable()
@@ -707,6 +695,7 @@ abstract class Drawable(
             framebuffer = renderer.createFramebuffer(size.x, size.y)
             if (polyUI.settings.debug) PolyUI.LOGGER.info("Drawable ${this.simpleName} created with $framebuffer")
         }
+        initialized = true
         return true
     }
 
@@ -801,7 +790,9 @@ abstract class Drawable(
         val tx = this.xScroll?.from ?: this.x
         val ty = this.yScroll?.from ?: this.y
         val vs = this.visibleSize
-        return x in tx..tx + vs.x && y in ty..ty + vs.y
+        val tw = vs.x * scaleX
+        val th = vs.y * scaleY
+        return x in tx..tx + tw && y in ty..ty + th
     }
 
     /**
@@ -813,8 +804,8 @@ abstract class Drawable(
         val tx = this.xScroll?.from ?: this.x
         val ty = this.yScroll?.from ?: this.y
         val vs = this.visibleSize
-        val tw = vs.x
-        val th = vs.y
+        val tw = vs.x * scaleX
+        val th = vs.y * scaleY
         return (x <= tx + tw && tx <= x + width) && (y <= ty + th && ty <= y + height)
     }
 

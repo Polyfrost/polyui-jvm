@@ -55,8 +55,9 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
 
     var wrap: Float = wrap
         set(value) {
+            if (field == value) return
             field = value
-            updateTextBounds()
+            if (initialized) updateTextBounds()
         }
 
     // asm: initially it is a dummy object to save need for a field
@@ -66,6 +67,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
     @ApiStatus.Internal
     var _translated = text
         set(value) {
+            if (field == value) return
             field = value
             if (initialized) updateTextBounds()
         }
@@ -89,6 +91,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
 
     private var _font: Font? = font
         set(value) {
+            if (field == value) return
             field = value
             if (initialized) updateTextBounds()
         }
@@ -96,6 +99,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
     var font: Font
         get() = _font ?: throw UninitializedPropertyAccessException("font")
         set(value) {
+            if (_font == value) return
             _font = value
             spacing = (font.lineSpacing - 1f) * fontSize
         }
@@ -136,6 +140,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
 
     var fontSize = fontSize
         set(value) {
+            if (field == value) return
             field = value
             spacing = (font.lineSpacing - 1f) * value
             updateTextBounds()

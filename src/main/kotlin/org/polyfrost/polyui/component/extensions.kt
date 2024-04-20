@@ -503,9 +503,12 @@ fun <S : Drawable> S.afterParentInit(depth: Int = 1, handler: S.() -> Unit): S {
         for (i in 0 until depth) {
             it.parent?.let { parent -> it = parent } ?: break
         }
-        it.addEventHandler(Event.Lifetime.PostInit) {
+        if(it.initialized) {
             handler(this@afterParentInit)
-            false
+        } else {
+            it.addEventHandler(Event.Lifetime.PostInit) {
+                handler(this@afterParentInit)
+            }
         }
         false
     }
