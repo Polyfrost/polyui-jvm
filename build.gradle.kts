@@ -45,8 +45,8 @@ allprojects {
 
     dependencies {
         implementation(rootProject.libs.bundles.kotlin)
-        implementation(rootProject.libs.slf4j.api)
-        runtimeOnly(rootProject.libs.slf4j.simple)
+        api(rootProject.libs.logging.api)
+        testRuntimeOnly(rootProject.libs.logging.impl)
     }
 
     java {

@@ -21,7 +21,6 @@
 
 package org.polyfrost.polyui.renderer.impl
 
-import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.Color
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.Font
@@ -31,7 +30,7 @@ import org.polyfrost.polyui.unit.Vec2
 
 object NoOpRenderer : Renderer {
     override fun init() {
-        PolyUI.LOGGER.warn("renderer is a no-op implementation")
+        println("renderer is a no-op implementation")
     }
 
     override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {

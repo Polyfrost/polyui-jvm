@@ -316,11 +316,28 @@ inline fun <T, reified R> Array<T>.mapToArray(transform: (T) -> R): Array<R> {
  *
  * Equivalent to `this.map { transform(it) }.toTypedArray()`, but saves on the creation of an intermediate list.
  */
-inline fun <T, reified R> List<T>.mapToArray(transform: (T) -> R): Array<R> {
+inline fun <T, reified R> Collection<T>.mapToArray(transform: (T) -> R): Array<R> {
     val out = arrayOfNulls<R>(size)
     var i = 0
     for (element in this) {
         out[i] = transform(element)
+        i++
+    }
+    @Suppress("UNCHECKED_CAST")
+    return out as Array<R>
+}
+
+/**
+ * Perform the given [transform] on every element in this map, and return a new array with the results.
+ *
+ * Equivalent to `this.map { transform(it) }.toTypedArray()`, but saves on the creation of an intermediate list.
+
+ */
+inline fun <K, V, reified R> Map<K, V>.mapToArray(transform: (Map.Entry<K, V>) -> R): Array<R> {
+    val out = arrayOfNulls<R>(size)
+    var i = 0
+    for (entry in this) {
+        out[i] = transform(entry)
         i++
     }
     @Suppress("UNCHECKED_CAST")
@@ -341,13 +358,20 @@ inline fun <T, reified R> LinkedList<T>.mapToArray(transform: (T) -> R): Array<R
     return out as Array<R>
 }
 
-fun FloatArray.areEqual(): Boolean {
+fun FloatArray.areValuesEqual(): Boolean {
     if (isEmpty()) return true
     val first = this[0]
     for (i in 1 until size) {
         if (this[i] != first) return false
     }
     return true
+}
+
+fun FloatArray.set(value: Float): FloatArray {
+    for(i in this.indices) {
+        this[i] = value
+    }
+    return this
 }
 
 /**

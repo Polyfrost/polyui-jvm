@@ -5,7 +5,6 @@ public final class org/polyfrost/polyui/PolyUI {
 	public static final field INPUT_HOVERED B
 	public static final field INPUT_NONE B
 	public static final field INPUT_PRESSED B
-	public static final field LOGGER Lorg/slf4j/Logger;
 	public static final field SUCCESS B
 	public static final field WARNING B
 	public static field defaultFonts Lorg/polyfrost/polyui/renderer/data/FontFamily;
@@ -475,7 +474,6 @@ public abstract class org/polyfrost/polyui/component/Drawable : java/lang/Clonea
 	public synthetic fun <init> ([Lorg/polyfrost/polyui/component/Drawable;FFLorg/polyfrost/polyui/unit/Align;Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/polyui/color/Colors$Palette;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun <init> ([Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/polyui/unit/Align;Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/polyui/color/Colors$Palette;Z)V
 	public synthetic fun <init> ([Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/polyui/unit/Align;Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/polyui/color/Colors$Palette;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	protected final fun _clipChildren (Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/utils/LinkedList;FFFF)V
 	protected final fun _setPalette (Lorg/polyfrost/polyui/color/Colors$Palette;)V
 	public fun accept (Lorg/polyfrost/polyui/event/Event;)Z
 	public final fun addChild (Lorg/polyfrost/polyui/component/Drawable;Z)V
@@ -1951,7 +1949,7 @@ public final class org/polyfrost/polyui/utils/Utils {
 	public static final fun HSBtoRGB (FFF)I
 	public static final fun RGBtoHSB (III[F)[F
 	public static synthetic fun RGBtoHSB$default (III[FILjava/lang/Object;)[F
-	public static final fun areEqual ([F)Z
+	public static final fun areValuesEqual ([F)Z
 	public static final fun asLinkedList (Ljava/util/Collection;)Lorg/polyfrost/polyui/utils/LinkedList;
 	public static final fun asLinkedList ([Ljava/lang/Object;)Lorg/polyfrost/polyui/utils/LinkedList;
 	public static final fun both (Lkotlin/Pair;Lkotlin/jvm/functions/Function1;)V
@@ -1980,6 +1978,7 @@ public final class org/polyfrost/polyui/utils/Utils {
 	public static final fun rgba (III)Lorg/polyfrost/polyui/color/PolyColor;
 	public static final fun rgba (IIIF)Lorg/polyfrost/polyui/color/PolyColor;
 	public static synthetic fun rgba$default (IIIFILjava/lang/Object;)Lorg/polyfrost/polyui/color/PolyColor;
+	public static final fun set ([FF)[F
 	public static final fun simplifyRatio (Lkotlin/Pair;)Lkotlin/Pair;
 	public static final fun stdout (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 	public static synthetic fun stdout$default (Ljava/lang/Object;Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;

@@ -21,6 +21,7 @@
 
 package org.polyfrost.polyui.renderer.impl
 
+import org.apache.logging.log4j.LogManager
 import org.lwjgl.glfw.Callbacks
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWDropCallback
@@ -60,6 +61,8 @@ class GLFWWindow @JvmOverloads constructor(
     resizeable: Boolean = true,
     decorated: Boolean = true,
 ) : Window(width, height) {
+    private val LOGGER = LogManager.getLogger("PolyUI/GLFW")
+
     override var height: Int
         get() = super.height
         set(value) {
@@ -94,20 +97,20 @@ class GLFWWindow @JvmOverloads constructor(
     init {
         if (Platform.get() == Platform.MACOSX && enableMacOSFix) {
             val now = System.nanoTime()
-            PolyUI.LOGGER.warn("macOS detected: checking isMainThread()... (disable with -Dpolyui.glfwnomacfix)")
+            LOGGER.warn("macOS detected: checking isMainThread()... (disable with -Dpolyui.glfwnomacfix)")
             try {
                 // kotlin copy of org.lwjgl.glfw.EventLoop.isMainThread()
                 val msgSend = ObjCRuntime.getLibrary().getFunctionAddress("objc_msgSend")
                 val currentThread = JNI.invokePPP(ObjCRuntime.objc_getClass("NSThread"), ObjCRuntime.sel_getUid("currentThread"), msgSend)
                 val isMainThread = JNI.invokePPZ(currentThread, ObjCRuntime.sel_getUid("isMainThread"), msgSend)
                 if (!isMainThread) {
-                    PolyUI.LOGGER.warn("VM option -XstartOnMainThread is required on macOS. glfw_async has been set to avoid crashing.")
+                    LOGGER.warn("VM option -XstartOnMainThread is required on macOS. glfw_async has been set to avoid crashing.")
                     Configuration.GLFW_LIBRARY_NAME.set("glfw_async")
                 }
             } catch (e: Exception) {
-                PolyUI.LOGGER.error("Failed to check if isMainThread, may crash!", e)
+                LOGGER.error("Failed to check if isMainThread, may crash!", e)
             }
-            PolyUI.LOGGER.warn("\t > took: ${(System.nanoTime() - now) / 1_000_000f}ms")
+            LOGGER.warn("\t > took: ${(System.nanoTime() - now) / 1_000_000f}ms")
         }
 
         GLFWErrorCallback.createPrint().set()
@@ -155,7 +158,7 @@ class GLFWWindow @JvmOverloads constructor(
 
         glfwSetWindowContentScaleCallback(handle) { _, xScale, yScale ->
             val pixelRatio = max(xScale, yScale)
-            if (polyUI.settings.debug) PolyUI.LOGGER.info("Pixel ratio: $pixelRatio")
+            if (polyUI.settings.debug) LOGGER.info("Pixel ratio: $pixelRatio")
             this.pixelRatio = pixelRatio
             polyUI.resize(width.toFloat() / pixelRatio, height.toFloat() / pixelRatio)
         }
@@ -263,7 +266,7 @@ class GLFWWindow @JvmOverloads constructor(
         glfwSetScrollCallback(handle) { _, x, y ->
             // asm: small scroll amounts are usually trackpads
             if (!ran && (y < 1.0 && x < 1.0) && PolyUI.isOnMac && !polyUI.settings.naturalScrolling) {
-                PolyUI.LOGGER.info("Enabled natural scrolling as it has been guessed to be a trackpad on macOS.")
+                LOGGER.info("Enabled natural scrolling as it has been guessed to be a trackpad on macOS.")
                 polyUI.settings.naturalScrolling = true
             }
             ran = true
@@ -322,7 +325,7 @@ class GLFWWindow @JvmOverloads constructor(
 
         if (polyUI.settings.aspectRatio.first == 0 || polyUI.settings.aspectRatio.second == 0) {
             val ratio = (width to height).simplifyRatio()
-            PolyUI.LOGGER.info("Inferred aspect ratio: ${ratio.first}:${ratio.second}")
+            LOGGER.info("Inferred aspect ratio: ${ratio.first}:${ratio.second}")
             polyUI.settings.aspectRatio = ratio
         }
         glfwSetWindowAspectRatio(handle, polyUI.settings.aspectRatio.first, polyUI.settings.aspectRatio.second)

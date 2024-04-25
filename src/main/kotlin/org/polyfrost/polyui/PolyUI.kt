@@ -21,6 +21,7 @@
 
 package org.polyfrost.polyui
 
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.color.DarkTheme
 import org.polyfrost.polyui.color.PolyColor
@@ -45,8 +46,6 @@ import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.immutable
 import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.*
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.text.DecimalFormat
 import kotlin.math.max
 import kotlin.math.min
@@ -301,7 +300,7 @@ class PolyUI @JvmOverloads constructor(
                     if (drew) LOGGER.info(perf)
                 }
             }
-            println(debugString())
+            LOGGER.info(debugString())
         }
         if (this.settings.cleanupOnShutdown) {
             Runtime.getRuntime().addShutdownHook(
@@ -564,7 +563,8 @@ class PolyUI @JvmOverloads constructor(
 
     companion object {
         @JvmField
-        val LOGGER: Logger = LoggerFactory.getLogger("PolyUI")
+        @PublishedApi
+        internal val LOGGER = LogManager.getLogger("PolyUI")
 
         /**
          * If the current OS is detected as macOS

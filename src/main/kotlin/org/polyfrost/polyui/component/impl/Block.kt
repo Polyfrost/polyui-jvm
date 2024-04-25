@@ -26,7 +26,7 @@ import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.utils.areEqual
+import org.polyfrost.polyui.utils.areValuesEqual
 import org.polyfrost.polyui.utils.cl1
 import org.polyfrost.polyui.utils.radii
 
@@ -58,7 +58,7 @@ constructor(
 
     override fun rescale(scaleX: Float, scaleY: Float, position: Boolean) {
         super.rescale(scaleX, scaleY, position)
-        if (radii.areEqual()) {
+        if (radii.areValuesEqual()) {
             val scale = cl1(scaleX, scaleY)
             for (i in 0..3) {
                 radii[i] *= scale

@@ -1,6 +1,6 @@
 [versions]
 kotlin = "2.0.0-Beta5"
-slf4j = "2.0.12"
+log4j = "2.8.1"
 annotations = "24.1.0"
 kotlinter = "4.3.0"
 kotlin-abi = "0.14.0"
@@ -16,8 +16,8 @@ dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 git-hooks = { id = "com.github.jakemarsden.git-hooks", version = "0.0.2" }
 
 [libraries]
-slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
-slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
+logging-api = { module = "org.apache.logging.log4j:log4j-api", version.ref = "log4j" }
+logging-impl = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
 
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
 kotlin-annotations = { module = "org.jetbrains:annotations", version.ref = "annotations" }
