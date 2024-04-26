@@ -222,7 +222,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         val new = lines.size * (fontSize + spacing) - spacing
         if (lines.size > 1 && visibleSize.y != 0f && new > visibleSize.y) {
             // asm: text is larger than its box, cut off the last lines, but a minimum of 1 line
-            lines.cut(0, max(1, (visibleSize.y / (fontSize + spacing)).toInt()))
+            lines.cut(0, max(0, (visibleSize.y / (fontSize + spacing)).toInt() - 1))
             size.y = visibleSize.y
         } else size.y = new
         size.x = wrap

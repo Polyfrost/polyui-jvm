@@ -365,7 +365,7 @@ class LinkedList<T>() : MutableList<T>, Cloneable {
      * @param to the end index, must be less than [size] and more than [from]
      */
     fun cut(from: Int, to: Int) {
-        require(from < to) { "from must be less than to ($from..$to)" }
+        require(from <= to) { "from must be less than to ($from..$to)" }
         val start = _get(from)
         val end = _get(to)
         this.start = start
@@ -485,7 +485,13 @@ class LinkedList<T>() : MutableList<T>, Cloneable {
     }
 
     @ApiStatus.Internal
-    class Node<T>(var value: T, var next: Node<T>? = null, var prev: Node<T>? = null)
+    class Node<T>(var value: T, var next: Node<T>? = null, var prev: Node<T>? = null) {
+        override fun toString(): String {
+            return if (next == null) "TailNode($value)"
+            else if (prev == null) "HeadNode($value)"
+            else "Node($value)"
+        }
+    }
 
     /**
      * iterator for [LinkedList].

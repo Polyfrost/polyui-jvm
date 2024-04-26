@@ -45,7 +45,7 @@ allprojects {
 
     dependencies {
         implementation(rootProject.libs.bundles.kotlin)
-        api(rootProject.libs.logging.api)
+        implementation(rootProject.libs.logging.api)
         testRuntimeOnly(rootProject.libs.logging.impl)
     }
 
