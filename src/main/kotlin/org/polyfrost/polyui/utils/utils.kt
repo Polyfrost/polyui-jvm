@@ -189,6 +189,23 @@ inline val Int.alpha get() = this shr 24 and 0xFF
 inline fun Double.toRadians() = (this % 360.0) * (PI / 180.0)
 
 /**
+ * Return a PolyUI compatible color object representative of this Java color object.
+ * @see PolyColor.toJavaColor
+ * @since 1.1.51
+ */
+fun java.awt.Color.toPolyColor() = PolyColor(red, green, blue, alpha / 255f)
+
+/**
+ * Return an animatable PolyUI color object representative of this Java color object.
+ * @see PolyColor.toJavaColor
+ * @since 1.1.51
+ */
+fun java.awt.Color.toPolyColorAnimated(): PolyColor.Animated {
+    val hsb = RGBtoHSB(red, green, blue)
+    return PolyColor.Animated(hsb[0], hsb[1], hsb[2], alpha / 255f)
+}
+
+/**
  * Calculate the greatest common denominator of two integers.
  * @since 0.18.4
  */

@@ -37,31 +37,31 @@ fun main() {
     polyUI {
         size = 800f by 500f
         renderer = NVGRenderer
-        image("polyfrost.png".image())
-        text("text.dark") {
+        Image("polyfrost.png".image())
+        Text("text.dark") {
             fontSize = 20f
         }
-        group {
+        Group {
             Button("moon.svg".image()).add()
             Button("face-wink.svg".image(), "button.text").add()
             Switch(size = 28f).add()
             Checkbox(size = 28f).add()
         }
         Dropdown("tomato", "orange", "banana", "lime").add()
-        block {
-            text("Title:")
+        Block {
+            Text("Title:")
             TextInput().add()
-            block {
-                text("px")
+            Block {
+                Text("px")
             }
         }
-        group {
+        Group {
             repeat(30) {
-                block(size = (32f + (Math.random().toFloat() * 100f)) by 32f).withStates()
+                Block(size = (32f + (Math.random().toFloat() * 100f)) by 32f).withStates()
             }
             it.visibleSize = 350f by 120f
         }
-        group {
+        Group {
             Button("shuffle.svg".image(), "button.randomize").events {
                 Event.Mouse.Clicked(0) then { _ ->
                     val box = parent.parent[5]
@@ -80,10 +80,10 @@ fun main() {
                     )
                 }
             }.add()
-            group {
+            Group {
                 Radiobutton("hello", "goodbye").add()
                 Slider().add()
-                text("blink three times when u feel it kicking in")
+                Text("blink three times when u feel it kicking in")
             }
         }
     }.open(window)

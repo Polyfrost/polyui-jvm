@@ -163,6 +163,15 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
         return result.toInt()
     }
 
+    /**
+     * Return a static java [Color][java.awt.Color] object of this color at the instant this method is called.
+     *
+     * Future changes to this color will not be reflected in the returned object.
+     *
+     * @since 1.1.51
+     */
+    fun toJavaColor() = java.awt.Color(argb, true)
+
     fun take(color: Color): Color {
         this.hue = color.hue
         this.saturation = color.saturation
