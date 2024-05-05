@@ -334,6 +334,7 @@ class GLFWWindow @JvmOverloads constructor(
         fpsCap = polyUI.settings.maxFPS.toDouble()
         while (!glfwWindowShouldClose(handle)) {
             if (offset != 0) glViewport(0, offset, width, height)
+            glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
             glClearColor(0f, 0f, 0f, 0f)
 
             this.polyUI.render()

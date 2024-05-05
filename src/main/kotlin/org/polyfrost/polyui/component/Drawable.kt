@@ -153,6 +153,7 @@ abstract class Drawable(
     @Locking
     @set:Synchronized
     var framebuffer: Framebuffer? = null
+        private set
 
     /**
      * internal counter for framebuffer render count
@@ -439,7 +440,6 @@ abstract class Drawable(
             fbc++
         }
 
-//        if (!needsRedraw) return
         needsRedraw = false
         preRender()
         render()
@@ -691,7 +691,7 @@ abstract class Drawable(
         // following all init events being removed, if it is empty, we can set it to null
         if (eventHandlers.isNullOrEmpty()) eventHandlers = null
         clipChildren()
-        if (countChildren() > polyUI.settings.minDrawablesForFramebuffer) {
+        if (polyUI.canUseFramebuffers && countChildren() > polyUI.settings.minDrawablesForFramebuffer) {
             framebuffer = renderer.createFramebuffer(size.x, size.y)
             if (polyUI.settings.debug) PolyUI.LOGGER.info("Drawable ${this.simpleName} created with $framebuffer")
         }

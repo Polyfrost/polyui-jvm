@@ -153,6 +153,8 @@ class PolyUI @JvmOverloads constructor(
      */
     inline val canPauseRendering get() = settings.renderPausingEnabled && window?.supportsRenderPausing() == true
 
+    inline val canUseFramebuffers get() = settings.framebuffersEnabled && renderer.supportsFramebuffers()
+
     inline val pixelRatio get() = window?.pixelRatio ?: 1f
 
     /**
@@ -428,7 +430,7 @@ class PolyUI @JvmOverloads constructor(
 
             renderer.endFrame()
             drew = true
-            if (!canPauseRendering || !settings.renderPausingEnabled) master.needsRedraw = true
+            if (!canPauseRendering) master.needsRedraw = true
         } else {
             drew = false
         }

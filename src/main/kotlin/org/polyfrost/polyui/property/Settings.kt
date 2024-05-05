@@ -87,7 +87,8 @@ class Settings {
      */
     @get:JvmName("framebuffersEnabled")
     @set:JvmName("enableFramebuffers")
-    var framebuffersEnabled = true
+    @ApiStatus.Experimental
+    var framebuffersEnabled = false
 
     /**
      * This optimization enables "render pausing", or allowing the renderer to pause rendering when there are no changes to the UI.
