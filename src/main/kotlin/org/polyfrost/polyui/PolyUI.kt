@@ -86,6 +86,7 @@ import kotlin.system.measureNanoTime
  * PolyUI also supports a variety of [animations][org.polyfrost.polyui.animate.Animation] and transitions, which can be used to make your UI more dynamic, along with dynamically [adding][Drawable.addChild] and [removing][Drawable.removeChild] components.
  */
 class PolyUI @JvmOverloads constructor(
+    vararg drawables: Drawable,
     val renderer: Renderer,
     settings: Settings? = null,
     inputManager: InputManager? = null,
@@ -94,7 +95,6 @@ class PolyUI @JvmOverloads constructor(
     masterAlignment: Align = Align(cross = Align.Cross.Start, padding = Vec2.ZERO),
     colors: Colors = DarkTheme(),
     size: Vec2? = null,
-    vararg drawables: Drawable,
 ) {
     init {
         renderer.init()

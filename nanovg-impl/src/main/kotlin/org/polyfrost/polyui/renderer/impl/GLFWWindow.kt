@@ -333,7 +333,8 @@ class GLFWWindow @JvmOverloads constructor(
         var t = glfwGetTime()
         fpsCap = polyUI.settings.maxFPS.toDouble()
         while (!glfwWindowShouldClose(handle)) {
-            if (offset != 0) glViewport(0, offset, width, height)
+            val h = height - (polyUI.size.y * pixelRatio).toInt()
+            glViewport(0, offset + h, (polyUI.size.x * pixelRatio).toInt(), (polyUI.size.y * pixelRatio).toInt())
             glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
             glClearColor(0f, 0f, 0f, 0f)
 

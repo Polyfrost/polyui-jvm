@@ -36,90 +36,55 @@ import kotlin.random.Random
 fun main() {
     val window = GLFWWindow("PolyUI Test v2", 800, 500)
     val renderer = NVGRenderer
-    val polyUI =
-        PolyUI(
-            size = 800f by 500f,
-            renderer = renderer,
-            drawables =
-            arrayOf(
-                Image(PolyImage("polyfrost.png")),
-                Text("text.dark", font = PolyUI.defaultFonts.medium, fontSize = 20f),
-                Group(
-                    children =
-                    arrayOf(
-                        Button(leftImage = PolyImage("moon.svg")),
-                        Button(leftImage = PolyImage("face-wink.svg"), text = "button.text"),
-                        Switch(size = 28f),
-                        Checkbox(size = 28f),
-                    ),
-                ),
-                Dropdown(
-                    entries =
-                    arrayOf(
-                        null to "tomato",
-                        null to "orange",
-                        null to "banana",
-                        null to "lime",
-                    ),
-                ),
-                Block(
-                    children =
-                    arrayOf(
-                        Text("Title:"),
-                        TextInput(),
-                        Block(
-                            children =
-                            arrayOf(
-                                Text("px"),
-                            ),
-                        ),
-                    ),
-                ),
-                Group(
-                    visibleSize = Vec2(350f, 120f),
-                    children =
-                    Array(30) {
-                        Block(size = Vec2(32f + (Random.nextFloat() * 100f), 32f)).withStates() // .onInit { color.makeChroma() }
-                    },
-                ),
-                Group(
-                    children =
-                    arrayOf(
-                        Button(leftImage = PolyImage("shuffle.svg"), text = "button.randomize").events {
-                            Event.Mouse.Clicked(0) then { _ ->
-                                val it = parent!!.parent!![5]
-                                it.children?.shuffle()
-                                it.recalculateChildren()
-                            }
+    val polyUI = PolyUI(
+        Image(PolyImage("polyfrost.png")),
+        Text("text.dark", font = PolyUI.defaultFonts.medium, fontSize = 20f),
+        Group(
+            Button(leftImage = PolyImage("moon.svg")),
+            Button(leftImage = PolyImage("face-wink.svg"), text = "button.text"),
+            Switch(size = 28f),
+            Checkbox(size = 28f),
+        ),
+        Dropdown("tomato", "orange", "banana", "lime"),
+        Block(
+            Text("Title:"),
+            TextInput(),
+            Block(Text("px")),
+        ),
+        Group(
+            *Array(30) {
+                Block(size = Vec2(32f + (Random.nextFloat() * 100f), 32f)).withStates() // .onInit { color.makeChroma() }
+            },
+            visibleSize = Vec2(350f, 120f),
+        ),
+        Group(
+            Button(leftImage = PolyImage("shuffle.svg"), text = "button.randomize").events {
+                Event.Mouse.Clicked(0) then { _ ->
+                    val it = parent!!.parent!![5]
+                    it.children?.shuffle()
+                    it.recalculateChildren()
+                }
+            },
+            Button("minus.svg".image()),
+            Button("plus.svg".image()).events {
+                Event.Mouse.Clicked(0) then {
+                    parent!!.parent!![5] = Group(
+                        *Array(30) {
+                            Block(size = Vec2(32f + (Random.nextFloat() * 100f), 32f)).withStates()
                         },
-                        Button("minus.svg".image()),
-                        Button("plus.svg".image()).events {
-                            Event.Mouse.Clicked(0) then {
-                                parent!!.parent!![5] = Group(
-                                    *Array(30) {
-                                        Block(size = Vec2(32f + (Random.nextFloat() * 100f), 32f)).withStates()
-                                    },
-                                    visibleSize = Vec2(350f, 120f),
-                                )
-                            }
-                        },
-                    ),
-                ),
-                Group(
-                    children =
-                    arrayOf(
-//                        Radiobutton(
-//                            entries = arrayOf(
-//                                null to "hello",
-//                                null to "goodbye"
-//                            )
-//                        ),
-                        Slider(),
-                        Text("blink three times when u feel it kicking in"),
-                    ),
-                ),
-            ),
-        )
+                        visibleSize = Vec2(350f, 120f),
+                    )
+                }
+            },
+        ),
+        Group(
+            Radiobutton("hello", "goodbye"),
+            Slider(),
+            Text("blink three times when u feel it kicking in"),
+        ),
+        size = 800f by 500f,
+        renderer = renderer,
+    )
 
     // window.setIcon("icon.png")
     window.open(polyUI)
