@@ -132,7 +132,7 @@ fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2? = null, ini
                 true
             }
             Event.Mouse.Clicked(0) then { _ ->
-                val children = parent!!.children!!
+                val children = parent.children!!
                 val ev = Event.Change.Number(children.indexOf(this) - 1)
                 accept(ev)
                 if (ev.cancelled) return@then false
@@ -187,7 +187,7 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2? = null, fontSiz
                     val title = (it[0] as Text)
                     val self = ((if (children!!.size == 2) this[1] else this[0]) as Text).text
                     if (title.text == self) return@then false
-                    val ev = Event.Change.Number(parent!!.children!!.indexOf(this))
+                    val ev = Event.Change.Number(parent.children!!.indexOf(this))
                     it.accept(ev)
                     if (ev.cancelled) return@then false
                     title.text = self
@@ -273,7 +273,7 @@ fun Slider(at: Vec2? = null, min: Float = 0f, max: Float = 100f, initialValue: F
                 size = ptrSize.vec,
                 radii = (ptrSize / 2f).radii(),
             ).setPalette { text.primary }.withStates().draggable(withY = false, onDrag = {
-                val bar = this.parent!![0]
+                val bar = this.parent[0]
                 val half = this.size.x / 2f
                 this.x = this.x.coerceIn(bar.x - half, bar.x + bar.size.x - half)
                 bar[0].width = x - bar.x + half

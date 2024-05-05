@@ -330,23 +330,24 @@ class GLFWWindow @JvmOverloads constructor(
         }
         glfwSetWindowAspectRatio(handle, polyUI.settings.aspectRatio.first, polyUI.settings.aspectRatio.second)
 
-        var t = glfwGetTime()
+        var time = glfwGetTime()
         fpsCap = polyUI.settings.maxFPS.toDouble()
         while (!glfwWindowShouldClose(handle)) {
-            val h = height - (polyUI.size.y * pixelRatio).toInt()
-            glViewport(0, offset + h, (polyUI.size.x * pixelRatio).toInt(), (polyUI.size.y * pixelRatio).toInt())
+            val size = polyUI.size
+            val height = (size.y * pixelRatio).toInt()
+            glViewport(0, offset + (this.height - height), (size.x * pixelRatio).toInt(), height)
             glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
             glClearColor(0f, 0f, 0f, 0f)
 
             this.polyUI.render()
             if (fpsCap != 0.0) {
-                val e = glfwGetTime() - t
-                if (e < fpsCap) {
-                    Thread.sleep(((fpsCap - e) * 1_000.0).toLong())
-                }
-                t = glfwGetTime()
-            }
-            glfwPollEvents()
+                val delta = glfwGetTime() - time
+                if (delta < fpsCap) {
+                    glfwWaitEventsTimeout((fpsCap - delta) * 1_000_000.0)
+                } else glfwPollEvents()
+                time = glfwGetTime()
+            } else glfwPollEvents()
+
             if (polyUI.drew) glfwSwapBuffers(handle)
         }
 

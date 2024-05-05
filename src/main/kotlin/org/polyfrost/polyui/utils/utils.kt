@@ -24,10 +24,12 @@
 
 package org.polyfrost.polyui.utils
 
+import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.input.Translator
+import org.polyfrost.polyui.renderer.Window
 import org.polyfrost.polyui.renderer.data.PolyImage
 import kotlin.enums.EnumEntries
 import kotlin.jvm.internal.Ref
@@ -365,6 +367,10 @@ fun FloatArray.areValuesEqual(): Boolean {
         if (this[i] != first) return false
     }
     return true
+}
+
+fun PolyUI.open(window: Window) {
+    window.open(this)
 }
 
 fun FloatArray.set(value: Float): FloatArray {

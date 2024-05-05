@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023-2024 Polyfrost and its contributors.
+ * Copyright (C) 2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -24,67 +24,67 @@ package org.polyfrost.polyui
 import org.polyfrost.polyui.component.events
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.component.withStates
+import org.polyfrost.polyui.dsl.polyUI
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.renderer.impl.GLFWWindow
 import org.polyfrost.polyui.renderer.impl.NVGRenderer
-import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.utils.image
-import kotlin.random.Random
+import org.polyfrost.polyui.utils.open
 
 fun main() {
-    val window = GLFWWindow("PolyUI Test v2", 800, 500)
-    val renderer = NVGRenderer
-    val polyUI = PolyUI(
-        Image("polyfrost.png".image()),
-        Text("text.dark", font = PolyUI.defaultFonts.medium, fontSize = 20f),
-        Group(
-            Button("moon.svg".image()),
-            Button("face-wink.svg".image(), "button.text"),
-            Switch(size = 28f),
-            Checkbox(size = 28f),
-        ),
-        Dropdown("tomato", "orange", "banana", "lime"),
-        Block(
-            Text("Title:"),
-            TextInput(),
-            Block(Text("px")),
-        ),
-        Group(
-            *Array(30) {
-                Block(size = Vec2(32f + (Random.nextFloat() * 100f), 32f)).withStates() // .onInit { color.makeChroma() }
-            },
-            visibleSize = Vec2(350f, 120f),
-        ),
-        Group(
+    val window = GLFWWindow("PolyUI Test v2 (DSL)", 800, 500)
+    polyUI {
+        size = 800f by 500f
+        renderer = NVGRenderer
+        image("polyfrost.png".image())
+        text("text.dark") {
+            fontSize = 20f
+        }
+        group {
+            Button("moon.svg".image()).add()
+            Button("face-wink.svg".image(), "button.text").add()
+            Switch(size = 28f).add()
+            Checkbox(size = 28f).add()
+        }
+        Dropdown("tomato", "orange", "banana", "lime").add()
+        block {
+            text("Title:")
+            TextInput().add()
+            block {
+                text("px")
+            }
+        }
+        group {
+            repeat(30) {
+                block(size = (32f + (Math.random().toFloat() * 100f)) by 32f).withStates()
+            }
+            it.visibleSize = 350f by 120f
+        }
+        group {
             Button("shuffle.svg".image(), "button.randomize").events {
                 Event.Mouse.Clicked(0) then { _ ->
-                    val it = parent.parent[5]
-                    it.children?.shuffle()
-                    it.recalculateChildren()
+                    val box = parent.parent[5]
+                    box.children?.shuffle()
+                    box.recalculateChildren()
                 }
-            },
-            Button("minus.svg".image()),
+            }.add()
+            Button("minus.svg".image()).add()
             Button("plus.svg".image()).events {
                 Event.Mouse.Clicked(0) then {
                     parent.parent[5] = Group(
                         *Array(30) {
-                            Block(size = Vec2(32f + (Random.nextFloat() * 100f), 32f)).withStates()
+                            Block(size = (32f + (Math.random().toFloat() * 100f)) by 32f).withStates()
                         },
-                        visibleSize = Vec2(350f, 120f),
+                        visibleSize = 350f by 120f,
                     )
                 }
-            },
-        ),
-        Group(
-            Radiobutton("hello", "goodbye"),
-            Slider(),
-            Text("blink three times when u feel it kicking in"),
-        ),
-        size = 800f by 500f,
-        renderer = renderer,
-    )
-
-    // window.setIcon("icon.png")
-    window.open(polyUI)
+            }.add()
+            group {
+                Radiobutton("hello", "goodbye").add()
+                Slider().add()
+                text("blink three times when u feel it kicking in")
+            }
+        }
+    }.open(window)
 }

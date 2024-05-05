@@ -311,7 +311,7 @@ class InputManager(
         var candidate = to
         while (candidate != null) {
             if (candidate.accept(event)) return true
-            candidate = candidate.parent
+            candidate = candidate.parent0
         }
         return false
     }

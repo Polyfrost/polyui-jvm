@@ -96,14 +96,21 @@ abstract class Drawable(
      */
     inline val hasVisibleSize get() = visibleSize0 != null
 
-    var parent: Drawable? = null
-        private set(value) {
+    @ApiStatus.Internal
+    var parent0: Drawable? = null
+        set(value) {
             if (value === field) return
             if (field != null) {
                 if (value != null) PolyUI.LOGGER.info("transferring ownership of $simpleName from ${field?.simpleName} to ${value.simpleName}")
 //                else PolyUI.LOGGER.warn("$simpleName has no path to root, deleted?")
             }
             field = value
+        }
+
+    inline var parent: Drawable
+        get() = parent0 ?: error("cannot move outside of component tree")
+        set(value) {
+            parent0 = value
         }
 
     /**
@@ -284,7 +291,7 @@ abstract class Drawable(
     var needsRedraw = true
         set(value) {
             if (value && !field) {
-                parent?.needsRedraw = true
+                parent0?.needsRedraw = true
             }
             field = value
         }
@@ -868,7 +875,7 @@ abstract class Drawable(
     fun addChild(child: Drawable, reposition: Boolean = true) {
         if (children == null) children = LinkedList()
         val children = this.children ?: throw ConcurrentModificationException("well, this sucks")
-        child.parent = this
+        child.parent0 = this
         children.add(child)
         if (initialized) {
             if (child.setup(polyUI)) {
@@ -906,7 +913,7 @@ abstract class Drawable(
     fun removeChild(index: Int) {
         val children = this.children ?: throw NoSuchElementException("no children on $this")
         val it = children.getOrNull(index) ?: throw IndexOutOfBoundsException("index: $index, length: ${children.size}")
-        it.parent = null
+        it.parent0 = null
         polyUI.inputManager.drop(it)
         if (initialized) {
             it.accept(Event.Lifetime.Removed)
@@ -944,12 +951,12 @@ abstract class Drawable(
             removeChild(old)
             return
         }
-        new.parent = this
+        new.parent0 = this
         val isNew = new.setup(polyUI)
         Fade(old, 0f, false, Animations.EaseInOutQuad.create(0.3.seconds)) {
             enabled = false
             children.remove(this)
-            parent = null
+            parent0 = null
             polyUI.inputManager.drop(this)
         }.add()
         if (polyUI.settings.debug && new.visibleSize != old.visibleSize) PolyUI.LOGGER.warn("replacing drawable $old with $new, but visible sizes are different: ${old.visibleSize} -> ${new.visibleSize}")

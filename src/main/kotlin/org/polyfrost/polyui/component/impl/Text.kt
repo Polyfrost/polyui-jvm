@@ -142,8 +142,8 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         set(value) {
             if (field == value) return
             field = value
-            spacing = (font.lineSpacing - 1f) * value
-            updateTextBounds()
+            if (_font != null) spacing = (font.lineSpacing - 1f) * value
+            if (initialized) updateTextBounds()
         }
 
     protected var spacing = 0f

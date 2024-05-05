@@ -57,7 +57,6 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Animated>, faves: MutableList<Pol
                 radii = 8f.radii(),
                 children = arrayOf(
                     Block(at = 3f by 0f, size = 10f by 10f, radii = 5f.radii(), color = PolyColor.TRANSPARENT).draggable(withX = false, onDrag = {
-                        val parent = parent!!
                         y = y.coerceIn(parent.y, parent.y + parent.height - height)
                         color.element.hue = (y - parent.y) / (parent.height - height)
                     }).withBoarder(PolyColor.WHITE, 2f),
@@ -69,7 +68,6 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Animated>, faves: MutableList<Pol
                 radii = 8f.radii(),
                 children = arrayOf(
                     Block(at = 3f by 0f, size = 10f by 10f, radii = 5f.radii(), color = PolyColor.TRANSPARENT).draggable(withX = false, onDrag = {
-                        val parent = parent!!
                         y = y.coerceIn(parent.y, parent.y + parent.height - height)
                         color.element.alpha = 1f - (y - parent.y) / (parent.height - height)
                     }).withBoarder(PolyColor.WHITE, 2f),
@@ -128,7 +126,7 @@ private class ColorPickingBox(
 ) : Block(
     Block(size = 10f by 10f, radii = 5f.radii(), color = PolyColor.TRANSPARENT).draggable(
         onDrag = {
-            val parent = parent ?: return@draggable
+            val parent = parent0 ?: return@draggable
             val hf = width / 2f
             x = x.coerceIn(parent.x - hf, parent.x + parent.width - hf)
             y = y.coerceIn(parent.y - hf, parent.y + parent.height - hf)

@@ -40,7 +40,7 @@ constructor(
     visibleSize: Vec2? = null,
     focusable: Boolean = false,
     color: PolyColor? = null,
-    val radii: FloatArray = 8f.radii(),
+    var radii: FloatArray = 8f.radii(),
 ) : Drawable(children = children, at, alignment, size, visibleSize, focusable = focusable) {
     var boarderColor: PolyColor? = null
     var boarderWidth: Float = 2f

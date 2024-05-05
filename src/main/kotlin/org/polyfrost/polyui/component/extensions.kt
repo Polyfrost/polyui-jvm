@@ -84,9 +84,9 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, fre
                 if (self.inputState != INPUT_PRESSED) {
                     dragging = false
                     if (started) {
-                        if (free && self.parent !== self.polyUI.master) {
+                        if (free && self.parent0 !== self.polyUI.master) {
                             self.polyUI.master.children!!.remove(self)
-                            self.parent!!.children!!.add(self)
+                            self.parent.children!!.add(self)
                         }
                         onDrop?.invoke(this@draggable)
                         started = false
@@ -99,9 +99,9 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, fre
                     if (abs(px + x - self.polyUI.inputManager.mouseX) > MIN_DRAG || abs(py + y - self.polyUI.inputManager.mouseY) > MIN_DRAG) {
                         started = true
                         onStart?.invoke(this@draggable)
-                        if (free && self.parent !== self.polyUI.master) {
+                        if (free && self.parent0 !== self.polyUI.master) {
                             if (self.polyUI.inputManager.focused !== self) self.polyUI.unfocus()
-                            self.parent!!.children!!.remove(self)
+                            self.parent.children!!.remove(self)
                             self.polyUI.master.children!!.add(self)
                         }
                     } else return
@@ -141,7 +141,7 @@ fun <S : Drawable> S.addHoverInfo(text: String?): S {
     obj.alpha = 0f
     onInit {
         obj.setup(polyUI)
-        (parent ?: polyUI.master).addChild(obj, reposition = false)
+        (parent0 ?: polyUI.master).addChild(obj, reposition = false)
         obj.renders = false
         acceptsInput = true
     }
@@ -435,7 +435,7 @@ fun <S : Drawable> S.setState(state: Byte): S {
  * @since 1.0.0
  */
 fun <S : Drawable> S.prioritize(): S {
-    val children = parent?.children ?: return this
+    val children = parent0?.children ?: return this
     if (children.last() === this) return this
     children.remove(this)
     children.add(this)
@@ -452,20 +452,6 @@ fun Drawable.countChildren(): Int {
         i += it.countChildren()
     }
     return i
-}
-
-/**
- * Returns `true` if this drawable has a parent that is the provided drawable.
- */
-fun Drawable.hasParentOf(drawable: Drawable): Boolean {
-    // asm: fast path: master is always a parent
-    if (drawable === this.polyUI.master) return true
-    var parent = this.parent
-    while (parent != null) {
-        if (parent === drawable) return true
-        parent = parent.parent
-    }
-    return false
 }
 
 /**
@@ -501,7 +487,7 @@ fun <S : Drawable> S.afterParentInit(depth: Int = 1, handler: S.() -> Unit): S {
     this.addEventHandler(Event.Lifetime.PostInit) { _ ->
         var it: Drawable = this
         for (i in 0 until depth) {
-            it.parent?.let { parent -> it = parent } ?: break
+            it.parent0?.let { parent -> it = parent } ?: break
         }
         if(it.initialized) {
             handler(this@afterParentInit)
