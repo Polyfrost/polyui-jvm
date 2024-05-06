@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -28,9 +28,13 @@ class Spacer(at: Vec2? = null, size: Vec2) : Drawable(at = at, size = size) {
     init {
         acceptsInput = false
     }
+
     override val shouldScroll: Boolean
         get() = false
+
     override fun preRender() {}
+
     override fun render() {}
+
     override fun postRender() {}
 }

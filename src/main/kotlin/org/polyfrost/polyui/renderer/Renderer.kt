@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -22,12 +22,10 @@
 package org.polyfrost.polyui.renderer
 
 import org.polyfrost.polyui.color.Color
-import org.polyfrost.polyui.property.Settings
 import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.data.Framebuffer
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Vec2
-import kotlin.math.min
 
 /**
  * # Renderer
@@ -38,101 +36,80 @@ import kotlin.math.min
  * for these functions, such as [image] and [text], an initialized [Font] or [PolyImage] instance will be given.
  * You can access the data using [Resource.stream][org.polyfrost.polyui.renderer.data.Resource.stream], and cache it for future use (ideally).
  */
-abstract class Renderer(val size: Vec2) : AutoCloseable {
-    /**
-     * set a maximum alpha value for all future draw calls, in the range (0-1), until [reset][resetAlphaCap]. This is useful for fading in/out all of PolyUI, for example.
-     *
-     * **Note that this itself will not** set the global alpha, so use [globalAlpha] to do that.
-     */
-    var alphaCap: Float = 1f
-
-    lateinit var settings: Settings
-        internal set
-
-    /** the pixel ratio of the screen, used mainly on Apple screens which use high-dpi. */
-    var pixelRatio: Float = 1f
-        internal set
-
-    /** hook into this renderer. */
-    inline fun render(block: Renderer.() -> Unit) = block()
-
+interface Renderer : AutoCloseable {
     /**
      * This function is called during very early initialization, and should be used to prepare the renderer for use. This is always the first function called.
      * @since 0.21.2
      */
-    abstract fun init()
+    fun init()
 
     /**
      * Begin a frame. this is called before all drawing calls.
      */
-    abstract fun beginFrame()
+    fun beginFrame(width: Float, height: Float, pixelRatio: Float)
 
     /**
      * End a frame. this is called after all drawing calls.
      */
-    abstract fun endFrame()
-
-    /** implementation for [globalAlpha] */
-    protected abstract fun gblAlpha(alpha: Float)
+    fun endFrame()
 
     /** Set the alpha for all future draw calls, in the range (0-1), until [reset][resetGlobalAlpha].
      *
-     * Note that this call is capped by [alphaCap], so if a value higher than [alphaCap]'s value is set, it will just set it to that.
-     * @see alphaCap
-     * */
-    fun globalAlpha(alpha: Float) = gblAlpha(min(alphaCap, alpha))
+     */
+    fun globalAlpha(alpha: Float)
 
-    /** reset the [alphaCap]. This is the same as doing [alphaCap]` = 1f`. */
-    fun resetAlphaCap() {
-        alphaCap = 1f
-    }
+    /**
+     * Set a maximum alpha for all future draw calls, in the range (0-1).
+     *
+     * If this is set, calls to [globalAlpha] will not exceed this value.
+     */
+    fun setAlphaCap(cap: Float)
 
     /** reset the global alpha to normal.
      *
-     * Respects the [alphaCap], so may not actually reset fully if the [alphaCap] is set to a value lower than 1.
+     * Respects the [setAlphaCap], so may not actually reset fully if cap is set to a value lower than 1.
      * @see globalAlpha
-     * @see resetAlphaCap
      */
-    fun resetGlobalAlpha() = gblAlpha(1f)
+    fun resetGlobalAlpha() = globalAlpha(1f)
 
     /**
      * translate the origin of all future draw calls by the given amount.
      *
      * **you must** do all your transforms inside a [push], [pop] pair!
      */
-    abstract fun translate(x: Float, y: Float)
+    fun translate(x: Float, y: Float)
 
     /**
-     * scales all future draw calls by the given amount.
+     * scales all future draw calls by the given amount, around the given point, [px] and [py] (if [supported][transformsWithPoint])
      *
      * **you must** do all your transforms inside a [push], [pop] pair!
      */
-    abstract fun scale(x: Float, y: Float)
+    fun scale(sx: Float, sy: Float, px: Float, py: Float)
 
     /**
-     * rotate all future draw calls by the given amount.
+     * rotate all future draw calls by the given amount, around the given point, [px] and [py] (if [supported][transformsWithPoint])
      *
      * **you must** do all your transforms inside a [push], [pop] pair!
      */
-    abstract fun rotate(angleRadians: Double)
+    fun rotate(angleRadians: Double, px: Float, py: Float)
 
     /**
-     * Skew all future draw calls by the given amount.
-     *
-     * **you must** do all your transforms inside a [push], [pop] pair!
-     *
-     * @since 0.16.1
-     */
-    abstract fun skewX(angleRadians: Double)
-
-    /**
-     * Skew all future draw calls by the given amount.
+     * Skew all future draw calls by the given amount, around the given point, [px] and [py] (if [supported][transformsWithPoint])
      *
      * **you must** do all your transforms inside a [push], [pop] pair!
      *
      * @since 0.16.1
      */
-    abstract fun skewY(angleRadians: Double)
+    fun skewX(angleRadians: Double, px: Float, py: Float)
+
+    /**
+     * Skew all future draw calls by the given amount, around the given point, [px] and [py] (if [supported][transformsWithPoint])
+     *
+     * **you must** do all your transforms inside a [push], [pop] pair!
+     *
+     * @since 0.16.1
+     */
+    fun skewY(angleRadians: Double, px: Float, py: Float)
 
     /**
      * begin a scissor rectangle, that will clip rendering to the given rectangle.
@@ -141,7 +118,7 @@ abstract class Renderer(val size: Vec2) : AutoCloseable {
      *
      * **you must** call [popScissor] after you are done with this scissor!
      */
-    abstract fun pushScissor(x: Float, y: Float, width: Float, height: Float)
+    fun pushScissor(x: Float, y: Float, width: Float, height: Float)
 
     /**
      * begin a scissor rectangle, that will clip rendering to the given rectangle. The rectangle is intersected with the previous scissor.
@@ -150,12 +127,12 @@ abstract class Renderer(val size: Vec2) : AutoCloseable {
      *
      * **you must** call [popScissor] after you are done with this scissor!
      */
-    abstract fun pushScissorIntersecting(x: Float, y: Float, width: Float, height: Float)
+    fun pushScissorIntersecting(x: Float, y: Float, width: Float, height: Float)
 
     /** end a scissor.
      * @see pushScissor
      */
-    abstract fun popScissor()
+    fun popScissor()
 
     /**
      * Push the current state, saving all the current transforms before creating a new one with the same parameters as the current one.
@@ -166,7 +143,7 @@ abstract class Renderer(val size: Vec2) : AutoCloseable {
      *
      * @since 0.17.2
      */
-    abstract fun push()
+    fun push()
 
     /**
      * pop the current state, reverting all transforms to the previous values.
@@ -177,12 +154,12 @@ abstract class Renderer(val size: Vec2) : AutoCloseable {
      *
      * @since 0.17.2
      */
-    abstract fun pop()
+    fun pop()
 
     /**
      * draw text to the screen, per the given parameters. The string will already be wrapped to the given width.
      */
-    abstract fun text(
+    fun text(
         font: Font,
         x: Float,
         y: Float,
@@ -194,15 +171,15 @@ abstract class Renderer(val size: Vec2) : AutoCloseable {
     /** calculate the bounds of this text, per the given parameters.
      * @return a Vec2 containing the width and height of the given string. If your API does not support returning string heights, just return the font size. The discrepancy should be negligible.
      */
-    abstract fun textBounds(font: Font, text: String, fontSize: Float): Vec2
+    fun textBounds(font: Font, text: String, fontSize: Float): Vec2
 
     /** Function that can be called to explicitly initialize an image. This is used mainly for getting the size of an image, or to ensure an SVG has been rasterized. */
-    abstract fun initImage(image: PolyImage)
+    fun initImage(image: PolyImage)
 
     /**
      * Draw an image to the screen, per the given parameters.
      */
-    abstract fun image(
+    fun image(
         image: PolyImage,
         x: Float,
         y: Float,
@@ -220,7 +197,7 @@ abstract class Renderer(val size: Vec2) : AutoCloseable {
      *
      * If the radii are 0, this will just draw a normal rectangle. If they are not 0, it will draw a rounded rectangle.
      */
-    abstract fun rect(
+    fun rect(
         x: Float,
         y: Float,
         width: Float,
@@ -235,7 +212,7 @@ abstract class Renderer(val size: Vec2) : AutoCloseable {
     /**
      * draw a hollow rectangle to the screen, per the given parameters.
      */
-    abstract fun hollowRect(
+    fun hollowRect(
         x: Float,
         y: Float,
         width: Float,
@@ -298,12 +275,12 @@ abstract class Renderer(val size: Vec2) : AutoCloseable {
      * @param color The color of the line.
      * @param width The width of the line.
      */
-    abstract fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float)
+    fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float)
 
     /**
      * Draw a drop shadow to the screen, per the given parameters.
      */
-    abstract fun dropShadow(x: Float, y: Float, width: Float, height: Float, blur: Float, spread: Float, radius: Float)
+    fun dropShadow(x: Float, y: Float, width: Float, height: Float, blur: Float, spread: Float, radius: Float)
 
     /**
      * Return true if your rendering implementation supports usage of framebuffers.
@@ -311,21 +288,30 @@ abstract class Renderer(val size: Vec2) : AutoCloseable {
      * If this method returns `false`, you can be safe that [createFramebuffer] and [bindFramebuffer], etc. will never be called.
      * @since 0.25.1
      */
-    abstract fun supportsFramebuffers(): Boolean
+    fun supportsFramebuffers(): Boolean
+
+    /**
+     * Return `true` if your rendering implementation supports usage of `x` and `y` parameters on [scale], [rotate], [skewX], and [skewY].
+     *
+     * If you return `false`, PolyUI will automatically using [translate] to mimic this behavior.
+     *
+     * @since 1.0.8
+     */
+    fun transformsWithPoint(): Boolean
 
     /** Create a new framebuffer. It is down to you (as a rendering implementation) to cache this, and dispose of it as necessary.
      * @return a PolyUI framebuffer object using the width and height passed to this method. This is used by PolyUI to identify it.
      */
-    abstract fun createFramebuffer(width: Float, height: Float): Framebuffer
+    fun createFramebuffer(width: Float, height: Float): Framebuffer
 
-    /** Bind the given framebuffer. Ignore if null. */
-    abstract fun bindFramebuffer(fbo: Framebuffer?)
+    /** Bind the given framebuffer. */
+    fun bindFramebuffer(fbo: Framebuffer)
 
-    /** Unbind the given framebuffer. if it is null, unbind everything. */
-    abstract fun unbindFramebuffer(fbo: Framebuffer?)
+    /** Unbind the currently bound framebuffer. */
+    fun unbindFramebuffer()
 
     /** draw the given framebuffer to the screen. */
-    abstract fun drawFramebuffer(
+    fun drawFramebuffer(
         fbo: Framebuffer,
         x: Float,
         y: Float,
@@ -334,25 +320,24 @@ abstract class Renderer(val size: Vec2) : AutoCloseable {
     )
 
     /** Delete the given framebuffer. Ignore if null. */
-    abstract fun delete(fbo: Framebuffer?)
+    fun delete(fbo: Framebuffer?)
 
     /** Delete the given font. Use this to free any native resources.
      * @since 0.20.1
      */
-    abstract fun delete(font: Font?)
+    fun delete(font: Font?)
 
     /** Delete the given image. Use this to free any native resources.
      * @since 0.20.1
      */
-    abstract fun delete(image: PolyImage?)
+    fun delete(image: PolyImage?)
 
     /**
-     * Cleanup the PolyUI instance.
+     * Cleanup this renderer.
      * Use this to free any native resources.
      */
-    abstract fun cleanup()
+    fun cleanup()
 
-    /** @see cleanup */
     override fun close() {
         cleanup()
     }

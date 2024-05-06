@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -39,6 +39,15 @@ abstract class Animation(var durationNanos: Long, var from: Float, var to: Float
             if (field == value) return
             field = value
         }
+
+    /**
+     * finish the animation now.
+     * @since 1.0.5
+     */
+    fun finishNow() {
+        passedTime = durationNanos.toFloat()
+        update(0L)
+    }
 
     fun reset() {
         passedTime = 0f

@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -27,15 +27,13 @@ import org.polyfrost.polyui.renderer.data.Cursor
 
 class NoOpWindow(title: String, width: Int, height: Int) : Window(width, height) {
     override fun open(polyUI: PolyUI): Window {
+        polyUI.window = this
         while (true) {
             polyUI.render()
         }
     }
 
     override fun close() {
-    }
-
-    override fun createCallbacks() {
     }
 
     override fun getClipboard(): String? = null

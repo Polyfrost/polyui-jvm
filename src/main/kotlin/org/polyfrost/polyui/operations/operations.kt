@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,6 +19,8 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+@file:Suppress("EqualsOrHashCode")
+
 package org.polyfrost.polyui.operations
 
 import org.polyfrost.polyui.animate.Animation
@@ -35,7 +37,7 @@ class Move<S : Drawable>(
     onFinish: (S.() -> Unit)? = null,
 ) : DrawableOp.Animatable<S>(drawable, animation, onFinish) {
     constructor(drawable: S, at: Vec2, add: Boolean = true, animation: Animation? = null, onFinish: (S.() -> Unit)? = null) :
-        this(drawable, at.x, at.y, add, animation, onFinish)
+            this(drawable, at.x, at.y, add, animation, onFinish)
 
     private val ox = self.x
     private val oy = self.y
@@ -45,6 +47,16 @@ class Move<S : Drawable>(
     override fun apply(value: Float) {
         self.x = ox + (tx * value)
         self.y = oy + (ty * value)
+        self.polyUI.inputManager.recalculate()
+        self.resetScroll()
+    }
+
+    override fun verify(): Boolean {
+        return tx != 0f || ty != 0f
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is Move<*> && other.self === self
     }
 }
 
@@ -57,8 +69,17 @@ class Fade<S : Drawable>(
 ) : DrawableOp.Animatable<S>(drawable, animation, onFinish) {
     private val ia = self.alpha
     private val ta = if (add) alpha else alpha - ia
+
     override fun apply(value: Float) {
         self.alpha = ia + (ta * value)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is Fade<*> && other.self === self
+    }
+
+    override fun verify(): Boolean {
+        return ta != 0f
     }
 }
 
@@ -75,6 +96,14 @@ class Rotate<S : Drawable>(
     override fun apply(value: Float) {
         self.rotation = ir + (tr * value)
     }
+
+    override fun equals(other: Any?): Boolean {
+        return other is Rotate<*> && other.self === self
+    }
+
+    override fun verify(): Boolean {
+        return tr != 0.0
+    }
 }
 
 class Resize<S : Drawable>(
@@ -86,7 +115,7 @@ class Resize<S : Drawable>(
     onFinish: (S.() -> Unit)? = null,
 ) : DrawableOp.Animatable<S>(drawable, animation, onFinish) {
     constructor(drawable: S, size: Vec2, add: Boolean = true, animation: Animation? = null, onFinish: (S.() -> Unit)? = null) :
-        this(drawable, size.x, size.y, add, animation, onFinish)
+            this(drawable, size.x, size.y, add, animation, onFinish)
 
     private val ow = self.size.x
     private val oh = self.size.y
@@ -97,6 +126,14 @@ class Resize<S : Drawable>(
         self.size.x = ow + (tw * value)
         self.size.y = oh + (th * value)
         self.clipChildren()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is Resize<*> && other.self === self
+    }
+
+    override fun verify(): Boolean {
+        return tw != 0f || th != 0f
     }
 }
 
@@ -117,6 +154,14 @@ class Scale<S : Drawable>(
         self.scaleX = sx + (tx * value)
         self.scaleY = sy + (ty * value)
     }
+
+    override fun equals(other: Any?): Boolean {
+        return other is Scale<*> && other.self === self
+    }
+
+    override fun verify(): Boolean {
+        return tx != 0f || ty != 0f
+    }
 }
 
 class Skew<S : Drawable>(
@@ -136,6 +181,14 @@ class Skew<S : Drawable>(
         self.skewX = sx + (tx * value)
         self.skewY = sy + (ty * value)
     }
+
+    override fun equals(other: Any?): Boolean {
+        return other is Skew<*> && other.self === self
+    }
+
+    override fun verify(): Boolean {
+        return tx != 0.0 || ty != 0.0
+    }
 }
 
 /**
@@ -144,8 +197,6 @@ class Skew<S : Drawable>(
  *
  * If the color is a [PolyColor.Gradient], this component's color will be changed to a gradient between the current color and the specified color.
  *
- * If the color is a [PolyColor.Chroma], this component's color will be changed to a chroma color, keeping its current hue for consistency.
- * **Note:** This will look wierd if the current color is a gradient, and the brightness, saturation and alpha are NOT animated, so will change instantly.
  *
  * @param toColor The color to change the component to.
  * @param animation The animation to use.
@@ -156,49 +207,42 @@ class Recolor<S : Drawable>(
     drawable: S,
     private val toColor: PolyColor,
     animation: Animation? = null,
-    private val onFinish: (S.() -> Unit)? = null,
-) : DrawableOp(drawable) {
+    onFinish: (S.() -> Unit)? = null,
+) : DrawableOp.Animatable<S>(drawable, animation, onFinish) {
     private val hueToReturnTo = self.color.hue
     private val reset: Boolean
 
     init {
         var shouldReset = false
-        val color = self.color
+        var color = self.color
         when (toColor) {
             is PolyColor.Gradient -> {
                 if (color !is PolyColor.Gradient || color.type != toColor.type) {
                     self.color = PolyColor.Gradient(color, color.clone(), toColor.type)
                 }
-                color as PolyColor.Gradient
+                color = self.color as PolyColor.Gradient
+                // asm: double duration as animation is used twice
+                animation?.let { it.durationNanos *= 2L }
                 color.recolor(0, toColor[0], animation)
                 color.recolor(1, toColor[1], animation)
             }
 
-            is PolyColor.Chroma -> {
-                if (color !is PolyColor.Chroma) {
-                    self.color = PolyColor.Chroma(toColor.speedNanos, toColor.brightness, toColor.saturation, toColor.alpha, color.hue)
-                } else {
-                    color.speedNanos = toColor.speedNanos
-                    color.brightness = toColor.brightness
-                    color.saturation = toColor.saturation
-                    color.alpha = toColor.alpha
-                }
-            }
-
             else -> {
                 if (color is PolyColor.Gradient) {
+                    animation?.let { it.durationNanos *= 2L }
                     color.recolor(0, toColor, animation)
                     color.recolor(1, toColor, animation)
                     shouldReset = true
                 } else {
-                    if (color is PolyColor.Chroma) {
-                        self.color = color.freeze()
-                    }
                     color.recolor(toColor, animation)
                 }
             }
         }
         reset = shouldReset
+    }
+
+    override fun verify(): Boolean {
+        return toColor != self.color
     }
 
     override fun apply() {
@@ -218,5 +262,13 @@ class Recolor<S : Drawable>(
             onFinish?.invoke(this as S)
             true
         }
+    }
+
+    override fun apply(value: Float) {
+        // nop
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is Recolor<*> && other.self === self
     }
 }

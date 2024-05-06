@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,32 +19,30 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-@file:Suppress("NOTHING_TO_INLINE", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "UNUSED")
+@file:Suppress("UNUSED", "NOTHING_TO_INLINE")
 @file:JvmName("Utils")
 
 package org.polyfrost.polyui.utils
 
-import org.polyfrost.polyui.color.Color
-import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.PolyUI
+import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.input.Translator
+import org.polyfrost.polyui.renderer.Window
 import org.polyfrost.polyui.renderer.data.PolyImage
-import kotlin.experimental.and
+import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.unit.immutable
+import kotlin.enums.EnumEntries
+import kotlin.jvm.internal.Ref
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.min
 
-fun rgba(r: Float, g: Float, b: Float, a: Float): Color {
-    return Color((r * 255f).toInt(), (g * 255f).toInt(), (b * 255f).toInt(), a)
-}
-
-/** figma copy-paste accessor */
+/** create a color from the given red, green, and blue integer values, and an alpha value `0f..1f` */
 @JvmOverloads
-fun rgba(r: Int, g: Int, b: Int, a: Float = 1f): Color {
-    return Color(r, g, b, (a * 255f).toInt())
-}
+fun rgba(r: Int, g: Int, b: Int, a: Float = 1f) = PolyColor(r, g, b, a)
 
 /**
  * Converts the components of a color, as specified by the HSB
@@ -62,7 +60,7 @@ fun rgba(r: Int, g: Int, b: Int, a: Float = 1f): Color {
  * value of a color in bits 0-23 of an integer value that is the same
  * format used by the method getARGB().
  * This integer can be supplied as an argument to the
- * [toColor] method that takes a single integer argument to create a [Color].
+ * [toColor] method that takes a single integer argument to create a [PolyColor].
  * @param hue the hue component of the color
  * @param saturation the saturation of the color
  * @param brightness the brightness of the color
@@ -71,13 +69,13 @@ fun rgba(r: Int, g: Int, b: Int, a: Float = 1f): Color {
  */
 @Suppress("FunctionName")
 fun HSBtoRGB(hue: Float, saturation: Float, brightness: Float): Int {
-    var r = 0
-    var g = 0
-    var b = 0
+    val r: Int
+    val g: Int
+    val b: Int
     if (saturation == 0f) {
-        b = (brightness * 255.0f + 0.5f).toInt()
-        g = b
-        r = g
+        r = (brightness * 255.0f + 0.5f).toInt()
+        g = r
+        b = r
     } else {
         val h = (hue - floor(hue)) * 6.0f
         val f = h - floor(h)
@@ -120,9 +118,15 @@ fun HSBtoRGB(hue: Float, saturation: Float, brightness: Float): Int {
                 g = (p * 255.0f + 0.5f).toInt()
                 b = (q * 255.0f + 0.5f).toInt()
             }
+
+            else -> {
+                r = 0
+                g = 0
+                b = 0
+            }
         }
     }
-    return -0x1000000 or (r shl 16) or (g shl 8) or (b shl 0)
+    return -0x1000000 or (r shl 16) or (g shl 8) or b
 }
 
 /**
@@ -138,7 +142,7 @@ fun HSBtoRGB(hue: Float, saturation: Float, brightness: Float): Int {
  * @param b the blue component of the color
  * @param out the array used to return the three HSB values, or `null`
  * @return an array of three elements containing the hue, saturation, and brightness (in that order), of the color with the indicated red, green, and blue components.
- * @see Color
+ * @see PolyColor
  * @since 0.18.2
  */
 @Suppress("FunctionName", "NAME_SHADOWING")
@@ -151,18 +155,19 @@ fun RGBtoHSB(r: Int, g: Int, b: Int, out: FloatArray? = null): FloatArray {
     if (b > cmax) cmax = b
     var cmin = if (r < g) r else g
     if (b < cmin) cmin = b
+    val diff = (cmax - cmin).toFloat()
 
     brightness = cmax.toFloat() / 255.0f
-    saturation = if (cmax != 0) (cmax - cmin).toFloat() / cmax.toFloat() else 0f
+    saturation = if (cmax != 0) diff / cmax.toFloat() else 0f
     if (saturation == 0f) {
         hue = 0f
     } else {
-        val redc = (cmax - r).toFloat() / (cmax - cmin).toFloat()
-        val greenc = (cmax - g).toFloat() / (cmax - cmin).toFloat()
-        val bluec = (cmax - b).toFloat() / (cmax - cmin).toFloat()
+        val redc = (cmax - r).toFloat() / diff
+        val greenc = (cmax - g).toFloat() / diff
+        val bluec = (cmax - b).toFloat() / diff
         hue = if (r == cmax) bluec - greenc else if (g == cmax) 2.0f + redc - bluec else 4.0f + greenc - redc
         hue /= 6.0f
-        if (hue < 0) hue += 1.0f
+        if (hue < 0f) hue += 1.0f
     }
     out[0] = hue
     out[1] = saturation
@@ -171,24 +176,36 @@ fun RGBtoHSB(r: Int, g: Int, b: Int, out: FloatArray? = null): FloatArray {
 }
 
 /**
- * Takes an ARGB integer color and returns a [Color] object.
+ * Takes an ARGB integer color and returns a [PolyColor] object.
  */
-fun Int.toColor() = Color(RGBtoHSB(this shr 16 and 0xFF, this shr 8 and 0xFF, this and 0xFF), this shr 24 and 0xFF)
+fun Int.toColor() = PolyColor(RGBtoHSB(this shr 16 and 0xFF, this shr 8 and 0xFF, this and 0xFF), (this shr 24 and 0xFF) / 255f)
 
-@kotlin.internal.InlineOnly
 inline val Int.red get() = this shr 16 and 0xFF
 
-@kotlin.internal.InlineOnly
 inline val Int.green get() = this shr 8 and 0xFF
 
-@kotlin.internal.InlineOnly
 inline val Int.blue get() = this and 0xFF
 
-@kotlin.internal.InlineOnly
 inline val Int.alpha get() = this shr 24 and 0xFF
 
-@kotlin.internal.InlineOnly
 inline fun Double.toRadians() = (this % 360.0) * (PI / 180.0)
+
+/**
+ * Return a PolyUI compatible color object representative of this Java color object.
+ * @see PolyColor.toJavaColor
+ * @since 1.1.51
+ */
+fun java.awt.Color.toPolyColor() = PolyColor(red, green, blue, alpha / 255f)
+
+/**
+ * Return an animatable PolyUI color object representative of this Java color object.
+ * @see PolyColor.toJavaColor
+ * @since 1.1.51
+ */
+fun java.awt.Color.toPolyColorAnimated(): PolyColor.Animated {
+    val hsb = RGBtoHSB(red, green, blue)
+    return PolyColor.Animated(hsb[0], hsb[1], hsb[2], alpha / 255f)
+}
 
 /**
  * Calculate the greatest common denominator of two integers.
@@ -207,6 +224,22 @@ fun Int.gcd(b: Int): Int {
 }
 
 /**
+ * Get an enum constant by its name, or `null` if [name] is `null`; or does not match any of this enum's constants.
+ */
+fun <E : Enum<E>> EnumEntries<E>.getByName(name: String?, ignoreCase: Boolean = false): E? {
+    if (name == null) return null
+    for (entry in this) {
+        if (entry.name.equals(name, ignoreCase)) return entry
+    }
+    return null
+}
+
+/**
+ * Return a list of the names of the entries in this enum.
+ */
+fun EnumEntries<*>.names() = this.map { it.name }
+
+/**
  * Simplify a ratio of two integers.
  * @since 0.18.4
  */
@@ -222,7 +255,6 @@ fun Pair<Int, Int>.simplifyRatio(): Pair<Int, Int> {
  *
  * If `a == b`, then the result is `a`.
  */
-@kotlin.internal.InlineOnly
 inline fun cl0(a: Float, b: Float) = if (abs(a) <= abs(b)) a else b
 
 /**
@@ -232,7 +264,6 @@ inline fun cl0(a: Float, b: Float) = if (abs(a) <= abs(b)) a else b
  *
  * If `a == b`, then the result is `a`.
  */
-@kotlin.internal.InlineOnly
 inline fun cl1(a: Float, b: Float) = if (abs(a - 1f) <= abs(b - 1f)) a else b
 
 /**
@@ -243,15 +274,12 @@ inline fun cl1(a: Float, b: Float) = if (abs(a - 1f) <= abs(b - 1f)) a else b
  * @param c the third value
  * @return the minimum value among a, b, and c
  */
-@kotlin.internal.InlineOnly
 inline fun min3(a: Int, b: Int, c: Int): Int = min(min(a, b), c)
 
 /** convert the given float into an array of 4 floats for radii. */
-@kotlin.internal.InlineOnly
 inline fun Number.radii() = floatArrayOf(this.toFloat(), this.toFloat(), this.toFloat(), this.toFloat())
 
 /** convert the given floats into an array of 4 floats for radii. */
-@kotlin.internal.InlineOnly
 inline fun radii(topLeft: Float, topRight: Float, bottomLeft: Float, bottomRight: Float) = floatArrayOf(topLeft, topRight, bottomLeft, bottomRight)
 
 /** print the object to stdout, then return it. */
@@ -262,31 +290,23 @@ inline fun <T> T.stdout(arg: Any? = null): T {
     return this
 }
 
-@kotlin.internal.InlineOnly
 inline fun String.image() = PolyImage(this)
 
-@kotlin.internal.InlineOnly
+inline fun String.image(size: Vec2) = PolyImage(this).also { it.size = size.immutable() }
+
 inline fun String.translated(vararg args: Any?) = Translator.Text.Formatted(Translator.Text.Simple(this), *args)
 
-@kotlin.internal.InlineOnly
 inline fun String.translated(): Translator.Text = Translator.Text.Simple(this)
 
-@kotlin.internal.InlineOnly
 inline fun Any?.identityHashCode() = System.identityHashCode(this)
 
-/**
- * Return true if the Collection is empty or null.
- */
-@kotlin.internal.InlineOnly
-inline fun Collection<*>?.isEmpty() = this?.isEmpty() ?: true
-
-fun Short.fromModifierMerged(): Array<KeyModifiers> = KeyModifiers.fromModifierMerged(this)
-
-@kotlin.internal.InlineOnly
-inline fun Short.hasModifier(mod: Modifiers): Boolean = this and mod.value != 0.toShort()
-
-@kotlin.internal.InlineOnly
-inline fun Array<out KeyModifiers>.merge(): Short = KeyModifiers.merge(*this)
+fun mods(vararg mods: KeyModifiers): Modifiers {
+    var i = 0
+    for (mod in mods) {
+        i = i or mod.value.toInt()
+    }
+    return Modifiers(i.toByte())
+}
 
 /**
  * Moves the given element from the [from] index to the [to] index.
@@ -297,7 +317,6 @@ inline fun Array<out KeyModifiers>.merge(): Short = KeyModifiers.merge(*this)
  * @param from the index of the element to move
  * @param to the index to move the element to
  */
-@kotlin.internal.InlineOnly
 inline fun <E> Array<E>.moveElement(from: Int, to: Int) {
     val item = this[from]
     this[from] = this[to]
@@ -305,34 +324,126 @@ inline fun <E> Array<E>.moveElement(from: Int, to: Int) {
 }
 
 /**
+ * Perform the given [transform] on every element in this array, and return a new array with the results.
+ *
+ * Equivalent to `this.map { transform(it) }.toTypedArray()`, but saves on the creation of an intermediate list.
+ */
+inline fun <T, reified R> Array<T>.mapToArray(transform: (T) -> R): Array<R> {
+    return Array(size) {
+        transform(this[it])
+    }
+}
+
+/**
+ * Perform the given [transform] on every element in this list, and return a new array with the results.
+ *
+ * Equivalent to `this.map { transform(it) }.toTypedArray()`, but saves on the creation of an intermediate list.
+ */
+inline fun <T, reified R> Collection<T>.mapToArray(transform: (T) -> R): Array<R> {
+    val out = arrayOfNulls<R>(size)
+    var i = 0
+    for (element in this) {
+        out[i] = transform(element)
+        i++
+    }
+    @Suppress("UNCHECKED_CAST")
+    return out as Array<R>
+}
+
+/**
+ * Perform the given [transform] on every element in this map, and return a new array with the results.
+ *
+ * Equivalent to `this.map { transform(it) }.toTypedArray()`, but saves on the creation of an intermediate list.
+
+ */
+inline fun <K, V, reified R> Map<K, V>.mapToArray(transform: (Map.Entry<K, V>) -> R): Array<R> {
+    val out = arrayOfNulls<R>(size)
+    var i = 0
+    for (entry in this) {
+        out[i] = transform(entry)
+        i++
+    }
+    @Suppress("UNCHECKED_CAST")
+    return out as Array<R>
+}
+
+/**
+ * Perform the given [transform] on every element in this list, and return a new array with the results.
+ *
+ * Equivalent to `this.map { transform(it) }.toTypedArray()`, but saves on the creation of an intermediate list.
+ */
+inline fun <T, reified R> LinkedList<T>.mapToArray(transform: (T) -> R): Array<R> {
+    val out = arrayOfNulls<R>(size)
+    this.fastEachIndexed { i, it ->
+        out[i] = transform(it)
+    }
+    @Suppress("UNCHECKED_CAST")
+    return out as Array<R>
+}
+
+fun FloatArray.areValuesEqual(): Boolean {
+    if (isEmpty()) return true
+    val first = this[0]
+    for (i in 1 until size) {
+        if (this[i] != first) return false
+    }
+    return true
+}
+
+fun PolyUI.open(window: Window) {
+    window.open(this)
+}
+
+fun FloatArray.set(value: Float): FloatArray {
+    for(i in this.indices) {
+        this[i] = value
+    }
+    return this
+}
+
+/**
+ * Ensure that this list is at least [size] elements long, and if it is not, add elements to it using the given [initializer].
+ * @since 1.0.7
+ */
+fun <T> MutableList<T>.ensureSize(size: Int, initializer: (Int) -> T): MutableList<T> {
+    if (this.size < size) {
+        for (i in this.size until size) {
+            this.add(initializer(i))
+        }
+    }
+    return this
+}
+
+/**
+ * Box the given value into a [Ref.ObjectRef].
+ */
+fun <T> T.ref(): Ref.ObjectRef<T> {
+    val ref = Ref.ObjectRef<T>()
+    ref.element = this
+    return ref
+}
+
+/**
+ * Return the value of this [Ref.ObjectRef].
+ */
+fun <T> Ref.ObjectRef<T>.deref(): T {
+    return this.element
+}
+
+/**
  * Return this collection as an LinkedList. **Note:** if it is already a LinkedList, it will be returned as-is.
  */
-@kotlin.internal.InlineOnly
 inline fun <T> Collection<T>.asLinkedList(): LinkedList<T> = if (this is LinkedList) this else LinkedList(this)
 
-@kotlin.internal.InlineOnly
 inline fun <T> Array<T>.asLinkedList(): LinkedList<T> = LinkedList(*this)
+
+fun <T> linkedListOf(vararg elements: T): LinkedList<T> = LinkedList(*elements)
 
 /**
  * Returns the value of the given [key] in the map, and if [shouldRemove] is `true` the value is also removed from the map.
  * @since 1.0.2
  */
-@kotlin.internal.InlineOnly
-inline fun <K, V> MutableMap<K, V>.maybeRemove(key: K, shouldRemove: Boolean) = if (shouldRemove) remove(key) else get(key)
-
-fun Drawable.printInfo() {
-    var c: Drawable? = parent
-    var i = 0
-    val sb = StringBuilder().append("Tree for $this:\n")
-    while (c != null) {
-        sb.append("\t", i).append(c.toString()).append('\n')
-        c = c.parent
-        i++
-    }
-    i++
-    sb.append("\t", i).append(polyUI.toString())
-    println(sb.toString())
-}
+inline fun <K, V> MutableMap<K, V>.maybeRemove(key: K, shouldRemove: Boolean): V? = if (shouldRemove) remove(key) else get(key)
 
 /**
  * Perform the given function on both elements of this pair. The highest common type of both elements is used as the type of the parameter.
@@ -341,3 +452,8 @@ inline fun <T> Pair<T, T>.both(func: (T) -> Unit) {
     func(this.first)
     func(this.second)
 }
+
+/**
+ * Mutable version of [to].
+ */
+infix fun <A, B> A.with(that: B) = MutablePair(this, that)

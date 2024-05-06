@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -28,32 +28,36 @@ import org.polyfrost.polyui.renderer.data.Framebuffer
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Vec2
 
-class NoOpRenderer(size: Vec2) : Renderer(size) {
+object NoOpRenderer : Renderer {
     override fun init() {
+        println("renderer is a no-op implementation")
     }
 
-    override fun beginFrame() {
+    override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {
     }
 
     override fun endFrame() {
     }
 
-    override fun gblAlpha(alpha: Float) {
+    override fun globalAlpha(alpha: Float) {
+    }
+
+    override fun setAlphaCap(cap: Float) {
     }
 
     override fun translate(x: Float, y: Float) {
     }
 
-    override fun scale(x: Float, y: Float) {
+    override fun scale(sx: Float, sy: Float, px: Float, py: Float) {
     }
 
-    override fun rotate(angleRadians: Double) {
+    override fun rotate(angleRadians: Double, px: Float, py: Float) {
     }
 
-    override fun skewX(angleRadians: Double) {
+    override fun skewX(angleRadians: Double, px: Float, py: Float) {
     }
 
-    override fun skewY(angleRadians: Double) {
+    override fun skewY(angleRadians: Double, px: Float, py: Float) {
     }
 
     override fun pushScissor(x: Float, y: Float, width: Float, height: Float) {
@@ -81,9 +85,10 @@ class NoOpRenderer(size: Vec2) : Renderer(size) {
     ) {
     }
 
-    override fun textBounds(font: Font, text: String, fontSize: Float) = Vec2.ZERO
+    override fun textBounds(font: Font, text: String, fontSize: Float) = Vec2.ONE
 
     override fun initImage(image: PolyImage) {
+        if (image.invalid) image.size = Vec2.Immutable(18f, 18f)
     }
 
     override fun image(
@@ -154,10 +159,10 @@ class NoOpRenderer(size: Vec2) : Renderer(size) {
     override fun delete(image: PolyImage?) {
     }
 
-    override fun bindFramebuffer(fbo: Framebuffer?) {
+    override fun bindFramebuffer(fbo: Framebuffer) {
     }
 
-    override fun unbindFramebuffer(fbo: Framebuffer?) {
+    override fun unbindFramebuffer() {
     }
 
     override fun drawFramebuffer(fbo: Framebuffer, x: Float, y: Float, width: Float, height: Float) {
@@ -167,4 +172,6 @@ class NoOpRenderer(size: Vec2) : Renderer(size) {
     }
 
     override fun supportsFramebuffers() = false
+
+    override fun transformsWithPoint() = false
 }

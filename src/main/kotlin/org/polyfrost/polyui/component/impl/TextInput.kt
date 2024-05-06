@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -25,9 +25,9 @@ import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.event.Event
-import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Translator
+import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.Cursor
 import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.unit.Align
@@ -39,10 +39,10 @@ import org.polyfrost.polyui.utils.dropAt
 import org.polyfrost.polyui.utils.substringSafe
 import kotlin.math.min
 
-class TextInput(
+open class TextInput(
     text: String = "",
     placeholder: String = "polyui.textinput.placeholder",
-    font: Font = PolyUI.defaultFonts.regular,
+    font: Font? = null,
     fontSize: Float = 12f,
     at: Vec2? = null,
     alignment: Align = AlignDefault,
@@ -50,38 +50,28 @@ class TextInput(
     wrap: Float = 0f,
     vararg children: Drawable?,
 ) : Text(text, font, fontSize, at, alignment, wrap, visibleSize, true, *children) {
-    @Transient
-    private val linesData = LinkedList<Float>()
 
-    @Transient
     private val selectBoxes = LinkedList<Pair<Pair<Float, Float>, Pair<Float, Float>>>()
 
     // todo the old error stuff?
 
-    @Transient
     var focused = false
         private set
 
-    @Transient
     private val caretColor = PolyColor.WHITE
 
-    @Transient
     private var cposx = 0f
 
-    @Transient
     private var cposy = 0f
 
-    @Transient
     private var caret = 0
         set(value) {
             field = value
             if (!selecting) select = value
         }
 
-    @Transient
     private var select = 0
 
-    @Transient
     private var selecting = false
 
     val selection get() = text.substringSafe(caret, select)
@@ -112,6 +102,7 @@ class TextInput(
 
     override fun accept(event: Event): Boolean {
         if (!enabled) return false
+        needsRedraw = true
         return when (event) {
             is Event.Mouse.Entered -> {
                 polyUI.cursor = Cursor.Text
@@ -127,7 +118,7 @@ class TextInput(
                 clearSelection()
                 return when (event.clicks) {
                     1 -> {
-                        caretFromMouse(event.mouseX, event.mouseY)
+                        caretFromMouse(event.x, event.y)
                         focused
                     }
 
@@ -161,35 +152,37 @@ class TextInput(
             }
 
             is Event.Focused.KeyTyped -> {
-                if (event.mods < 2) {
+                if (event.mods.value < 2 /* mods == 0 || hasShift() */) {
                     if (caret != select) {
                         text = text.replace(selection, "")
                         caret = if (select > caret) caret else select
                         clearSelection()
                     }
+                    val tl = text.length
                     text = text.substring(0, caret) + event.key + text.substring(caret)
-                    caret++
-                } else if (event.hasModifier(KeyModifiers.LCONTROL) || event.hasModifier(KeyModifiers.RCONTROL)) {
+                    if (text.length != tl) caret++
+                } else if (event.mods.hasControl) {
                     when (event.key) {
-                        'V' -> {
+                        'v', 'V' -> {
+                            val tl = text.length
                             text = text.substring(0, caret) + (polyUI.clipboard ?: "") + text.substring(caret)
-                            caret += polyUI.clipboard?.length ?: 0
+                            if (text.length != tl) caret += polyUI.clipboard?.length ?: 0
                             clearSelection()
                         }
 
-                        'C' -> {
+                        'c', 'C' -> {
                             if (caret != select) {
                                 polyUI.clipboard = selection
                             }
                         }
 
-                        'X' -> {
-                            polyUI.clipboard = null
+                        'x', 'X' -> {
                             text = text.replace(selection, "")
+                            polyUI.clipboard = selection
                             clearSelection()
                         }
 
-                        'A' -> {
+                        'a', 'A' -> {
                             caret = text.lastIndex + 1
                             select = 0
                         }
@@ -198,8 +191,6 @@ class TextInput(
             }
 
             is Event.Focused.KeyPressed -> {
-                val hasControl = event.hasModifier(KeyModifiers.LCONTROL) || event.hasModifier(KeyModifiers.RCONTROL)
-                val hasShift = event.hasModifier(KeyModifiers.LSHIFT) || event.hasModifier(KeyModifiers.RSHIFT)
                 when (event.key) {
                     Keys.BACKSPACE -> {
                         if (select != caret) {
@@ -212,19 +203,23 @@ class TextInput(
                                 f = select
                                 t = caret
                             }
+                            val tl = text.length
                             text = text.substring(0, f) + text.substring(t)
-                            caret = f
+                            if (tl != text.length) caret = f
                             clearSelection()
-                        } else if (!hasControl) {
+                        } else if (!event.mods.hasControl) {
+                            val tl = text.length
                             text = text.dropAt(caret, 1)
-                            if (caret != 0) caret--
+                            if (caret != 0 && tl != text.length) caret--
                         } else {
                             dropToLastSpace()
                         }
                     }
 
                     Keys.TAB -> {
+                        val tl = text.length
                         text += "    "
+                        if (tl != text.length) caret += 4
                     }
 
                     Keys.DELETE -> {
@@ -233,8 +228,8 @@ class TextInput(
                     }
 
                     Keys.LEFT -> {
-                        selecting = hasShift
-                        if (hasControl) {
+                        selecting = event.mods.hasShift
+                        if (event.mods.hasControl) {
                             toLastSpace()
                         } else {
                             back()
@@ -242,8 +237,8 @@ class TextInput(
                     }
 
                     Keys.RIGHT -> {
-                        selecting = hasShift
-                        if (hasControl) {
+                        selecting = event.mods.hasShift
+                        if (event.mods.hasControl) {
                             toNextSpace()
                         } else {
                             forward()
@@ -251,12 +246,12 @@ class TextInput(
                     }
 
                     Keys.UP -> {
-                        selecting = hasShift
+                        selecting = event.mods.hasShift
                         moveLine(false)
                     }
 
                     Keys.DOWN -> {
-                        selecting = hasShift
+                        selecting = event.mods.hasShift
                         moveLine(true)
                     }
 
@@ -279,7 +274,7 @@ class TextInput(
             font,
             line.substring(0, idx),
             fontSize,
-        ).width + x
+        ).x + this.x
         cposy = lni * (fontSize + spacing) + y
     }
 
@@ -310,13 +305,13 @@ class TextInput(
     private fun getLineByIndex(index: Int): Triple<String, Int, Int> {
         require(index > -1) { "Index must not be negative" }
         var i = 0
-        lines.fastEachIndexed { li, it ->
+        lines.fastEachIndexed { li, (it, _) ->
             if (index < i + it.length) {
                 return Triple(it, index - i, li)
             }
             i += it.length
         }
-        val l = lines.last()
+        val l = lines.last().first
         return Triple(l, l.length, lines.lastIndex)
     }
 
@@ -333,7 +328,7 @@ class TextInput(
         }
         val lh = fontSize + spacing
         for (i in sli + 1 until eli) {
-            selectBoxes.add((x - 1f to y + (i.toFloat() * lh)) to (linesData[i] to lh))
+            selectBoxes.add((x - 1f to y + (i.toFloat() * lh)) to (lines[i].second to lh))
         }
         selection(sl, si, sl.length, sli)
         selection(el, 0, ei, eli)
@@ -348,7 +343,7 @@ class TextInput(
 
     private fun caretFromMouse(mouseX: Float, mouseY: Float) {
         val line = ((mouseY - y) / (fontSize + spacing)).toInt()
-        val p = lines[min(line, lines.lastIndex)].closestToPoint(renderer, font, fontSize, mouseX - x)
+        val p = lines[min(line, lines.lastIndex)].first.closestToPoint(renderer, font, fontSize, mouseX - x)
         caret = if (p == -1) text.length else p
         caretPos()
     }
@@ -370,15 +365,17 @@ class TextInput(
     }
 
     fun dropToLastSpace() {
-        val c = caret
+        val tl = text.length
+        val c: Int
         text.trimEnd().lastIndexOf(' ', caret).let {
-            caret = if (it != -1) {
+            c = if (it != -1) {
                 it
             } else {
                 0
             }
         }
         text = text.substring(0, caret) + text.substring(c)
+        if (tl != text.length) caret = c
     }
 
     fun toNextSpace() {
@@ -421,17 +418,17 @@ class TextInput(
         if (!super.setup(polyUI)) return false
         _placeholder = polyUI.translator.translate(_placeholder.string)
         val bounds = renderer.textBounds(font, _placeholder.string, fontSize)
-        size.ensureLargerThan(bounds)
+        size.smax(bounds)
         return true
     }
 
-    override fun calculateSize(): Vec2 {
-        val out = super.calculateSize()
-        linesData.clear()
-        lines.fastEach {
-            val size = renderer.textBounds(font, it, fontSize)
-            linesData.add(size.x)
+    override fun updateTextBounds(renderer: Renderer) {
+        super.updateTextBounds(renderer)
+        if (text.isEmpty()) {
+            val bounds = renderer.textBounds(font, _placeholder.string, fontSize)
+            size.smax(bounds)
         }
-        return out
     }
+
+    override fun debugString() = "placeholder: ${_placeholder.string}\ncaret: $caret;  select: $select;  selecting=$selecting\n${super.debugString()}"
 }

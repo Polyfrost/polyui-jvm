@@ -27,12 +27,30 @@ indent_size = 2
 indent_style = space
 indent_size = 4
 
+# noinspection EditorConfigKeyCorrectness
 [*.{kt,kts}]
 ij_kotlin_code_style_defaults = KOTLIN_OFFICIAL
 ktlint_standard_no-wildcard-imports = disabled
-ktlint_standard_max-line-length = disabled
 ktlint_standard_filename = disabled
-ktlint-experimental = enabled
+ktlint_standard_annotation = disabled
+ktlint_standard_indent = disabled
 
+ktlint_standard_max-line-length = disabled
+ktlint_standard_multiline-expression-wrapping = disabled
+ktlint_standard_argument-list-wrapping = disabled
+ktlint_standard_parameter-list-wrapping = disabled
+ktlint_standard_statement-wrapping = disabled
+ktlint_standard_enum-wrapping = disabled
+ktlint_standard_comment-wrapping = disabled
 
+ktlint_standard_if-else-bracing = disabled
+ktlint_standard_if-else-wrapping = disabled
+ktlint_standard_multiline-if-else = disabled
 
+ktlint_standard_property-naming = disabled
+ktlint_standard_function-naming = disabled
+ktlint_standard_function-signature = disabled
+
+ktlint_standard_string-template-indent = disabled
+ktlint_standard_value-parameter-comment = disabled
+ktlint_standard_value-argument-comment = disabled

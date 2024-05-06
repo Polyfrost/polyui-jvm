@@ -9,19 +9,6 @@
 
 package org.polyfrost.polyui;
 
-import java.util.LinkedList;
-
-import org.polyfrost.polyui.color.PolyColor;
-import org.polyfrost.polyui.component.Drawable;
-import org.polyfrost.polyui.component.impl.Block;
-import org.polyfrost.polyui.component.impl.Image;
-import org.polyfrost.polyui.component.impl.Text;
-import org.polyfrost.polyui.renderer.data.PolyImage;
-import org.polyfrost.polyui.renderer.impl.GLWindow;
-import org.polyfrost.polyui.renderer.impl.NVGRenderer;
-import org.polyfrost.polyui.unit.Units;
-import org.polyfrost.polyui.unit.Vec2;
-
 public class JavaTest {
 	public static void main(String[] args) {
 		//GLWindow window = new GLWindow("Java Window", 800, 800);

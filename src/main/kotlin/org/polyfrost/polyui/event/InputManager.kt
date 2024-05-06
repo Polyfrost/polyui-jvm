@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -22,37 +22,36 @@
 package org.polyfrost.polyui.event
 
 import org.jetbrains.annotations.ApiStatus
-import org.polyfrost.polyui.PolyUI
+import org.jetbrains.annotations.Contract
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_HOVERED
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_NONE
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.input.KeyBinder
-import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.property.Settings
-import org.polyfrost.polyui.utils.LinkedList
-import java.io.File
-import kotlin.experimental.and
-import kotlin.experimental.inv
-import kotlin.experimental.or
+import java.nio.file.Path
 
 /**
- * # EventManager
- * Handles all events and passes them to the correct components/layouts.
- * @param drawables the layout to create this event manager for. marked as internal as should not be accessed.
- * @param drawables the key binder to use for this event manager. marked as internal as should not be accessed.
+ * # InputManager
+ * Handles input events and passes them to the correct components/layouts.
+ * @param master the layout to create this event manager for. marked as internal as should not be accessed.
+ * @param keyBinder the key binder to use for this event manager. marked as internal as should not be accessed.
  */
-class EventManager @JvmOverloads constructor(
-    @get:ApiStatus.Internal
-    var drawables: LinkedList<Drawable>? = null,
-    @get:ApiStatus.Internal
+class InputManager(
+    private var master: Drawable?,
     var keyBinder: KeyBinder?,
     private val settings: Settings,
 ) {
-    private val mouseOvers = LinkedList<Drawable>()
-    val primaryCandidate get() = mouseOvers.lastOrNull()
+    var mouseOver: Drawable? = null
+        private set(value) {
+            if (field === value) return
+            field?.inputState = INPUT_NONE
+            value?.inputState = INPUT_HOVERED
+            field = value
+        }
+
     var mouseX: Float = 0f
         private set
     var mouseY: Float = 0f
@@ -60,7 +59,11 @@ class EventManager @JvmOverloads constructor(
     private var clickTimer: Long = 0L
 
     /** @see org.polyfrost.polyui.input.Modifiers */
-    var keyModifiers: Short = 0
+    val keyModifiers get() = Modifiers(mods)
+
+    /** the current key modifiers (raw). */
+    @ApiStatus.Internal
+    var mods: Byte = 0
         private set
 
     /** amount of clicks in the current combo */
@@ -68,15 +71,16 @@ class EventManager @JvmOverloads constructor(
 
     /** tracker for the combo */
     private var clickedButton: Int = 0
-    private var focused: Drawable? = null
-    val hasFocused get() = focused != null
+
+    var focused: Drawable? = null
+        private set
 
     /** weather or not the left button/primary click is DOWN (aka repeating) */
     var mouseDown = false
         private set
 
-    fun with(drawables: LinkedList<Drawable>?): EventManager {
-        this.drawables = drawables
+    fun with(master: Drawable?): InputManager {
+        this.master = master
         return this
     }
 
@@ -85,7 +89,7 @@ class EventManager @JvmOverloads constructor(
      * @see focus
      * @since 1.0.3
      */
-    fun filesDropped(files: Array<File>) {
+    fun filesDropped(files: Array<Path>) {
         focused?.accept(Event.Focused.FileDrop(files))
     }
 
@@ -115,7 +119,7 @@ class EventManager @JvmOverloads constructor(
      */
     fun keyDown(code: Int) {
         if (keyBinder?.accept(code, true) == true) return
-        focused?.accept(Event.Focused.UnmappedInput(code, true))
+        focused?.accept(Event.Focused.UnmappedInput(code, true, keyModifiers))
     }
 
     /**
@@ -125,125 +129,108 @@ class EventManager @JvmOverloads constructor(
      */
     fun keyUp(code: Int) {
         if (keyBinder?.accept(code, false) == true) return
-        focused?.accept(Event.Focused.UnmappedInput(code, false))
+        focused?.accept(Event.Focused.UnmappedInput(code, false, keyModifiers))
     }
 
     /**
      * force the mouse position to be updated.
      * @since 0.18.5
      */
-    fun recalculateMousePos() = mouseMoved(mouseX, mouseY)
+    fun recalculate() = mouseMoved(mouseX, mouseY)
 
     /**
-     * Internal function that will forcefully drop the given drawable from event tracking.
+     * Drop the current mouse over drawable.
      */
     @ApiStatus.Internal
-    fun drop(drawable: Drawable) {
-        mouseOvers.fastRemoveIfReversed {
-            if (it === drawable || it.hasParentOf(drawable)) {
-                it.inputState = INPUT_NONE
-                true
-            } else {
-                false
+    fun drop(it: Drawable? = null) {
+        if (it != null) {
+            if (it === mouseOver) {
+                mouseOver = null
             }
-        }
-    }
-
-    @ApiStatus.Internal
-    fun drop() {
-        mouseOvers.clearing {
-            it.inputState = INPUT_NONE
-        }
+        } else mouseOver = null
     }
 
     /**
      * add a modifier to the current keyModifiers.
-     * @see KeyModifiers
+     * @see Modifiers
      */
-    fun addModifier(modifier: Short) {
-        keyModifiers = if (PolyUI.isOnMac && settings.commandActsAsControl && modifier == Modifiers.LMETA.value) {
-            keyModifiers or Modifiers.LCONTROL.value
-        } else {
-            keyModifiers or modifier
-        }
+    fun addModifier(modifier: Byte) {
+        mods = (mods.toInt() or modifier.toInt()).toByte()
     }
 
     /**
      * remove a modifier from the current keyModifiers.
-     * @see KeyModifiers
+     * @see Modifiers
      */
-    fun removeModifier(modifier: Short) {
-        keyModifiers = if (PolyUI.isOnMac && settings.commandActsAsControl && modifier == Modifiers.LMETA.value) {
-            keyModifiers and (Modifiers.LCONTROL.value).inv()
-        } else {
-            keyModifiers and modifier.inv()
-        }
+    fun removeModifier(modifier: Byte) {
+        mods = (mods.toInt() and modifier.toInt().inv()).toByte()
     }
 
     /**
      * Clear the current keyModifiers.
-     * @see KeyModifiers
+     * @see Modifiers
      * @see addModifier
      * @since 0.20.1
      */
     fun clearModifiers() {
-        keyModifiers = 0
+        mods = 0
     }
 
     /**
-     * Internal method for drawables, tracking it if it does not consume the events.
+     * perform a recursive ray check on the drawable.
+     * Each drawable will be checked with [Drawable.enabled], then [Drawable.isInside], then finally [Drawable.acceptsInput]
+     * before it is considered a valid candidate.
      *
-     * This is used for event dispatching.
+     * Note that this functions inclusion in public API is experimental.
+     *
+     * @since 1.0.7
      */
-    @ApiStatus.Internal
-    fun processCandidate(drawable: Drawable, x: Float, y: Float): Boolean {
-        if (!drawable.acceptsInput) return true
-        return when (drawable.inputState) {
-            INPUT_NONE -> {
-                if (drawable.isInside(x, y)) {
-                    drawable.inputState = INPUT_HOVERED
-//                    if (mouseOvers.contains(drawable)) throw IllegalArgumentException()
-                    mouseOvers.add(drawable)
-                    true
-                } else false
-            }
-
-            INPUT_HOVERED -> {
-                if (!drawable.isInside(x, y)) {
-                    drawable.inputState = INPUT_NONE
-                    mouseOvers.remove(drawable)
-                    false
-                } else true
-            }
-
-            else -> true
-        }
-    }
-
-
-    private fun processCandidates(drawables: LinkedList<Drawable>, x: Float, y: Float) {
-        drawables.fastEachReversed a@{
-            val inside = processCandidate(it, x, y)
-            val children = it.children ?: return@a
-            if (inside) {
-                processCandidates(children, x, y)
-            } else {
-                drop(it)
+    @ApiStatus.Experimental
+    @Contract(pure = true)
+    fun rayCheck(it: Drawable, x: Float, y: Float): Drawable? {
+        var c: Drawable? = null
+        if (it.enabled && it.isInside(x, y)) {
+            if (it.acceptsInput) c = it
+            it.children?.fastEach {
+                val n = rayCheck(it, x, y)
+                if (n != null) c = n
             }
         }
+        return c
     }
+
+    /** same as [rayCheck], but does not check for [Drawable.acceptsInput] or [Drawable.enabled]. */
+    @ApiStatus.Experimental
+    @Contract(pure = true)
+    fun rayCheckUnsafe(it: Drawable, x: Float, y: Float): Drawable? {
+        var c: Drawable? = null
+        if (it.isInside(x, y)) {
+            c = it
+            it.children?.fastEach {
+                val n = rayCheckUnsafe(it, x, y)
+                if (n != null) c = n
+            }
+        }
+        return c
+    }
+
 
     /** call this function to update the mouse position. */
     fun mouseMoved(x: Float, y: Float) {
         mouseX = x
         mouseY = y
-        processCandidates(drawables ?: return, x, y)
+        if (mouseDown) {
+            dispatch(Event.Mouse.Dragged)
+            return
+        }
+        master?.let { mouseOver = rayCheck(it, x, y) }
     }
 
     fun mousePressed(button: Int) {
         if (button == 0) mouseDown = true
         val event = Event.Mouse.Pressed(button, mouseX, mouseY, keyModifiers)
-        dispatchPress(event, true)
+        mouseOver?.inputState = INPUT_PRESSED
+        dispatch(event, true)
     }
 
     /** call this function when a mouse button is released. */
@@ -267,14 +254,15 @@ class EventManager @JvmOverloads constructor(
             }
             clickTimer = curr
         }
-        if (focused?.inputState == INPUT_NONE) {
+        if (focused?.isInside(mouseX, mouseY) != true) {
             unfocus()
         }
         val release = Event.Mouse.Released(button, mouseX, mouseY, keyModifiers)
         val click = Event.Mouse.Clicked(button, mouseX, mouseY, clickAmount, keyModifiers)
-        dispatchPress(release, false)
+        mouseOver?.inputState = INPUT_HOVERED
+        dispatch(release, true)
         if (!dispatch(click) && button == 0) {
-            mouseOvers.fastEachReversed { if (focusCatching(it)) return }
+            safeFocus(mouseOver)
         }
     }
 
@@ -284,7 +272,7 @@ class EventManager @JvmOverloads constructor(
      * @see focus
      * @since 1.0.4
      */
-    fun focusCatching(drawable: Drawable?): Boolean {
+    fun safeFocus(drawable: Drawable?): Boolean {
         if (drawable == null) return false
         if (drawable.focusable) {
             return focus(drawable)
@@ -297,7 +285,7 @@ class EventManager @JvmOverloads constructor(
     fun mouseScrolled(amountX: Float, amountY: Float) {
         var amountX = if (settings.naturalScrolling) amountX else -amountX
         var amountY = if (settings.naturalScrolling) amountY else -amountY
-        if ((keyModifiers and KeyModifiers.LSHIFT.value).toInt() != 0) {
+        if (keyModifiers.hasShift) {
             val t = amountX
             amountX = amountY
             amountY = t
@@ -308,26 +296,21 @@ class EventManager @JvmOverloads constructor(
     }
 
     /**
-     * Dispatch an event to this PolyUI instance, and it will be given to any tracked drawable.
+     * Dispatch an event to the provided drawable.
+     *
+     * If the candidate drawable does not accept the event (returns `false`), it will be given to the parent, and so on.
+     *
+     * **Note that changing of the [to] parameter is experimental.**
+     * @param bindable (*mostly internal parameter*) if `true`, the event will be given to the [keyBinder] for processing of keybindings,
+     * **before** being given to the candidate drawable. It will consume the event if a keybinding matches and accepts it.
+     *
      */
-    fun dispatch(event: Event): Boolean {
-        if (keyBinder?.accept(event) == true) return true
-        mouseOvers.fastEachReversed {
-            if (it.accept(event)) {
-                return true
-            }
-        }
-        return false
-    }
-
-    private fun dispatchPress(event: Event, state: Boolean): Boolean {
-        if (keyBinder?.accept(event) == true) return true
-        val mode = if (state) INPUT_PRESSED else INPUT_HOVERED
-        mouseOvers.fastEachReversed {
-            it.inputState = mode
-            if (it.accept(event)) {
-                return true
-            }
+    fun dispatch(event: Event, bindable: Boolean = false, to: Drawable? = mouseOver): Boolean {
+        if (bindable && keyBinder?.accept(event) == true) return true
+        var candidate = to
+        while (candidate != null) {
+            if (candidate.accept(event)) return true
+            candidate = candidate.parent0
         }
         return false
     }
@@ -338,11 +321,11 @@ class EventManager @JvmOverloads constructor(
      * @throws IllegalArgumentException if the provided drawable is not [Drawable.focusable]
      * @param focusable the element to set focus on
      * @return true if focus was successfully set, false if the provided focusable is already focused
-     * @see focusCatching
+     * @see safeFocus
      */
     fun focus(focusable: Drawable?): Boolean {
         if (focusable === focused) return false
-        require(focusable?.focusable ?: true) { "Cannot focus un-focusable drawable!" }
+        require(focusable?.focusable != false) { "Cannot focus un-focusable drawable!" }
         focused?.accept(Event.Focused.Lost)
         focused = focusable
         return focused?.accept(Event.Focused.Gained) == true

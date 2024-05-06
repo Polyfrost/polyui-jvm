@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -21,6 +21,7 @@
 
 package org.polyfrost.polyui.component
 
+import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI.Companion.DANGER
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_HOVERED
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
@@ -34,51 +35,86 @@ import org.polyfrost.polyui.component.impl.Block
 import org.polyfrost.polyui.component.impl.Text
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.event.EventDSL
-import org.polyfrost.polyui.event.EventDSLMarker
 import org.polyfrost.polyui.operations.*
 import org.polyfrost.polyui.renderer.data.Cursor
+import org.polyfrost.polyui.renderer.data.Font
+import org.polyfrost.polyui.renderer.data.FontFamily
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.seconds
+import org.polyfrost.polyui.unit.toChromaSpeed
+import kotlin.jvm.internal.Ref.LongRef
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
+private var dragging = false
+const val MIN_DRAG = 3f
+
 /**
  * Make this component draggable.
- * @param consumesEvent weather beginning/ending dragging should cancel the corresponding mouse event
+ * @param free if this is true, the component will be able to be dragged outside its parent.
+ *
  */
-fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, consumesEvent: Boolean = false, onDrag: (S.() -> Unit)? = null, onDrop: (S.() -> Unit)? = null): S {
-    if (!withX && !withY) return this
+fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, free: Boolean = false, onStart: (S.() -> Unit)? = null, onDrag: (S.() -> Unit)? = null, onDrop: (S.() -> Unit)? = null): S {
     var pressed = false
     var px = 0f
     var py = 0f
     addEventHandler(Event.Mouse.Pressed(0)) {
+        if (dragging) return@addEventHandler false
+        needsRedraw = true
+        dragging = true
         pressed = true
         px = it.x - x
         py = it.y - y
-        needsRedraw = true
-        prioritize()
-        consumesEvent
+        false
+    }
+    addEventHandler(Event.Mouse.Dragged) {
+        if (dragging) {
+            needsRedraw = true
+        }
+        false
     }
     addOperation(object : DrawableOp(this) {
         private var prevX = 0f
         private var prevY = 0f
+        private var started = false
+
         override fun apply() {
             if (pressed) {
                 if (self.inputState != INPUT_PRESSED) {
-                    onDrop?.invoke(this@draggable)
+                    dragging = false
+                    if (started) {
+                        if (free && self.parent0 !== self.polyUI.master) {
+                            self.polyUI.master.children!!.remove(self)
+                            self.parent.children!!.add(self)
+                        }
+                        onDrop?.invoke(this@draggable)
+                        started = false
+                    }
                     pressed = false
                     return
                 }
-                needsRedraw = true
-                val mx = self.polyUI.eventManager.mouseX
-                val my = self.polyUI.eventManager.mouseY
+                if (!started) {
+                    // asm: only start dragging if it has moved at least MIN_DRAG
+                    if (abs(px + x - self.polyUI.inputManager.mouseX) > MIN_DRAG || abs(py + y - self.polyUI.inputManager.mouseY) > MIN_DRAG) {
+                        started = true
+                        onStart?.invoke(this@draggable)
+                        if (free && self.parent0 !== self.polyUI.master) {
+                            if (self.polyUI.inputManager.focused !== self) self.polyUI.unfocus()
+                            self.parent.children!!.remove(self)
+                            self.polyUI.master.children!!.add(self)
+                        }
+                    } else return
+                }
+                val mx = self.polyUI.inputManager.mouseX
+                val my = self.polyUI.inputManager.mouseY
                 var i = false
-                if (withX && prevX != mx) {
-                    self.x = mx - px
+                if (prevX != mx) {
+                    if (withX) self.x = mx - px
                     i = true
                 }
-                if (withY && prevY != my) {
-                    self.y = my - py
+                if (prevY != my) {
+                    if (withY) self.y = my - py
                     i = true
                 }
                 if (i) onDrag?.invoke(this@draggable)
@@ -100,12 +136,13 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, con
 fun <S : Drawable> S.addHoverInfo(text: String?): S {
     if (text == null) return this
     val obj = Block(
-        children = arrayOf(Text(text))
+        children = arrayOf(Text(text)),
     ).hide()
     obj.alpha = 0f
     onInit {
         obj.setup(polyUI)
-        parent!!.addChild(obj)
+        (parent0 ?: polyUI.master).addChild(obj, reposition = false)
+        obj.renders = false
         acceptsInput = true
     }
     var mx = 0f
@@ -116,7 +153,7 @@ fun <S : Drawable> S.addHoverInfo(text: String?): S {
                 super.apply()
             }
             if (open && mx != self.polyUI.mouseX) {
-                animation!!.reset()
+                animation?.reset()
                 open = false
                 Fade(obj, 0f, false, Animations.EaseInOutQuad.create(0.1.seconds)) {
                     renders = false
@@ -164,6 +201,75 @@ fun <S : Drawable> S.hide(state: Boolean = true): S {
     return this
 }
 
+fun <S : Drawable> S.setAlpha(alpha: Float): S {
+    this.alpha = alpha
+    return this
+}
+
+/**
+ * Add a listener for changes to the given String-type property.
+ *
+ * In PolyUI, this is for [Text] and [TextInput][org.polyfrost.polyui.component.impl.TextInput] only.
+ * @since 1.0.6
+ */
+@JvmName("onChangeString")
+fun <S : Text> S.onChange(func: S.(String) -> Boolean): S {
+    addEventHandler(Event.Change.Text()) {
+        val res = func.invoke(this, it.text)
+        it.cancelled = res
+        res
+    }
+    return this
+}
+
+/**
+ * Add a listener for changes to the given Boolean-type property.
+ *
+ * In PolyUI, this is for [Checkbox][org.polyfrost.polyui.component.impl.Checkbox] and [Switch][org.polyfrost.polyui.component.impl.Switch] only.
+ * @since 1.0.6
+ */
+@JvmName("onChangeState")
+fun <S : Drawable> S.onChange(func: S.(Boolean) -> Boolean): S {
+    addEventHandler(Event.Change.State()) {
+        val res = func.invoke(this, it.state)
+        it.cancelled = res
+        res
+    }
+    return this
+}
+
+/**
+ * Add a listener for changes to the given Int-type property.
+ *
+ * In PolyUI, this is for [Radiobutton][org.polyfrost.polyui.component.impl.Radiobutton], and [Dropdown][org.polyfrost.polyui.component.impl.Dropdown] only.
+ * @since 1.0.6
+ */
+@JvmName("onChangeIndex")
+fun <S : Drawable> S.onChange(func: S.(Int) -> Boolean): S {
+    addEventHandler(Event.Change.Number()) {
+        val res = func.invoke(this, it.amount.toInt())
+        it.cancelled = res
+        res
+    }
+    return this
+}
+
+/**
+ * Add a listener for changes to the given Float-type property.
+ *
+ * In PolyUI, this is for [Slider][org.polyfrost.polyui.component.impl.Slider] only.
+ * @since 1.0.6
+ */
+@JvmName("onChangeNumber")
+fun <S : Drawable> S.onChange(func: S.(Float) -> Boolean): S {
+    addEventHandler(Event.Change.Number()) {
+        val res = func.invoke(this, it.amount.toFloat())
+        it.cancelled = res
+        res
+    }
+    return this
+}
+
 /**
  * Set the color palette of this drawable during initialization, using the PolyUI colors instance.
  */
@@ -174,31 +280,120 @@ fun <S : Drawable> S.setPalette(palette: Colors.() -> Colors.Palette): S {
     return this
 }
 
+/**
+ * Call this function to ignore this drawable during the calculation of the parent's positioning and size.
+ * It is equivalent to the following:
+ * ```
+ * renders = false
+ * afterParentInit { renders = true }
+ * ```
+ *
+ * @since 1.1.4
+ */
+fun <S : Drawable> S.ignoreLayout(): S {
+    renders = false
+    afterParentInit { renders = true }
+    return this
+}
+
+/**
+ * Set the font of this text component during initialization, using the PolyUI fonts instance.
+ * @since 1.1.3
+ */
+fun <S : Text> S.setFont(font: FontFamily.() -> Font): S {
+    onInit {
+        this.font = polyUI.fonts.font()
+    }
+    return this
+}
+
 fun <S : Text> S.secondary(): S {
     setPalette { text.secondary }
     return this
 }
 
-fun <S : Drawable> S.setDestructivePalette() = setPalette { Colors.Palette(text.primary.normal, state.danger.hovered, state.danger.pressed, text.primary.disabled) }
+/**
+ * Add a validation function to this text component.
+ *
+ * The given [func] will have the text that is requested as the argument.
+ * Return `false` to cancel the change, meaning the text will not be set.
+ */
+fun <S : Text> S.addValidationFunction(func: S.(String) -> Boolean): S {
+    addEventHandler(Event.Change.Text()) {
+        if (!func(this, it.text)) {
+            it.cancel()
+        }
+    }
+    return this
+}
 
-fun <S : Drawable> S.withStates(showClicker: Boolean = true, animation: (() -> Animation)? = { Animations.EaseInOutQuad.create(0.08.seconds) }): S {
+fun <S : Drawable> S.setDestructivePalette() = setPalette {
+    Colors.Palette(text.primary.normal, state.danger.hovered, state.danger.pressed, text.primary.disabled)
+}
+
+private val defEnter: Drawable.(Event.Mouse.Entered) -> Boolean = {
+    Recolor(this, this.palette.hovered, Animations.EaseInOutQuad.create(0.08.seconds)).add()
+    polyUI.cursor = Cursor.Clicker
+    false
+}
+
+private val defExit: Drawable.(Event.Mouse.Exited) -> Boolean = {
+    Recolor(this, this.palette.normal, Animations.EaseInOutQuad.create(0.08.seconds)).add()
+    polyUI.cursor = Cursor.Pointer
+    false
+}
+
+private val defPressed: Drawable.(Event.Mouse.Pressed) -> Boolean = {
+    Recolor(this, this.palette.pressed, Animations.EaseInOutQuad.create(0.08.seconds)).add()
+    false
+}
+
+private val defReleased: Drawable.(Event.Mouse.Released) -> Boolean = {
+    Recolor(this, this.palette.hovered, Animations.EaseInOutQuad.create(0.08.seconds)).add()
+    false
+}
+
+fun <S : Drawable> S.withStates(): S {
+    addEventHandler(Event.Mouse.Entered, defEnter)
+    addEventHandler(Event.Mouse.Exited, defExit)
+    addEventHandler(Event.Mouse.Pressed(0), defPressed)
+    addEventHandler(Event.Mouse.Released(0), defReleased)
+    return this
+}
+
+fun <S : Drawable> S.withStates(
+    consume: Boolean = false, showClicker: Boolean = true,
+    animation: (() -> Animation)? = {
+        Animations.EaseInOutQuad.create(0.08.seconds)
+    },
+): S {
     addEventHandler(Event.Mouse.Entered) {
         Recolor(this, this.palette.hovered, animation?.invoke()).add()
         if (showClicker) polyUI.cursor = Cursor.Clicker
-        false
+        consume
     }
     addEventHandler(Event.Mouse.Exited) {
         Recolor(this, this.palette.normal, animation?.invoke()).add()
         polyUI.cursor = Cursor.Pointer
-        false
+        consume
     }
     addEventHandler(Event.Mouse.Pressed(0)) {
         Recolor(this, this.palette.pressed, animation?.invoke()).add()
-        false
+        consume
     }
     addEventHandler(Event.Mouse.Released(0)) {
         Recolor(this, this.palette.hovered, animation?.invoke()).add()
-        false
+        consume
+    }
+    return this
+}
+
+fun <S : Drawable> S.withCursor(cursor: Cursor = Cursor.Clicker): S {
+    addEventHandler(Event.Mouse.Entered) {
+        polyUI.cursor = cursor
+    }
+    addEventHandler(Event.Mouse.Exited) {
+        polyUI.cursor = Cursor.Pointer
     }
     return this
 }
@@ -228,7 +423,7 @@ fun <S : Drawable> S.setState(state: Byte): S {
             WARNING -> polyUI.colors.state.warning
             SUCCESS -> polyUI.colors.state.success
             else -> throw IllegalArgumentException("Invalid state: $state")
-        }
+        },
     )
     return this
 }
@@ -240,11 +435,36 @@ fun <S : Drawable> S.setState(state: Byte): S {
  * @since 1.0.0
  */
 fun <S : Drawable> S.prioritize(): S {
-    val children = parent?.children ?: return this
+    val children = parent0?.children ?: return this
     if (children.last() === this) return this
     children.remove(this)
     children.add(this)
     return this
+}
+
+/**
+ * Returns a count of this drawable's children, including children of children.
+ * @since 1.0.1
+ */
+fun Drawable.countChildren(): Int {
+    var i = children?.size ?: 0
+    children?.fastEach {
+        i += it.countChildren()
+    }
+    return i
+}
+
+/**
+ * @return `true` if this drawable has a child that intersects the provided rectangle.
+ * @since 1.0.4
+ */
+fun Drawable.hasChildIn(x: Float, y: Float, width: Float, height: Float): Boolean {
+    val children = this.children ?: return false
+    children.fastEach {
+        if (!it.renders) return@fastEach
+        if (it.intersects(x, y, width, height)) return true
+    }
+    return false
 }
 
 fun <S : Drawable> S.onInit(function: S.(Event.Lifetime.Init) -> Unit): S {
@@ -266,27 +486,65 @@ fun <S : Drawable> S.afterInit(function: S.(Event.Lifetime.PostInit) -> Unit): S
 fun <S : Drawable> S.afterParentInit(depth: Int = 1, handler: S.() -> Unit): S {
     this.addEventHandler(Event.Lifetime.PostInit) { _ ->
         var it: Drawable = this
-        repeat(depth) { _ ->
-            it = it.parent ?: it
+        for (i in 0 until depth) {
+            it.parent0?.let { parent -> it = parent } ?: break
         }
-        it.addEventHandler(Event.Lifetime.PostInit) {
+        if(it.initialized) {
             handler(this@afterParentInit)
-            false
+        } else {
+            it.addEventHandler(Event.Lifetime.PostInit) {
+                handler(this@afterParentInit)
+            }
         }
         false
     }
     return this
 }
 
-@EventDSLMarker
+@EventDSL.Marker
 fun <S : Drawable> S.events(dsl: EventDSL<S>.() -> Unit): S {
     EventDSL(this).apply(dsl)
     return this
 }
 
-fun <S : Drawable> S.onClick(func: S.(Event.Mouse.Clicked) -> Unit?): S {
+fun <S : Drawable> S.onClick(func: S.(Event.Mouse.Clicked) -> Unit): S {
     addEventHandler(Event.Mouse.Clicked(0), func)
     return this
+}
+
+/**
+ * Make the given color chroma, meaning it will change its hue over time.
+ *
+ * If you wish to change the speed of the color, you can change the value of the [LongRef] returned by [toChromaSpeed]:
+ * ```
+ * // apply the chroma to the color of this Drawable
+ * val speed = 5.seconds.toChromaSpeed()
+ * this.color.applyChroma(speed)
+ *
+ * // now you can mutate the speed at any point you like
+ * speed.element = 10.seconds
+ * ```
+ *
+ * @param speedNanos the speed of the chroma, in nanoseconds. The default is 5 seconds. use the [toChromaSpeed] extension function to convert from other units.
+ * @return the [DrawableOp] that was applied to this drawable, so you can [remove][DrawableOp.remove] it later to stop the chroma.
+ * @since 1.0.5
+ */
+context(S)
+@ApiStatus.Experimental
+fun <S : Drawable> PolyColor.makeChroma(speedNanos: LongRef = 5.seconds.toChromaSpeed()): DrawableOp {
+    val p = object : DrawableOp(this@S) {
+        private var time = ((hue % 360f) * speedNanos.element.toFloat()).toLong()
+
+        override fun apply() {
+            time += polyUI.delta
+            val speed = speedNanos.element
+            hue = (time % speed) / speed.toFloat()
+        }
+
+        override fun unapply() = false
+    }
+    p.add()
+    return p
 }
 
 /**
@@ -297,7 +555,7 @@ fun <S : Drawable> S.onClick(func: S.(Event.Mouse.Clicked) -> Unit?): S {
  * This is the "by" version of this method, meaning that each value is added to the current one of this drawable.
  * See the [animateTo] method for the "to" equivalent, which sets each value to the provided one.
  */
-fun <S : Drawable> S.animateBy(
+fun Drawable.animateBy(
     at: Vec2? = null,
     size: Vec2? = null,
     rotation: Double = 0.0,
@@ -324,8 +582,9 @@ fun <S : Drawable> S.animateBy(
  * This is the "to" version of this method, meaning that each value is set to the provided one.
  * See the [animateBy] method for the "by" equivalent, which adds each value to the current one of this drawable.
  */
-fun <S : Drawable> S.animateTo(
-    at: Vec2 = this.at,
+fun Drawable.animateTo(
+    tx: Float = this.x,
+    ty: Float = this.y,
     size: Vec2 = this.size,
     rotation: Double = this.rotation,
     skewX: Double = this.skewX,
@@ -335,7 +594,7 @@ fun <S : Drawable> S.animateTo(
     color: PolyColor = this.color,
     animation: Animation? = null,
 ) {
-    if (at != this.at) Move(this, at, false, animation).add()
+    if (tx != this.x || ty != this.y) Move(this, tx, ty, false, animation).add()
     if (size != this.size) Resize(this, size, false, animation).add()
     if (rotation != this.rotation) Rotate(this, rotation, false, animation).add()
     if (skewX != this.skewX || skewY != this.skewY) Skew(this, skewX, skewY, false, animation).add()

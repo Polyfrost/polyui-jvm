@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -31,28 +31,37 @@ class Align(val main: Main = Main.Start, val cross: Cross = Cross.Center, val mo
     enum class Main {
         /** Items are packed in order they are added from the start of the row. */
         Start,
+
         /** Items are packed in the order they are added, but they are centered on each row. */
         Center,
+
         /** Items are packed in the order they are added, but they are packed from the end of each row. */
         End,
+
         /** Items are packed so the last items each touch the ends of the row. */
         SpaceBetween,
+
         /** Items are packed so the space between each item and the edges is equal. */
-        SpaceEvenly
+        SpaceEvenly,
     }
+
     enum class Cross {
         /** Each row is placed on after the other, with the first row at the top. */
         Start,
+
         /** Each row is placed on after the other, with the rows centered overall. */
         Center,
+
         /** Each row is placed on after the other, with the last row at the very bottom. */
-        End
+        End,
     }
+
     enum class Mode {
         /** Items are packed from left to right, so the main axis is the x-axis and cross is the y-axis. */
         Horizontal,
+
         /** Items are packed from top to bottom, so the main axis is the y-axis and cross is the x-axis. */
-        Vertical
+        Vertical,
     }
 }
 

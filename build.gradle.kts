@@ -1,21 +1,16 @@
+
 import org.jetbrains.dokka.base.DokkaBase
 import org.jetbrains.dokka.base.DokkaBaseConfiguration
 import org.jetbrains.dokka.gradle.AbstractDokkaTask
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.archivesName
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import java.time.Year
-
-@Suppress(
-    "DSL_SCOPE_VIOLATION",
-    "MISSING_DEPENDENCY_CLASS",
-    "UNRESOLVED_REFERENCE_WRONG_RECEIVER",
-    "FUNCTION_CALL_EXPECTED"
-)
 
 plugins {
     `java-library`
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.licenser)
     alias(libs.plugins.kotlinter)
+    alias(libs.plugins.kotlin.abi)
 //    alias(libs.plugins.git.hooks)
     alias(libs.plugins.dokka)
     `maven-publish`
@@ -29,7 +24,7 @@ buildscript {
 
 group = "org.polyfrost"
 version = project.findProperty("version") as String
-val targetKotlinVersion = project.findProperty("kotlin.target") as String? ?: "1.8"
+val targetKotlinVersion = KotlinVersion.fromVersion(project.findProperty("kotlin.target") as String? ?: "1.9")
 val jvmToolchainVersion = (project.findProperty("jvm.toolchain") as String? ?: "8").toInt()
 
 allprojects {
@@ -50,8 +45,9 @@ allprojects {
 
     dependencies {
         implementation(rootProject.libs.bundles.kotlin)
-        implementation(rootProject.libs.bundles.slf4j)
         implementation(rootProject.libs.bundles.markdown)
+        implementation(rootProject.libs.logging.api)
+        testRuntimeOnly(rootProject.libs.logging.impl)
     }
 
     java {
@@ -59,15 +55,12 @@ allprojects {
     }
 
     kotlin {
-        sourceSets.all {
-            languageSettings.apply {
-                optIn("kotlin.experimental.ExperimentalTypeInference")
-                languageVersion = targetKotlinVersion
-                apiVersion = targetKotlinVersion
-            }
-        }
         compilerOptions {
+            languageVersion = targetKotlinVersion
+            apiVersion = targetKotlinVersion
+            optIn.add("kotlin.experimental.ExperimentalTypeInference")
             freeCompilerArgs = listOf(
+                "-Xcontext-receivers",
                 "-Xjvm-default=all-compatibility",
                 "-Xno-call-assertions",
                 "-Xno-receiver-assertions",
@@ -122,33 +115,35 @@ allprojects {
     tasks {
         val dokkaJavadocJar by creating(Jar::class.java) {
             group = "documentation"
-            archiveClassifier.set("javadoc")
+            archiveClassifier = "javadoc"
             from(dokkaJavadoc)
         }
     }
 }
 
-//apiValidation {
-//    ignoredProjects.addAll(rootProject.subprojects.map { it.name })
-//}
+apiValidation {
+    ignoredProjects.addAll(rootProject.subprojects.map { it.name })
+}
 
 subprojects {
     dependencies {
         api(project.rootProject)
     }
 
-    archivesName.set("${rootProject.name}-${project.name}")
+    tasks.jar {
+        archiveBaseName = "${rootProject.name}-${project.name}"
+    }
 
     tasks.named<Jar>("dokkaJavadocJar") {
-        archiveBaseName.set("polyui-${project.name}")
+        archiveBaseName = "polyui-${project.name}"
     }
 }
 
 tasks {
     create("dokkaHtmlJar", Jar::class.java) {
         group = "documentation"
-        archiveBaseName.set("polyui")
-        archiveClassifier.set("dokka")
+        archiveBaseName = "polyui"
+        archiveClassifier = "dokka"
         from(dokkaHtmlMultiModule.get().outputDirectory)
         duplicatesStrategy = DuplicatesStrategy.FAIL
     }

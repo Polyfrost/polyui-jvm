@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023-2024 Polyfrost and its contributors.
+ * Copyright (C) 2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -21,16 +21,26 @@
 
 package org.polyfrost.polyui.utils
 
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Blocking
+import java.io.Serializable
 
 /**
- * Marker class for future use, which will be used to indicate that the given function or property
- * will block until the lock is freed (when it finishes the frame)
+ * A mutable pair of values.
+ *
+ * There is no meaning attached to values in this class, it can be used for any purpose.
+ * Pair exhibits value semantics, i.e. two pairs are equal if both components are equal.
+ *
+ * @param A type of the first value.
+ * @param B type of the second value.
+ * @property first First value.
+ * @property second Second value.
+ * @constructor Creates a new instance of Pair.
  */
-@Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY)
-@Retention(AnnotationRetention.BINARY)
-@Blocking
-@MustBeDocumented
-@ApiStatus.Experimental
-annotation class Locking
+data class MutablePair<A, B>(
+    var first: A,
+    var second: B,
+) : Serializable {
+    /**
+     * Returns string representation of the [MutablePair] including its [first] and [second] values.
+     */
+    override fun toString(): String = "($first, $second)"
+}

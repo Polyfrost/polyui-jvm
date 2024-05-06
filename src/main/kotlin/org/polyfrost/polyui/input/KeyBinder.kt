@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -23,7 +23,7 @@ package org.polyfrost.polyui.input
 
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.event.*
+import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.property.Settings
 import org.polyfrost.polyui.utils.LinkedList
 import java.util.concurrent.CancellationException
@@ -40,12 +40,19 @@ import java.util.concurrent.CompletableFuture
  */
 class KeyBinder(private val settings: Settings) {
     private val listeners = LinkedList<Bind>()
+
+    /**
+     * Property which enables an optimization where the KeyBinder will only update after every frame if there are time-sensitive listeners.
+     * @since 1.1.1
+     */
+    var hasTimeSensitiveListeners = false
+        private set
     private val downMouseButtons = LinkedList<Int>()
     private val downUnmappedKeys = LinkedList<Int>()
     private val downKeys = LinkedList<Keys>()
     private var recording: CompletableFuture<Bind>? = null
     private var recordingTime = 0L
-    private var modifiers: Short = 0
+    private var modifiers: Byte = 0
     private var recordingFunc: (() -> Boolean)? = null
 
     /**
@@ -55,27 +62,34 @@ class KeyBinder(private val settings: Settings) {
      */
     @ApiStatus.Internal
     fun accept(event: Event): Boolean {
-        if (event is Event.Mouse.Pressed) {
-            if (event.mods == 0.toShort()) {
-                recording?.completeExceptionally(IllegalStateException("Cannot bind to just left click"))
-                return false
+        when (event) {
+            is Event.Mouse.Pressed -> {
+                if (event.mods.isEmpty) {
+                    recording?.completeExceptionally(IllegalStateException("Cannot bind to just left click"))
+                    return false
+                }
+                downMouseButtons.add(event.button)
+                completeRecording()
             }
-            downMouseButtons.add(event.button)
-            completeRecording()
-        }
-        if (event is Event.Mouse.Pressed) {
-            downMouseButtons.remove(event.button)
-        }
-        if (event is Event.Focused.KeyPressed) {
-            if (event.key == Keys.ESCAPE) {
-                recording?.completeExceptionally(CancellationException("ESC key pressed"))
-                return false
+
+            is Event.Mouse.Released -> {
+                downMouseButtons.remove(event.button)
             }
-            downKeys.add(event.key)
-            completeRecording()
-        }
-        if (event is Event.Focused.KeyReleased) {
-            downKeys.remove(event.key)
+
+            is Event.Focused.KeyPressed -> {
+                if (event.key == Keys.ESCAPE) {
+                    recording?.completeExceptionally(CancellationException("ESC key pressed"))
+                    return false
+                }
+                downKeys.add(event.key)
+                completeRecording()
+            }
+
+            is Event.Focused.KeyReleased -> {
+                downKeys.remove(event.key)
+            }
+
+            else -> return false
         }
         return update(0L, modifiers)
     }
@@ -96,8 +110,10 @@ class KeyBinder(private val settings: Settings) {
         return update(0L, modifiers)
     }
 
-    fun update(deltaTimeNanos: Long, keyModifiers: Short): Boolean {
+    @ApiStatus.Internal
+    fun update(deltaTimeNanos: Long, keyModifiers: Byte): Boolean {
         modifiers = keyModifiers
+        if (!hasTimeSensitiveListeners && deltaTimeNanos > 0L) return false
         listeners.fastEach {
             if (it.update(downUnmappedKeys, downKeys, downMouseButtons, keyModifiers, deltaTimeNanos)) {
                 return true
@@ -113,11 +129,11 @@ class KeyBinder(private val settings: Settings) {
             if (downUnmappedKeys.size == 0) null else downUnmappedKeys.toIntArray(),
             if (downKeys.size == 0) null else downKeys.toTypedArray(),
             if (downMouseButtons.size == 0) null else downMouseButtons.toIntArray(),
-            modifiers,
+            Modifiers(modifiers),
             recordingTime,
             recordingFunc ?: throw ConcurrentModificationException("recording function has been removed"),
         )
-        if (listeners.contains(b)) {
+        if (b in listeners) {
             recording.completeExceptionally(IllegalStateException("Duplicate keybind: $b"))
             release()
             return
@@ -134,6 +150,7 @@ class KeyBinder(private val settings: Settings) {
      * @since 0.21.0
      */
     fun add(bind: Bind) {
+        if (bind.durationNanos > 0L) hasTimeSensitiveListeners = true
         val old = listeners.addOrReplace(bind)
         if (old != null && old !== bind) {
             PolyUI.LOGGER.warn("Keybind replaced: $bind")
@@ -142,6 +159,15 @@ class KeyBinder(private val settings: Settings) {
 
     fun remove(bind: Bind) {
         listeners.remove(bind)
+        if (hasTimeSensitiveListeners) {
+            hasTimeSensitiveListeners = false
+            listeners.fastEach {
+                if (it.durationNanos > 0L) {
+                    hasTimeSensitiveListeners = true
+                    return
+                }
+            }
+        }
     }
 
     /**
@@ -156,9 +182,7 @@ class KeyBinder(private val settings: Settings) {
      * @since 0.24.0
      */
     fun record(holdDurationNanos: Long = 0L, function: () -> Boolean): CompletableFuture<Bind> {
-        if (settings.debug) {
-            PolyUI.LOGGER.info("Recording keybind began")
-        }
+        if (settings.debug) PolyUI.LOGGER.info("Recording keybind began")
         recording?.completeExceptionally(CancellationException("New recording was started"))
         release()
         val recording = CompletableFuture<Bind>()
@@ -166,12 +190,8 @@ class KeyBinder(private val settings: Settings) {
         recordingFunc = function
         this.recording = recording
         return recording.thenApply {
-            if (settings.debug) {
-                PolyUI.LOGGER.info("Bind created: $it")
-            }
-            if (listeners.addOrReplace(it) != null) {
-                PolyUI.LOGGER.warn("Keybind replaced: $it")
-            }
+            if (settings.debug) PolyUI.LOGGER.info("Bind created: $it")
+            add(it)
             it
         }.exceptionally {
             PolyUI.LOGGER.warn("Keybind recording cancelled: ${it.message}")
@@ -195,13 +215,38 @@ class KeyBinder(private val settings: Settings) {
         downUnmappedKeys.clear()
     }
 
-    class Bind @JvmOverloads constructor(val unmappedKeys: IntArray? = null, val keys: Array<Keys>? = null, val mouse: IntArray? = null, val mods: Short = 0, val durationNanos: Long = 0L, @Transient val action: () -> Boolean) {
-        constructor(chars: CharArray? = null, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Short = 0, durationNanos: Long = 0L, action: () -> Boolean) : this(chars?.map { it.code }?.toIntArray(), keys, mouse, mods, durationNanos, action)
+    class Bind(val unmappedKeys: IntArray? = null, val keys: Array<Keys>? = null, val mouse: IntArray? = null, val mods: Modifiers = Modifiers(0), val durationNanos: Long = 0L, @Transient val action: () -> Boolean) {
+        constructor(chars: CharArray? = null, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: () -> Boolean) : this(
+            chars?.map {
+                it.code
+            }?.toIntArray(),
+            keys, mouse, mods, durationNanos, action,
+        )
 
-        @JvmOverloads constructor(char: Char, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Short = 0, durationNanos: Long = 0L, action: () -> Boolean) : this(intArrayOf(char.code), keys, mouse, mods, durationNanos, action)
-        constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Array<Mouse>? = null, mods: Short = 0, durationNanos: Long = 0L, action: () -> Boolean) : this(unmappedKeys, keys, mouse?.map { it.value.toInt() }?.toIntArray(), mods, durationNanos, action)
-        constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Mouse? = null, mods: Short = 0, durationNanos: Long = 0L, action: () -> Boolean) : this(unmappedKeys, keys, mouse?.value?.let { intArrayOf(it.toInt()) }, mods, durationNanos, action)
-        constructor(unmappedKeys: IntArray? = null, key: Keys? = null, mouse: Array<Mouse>? = null, mods: Short = 0, durationNanos: Long = 0L, action: () -> Boolean) : this(unmappedKeys, key?.let { arrayOf(it) }, mouse, mods, durationNanos, action)
+        constructor(char: Char, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: () -> Boolean) : this(intArrayOf(char.code), keys, mouse, mods, durationNanos, action)
+        constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Array<Mouse>? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: () -> Boolean) : this(
+            unmappedKeys, keys,
+            mouse?.map {
+                it.value.toInt()
+            }?.toIntArray(),
+            mods, durationNanos, action,
+        )
+
+        constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Mouse? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: () -> Boolean) : this(
+            unmappedKeys, keys,
+            mouse?.value?.let {
+                intArrayOf(it.toInt())
+            },
+            mods, durationNanos, action,
+        )
+
+        constructor(unmappedKeys: IntArray? = null, key: Keys? = null, mouse: Array<Mouse>? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: () -> Boolean) : this(
+            unmappedKeys,
+            key?.let {
+                arrayOf(it)
+            },
+            mouse, mods, durationNanos, action,
+        )
 
         @Transient
         private var time = 0L
@@ -209,8 +254,9 @@ class KeyBinder(private val settings: Settings) {
         @Transient
         private var ran = false
 
-        fun update(c: LinkedList<Int>, k: LinkedList<Keys>, m: LinkedList<Int>, mods: Short, deltaTimeNanos: Long): Boolean {
-            if (unmappedKeys?.matches(c) != false && keys?.matches(k) != false && mouse?.matches(m) != false && this.mods == mods) {
+        fun update(c: LinkedList<Int>, k: LinkedList<Keys>, m: LinkedList<Int>, mods: Byte, deltaTimeNanos: Long): Boolean {
+            if (durationNanos == 0L && deltaTimeNanos > 0L) return false
+            if (unmappedKeys?.matches(c) != false && keys?.matches(k) != false && mouse?.matches(m) != false && this.mods.equal(mods)) {
                 if (!ran) {
                     if (durationNanos != 0L) {
                         time += deltaTimeNanos
@@ -240,10 +286,8 @@ class KeyBinder(private val settings: Settings) {
 
         fun keysToString(): String {
             val sb = StringBuilder()
-            val s = Modifiers.toStringPretty(mods)
-            if (s.isNotEmpty()) {
-                sb.append(s)
-            }
+            val s = mods.prettyName
+            sb.append(s)
             if (unmappedKeys != null) {
                 if (s.isNotEmpty()) sb.append(" + ")
                 for (c in unmappedKeys) {
@@ -291,7 +335,7 @@ class KeyBinder(private val settings: Settings) {
         private fun <T> Array<T>.matches(other: LinkedList<T>): Boolean {
             if (other.size == 0) return false
             for (i in this) {
-                if (!other.contains(i)) return false
+                if (i !in other) return false
             }
             return true
         }
@@ -299,7 +343,7 @@ class KeyBinder(private val settings: Settings) {
         private fun IntArray.matches(other: LinkedList<Int>): Boolean {
             if (other.size == 0) return false
             for (i in this) {
-                if (!other.contains(i)) return false
+                if (i !in other) return false
             }
             return true
         }

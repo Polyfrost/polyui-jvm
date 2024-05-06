@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -22,26 +22,47 @@
 package org.polyfrost.polyui.renderer
 
 import org.polyfrost.polyui.PolyUI
+import org.polyfrost.polyui.event.InputManager
 import org.polyfrost.polyui.renderer.data.Cursor
 
 /** # Window
  * This class represents the physical window that PolyUI will render to.
- * As a rendering implementation, you must:
- *  - implement all the methods
- *  - create callbacks for the event methods in PolyUI e.g. [PolyUI.resize]
- *  - create callbacks for all the event-related methods in [org.polyfrost.polyui.event.EventManager]
- *  - call [open] to start the rendering loop; this can be blocking or non-blocking. Please note that after open is called, the rendering implementation will be created. This means that in a thread-based system such as LWJGL's OpenGL, you **must** ensure that it is fully setup before exiting `init {}`.
+ * As a window implementation, you must:
+ *  - implement these methods
+ *  - call [PolyUI.resize] when the window is resized
+ *  - call [PolyUI.render] every frame, inside a rendering loop started with [open]. It may be blocking or non-blocking.
+ *  - callbacks for [InputManager.mousePressed]
+ *  - callbacks for [InputManager.mouseReleased]
+ *  - callbacks for [InputManager.mouseMoved]
+ *  - callbacks for [InputManager.mouseScrolled]
+ *  - callbacks for [InputManager.keyDown]
+ *  - callbacks for [InputManager.keyUp]
+ *  - callbacks for [InputManager.keyTyped]
+ *  - callbacks for [InputManager.filesDropped]
  */
-abstract class Window(open var width: Int, open var height: Int) {
-    /** open the window with the specified [PolyUI] instance, and then start the rendering loop. It may be blocking or non-blocking. */
+abstract class Window(open var width: Int, open var height: Int, open var pixelRatio: Float = 1f) {
+    /**
+     * open the window with the specified [PolyUI] instance, and then start the rendering loop. It may be blocking or non-blocking.
+     * Every frame, call the [PolyUI.render] function to render the UI.
+     */
     abstract fun open(polyUI: PolyUI): Window
 
     /** destroy the window. */
     abstract fun close()
 
-    /** Create the callbacks for window events.
-     * @see Window */
-    abstract fun createCallbacks()
+    /**
+     * this function hooks into the rendering loop. it is ran before a render cycle.
+     * @see postRender
+     * @since 1.1.3
+     */
+    open fun preRender(renderer: Renderer) {}
+
+    /**
+     * this function hooks into the rendering loop. it is ran after a render cycle.
+     * @see preRender
+     * @since 1.1.3
+     */
+    open fun postRender(renderer: Renderer) {}
 
     /**
      * Return true if your window supports "render pausing", a optimization technique which will not render any frames if not necessary.

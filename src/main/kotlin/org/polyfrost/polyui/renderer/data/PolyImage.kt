@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -21,52 +21,43 @@
 
 package org.polyfrost.polyui.renderer.data
 
+import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
+import org.polyfrost.polyui.renderer.data.PolyImage.Type
 import org.polyfrost.polyui.unit.Vec2
 
 /**
  * Image representation in PolyUI. The image is lazily-loaded from the [resourcePath].
  * @param resourcePath the path to the [resource][org.polyfrost.polyui.utils.getResourceStream]
- * @param size the size of the image. Specify one to respect the aspect ratio of the image.
  * @param type the [image type][Type]. This is automatically inferred from the file extension normally, but you can manually select it.
  */
 class PolyImage @JvmOverloads constructor(
     resourcePath: String,
-    size: Vec2? = null,
     val type: Type = from(resourcePath),
 ) : Resource(resourcePath) {
-    val size = size ?: Vec2(-1f, -1f)
-    inline var width: Float
-        get() = size.x
-        set(value) {
-            size.x = value
-        }
-    inline var height: Float
-        get() = size.y
-        set(value) {
-            size.y = value
-        }
-    private val prevScaleAmount = Vec2()
 
-    // asm: fix for when objects are sharing an image, and it gets scaled multiple times
-    fun rescale(scaleX: Float, scaleY: Float) {
-        if (prevScaleAmount.x == scaleX && prevScaleAmount.y == scaleY) return
-        width *= scaleX
-        height *= scaleY
-        prevScaleAmount.x = scaleX
-        prevScaleAmount.y = scaleY
-    }
+    /**
+     * Size of the image.
+     */
+    @set:ApiStatus.Internal
+    var size: Vec2.Immutable = Vec2.Immutable(-1f, -1f)
+
+    inline val width get() = size.x
+    inline val height get() = size.y
+    val invalid get() = size.x < 0f || size.y < 0f
 
     override fun toString(): String {
-        return "$type Image($resourcePath, $size)"
+        return "$type Image($resourcePath, ${if (!invalid) size.toString() else "??x??"})"
     }
 
-    override fun hashCode(): Int {
-        return resourcePath.hashCode()
-    }
+    override fun hashCode() = resourcePath.hashCode()
 
-    @Suppress("ReplaceCallWithBinaryOperator")
-    override fun equals(other: Any?): Boolean = resourcePath.equals(other)
+    override fun equals(other: Any?): Boolean {
+        if (other === this) return true
+        if (other !is PolyImage) return false
+
+        return resourcePath == other.resourcePath
+    }
 
     /**
      * Types for images in PolyUI.
@@ -127,12 +118,10 @@ class PolyImage @JvmOverloads constructor(
         @JvmOverloads
         fun getMaterialIcon(
             icon: String,
-            size: Vec2? = null,
             style: MaterialStyle = MaterialStyle.NORMAL,
         ) = PolyImage(
             "https://raw.githubusercontent.com/google/material-design-icons/master/src/" +
-                "${icon.replace('.', '/')}/${style.style}/24px.svg",
-            size,
+                    "${icon.replace('.', '/')}/${style.style}/24px.svg",
             Type.Vector,
         )
     }
