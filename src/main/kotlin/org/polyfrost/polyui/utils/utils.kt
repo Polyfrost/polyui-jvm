@@ -31,6 +31,8 @@ import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.renderer.Window
 import org.polyfrost.polyui.renderer.data.PolyImage
+import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.unit.immutable
 import kotlin.enums.EnumEntries
 import kotlin.jvm.internal.Ref
 import kotlin.math.PI
@@ -289,6 +291,8 @@ inline fun <T> T.stdout(arg: Any? = null): T {
 }
 
 inline fun String.image() = PolyImage(this)
+
+inline fun String.image(size: Vec2) = PolyImage(this).also { it.size = size.immutable() }
 
 inline fun String.translated(vararg args: Any?) = Translator.Text.Formatted(Translator.Text.Simple(this), *args)
 

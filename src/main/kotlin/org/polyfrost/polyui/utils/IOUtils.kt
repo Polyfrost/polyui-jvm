@@ -27,7 +27,6 @@ import org.polyfrost.polyui.PolyUI
 import java.io.FileNotFoundException
 import java.io.InputStream
 import java.net.HttpURLConnection
-import java.net.MalformedURLException
 import java.net.URL
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -49,16 +48,17 @@ fun getResourceStream(resourcePath: String, caller: Class<*> = PolyUI::class.jav
 
 /**
  * return a stream of the given resource, or null.
- * @param resourcePath the path to the resource. Can either be a valid [URL] (including file URL), or a [resource path][Class.getResourceAsStream].
+ * @param resourcePath the path to the resource. Can either be a valid [URL], [java.nio.file.Path] (including file URL), or a [resource path][Class.getResourceAsStream].
  * @throws java.io.IOException if an IO error occurs.
  * @see getResourceStream
  */
 fun getResourceStreamNullable(resourcePath: String, caller: Class<*> = PolyUI::class.java): InputStream? {
-    return try {
+    return if (":/" !in resourcePath) {
+        caller.getResourceAsStream(resourcePath)
+            ?: caller.getResourceAsStream("/$resourcePath")
+    } else try {
         val url = URL(resourcePath)
-        return if (url.protocol == "file") {
-            url.openStream()
-        } else {
+        if ("http" in url.protocol) {
             val connection = url.openConnection() as HttpURLConnection
             connection.requestMethod = "GET"
             connection.useCaches = true
@@ -67,13 +67,12 @@ fun getResourceStreamNullable(resourcePath: String, caller: Class<*> = PolyUI::c
             connection.connectTimeout = 5000
             connection.doOutput = true
             connection.inputStream
+        } else {
+            url.openStream()
         }
     } catch (e: Exception) {
-        if (e !is MalformedURLException) {
-            PolyUI.LOGGER.error("Failed to get resource: ${e.message}")
-        }
-        caller.getResourceAsStream(resourcePath)
-            ?: caller.getResourceAsStream("/$resourcePath")
+        PolyUI.LOGGER.error("Failed to get resource $resourcePath", e)
+        null
     }
 }
 
@@ -83,12 +82,22 @@ fun resourceExists(resourcePath: String): Boolean {
     return s != null
 }
 
-fun InputStream.toByteBuffer(close: Boolean = true): ByteBuffer {
-    val bytes = this.toByteArray(close)
+fun InputStream.toDirectByteBuffer(): ByteBuffer {
+    val bytes = this.toByteArray()
     return ByteBuffer.allocateDirect(bytes.size)
         .order(ByteOrder.nativeOrder())
-        .put(bytes)
-        .also { it.flip() }
+        .put(bytes).flip() as ByteBuffer
+}
+
+/**
+ * [toDirectByteBuffer] with a null terminator.
+ * @since 1.1.6
+ */
+fun InputStream.toDirectByteBufferNT(): ByteBuffer {
+    val bytes = this.toByteArray()
+    return ByteBuffer.allocateDirect(bytes.size + 1)
+        .order(ByteOrder.nativeOrder())
+        .put(bytes).put(0).flip() as ByteBuffer
 }
 
 /**
@@ -97,8 +106,8 @@ fun InputStream.toByteBuffer(close: Boolean = true): ByteBuffer {
  * @return The byte array of the InputStream.
  */
 @Suppress("NOTHING_TO_INLINE")
-inline fun InputStream.toByteArray(close: Boolean = true): ByteArray {
+inline fun InputStream.toByteArray(): ByteArray {
     val bytes = this.readBytes()
-    if (close) this.close()
+    this.close()
     return bytes
 }

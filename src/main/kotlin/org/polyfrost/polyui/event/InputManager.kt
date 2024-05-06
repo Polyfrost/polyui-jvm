@@ -31,7 +31,7 @@ import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.property.Settings
-import java.io.File
+import java.nio.file.Path
 
 /**
  * # InputManager
@@ -89,7 +89,7 @@ class InputManager(
      * @see focus
      * @since 1.0.3
      */
-    fun filesDropped(files: Array<File>) {
+    fun filesDropped(files: Array<Path>) {
         focused?.accept(Event.Focused.FileDrop(files))
     }
 
@@ -213,7 +213,6 @@ class InputManager(
         }
         return c
     }
-
 
 
     /** call this function to update the mouse position. */

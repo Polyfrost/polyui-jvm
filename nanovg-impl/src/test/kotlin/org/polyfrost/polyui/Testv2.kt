@@ -25,6 +25,7 @@ import org.polyfrost.polyui.component.events
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.component.withStates
 import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.impl.GLFWWindow
 import org.polyfrost.polyui.renderer.impl.NVGRenderer
 import org.polyfrost.polyui.unit.Vec2
@@ -37,7 +38,7 @@ fun main() {
     val renderer = NVGRenderer
     val polyUI = PolyUI(
         Image("polyfrost.png".image()),
-        Text("text.dark", font = PolyUI.defaultFonts.medium, fontSize = 20f),
+        Text("text.dark", font = Font("https://raw.githubusercontent.com/coreyhu/Urbanist/main/fonts/ttf/Urbanist-BlackItalic.ttf"), fontSize = 20f),
         Group(
             Button("moon.svg".image()),
             Button("face-wink.svg".image(), "button.text"),

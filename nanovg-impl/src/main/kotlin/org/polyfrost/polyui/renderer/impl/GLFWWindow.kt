@@ -40,8 +40,8 @@ import org.polyfrost.polyui.renderer.Window
 import org.polyfrost.polyui.renderer.data.Cursor
 import org.polyfrost.polyui.utils.getResourceStream
 import org.polyfrost.polyui.utils.simplifyRatio
-import org.polyfrost.polyui.utils.toByteBuffer
-import java.io.File
+import org.polyfrost.polyui.utils.toDirectByteBuffer
+import java.nio.file.Paths
 import kotlin.math.max
 
 /**
@@ -275,7 +275,7 @@ class GLFWWindow @JvmOverloads constructor(
 
         glfwSetDropCallback(handle) { _, count, names ->
             val files = Array(count) {
-                File(GLFWDropCallback.getName(names, it))
+                Paths.get(GLFWDropCallback.getName(names, it))
             }
             polyUI.inputManager.filesDropped(files)
         }
@@ -373,7 +373,7 @@ class GLFWWindow @JvmOverloads constructor(
     fun setIcon(icon: String) {
         val w = IntArray(1)
         val h = IntArray(1)
-        val data = STBImage.stbi_load_from_memory(getResourceStream(icon).toByteBuffer(), w, h, IntArray(1), 4)
+        val data = STBImage.stbi_load_from_memory(getResourceStream(icon).toDirectByteBuffer(), w, h, IntArray(1), 4)
             ?: throw Exception("error occurred while loading icon!")
         glfwSetWindowIcon(handle, GLFWImage.malloc(1).put(0, GLFWImage.malloc().set(w[0], h[0], data)))
     }

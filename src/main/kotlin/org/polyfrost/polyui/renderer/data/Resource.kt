@@ -22,138 +22,165 @@
 package org.polyfrost.polyui.renderer.data
 
 import org.jetbrains.annotations.ApiStatus
-import org.polyfrost.polyui.utils.LinkedList
 import org.polyfrost.polyui.utils.getResourceStream
-import org.polyfrost.polyui.utils.getResourceStreamNullable
+import org.polyfrost.polyui.utils.toByteArray
+import org.polyfrost.polyui.utils.toDirectByteBuffer
+import org.polyfrost.polyui.utils.toDirectByteBufferNT
 import java.io.InputStream
+import java.nio.ByteBuffer
 import java.util.concurrent.CompletableFuture
 
 /**
- * Abstract representation of a resource. This is used to lazily load resources.
+ * representation of a resource, which can be loaded asynchronously or synchronously.
  *
- * @since 0.21.1
+ * For the definition of a resource, see [getResourceStream].
+ * @property loadSync `true` if this resource should be loaded synchronously, `false` otherwise. (*optional operation*)
+ * @since 1.1.6
+ * @see load
+ * @see loadAsync
+ * @see loadDirect
  */
-abstract class Resource(val resourcePath: String) : AutoCloseable {
-    var init = false
-        private set(value) {
-            field = value
-            if (value) runCallbacks()
-        }
-
+open class Resource(val resourcePath: String, val loadSync: Boolean = ":/" !in resourcePath) {
+    @Volatile
     private var initting = false
 
-    var errored = false
-        protected set
-
-    var resettable = false
-        private set
-
-    private var _stream: InputStream? = null
-
-    private var completionCallbacks: LinkedList<Resource.() -> Unit>? = null
-
-    val stream: InputStream?
-        get() {
-            if (!init) {
-                val s = getResourceStreamNullable(resourcePath)
-                if (s == null) {
-                    errored = true
-                    return null
-                }
-                _stream = s.apply {
-                    if (markSupported()) {
-                        mark(0)
-                        resettable = true
-                    }
-                }
-                init = true
-            }
-            return _stream
-        }
-
-    fun get() = stream ?: throw NullPointerException("Resource $resourcePath not found!")
-
-    fun reset() {
-        if (resettable) {
-            _stream?.reset()
-        } else {
-            _stream?.close()
-            _stream = null
+    /**
+     * load the given resource asynchronously, mapping to definitely non-nullable type [T], calling the [consumer] with the result **on the main thread**.
+     *
+     * In case of failure, the [errorHandler] will be called with the exception.
+     * @since 1.1.6
+     * @see load
+     * @see loadAsyncDirect
+     */
+    fun <T> loadAsync(errorHandler: (Throwable) -> Unit = { throw it }, mapper: (InputStream) -> T & Any, consumer: (T & Any) -> Unit) {
+        if (initting) return
+        initting = true
+        CompletableFuture.supplyAsync { getResourceStream(resourcePath).use(mapper) }.whenComplete { it, err ->
+            if (err != null) errorHandler(err)
+            else consumer(it)
             initting = false
-            init = false
-            errored = false
         }
     }
 
-    override fun close() {
-        _stream?.close()
-        _stream = null
-        initting = false
-    }
-
-    @ApiStatus.Experimental
-    fun getAsync(exceptionHandler: (Throwable) -> Unit = { it.printStackTrace() }, callback: InputStream.() -> Unit) {
-        if (!init) {
-            if (!initting) {
-                initting = true
-                CompletableFuture.supplyAsync {
-                    getResourceStream(resourcePath)
-                }.thenAcceptAsync {
-                    _stream = it
-                    init = true
-                    callback(it)
-                }.exceptionally {
-                    exceptionHandler(it)
-                    initting = false
-                    null
-                }
-            }
-        } else {
-            callback(_stream ?: throw IllegalStateException("stream should not be null"))
+    /**
+     * load the given resource asynchronously into a new byte array, calling the [consumer] with the result **on the main thread**.
+     *
+     * In case of failure, the [errorHandler] will be called with the exception.
+     * @since 1.1.6
+     * @see load
+     * @see loadAsyncDirect
+     */
+    fun loadAsync(errorHandler: (Throwable) -> Unit = { throw it }, consumer: (ByteArray) -> Unit) {
+        if (initting) return
+        initting = true
+        CompletableFuture.supplyAsync { getResourceStream(resourcePath).toByteArray() }.whenComplete { it, err ->
+            if (err != null) errorHandler(err)
+            else consumer(it)
+            initting = false
         }
     }
 
-    @ApiStatus.Experimental
-    fun getAsyncNullable(exceptionHandler: (Throwable) -> Unit = { it.printStackTrace() }, callback: InputStream?.() -> Unit) {
-        if (!init) {
-            if (!initting) {
-                initting = true
-                CompletableFuture.supplyAsync {
-                    getResourceStreamNullable(resourcePath)
-                }.thenAcceptAsync {
-                    _stream = it
-                    init = true
-                    callback(it)
-                    runCallbacks()
-                }.exceptionally {
-                    exceptionHandler(it)
-                    initting = false
-                    null
-                }
-            }
-        } else {
-            callback(_stream)
+    /**
+     * load the given resource asynchronously into a new direct byte buffer, calling the [consumer] with the result **on the main thread**.
+     *
+     * In case of failure, the [errorHandler] will be called with the exception.
+     * @since 1.1.6
+     * @see load
+     * @see loadAsync
+     */
+    fun loadAsyncDirect(errorHandler: (Throwable) -> Unit = { throw it }, consumer: (ByteBuffer) -> Unit) {
+        if (initting) return
+        initting = true
+        CompletableFuture.supplyAsync { getResourceStream(resourcePath).toDirectByteBuffer() }.whenComplete { it, err ->
+            if (err != null) errorHandler(err)
+            else consumer(it)
+            initting = false
         }
     }
 
-    fun addCompletionCallback(callback: Resource.() -> Unit) {
-        if (init) {
-            callback()
-        } else {
-            val c = completionCallbacks ?: LinkedList<Resource.() -> Unit>().also { completionCallbacks = it }
-            c.add(callback)
+    /**
+     * load the given resource asynchronously into a new direct byte buffer, with null termination, calling the [consumer] with the result **on the main thread**.
+     *
+     * In case of failure, the [errorHandler] will be called with the exception.
+     * @since 1.1.6
+     * @see load
+     * @see loadAsync
+     */
+    fun loadAsyncDirectNT(errorHandler: (Throwable) -> Unit = { throw it }, consumer: (ByteBuffer) -> Unit) {
+        if (initting) return
+        initting = true
+        CompletableFuture.supplyAsync { getResourceStream(resourcePath).toDirectByteBufferNT() }.whenComplete { it, err ->
+            if (err != null) errorHandler(err)
+            else consumer(it)
+            initting = false
         }
     }
 
-    private fun runCallbacks() {
-        if(resettable) {
-            completionCallbacks?.fastEach { it() }
-        } else {
-            completionCallbacks?.clearing { it() }
-        }
+    /**
+     * load the given resource synchronously, mapping to definitely non-nullable type [T]. you may then perform any operations on the result.
+     *
+     * In case of failure, the [errorHandler] will be called with the exception.
+     * @since 1.1.6
+     * @see loadAsync
+     * @see loadDirect
+     */
+    inline fun <T> load(errorHandler: (Throwable) -> T & Any = { throw it }, mapper: (InputStream) -> T & Any) = try {
+        getResourceStream(resourcePath).use(mapper)
+    } catch (e: Throwable) {
+        errorHandler(e)
     }
 
-    override fun toString() = "Resource(file=$resourcePath, init=$init)"
+    /**
+     * load the given resource synchronously into a new byte array. you may then perform any operations on the result.
+     *
+     * In case of failure, the [errorHandler] will be called with the exception.
+     * @since 1.1.6
+     * @see loadAsync
+     * @see loadDirect
+     */
+    inline fun load(errorHandler: (Throwable) -> ByteArray = { throw it }) = try {
+        getResourceStream(resourcePath).toByteArray()
+    } catch (e: Throwable) {
+        errorHandler(e)
+    }
+
+    /**
+     * load the given resource synchronously into a new direct byte buffer. you may then perform any operations on the result.
+     *
+     * In case of failure, the [errorHandler] will be called with the exception.
+     * @since 1.1.6
+     * @see loadAsyncDirect
+     * @see load
+     */
+    inline fun loadDirect(errorHandler: (Throwable) -> ByteBuffer = { throw it }) = try {
+        getResourceStream(resourcePath).toDirectByteBuffer()
+    } catch (e: Throwable) {
+        errorHandler(e)
+    }
+
+    /**
+     * load the given resource synchronously into a new direct byte buffer, with null termination. you may then perform any operations on the result.
+     *
+     * In case of failure, the [errorHandler] will be called with the exception.
+     * @since 1.1.6
+     * @see loadAsyncDirect
+     * @see load
+     */
+    inline fun loadDirectNT(errorHandler: (Throwable) -> ByteBuffer = { throw it }) = try {
+        getResourceStream(resourcePath).toDirectByteBufferNT()
+    } catch (e: Throwable) {
+        errorHandler(e)
+    }
+
+    /**
+     * return the stream of this resource. **it is the caller's responsibility to close the stream.**
+     */
+    @Suppress("NOTHING_TO_INLINE")
+    @ApiStatus.Obsolete(since = "1.1.6")
+    inline fun stream() = getResourceStream(resourcePath)
+
+
+    override fun toString() = "Resource(file=$resourcePath)"
 
     override fun hashCode() = resourcePath.hashCode()
 

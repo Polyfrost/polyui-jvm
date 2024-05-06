@@ -822,7 +822,7 @@ public final class org/polyfrost/polyui/dsl/DrawableDSL$Master : org/polyfrost/p
 	public final fun setTranslator (Lorg/polyfrost/polyui/input/Translator;)V
 }
 
-public final class org/polyfrost/polyui/dsl/PolyUIDSLKt {
+public final class org/polyfrost/polyui/dsl/DslKt {
 	public static final synthetic fun polyUI (Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/polyui/PolyUI;
 }
 
@@ -866,7 +866,7 @@ public abstract interface class org/polyfrost/polyui/event/Event$Focused : org/p
 public final class org/polyfrost/polyui/event/Event$Focused$FileDrop : org/polyfrost/polyui/event/Event$Focused {
 	public fun <init> ()V
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getFiles ()[Ljava/io/File;
+	public final fun getFiles ()[Ljava/nio/file/Path;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -1023,7 +1023,7 @@ public final class org/polyfrost/polyui/event/InputManager {
 	public static synthetic fun dispatch$default (Lorg/polyfrost/polyui/event/InputManager;Lorg/polyfrost/polyui/event/Event;ZLorg/polyfrost/polyui/component/Drawable;ILjava/lang/Object;)Z
 	public final fun drop (Lorg/polyfrost/polyui/component/Drawable;)V
 	public static synthetic fun drop$default (Lorg/polyfrost/polyui/event/InputManager;Lorg/polyfrost/polyui/component/Drawable;ILjava/lang/Object;)V
-	public final fun filesDropped ([Ljava/io/File;)V
+	public final fun filesDropped ([Ljava/nio/file/Path;)V
 	public final fun focus (Lorg/polyfrost/polyui/component/Drawable;)Z
 	public final fun getFocused ()Lorg/polyfrost/polyui/component/Drawable;
 	public final fun getKeyBinder ()Lorg/polyfrost/polyui/input/KeyBinder;
@@ -1599,7 +1599,6 @@ public class org/polyfrost/polyui/renderer/data/FontFamily {
 	public fun getMedium ()Lorg/polyfrost/polyui/renderer/data/Font;
 	public fun getMediumItalic ()Lorg/polyfrost/polyui/renderer/data/Font;
 	public final fun getName ()Ljava/lang/String;
-	public final fun getPath ()Ljava/lang/String;
 	public fun getRegular ()Lorg/polyfrost/polyui/renderer/data/Font;
 	public fun getRegularItalic ()Lorg/polyfrost/polyui/renderer/data/Font;
 	public fun getSemiBold ()Lorg/polyfrost/polyui/renderer/data/Font;
@@ -1608,7 +1607,6 @@ public class org/polyfrost/polyui/renderer/data/FontFamily {
 	public fun getThin ()Lorg/polyfrost/polyui/renderer/data/Font;
 	public fun getThinItalic ()Lorg/polyfrost/polyui/renderer/data/Font;
 	public final fun has (Lorg/polyfrost/polyui/renderer/data/Font$Weight;Z)Z
-	public final fun isZip ()Z
 }
 
 public final class org/polyfrost/polyui/renderer/data/Framebuffer {
@@ -1640,7 +1638,6 @@ public final class org/polyfrost/polyui/renderer/data/PolyImage : org/polyfrost/
 	public final fun getWidth ()F
 	public fun hashCode ()I
 	public final fun setSize (Lorg/polyfrost/polyui/unit/Vec2$Immutable;)V
-	public final fun setType (Lorg/polyfrost/polyui/renderer/data/PolyImage$Type;)V
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -1672,24 +1669,30 @@ public final class org/polyfrost/polyui/renderer/data/PolyImage$Type : java/lang
 	public static fun values ()[Lorg/polyfrost/polyui/renderer/data/PolyImage$Type;
 }
 
-public abstract class org/polyfrost/polyui/renderer/data/Resource : java/lang/AutoCloseable {
-	public fun <init> (Ljava/lang/String;)V
-	public final fun addCompletionCallback (Lkotlin/jvm/functions/Function1;)V
-	public fun close ()V
+public class org/polyfrost/polyui/renderer/data/Resource {
+	public fun <init> (Ljava/lang/String;Z)V
+	public synthetic fun <init> (Ljava/lang/String;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun get ()Ljava/io/InputStream;
-	public final fun getAsync (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun getAsync$default (Lorg/polyfrost/polyui/renderer/data/Resource;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public final fun getAsyncNullable (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun getAsyncNullable$default (Lorg/polyfrost/polyui/renderer/data/Resource;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public final fun getErrored ()Z
-	public final fun getInit ()Z
-	public final fun getResettable ()Z
 	public final fun getResourcePath ()Ljava/lang/String;
-	public final fun getStream ()Ljava/io/InputStream;
 	public fun hashCode ()I
-	public final fun reset ()V
-	protected final fun setErrored (Z)V
+	public final fun isLocal ()Z
+	public final fun load (Lkotlin/jvm/functions/Function1;)[B
+	public final fun load (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+	public static synthetic fun load$default (Lorg/polyfrost/polyui/renderer/data/Resource;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)[B
+	public static synthetic fun load$default (Lorg/polyfrost/polyui/renderer/data/Resource;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun loadAsync (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public final fun loadAsync (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun loadAsync$default (Lorg/polyfrost/polyui/renderer/data/Resource;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static synthetic fun loadAsync$default (Lorg/polyfrost/polyui/renderer/data/Resource;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun loadAsyncDirect (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun loadAsyncDirect$default (Lorg/polyfrost/polyui/renderer/data/Resource;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun loadAsyncDirectNT (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun loadAsyncDirectNT$default (Lorg/polyfrost/polyui/renderer/data/Resource;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun loadDirect (Lkotlin/jvm/functions/Function1;)Ljava/nio/ByteBuffer;
+	public static synthetic fun loadDirect$default (Lorg/polyfrost/polyui/renderer/data/Resource;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ljava/nio/ByteBuffer;
+	public final fun loadDirectNT (Lkotlin/jvm/functions/Function1;)Ljava/nio/ByteBuffer;
+	public static synthetic fun loadDirectNT$default (Lorg/polyfrost/polyui/renderer/data/Resource;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ljava/nio/ByteBuffer;
+	public final fun stream ()Ljava/io/InputStream;
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -1870,10 +1873,9 @@ public final class org/polyfrost/polyui/utils/IOUtils {
 	public static final fun getResourceStreamNullable (Ljava/lang/String;Ljava/lang/Class;)Ljava/io/InputStream;
 	public static synthetic fun getResourceStreamNullable$default (Ljava/lang/String;Ljava/lang/Class;ILjava/lang/Object;)Ljava/io/InputStream;
 	public static final fun resourceExists (Ljava/lang/String;)Z
-	public static final fun toByteArray (Ljava/io/InputStream;Z)[B
-	public static synthetic fun toByteArray$default (Ljava/io/InputStream;ZILjava/lang/Object;)[B
-	public static final fun toByteBuffer (Ljava/io/InputStream;Z)Ljava/nio/ByteBuffer;
-	public static synthetic fun toByteBuffer$default (Ljava/io/InputStream;ZILjava/lang/Object;)Ljava/nio/ByteBuffer;
+	public static final fun toByteArray (Ljava/io/InputStream;)[B
+	public static final fun toDirectByteBuffer (Ljava/io/InputStream;)Ljava/nio/ByteBuffer;
+	public static final fun toDirectByteBufferNT (Ljava/io/InputStream;)Ljava/nio/ByteBuffer;
 }
 
 public final class org/polyfrost/polyui/utils/LinkedList : java/lang/Cloneable, java/util/List, kotlin/jvm/internal/markers/KMutableList {
@@ -2018,6 +2020,7 @@ public final class org/polyfrost/polyui/utils/Utils {
 	public static final fun getRed (I)I
 	public static final fun identityHashCode (Ljava/lang/Object;)I
 	public static final fun image (Ljava/lang/String;)Lorg/polyfrost/polyui/renderer/data/PolyImage;
+	public static final fun image (Ljava/lang/String;Lorg/polyfrost/polyui/unit/Vec2;)Lorg/polyfrost/polyui/renderer/data/PolyImage;
 	public static final fun linkedListOf ([Ljava/lang/Object;)Lorg/polyfrost/polyui/utils/LinkedList;
 	public static final fun maybeRemove (Ljava/util/Map;Ljava/lang/Object;Z)Ljava/lang/Object;
 	public static final fun min3 (III)I

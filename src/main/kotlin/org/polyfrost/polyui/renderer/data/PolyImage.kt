@@ -33,7 +33,7 @@ import org.polyfrost.polyui.unit.Vec2
  */
 class PolyImage @JvmOverloads constructor(
     resourcePath: String,
-    var type: Type = from(resourcePath),
+    val type: Type = from(resourcePath),
 ) : Resource(resourcePath) {
 
     /**

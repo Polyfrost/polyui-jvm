@@ -24,15 +24,18 @@ package org.polyfrost.polyui.renderer.data
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.utils.getResourceStreamNullable
 import org.polyfrost.polyui.utils.resourceExists
-import java.io.File
 import java.net.URI
+import java.nio.file.Paths
 import java.util.zip.ZipInputStream
+import kotlin.io.path.createDirectories
+import kotlin.io.path.exists
+import kotlin.io.path.outputStream
 
 /**
  * Represents a font family, which consists of multiple font styles.
  *
  * @property name The name of the font family.
- * @property path The path to the font files or font zip file.
+ * @param path The path to the font files or font zip file.
  * @property fallback The fallback font family to use if a particular font style is not found in this font family.
  * If not provided, the [default fallback font family][PolyUI.defaultFonts] will be used.
  * @since 0.22.0
@@ -40,30 +43,28 @@ import java.util.zip.ZipInputStream
 @Suppress("unused")
 open class FontFamily(
     val name: String,
-    val path: String,
+    path: String,
     private val fallback: FontFamily? = null,
 ) {
-    @Transient
-    val isZip = path.endsWith(".zip")
     protected val dir: URI by lazy {
+        if (!path.endsWith(".zip")) return@lazy URI.create(path)
         val start = System.nanoTime()
-        val f = File(System.getProperty("java.io.tmpdir")).resolve("polyui-fonts-$name")
-        f.deleteOnExit()
-        PolyUI.LOGGER.info("Extracting font $name to temporary directory... ($f)")
-        f.mkdirs()
+        val p = Paths.get(System.getProperty("java.io.tmpdir")).resolve("polyui-fonts-$name")
+        PolyUI.LOGGER.info("Extracting font $name to temporary directory... ($p)")
+        p.createDirectories()
         val zip =
             ZipInputStream(getResourceStreamNullable(path)?.buffered() ?: throw IllegalArgumentException("Font zip file $path not found!"))
         while (true) {
             val entry = zip.nextEntry ?: break
-            val file = f.resolve(entry.name)
-            file.createNewFile()
-            file.outputStream().buffered().use { out ->
+            val output = p.resolve(entry.name)
+            if (output.exists()) continue
+            output.outputStream().buffered().use { out ->
                 zip.copyTo(out)
             }
         }
         zip.close()
         PolyUI.LOGGER.info("\t\t> took ${(System.nanoTime() - start) / 1_000_000.0}ms")
-        f.toURI()
+        p.toUri()
     }
 
     open val thin by lazy { fload(Font.Weight.Thin, false) }
@@ -148,7 +149,7 @@ open class FontFamily(
     protected open fun fload(weight: Font.Weight, italic: Boolean, origin: Font.Weight? = null): Font {
         val style = getStyle(weight, italic)
         val p = "$name-$style.ttf"
-        val address = if (isZip) "$dir$p" else "$path/$p"
+        val address = dir.resolve(p).toString()
         return if (!resourceExists(address)) {
             val fb = weight.fb
             return if (fb == null) {

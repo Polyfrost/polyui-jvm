@@ -25,7 +25,7 @@ import org.polyfrost.polyui.event.Event.*
 import org.polyfrost.polyui.event.Event.Lifetime.*
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Modifiers
-import java.io.File
+import java.nio.file.Path
 import org.polyfrost.polyui.input.Mouse as MouseUtils
 
 /**
@@ -334,7 +334,7 @@ interface Event {
          * In order to receive it, your drawable must have focus at the time of drop.
          * @since 1.0.3
          */
-        class FileDrop internal constructor(val files: Array<File>) : Focused {
+        class FileDrop internal constructor(val files: Array<Path>) : Focused {
             constructor() : this(arrayOf())
 
             override fun toString() = "FileDrop($files)"

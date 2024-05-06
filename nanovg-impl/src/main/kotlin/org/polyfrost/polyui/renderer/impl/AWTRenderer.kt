@@ -31,7 +31,6 @@ import org.polyfrost.polyui.unit.Vec2
 import java.awt.*
 import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
-import java.io.InputStreamReader
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.IdentityHashMap
@@ -116,13 +115,13 @@ class AWTRenderer : Renderer {
     }
 
     override fun text(font: Font, x: Float, y: Float, text: String, color: Color, fontSize: Float) {
-        g2d.font = (fonts.getOrPut(font) { java.awt.Font.createFont(java.awt.Font.TRUETYPE_FONT, font.stream) }).deriveFont(fontSize)
+        g2d.font = (fonts.getOrPut(font) { java.awt.Font.createFont(java.awt.Font.TRUETYPE_FONT, font.stream()) }).deriveFont(fontSize)
         g2d.color = colors.getOrPut(color) { Color(color.argb, true) }
         g2d.drawString(text, x, y + fontSize)
     }
 
     override fun textBounds(font: Font, text: String, fontSize: Float): Vec2 {
-        g2d.font = (fonts.getOrPut(font) { java.awt.Font.createFont(java.awt.Font.TRUETYPE_FONT, font.stream) }).deriveFont(fontSize)
+        g2d.font = (fonts.getOrPut(font) { java.awt.Font.createFont(java.awt.Font.TRUETYPE_FONT, font.stream()) }).deriveFont(fontSize)
         val bounds = g2d.fontMetrics.getStringBounds(text, g2d)
         return Vec2(bounds.width.toFloat(), fontSize)
     }
@@ -134,7 +133,7 @@ class AWTRenderer : Renderer {
     private fun getImage(image: PolyImage): Image {
         return images.getOrPut(image) {
             if (image.type == PolyImage.Type.Vector) {
-                val d = InputStreamReader(image.stream!!).readText()
+                val d = String(image.load())
                 val svg = NanoSVG.nsvgParse(d, "px", 96f) ?: throw Exception("Failed to open SVG: $image (invalid data?)")
                 val raster = NanoSVG.nsvgCreateRasterizer()
                 val w = svg.width().toInt()
@@ -148,7 +147,7 @@ class AWTRenderer : Renderer {
                 image.size = Vec2.Immutable(w.toFloat(), h.toFloat())
                 return@getOrPut img
             }
-            val img = ImageIO.read(image.stream)
+            val img = ImageIO.read(image.stream())
             image.size = Vec2.Immutable(img.width.toFloat(), img.height.toFloat())
             img
         }

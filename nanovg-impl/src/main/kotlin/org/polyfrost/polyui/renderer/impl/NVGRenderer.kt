@@ -36,8 +36,8 @@ import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.data.Framebuffer
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.utils.LinkedList
 import org.polyfrost.polyui.utils.cl1
-import org.polyfrost.polyui.utils.toByteBuffer
 import java.nio.ByteBuffer
 import java.util.IdentityHashMap
 import kotlin.math.min
@@ -50,20 +50,41 @@ object NVGRenderer : Renderer {
     private val images = HashMap<PolyImage, Int>()
     private val svgs = HashMap<PolyImage, Pair<NSVGImage, HashMap<Int, Int>>>()
     private val fonts = IdentityHashMap<Font, NVGFont>()
+    private var defaultFont: NVGFont? = null
+    private var defaultImage = 0
     private var alphaCap = 1f
     private var vg: Long = -1L
     private var raster: Long = -1L
     private var drawing = false
+    private val queue = LinkedList<() -> Unit>()
+    private val PIXELS: ByteBuffer = run {
+        val arr = "px\u0000".toByteArray()
+        MemoryUtil.memAlloc(arr.size).put(arr).flip() as ByteBuffer
+    }
 
     override fun init() {
         vg = nvgCreate(NVG_ANTIALIAS)
         raster = nsvgCreateRasterizer()
         require(vg != -1L) { "Could not initialize NanoVG" }
         require(raster != -1L) { "Could not initialize NanoSVG" }
+
+        val font = PolyUI.defaultFonts.regular
+        val fdata = font.loadDirect()
+        val fit = NVGFont(nvgCreateFontMem(vg, font.name, fdata, false), fdata)
+        this.defaultFont = fit
+        fonts[font] = fit
+
+        val img = PolyUI.defaultImage
+        val idata = img.loadDirect()
+        val iit = nvgCreateImageRGBA(vg, img.width.toInt(), img.height.toInt(), 0, idata)
+        require(iit != 0) { "NanoVG failed to initialize default image" }
+        images[img] = iit
+        this.defaultImage = iit
     }
 
     override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {
         if (drawing) throw IllegalStateException("Already drawing")
+        queue.fastRemoveIf { it(); true }
         nvgBeginFrame(vg, width, height, pixelRatio)
         drawing = true
     }
@@ -118,7 +139,7 @@ object NVGRenderer : Renderer {
         if (color.transparent) return
         nvgBeginPath(vg)
         nvgFontSize(vg, fontSize)
-        nvgFontFaceId(vg, getFont(font).id)
+        nvgFontFaceId(vg, getFont(font))
         nvgTextAlign(vg, NVG_ALIGN_LEFT or NVG_ALIGN_TOP)
         color(color)
         nvgFillColor(vg, nvgColor)
@@ -304,7 +325,7 @@ object NVGRenderer : Renderer {
             text += ' '
         }
         val out = FloatArray(4)
-        nvgFontFaceId(vg, getFont(font).id)
+        nvgFontFaceId(vg, getFont(font))
         nvgTextAlign(vg, NVG_ALIGN_TOP or NVG_ALIGN_LEFT)
         nvgFontSize(vg, fontSize)
         nvgTextBounds(vg, 0f, 0f, text, out)
@@ -415,36 +436,68 @@ object NVGRenderer : Renderer {
         return true
     }
 
-    private fun getFont(font: Font): NVGFont {
-        return fonts.getOrPut(font) {
-            val data = font.stream?.toByteBuffer() ?: run {
-                PolyUI.defaultFonts.regular.get().toByteBuffer(false)
+    private fun getFont(font: Font): Int {
+        if (font.loadSync) return getFontSync(font)
+        return fonts.getOrElse(font) {
+            font.loadAsyncDirect(errorHandler = { ; }) {
+                queue.add { fonts[font] = NVGFont(nvgCreateFontMem(vg, font.name, it, false), it) }
             }
-            val ft = nvgCreateFontMem(vg, font.name, data, false)
-            NVGFont(ft, data)
-        }
+            defaultFont!!
+        }.id
+    }
+
+    private fun getFontSync(font: Font): Int {
+        return fonts.getOrPut(font) {
+            val data = font.loadDirect(errorHandler = { return@getOrPut defaultFont!! })
+            NVGFont(nvgCreateFontMem(vg, font.name, data, false), data)
+        }.id
     }
 
     private fun getImage(image: PolyImage, width: Float, height: Float): Int {
-        val vec = fixImage(image)
+        if (image.loadSync) return getImageSync(image, width, height)
         return when (image.type) {
             PolyImage.Type.Vector -> {
-                val (svg, map) = svgs[image] ?: return svgLoad(image, vec)
+                val (svg, map) = svgs.getOrElse(image) {
+                    image.loadAsyncDirectNT(errorHandler = { ; }) {
+                        queue.add { svgLoad(image, it) }
+                    }
+                    return defaultImage
+                }
                 if (image.invalid) image.size = Vec2.Immutable(svg.width(), svg.height())
                 map.getOrPut(width.hashCode() * 31 + height.hashCode()) { svgResize(svg, width, height) }
             }
 
             PolyImage.Type.Raster -> {
-                images.getOrPut(image) { loadImage(image) }
+                images.getOrElse(image) {
+                    image.loadAsyncDirect {
+                        queue.add { images[image] = loadImage(image, it) }
+                    }
+                    defaultImage
+                }
             }
 
-            else -> throw NoWhenBranchMatchedException("Impossible")
+            else -> throw NoWhenBranchMatchedException("Please specify image type for $image")
         }
     }
 
-    private fun svgLoad(image: PolyImage, vec: String?): Int {
-        val raw = vec ?: image.stream?.bufferedReader()?.readText() ?: throw NullPointerException()
-        val svg = nsvgParse(raw, "px", 96f) ?: throw IllegalStateException("Failed to parse SVG: ${image.resourcePath}")
+    private fun getImageSync(image: PolyImage, width: Float, height: Float): Int {
+        return when (image.type) {
+            PolyImage.Type.Vector -> {
+                val (svg, map) = svgs[image] ?: return svgLoad(image, image.loadDirectNT())
+                if (image.invalid) image.size = Vec2.Immutable(svg.width(), svg.height())
+                map.getOrPut(width.hashCode() * 31 + height.hashCode()) { svgResize(svg, width, height) }
+            }
+
+            PolyImage.Type.Raster -> {
+                images.getOrPut(image) { loadImage(image, image.loadDirect()) }
+            }
+
+            else -> throw NoWhenBranchMatchedException("Please specify image type for $image")
+        }
+    }
+
+    private fun svgLoad(image: PolyImage, data: ByteBuffer): Int {
+        val svg = nsvgParse(data, PIXELS, 96f) ?: throw IllegalStateException("Failed to parse SVG: ${image.resourcePath}")
         image.size = Vec2.Immutable(svg.width(), svg.height())
         val map = HashMap<Int, Int>(2)
         val o = svgResize(svg, svg.width(), svg.height())
@@ -462,24 +515,10 @@ object NVGRenderer : Renderer {
         return nvgCreateImageRGBA(vg, wi, hi, 0, dst)
     }
 
-    private fun fixImage(image: PolyImage): String? {
-        if (image.type != PolyImage.Type.Unknown) return null
-        val stream = image.stream ?: throw NullPointerException()
-        val vec = stream.bufferedReader().readText()
-        return if (vec.startsWith("<svg")) {
-            image.type = PolyImage.Type.Vector
-            vec
-        } else {
-            image.type = PolyImage.Type.Raster
-            null
-        }
-    }
-
-    private fun loadImage(image: PolyImage): Int {
-        val stream = image.stream ?: PolyUI.defaultImage.stream ?: throw NullPointerException("default not available")
+    private fun loadImage(image: PolyImage, data: ByteBuffer): Int {
         val w = IntArray(1)
         val h = IntArray(1)
-        val d = stbi_load_from_memory(stream.toByteBuffer(true), w, h, IntArray(1), 4) ?: throw IllegalStateException("Failed to load image ${image.resourcePath}: ${stbi_failure_reason()}")
+        val d = stbi_load_from_memory(data, w, h, IntArray(1), 4) ?: throw IllegalStateException("Failed to load image ${image.resourcePath}: ${stbi_failure_reason()}")
         image.size = Vec2.Immutable(w[0].toFloat(), h[0].toFloat())
         return nvgCreateImageRGBA(vg, w[0], h[0], 0, d)
     }
