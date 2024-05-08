@@ -482,9 +482,7 @@ public abstract class org/polyfrost/polyui/component/Drawable : java/lang/Clonea
 	public final fun addChild (Lorg/polyfrost/polyui/component/Drawable;Z)V
 	public final fun addChild ([Lorg/polyfrost/polyui/component/Drawable;)V
 	public static synthetic fun addChild$default (Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/component/Drawable;ZILjava/lang/Object;)V
-	public final fun addEventHandler (Lorg/polyfrost/polyui/component/Drawable;Ljava/lang/Class;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Drawable;
 	public final fun addEventHandler (Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/event/Event;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Drawable;
-	public final fun addEventhandler (Lorg/polyfrost/polyui/component/Drawable;Ljava/lang/Class;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Drawable;
 	public final fun addEventhandler (Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/event/Event;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Drawable;
 	public final fun addOperation (Lorg/polyfrost/polyui/operations/DrawableOp;)Z
 	public final fun addOperation ([Lorg/polyfrost/polyui/operations/DrawableOp;)V
@@ -871,7 +869,7 @@ public final class org/polyfrost/polyui/event/Event$Focused$Gained : org/polyfro
 }
 
 public final class org/polyfrost/polyui/event/Event$Focused$KeyPressed : org/polyfrost/polyui/event/Event$Focused {
-	public synthetic fun <init> (Lorg/polyfrost/polyui/input/Keys;BLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> ()V
 	public final fun getKey ()Lorg/polyfrost/polyui/input/Keys;
 	public final fun getMods-V_44FwM ()B
 	public fun toString ()Ljava/lang/String;
@@ -879,7 +877,7 @@ public final class org/polyfrost/polyui/event/Event$Focused$KeyPressed : org/pol
 }
 
 public final class org/polyfrost/polyui/event/Event$Focused$KeyReleased : org/polyfrost/polyui/event/Event$Focused {
-	public synthetic fun <init> (Lorg/polyfrost/polyui/input/Keys;BLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> ()V
 	public final fun getKey ()Lorg/polyfrost/polyui/input/Keys;
 	public final fun getMods-V_44FwM ()B
 	public fun toString ()Ljava/lang/String;
@@ -887,7 +885,7 @@ public final class org/polyfrost/polyui/event/Event$Focused$KeyReleased : org/po
 }
 
 public final class org/polyfrost/polyui/event/Event$Focused$KeyTyped : org/polyfrost/polyui/event/Event$Focused {
-	public synthetic fun <init> (CBLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> ()V
 	public final fun getKey ()C
 	public final fun getMods-V_44FwM ()B
 	public fun toString ()Ljava/lang/String;
@@ -899,7 +897,6 @@ public final class org/polyfrost/polyui/event/Event$Focused$Lost : org/polyfrost
 
 public final class org/polyfrost/polyui/event/Event$Focused$UnmappedInput : org/polyfrost/polyui/event/Event$Focused {
 	public fun <init> ()V
-	public synthetic fun <init> (IZBLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getCode ()I
 	public final fun getDown ()Z
 	public final fun getMods-V_44FwM ()B
@@ -936,14 +933,22 @@ public final class org/polyfrost/polyui/event/Event$Lifetime$Removed : org/polyf
 public abstract interface class org/polyfrost/polyui/event/Event$Mouse : org/polyfrost/polyui/event/Event {
 }
 
-public final class org/polyfrost/polyui/event/Event$Mouse$Clicked : org/polyfrost/polyui/event/Event$Mouse {
-	public synthetic fun <init> (IIBILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (IIBLkotlin/jvm/internal/DefaultConstructorMarker;)V
+public abstract class org/polyfrost/polyui/event/Event$Mouse$ButtonBase : org/polyfrost/polyui/event/Event$Mouse {
+	public synthetic fun <init> (IFFBLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
 	public final fun getButton ()I
-	public final fun getClicks ()I
 	public final fun getMods-V_44FwM ()B
 	public final fun getX ()F
 	public final fun getY ()F
+	public fun hashCode ()I
+}
+
+public final class org/polyfrost/polyui/event/Event$Mouse$Clicked : org/polyfrost/polyui/event/Event$Mouse$ButtonBase {
+	public synthetic fun <init> (IIBILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (IIBLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getClicks ()I
+	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -959,21 +964,15 @@ public final class org/polyfrost/polyui/event/Event$Mouse$Exited : org/polyfrost
 	public static final field INSTANCE Lorg/polyfrost/polyui/event/Event$Mouse$Exited;
 }
 
-public final class org/polyfrost/polyui/event/Event$Mouse$Pressed : org/polyfrost/polyui/event/Event$Mouse {
-	public fun <init> (I)V
-	public final fun getButton ()I
-	public final fun getMods-V_44FwM ()B
-	public final fun getX ()F
-	public final fun getY ()F
+public final class org/polyfrost/polyui/event/Event$Mouse$Pressed : org/polyfrost/polyui/event/Event$Mouse$ButtonBase {
+	public synthetic fun <init> (IBILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (IBLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class org/polyfrost/polyui/event/Event$Mouse$Released : org/polyfrost/polyui/event/Event$Mouse {
-	public fun <init> (I)V
-	public final fun getButton ()I
-	public final fun getMods-V_44FwM ()B
-	public final fun getX ()F
-	public final fun getY ()F
+public final class org/polyfrost/polyui/event/Event$Mouse$Released : org/polyfrost/polyui/event/Event$Mouse$ButtonBase {
+	public synthetic fun <init> (IBILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (IBLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun toString ()Ljava/lang/String;
 }
 

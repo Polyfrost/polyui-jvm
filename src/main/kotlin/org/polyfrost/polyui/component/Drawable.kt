@@ -36,7 +36,6 @@ import org.polyfrost.polyui.operations.*
 import org.polyfrost.polyui.renderer.data.Framebuffer
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.*
-import java.util.IdentityHashMap
 
 /**
  * # Drawable
@@ -123,7 +122,7 @@ abstract class Drawable(
      */
     var rawResize = false
 
-    private var eventHandlers: MutableMap<Class<out Event>, LinkedList<(Drawable.(Event) -> Boolean)>>? = null
+    private var eventHandlers: MutableMap<Any, LinkedList<(Drawable.(Event) -> Boolean)>>? = null
 
     /**
      * This is the name of this drawable, and it will be consistent over reboots of the program, so you can use it to get drawables from a layout by ID, e.g:
@@ -660,7 +659,9 @@ abstract class Drawable(
                 return true
             }
         }
-        eventHandlers?.get(event::class.java)?.fastEach {
+        val eh = eventHandlers ?: return false
+        val handlers = eh[event::class.java] ?: eh[event] ?: return false
+        handlers.fastEach {
             if (it(this, event)) return true
         }
         return false
@@ -977,27 +978,26 @@ abstract class Drawable(
     operator fun get(x: Float, y: Float) = children?.first { it.isInside(x, y) } ?: throw NoSuchElementException("no children on $this")
 
     @OverloadResolutionByLambdaReturnType
-    fun <E : Event, S : Drawable> S.addEventHandler(event: Class<E>, handler: S.(E) -> Boolean): S {
-        if (!acceptsInput && !Event.Lifetime::class.java.isAssignableFrom(event)) acceptsInput = true
-        val ev = eventHandlers ?: IdentityHashMap(8)
-        val ls = ev.getOrPut(event) { LinkedList() }
+    fun <E : Event, S : Drawable> S.addEventHandler(event: E, handler: S.(E) -> Boolean): S {
+        if (!acceptsInput && event !is Event.Lifetime) acceptsInput = true
+        val ev = eventHandlers ?: HashMap(8)
+        // asm: non-specific events will not override hashCode, so identityHashCode will return the same
+        val ls = if (event.hashCode() == System.identityHashCode(event)) ev.getOrPut(event::class.java) { LinkedList() }
+        else ev.getOrPut(event) { LinkedList() }
         @Suppress("UNCHECKED_CAST")
         ls.add(handler as Drawable.(Event) -> Boolean)
         eventHandlers = ev
         return this
     }
 
-    @OverloadResolutionByLambdaReturnType
-    fun <E : Event, S : Drawable> S.addEventHandler(event: E, handler: S.(E) -> Boolean) = addEventHandler(event::class.java, handler)
-
     @JvmName("addEventhandler")
     @OverloadResolutionByLambdaReturnType
-    inline fun <E : Event, S : Drawable> S.addEventHandler(event: E, crossinline handler: S.(E) -> Unit) = addEventHandler(event::class.java) { handler(this, it); true }
-
-    @JvmName("addEventhandler")
-    @OverloadResolutionByLambdaReturnType
-    inline fun <E : Event, S : Drawable> S.addEventHandler(event: Class<E>, crossinline handler: S.(E) -> Unit): S = addEventHandler(event) { handler(this, it); true }
+    inline fun <E : Event, S : Drawable> S.addEventHandler(event: E, crossinline handler: S.(E) -> Unit): S = addEventHandler(event) { handler(this, it); true }
 
     // asm: uses java class because bootstrapping reflect for this is not worth the slightly better syntax tbh
+    /**
+     * returns `true` if this drawable has any [non-specific][Event] event handlers registered for it.
+     * @since 1.1.61
+     */
     fun hasListenersFor(event: Class<out Event>) = eventHandlers?.containsKey(event) ?: false
 }

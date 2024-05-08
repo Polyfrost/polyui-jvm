@@ -21,6 +21,7 @@
 
 package org.polyfrost.polyui.event
 
+import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.event.Event.*
 import org.polyfrost.polyui.event.Event.Lifetime.*
 import org.polyfrost.polyui.input.Keys
@@ -35,12 +36,14 @@ import org.polyfrost.polyui.input.Mouse as MouseUtils
  * [text input changes][Change.Text], [initialization][Lifetime.Init]
  * and [destruction][Lifetime.Removed] of components are communicated through events.
  *
- * Some events are specific, requiring [constructor parameters][Mouse.Clicked.button] to ensure that for example, only single,
- * left-click events are handled by any given handler, whereas others are non-specific, like [Focused.UnmappedInput] and receive
- * any matching event of the type.
- *
  * These events can be dispatched by your own components, and you can add your own events - though PolyUI comes with 22 events by default.
  *
+ * ## event specificity
+ * Some events are specific, requiring [constructor parameters][Mouse.Clicked.button] to ensure that for example, only single,
+ * left-click events are handled by any given handler. others are non-specific, like [Focused.UnmappedInput] and receive
+ * any matching event of the type.
+ *
+ * by default, an event is non-specific. in order to make it specific, override the [equals] and [hashCode] methods.
  */
 interface Event {
     /**
@@ -54,24 +57,53 @@ interface Event {
      * @see Mouse.Exited
      */
     interface Mouse : Event {
-        class Pressed internal constructor(val button: Int, val x: Float, val y: Float, val mods: Modifiers) : Mouse {
-            constructor(button: Int) : this(button, 0f, 0f, Modifiers(0))
+        abstract class ButtonBase(val button: Int, val x: Float, val y: Float, val mods: Modifiers) : Mouse {
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (javaClass != other?.javaClass) return false
+
+                other as ButtonBase
+
+                if (button != other.button) return false
+                if (mods != other.mods) return false
+                return true
+            }
+
+            override fun hashCode(): Int {
+                var result = button
+                result = 31 * result + mods.hashCode()
+                return result
+            }
+        }
+
+        class Pressed internal constructor(button: Int, x: Float, y: Float, mods: Modifiers) : ButtonBase(button, x, y, mods) {
+            constructor(button: Int, mods: Modifiers = Modifiers(0)) : this(button, 0f, 0f, mods)
 
             override fun toString(): String =
                 "MousePressed(($x, $y), ${MouseUtils.toStringPretty(MouseUtils.fromValue(button), mods)})"
         }
 
-        class Released internal constructor(val button: Int, val x: Float, val y: Float, val mods: Modifiers) : Mouse {
-            constructor(button: Int) : this(button, 0f, 0f, Modifiers(0))
+        class Released internal constructor(button: Int, x: Float, y: Float, mods: Modifiers) : ButtonBase(button, x, y, mods) {
+            constructor(button: Int, mods: Modifiers = Modifiers(0)) : this(button, 0f, 0f, mods)
 
             override fun toString(): String =
                 "MouseReleased(($x, $y), ${MouseUtils.toStringPretty(MouseUtils.fromValue(button), mods)})"
         }
 
-        class Clicked internal constructor(val button: Int, val x: Float, val y: Float, val clicks: Int, val mods: Modifiers) : Mouse {
+        class Clicked internal constructor(button: Int, x: Float, y: Float, val clicks: Int, mods: Modifiers) : ButtonBase(button, x, y, mods) {
             constructor(button: Int, amountClicks: Int = 1, mods: Modifiers = Modifiers(0)) : this(button, 0f, 0f, amountClicks, mods)
 
-            override fun toString(): String = "MouseClicked x$clicks($x x $y, ${MouseUtils.toStringPretty(MouseUtils.fromValue(button), mods)})"
+            override fun hashCode(): Int {
+                var result = super.hashCode()
+                result = 31 * result + clicks
+                return result
+            }
+
+            override fun equals(other: Any?): Boolean {
+                return super.equals(other) && other is Clicked && clicks == other.clicks
+            }
+
+            override fun toString(): String = "MouseClicked x$clicks(($x, $y), ${MouseUtils.toStringPretty(MouseUtils.fromValue(button), mods)})"
         }
 
         class Scrolled internal constructor(val amountX: Float, val amountY: Float, val mods: Modifiers) : Mouse {
@@ -139,15 +171,15 @@ interface Event {
             cancelled = true
         }
 
-        class Text(val text: String) : Change() {
+        class Text @ApiStatus.Internal constructor(val text: String) : Change() {
             constructor() : this("")
         }
 
-        class Number(val amount: kotlin.Number) : Change() {
+        class Number @ApiStatus.Internal constructor(val amount: kotlin.Number) : Change() {
             constructor() : this(0)
         }
 
-        class State(val state: Boolean) : Change() {
+        class State @ApiStatus.Internal constructor(val state: Boolean) : Change() {
             constructor() : this(false)
         }
     }
@@ -175,7 +207,9 @@ interface Event {
          * @see [Keys]
          * @see [Modifiers]
          */
-        class KeyTyped(val key: Char, val mods: Modifiers) : Focused {
+        class KeyTyped internal constructor(val key: Char, val mods: Modifiers) : Focused {
+            constructor() : this(0.toChar(), Modifiers(0))
+
             override fun toString() = "KeyTyped(${Keys.toStringPretty(key, mods)})"
         }
 
@@ -185,22 +219,26 @@ interface Event {
          * @see [Keys]
          * @see [Modifiers]
          */
-        class KeyPressed(val key: Keys, val mods: Modifiers) : Focused {
+        class KeyPressed internal constructor(val key: Keys, val mods: Modifiers) : Focused {
+            constructor() : this(Keys.UNKNOWN, Modifiers(0))
+
             override fun toString(): String = "KeyPressed(${Keys.toString(key, mods)})"
 
             fun toStringPretty(): String = "KeyPressed(${Keys.toStringPretty(key, mods)})"
         }
 
-        class KeyReleased(val key: Keys, val mods: Modifiers) : Focused {
+        class KeyReleased internal constructor(val key: Keys, val mods: Modifiers) : Focused {
+            constructor() : this(Keys.UNKNOWN, Modifiers(0))
+
             override fun toString(): String = "KeyReleased(${Keys.toString(key, mods)})"
 
             fun toStringPretty(): String = "KeyReleased(${Keys.toStringPretty(key, mods)})"
         }
 
-        class UnmappedInput(val code: Int, val down: Boolean, val mods: Modifiers) : Focused {
+        class UnmappedInput internal constructor(val code: Int, val down: Boolean, val mods: Modifiers) : Focused {
             constructor() : this(0, false, Modifiers(0))
 
-            override fun toString(): String = "UnmappedInput(key=$code, down=$down)"
+            override fun toString(): String = "UnmappedInput(key=$code, down=$down, mods=$mods)"
         }
 
         /**

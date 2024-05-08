@@ -21,15 +21,19 @@
 
 package org.polyfrost.polyui
 
+import org.polyfrost.polyui.animate.Animations
+import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.events
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.component.withStates
 import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.operations.Recolor
 import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.impl.GLFWWindow
 import org.polyfrost.polyui.renderer.impl.NVGRenderer
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
+import org.polyfrost.polyui.unit.ms
 import org.polyfrost.polyui.utils.image
 import kotlin.random.Random
 
@@ -41,7 +45,15 @@ fun main() {
         Text("text.dark", font = Font("https://raw.githubusercontent.com/coreyhu/Urbanist/main/fonts/ttf/Urbanist-BlackItalic.ttf"), fontSize = 20f),
         Group(
             Button("moon.svg".image()),
-            Button("face-wink.svg".image(), "button.text"),
+            Button("face-wink.svg".image(), "button.text").events {
+                Event.Mouse.Clicked(0, amountClicks = 2) then {
+                    Recolor(
+                        this,
+                        PolyColor(Random.nextFloat(), Random.nextFloat(), Random.nextFloat(), 1f),
+                        Animations.EaseInOutQuad.create(0.8.ms)
+                    ).add()
+                }
+            },
             Switch(size = 28f),
             Checkbox(size = 28f),
         ),
