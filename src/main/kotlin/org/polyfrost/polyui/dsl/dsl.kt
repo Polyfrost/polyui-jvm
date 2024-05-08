@@ -128,4 +128,4 @@ private annotation class PolyUIDSL
 @PolyUIDSL
 @JvmSynthetic
 @ApiStatus.Experimental
-fun polyUI(block: DrawableDSL.Master.() -> Unit) = DrawableDSL.Master().apply(block).build()
+inline fun polyUI(block: DrawableDSL.Master.() -> Unit) = DrawableDSL.Master().apply(block).build()

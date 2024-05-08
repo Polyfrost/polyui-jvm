@@ -77,9 +77,11 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         inline get() = _translated.string
         set(value) {
             if (_translated.string == value) return
-            val ev = Event.Change.Text(value)
-            accept(ev)
-            if (ev.cancelled) return
+            if (hasListenersFor(Event.Change.Text::class.java)) {
+                val ev = Event.Change.Text(value)
+                accept(ev)
+                if (ev.cancelled) return
+            }
             _translated.string = value
             if (initialized) updateTextBounds()
         }

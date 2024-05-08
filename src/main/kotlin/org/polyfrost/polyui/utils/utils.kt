@@ -298,8 +298,6 @@ inline fun String.translated(vararg args: Any?) = Translator.Text.Formatted(Tran
 
 inline fun String.translated(): Translator.Text = Translator.Text.Simple(this)
 
-inline fun Any?.identityHashCode() = System.identityHashCode(this)
-
 fun mods(vararg mods: KeyModifiers): Modifiers {
     var i = 0
     for (mod in mods) {

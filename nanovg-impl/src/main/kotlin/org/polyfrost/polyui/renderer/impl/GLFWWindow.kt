@@ -96,24 +96,27 @@ class GLFWWindow @JvmOverloads constructor(
 
     init {
         if (Platform.get() == Platform.MACOSX && enableMacOSFix) {
-            val now = System.nanoTime()
-            LOGGER.warn("macOS detected: checking isMainThread()... (disable with -Dpolyui.glfwnomacfix)")
-            try {
-                // kotlin copy of org.lwjgl.glfw.EventLoop.isMainThread()
-                val msgSend = ObjCRuntime.getLibrary().getFunctionAddress("objc_msgSend")
-                val currentThread = JNI.invokePPP(ObjCRuntime.objc_getClass("NSThread"), ObjCRuntime.sel_getUid("currentThread"), msgSend)
-                val isMainThread = JNI.invokePPZ(currentThread, ObjCRuntime.sel_getUid("isMainThread"), msgSend)
-                if (!isMainThread) {
-                    LOGGER.warn("VM option -XstartOnMainThread is required on macOS. glfw_async has been set to avoid crashing.")
-                    Configuration.GLFW_LIBRARY_NAME.set("glfw_async")
+            PolyUI.timed(true, "macOS detected: checking isMainThread()... (disable with -Dpolyui.glfwnomacfix)") {
+                try {
+                    // kotlin copy of org.lwjgl.glfw.EventLoop.isMainThread()
+                    val msgSend = ObjCRuntime.getLibrary().getFunctionAddress("objc_msgSend")
+                    val currentThread = JNI.invokePPP(ObjCRuntime.objc_getClass("NSThread"), ObjCRuntime.sel_getUid("currentThread"), msgSend)
+                    val isMainThread = JNI.invokePPZ(currentThread, ObjCRuntime.sel_getUid("isMainThread"), msgSend)
+                    if (!isMainThread) {
+                        LOGGER.warn("VM option -XstartOnMainThread is required on macOS. glfw_async has been set to avoid crashing.")
+                        Configuration.GLFW_LIBRARY_NAME.set("glfw_async")
+                    }
+                } catch (e: Exception) {
+                    LOGGER.error("Failed to check if isMainThread, may crash!", e)
                 }
-            } catch (e: Exception) {
-                LOGGER.error("Failed to check if isMainThread, may crash!", e)
             }
-            LOGGER.warn("\t > took: ${(System.nanoTime() - now) / 1_000_000f}ms")
         }
 
-        GLFWErrorCallback.createPrint().set()
+        val codes = APIUtil.apiClassTokens({ _, value -> value in 0x10001..0x1ffff }, null, org.lwjgl.glfw.GLFW::class.java);
+        glfwSetErrorCallback { code, desc ->
+            val stack = Thread.currentThread().stackTrace.drop(4).joinToString("\n\t at ")
+            LOGGER.error("${codes[code]} ($code): ${GLFWErrorCallback.getDescription(desc)}\nStack: $stack")
+        }
         if (!glfwInit()) throw RuntimeException("Failed to init GLFW")
 
         if (gl2) {
@@ -144,8 +147,6 @@ class GLFWWindow @JvmOverloads constructor(
         println("\tDriver version: ${glGetString(GL_VERSION)}")
         println("\tOS: ${System.getProperty("os.name")} v${System.getProperty("os.version")}; ${System.getProperty("os.arch")}")
         println("\tJava version: ${System.getProperty("java.version")}; ${System.getProperty("java.vm.name")} from ${System.getProperty("java.vendor")} (${System.getProperty("java.vendor.url")})")
-
-        glfwSetTime(0.0)
     }
 
     fun createCallbacks(polyUI: PolyUI) {
@@ -293,6 +294,7 @@ class GLFWWindow @JvmOverloads constructor(
     override fun open(polyUI: PolyUI): Window {
         this.polyUI = polyUI
         polyUI.window = this
+        glfwSetTime(0.0)
         glfwSwapInterval(if (polyUI.settings.enableVSync) 1 else 0)
 
         createCallbacks(polyUI)

@@ -19,6 +19,8 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+@file:Suppress("UNUSED")
+
 package org.polyfrost.polyui.component
 
 import org.jetbrains.annotations.ApiStatus
@@ -275,7 +277,7 @@ fun <S : Drawable> S.onChange(func: S.(Float) -> Boolean): S {
  */
 fun <S : Drawable> S.setPalette(palette: Colors.() -> Colors.Palette): S {
     onInit {
-        this.setPalette(polyUI.colors.palette())
+        this.palette = polyUI.colors.palette()
     }
     return this
 }
@@ -417,14 +419,12 @@ fun <S : Block> S.withBoarder(width: Float = 1f, color: (Colors.() -> PolyColor)
  * @param state the state to set. One of [DANGER]/0 (red), [WARNING]/1 (yellow), [SUCCESS]/2 (green).
  */
 fun <S : Drawable> S.setState(state: Byte): S {
-    setPalette(
-        when (state) {
-            DANGER -> polyUI.colors.state.danger
-            WARNING -> polyUI.colors.state.warning
-            SUCCESS -> polyUI.colors.state.success
-            else -> throw IllegalArgumentException("Invalid state: $state")
-        },
-    )
+    palette = when (state) {
+        DANGER -> polyUI.colors.state.danger
+        WARNING -> polyUI.colors.state.warning
+        SUCCESS -> polyUI.colors.state.success
+        else -> throw IllegalArgumentException("Invalid state: $state")
+    }
     return this
 }
 
@@ -489,7 +489,7 @@ fun <S : Drawable> S.afterParentInit(depth: Int = 1, handler: S.() -> Unit): S {
         for (i in 0 until depth) {
             it.parent0?.let { parent -> it = parent } ?: break
         }
-        if(it.initialized) {
+        if (it.initialized) {
             handler(this@afterParentInit)
         } else {
             it.addEventHandler(Event.Lifetime.PostInit) {
@@ -502,7 +502,7 @@ fun <S : Drawable> S.afterParentInit(depth: Int = 1, handler: S.() -> Unit): S {
 }
 
 @EventDSL.Marker
-fun <S : Drawable> S.events(dsl: EventDSL<S>.() -> Unit): S {
+inline fun <S : Drawable> S.events(dsl: EventDSL<S>.() -> Unit): S {
     EventDSL(this).apply(dsl)
     return this
 }

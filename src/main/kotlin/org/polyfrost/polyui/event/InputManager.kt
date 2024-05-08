@@ -31,6 +31,7 @@ import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.property.Settings
+import org.polyfrost.polyui.utils.Clock
 import java.nio.file.Path
 
 /**
@@ -90,7 +91,9 @@ class InputManager(
      * @since 1.0.3
      */
     fun filesDropped(files: Array<Path>) {
-        focused?.accept(Event.Focused.FileDrop(files))
+        if (focused?.hasListenersFor(Event.Focused.FileDrop::class.java) == true) {
+            focused?.accept(Event.Focused.FileDrop(files))
+        }
     }
 
     /** This method should be called when a printable key is typed. This key should be **mapped to the user's keyboard layout!** */
@@ -119,7 +122,9 @@ class InputManager(
      */
     fun keyDown(code: Int) {
         if (keyBinder?.accept(code, true) == true) return
-        focused?.accept(Event.Focused.UnmappedInput(code, true, keyModifiers))
+        if(focused?.hasListenersFor(Event.Focused.UnmappedInput::class.java) == true) {
+            focused?.accept(Event.Focused.UnmappedInput(code, true, keyModifiers))
+        }
     }
 
     /**
@@ -129,7 +134,9 @@ class InputManager(
      */
     fun keyUp(code: Int) {
         if (keyBinder?.accept(code, false) == true) return
-        focused?.accept(Event.Focused.UnmappedInput(code, false, keyModifiers))
+        if (focused?.hasListenersFor(Event.Focused.UnmappedInput::class.java) == true) {
+            focused?.accept(Event.Focused.UnmappedInput(code, false, keyModifiers))
+        }
     }
 
     /**
@@ -242,7 +249,7 @@ class InputManager(
             clickedButton = button
             clickAmount = 1
         } else {
-            val curr = System.nanoTime()
+            val curr = Clock.time
             if (curr - clickTimer < settings.comboMaxInterval) {
                 if (clickAmount < settings.maxComboSize) {
                     clickAmount++

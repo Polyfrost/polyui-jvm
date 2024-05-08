@@ -109,21 +109,20 @@ class Translator(private val settings: Settings, private val translationDir: Str
         if (!now) {
             queue.add(resource)
         } else {
-            PolyUI.LOGGER.info("Loading translation table $resource...")
-            val start = System.nanoTime()
-            getResourceStreamNullable(resource)?.reader()?.forEachLine {
-                if (it.isEmpty()) return@forEachLine
-                val split = it.split("=")
-                require(split.size == 2) { "Invalid key-value pair in $resource: $it" }
-                val v = map[split[0]]
-                if (v != null) {
-                    PolyUI.LOGGER.warn("Duplicate key: '${split[0]}', overwriting with $resource -> ${split[1]}")
-                    v.string = split[1]
-                } else {
-                    map[split[0]] = Text.Simple(split[1])
-                }
-            } ?: PolyUI.LOGGER.warn("\t\t> Table not found!")
-            PolyUI.LOGGER.info("\t\t> took ${(System.nanoTime() - start) / 1_000_000f}ms")
+            PolyUI.timed(true, "Loading translation table $resource...") {
+                getResourceStreamNullable(resource)?.reader()?.forEachLine {
+                    if (it.isEmpty()) return@forEachLine
+                    val split = it.split("=")
+                    require(split.size == 2) { "Invalid key-value pair in $resource: $it" }
+                    val v = map[split[0]]
+                    if (v != null) {
+                        PolyUI.LOGGER.warn("Duplicate key: '${split[0]}', overwriting with $resource -> ${split[1]}")
+                        v.string = split[1]
+                    } else {
+                        map[split[0]] = Text.Simple(split[1])
+                    }
+                } ?: PolyUI.LOGGER.warn("\t\t> Table not found!")
+            }
         }
     }
 

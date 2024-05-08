@@ -40,7 +40,7 @@ import java.util.concurrent.CompletableFuture
  * @see loadAsync
  * @see loadDirect
  */
-open class Resource(val resourcePath: String, val loadSync: Boolean = ":/" !in resourcePath) {
+open class Resource(val resourcePath: String, @get:JvmName("shouldLoadSync") val loadSync: Boolean = ":/" !in resourcePath) {
     @Volatile
     private var initting = false
 

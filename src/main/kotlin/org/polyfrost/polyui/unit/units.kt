@@ -20,6 +20,7 @@
  */
 
 @file:JvmName("Units")
+@file:Suppress("NOTHING_TO_INLINE", "UNUSED")
 
 package org.polyfrost.polyui.unit
 
@@ -35,8 +36,14 @@ inline val Number.microseconds get() = (toDouble() * 1_000.0).toLong()
 @get:JvmName("milliseconds")
 inline val Number.milliseconds get() = (toDouble() * 1_000_000.0).toLong()
 
+@get:JvmName("ms")
+inline val Number.ms get() = (toDouble() * 1_000_000.0).toLong()
+
 @get:JvmName("seconds")
 inline val Number.seconds get() = (toDouble() * 1_000_000_000.0).toLong()
+
+@get:JvmName("secs")
+inline val Number.secs get() = (toDouble() * 1_000_000_000.0).toLong()
 
 @get:JvmName("minutes")
 inline val Number.minutes get() = (toDouble() * 60_000_000_000.0).toLong()

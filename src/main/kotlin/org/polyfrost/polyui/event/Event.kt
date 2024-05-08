@@ -57,76 +57,25 @@ interface Event {
         class Pressed internal constructor(val button: Int, val x: Float, val y: Float, val mods: Modifiers) : Mouse {
             constructor(button: Int) : this(button, 0f, 0f, Modifiers(0))
 
-            override fun hashCode(): Int {
-                var result = button + 500
-                result = 31 * result + mods.value
-                return result
-            }
-
             override fun toString(): String =
                 "MousePressed(($x, $y), ${MouseUtils.toStringPretty(MouseUtils.fromValue(button), mods)})"
-
-            override fun equals(other: Any?): Boolean {
-                if (this === other) return true
-                if (other !is Pressed) return false
-
-                if (button != other.button) return false
-                return mods == other.mods
-            }
         }
 
         class Released internal constructor(val button: Int, val x: Float, val y: Float, val mods: Modifiers) : Mouse {
             constructor(button: Int) : this(button, 0f, 0f, Modifiers(0))
 
-            override fun hashCode(): Int {
-                var result = button + 5000 // avoid conflicts with MousePressed
-                result = 31 * result + mods.value
-                return result
-            }
-
             override fun toString(): String =
                 "MouseReleased(($x, $y), ${MouseUtils.toStringPretty(MouseUtils.fromValue(button), mods)})"
-
-            override fun equals(other: Any?): Boolean {
-                if (this === other) return true
-                if (other !is Released) return false
-
-                if (button != other.button) return false
-                return mods == other.mods
-            }
         }
 
         class Clicked internal constructor(val button: Int, val x: Float, val y: Float, val clicks: Int, val mods: Modifiers) : Mouse {
             constructor(button: Int, amountClicks: Int = 1, mods: Modifiers = Modifiers(0)) : this(button, 0f, 0f, amountClicks, mods)
 
             override fun toString(): String = "MouseClicked x$clicks($x x $y, ${MouseUtils.toStringPretty(MouseUtils.fromValue(button), mods)})"
-
-            override fun hashCode(): Int {
-                var result = button
-                result = 31 * result + clicks
-                result = 31 * result + mods.value
-                return result
-            }
-
-            override fun equals(other: Any?): Boolean {
-                if (this === other) return true
-                if (other !is Clicked) return false
-
-                if (button != other.button) return false
-                if (clicks != other.clicks) return false
-                return mods == other.mods
-            }
         }
 
         class Scrolled internal constructor(val amountX: Float, val amountY: Float, val mods: Modifiers) : Mouse {
             constructor() : this(0f, 0f, Modifiers(0))
-
-            override fun hashCode() = 893402779
-
-            override fun equals(other: Any?): Boolean {
-                if (this === other) return true
-                return other is Scrolled
-            }
         }
 
         /** acceptable by component and layout, when the mouse enters this drawable.
@@ -192,35 +141,14 @@ interface Event {
 
         class Text(val text: String) : Change() {
             constructor() : this("")
-
-            override fun hashCode() = 859347809
-
-            override fun equals(other: Any?): Boolean {
-                if (this === other) return true
-                return other is Text
-            }
         }
 
         class Number(val amount: kotlin.Number) : Change() {
             constructor() : this(0)
-
-            override fun hashCode() = 57328903
-
-            override fun equals(other: Any?): Boolean {
-                if (this === other) return true
-                return other is Number
-            }
         }
 
         class State(val state: Boolean) : Change() {
             constructor() : this(false)
-
-            override fun hashCode() = 38294781
-
-            override fun equals(other: Any?): Boolean {
-                if (this === other) return true
-                return other is State
-            }
         }
     }
 
@@ -249,20 +177,6 @@ interface Event {
          */
         class KeyTyped(val key: Char, val mods: Modifiers) : Focused {
             override fun toString() = "KeyTyped(${Keys.toStringPretty(key, mods)})"
-
-            override fun hashCode(): Int {
-                var result = key.hashCode() + 500
-                result = 31 * result + mods.value
-                return result
-            }
-
-            override fun equals(other: Any?): Boolean {
-                if (this === other) return true
-                if (other !is KeyTyped) return false
-
-                if (key != other.key) return false
-                return mods == other.mods
-            }
         }
 
         /**
@@ -275,57 +189,18 @@ interface Event {
             override fun toString(): String = "KeyPressed(${Keys.toString(key, mods)})"
 
             fun toStringPretty(): String = "KeyPressed(${Keys.toStringPretty(key, mods)})"
-
-            override fun hashCode(): Int {
-                var result = key.hashCode() + 5000
-                result = 31 * result + mods.value
-                return result
-            }
-
-            override fun equals(other: Any?): Boolean {
-                if (this === other) return true
-                if (other !is KeyPressed) return false
-
-                if (key != other.key) return false
-                return mods == other.mods
-            }
         }
 
         class KeyReleased(val key: Keys, val mods: Modifiers) : Focused {
             override fun toString(): String = "KeyReleased(${Keys.toString(key, mods)})"
 
             fun toStringPretty(): String = "KeyReleased(${Keys.toStringPretty(key, mods)})"
-
-            override fun hashCode(): Int {
-                var result = key.hashCode() + 50000
-                result = 31 * result + mods.value
-                return result
-            }
-
-            override fun equals(other: Any?): Boolean {
-                if (this === other) return true
-                if (other !is KeyPressed) return false
-
-                if (key != other.key) return false
-                return mods == other.mods
-            }
         }
 
         class UnmappedInput(val code: Int, val down: Boolean, val mods: Modifiers) : Focused {
             constructor() : this(0, false, Modifiers(0))
 
             override fun toString(): String = "UnmappedInput(key=$code, down=$down)"
-
-            override fun hashCode(): Int {
-                var result = code.hashCode() + 37489208
-                result = 31 * result + down.hashCode()
-                return result
-            }
-
-            override fun equals(other: Any?): Boolean {
-                if (this === other) return true
-                return other is UnmappedInput
-            }
         }
 
         /**
@@ -337,14 +212,7 @@ interface Event {
         class FileDrop internal constructor(val files: Array<Path>) : Focused {
             constructor() : this(arrayOf())
 
-            override fun toString() = "FileDrop($files)"
-
-            override fun hashCode() = 453646123
-
-            override fun equals(other: Any?): Boolean {
-                if (this === other) return true
-                return other is FileDrop
-            }
+            override fun toString() = "FileDrop(${files.joinToString()})"
         }
     }
 }

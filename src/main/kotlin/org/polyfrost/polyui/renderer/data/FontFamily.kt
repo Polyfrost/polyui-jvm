@@ -48,22 +48,21 @@ open class FontFamily(
 ) {
     protected val dir: URI by lazy {
         if (!path.endsWith(".zip")) return@lazy URI.create(path)
-        val start = System.nanoTime()
         val p = Paths.get(System.getProperty("java.io.tmpdir")).resolve("polyui-fonts-$name")
-        PolyUI.LOGGER.info("Extracting font $name to temporary directory... ($p)")
-        p.createDirectories()
-        val zip =
-            ZipInputStream(getResourceStreamNullable(path)?.buffered() ?: throw IllegalArgumentException("Font zip file $path not found!"))
-        while (true) {
-            val entry = zip.nextEntry ?: break
-            val output = p.resolve(entry.name)
-            if (output.exists()) continue
-            output.outputStream().buffered().use { out ->
-                zip.copyTo(out)
+        PolyUI.timed(true, "Extracting font $name to temporary directory... ($p)") {
+            p.createDirectories()
+            val zip =
+                ZipInputStream(getResourceStreamNullable(path)?.buffered() ?: throw IllegalArgumentException("Font zip file $path not found!"))
+            while (true) {
+                val entry = zip.nextEntry ?: break
+                val output = p.resolve(entry.name)
+                if (output.exists()) continue
+                output.outputStream().buffered().use { out ->
+                    zip.copyTo(out)
+                }
             }
+            zip.close()
         }
-        zip.close()
-        PolyUI.LOGGER.info("\t\t> took ${(System.nanoTime() - start) / 1_000_000.0}ms")
         p.toUri()
     }
 

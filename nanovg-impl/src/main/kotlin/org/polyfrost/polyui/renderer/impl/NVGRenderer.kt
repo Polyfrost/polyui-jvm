@@ -21,6 +21,7 @@
 
 package org.polyfrost.polyui.renderer.impl
 
+import org.apache.logging.log4j.LogManager
 import org.lwjgl.nanovg.NSVGImage
 import org.lwjgl.nanovg.NVGColor
 import org.lwjgl.nanovg.NVGPaint
@@ -44,6 +45,8 @@ import kotlin.math.min
 import org.polyfrost.polyui.color.PolyColor as Color
 
 object NVGRenderer : Renderer {
+    @JvmStatic
+    private val LOGGER = LogManager.getLogger("PolyUI/NVGRenderer")
     private val nvgPaint: NVGPaint = NVGPaint.malloc()
     private val nvgColor: NVGColor = NVGColor.malloc()
     private val nvgColor2: NVGColor = NVGColor.malloc()
@@ -53,20 +56,21 @@ object NVGRenderer : Renderer {
     private var defaultFont: NVGFont? = null
     private var defaultImage = 0
     private var alphaCap = 1f
-    private var vg: Long = -1L
-    private var raster: Long = -1L
+    private var vg: Long = 0L
+    private var raster: Long = 0L
     private var drawing = false
     private val queue = LinkedList<() -> Unit>()
     private val PIXELS: ByteBuffer = run {
         val arr = "px\u0000".toByteArray()
         MemoryUtil.memAlloc(arr.size).put(arr).flip() as ByteBuffer
     }
+    private val errorHandler: (Throwable) -> Unit = { LOGGER.error("failed to load resource!", it) }
 
     override fun init() {
-        vg = nvgCreate(NVG_ANTIALIAS)
-        raster = nsvgCreateRasterizer()
-        require(vg != -1L) { "Could not initialize NanoVG" }
-        require(raster != -1L) { "Could not initialize NanoSVG" }
+        if (vg == 0L) vg = nvgCreate(NVG_ANTIALIAS)
+        if (raster == 0L) raster = nsvgCreateRasterizer()
+        require(vg != 0L) { "Could not initialize NanoVG" }
+        require(raster != 0L) { "Could not initialize NanoSVG" }
 
         val font = PolyUI.defaultFonts.regular
         val fdata = font.loadDirect()
@@ -439,7 +443,7 @@ object NVGRenderer : Renderer {
     private fun getFont(font: Font): Int {
         if (font.loadSync) return getFontSync(font)
         return fonts.getOrElse(font) {
-            font.loadAsyncDirect(errorHandler = { ; }) {
+            font.loadAsyncDirect(errorHandler = errorHandler) {
                 queue.add { fonts[font] = NVGFont(nvgCreateFontMem(vg, font.name, it, false), it) }
             }
             defaultFont!!
@@ -448,7 +452,7 @@ object NVGRenderer : Renderer {
 
     private fun getFontSync(font: Font): Int {
         return fonts.getOrPut(font) {
-            val data = font.loadDirect(errorHandler = { return@getOrPut defaultFont!! })
+            val data = font.loadDirect { errorHandler(it); return@getOrPut defaultFont!! }
             NVGFont(nvgCreateFontMem(vg, font.name, data, false), data)
         }.id
     }
@@ -458,7 +462,7 @@ object NVGRenderer : Renderer {
         return when (image.type) {
             PolyImage.Type.Vector -> {
                 val (svg, map) = svgs.getOrElse(image) {
-                    image.loadAsyncDirectNT(errorHandler = { ; }) {
+                    image.loadAsyncDirectNT(errorHandler) {
                         queue.add { svgLoad(image, it) }
                     }
                     return defaultImage
@@ -469,7 +473,7 @@ object NVGRenderer : Renderer {
 
             PolyImage.Type.Raster -> {
                 images.getOrElse(image) {
-                    image.loadAsyncDirect {
+                    image.loadAsyncDirect(errorHandler) {
                         queue.add { images[image] = loadImage(image, it) }
                     }
                     defaultImage

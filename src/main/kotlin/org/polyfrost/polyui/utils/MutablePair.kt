@@ -21,8 +21,6 @@
 
 package org.polyfrost.polyui.utils
 
-import java.io.Serializable
-
 /**
  * A mutable pair of values.
  *
@@ -35,10 +33,7 @@ import java.io.Serializable
  * @property second Second value.
  * @constructor Creates a new instance of Pair.
  */
-data class MutablePair<A, B>(
-    var first: A,
-    var second: B,
-) : Serializable {
+data class MutablePair<A, B>(var first: A, var second: B) {
     /**
      * Returns string representation of the [MutablePair] including its [first] and [second] values.
      */

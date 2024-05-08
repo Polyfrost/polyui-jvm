@@ -49,7 +49,6 @@ import org.polyfrost.polyui.utils.*
 import java.text.DecimalFormat
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.system.measureNanoTime
 
 // todo rewrite this doc
 
@@ -197,7 +196,6 @@ class PolyUI @JvmOverloads constructor(
      */
     var drew = false
         private set
-    private val clock = Clock()
 
     inline val mouseX get() = inputManager.mouseX
 
@@ -274,10 +272,10 @@ class PolyUI @JvmOverloads constructor(
         if (this.settings.debug) {
             addDebug(this.settings.enableDebugKeybind)
             val f = DecimalFormat("#.###")
-//            var td = System.nanoTime()
+//            var td = Clock.time
             every(1.seconds) {
-//            val diff = (System.nanoTime() - td) / 1_000_000_000.0
-//            td = System.nanoTime()
+//            val diff = (Clock.time - td) / 1_000_000_000.0
+//            td = Clock.time
 //            LOGGER.info("took $diff sec (accuracy = ${100.0 - (diff - 1.0) * 100.0}%)")
                 if (this.settings.debug) {
                     val sb = StringBuilder(64)
@@ -386,7 +384,7 @@ class PolyUI @JvmOverloads constructor(
     }
 
     fun render() {
-        delta = clock.delta
+        delta = Clock.delta
         nframes++
         if (master.needsRedraw) {
             val sz = master.size
@@ -397,7 +395,7 @@ class PolyUI @JvmOverloads constructor(
 
             // telemetry
             if (settings.debug) {
-                val frameTime = (clock.peek()) / 1_000_000.0
+                val frameTime = (Clock.peek()) / 1_000_000.0
                 timeInFrames += frameTime
                 if (frameTime > longestFrame) longestFrame = frameTime
                 if (frameTime < shortestFrame) shortestFrame = frameTime
@@ -546,12 +544,7 @@ class PolyUI @JvmOverloads constructor(
      * Time the [block] and return how long it took, as well as logging with the [msg] if [debug][org.polyfrost.polyui.property.Settings.debug] is active.
      * @since 0.18.5
      */
-    inline fun timed(msg: String? = null, crossinline block: () -> Unit): Long {
-        if (msg != null && settings.debug) LOGGER.info(msg)
-        val time = measureNanoTime(block)
-        if (settings.debug) LOGGER.info("${if (msg != null) "\t\t> " else ""}took ${time / 1_000_000.0}ms")
-        return time
-    }
+    inline fun timed(msg: String? = null, block: () -> Unit) = timed(settings.debug, msg, block)
 
     override fun toString() = "PolyUI($size)"
 
@@ -590,6 +583,20 @@ class PolyUI @JvmOverloads constructor(
          */
         @JvmField
         var defaultImage = PolyImage("err.png")
+
+        /**
+         * Time the [block] and return how long it took, as well as logging with the [msg] if [log] is `true`.
+         * @since 1.1.61
+         */
+        @JvmStatic
+        inline fun timed(log: Boolean = true, msg: String? = null, block: () -> Unit): Long {
+            if (log && msg != null) LOGGER.info(msg)
+            val now = Clock.time
+            block()
+            val time = Clock.time - now
+            if (log) LOGGER.info("${if (msg != null) "\t\t> " else ""}took ${time / 1_000_000.0}ms")
+            return time
+        }
 
         const val INPUT_DISABLED: Byte = -1
         const val INPUT_NONE: Byte = 0

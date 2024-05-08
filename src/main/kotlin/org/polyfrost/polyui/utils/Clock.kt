@@ -21,32 +21,43 @@
 
 package org.polyfrost.polyui.utils
 
+import org.jetbrains.annotations.ApiStatus
+
 /**
  * A simple class for timing of animations and things.
  * Literally a delta function.
  *
  * PolyUI internally uses nanoseconds as the time unit. There are a few reasons for this:
  * - animations will be smoother as frames are usually shorter than 1ms, around 0.007ms. This means that the delta will be a decimal, which is not possible with longs, so some accuracy is lost with milliseconds.
- * - [System.nanoTime] (the function we use to measure time) ignores changes to the system clock, so if the user changes their clock PolyUI won't crash or go very crazy because of a negative time.
+ * - [Clock,getTime] (the function we use to measure time) ignores changes to the system clock, so if the user changes their clock PolyUI won't crash or go very crazy because of a negative time.
  * - 9,223,372,036,854,775,808 is max for a long, so the program can run for 2,562,047.78802 hours, or 106,751.991167 days, or 292.471 years. So we can use these.
  *
- * @see FixedTimeExecutor
+ * @see Clock.FixedTimeExecutor
  * @see org.polyfrost.polyui.PolyUI.every
  */
-class Clock {
+object Clock {
     @PublishedApi
-    internal var lastTime: Long = System.nanoTime()
+    internal var lastTime: Long = time
 
-    inline val now get() = lastTime
     val delta: Long
         get() {
-            val currentTime = System.nanoTime()
+            val currentTime = time
             val delta = currentTime - lastTime
             lastTime = currentTime
             return delta
         }
 
-    fun peek(): Long = System.nanoTime() - lastTime
+    /**
+     * this function is rather wasteful and usage should be avoided.
+     */
+    @ApiStatus.Internal
+    fun peek(): Long = time - lastTime
+
+    /**
+     * Get the current time in nanoseconds.
+     */
+    @JvmStatic
+    inline val time get() = System.nanoTime()
 
     /**
      * Create a new Executor.

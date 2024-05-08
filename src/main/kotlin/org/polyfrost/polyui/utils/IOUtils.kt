@@ -76,11 +76,8 @@ fun getResourceStreamNullable(resourcePath: String, caller: Class<*> = PolyUI::c
     }
 }
 
-@Deprecated("This method is rather wasteful, and usage should be avoided.")
-fun resourceExists(resourcePath: String): Boolean {
-    val s = getResourceStreamNullable(resourcePath)?.close()
-    return s != null
-}
+@Deprecated("This method is rather wasteful, and usage should be avoided.", ReplaceWith("getResourceStreamNullable?.apply {}"))
+fun resourceExists(resourcePath: String, caller: Class<*> = PolyUI::class.java) = getResourceStreamNullable(resourcePath, caller)?.close() != null
 
 fun InputStream.toDirectByteBuffer(): ByteBuffer {
     val bytes = this.toByteArray()

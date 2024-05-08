@@ -36,6 +36,7 @@ import org.polyfrost.polyui.operations.*
 import org.polyfrost.polyui.renderer.data.Framebuffer
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.*
+import java.util.IdentityHashMap
 
 /**
  * # Drawable
@@ -122,7 +123,7 @@ abstract class Drawable(
      */
     var rawResize = false
 
-    private var eventHandlers: MutableMap<Event, LinkedList<(Drawable.(Event) -> Boolean)>>? = null
+    private var eventHandlers: MutableMap<Class<out Event>, LinkedList<(Drawable.(Event) -> Boolean)>>? = null
 
     /**
      * This is the name of this drawable, and it will be consistent over reboots of the program, so you can use it to get drawables from a layout by ID, e.g:
@@ -173,22 +174,18 @@ abstract class Drawable(
     @set:ApiStatus.Experimental
     lateinit var color: PolyColor.Animated
 
-    @set:JvmName("_setPalette")
-    lateinit var palette: Colors.Palette
-        protected set
+    private var _palette: Colors.Palette? = null
 
-    /**
-     * For some reason, you can't have custom setters on `lateinit` properties, so this is a workaround.
-     * @since 1.0.1
-     */
-    fun <S : Drawable> S.setPalette(palette: Colors.Palette): S {
-        this.palette = palette
-        if (::color.isInitialized) this.color.recolor(palette.get(this.inputState))
-        return this
-    }
+    var palette: Colors.Palette
+        get() = _palette ?: throw UninitializedPropertyAccessException("Palette is not initialized")
+        set(value) {
+            _palette = value
+            if (::color.isInitialized) color.recolor(value.get(inputState))
+        }
+
 
     init {
-        if (palette != null) this.palette = palette
+        if (palette != null) this._palette = palette
     }
 
     /**
@@ -663,7 +660,7 @@ abstract class Drawable(
                 return true
             }
         }
-        eventHandlers?.get(event)?.fastEach {
+        eventHandlers?.get(event::class.java)?.fastEach {
             if (it(this, event)) return true
         }
         return false
@@ -682,18 +679,18 @@ abstract class Drawable(
     open fun setup(polyUI: PolyUI): Boolean {
         if (initialized) return false
         this.polyUI = polyUI
-        if (!::palette.isInitialized) palette = polyUI.colors.component.bg
+        if (_palette == null) palette = polyUI.colors.component.bg
         if (!::color.isInitialized) this.color = palette.normal.toAnimatable()
         children?.fastEach {
             it.setup(polyUI)
         }
         // asm: don't use accept as we don't want to dispatch to children
-        eventHandlers?.maybeRemove(Event.Lifetime.Init, polyUI.settings.aggressiveCleanup)?.fastEach { it(this, Event.Lifetime.Init) }
+        eventHandlers?.maybeRemove(Event.Lifetime.Init::class.java, polyUI.settings.aggressiveCleanup)?.fastEach { it(this, Event.Lifetime.Init) }
         if (atValid) {
             recalculateChildren()
         } else polyUI.positioner.position(this)
 
-        eventHandlers?.maybeRemove(Event.Lifetime.PostInit, polyUI.settings.aggressiveCleanup)?.fastEach { it(this, Event.Lifetime.PostInit) }
+        eventHandlers?.maybeRemove(Event.Lifetime.PostInit::class.java, polyUI.settings.aggressiveCleanup)?.fastEach { it(this, Event.Lifetime.PostInit) }
 
         // following all init events being removed, if it is empty, we can set it to null
         if (eventHandlers.isNullOrEmpty()) eventHandlers = null
@@ -980,38 +977,27 @@ abstract class Drawable(
     operator fun get(x: Float, y: Float) = children?.first { it.isInside(x, y) } ?: throw NoSuchElementException("no children on $this")
 
     @OverloadResolutionByLambdaReturnType
-    @Suppress("UNCHECKED_CAST")
-    fun <E : Event, S : Drawable> S.addEventHandler(event: E, handler: S.(E) -> Boolean): S {
-        if (event !is Event.Lifetime) acceptsInput = true
-        val ev = eventHandlers ?: HashMap(8)
+    fun <E : Event, S : Drawable> S.addEventHandler(event: Class<E>, handler: S.(E) -> Boolean): S {
+        if (!acceptsInput && !Event.Lifetime::class.java.isAssignableFrom(event)) acceptsInput = true
+        val ev = eventHandlers ?: IdentityHashMap(8)
         val ls = ev.getOrPut(event) { LinkedList() }
+        @Suppress("UNCHECKED_CAST")
         ls.add(handler as Drawable.(Event) -> Boolean)
         eventHandlers = ev
         return this
     }
 
+    @OverloadResolutionByLambdaReturnType
+    fun <E : Event, S : Drawable> S.addEventHandler(event: E, handler: S.(E) -> Boolean) = addEventHandler(event::class.java, handler)
+
     @JvmName("addEventhandler")
     @OverloadResolutionByLambdaReturnType
-    inline fun <E : Event, S : Drawable> S.addEventHandler(event: E, crossinline handler: S.(E) -> Unit): S =
-        addEventHandler(event) { handler(this, it); true }
+    inline fun <E : Event, S : Drawable> S.addEventHandler(event: E, crossinline handler: S.(E) -> Unit) = addEventHandler(event::class.java) { handler(this, it); true }
 
-    /**
-     * Forward the events that this drawable receives to the given drawable.
-     *
-     * This action cannot be undone.
-     * @since 1.0.6
-     */
-    @ApiStatus.Experimental
-    fun <S : Drawable> S.forwardEventsTo(to: Drawable): S {
-        this.eventHandlers?.forEach { (event, handlers) ->
-            to.addEventHandler(event) {
-                var ran = false
-                handlers.fastEach {
-                    if (it.invoke(this, event)) ran = true
-                }
-                ran
-            }
-        }
-        return this
-    }
+    @JvmName("addEventhandler")
+    @OverloadResolutionByLambdaReturnType
+    inline fun <E : Event, S : Drawable> S.addEventHandler(event: Class<E>, crossinline handler: S.(E) -> Unit): S = addEventHandler(event) { handler(this, it); true }
+
+    // asm: uses java class because bootstrapping reflect for this is not worth the slightly better syntax tbh
+    fun hasListenersFor(event: Class<out Event>) = eventHandlers?.containsKey(event) ?: false
 }

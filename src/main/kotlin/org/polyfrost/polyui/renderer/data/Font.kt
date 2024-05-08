@@ -54,9 +54,7 @@ class Font @JvmOverloads constructor(
     }
 
     // improves memory usage so fonts can use the same data object
-    override fun hashCode(): Int {
-        return resourcePath.hashCode()
-    }
+    override fun hashCode() = resourcePath.hashCode()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
