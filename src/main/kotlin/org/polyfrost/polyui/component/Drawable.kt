@@ -696,9 +696,11 @@ abstract class Drawable(
         // following all init events being removed, if it is empty, we can set it to null
         if (eventHandlers.isNullOrEmpty()) eventHandlers = null
         clipChildren()
-        if (polyUI.canUseFramebuffers && countChildren() > polyUI.settings.minDrawablesForFramebuffer) {
-            framebuffer = renderer.createFramebuffer(size.x, size.y)
-            if (polyUI.settings.debug) PolyUI.LOGGER.info("Drawable ${this.simpleName} created with $framebuffer")
+        if (polyUI.canUseFramebuffers) {
+            if (countChildren() > polyUI.settings.minDrawablesForFramebuffer || (this === polyUI.master && polyUI.settings.isMasterFrameBuffer)) {
+                framebuffer = renderer.createFramebuffer(size.x, size.y)
+                if (polyUI.settings.debug) PolyUI.LOGGER.info("Drawable ${this.simpleName} created with $framebuffer")
+            }
         }
         initialized = true
         return true

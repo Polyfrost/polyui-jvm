@@ -78,7 +78,7 @@ class Settings {
      * @see [org.polyfrost.polyui.component.countChildren]
      */
     @ApiStatus.Experimental
-    var minDrawablesForFramebuffer: Int = Int.MAX_VALUE
+    var minDrawablesForFramebuffer: Int = 50
 
     /**
      * Enable or disable framebuffers. Please note that PolyUI is designed to work with framebuffers, so disabling them may cause performance issues.
@@ -99,14 +99,6 @@ class Settings {
     @get:JvmName("isRenderPausingEnabled")
     @set:JvmName("enableRenderPausing")
     var renderPausingEnabled = true
-
-    /**
-     * If enabled, the command key on Mac will act as control inputs.
-     * @since 0.24.3
-     */
-    @get:JvmName("doesCommandActAsControl")
-    @set:JvmName("enableCommandAsControl")
-    var commandActsAsControl = true
 
     /** the time between clicks for them to be considered as a combo.
      * @see maxComboSize
@@ -188,6 +180,7 @@ class Settings {
      */
     @get:JvmName("isAggressiveCleanupEnabled")
     @set:JvmName("enableAggressiveCleanup")
+    @ApiStatus.Experimental
     var aggressiveCleanup = false
 
     /**
@@ -206,6 +199,14 @@ class Settings {
     @get:JvmName("shouldLoadTranslationsOnInit")
     @set:JvmName("enableTranslationLoadingOnInit")
     var loadTranslationsOnInit = true
+
+    /**
+     * This property will mean that, if `force` is true in the `resize` method, the initial size will be set to the size given.
+     * @since 1.1.63
+     */
+    @get:JvmName("forceSetsInitialSize")
+    @set:JvmName("enableForceSettingInitialSize")
+    var forceSetsInitialSize = false
 
     /** How to handle resource (image and font) loading errors.
      * @see resourcePolicy

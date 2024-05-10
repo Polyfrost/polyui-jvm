@@ -621,6 +621,7 @@ public final class org/polyfrost/polyui/component/ExtensionsKt {
 	public static final fun onChangeState (Lorg/polyfrost/polyui/component/Drawable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Drawable;
 	public static final fun onChangeString (Lorg/polyfrost/polyui/component/impl/Text;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/impl/Text;
 	public static final fun onClick (Lorg/polyfrost/polyui/component/Drawable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Drawable;
+	public static final fun onClickZ (Lorg/polyfrost/polyui/component/Drawable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Drawable;
 	public static final fun onInit (Lorg/polyfrost/polyui/component/Drawable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Drawable;
 	public static final fun prioritize (Lorg/polyfrost/polyui/component/Drawable;)Lorg/polyfrost/polyui/component/Drawable;
 	public static final fun secondary (Lorg/polyfrost/polyui/component/impl/Text;)Lorg/polyfrost/polyui/component/impl/Text;
@@ -1352,12 +1353,11 @@ public final class org/polyfrost/polyui/operations/Skew : org/polyfrost/polyui/o
 
 public final class org/polyfrost/polyui/property/Settings {
 	public fun <init> ()V
-	public final fun doesCommandActAsControl ()Z
 	public final fun enableAggressiveCleanup (Z)V
 	public final fun enableComboClearing ()Z
-	public final fun enableCommandAsControl (Z)V
 	public final fun enableDebugKeybind (Z)V
 	public final fun enableDebugMode (Z)V
+	public final fun enableForceSettingInitialSize (Z)V
 	public final fun enableFramebuffers (Z)V
 	public final fun enableInitCleanup (Z)V
 	public final fun enableNaturalScrolling (Z)V
@@ -1365,6 +1365,7 @@ public final class org/polyfrost/polyui/property/Settings {
 	public final fun enableShutdownCleanup (Z)V
 	public final fun enableTranslationLoadingOnInit (Z)V
 	public final fun enableVSync (Z)V
+	public final fun forceSetsInitialSize ()Z
 	public final fun framebuffersEnabled ()Z
 	public final fun getAspectRatio ()Lkotlin/Pair;
 	public final fun getComboMaxInterval ()J

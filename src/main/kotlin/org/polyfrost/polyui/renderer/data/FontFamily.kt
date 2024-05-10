@@ -25,10 +25,8 @@ import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.utils.getResourceStreamNullable
 import org.polyfrost.polyui.utils.resourceExists
 import java.net.URI
-import java.nio.file.Paths
+import java.nio.file.Files
 import java.util.zip.ZipInputStream
-import kotlin.io.path.createDirectories
-import kotlin.io.path.exists
 import kotlin.io.path.outputStream
 
 /**
@@ -48,15 +46,12 @@ open class FontFamily(
 ) {
     protected val dir: URI by lazy {
         if (!path.endsWith(".zip")) return@lazy URI.create(path)
-        val p = Paths.get(System.getProperty("java.io.tmpdir")).resolve("polyui-fonts-$name")
+        val p = Files.createTempDirectory("polyui-fonts-$name")
         PolyUI.timed(true, "Extracting font $name to temporary directory... ($p)") {
-            p.createDirectories()
-            val zip =
-                ZipInputStream(getResourceStreamNullable(path)?.buffered() ?: throw IllegalArgumentException("Font zip file $path not found!"))
+            val zip = ZipInputStream(getResourceStreamNullable(path)?.buffered() ?: throw IllegalArgumentException("Font zip file $path not found!"))
             while (true) {
                 val entry = zip.nextEntry ?: break
                 val output = p.resolve(entry.name)
-                if (output.exists()) continue
                 output.outputStream().buffered().use { out ->
                     zip.copyTo(out)
                 }

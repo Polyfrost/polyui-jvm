@@ -41,15 +41,13 @@ import kotlin.math.min
 
 fun Button(leftImage: PolyImage? = null, text: String? = null, rightImage: PolyImage? = null, fontSize: Float = 12f, font: Font? = null, radii: FloatArray = 8f.radii(), padding: Vec2 = Vec2(12f, 6f), at: Vec2? = null, size: Vec2? = null): Block {
     return Block(
+        if (leftImage != null) Image(leftImage) else null,
+        if (text != null) Text(text, fontSize = fontSize, font = font) else null,
+        if (rightImage != null) Image(rightImage) else null,
         alignment = Align(main = Align.Main.Center, padding = padding),
         at = at,
         size = size,
         radii = radii,
-        children = arrayOf(
-            if (leftImage != null) Image(leftImage) else null,
-            if (text != null) Text(text, fontSize = fontSize, font = font) else null,
-            if (rightImage != null) Image(rightImage) else null,
-        ),
     ).onInit { _ ->
         this.children?.fastEach {
             (it as? Image)?.size?.max(32f, 32f)
@@ -60,13 +58,11 @@ fun Button(leftImage: PolyImage? = null, text: String? = null, rightImage: PolyI
 fun Switch(at: Vec2? = null, size: Float, padding: Float = 3f, state: Boolean = false, lateralStretch: Float = 1.8f): Block {
     val circleSize = size - (padding + padding)
     return Block(
+        Block(size = Vec2(circleSize, circleSize), radii = (circleSize / 2f).radii()).setPalette { text.primary },
         at = at,
         size = Vec2(size * lateralStretch, size),
         alignment = Align(main = Align.Main.Start, padding = Vec2(padding, 0f)),
         radii = (size / 2f).radii(),
-        children = arrayOf(
-            Block(size = Vec2(circleSize, circleSize), radii = (circleSize / 2f).radii()).setPalette { text.primary },
-        ),
     ).withStates().events {
         var switched = state
         Event.Mouse.Clicked(0) then {
@@ -122,11 +118,9 @@ fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2? = null, ini
     val buttons: LinkedList<Drawable> = entries.mapTo(LinkedList()) { (img, text) ->
         require(img != null || text != null) { "image and text cannot both be null on Radiobutton" }
         Group(
+            if (img != null) Image(img) else null,
+            if (text != null) Text(text, fontSize = fontSize).withStates() else null,
             alignment = optAlign,
-            children = arrayOf(
-                if (img != null) Image(img) else null,
-                if (text != null) Text(text, fontSize = fontSize).withStates() else null,
-            ),
         ).events {
             Event.Lifetime.Init then {
                 val maxImageSize = fontSize * 1.3f
@@ -182,10 +176,8 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2? = null, fontSiz
         alignment = Align(mode = Align.Mode.Vertical, padding = Vec2(padding, 6f)),
         children = entries.mapToArray { (img, text) ->
             Group(
-                children = arrayOf(
-                    if (img != null) Image(img) else null,
-                    Text(text, fontSize = fontSize).withStates(),
-                ),
+                if (img != null) Image(img) else null,
+                Text(text, fontSize = fontSize).withStates()
             ).events {
                 Event.Mouse.Clicked(0) then { _ ->
                     val title = (it[0] as Text)
@@ -260,65 +252,61 @@ fun Slider(at: Vec2? = null, min: Float = 0f, max: Float = 100f, initialValue: F
     val rad = (barHeight / 2f).radii()
 
     return Group(
+        Block(
+            Block(
+                size = Vec2(1f, barHeight),
+                radii = rad,
+            ).setPalette { brand.fg },
+            size = Vec2(barWidth, barHeight),
+            alignment = Align(Align.Main.Start, padding = Vec2.ZERO),
+            radii = rad,
+        ),
+        Block(
+            size = ptrSize.vec,
+            radii = (ptrSize / 2f).radii(),
+        ).setPalette { text.primary }.withStates().draggable(withY = false, onDrag = {
+            val bar = this.parent[0]
+            val half = this.size.x / 2f
+            this.x = this.x.coerceIn(bar.x - half, bar.x + bar.size.x - half)
+            bar[0].width = x - bar.x + half
+            if (instant && hasListenersFor(Event.Change.Number::class.java)) {
+                val progress = (this.x + half - bar.x) / size.x
+                var value = (max - min) * progress
+                if (!floating) value = value.toInt().toFloat()
+                accept(Event.Change.Number(value))
+            }
+        }).events {
+            val op = object : DrawableOp.Animatable<Block>(self, Animations.EaseInOutQuad.create(0.15.seconds, 1f, 0f)) {
+                override fun apply(value: Float) {}
+
+                override fun unapply(value: Float) {
+                    self.apply {
+                        val maxRadius = this.size.x / 2.8f
+                        val rads = maxRadius * value
+                        val circleSize = rads * 2f
+                        val offset = (this.size.x - circleSize) / 2f
+                        renderer.rect(x + offset, y + offset, circleSize, circleSize, polyUI.colors.brand.fg.normal, rads)
+                    }
+                }
+
+                override fun unapply(): Boolean {
+                    super.unapply()
+                    isFinished = false
+                    // asm: don't finish by itself
+                    return false
+                }
+            }
+            op.add()
+            Event.Mouse.Exited then {
+                op.reverse()
+            }
+            Event.Mouse.Entered then {
+                op.reverse()
+            }
+        },
         at = at,
         size = size,
         alignment = Align(Align.Main.Start, padding = Vec2.ZERO),
-        children = arrayOf(
-            Block(
-                size = Vec2(barWidth, barHeight),
-                alignment = Align(Align.Main.Start, padding = Vec2.ZERO),
-                radii = rad,
-                children = arrayOf(
-                    Block(
-                        size = Vec2(1f, barHeight),
-                        radii = rad,
-                    ).setPalette { brand.fg },
-                ),
-            ),
-            Block(
-                size = ptrSize.vec,
-                radii = (ptrSize / 2f).radii(),
-            ).setPalette { text.primary }.withStates().draggable(withY = false, onDrag = {
-                val bar = this.parent[0]
-                val half = this.size.x / 2f
-                this.x = this.x.coerceIn(bar.x - half, bar.x + bar.size.x - half)
-                bar[0].width = x - bar.x + half
-                if (instant && hasListenersFor(Event.Change.Number::class.java)) {
-                    val progress = (this.x + half - bar.x) / size.x
-                    var value = (max - min) * progress
-                    if (!floating) value = value.toInt().toFloat()
-                    accept(Event.Change.Number(value))
-                }
-            }).events {
-                val op = object : DrawableOp.Animatable<Block>(self, Animations.EaseInOutQuad.create(0.15.seconds, 1f, 0f)) {
-                    override fun apply(value: Float) {}
-
-                    override fun unapply(value: Float) {
-                        self.apply {
-                            val maxRadius = this.size.x / 2.8f
-                            val rads = maxRadius * value
-                            val circleSize = rads * 2f
-                            val offset = (this.size.x - circleSize) / 2f
-                            renderer.rect(x + offset, y + offset, circleSize, circleSize, polyUI.colors.brand.fg.normal, rads)
-                        }
-                    }
-
-                    override fun unapply(): Boolean {
-                        super.unapply()
-                        isFinished = false
-                        // asm: don't finish by itself
-                        return false
-                    }
-                }
-                op.add()
-                Event.Mouse.Exited then {
-                    op.reverse()
-                }
-                Event.Mouse.Entered then {
-                    op.reverse()
-                }
-            },
-        ),
     ).apply {
         onClick {
             val bar = this[0]
@@ -347,17 +335,15 @@ fun Slider(at: Vec2? = null, min: Float = 0f, max: Float = 100f, initialValue: F
 
 fun Checkbox(at: Vec2? = null, size: Float, state: Boolean = false): Drawable {
     return Block(
+        Image(
+            image = PolyImage("check.svg"),
+            size = (size / 1.25f).vec,
+        ).disable(!state).also {
+            if (!state) it.alpha = 0f
+        },
         at = at,
         size = Vec2(size, size),
         alignment = Align(padding = ((size - size / 1.25f) / 2f).vec),
-        children = arrayOf(
-            Image(
-                image = PolyImage("check.svg"),
-                size = (size / 1.25f).vec,
-            ).disable(!state).also {
-                if (!state) it.alpha = 0f
-            },
-        ),
     ).events {
         var checked = state
         Event.Mouse.Clicked(0) then {
@@ -391,11 +377,9 @@ fun BoxedTextInput(
     size: Vec2? = null,
 ): Drawable {
     return Block(
-        size = size,
-        children = arrayOf(
-            if (image != null) Image(image) else null,
-            TextInput(placeholder = placeholder, text = initialValue, wrap = size?.x ?: 0f),
-        ),
+        if (image != null) Image(image) else null,
+        TextInput(placeholder = placeholder, text = initialValue, wrap = size?.x ?: 0f),
+        size = size
     ).withBoarder()
 }
 

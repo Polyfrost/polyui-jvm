@@ -215,11 +215,21 @@ class PolyUI @JvmOverloads constructor(
 
     inline val size: Vec2 get() = master.size
 
-    internal var _iSize: Vec2.Immutable? = null
+    private var _iSize: Vec2.Immutable? = null
+        set(value) {
+            field = value
+            if (settings.debug && field != value) LOGGER.info("initial size: $value")
+        }
 
     /**
      * this property stores the initial size of this PolyUI instance.
      * It is used to make sure that new objects experience the same resizing as others.
+     *
+     * **note:** access to this too early will result in a size of `1x1`. As this value is used for scaling, this is not a problem.
+     * just be careful if you are using this value for anything else.
+     *
+     * @see Settings.forceSetsInitialSize
+     * @see resize
      * @since 1.0.5
      */
     val iSize: Vec2.Immutable
@@ -376,6 +386,7 @@ class PolyUI @JvmOverloads constructor(
         }
 
         if (settings.debug) LOGGER.info("resize: ${newWidth}x$newHeight")
+        if (force && settings.forceSetsInitialSize) _iSize = Vec2(newWidth, newHeight).immutable()
 
         val sx = newWidth / size.x
         val sy = newHeight / size.y

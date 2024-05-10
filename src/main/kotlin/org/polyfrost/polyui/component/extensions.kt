@@ -137,9 +137,7 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, fre
  */
 fun <S : Drawable> S.addHoverInfo(text: String?): S {
     if (text == null) return this
-    val obj = Block(
-        children = arrayOf(Text(text)),
-    ).hide()
+    val obj = Block(Text(text)).hide()
     obj.alpha = 0f
     onInit {
         obj.setup(polyUI)
@@ -507,6 +505,14 @@ inline fun <S : Drawable> S.events(dsl: EventDSL<S>.() -> Unit): S {
     return this
 }
 
+@OverloadResolutionByLambdaReturnType
+@JvmName("onClickZ")
+fun <S : Drawable> S.onClick(func: S.(Event.Mouse.Clicked) -> Boolean): S {
+    addEventHandler(Event.Mouse.Clicked(0), func)
+    return this
+}
+
+@OverloadResolutionByLambdaReturnType
 fun <S : Drawable> S.onClick(func: S.(Event.Mouse.Clicked) -> Unit): S {
     addEventHandler(Event.Mouse.Clicked(0), func)
     return this
