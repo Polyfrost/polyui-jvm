@@ -70,7 +70,7 @@ abstract class Drawable(
      * @since 1.1.0
      */
     @ApiStatus.Internal
-    var visibleSize0: Vec2? = visibleSize?.mutable()
+    var _visibleSize: Vec2? = visibleSize?.mutable()
 
     /**
      * The visible size of this drawable. This is used for clipping and scrolling.
@@ -86,18 +86,18 @@ abstract class Drawable(
      * @since 1.1.0
      */
     inline var visibleSize: Vec2
-        get() = visibleSize0 ?: size
+        get() = _visibleSize ?: size
         set(value) {
-            visibleSize0 = value
+            _visibleSize = value
         }
 
     /**
      * Returns `true` if this drawable has a visible size set.
      */
-    inline val hasVisibleSize get() = visibleSize0 != null
+    inline val hasVisibleSize get() = _visibleSize != null
 
     @ApiStatus.Internal
-    var parent0: Drawable? = null
+    var _parent: Drawable? = null
         set(value) {
             if (value === field) return
             if (field != null) {
@@ -108,9 +108,9 @@ abstract class Drawable(
         }
 
     inline var parent: Drawable
-        get() = parent0 ?: error("cannot move outside of component tree")
+        get() = _parent ?: error("cannot move outside of component tree")
         set(value) {
-            parent0 = value
+            _parent = value
         }
 
     /**
@@ -287,7 +287,7 @@ abstract class Drawable(
     var needsRedraw = true
         set(value) {
             if (value && !field) {
-                parent0?.needsRedraw = true
+                _parent?.needsRedraw = true
             }
             field = value
         }
@@ -568,7 +568,7 @@ abstract class Drawable(
             yScroll?.let { it.from *= sy; it.to *= sy }
         }
         size.scale(sx, sy)
-        visibleSize0?.scale(sx, sy)
+        _visibleSize?.scale(sx, sy)
 
         children?.fastEach { it.rescale(scaleX, scaleY) }
         framebuffer?.let {
@@ -687,9 +687,8 @@ abstract class Drawable(
         }
         // asm: don't use accept as we don't want to dispatch to children
         eventHandlers?.maybeRemove(Event.Lifetime.Init::class.java, polyUI.settings.aggressiveCleanup)?.fastEach { it(this, Event.Lifetime.Init) }
-        if (atValid) {
-            recalculateChildren()
-        } else polyUI.positioner.position(this)
+        if (atValid) recalculate()
+        else polyUI.positioner.position(this)
 
         eventHandlers?.maybeRemove(Event.Lifetime.PostInit::class.java, polyUI.settings.aggressiveCleanup)?.fastEach { it(this, Event.Lifetime.PostInit) }
 
@@ -747,19 +746,12 @@ abstract class Drawable(
     @Locking
     @Synchronized
     fun recalculateChildren() {
-        val oldX = this.x
-        val oldY = this.y
-        this.x = 0f
-        this.y = 0f
-        this.atValid = false
         children?.fastEach {
             it.x = 0f
             it.y = 0f
             it.atValid = false
         }
         polyUI.positioner.position(this)
-        this.x = oldX
-        this.y = oldY
         clipChildren()
     }
 
@@ -771,9 +763,14 @@ abstract class Drawable(
     @Locking
     @Synchronized
     fun recalculate() {
-        this.size.x = 0f
-        this.size.y = 0f
+        val sz = this.size
+        val oldW = sz.x
+        val oldH = sz.y
+        sz.x = 0f
+        sz.y = 0f
         recalculateChildren()
+        x -= (sz.x - oldW) / 2f
+        y -= (sz.y - oldH) / 2f
     }
 
     /**
@@ -875,7 +872,7 @@ abstract class Drawable(
     fun addChild(child: Drawable, reposition: Boolean = true) {
         if (children == null) children = LinkedList()
         val children = this.children ?: throw ConcurrentModificationException("well, this sucks")
-        child.parent0 = this
+        child._parent = this
         children.add(child)
         if (initialized) {
             if (child.setup(polyUI)) {
@@ -913,7 +910,7 @@ abstract class Drawable(
     fun removeChild(index: Int) {
         val children = this.children ?: throw NoSuchElementException("no children on $this")
         val it = children.getOrNull(index) ?: throw IndexOutOfBoundsException("index: $index, length: ${children.size}")
-        it.parent0 = null
+        it._parent = null
         polyUI.inputManager.drop(it)
         if (initialized) {
             it.accept(Event.Lifetime.Removed)
@@ -951,15 +948,14 @@ abstract class Drawable(
             removeChild(old)
             return
         }
-        new.parent0 = this
+        new._parent = this
         val isNew = new.setup(polyUI)
         Fade(old, 0f, false, Animations.EaseInOutQuad.create(0.3.seconds)) {
             enabled = false
             children.remove(this)
-            parent0 = null
+            _parent = null
             polyUI.inputManager.drop(this)
         }.add()
-        if (polyUI.settings.debug && new.visibleSize != old.visibleSize) PolyUI.LOGGER.warn("replacing drawable $old with $new, but visible sizes are different: ${old.visibleSize} -> ${new.visibleSize}")
         children.add(index, new)
         new.enabled = true
         if (isNew) {

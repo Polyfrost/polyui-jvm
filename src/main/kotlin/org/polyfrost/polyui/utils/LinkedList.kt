@@ -356,6 +356,16 @@ class LinkedList<T>() : MutableList<T>, Cloneable {
         return null
     }
 
+    fun addIfAbsent(element: T & Any): Boolean {
+        var current = start
+        while (current != null) {
+            if (current.value == element) return false
+            current = current.next
+        }
+        add(element)
+        return true
+    }
+
     /**
      * Sublist this list in the range of [from] to [to], discarding any elements outside of that range.
      *

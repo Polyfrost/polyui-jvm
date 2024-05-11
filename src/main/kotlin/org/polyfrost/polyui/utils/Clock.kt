@@ -76,16 +76,16 @@ object Clock {
 
         /**
          * Update this Executor, and execute it if the given amount of [time][deltaTimeNanos] has passed.
-         * @return the same as [finished]
+         * @return the amount of time left until the next execution, or `0L  if it no longer needs to be executed (has [finished])
          */
-        open fun tick(deltaTimeNanos: Long): Boolean {
-            if (finished) return true
+        open fun tick(deltaTimeNanos: Long): Long {
+            if (finished) return 0L
             time += deltaTimeNanos
             if (time >= executeEveryNanos) {
                 func()
                 time = 0L
             }
-            return false
+            return executeEveryNanos - time
         }
     }
 
@@ -104,15 +104,15 @@ object Clock {
          * Returns false if [repeats] is 0 (it lasts forever) */
         override val finished get() = cycles > repeats
 
-        override fun tick(deltaTimeNanos: Long): Boolean {
-            if (cycles > repeats) return true
+        override fun tick(deltaTimeNanos: Long): Long {
+            if (cycles > repeats) return 0L
             time += deltaTimeNanos
             if (time >= executeEveryNanos) {
                 func()
                 if (repeats != 0) cycles++
                 time = 0L
             }
-            return false
+            return executeEveryNanos - time
         }
     }
 }

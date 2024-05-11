@@ -40,6 +40,7 @@ import org.polyfrost.polyui.renderer.Window
 import org.polyfrost.polyui.renderer.data.Cursor
 import org.polyfrost.polyui.utils.getResourceStream
 import org.polyfrost.polyui.utils.simplifyRatio
+import org.polyfrost.polyui.utils.stdout
 import org.polyfrost.polyui.utils.toDirectByteBuffer
 import java.nio.file.Paths
 import kotlin.math.max
@@ -62,7 +63,6 @@ class GLFWWindow @JvmOverloads constructor(
     decorated: Boolean = true,
 ) : Window(width, height) {
     private val LOGGER = LogManager.getLogger("PolyUI/GLFW")
-
     override var height: Int
         get() = super.height
         set(value) {
@@ -79,8 +79,6 @@ class GLFWWindow @JvmOverloads constructor(
      */
     private var offset = 0
     val handle: Long
-    lateinit var polyUI: PolyUI
-        private set
     var fpsCap: Double = 0.0
         set(value) {
             field = if (value == 0.0) 0.0 else 1.0 / value.toInt()
@@ -292,7 +290,6 @@ class GLFWWindow @JvmOverloads constructor(
     }
 
     override fun open(polyUI: PolyUI): Window {
-        this.polyUI = polyUI
         polyUI.window = this
         glfwSetTime(0.0)
         glfwSwapInterval(if (polyUI.settings.enableVSync) 1 else 0)
@@ -341,15 +338,16 @@ class GLFWWindow @JvmOverloads constructor(
             glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
             glClearColor(0f, 0f, 0f, 0f)
 
-            this.polyUI.render()
+            val timeout = polyUI.render()
             if (fpsCap != 0.0) {
                 val delta = glfwGetTime() - time
                 if (delta < fpsCap) {
-                    glfwWaitEventsTimeout((fpsCap - delta) * 1_000_000.0)
-                } else glfwPollEvents()
+                    Thread.sleep(((fpsCap - delta) * 1_000.0).toLong())
+                }
                 time = glfwGetTime()
-            } else glfwPollEvents()
-
+            }
+            if (timeout == 0L) glfwPollEvents()
+            else glfwWaitEventsTimeout((timeout / 1_000_000_000.0).stdout("time"))
             if (polyUI.drew) glfwSwapBuffers(handle)
         }
 

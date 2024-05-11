@@ -86,7 +86,7 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, fre
                 if (self.inputState != INPUT_PRESSED) {
                     dragging = false
                     if (started) {
-                        if (free && self.parent0 !== self.polyUI.master) {
+                        if (free && self._parent !== self.polyUI.master) {
                             self.polyUI.master.children!!.remove(self)
                             self.parent.children!!.add(self)
                         }
@@ -101,7 +101,7 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, fre
                     if (abs(px + x - self.polyUI.inputManager.mouseX) > MIN_DRAG || abs(py + y - self.polyUI.inputManager.mouseY) > MIN_DRAG) {
                         started = true
                         onStart?.invoke(this@draggable)
-                        if (free && self.parent0 !== self.polyUI.master) {
+                        if (free && self._parent !== self.polyUI.master) {
                             if (self.polyUI.inputManager.focused !== self) self.polyUI.unfocus()
                             self.parent.children!!.remove(self)
                             self.polyUI.master.children!!.add(self)
@@ -141,7 +141,7 @@ fun <S : Drawable> S.addHoverInfo(text: String?): S {
     obj.alpha = 0f
     onInit {
         obj.setup(polyUI)
-        (parent0 ?: polyUI.master).addChild(obj, reposition = false)
+        (_parent ?: polyUI.master).addChild(obj, reposition = false)
         obj.renders = false
         acceptsInput = true
     }
@@ -433,7 +433,7 @@ fun <S : Drawable> S.setState(state: Byte): S {
  * @since 1.0.0
  */
 fun <S : Drawable> S.prioritize(): S {
-    val children = parent0?.children ?: return this
+    val children = _parent?.children ?: return this
     if (children.last() === this) return this
     children.remove(this)
     children.add(this)
@@ -485,7 +485,7 @@ fun <S : Drawable> S.afterParentInit(depth: Int = 1, handler: S.() -> Unit): S {
     this.addEventHandler(Event.Lifetime.PostInit) { _ ->
         var it: Drawable = this
         for (i in 0 until depth) {
-            it.parent0?.let { parent -> it = parent } ?: break
+            it._parent?.let { parent -> it = parent } ?: break
         }
         if (it.initialized) {
             handler(this@afterParentInit)

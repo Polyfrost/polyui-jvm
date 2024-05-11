@@ -190,6 +190,12 @@ class Translator(private val settings: Settings, private val translationDir: Str
 
             override fun toString() = string
         }
+
+        /**
+         * Use this class to prevent the translation from occurring.
+         * @since 1.1.63
+         */
+        class Dont(text: Text) : Text by text
     }
 
     /** translate the provided key, returning the key as per the translation table.

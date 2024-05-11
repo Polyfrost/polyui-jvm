@@ -126,7 +126,6 @@ private class ColorPickingBox(
 ) : Block(
     Block(size = 10f by 10f, radii = 5f.radii(), color = PolyColor.TRANSPARENT).draggable(
         onDrag = {
-            val parent = parent0 ?: return@draggable
             val hf = width / 2f
             x = x.coerceIn(parent.x - hf, parent.x + parent.width - hf)
             y = y.coerceIn(parent.y - hf, parent.y + parent.height - hf)

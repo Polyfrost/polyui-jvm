@@ -129,9 +129,9 @@ fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2? = null, ini
             }
             Event.Mouse.Clicked(0) then { _ ->
                 val children = parent.children!!
-                if (hasListenersFor(Event.Change.Number::class.java)) {
+                if (parent.hasListenersFor(Event.Change.Number::class.java)) {
                     val ev = Event.Change.Number(children.indexOf(this) - 1)
-                    accept(ev)
+                    parent.accept(ev)
                     if (ev.cancelled) return@then false
                 }
                 val it = children.first()

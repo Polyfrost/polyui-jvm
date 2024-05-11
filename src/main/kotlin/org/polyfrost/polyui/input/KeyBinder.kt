@@ -147,6 +147,16 @@ class KeyBinder(private val settings: Settings) {
 
     /**
      * Add a keybind to this PolyUI instance, that will be run when the given keys are pressed.
+     * @since 1.1.7
+     */
+    fun add(vararg binds: Bind) {
+        for (bind in binds) {
+            add(bind)
+        }
+    }
+
+    /**
+     * Add a keybind to this PolyUI instance, that will be run when the given keys are pressed.
      * @since 0.21.0
      */
     fun add(bind: Bind) {

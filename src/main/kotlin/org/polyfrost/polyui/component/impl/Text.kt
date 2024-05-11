@@ -180,13 +180,15 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
     override fun setup(polyUI: PolyUI): Boolean {
         if (initialized) return false
         palette = polyUI.colors.text.primary
-        _translated = if (_translated is Translator.Text.Formatted) {
-            polyUI.translator.translate(_translated.string, *(_translated as Translator.Text.Formatted).args)
-        } else {
-            polyUI.translator.translate(_translated.string)
+        if (_translated !is Translator.Text.Dont) {
+            _translated = if (_translated is Translator.Text.Formatted) {
+                polyUI.translator.translate(_translated.string, *(_translated as Translator.Text.Formatted).args)
+            } else {
+                polyUI.translator.translate(_translated.string)
+            }
+            // asm: in translation files \\n is used for new line for some reason
+            text = text.replace("\\n", "\n")
         }
-        // asm: in translation files \\n is used for new line for some reason
-        text = text.replace("\\n", "\n")
         if (_font == null) _font = polyUI.fonts.regular
         updateTextBounds(polyUI.renderer)
         super.setup(polyUI)

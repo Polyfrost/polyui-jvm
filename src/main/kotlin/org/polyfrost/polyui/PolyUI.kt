@@ -27,7 +27,6 @@ import org.polyfrost.polyui.color.DarkTheme
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.Positioner
-import org.polyfrost.polyui.component.countChildren
 import org.polyfrost.polyui.component.impl.Block
 import org.polyfrost.polyui.component.impl.Group
 import org.polyfrost.polyui.event.InputManager
@@ -44,10 +43,7 @@ import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.immutable
-import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.*
-import java.text.DecimalFormat
-import kotlin.math.max
 import kotlin.math.min
 
 // todo rewrite this doc
@@ -144,6 +140,14 @@ class PolyUI @JvmOverloads constructor(
      * @since 0.18.3
      */
     var window: Window? = null
+        set(value) {
+            if (field === value) return
+            if (field != null && settings.debug) LOGGER.info("window change: $field -> $value")
+            field = value
+            if (value != null) {
+                resize(value.width.toFloat(), value.height.toFloat(), false)
+            }
+        }
 
     /**
      * returns `true` if render pausing is possible.
@@ -251,19 +255,12 @@ class PolyUI @JvmOverloads constructor(
     var delta: Long = 0L
         private set
 
-    // telemetry
-    var fps: Int = 1
-        private set
-    private var frames = 0
-    private var nframes = 0
-    var longestFrame = 0.0
-        private set
-    var shortestFrame = 100.0
-        private set
-    private var timeInFrames = 0.0
-    var avgFrame = 0.0
-        private set
-    private var perf: String = ""
+    /**
+     * the debugger attached to this PolyUI instance.
+     * @see Debugger
+     * @since 1.1.7
+     */
+    val debugger = Debugger(this)
 
     init {
         LOGGER.info("PolyUI initializing...")
@@ -279,39 +276,7 @@ class PolyUI @JvmOverloads constructor(
                 true
             },
         )
-        if (this.settings.debug) {
-            addDebug(this.settings.enableDebugKeybind)
-            val f = DecimalFormat("#.###")
-//            var td = Clock.time
-            every(1.seconds) {
-//            val diff = (Clock.time - td) / 1_000_000_000.0
-//            td = Clock.time
-//            LOGGER.info("took $diff sec (accuracy = ${100.0 - (diff - 1.0) * 100.0}%)")
-                if (this.settings.debug) {
-                    val sb = StringBuilder(64)
-                    sb.append("fps: ").append(fps)
-                        .append(", avg/max/min: ")
-                        .append(f.format(avgFrame)).append("ms; ")
-                        .append(f.format(longestFrame)).append("ms; ")
-                        .append(f.format(shortestFrame)).append("ms")
-                    if (canPauseRendering) {
-                        val skipPercent = (1.0 - (frames.toDouble() / nframes)) * 100.0
-                        sb.append(", skip=").append(f.format(skipPercent)).append('%')
-                    }
-                    perf = sb.toString()
-                    longestFrame = 0.0
-                    shortestFrame = 100.0
-                    avgFrame = timeInFrames / fps
-                    timeInFrames = 0.0
-                    fps = frames
-                    frames = 0
-                    nframes = 0
-                    master.needsRedraw = true
-                    if (drew) LOGGER.info(perf)
-                }
-            }
-            LOGGER.info(debugString())
-        }
+        if (this.settings.debug) LOGGER.info(debugger.debugString())
         if (this.settings.cleanupOnShutdown) {
             Runtime.getRuntime().addShutdownHook(
                 Thread {
@@ -328,6 +293,7 @@ class PolyUI @JvmOverloads constructor(
             val newUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
             LOGGER.info("\t\t> Freed ${(currentUsage - newUsage) / 1024L}KB of memory")
         }
+        iSize // initialize the initial size
         LOGGER.info("PolyUI initialized!")
     }
 
@@ -394,70 +360,40 @@ class PolyUI @JvmOverloads constructor(
         master.needsRedraw = true
     }
 
-    fun render() {
+    /**
+     * Perform a render cycle.
+     * @return *(revised 1.1.7)* the maximum amount of time that can be waited, as long as no events are dispatched, that
+     * can be waited before [render] needs to be called again.
+     */
+    fun render(): Long {
+        debugger.nframes++
         delta = Clock.delta
-        nframes++
         if (master.needsRedraw) {
             val sz = master.size
             renderer.beginFrame(sz.x, sz.y, pixelRatio)
             window?.preRender(renderer)
             master.draw()
+            debugger.takeReadings()
+            if (settings.debug) debugger.render()
             window?.postRender(renderer)
-
-            // telemetry
-            if (settings.debug) {
-                val frameTime = (Clock.peek()) / 1_000_000.0
-                timeInFrames += frameTime
-                if (frameTime > longestFrame) longestFrame = frameTime
-                if (frameTime < shortestFrame) shortestFrame = frameTime
-                frames++
-                drawDebugOverlay(0f, size.y - 11f)
-                if (inputManager.focused == null) {
-                    val mods = inputManager.keyModifiers
-                    if (mods.hasControl) {
-                        val obj = inputManager.mouseOver
-                        if (obj != null) {
-                            val os = obj.toString()
-                            val w = renderer.textBounds(monospaceFont, os, 10f).x
-                            val pos = min(max(0f, mouseX - w / 2f), this.size.x - w - 10f)
-                            renderer.rect(pos, mouseY - 14f, w + 10f, 14f, colors.component.bg.hovered)
-                            renderer.text(monospaceFont, pos + 5f, mouseY - 10f, text = os, colors.text.primary.normal, 10f)
-                            master.needsRedraw = true
-                        }
-                    }
-                    if (mods.hasShift) {
-                        val s = "${inputManager.mouseX}x${inputManager.mouseY}"
-                        val ww = renderer.textBounds(monospaceFont, s, 10f).x
-                        val ppos = min(max(0f, mouseX + 10f), this.size.x - ww - 10f)
-                        val pposy = min(max(0f, mouseY), this.size.y - 14f)
-                        renderer.rect(ppos, pposy, ww + 10f, 14f, colors.component.bg.hovered)
-                        renderer.text(monospaceFont, ppos + 5f, pposy + 4f, text = s, colors.text.primary.normal, 10f)
-                        master.needsRedraw = true
-                    }
-                }
-            }
-
             renderer.endFrame()
             drew = true
-            if (!canPauseRendering) master.needsRedraw = true
+
         } else {
+
             drew = false
         }
+        val needsRedraw = master.needsRedraw
+        if (!canPauseRendering) master.needsRedraw = true
         keyBinder?.update(delta, inputManager.mods)
-        executors.fastRemoveIfReversed { it.tick(delta) }
-    }
-
-    /** draw the debug overlay text. It is right-aligned. */
-    fun drawDebugOverlay(x: Float, y: Float) {
-        renderer.text(
-            monospaceFont,
-            x,
-            y,
-            text = perf,
-            color = colors.text.primary.normal,
-            fontSize = 10f,
-        )
-        master.debugDraw()
+        var wait = Long.MAX_VALUE
+        executors.fastRemoveIfReversed l@{
+            val o = it.tick(delta)
+            if (o < 1L) return@l true
+            wait = min(wait, o)
+            false
+        }
+        return if (needsRedraw) 0L else wait
     }
 
     /**
@@ -474,6 +410,10 @@ class PolyUI @JvmOverloads constructor(
         val exec = Clock.FixedTimeExecutor(nanos, repeats, func)
         executors.add(exec)
         return exec
+    }
+
+    fun addExecutor(executor: Clock.Executor) {
+        executors.addIfAbsent(executor)
     }
 
     /**
@@ -501,55 +441,6 @@ class PolyUI @JvmOverloads constructor(
      * Return the key name for the given key code, or "Unknown" if the key is not mapped / no window is present.
      */
     fun getKeyName(key: Int) = window?.getKeyName(key) ?: "Unknown"
-
-    /**
-     * return a string of this PolyUI instance's components and children in a list, like this:
-     * ```
-     * PolyUI(800.0 x 800.0) with 0 components and 2 layouts:
-     *   PixelLayout@5bcab519 [Draggable](20.0x570.0, 540.0 x 150.0)
-     * 	 Text@6eebc39e(40.0x570.0, 520.0x32.0)
-     * 	 Block@2f686d1f(40.0x600.0, 120.0x120.0)
-     * 	 Block@7085bdee(220.0x600.0, 120.0x120.0)
-     * 	 Image@6fd02e5(400.0x600.0, 120.0x120.0 (auto))
-     * 	 ... 2 more
-     *   FlexLayout@73846619 [Scrollable](20.0x30.0, 693.73267 x 409.47168, buffered, needsRedraw)
-     * 	 Block@32e6e9c3(20.0x30.0, 61.111263x42.21167)
-     * 	 Block@5056dfcb(86.11127x30.0, 40.909004x76.32132)
-     * 	 Block@6574b225(132.02026x30.0, 52.75415x52.59597)
-     * 	 Block@2669b199(189.77441x30.0, 76.59671x45.275665)
-     * ```
-     */
-    fun debugString(): String {
-        val sb = StringBuilder().append(toString())
-        val children = master.children ?: run {
-            sb.append(" with 0 children, totalling 0 components.")
-            return sb.toString()
-        }
-        sb.append(" with ${children.size} children, totalling ${master.countChildren()} components:")
-        children.fastEach {
-            sb.append("\n\t").append(it.toString())
-            debugString(it.children ?: return@fastEach, 1, sb)
-        }
-        return sb.toString()
-    }
-
-    private fun debugString(list: LinkedList<Drawable>, depth: Int, sb: StringBuilder) {
-        var i = 0
-        var ii = 0
-        val ndepth = depth + 1
-        list.fastEach {
-            if (it.initialized) {
-                sb.append('\n').append('\t', ndepth).append(it.toString())
-                debugString(it.children ?: return@fastEach, ndepth, sb)
-                i++
-            } else ii += it.countChildren() + 1
-            if (i >= 10) {
-                sb.append('\n').append('\t', ndepth).append("... ").append(list.size - i).append(" more")
-                return
-            }
-        }
-        if (ii != 0) sb.append('\n').append('\t', ndepth).append("... (").append(ii).append(" uninitialized)")
-    }
 
     /**
      * Time the [block] and return how long it took, as well as logging with the [msg] if [debug][org.polyfrost.polyui.property.Settings.debug] is active.

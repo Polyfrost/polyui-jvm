@@ -38,6 +38,7 @@ fun interface Positioner {
     class Default : Positioner {
         override fun position(drawable: Drawable) {
             val children = drawable.children
+            val polyUI = drawable.polyUI
             if (!drawable.sizeValid) {
                 val out = drawable.calculateSize()
                 if (out != null) {
@@ -47,7 +48,7 @@ fun interface Positioner {
             }
             val needsToCalcSize = !drawable.sizeValid
             if (needsToCalcSize) {
-                require(!children.isNullOrEmpty()) { "Drawable $drawable has no size and no children\nBacktrace: ${drawable.polyUI.debugString()}" }
+                require(!children.isNullOrEmpty()) { "Drawable $drawable has no size and no children\nBacktrace: ${polyUI.debugger.debugString()}" }
             } else if (children.isNullOrEmpty()) {
                 fixVisibleSize(drawable)
                 return
@@ -58,7 +59,6 @@ fun interface Positioner {
             val main = if (drawable.alignment.mode == Align.Mode.Horizontal) 0 else 1
             val crs = if (main == 0) 1 else 0
             val padding = drawable.alignment.padding
-            val polyUI = drawable.polyUI
             val vs = drawable.visibleSize
             val totalSm = polyUI.size[main] / polyUI.iSize[main]
             val totalSc = polyUI.size[crs] / polyUI.iSize[crs]
@@ -70,7 +70,6 @@ fun interface Positioner {
                 val it = children.first()
                 val ivs = it.visibleSize
                 if (!it.sizeValid) position(it)
-                if (it.atValid) return
                 if (needsToCalcSize) {
                     drawable.size.x = ivs.x + mainPad * 2f
                     drawable.size.y = ivs.y + crossPad * 2f
@@ -78,7 +77,7 @@ fun interface Positioner {
                 fixVisibleSize(drawable)
                 it.at(
                     main,
-                    when (drawable.alignment.main) {
+                    drawable.x + when (drawable.alignment.main) {
                         Align.Main.Start -> mainPad
                         Align.Main.End -> vs[main] - ivs[main] - mainPad
                         else -> (vs[main] - ivs[main]) / 2f
@@ -86,7 +85,7 @@ fun interface Positioner {
                 )
                 it.at(
                     crs,
-                    when (drawable.alignment.cross) {
+                    drawable.y + when (drawable.alignment.cross) {
                         Align.Cross.Start -> crossPad
                         Align.Cross.End -> vs[crs] - ivs[crs] - crossPad
                         else -> (vs[crs] - ivs[crs]) / 2f
@@ -105,7 +104,7 @@ fun interface Positioner {
                 var rowCross = 0f
                 var currentRow = LinkedList<Drawable>()
                 children.fastEach {
-                    if (!it.renders || it.atValid) return@fastEach
+                    if (!it.enabled) return@fastEach
                     if (!it.sizeValid) position(it)
                     val ivs = it.visibleSize
                     if (currentRow.isNotEmpty() && (rowMain + ivs[main] + mainPad > vs[main] || currentRow.size == maxRowSize)) {
@@ -130,15 +129,15 @@ fun interface Positioner {
                     drawable.size[crs] = maxCross
                 }
                 fixVisibleSize(drawable)
-                rowCross = 0f
+                rowCross = drawable.at(crs)
                 if (rows.size == 1) {
                     // asm: in this situation, the user specified a size, and as there is only 1 row, so we should
                     // make it so the actual cross limit is the size of the drawable
                     val (rowData, row) = rows[0]
                     place(
                         drawable.alignment, row,
-                        vs[crs], 0f, crossPad, crs,
-                        rowData.first, vs[main], mainPad, main,
+                        vs[crs], drawable.at(crs), crossPad, crs,
+                        rowData.first, drawable.at(main), vs[main], mainPad, main,
                     )
                 } else {
                     rows.fastEach { (rowData, row) ->
@@ -146,7 +145,7 @@ fun interface Positioner {
                         place(
                             drawable.alignment, row,
                             theRowCross, rowCross, crossPad, crs,
-                            theRowMain, vs[main], mainPad, main,
+                            theRowMain, drawable.at(main), vs[main], mainPad, main,
                         )
                         rowCross += theRowCross + crossPad
                     }
@@ -158,8 +157,13 @@ fun interface Positioner {
                 children.fastEach {
                     if (!it.renders) return@fastEach
                     if (!it.sizeValid) position(it)
-                    rowCross = max(rowCross, it.size[crs] + pad)
-                    rowMain += it.size[main] + mainPad
+                    if (it.atValid) {
+                        rowCross = max(rowCross, it.at(crs) + it.visibleSize[crs] + pad)
+                        rowMain = max(rowMain, it.at(main) + it.visibleSize[main] + mainPad)
+                    } else {
+                        rowCross = max(rowCross, it.size[crs] + pad)
+                        rowMain += it.size[main] + mainPad
+                    }
                 }
                 if (needsToCalcSize) {
                     drawable.size[main] = rowMain
@@ -168,8 +172,8 @@ fun interface Positioner {
                 fixVisibleSize(drawable)
                 place(
                     drawable.alignment, children,
-                    rowCross, 0f, crossPad, crs,
-                    rowMain, drawable.size[main], mainPad, main,
+                    rowCross, drawable.at(crs), crossPad, crs,
+                    rowMain, drawable.at(main), drawable.size[main], mainPad, main,
                 )
             }
         }
@@ -177,7 +181,7 @@ fun interface Positioner {
         private fun place(
             align: Align, row: LinkedList<Drawable>,
             rowCross: Float, minCross: Float, padCross: Float, crs: Int,
-            rowMain: Float, maxMain: Float, padMain: Float, main: Int,
+            rowMain: Float, minMain: Float, maxMain: Float, padMain: Float, main: Int,
         ) {
             val aligner = when (align.cross) {
                 Align.Cross.Start -> cStart
@@ -194,7 +198,7 @@ fun interface Positioner {
                 Align.Main.SpaceEvenly -> (maxMain - rowMain) / (row.size + 1)
                 else -> 0f
             }
-            var current = when (align.main) {
+            var current = minMain + when (align.main) {
                 Align.Main.Start, Align.Main.End, Align.Main.SpaceBetween -> padMain
                 Align.Main.Center -> (maxMain / 2f) - (rowMain / 2f) + padMain
                 Align.Main.SpaceEvenly -> padMain + gap
@@ -223,7 +227,7 @@ fun interface Positioner {
         }
 
         private val cEnd = Aligner { rowCross, it, min, padding, crs ->
-            it.at(crs, (min + rowCross) - it.visibleSize[crs] - padding)
+            it.at(crs, min + rowCross - it.visibleSize[crs] - padding)
         }
 
         private val mProgressive = Justifier { current, it, padding, main, _ ->
