@@ -140,6 +140,7 @@ fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2? = null, ini
             it.palette = polyUI.colors.brand.fg
         }
         addChild(it, recalculate = false)
+        it.size.set(target.size)
         it.relegate()
     }.namedId("Radiobutton")
 }
@@ -417,7 +418,7 @@ fun PopupMenu(vararg children: Drawable, size: Vec2? = null, align: Align = Alig
         }
         Event.Focused.Lost then {
             Fade(this, 0f, false, Animations.EaseInOutQuad.create(0.2.seconds)) {
-                this.polyUI.master.removeChild(this)
+                this.polyUI.master.removeChild(this, recalculate = false)
             }.add()
         }
     }

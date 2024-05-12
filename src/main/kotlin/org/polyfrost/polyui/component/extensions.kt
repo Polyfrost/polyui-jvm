@@ -281,22 +281,6 @@ fun <S : Drawable> S.setPalette(palette: Colors.() -> Colors.Palette): S {
 }
 
 /**
- * Call this function to ignore this drawable during the calculation of the parent's positioning and size.
- * It is equivalent to the following:
- * ```
- * renders = false
- * afterParentInit { renders = true }
- * ```
- *
- * @since 1.1.4
- */
-fun <S : Drawable> S.ignoreLayout(): S {
-    renders = false
-    afterParentInit { renders = true }
-    return this
-}
-
-/**
  * Set the font of this text component during initialization, using the PolyUI fonts instance.
  * @since 1.1.3
  */
@@ -573,6 +557,24 @@ fun <S : Drawable> PolyColor.makeChroma(speedNanos: LongRef = 5.seconds.toChroma
     }
     p.add()
     return p
+}
+
+/**
+ * Locate a drawable by its name.
+ *
+ * This method is recursive, meaning it will search through all children of this drawable.
+ * @param id the name of the drawable to locate.
+ * @return the drawable with the given name, or `null` if it was not found.
+ * @since 1.1.72
+ */
+fun <S : Drawable> Drawable.locate(id: String): S? {
+    @Suppress("UNCHECKED_CAST")
+    if (this.simpleName == id) return this as S
+    children?.fastEach {
+        val res = it.locate<S>(id)
+        if (res != null) return res
+    }
+    return null
 }
 
 /**

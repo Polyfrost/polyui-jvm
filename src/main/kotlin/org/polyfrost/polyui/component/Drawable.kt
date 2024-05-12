@@ -107,6 +107,7 @@ abstract class Drawable(
             field = value
         }
 
+    @SideEffects(["_parent"])
     inline var parent: Drawable
         get() = _parent ?: error("cannot move outside of component tree")
         set(value) {
@@ -175,6 +176,7 @@ abstract class Drawable(
 
     private var _palette: Colors.Palette? = null
 
+    @SideEffects(["color", "palette"])
     var palette: Colors.Palette
         get() = _palette ?: throw UninitializedPropertyAccessException("Palette is not initialized")
         set(value) {
@@ -201,6 +203,7 @@ abstract class Drawable(
     @ApiStatus.Internal
     var _y = y
 
+    @SideEffects(["x", "_x", "atValid", "this.children::x"], "value != x")
     var x: Float
         inline get() = _x
         set(value) {
@@ -213,6 +216,7 @@ abstract class Drawable(
             }
         }
 
+    @SideEffects(["y", "_y", "atValid", "this.children::y"], "value != y")
     var y: Float
         inline get() = _y
         set(value) {
@@ -284,6 +288,7 @@ abstract class Drawable(
 
     val scrolling get() = xScroll != null || yScroll != null
 
+    @SideEffects(["_parent.needsRedraw"], `when` = "field != value")
     var needsRedraw = true
         set(value) {
             if (value && !field) {
@@ -308,6 +313,10 @@ abstract class Drawable(
      * **Do not** modify this value!
      * @since 1.0.0
      */
+    @Dispatches("Lifetime.Disabled", "value == INPUT_DISABLED")
+    @Dispatches("Lifetime.Enabled", "value != INPUT_DISABLED")
+    @Dispatches("Mouse.Entered", "value > INPUT_NONE")
+    @Dispatches("Mouse.Exited", "value == INPUT_NONE")
     var inputState = INPUT_NONE
         set(value) {
             if (field == value) return
@@ -344,6 +353,7 @@ abstract class Drawable(
      */
     open var renders = true
         set(value) {
+            if (field == value) return
             field = value
             needsRedraw = true
         }
@@ -353,6 +363,7 @@ abstract class Drawable(
      *
      * @since 0.21.4
      */
+    @SideEffects(["inputState"])
     inline var enabled
         get() = inputState > INPUT_DISABLED
         set(value) {
@@ -368,9 +379,10 @@ abstract class Drawable(
      * note: this method locks due to the fact the object needs to be translated to the center, rotated, and then translated back.
      * It only locks if the value is `0.0`.
      */
-    @Locking
+    @Locking(`when` = "value == 0.0")
     var rotation: Double = 0.0
         set(value) {
+            if (field == value) return
             if (value == 0.0) {
                 synchronized(this) {
                     // lock required!
@@ -384,9 +396,10 @@ abstract class Drawable(
      *
      * locking if set to `0.0`. See [rotation].
      */
-    @Locking
+    @Locking(`when` = "value == 0.0")
     var skewX: Double = 0.0
         set(value) {
+            if (field == value) return
             if (value == 0.0) {
                 synchronized(this) {
                     field = value
@@ -400,9 +413,10 @@ abstract class Drawable(
      *
      * Locking if set to `0.0`. See [rotation].
      */
-    @Locking
+    @Locking(`when` = "value == 0.0")
     var skewY: Double = 0.0
         set(value) {
+            if (field == value) return
             if (value == 0.0) {
                 synchronized(this) {
                     field = value
@@ -414,6 +428,7 @@ abstract class Drawable(
     /** current scale in x dimension of this drawable. */
     var scaleX: Float = 1f
         set(value) {
+            if (field == value) return
             field = value
             needsRedraw = true
         }
@@ -421,6 +436,7 @@ abstract class Drawable(
     /** current scale in y dimension of this drawable. */
     var scaleY: Float = 1f
         set(value) {
+            if (field == value) return
             field = value
             needsRedraw = true
         }
@@ -430,10 +446,6 @@ abstract class Drawable(
      * @since 0.20.0
      */
     var alpha = 1f
-        set(value) {
-            field = value
-            needsRedraw = true
-        }
 
     /** **a**t **c**ache **x** for transformations. */
     private var acx = 0f
@@ -719,7 +731,7 @@ abstract class Drawable(
         return true
     }
 
-    @Locking
+    @Locking(`when` = "this.shouldScroll && this.hasVisibleSize && this.visibleSize > this.size")
     fun tryMakeScrolling() {
         if (shouldScroll && hasVisibleSize) {
             var scrolling = false
@@ -763,9 +775,10 @@ abstract class Drawable(
      * @since 1.0.2
      */
     @ApiStatus.Experimental
-    @Locking
+    @Locking(`when` = "this.children != null")
     @Synchronized
     fun repositionChildren() {
+        if (children == null) return
         children?.fastEach {
             it.x = 0f
             it.y = 0f
@@ -782,9 +795,10 @@ abstract class Drawable(
      * @since 1.0.7
      */
     @ApiStatus.Experimental
-    @Locking
+    @Locking(`when` = "this.children != null")
     @Synchronized
     fun recalculate() {
+        if (children == null) return
         val sz = this.size
         val oldW = sz.x
         val oldH = sz.y
@@ -859,7 +873,7 @@ abstract class Drawable(
      * Add a [DrawableOp] to this drawable.
      * @return `true` if the operation was added, `false` if it was replaced.
      */
-    @Locking
+    @Locking(`when` = "drawableOp.verify() == true")
     @Synchronized
     fun addOperation(drawableOp: DrawableOp): Boolean {
         if (!drawableOp.verify()) {
@@ -879,7 +893,7 @@ abstract class Drawable(
     /**
      * Remove an operation from this drawable.
      */
-    @Locking
+    @Locking(`when` = "operations != null")
     @Synchronized
     fun removeOperation(drawableOp: DrawableOp) {
         this.operations?.apply {
@@ -918,16 +932,16 @@ abstract class Drawable(
         }
     }
 
-    @Locking
+    @Locking(`when` = "children.size != 0")
     fun addChild(vararg children: Drawable) {
         for (child in children) addChild(child)
     }
 
     @Locking
-    fun removeChild(child: Drawable) {
+    fun removeChild(child: Drawable, recalculate: Boolean = true) {
         val i = children?.indexOf(child) ?: throw NoSuchElementException("no children on $this")
         require(i != -1) { "Drawable $child is not a child of $this" }
-        removeChild(i)
+        removeChild(i, recalculate)
     }
 
     @Locking

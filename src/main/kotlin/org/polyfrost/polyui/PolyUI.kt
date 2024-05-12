@@ -141,12 +141,13 @@ class PolyUI @JvmOverloads constructor(
      */
     var window: Window? = null
         set(value) {
+            if (value == null) return
             if (field === value) return
-            if (field != null && settings.debug) LOGGER.info("window change: $field -> $value")
-            field = value
-            if (value != null) {
+            if (field != null) {
+                if (settings.debug) LOGGER.info("window change: $field -> $value")
+                field = value
                 resize(value.width.toFloat(), value.height.toFloat(), false)
-            }
+            } else field = value
         }
 
     /**

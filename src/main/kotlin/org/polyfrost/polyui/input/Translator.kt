@@ -120,6 +120,7 @@ class Translator(private val settings: Settings, private val translationDir: Str
                         PolyUI.LOGGER.warn("Duplicate key: '${split[0]}', overwriting with $resource -> ${split[1]}")
                         v.string = split[1]
                     } else {
+                        require('.' in split[0]) { "Invalid key ${split[0]}: keys must contain at least one dot" }
                         map[split[0]] = Text.Simple(split[1])
                     }
                 } ?: PolyUI.LOGGER.warn("\t\t> Table not found!")
@@ -165,10 +166,12 @@ class Translator(private val settings: Settings, private val translationDir: Str
      * @since 0.17.5
      */
     fun addKey(key: String, value: String) {
+        require('.' in key) { "Invalid key $key: keys must contain at least one dot" }
         val v = map[key]
         if (v == null) {
             map[key] = Text.Simple(value)
         } else {
+            PolyUI.LOGGER.warn("Duplicate key: '$key', overwriting with $value")
             v.string = value
         }
     }
@@ -207,7 +210,7 @@ class Translator(private val settings: Settings, private val translationDir: Str
      */
     fun translate(key: String): Text {
         if (key.isEmpty()) return Text.Simple("").dont()
-        var ran = false
+        if ('.' !in key) return Text.Simple(key).dont()
         val text = map.getOrPut(key) {
             while (queue.isNotEmpty()) {
                 loadKeys(queue.removeFirst(), true)
@@ -234,10 +237,9 @@ class Translator(private val settings: Settings, private val translationDir: Str
                 val v = map[key]
                 if (v != null) return@getOrPut v
             }
-            ran = true
+            if(!dontWarn) PolyUI.LOGGER.warn("No translation for '$key'!")
             Text.Simple(key)
         }
-        if (!dontWarn && ran && text.string == key && '.' in key) PolyUI.LOGGER.warn("No translation for '$key'!")
         return text
     }
 
