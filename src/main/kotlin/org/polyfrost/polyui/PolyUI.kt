@@ -378,9 +378,7 @@ class PolyUI @JvmOverloads constructor(
             window?.postRender(renderer)
             renderer.endFrame()
             drew = true
-
         } else {
-
             drew = false
         }
         val needsRedraw = master.needsRedraw

@@ -264,11 +264,19 @@ class InputManager(
         if (focused?.isInside(mouseX, mouseY) != true) {
             unfocus()
         }
-        val release = Event.Mouse.Released(button, mouseX, mouseY, keyModifiers)
-        val click = Event.Mouse.Clicked(button, mouseX, mouseY, clickAmount, keyModifiers)
         mouseOver?.inputState = INPUT_HOVERED
-        dispatch(release, true)
-        if (!dispatch(click) && button == 0) {
+        dispatch(Event.Mouse.Released(button, mouseX, mouseY, keyModifiers), true)
+        val click = Event.Mouse.Clicked(button, mouseX, mouseY, clickAmount, keyModifiers)
+        if (clickAmount > 1) {
+            // asm: not many drawables will actually have double click listeners, so, we check and see if we can skip the dispatch.
+            val mouseOver = mouseOver ?: return
+            if (!mouseOver.hasListenersFor(click)) {
+                val click1 = Event.Mouse.Clicked(button, mouseX, mouseY, 1, keyModifiers)
+                dispatch(click1, true)
+                return
+            }
+        }
+        if (!dispatch(click) && button == 0 && clickAmount == 1) {
             safeFocus(mouseOver)
         }
     }

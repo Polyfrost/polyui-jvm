@@ -42,7 +42,7 @@ class EventDSL<S : Drawable>(val self: S) {
      * */
     @OverloadResolutionByLambdaReturnType
     infix fun <E : Event> E.then(handler: S.(E) -> Boolean) = self.run {
-        addEventHandler(this@then, handler)
+        on(this@then, handler)
     }
 
     /** specify a handler for this event.
@@ -56,7 +56,7 @@ class EventDSL<S : Drawable>(val self: S) {
     @JvmName("to")
     @OverloadResolutionByLambdaReturnType
     infix fun <E : Event> E.then(handler: S.(E) -> Unit) = self.run {
-        addEventHandler(this@then, handler)
+        on(this@then, handler)
     }
 
     /** marker class for preventing illegal nesting. */

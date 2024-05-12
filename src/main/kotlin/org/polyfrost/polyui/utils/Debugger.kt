@@ -195,7 +195,7 @@ class Debugger(private val polyUI: PolyUI) {
      * ```
      */
     fun debugString(): String {
-        val sb = StringBuilder().append(toString())
+        val sb = StringBuilder(1024).append(polyUI.toString())
         val children = polyUI.master.children ?: run {
             sb.append(" with 0 children, totalling 0 components.")
             return sb.toString()
@@ -215,10 +215,11 @@ class Debugger(private val polyUI: PolyUI) {
         list.fastEach {
             if (it.initialized) {
                 sb.append('\n').append('\t', ndepth).append(it.toString())
-                _debugString(it.children ?: return@fastEach, ndepth, sb)
-                i++
+                val children = it.children
+                if (children != null) _debugString(children, ndepth, sb)
+                else i++
             } else ii += it.countChildren() + 1
-            if (i >= 10) {
+            if (i >= 5) {
                 sb.append('\n').append('\t', ndepth).append("... ").append(list.size - i).append(" more")
                 return
             }

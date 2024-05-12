@@ -41,7 +41,7 @@ fun main() {
     val window = GLFWWindow("PolyUI Test v2", 800, 500)
     val renderer = NVGRenderer
     val polyUI = PolyUI(
-        Image("polyfrost.png".image()),
+        Image("polyfrost.png"),
         Text("text.dark", font = Font("https://raw.githubusercontent.com/coreyhu/Urbanist/main/fonts/ttf/Urbanist-BlackItalic.ttf"), fontSize = 20f),
         Group(
             Button("moon.svg".image()),
@@ -74,7 +74,7 @@ fun main() {
                 Event.Mouse.Clicked(0) then { _ ->
                     val it = parent.parent[5]
                     it.children?.shuffle()
-                    it.recalculateChildren()
+                    it.repositionChildren()
                 }
             },
             Button("minus.svg".image()),

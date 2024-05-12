@@ -377,6 +377,7 @@ abstract class Drawable(
                     field = value
                 }
             } else field = value
+            needsRedraw = true
         }
 
     /** current skew in x dimension of this drawable (radians).
@@ -391,6 +392,7 @@ abstract class Drawable(
                     field = value
                 }
             } else field = value
+            needsRedraw = true
         }
 
     /**
@@ -406,19 +408,32 @@ abstract class Drawable(
                     field = value
                 }
             } else field = value
+            needsRedraw = true
         }
 
     /** current scale in x dimension of this drawable. */
     var scaleX: Float = 1f
+        set(value) {
+            field = value
+            needsRedraw = true
+        }
 
     /** current scale in y dimension of this drawable. */
     var scaleY: Float = 1f
+        set(value) {
+            field = value
+            needsRedraw = true
+        }
 
     /**
      * The alpha value of this drawable.
      * @since 0.20.0
      */
     var alpha = 1f
+        set(value) {
+            field = value
+            needsRedraw = true
+        }
 
     /** **a**t **c**ache **x** for transformations. */
     private var acx = 0f
@@ -687,8 +702,8 @@ abstract class Drawable(
         }
         // asm: don't use accept as we don't want to dispatch to children
         eventHandlers?.maybeRemove(Event.Lifetime.Init::class.java, polyUI.settings.aggressiveCleanup)?.fastEach { it(this, Event.Lifetime.Init) }
-        if (atValid) recalculate()
-        else polyUI.positioner.position(this)
+        polyUI.positioner.position(this)
+        initialized = true
 
         eventHandlers?.maybeRemove(Event.Lifetime.PostInit::class.java, polyUI.settings.aggressiveCleanup)?.fastEach { it(this, Event.Lifetime.PostInit) }
 
@@ -701,7 +716,6 @@ abstract class Drawable(
                 if (polyUI.settings.debug) PolyUI.LOGGER.info("Drawable ${this.simpleName} created with $framebuffer")
             }
         }
-        initialized = true
         return true
     }
 
@@ -720,6 +734,7 @@ abstract class Drawable(
             if (scrolling) {
                 acceptsInput = true
                 if (polyUI.settings.debug) PolyUI.LOGGER.info("Enabled scrolling for $simpleName")
+                clipChildren()
             }
         }
         children?.fastEach { it.tryMakeScrolling() }
@@ -740,12 +755,17 @@ abstract class Drawable(
 
     /**
      * Reposition all the children of this drawable.
+     *
+     * Note that in most circumstances, [recalculate] is the method that you actually want.
+     *
+     * **This method is experimental because it may interfere with children that were placed manually with the [at] property.**
+     * @see recalculate
      * @since 1.0.2
      */
     @ApiStatus.Experimental
     @Locking
     @Synchronized
-    fun recalculateChildren() {
+    fun repositionChildren() {
         children?.fastEach {
             it.x = 0f
             it.y = 0f
@@ -756,7 +776,9 @@ abstract class Drawable(
     }
 
     /**
-     * Reposition the children of this drawable, and recalculate the size of this drawable.
+     * Fully recalculate this drawable's size, and any of its children's positions.
+     *
+     * **This method is experimental because it may interfere with children that were placed manually with the [at] property.**
      * @since 1.0.7
      */
     @ApiStatus.Experimental
@@ -768,7 +790,7 @@ abstract class Drawable(
         val oldH = sz.y
         sz.x = 0f
         sz.y = 0f
-        recalculateChildren()
+        repositionChildren()
         x -= (sz.x - oldW) / 2f
         y -= (sz.y - oldH) / 2f
     }
@@ -867,9 +889,12 @@ abstract class Drawable(
         needsRedraw = true
     }
 
+    /**
+     * the runtime equivalent of adding children to this drawable during the constructor.
+     */
     @Locking
     @Synchronized
-    fun addChild(child: Drawable, reposition: Boolean = true) {
+    fun addChild(child: Drawable, recalculate: Boolean = true) {
         if (children == null) children = LinkedList()
         val children = this.children ?: throw ConcurrentModificationException("well, this sucks")
         child._parent = this
@@ -882,7 +907,7 @@ abstract class Drawable(
                 child.tryMakeScrolling()
             }
             if (!child.atValid) {
-                if (reposition) recalculateChildren()
+                if (recalculate) recalculate()
                 else {
                     child.x += x
                     child.y += y
@@ -907,7 +932,7 @@ abstract class Drawable(
 
     @Locking
     @Synchronized
-    fun removeChild(index: Int) {
+    fun removeChild(index: Int, recalculate: Boolean = true) {
         val children = this.children ?: throw NoSuchElementException("no children on $this")
         val it = children.getOrNull(index) ?: throw IndexOutOfBoundsException("index: $index, length: ${children.size}")
         it._parent = null
@@ -915,6 +940,7 @@ abstract class Drawable(
         if (initialized) {
             it.accept(Event.Lifetime.Removed)
             children.remove(it)
+            if (recalculate) recalculate()
             needsRedraw = true
         } else {
             children.remove(it)
@@ -976,7 +1002,7 @@ abstract class Drawable(
     operator fun get(x: Float, y: Float) = children?.first { it.isInside(x, y) } ?: throw NoSuchElementException("no children on $this")
 
     @OverloadResolutionByLambdaReturnType
-    fun <E : Event, S : Drawable> S.addEventHandler(event: E, handler: S.(E) -> Boolean): S {
+    fun <E : Event, S : Drawable> S.on(event: E, handler: S.(E) -> Boolean): S {
         if (!acceptsInput && event !is Event.Lifetime) acceptsInput = true
         val ev = eventHandlers ?: HashMap(8)
         // asm: non-specific events will not override hashCode, so identityHashCode will return the same
@@ -990,12 +1016,25 @@ abstract class Drawable(
 
     @JvmName("addEventhandler")
     @OverloadResolutionByLambdaReturnType
-    inline fun <E : Event, S : Drawable> S.addEventHandler(event: E, crossinline handler: S.(E) -> Unit): S = addEventHandler(event) { handler(this, it); true }
+    inline fun <E : Event, S : Drawable> S.on(event: E, crossinline handler: S.(E) -> Unit): S = on(event) { handler(this, it); true }
 
     // asm: uses java class because bootstrapping reflect for this is not worth the slightly better syntax tbh
     /**
      * returns `true` if this drawable has any [non-specific][Event] event handlers registered for it.
+     *
+     * pass an event instance to this method for [specific][Event] events.
      * @since 1.1.61
      */
     fun hasListenersFor(event: Class<out Event>) = eventHandlers?.containsKey(event) ?: false
+
+    /**
+     * returns `true` if this drawable has any [specific][Event] event handlers registered for it.
+     *
+     * pass a class instance to this method for [non-specific][Event] events.
+     * @since 1.1.71
+     */
+    fun hasListenersFor(event: Event): Boolean {
+        val k: Any = if (System.identityHashCode(event) == event.hashCode()) event::class.java else event
+        return eventHandlers?.containsKey(k) ?: false
+    }
 }

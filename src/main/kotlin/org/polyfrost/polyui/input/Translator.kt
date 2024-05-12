@@ -24,6 +24,7 @@ package org.polyfrost.polyui.input
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.property.Settings
+import org.polyfrost.polyui.utils.dont
 import org.polyfrost.polyui.utils.getResourceStreamNullable
 import java.text.MessageFormat
 
@@ -205,7 +206,7 @@ class Translator(private val settings: Settings, private val translationDir: Str
      * @throws IllegalArgumentException if multiple values exist for the same key.
      */
     fun translate(key: String): Text {
-        if (key.isEmpty()) return Text.Simple("")
+        if (key.isEmpty()) return Text.Simple("").dont()
         var ran = false
         val text = map.getOrPut(key) {
             while (queue.isNotEmpty()) {

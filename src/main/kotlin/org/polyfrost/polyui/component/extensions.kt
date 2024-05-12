@@ -61,8 +61,8 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, fre
     var pressed = false
     var px = 0f
     var py = 0f
-    addEventHandler(Event.Mouse.Pressed(0)) {
-        if (dragging) return@addEventHandler false
+    on(Event.Mouse.Pressed(0)) {
+        if (dragging) return@on false
         needsRedraw = true
         dragging = true
         pressed = true
@@ -70,7 +70,7 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, fre
         py = it.y - y
         false
     }
-    addEventHandler(Event.Mouse.Dragged) {
+    on(Event.Mouse.Dragged) {
         if (dragging) {
             needsRedraw = true
         }
@@ -141,7 +141,7 @@ fun <S : Drawable> S.addHoverInfo(text: String?): S {
     obj.alpha = 0f
     onInit {
         obj.setup(polyUI)
-        (_parent ?: polyUI.master).addChild(obj, reposition = false)
+        (_parent ?: polyUI.master).addChild(obj, recalculate = false)
         obj.renders = false
         acceptsInput = true
     }
@@ -214,7 +214,7 @@ fun <S : Drawable> S.setAlpha(alpha: Float): S {
  */
 @JvmName("onChangeString")
 fun <S : Text> S.onChange(func: S.(String) -> Boolean): S {
-    addEventHandler(Event.Change.Text()) {
+    on(Event.Change.Text()) {
         val res = func.invoke(this, it.text)
         it.cancelled = res
         res
@@ -230,7 +230,7 @@ fun <S : Text> S.onChange(func: S.(String) -> Boolean): S {
  */
 @JvmName("onChangeState")
 fun <S : Drawable> S.onChange(func: S.(Boolean) -> Boolean): S {
-    addEventHandler(Event.Change.State()) {
+    on(Event.Change.State()) {
         val res = func.invoke(this, it.state)
         it.cancelled = res
         res
@@ -246,7 +246,7 @@ fun <S : Drawable> S.onChange(func: S.(Boolean) -> Boolean): S {
  */
 @JvmName("onChangeIndex")
 fun <S : Drawable> S.onChange(func: S.(Int) -> Boolean): S {
-    addEventHandler(Event.Change.Number()) {
+    on(Event.Change.Number()) {
         val res = func.invoke(this, it.amount.toInt())
         it.cancelled = res
         res
@@ -262,7 +262,7 @@ fun <S : Drawable> S.onChange(func: S.(Int) -> Boolean): S {
  */
 @JvmName("onChangeNumber")
 fun <S : Drawable> S.onChange(func: S.(Float) -> Boolean): S {
-    addEventHandler(Event.Change.Number()) {
+    on(Event.Change.Number()) {
         val res = func.invoke(this, it.amount.toFloat())
         it.cancelled = res
         res
@@ -319,7 +319,7 @@ fun <S : Text> S.secondary(): S {
  * Return `false` to cancel the change, meaning the text will not be set.
  */
 fun <S : Text> S.addValidationFunction(func: S.(String) -> Boolean): S {
-    addEventHandler(Event.Change.Text()) {
+    on(Event.Change.Text()) {
         if (!func(this, it.text)) {
             it.cancel()
         }
@@ -354,10 +354,10 @@ private val defReleased: Drawable.(Event.Mouse.Released) -> Boolean = {
 }
 
 fun <S : Drawable> S.withStates(): S {
-    addEventHandler(Event.Mouse.Entered, defEnter)
-    addEventHandler(Event.Mouse.Exited, defExit)
-    addEventHandler(Event.Mouse.Pressed(0), defPressed)
-    addEventHandler(Event.Mouse.Released(0), defReleased)
+    on(Event.Mouse.Entered, defEnter)
+    on(Event.Mouse.Exited, defExit)
+    on(Event.Mouse.Pressed(0), defPressed)
+    on(Event.Mouse.Released(0), defReleased)
     return this
 }
 
@@ -367,21 +367,21 @@ fun <S : Drawable> S.withStates(
         Animations.EaseInOutQuad.create(0.08.seconds)
     },
 ): S {
-    addEventHandler(Event.Mouse.Entered) {
+    on(Event.Mouse.Entered) {
         Recolor(this, this.palette.hovered, animation?.invoke()).add()
         if (showClicker) polyUI.cursor = Cursor.Clicker
         consume
     }
-    addEventHandler(Event.Mouse.Exited) {
+    on(Event.Mouse.Exited) {
         Recolor(this, this.palette.normal, animation?.invoke()).add()
         polyUI.cursor = Cursor.Pointer
         consume
     }
-    addEventHandler(Event.Mouse.Pressed(0)) {
+    on(Event.Mouse.Pressed(0)) {
         Recolor(this, this.palette.pressed, animation?.invoke()).add()
         consume
     }
-    addEventHandler(Event.Mouse.Released(0)) {
+    on(Event.Mouse.Released(0)) {
         Recolor(this, this.palette.hovered, animation?.invoke()).add()
         consume
     }
@@ -389,10 +389,10 @@ fun <S : Drawable> S.withStates(
 }
 
 fun <S : Drawable> S.withCursor(cursor: Cursor = Cursor.Clicker): S {
-    addEventHandler(Event.Mouse.Entered) {
+    on(Event.Mouse.Entered) {
         polyUI.cursor = cursor
     }
-    addEventHandler(Event.Mouse.Exited) {
+    on(Event.Mouse.Exited) {
         polyUI.cursor = Cursor.Pointer
     }
     return this
@@ -430,13 +430,35 @@ fun <S : Drawable> S.setState(state: Byte): S {
  * Prioritize this drawable, meaning it will, in relation to its siblings:
  * - be drawn last
  * - receive events first
+ *
+ * **this method is experimental as it may interfere with statically-typed references to children.**
+ * @see relegate
  * @since 1.0.0
  */
+@ApiStatus.Experimental
 fun <S : Drawable> S.prioritize(): S {
     val children = _parent?.children ?: return this
     if (children.last() === this) return this
     children.remove(this)
     children.add(this)
+    return this
+}
+
+/**
+ * Relegate this drawable, meaning it will, in relation to its siblings:
+ * - be drawn first
+ * - receive events last
+ *
+ * **this method is experimental as it may interfere with statically-typed references to children.**
+ * @see prioritize
+ * @since 1.1.71
+ */
+@ApiStatus.Experimental
+fun <S : Drawable> S.relegate(): S {
+    val children = _parent?.children ?: return this
+    if (children.first() === this) return this
+    children.remove(this)
+    children.add(0, this)
     return this
 }
 
@@ -466,12 +488,12 @@ fun Drawable.hasChildIn(x: Float, y: Float, width: Float, height: Float): Boolea
 }
 
 fun <S : Drawable> S.onInit(function: S.(Event.Lifetime.Init) -> Unit): S {
-    addEventHandler(Event.Lifetime.Init, function)
+    on(Event.Lifetime.Init, function)
     return this
 }
 
 fun <S : Drawable> S.afterInit(function: S.(Event.Lifetime.PostInit) -> Unit): S {
-    addEventHandler(Event.Lifetime.PostInit, function)
+    on(Event.Lifetime.PostInit, function)
     return this
 }
 
@@ -482,7 +504,7 @@ fun <S : Drawable> S.afterInit(function: S.(Event.Lifetime.PostInit) -> Unit): S
  * as if they were ran under this [Event.Lifetime.PostInit] they would be overwritten by the positioning logic.
  */
 fun <S : Drawable> S.afterParentInit(depth: Int = 1, handler: S.() -> Unit): S {
-    this.addEventHandler(Event.Lifetime.PostInit) { _ ->
+    this.on(Event.Lifetime.PostInit) { _ ->
         var it: Drawable = this
         for (i in 0 until depth) {
             it._parent?.let { parent -> it = parent } ?: break
@@ -490,7 +512,7 @@ fun <S : Drawable> S.afterParentInit(depth: Int = 1, handler: S.() -> Unit): S {
         if (it.initialized) {
             handler(this@afterParentInit)
         } else {
-            it.addEventHandler(Event.Lifetime.PostInit) {
+            it.on(Event.Lifetime.PostInit) {
                 handler(this@afterParentInit)
             }
         }
@@ -508,13 +530,13 @@ inline fun <S : Drawable> S.events(dsl: EventDSL<S>.() -> Unit): S {
 @OverloadResolutionByLambdaReturnType
 @JvmName("onClickZ")
 fun <S : Drawable> S.onClick(func: S.(Event.Mouse.Clicked) -> Boolean): S {
-    addEventHandler(Event.Mouse.Clicked(0), func)
+    on(Event.Mouse.Clicked(0), func)
     return this
 }
 
 @OverloadResolutionByLambdaReturnType
 fun <S : Drawable> S.onClick(func: S.(Event.Mouse.Clicked) -> Unit): S {
-    addEventHandler(Event.Mouse.Clicked(0), func)
+    on(Event.Mouse.Clicked(0), func)
     return this
 }
 

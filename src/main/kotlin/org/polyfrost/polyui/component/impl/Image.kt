@@ -38,8 +38,9 @@ open class Image(
     var backgroundColor: PolyColor? = null,
     alignment: Align = AlignDefault,
     vararg children: Drawable?,
-) :
-    Block(children = children, at, size, alignment, null, false, null, radii) {
+) : Block(children = children, at, size, alignment, null, false, null, radii) {
+    constructor(image: String) : this(PolyImage(image))
+
     var image: PolyImage = image
         set(value) {
             field = value
