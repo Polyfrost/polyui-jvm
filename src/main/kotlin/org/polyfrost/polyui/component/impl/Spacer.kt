@@ -32,7 +32,7 @@ class Spacer(at: Vec2? = null, size: Vec2) : Drawable(at = at, size = size) {
     override val shouldScroll: Boolean
         get() = false
 
-    override fun preRender() {}
+    override fun preRender(delta: Long) {}
 
     override fun render() {}
 

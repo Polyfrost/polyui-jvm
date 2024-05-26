@@ -22,18 +22,14 @@
 package org.polyfrost.polyui.renderer.data
 
 import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.utils.getResourceStreamNullable
 import org.polyfrost.polyui.utils.resourceExists
 import java.net.URI
-import java.nio.file.Files
-import java.util.zip.ZipInputStream
-import kotlin.io.path.outputStream
 
 /**
  * Represents a font family, which consists of multiple font styles.
  *
  * @property name The name of the font family.
- * @param path The path to the font files or font zip file.
+ * @param path The path to the font files.
  * @property fallback The fallback font family to use if a particular font style is not found in this font family.
  * If not provided, the [default fallback font family][PolyUI.defaultFonts] will be used.
  * @since 0.22.0
@@ -44,22 +40,7 @@ open class FontFamily(
     path: String,
     private val fallback: FontFamily? = null,
 ) {
-    protected val dir: URI by lazy {
-        if (!path.endsWith(".zip")) return@lazy URI.create(path)
-        val p = Files.createTempDirectory("polyui-fonts-$name")
-        PolyUI.timed(true, "Extracting font $name to temporary directory... ($p)") {
-            val zip = ZipInputStream(getResourceStreamNullable(path)?.buffered() ?: throw IllegalArgumentException("Font zip file $path not found!"))
-            while (true) {
-                val entry = zip.nextEntry ?: break
-                val output = p.resolve(entry.name)
-                output.outputStream().buffered().use { out ->
-                    zip.copyTo(out)
-                }
-            }
-            zip.close()
-        }
-        p.toUri()
-    }
+    protected val path = URI.create(path)
 
     open val thin by lazy { fload(Font.Weight.Thin, false) }
     open val thinItalic by lazy { fload(Font.Weight.Thin, true) }
@@ -143,7 +124,7 @@ open class FontFamily(
     protected open fun fload(weight: Font.Weight, italic: Boolean, origin: Font.Weight? = null): Font {
         val style = getStyle(weight, italic)
         val p = "$name-$style.ttf"
-        val address = dir.resolve(p).toString()
+        val address = path.resolve(p).toString()
         return if (!resourceExists(address)) {
             val fb = weight.fb
             return if (fb == null) {

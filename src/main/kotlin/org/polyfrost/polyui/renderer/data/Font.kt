@@ -23,7 +23,6 @@ package org.polyfrost.polyui.renderer.data
 
 import org.polyfrost.polyui.utils.getByName
 import org.polyfrost.polyui.utils.names
-import java.net.URL
 
 /**
  * # Font
@@ -39,8 +38,11 @@ import java.net.URL
  */
 class Font @JvmOverloads constructor(
     resourcePath: String,
+    @Transient
     val letterSpacing: Float = 0f,
+    @Transient
     val lineSpacing: Float = 1.4f,
+    @Transient
     val family: FontFamily? = null,
     val italic: Boolean = resourcePath.contains("italic", ignoreCase = true),
     val weight: Weight = Weight.entries.getByName(resourcePath.findLastAnyOf(Weight.entries.names(), ignoreCase = true)?.second) ?: Weight.Regular,
@@ -65,11 +67,11 @@ class Font @JvmOverloads constructor(
 
     /**
      * Enum representing weights available to a font in PolyUI.
-     * @param w the weight of the font, as specified by the [Google Fonts CSS v2 API](https://fonts.google.com/knowledge/glossary/weight_axis).
+     * @param value the weight of the font, as specified by the [Google Fonts CSS v2 API](https://fonts.google.com/knowledge/glossary/weight_axis).
      * @param fb in the case that the given weight is unavailable, this will be used instead.
      * @since 1.0.7
      */
-    enum class Weight(val w: Int, val fb: Weight?) {
+    enum class Weight(val value: Int, val fb: Weight?) {
         Regular(400, null),
         Bold(700, null),
 
@@ -85,58 +87,6 @@ class Font @JvmOverloads constructor(
     }
 
     companion object {
-        /**
-         * Get a font from the [Google Fonts repository](https://github.com/google/fonts) on GitHub.
-         *
-         * Note that [each font has a different licence,](https://github.com/google/fonts#license) so it's best to check the licence for your usage.
-         *
-         * Set [verify] to `true` to attempt to connect to the mirror in this method for a better error message.
-         * @param family the name of the font, for example `poppins` or `roboto`.
-         * @param style the style of the font. These are normally standard, but please check individually if this method fails. Normal ones are `Light, Regular, Bold`, and `Italic`.
-         *
-         * @since 0.16.0
-         */
-        @JvmStatic
-        @JvmOverloads
-        @Suppress("DEPRECATION", "NAME_SHADOWING")
-        fun getGoogleFont(
-            family: String,
-            style: String,
-            letterSpacing: Float = 0f,
-            lineSpacing: Float = 1f,
-            verify: Boolean = false,
-        ): Font {
-            val dir = family.lowercase()
-            val family = family.capitalize()
-            val style = style.capitalize()
-            val base = "https://raw.githubusercontent.com/google/fonts/main/ofl"
-            val link = when (dir) {
-                "inter" -> "$base/inter/Inter%5Bslnt%2Cwght%5D.ttf" // inter doesn't support styles?
-                "roboto" -> "https://raw.githubusercontent.com/google/fonts/main/apache/roboto/static/$family-$style.ttf" // roboto is in static directory?
-                "comicsans" -> "$base/comicneue/ComicNeue-$style.ttf" // https://github.com/google/fonts/blob/main/ofl/comicneue/DESCRIPTION.en_us.html
-                else -> "$base/$dir/$family-$style.ttf"
-            }
-            if (verify) {
-                var url = URL(link)
-                try {
-                    url.openStream()
-                } catch (_: Exception) {
-                    // check apache base
-                    url = URL("https://raw.githubusercontent.com/google/fonts/main/apache/$dir/$family-$style.ttf")
-                    try {
-                        url.openStream()
-                    } catch (e: Exception) {
-                        throw IllegalArgumentException("Failed to get font ($family-$style), check if the font exists on https://github.com/google/fonts in either apache or ofl directory.")
-                    }
-                }
-            }
-
-            return Font(
-                link,
-                letterSpacing,
-                lineSpacing,
-            )
-        }
 
         /**
          * Get a Weight instance given the integer weight,

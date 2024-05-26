@@ -62,12 +62,12 @@ abstract class DrawableOp(protected val self: Drawable) {
             return
         }
 
-        @Suppress("unchecked_cast")
         override fun unapply(): Boolean {
             if (isFinished) return true
             unapply(animation?.value ?: 1f)
             if (animation?.isFinished != false) {
                 isFinished = true
+                @Suppress("unchecked_cast")
                 onFinish?.invoke(self as T)
                 onFinish = null
                 return true

@@ -33,11 +33,9 @@ import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.utils.LinkedList
-import org.polyfrost.polyui.utils.closestToPoint
-import org.polyfrost.polyui.utils.dropAt
-import org.polyfrost.polyui.utils.substringSafe
-import kotlin.math.min
+import org.polyfrost.polyui.unit.by
+import org.polyfrost.polyui.utils.*
+import kotlin.math.max
 
 open class TextInput(
     text: String = "",
@@ -51,7 +49,7 @@ open class TextInput(
     vararg children: Drawable?,
 ) : Text(text, font, fontSize, at, alignment, wrap, visibleSize, true, *children) {
 
-    private val selectBoxes = LinkedList<Pair<Pair<Float, Float>, Pair<Float, Float>>>()
+    private val selectBoxes = ArrayList<Pair<Vec2, Vec2>>()
 
     // todo the old error stuff?
 
@@ -302,48 +300,64 @@ open class TextInput(
         caretPos()
     }
 
-    private fun getLineByIndex(index: Int): Triple<String, Int, Int> {
+    /**
+     * `line to lineLength to lineIndex to linePos`
+     */
+    private fun getLineByIndex(index: Int): Quad<String, Int, Int, Float> {
         require(index > -1) { "Index must not be negative" }
         var i = 0
-        lines.fastEachIndexed { li, (it, _) ->
+        var y = y
+        lines.fastEachIndexed { li, (it, bounds) ->
             if (index < i + it.length) {
-                return Triple(it, index - i, li)
+                return Quad(it, index - i, li, y)
             }
             i += it.length
+            y += bounds.y + spacing
         }
-        val l = lines.last().first
-        return Triple(l, l.length, lines.lastIndex)
+        val (ln, bounds) = lines.last()
+        return Quad(ln, ln.length, lines.lastIndex, height - spacing - bounds.y)
     }
 
     private fun selections() {
         selectBoxes.clear()
         if (select == caret) return
-        val (sl, si, sli) = if (caret < select) getLineByIndex(caret) else getLineByIndex(select)
-        val (el, ei, eli) = if (caret < select) getLineByIndex(select) else getLineByIndex(caret)
+        val start: Int
+        val end: Int
+        if(caret < select) {
+            start = caret
+            end = select
+        } else {
+            start = select
+            end = caret
+        }
+        // startLine startIndex startLineIndex startLinePos
+        val (sl, si, sli, slp) = getLineByIndex(start)
+        val (el, ei, eli, elp) = getLineByIndex(end)
         if (sl === el) {
-            val endIndex = if (caret < select) select else caret
-            val startIndex = if (caret < select) caret else select
-            selection(sl, si, endIndex - startIndex + si, sli)
+            selection(sl, si, end - start + si, slp)
             return
         }
-        val lh = fontSize + spacing
+        // funny - get it? realY and really are like the same !
+        var really = y
         for (i in sli + 1 until eli) {
-            selectBoxes.add((x - 1f to y + (i.toFloat() * lh)) to (lines[i].second to lh))
+            val (_, bounds) = lines[i]
+            selectBoxes.add((x - 1f by really) to bounds)
+            really += bounds.y
         }
-        selection(sl, si, sl.length, sli)
-        selection(el, 0, ei, eli)
+        selection(sl, si, sl.length, slp)
+        selection(el, 0, ei, elp)
     }
 
-    private fun selection(line: String, startIndex: Int, endIndex: Int, lineIndex: Int) {
-        val lh = fontSize + spacing
-        val start = renderer.textBounds(font, line.substring(0, startIndex), fontSize).x
-        val width = renderer.textBounds(font, line.substring(startIndex, endIndex), fontSize).x
-        selectBoxes.add((x + start - 1f to y + (lineIndex * lh)) to (width to lh))
+    private fun selection(line: String, startIndex: Int, endIndex: Int, linePos: Float) {
+        val start = renderer.textBounds(font, line.substring(0, startIndex), fontSize)
+        val end = renderer.textBounds(font, line.substring(startIndex, endIndex), fontSize)
+        val lh = max(start.y, end.y)
+        selectBoxes.add((x + start.x - 1f by linePos) to (end.x by lh))
     }
 
     private fun caretFromMouse(mouseX: Float, mouseY: Float) {
         val line = ((mouseY - y) / (fontSize + spacing)).toInt()
-        val p = lines[min(line, lines.lastIndex)].first.closestToPoint(renderer, font, fontSize, mouseX - x)
+        val p = lines[line.coerceAtMost(lines.lastIndex)].first.closestToPoint(renderer, font, fontSize, mouseX - x)
         caret = if (p == -1) text.length else p
         caretPos()
     }

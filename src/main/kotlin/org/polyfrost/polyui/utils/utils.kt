@@ -208,6 +208,15 @@ fun java.awt.Color.toPolyColorAnimated(): PolyColor.Animated {
 }
 
 /**
+ * Return a static java [Color][java.awt.Color] object of this color at the instant this method is called.
+ *
+ * Future changes to this color will not be reflected in the returned object.
+ *
+ * @since 1.1.51
+ */
+fun PolyColor.toJavaColor() = java.awt.Color(argb, true)
+
+/**
  * Calculate the greatest common denominator of two integers.
  * @since 0.18.4
  */
@@ -372,7 +381,7 @@ inline fun <K, V, reified R> Map<K, V>.mapToArray(transform: (Map.Entry<K, V>) -
  *
  * Equivalent to `this.map { transform(it) }.toTypedArray()`, but saves on the creation of an intermediate list.
  */
-inline fun <T, reified R> LinkedList<T>.mapToArray(transform: (T) -> R): Array<R> {
+inline fun <T, reified R> ArrayList<T>.mapToArray(transform: (T) -> R): Array<R> {
     val out = arrayOfNulls<R>(size)
     this.fastEachIndexed { i, it ->
         out[i] = transform(it)
@@ -431,15 +440,6 @@ fun <T> Ref.ObjectRef<T>.deref(): T {
 }
 
 /**
- * Return this collection as an LinkedList. **Note:** if it is already a LinkedList, it will be returned as-is.
- */
-inline fun <T> Collection<T>.asLinkedList(): LinkedList<T> = if (this is LinkedList) this else LinkedList(this)
-
-inline fun <T> Array<T>.asLinkedList(): LinkedList<T> = LinkedList(*this)
-
-fun <T> linkedListOf(vararg elements: T): LinkedList<T> = LinkedList(*elements)
-
-/**
  * Returns the value of the given [key] in the map, and if [shouldRemove] is `true` the value is also removed from the map.
  * @since 1.0.2
  */
@@ -452,8 +452,3 @@ inline fun <T> Pair<T, T>.both(func: (T) -> Unit) {
     func(this.first)
     func(this.second)
 }
-
-/**
- * Mutable version of [to].
- */
-infix fun <A, B> A.with(that: B) = MutablePair(this, that)

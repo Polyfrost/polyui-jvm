@@ -24,6 +24,7 @@
 
 package org.polyfrost.polyui.unit
 
+import org.polyfrost.polyui.PolyUI
 import kotlin.jvm.internal.Ref.LongRef
 
 /** note that the smallest unit of time in PolyUI is 1 nanosecond. */
@@ -72,5 +73,18 @@ inline infix fun Double.by(other: Double) = Vec2(this.toFloat(), other.toFloat()
 
 
 fun Vec2.mutable() = if (this is Vec2.Immutable) Vec2(x, y) else this
+
+/**
+ * Scale this vec2 by any scaling that has been applied to this PolyUI instance.
+ *
+ * This method is useful in conjunction with resize operations to ensure that it is scaled to the local coordinate system.
+ * @since 1.2.0
+ * @see PolyUI.iSize
+ */
+fun Vec2.scale(polyUI: PolyUI) {
+    val sz = polyUI.size
+    val isz = polyUI.iSize
+    return this.scale(sz.x / isz.x, sz.y / isz.y)
+}
 
 fun Vec2.immutable() = if (this !is Vec2.Immutable) Vec2.Immutable(x, y) else this

@@ -79,22 +79,20 @@ fun getResourceStreamNullable(resourcePath: String, caller: Class<*> = PolyUI::c
 @Deprecated("This method is rather wasteful, and usage should be avoided.", ReplaceWith("getResourceStreamNullable?.apply {}"))
 fun resourceExists(resourcePath: String, caller: Class<*> = PolyUI::class.java) = getResourceStreamNullable(resourcePath, caller)?.close() != null
 
-fun InputStream.toDirectByteBuffer(): ByteBuffer {
-    val bytes = this.toByteArray()
-    return ByteBuffer.allocateDirect(bytes.size)
+fun ByteArray.toDirectByteBuffer(): ByteBuffer {
+    return ByteBuffer.allocateDirect(this.size)
         .order(ByteOrder.nativeOrder())
-        .put(bytes).flip() as ByteBuffer
+        .put(this).flip() as ByteBuffer
 }
 
 /**
  * [toDirectByteBuffer] with a null terminator.
  * @since 1.1.6
  */
-fun InputStream.toDirectByteBufferNT(): ByteBuffer {
-    val bytes = this.toByteArray()
-    return ByteBuffer.allocateDirect(bytes.size + 1)
+fun ByteArray.toDirectByteBufferNT(): ByteBuffer {
+    return ByteBuffer.allocateDirect(this.size + 1)
         .order(ByteOrder.nativeOrder())
-        .put(bytes).put(0).flip() as ByteBuffer
+        .put(this).put(0).flip() as ByteBuffer
 }
 
 /**

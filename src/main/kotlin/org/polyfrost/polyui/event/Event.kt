@@ -57,7 +57,12 @@ interface Event {
      * @see Mouse.Exited
      */
     interface Mouse : Event {
-        abstract class ButtonBase(val button: Int, val x: Float, val y: Float, val mods: Modifiers) : Mouse {
+        abstract class ButtonBase(val button: Int, x: Float, y: Float, val mods: Modifiers) : Mouse {
+            var x = x
+                private set
+            var y = y
+                private set
+
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
                 if (javaClass != other?.javaClass) return false
@@ -73,6 +78,11 @@ interface Event {
                 var result = button
                 result = 31 * result + mods.hashCode()
                 return result
+            }
+
+            internal fun set(mx: Float, my: Float) {
+                this.x = mx
+                this.y = my
             }
         }
 
@@ -106,9 +116,7 @@ interface Event {
             override fun toString(): String = "MouseClicked x$clicks(($x, $y), ${MouseUtils.toStringPretty(MouseUtils.fromValue(button), mods)})"
         }
 
-        class Scrolled internal constructor(val amountX: Float, val amountY: Float, val mods: Modifiers) : Mouse {
-            constructor() : this(0f, 0f, Modifiers(0))
-        }
+        class Scrolled internal constructor(val amountX: Float, val amountY: Float, val mods: Modifiers) : Mouse {}
 
         /** acceptable by component and layout, when the mouse enters this drawable.
          * @see Exited */
@@ -123,6 +131,31 @@ interface Event {
          * @since 1.0.8
          */
         object Dragged : Mouse
+
+        companion object {
+            /**
+             * Constant for [Event.Mouse.Released], for single left click events.
+             * @since 1.2.0
+             */
+            @JvmStatic
+            val Released = Released(0)
+
+            /**
+             * Constant for [Event.Mouse.Pressed], for single left click events.
+             * @since 1.2.0
+             */
+            @JvmStatic
+            val Pressed = Pressed(0)
+            /**
+             * Constant for [Event.Mouse.Released], for single left click events.
+             * @since 1.2.0
+             */
+            @JvmStatic
+            val Clicked = Clicked(0)
+
+            @JvmStatic
+            val Scrolled = Scrolled(0f, 0f, Modifiers(0))
+        }
     }
 
     /**
@@ -171,16 +204,19 @@ interface Event {
             cancelled = true
         }
 
-        class Text @ApiStatus.Internal constructor(val text: String) : Change() {
-            constructor() : this("")
-        }
+        class Text @ApiStatus.Internal constructor(val text: String) : Change()
 
-        class Number @ApiStatus.Internal constructor(val amount: kotlin.Number) : Change() {
-            constructor() : this(0)
-        }
+        class Number @ApiStatus.Internal constructor(val amount: kotlin.Number) : Change()
 
-        class State @ApiStatus.Internal constructor(val state: Boolean) : Change() {
-            constructor() : this(false)
+        class State @ApiStatus.Internal constructor(val state: Boolean) : Change()
+
+        companion object {
+            @JvmStatic
+            val Text = Text("")
+            @JvmStatic
+            val Number = Number(0)
+            @JvmStatic
+            val State = State(false)
         }
     }
 
@@ -195,6 +231,7 @@ interface Event {
      * @see Focused.KeyPressed
      * @see Focused.KeyReleased
      * @see Focused.UnmappedInput
+     * @see Focused.FileDrop
      */
     interface Focused : Event {
         object Gained : Focused
@@ -208,8 +245,6 @@ interface Event {
          * @see [Modifiers]
          */
         class KeyTyped internal constructor(val key: Char, val mods: Modifiers) : Focused {
-            constructor() : this(0.toChar(), Modifiers(0))
-
             override fun toString() = "KeyTyped(${Keys.toStringPretty(key, mods)})"
         }
 
@@ -220,24 +255,18 @@ interface Event {
          * @see [Modifiers]
          */
         class KeyPressed internal constructor(val key: Keys, val mods: Modifiers) : Focused {
-            constructor() : this(Keys.UNKNOWN, Modifiers(0))
-
             override fun toString(): String = "KeyPressed(${Keys.toString(key, mods)})"
 
             fun toStringPretty(): String = "KeyPressed(${Keys.toStringPretty(key, mods)})"
         }
 
         class KeyReleased internal constructor(val key: Keys, val mods: Modifiers) : Focused {
-            constructor() : this(Keys.UNKNOWN, Modifiers(0))
-
             override fun toString(): String = "KeyReleased(${Keys.toString(key, mods)})"
 
             fun toStringPretty(): String = "KeyReleased(${Keys.toStringPretty(key, mods)})"
         }
 
         class UnmappedInput internal constructor(val code: Int, val down: Boolean, val mods: Modifiers) : Focused {
-            constructor() : this(0, false, Modifiers(0))
-
             override fun toString(): String = "UnmappedInput(key=$code, down=$down, mods=$mods)"
         }
 
@@ -248,9 +277,20 @@ interface Event {
          * @since 1.0.3
          */
         class FileDrop internal constructor(val files: Array<Path>) : Focused {
-            constructor() : this(arrayOf())
-
             override fun toString() = "FileDrop(${files.joinToString()})"
+        }
+
+        companion object {
+            @JvmStatic
+            val KeyTyped = KeyTyped(0.toChar(), Modifiers(0))
+            @JvmStatic
+            val KeyPressed = KeyPressed(Keys.UNKNOWN, Modifiers(0))
+            @JvmStatic
+            val KeyReleased = KeyReleased(Keys.UNKNOWN, Modifiers(0))
+            @JvmStatic
+            val UnmappedInput = UnmappedInput(0, false, Modifiers(0))
+            @JvmStatic
+            val FileDrop = FileDrop(arrayOf())
         }
     }
 }

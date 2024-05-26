@@ -25,9 +25,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.property.Settings
-import org.polyfrost.polyui.utils.LinkedList
-import java.util.concurrent.CancellationException
-import java.util.concurrent.CompletableFuture
+import org.polyfrost.polyui.utils.addOrReplace
+import org.polyfrost.polyui.utils.fastEach
 
 /**
  * # KeyBinder
@@ -39,7 +38,7 @@ import java.util.concurrent.CompletableFuture
  * @see removeAll
  */
 class KeyBinder(private val settings: Settings) {
-    private val listeners = LinkedList<Bind>()
+    private val listeners = ArrayList<Bind>()
 
     /**
      * Property which enables an optimization where the KeyBinder will only update after every frame if there are time-sensitive listeners.
@@ -47,13 +46,13 @@ class KeyBinder(private val settings: Settings) {
      */
     var hasTimeSensitiveListeners = false
         private set
-    private val downMouseButtons = LinkedList<Int>()
-    private val downUnmappedKeys = LinkedList<Int>()
-    private val downKeys = LinkedList<Keys>()
-    private var recording: CompletableFuture<Bind>? = null
+    private val downMouseButtons = ArrayList<Int>(5)
+    private val downUnmappedKeys = ArrayList<Int>(5)
+    private val downKeys = ArrayList<Keys>(5)
     private var recordingTime = 0L
     private var modifiers: Byte = 0
     private var recordingFunc: (() -> Boolean)? = null
+    private var callback: ((Bind) -> Unit)? = null
 
     /**
      * accept a keystroke event. This will call all keybindings that match the event.
@@ -65,7 +64,7 @@ class KeyBinder(private val settings: Settings) {
         when (event) {
             is Event.Mouse.Pressed -> {
                 if (event.mods.isEmpty) {
-                    recording?.completeExceptionally(IllegalStateException("Cannot bind to just left click"))
+                    cancelRecord("Cannot bind to just left click")
                     return false
                 }
                 downMouseButtons.add(event.button)
@@ -78,7 +77,7 @@ class KeyBinder(private val settings: Settings) {
 
             is Event.Focused.KeyPressed -> {
                 if (event.key == Keys.ESCAPE) {
-                    recording?.completeExceptionally(CancellationException("ESC key pressed"))
+                    cancelRecord("ESC key pressed")
                     return false
                 }
                 downKeys.add(event.key)
@@ -122,27 +121,27 @@ class KeyBinder(private val settings: Settings) {
         return false
     }
 
-    @ApiStatus.Internal
-    fun completeRecording() {
-        val recording = recording ?: return
+    private fun completeRecording() {
+        if (recordingFunc == null) return
         val b = Bind(
             if (downUnmappedKeys.size == 0) null else downUnmappedKeys.toIntArray(),
             if (downKeys.size == 0) null else downKeys.toTypedArray(),
             if (downMouseButtons.size == 0) null else downMouseButtons.toIntArray(),
             Modifiers(modifiers),
             recordingTime,
-            recordingFunc ?: throw ConcurrentModificationException("recording function has been removed"),
+            recordingFunc ?: throw ConcurrentModificationException("unlucky"),
         )
         if (b in listeners) {
-            recording.completeExceptionally(IllegalStateException("Duplicate keybind: $b"))
+            cancelRecord("Duplicate keybind: $b")
+        } else {
+            if (settings.debug) PolyUI.LOGGER.info("Bind created: $b")
+            callback?.invoke(b)
+            add(b)
+            recordingTime = 0L
+            callback = null
+            recordingFunc = null
             release()
-            return
         }
-        recording.complete(b)
-        this.recording = null
-        this.recordingTime = 0L
-        this.recordingFunc = null
-        release()
     }
 
     /**
@@ -191,29 +190,22 @@ class KeyBinder(private val settings: Settings) {
      * @throws IllegalStateException if the keybind is already present
      * @since 0.24.0
      */
-    fun record(holdDurationNanos: Long = 0L, function: () -> Boolean): CompletableFuture<Bind> {
+    fun record(holdDurationNanos: Long = 0L, callback: (Bind) -> Unit, function: () -> Boolean) {
         if (settings.debug) PolyUI.LOGGER.info("Recording keybind began")
-        recording?.completeExceptionally(CancellationException("New recording was started"))
+        if (recordingFunc != null) cancelRecord("New recording started")
         release()
-        val recording = CompletableFuture<Bind>()
+        this.callback = callback
         recordingTime = holdDurationNanos
         recordingFunc = function
-        this.recording = recording
-        return recording.thenApply {
-            if (settings.debug) PolyUI.LOGGER.info("Bind created: $it")
-            add(it)
-            it
-        }.exceptionally {
-            PolyUI.LOGGER.warn("Keybind recording cancelled: ${it.message}")
-            this.recording = null
-            recordingTime = 0L
-            recordingFunc = null
-            null
-        }
     }
 
-    fun cancelRecord() {
-        recording?.completeExceptionally(CancellationException("Recording cancelled"))
+    @ApiStatus.Internal
+    fun cancelRecord(reason: String) {
+        if (recordingFunc != null) PolyUI.LOGGER.warn("Keybind recording cancelled: $reason")
+        recordingTime = 0L
+        callback = null
+        recordingFunc = null
+        release()
     }
 
     /**
@@ -264,7 +256,7 @@ class KeyBinder(private val settings: Settings) {
         @Transient
         private var ran = false
 
-        fun update(c: LinkedList<Int>, k: LinkedList<Keys>, m: LinkedList<Int>, mods: Byte, deltaTimeNanos: Long): Boolean {
+        internal fun update(c: ArrayList<Int>, k: ArrayList<Keys>, m: ArrayList<Int>, mods: Byte, deltaTimeNanos: Long): Boolean {
             if (durationNanos == 0L && deltaTimeNanos > 0L) return false
             if (unmappedKeys?.matches(c) != false && keys?.matches(k) != false && mouse?.matches(m) != false && this.mods.equal(mods)) {
                 if (!ran) {
@@ -342,7 +334,7 @@ class KeyBinder(private val settings: Settings) {
             return result
         }
 
-        private fun <T> Array<T>.matches(other: LinkedList<T>): Boolean {
+        private fun <T> Array<T>.matches(other: ArrayList<T>): Boolean {
             if (other.size == 0) return false
             for (i in this) {
                 if (i !in other) return false
@@ -350,7 +342,7 @@ class KeyBinder(private val settings: Settings) {
             return true
         }
 
-        private fun IntArray.matches(other: LinkedList<Int>): Boolean {
+        private fun IntArray.matches(other: ArrayList<Int>): Boolean {
             if (other.size == 0) return false
             for (i in this) {
                 if (i !in other) return false

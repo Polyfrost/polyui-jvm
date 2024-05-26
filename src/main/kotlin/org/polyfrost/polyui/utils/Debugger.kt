@@ -38,8 +38,6 @@ import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Point
 import org.polyfrost.polyui.unit.seconds
 import java.text.DecimalFormat
-import kotlin.math.max
-import kotlin.math.min
 
 /**
  * the debug utilities for PolyUI.
@@ -157,7 +155,7 @@ class Debugger(private val polyUI: PolyUI) {
                     if (obj != null) {
                         val os = obj.toString()
                         val w = renderer.textBounds(monospaceFont, os, 10f).x
-                        val pos = min(max(0f, mouseX - w / 2f), this.size.x - w - 10f)
+                        val pos = (mouseX - w / 2f).coerceIn(0f, this.size.x - w - 10f)
                         renderer.rect(pos, mouseY - 14f, w + 10f, 14f, colors.component.bg.hovered)
                         renderer.text(monospaceFont, pos + 5f, mouseY - 10f, text = os, colors.text.primary.normal, 10f)
                         master.needsRedraw = true
@@ -166,8 +164,8 @@ class Debugger(private val polyUI: PolyUI) {
                 if (mods.hasShift) {
                     val s = "${inputManager.mouseX}x${inputManager.mouseY}"
                     val ww = renderer.textBounds(monospaceFont, s, 10f).x
-                    val ppos = min(max(0f, mouseX + 10f), this.size.x - ww - 10f)
-                    val pposy = min(max(0f, mouseY), this.size.y - 14f)
+                    val ppos = (mouseX + 10f).coerceIn(0f, this.size.x - ww - 10f)
+                    val pposy = mouseY.coerceIn(0f, this.size.y - 14f)
                     renderer.rect(ppos, pposy, ww + 10f, 14f, colors.component.bg.hovered)
                     renderer.text(monospaceFont, ppos + 5f, pposy + 4f, text = s, colors.text.primary.normal, 10f)
                     master.needsRedraw = true
@@ -208,7 +206,7 @@ class Debugger(private val polyUI: PolyUI) {
         return sb.toString()
     }
 
-    private fun _debugString(list: LinkedList<Drawable>, depth: Int, sb: StringBuilder) {
+    private fun _debugString(list: ArrayList<Drawable>, depth: Int, sb: StringBuilder) {
         var i = 0
         var ii = 0
         val ndepth = depth + 1

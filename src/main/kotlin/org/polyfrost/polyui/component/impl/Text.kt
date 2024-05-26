@@ -31,8 +31,8 @@ import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.utils.*
-import kotlin.math.max
 
 open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f, at: Vec2? = null, alignment: Align = AlignDefault, wrap: Float = 0f, visibleSize: Vec2? = null, focusable: Boolean = false, vararg children: Drawable?) :
     Drawable(children = children, at, alignment, visibleSize = visibleSize, focusable = focusable) {
@@ -63,7 +63,6 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
     // asm: initially it is a dummy object to save need for a field
     // it is immediately overwritten by setup()
     // this is public so it can be inlined
-    @Deprecated("Internal object, use text instead", replaceWith = ReplaceWith("text"), level = DeprecationLevel.ERROR)
     @ApiStatus.Internal
     var _translated = text
         set(value) {
@@ -89,9 +88,10 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
     /**
      * A list of the lines of this text, and their corresponding width.
      */
-    protected val lines = LinkedList<MutablePair<String, Float>>()
+    protected val lines = ArrayList<Line>()
 
-    private var _font: Font? = font
+    @ApiStatus.Internal
+    var _font: Font? = font
         set(value) {
             if (field == value) return
             field = value
@@ -99,9 +99,8 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         }
 
     var font: Font
-        get() = _font ?: throw UninitializedPropertyAccessException("font")
+        inline get() = _font ?: throw UninitializedPropertyAccessException("font")
         set(value) {
-            if (_font == value) return
             _font = value
             spacing = (font.lineSpacing - 1f) * fontSize
         }
@@ -140,6 +139,22 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
             font = fam.get(fontWeight, value)
         }
 
+    /**
+     * Tracker for the unscaled [fontSize]. You should set this instead of font size in most cases.
+     * @since 1.2.0
+     */
+    var uFontSize = fontSize
+        set(value) {
+            if (field == value) return
+            field = value
+            fontSize = if (initialized) value * (polyUI.size.y / polyUI.iSize.y)
+            else value
+        }
+
+    /**
+     * Internal, scaled font size. You probably should be using [uFontSize] instead, as this is an internal object.
+     */
+    @ApiStatus.Internal
     var fontSize = fontSize
         set(value) {
             if (field == value) return
@@ -155,17 +170,18 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         var y = this.y
         val strikethrough = strikethrough
         val underline = underline
-        lines.fastEach { (it, width) ->
+        lines.fastEach { (it, bounds) ->
+            val (width, height) = bounds
             renderer.text(font, x, y, it, color, fontSize)
             if (strikethrough) {
-                val hf = y + fontSize / 2f
+                val hf = y + height / 2f
                 renderer.line(x, hf, x + width, hf, color, 1f)
             }
             if (underline) {
-                val ff = y + fontSize - spacing + 1f
+                val ff = y + height - spacing + 1f
                 renderer.line(x, ff, x + width, ff, color, 1f)
             }
-            y += fontSize + spacing
+            y += height + spacing
         }
     }
 
@@ -173,7 +189,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         super.rescale(scaleX, scaleY, position)
         val scale = cl1(scaleX, scaleY)
         fontSize *= scale
-        spacing *= scale
+        wrap *= scale
     }
 
     @Suppress("deprecation_error")
@@ -196,48 +212,67 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
     }
 
     open fun updateTextBounds(renderer: Renderer = this.renderer) {
-        val wrap = if (!hasVisibleSize) wrap else visibleSize.x
         lines.clear()
-        text.splitTo('\n', dest = lines)
-        if (lines.isEmpty() || (lines.size == 1 && lines[0].first.isEmpty())) {
+        if (text.isEmpty()) {
+            lines.add("" to (1f by fontSize))
             size.x = 1f
             size.y = fontSize
             return
         }
+        val wrap = if (!hasVisibleSize) wrap else visibleSize.x
+        val hasNewLn = '\n' in text
         if (wrap == 0f) {
+            if (!hasNewLn) {
+                val bounds = renderer.textBounds(font, text, fontSize)
+                lines.add(text to bounds)
+                size = bounds
+                if (hasVisibleSize) visibleSize.y = bounds.y
+                return
+            }
             var mx = 0f
             var ty = -spacing
-            lines.fastEach {
-                val bounds = renderer.textBounds(font, it.first, fontSize)
-                it.second = bounds.x
-                mx = max(mx, bounds.x)
+
+            val txt = text
+            var start = 0
+            var end = txt.indexOf('\n')
+            while (end != -1) {
+                val line = txt.substring(start, end)
+                val bounds = renderer.textBounds(font, line, fontSize)
+                lines.add(line to bounds)
+                mx = mx.coerceAtLeast(bounds.x)
                 ty += bounds.y + spacing
+                start = end + 1
+                end = txt.indexOf('\n', start)
             }
+            val line = txt.substring(start)
+            val bounds = renderer.textBounds(font, line, fontSize)
+            lines.add(line to bounds)
+            mx = mx.coerceAtLeast(bounds.x)
+            ty += bounds.y + spacing
             size.x = mx
             size.y = ty
-            if (visibleSize.y == 0f) visibleSize.y = ty
+            if (hasVisibleSize) visibleSize.y = ty
             return
         }
-        val cp = lines.copy()
-        lines.clear()
-        cp.fastEach { (it, _) ->
-            it.wrap(wrap, renderer, font, fontSize, lines)
-        }
+
+        text.wrap(wrap, renderer, font, fontSize, lines)
+
         val new = lines.size * (fontSize + spacing) - spacing
-        if (lines.size > 1 && visibleSize.y != 0f && new > visibleSize.y) {
+        if (lines.size > 1 && hasVisibleSize && new > visibleSize.y) {
             // asm: text is larger than its box, cut off the last lines, but a minimum of 1 line
-            lines.cut(0, max(0, (visibleSize.y / (fontSize + spacing)).toInt() - 1))
+            lines.cut(0, ((visibleSize.y / (fontSize + spacing)).toInt() - 1).coerceIn(0, lines.lastIndex))
             size.y = visibleSize.y
         } else size.y = new
         size.x = wrap
-        // asm: wrap was specified, but no height so just set it
-        if (visibleSize.y == 0f) {
-            visibleSize.y = size.y
-        }
+
     }
 
     override fun calculateSize(): Vec2 {
-        updateTextBounds(renderer)
+        updateTextBounds()
+        // asm: wrap was specified, but no height so just set it
+        if (hasVisibleSize && visibleSize.y == 0f) {
+            visibleSize.y = size.y
+        }
         return size
     }
 

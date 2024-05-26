@@ -26,7 +26,6 @@ import org.polyfrost.polyui.color.Color
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.animateBy
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.utils.LinkedList
 
 /**
  * # KeyFrames
@@ -34,7 +33,7 @@ import org.polyfrost.polyui.utils.LinkedList
  * Keyframes are an easy way to create animations on components. PolyUI uses a [Kotlin DSL](https://kotlinlang.org/docs/type-safe-builders.html) to create them in an easy and concise way.
  *
  * They can be created wherever a [Drawable] is in scope, so everything from [events][org.polyfrost.polyui.event.Event]
- * for [mouse clicks][org.polyfrost.polyui.event.MouseClicked]; to in your initialization block; using the extension function [keyframed].
+ * for [mouse clicks][org.polyfrost.polyui.event.Event.Mouse.Clicked]; to in your initialization block; using the extension function [keyframed].
  *
  * Each keyframe can be added using a number between 0 (representing the start or 0%) to 100, representing the end or 100%.
  * Each keyframe can control the color, rotation, position, skew and size of the component (using this [function][org.polyfrost.polyui.component.animateTo]).
@@ -63,7 +62,7 @@ import org.polyfrost.polyui.utils.LinkedList
  */
 @KeyFrameDSL
 class KeyFrames<T : Drawable>(self: T, animation: Animation) : DrawableOp.Animatable<T>(self, animation) {
-    private val keyframes = LinkedList<KeyFrame>()
+    private val keyframes = ArrayList<KeyFrame>(5)
     private var i = 0
     private inline val next get() = keyframes.getOrNull(i)
 

@@ -60,7 +60,7 @@ fun Switch(at: Vec2? = null, size: Float, padding: Float = 3f, state: Boolean = 
         radii = (size / 2f).radii(),
     ).withStates().events {
         var switched = state
-        Event.Mouse.Clicked(0) then {
+        Event.Mouse.Clicked then {
             if (hasListenersFor(Event.Change.State::class.java)) {
                 val ev = Event.Change.State(switched)
                 accept(ev)
@@ -159,7 +159,7 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2? = null, fontSiz
         Image("chevron-down.svg"),
         at = at,
         focusable = true,
-        alignment = Align(main = Align.Main.SpaceBetween, padding = Vec2(12f, 6f)),
+        alignment = Align(main = Align.Main.SpaceBetween, padding = Vec2(12f, 6f), maxRowSize = 0),
     ).withStates().withBoarder()
     val dropdown = Block(
         alignment = Align(mode = Align.Mode.Vertical, padding = Vec2(padding, 6f)),
@@ -181,9 +181,6 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2? = null, fontSiz
             }
         },
     ).namedId("DropdownMenu").hide().disable()
-    it.afterParentInit(Int.MAX_VALUE) {
-        polyUI.master.addChild(dropdown, recalculate = false)
-    }
     return it.events {
         Event.Focused.Gained then {
             dropdown.x = this.x
@@ -197,7 +194,6 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2? = null, fontSiz
             Rotate(this[1], PI, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
         }
         Event.Focused.Lost then {
-            if (dropdown.height != 0f) heightTracker = dropdown.height
             Resize(dropdown, height = 0f, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)) {
                 dropdown.enabled = false
                 dropdown.renders = false
@@ -205,22 +201,13 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2? = null, fontSiz
             Rotate(this[1], 0.0, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
         }
         Event.Lifetime.Init then {
-            dropdown.setup(polyUI)
-            if (polyUI.master.initialized) polyUI.master.addChild(dropdown, recalculate = false)
-            dropdown.width += padding
-            dropdown.repositionChildren()
+            polyUI.master.addChild(dropdown, recalculate = false)
             this.width = dropdown.width
-            this.height = fontSize + alignment.padding.y * 2f
-
-            val totalSx = polyUI.size.x / polyUI.iSize.x
-            val totalSy = polyUI.size.y / polyUI.iSize.y
-            dropdown.rescale(totalSx, totalSy, position = true)
-            dropdown.tryMakeScrolling()
 
             val first = dropdown[initial]
             (this[0] as Text).text = ((if (first.children!!.size == 2) first[1] else first[0]) as Text).text
         }
-        Event.Mouse.Clicked(0) then {
+        Event.Mouse.Clicked then {
             if (polyUI.inputManager.focused != null) {
                 polyUI.unfocus()
                 true
@@ -328,7 +315,7 @@ fun Checkbox(at: Vec2? = null, size: Float, state: Boolean = false): Drawable {
         alignment = Align(padding = ((size - size / 1.25f) / 2f).vec),
     ).events {
         var checked = state
-        Event.Mouse.Clicked(0) then {
+        Event.Mouse.Clicked then {
             if (hasListenersFor(Event.Change.State::class.java)) {
                 val ev = Event.Change.State(checked)
                 accept(ev)
@@ -398,20 +385,23 @@ fun PopupMenu(vararg children: Drawable, size: Vec2? = null, align: Align = Alig
         children = children,
     ).events {
         Event.Focused.Gained then {
+            val mx = this.polyUI.mouseX
+            val my = this.polyUI.mouseY
+            val sz = this.polyUI.size
             when (position) {
                 Point.At -> {
-                    x = max(min(this.polyUI.mouseX, this.polyUI.size.x - this.size.x), 0f)
-                    y = max(min(this.polyUI.mouseY, this.polyUI.size.y - this.size.y), 0f)
+                    x = max(min(mx, sz.x - this.size.x), 0f)
+                    y = max(min(my, sz.y - this.size.y), 0f)
                 }
 
                 Point.Above -> {
-                    x = max(min(this.polyUI.mouseX - (this.size.x / 2f), this.polyUI.size.x), 0f)
-                    y = max(min(this.polyUI.mouseY - this.size.y - 12f, this.polyUI.size.y), 0f)
+                    x = max(min(mx - (this.size.x / 2f), sz.x), 0f)
+                    y = max(min(my - this.size.y - 12f, sz.y), 0f)
                 }
 
                 Point.Below -> {
-                    x = max(min(this.polyUI.mouseX - (this.size.x / 2f), this.polyUI.size.x - this.size.x), 0f)
-                    y = max(min(this.polyUI.mouseY + 12f, this.polyUI.size.y - this.size.y), 0f)
+                    x = max(min(mx - (this.size.x / 2f), sz.x - this.size.x), 0f)
+                    y = max(min(my + 12f, sz.y - this.size.y), 0f)
                 }
             }
             Fade(this, 1f, false, Animations.EaseInOutQuad.create(0.2.seconds)).add()

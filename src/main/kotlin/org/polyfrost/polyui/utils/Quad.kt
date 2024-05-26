@@ -22,20 +22,27 @@
 package org.polyfrost.polyui.utils
 
 /**
- * A mutable pair of values.
+ * A quad of values.
  *
  * There is no meaning attached to values in this class, it can be used for any purpose.
- * Pair exhibits value semantics, i.e. two pairs are equal if both components are equal.
+ * Quad exhibits value semantics, i.e. two quads are equal if all components are equal.
  *
- * @param A type of the first value.
- * @param B type of the second value.
- * @property first First value.
- * @property second Second value.
- * @constructor Creates a new instance of Pair.
+ * @since 1.2.0
+ * @see Triple
  */
-data class MutablePair<A, B>(var first: A, var second: B) {
+data class Quad<out A, out B, out C, out D>(
+    val first: A,
+    val second: B,
+    val third: C,
+    val fourth: D
+) {
     /**
-     * Returns string representation of the [MutablePair] including its [first] and [second] values.
+     * Returns string representation of the [Quad] including its values.
      */
-    override fun toString(): String = "($first, $second)"
+    override fun toString(): String = "($first, $second, $third, $fourth)"
+
+    /**
+     * Turns this quad into a [List].
+     */
+    fun <T> Quad<T, T, T, T>.toList() = listOf(first, second, third, fourth)
 }

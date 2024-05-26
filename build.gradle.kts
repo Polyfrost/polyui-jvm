@@ -1,4 +1,3 @@
-
 import org.jetbrains.dokka.base.DokkaBase
 import org.jetbrains.dokka.base.DokkaBaseConfiguration
 import org.jetbrains.dokka.gradle.AbstractDokkaTask
@@ -23,9 +22,9 @@ buildscript {
 }
 
 group = "org.polyfrost"
-version = project.findProperty("version") as String
-val targetKotlinVersion = KotlinVersion.fromVersion(project.findProperty("kotlin.target") as String? ?: "1.9")
-val jvmToolchainVersion = (project.findProperty("jvm.toolchain") as String? ?: "8").toInt()
+version = properties["version"] as String
+val targetKotlinVersion = KotlinVersion.fromVersion(properties["kotlin.target"] as? String ?: "1.9")
+val jvmToolchainVersion = (properties["jvm.toolchain"] as? String ?: "8").toInt()
 
 allprojects {
     apply(plugin = "java-library")
@@ -49,9 +48,7 @@ allprojects {
         testRuntimeOnly(rootProject.libs.logging.impl)
     }
 
-    java {
-        withSourcesJar()
-    }
+    java.withSourcesJar()
 
     kotlin {
         compilerOptions {
@@ -100,7 +97,7 @@ allprojects {
             }
         }
 
-        named("build") {
+        build {
             dependsOn("format")
         }
 
@@ -109,19 +106,25 @@ allprojects {
             description = "Formats source code according to project style"
             dependsOn(applyLicenses, formatKotlin)
         }
-    }
 
-    tasks {
-        val dokkaJavadocJar by creating(Jar::class.java) {
+        create("dokkaJavadocJar", Jar::class.java) {
             group = "documentation"
             archiveClassifier = "javadoc"
             from(dokkaJavadoc)
+        }
+
+        create("dokkaHtmlJar", Jar::class.java) {
+            group = "documentation"
+            archiveBaseName = rootProject.name
+            archiveClassifier = "dokka"
+            from(dokkaHtml.get().outputDirectory)
+            duplicatesStrategy = DuplicatesStrategy.FAIL
         }
     }
 }
 
 apiValidation {
-    ignoredProjects.addAll(rootProject.subprojects.map { it.name })
+    ignoredProjects += rootProject.subprojects.map { it.name }
 }
 
 subprojects {
@@ -134,17 +137,7 @@ subprojects {
     }
 
     tasks.named<Jar>("dokkaJavadocJar") {
-        archiveBaseName = "polyui-${project.name}"
-    }
-}
-
-tasks {
-    create("dokkaHtmlJar", Jar::class.java) {
-        group = "documentation"
-        archiveBaseName = "polyui"
-        archiveClassifier = "dokka"
-        from(dokkaHtmlMultiModule.get().outputDirectory)
-        duplicatesStrategy = DuplicatesStrategy.FAIL
+        archiveBaseName = "${rootProject.name}-${project.name}"
     }
 }
 
@@ -154,7 +147,7 @@ publishing {
             artifactId = project.name
             version = rootProject.version.toString()
 
-            artifact(tasks.getByName<Jar>("jar").archiveFile)
+            artifact(tasks.jar.get().archiveFile)
 
             artifact(tasks.getByName<Jar>("sourcesJar").archiveFile) {
                 this.classifier = "sources"

@@ -44,10 +44,9 @@ import org.polyfrost.polyui.renderer.data.FontFamily
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.unit.toChromaSpeed
+import org.polyfrost.polyui.utils.fastEach
 import kotlin.jvm.internal.Ref.LongRef
 import kotlin.math.abs
-import kotlin.math.max
-import kotlin.math.min
 
 private var dragging = false
 const val MIN_DRAG = 3f
@@ -61,7 +60,7 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, fre
     var pressed = false
     var px = 0f
     var py = 0f
-    on(Event.Mouse.Pressed(0)) {
+    on(Event.Mouse.Pressed) {
         if (dragging) return@on false
         needsRedraw = true
         dragging = true
@@ -164,8 +163,8 @@ fun <S : Drawable> S.addHoverInfo(text: String?): S {
         override fun apply(value: Float) {
             if (!open && value == 1f) {
                 mx = self.polyUI.mouseX
-                obj.x = min(max(0f, mx - obj.width / 2f), self.polyUI.size.x - obj.width)
-                obj.y = min(max(0f, self.polyUI.mouseY - obj.height - 4f), self.polyUI.size.y)
+                obj.x = (mx - obj.width / 2f).coerceIn(0f, self.polyUI.size.x - obj.width)
+                obj.y = (self.polyUI.mouseY - obj.height - 4f).coerceIn(0f, self.polyUI.size.y)
                 obj.renders = true
                 open = true
                 Fade(obj, 1f, false, Animations.EaseInOutQuad.create(0.1.seconds)).add()
@@ -214,7 +213,7 @@ fun <S : Drawable> S.setAlpha(alpha: Float): S {
  */
 @JvmName("onChangeString")
 fun <S : Text> S.onChange(func: S.(String) -> Boolean): S {
-    on(Event.Change.Text()) {
+    on(Event.Change.Text) {
         val res = func.invoke(this, it.text)
         it.cancelled = res
         res
@@ -230,7 +229,7 @@ fun <S : Text> S.onChange(func: S.(String) -> Boolean): S {
  */
 @JvmName("onChangeState")
 fun <S : Drawable> S.onChange(func: S.(Boolean) -> Boolean): S {
-    on(Event.Change.State()) {
+    on(Event.Change.State) {
         val res = func.invoke(this, it.state)
         it.cancelled = res
         res
@@ -246,7 +245,7 @@ fun <S : Drawable> S.onChange(func: S.(Boolean) -> Boolean): S {
  */
 @JvmName("onChangeIndex")
 fun <S : Drawable> S.onChange(func: S.(Int) -> Boolean): S {
-    on(Event.Change.Number()) {
+    on(Event.Change.Number) {
         val res = func.invoke(this, it.amount.toInt())
         it.cancelled = res
         res
@@ -262,7 +261,7 @@ fun <S : Drawable> S.onChange(func: S.(Int) -> Boolean): S {
  */
 @JvmName("onChangeNumber")
 fun <S : Drawable> S.onChange(func: S.(Float) -> Boolean): S {
-    on(Event.Change.Number()) {
+    on(Event.Change.Number) {
         val res = func.invoke(this, it.amount.toFloat())
         it.cancelled = res
         res
@@ -303,7 +302,7 @@ fun <S : Text> S.secondary(): S {
  * Return `false` to cancel the change, meaning the text will not be set.
  */
 fun <S : Text> S.addValidationFunction(func: S.(String) -> Boolean): S {
-    on(Event.Change.Text()) {
+    on(Event.Change.Text) {
         if (!func(this, it.text)) {
             it.cancel()
         }
@@ -340,8 +339,8 @@ private val defReleased: Drawable.(Event.Mouse.Released) -> Boolean = {
 fun <S : Drawable> S.withStates(): S {
     on(Event.Mouse.Entered, defEnter)
     on(Event.Mouse.Exited, defExit)
-    on(Event.Mouse.Pressed(0), defPressed)
-    on(Event.Mouse.Released(0), defReleased)
+    on(Event.Mouse.Pressed, defPressed)
+    on(Event.Mouse.Released, defReleased)
     return this
 }
 
@@ -361,11 +360,11 @@ fun <S : Drawable> S.withStates(
         polyUI.cursor = Cursor.Pointer
         consume
     }
-    on(Event.Mouse.Pressed(0)) {
+    on(Event.Mouse.Pressed) {
         Recolor(this, this.palette.pressed, animation?.invoke()).add()
         consume
     }
-    on(Event.Mouse.Released(0)) {
+    on(Event.Mouse.Released) {
         Recolor(this, this.palette.hovered, animation?.invoke()).add()
         consume
     }
@@ -514,13 +513,13 @@ inline fun <S : Drawable> S.events(dsl: EventDSL<S>.() -> Unit): S {
 @OverloadResolutionByLambdaReturnType
 @JvmName("onClickZ")
 fun <S : Drawable> S.onClick(func: S.(Event.Mouse.Clicked) -> Boolean): S {
-    on(Event.Mouse.Clicked(0), func)
+    on(Event.Mouse.Clicked, func)
     return this
 }
 
 @OverloadResolutionByLambdaReturnType
 fun <S : Drawable> S.onClick(func: S.(Event.Mouse.Clicked) -> Unit): S {
-    on(Event.Mouse.Clicked(0), func)
+    on(Event.Mouse.Clicked, func)
     return this
 }
 

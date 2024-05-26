@@ -40,7 +40,7 @@ import org.polyfrost.polyui.renderer.Window
 import org.polyfrost.polyui.renderer.data.Cursor
 import org.polyfrost.polyui.utils.getResourceStream
 import org.polyfrost.polyui.utils.simplifyRatio
-import org.polyfrost.polyui.utils.stdout
+import org.polyfrost.polyui.utils.toByteArray
 import org.polyfrost.polyui.utils.toDirectByteBuffer
 import java.nio.file.Paths
 import kotlin.math.max
@@ -110,7 +110,7 @@ class GLFWWindow @JvmOverloads constructor(
             }
         }
 
-        val codes = APIUtil.apiClassTokens({ _, value -> value in 0x10001..0x1ffff }, null, org.lwjgl.glfw.GLFW::class.java);
+        val codes = APIUtil.apiClassTokens({ _, value -> value in 0x10001..0x1ffff }, null, org.lwjgl.glfw.GLFW::class.java)
         glfwSetErrorCallback { code, desc ->
             val stack = Thread.currentThread().stackTrace.drop(4).joinToString("\n\t at ")
             LOGGER.error("${codes[code]} ($code): ${GLFWErrorCallback.getDescription(desc)}\nStack: $stack")
@@ -347,7 +347,7 @@ class GLFWWindow @JvmOverloads constructor(
                 time = glfwGetTime()
             }
             if (timeout == 0L) glfwPollEvents()
-            else glfwWaitEventsTimeout((timeout / 1_000_000_000.0).stdout("time"))
+            else glfwWaitEventsTimeout((timeout / 1_000_000_000.0))
             if (polyUI.drew) glfwSwapBuffers(handle)
         }
 
@@ -373,7 +373,7 @@ class GLFWWindow @JvmOverloads constructor(
     fun setIcon(icon: String) {
         val w = IntArray(1)
         val h = IntArray(1)
-        val data = STBImage.stbi_load_from_memory(getResourceStream(icon).toDirectByteBuffer(), w, h, IntArray(1), 4)
+        val data = STBImage.stbi_load_from_memory(getResourceStream(icon).toByteArray().toDirectByteBuffer(), w, h, IntArray(1), 4)
             ?: throw Exception("error occurred while loading icon!")
         glfwSetWindowIcon(handle, GLFWImage.malloc(1).put(0, GLFWImage.malloc().set(w[0], h[0], data)))
     }

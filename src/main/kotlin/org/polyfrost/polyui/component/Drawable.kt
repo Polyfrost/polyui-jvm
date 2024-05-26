@@ -101,7 +101,12 @@ abstract class Drawable(
         set(value) {
             if (value === field) return
             if (field != null) {
-                if (value != null) PolyUI.LOGGER.info("transferring ownership of $simpleName from ${field?.simpleName} to ${value.simpleName}")
+                if (value != null) {
+                    PolyUI.LOGGER.info("transferring ownership of $simpleName from ${field?.simpleName} to ${value.simpleName}")
+                    // avoids any race conditions and generally is good practice.
+                    // currently disabled because of how the DSL works
+//                    require(value.children?.contains(this) == false) { "transfer fail: old owner needs to already have dropped reference" }
+                }
 //                else PolyUI.LOGGER.warn("$simpleName has no path to root, deleted?")
             }
             field = value
@@ -123,21 +128,22 @@ abstract class Drawable(
      */
     var rawResize = false
 
-    private var eventHandlers: MutableMap<Any, LinkedList<(Drawable.(Event) -> Boolean)>>? = null
+    private var eventHandlers: MutableMap<Any, ArrayList<(Drawable.(Event) -> Boolean)>>? = null
 
     /**
      * This is the name of this drawable, and it will be consistent over reboots of the program, so you can use it to get drawables from a layout by ID, e.g:
      *
      * `val text = myLayout["Text@4cf777e8"] as Text`
      */
-    open var simpleName = "${this::class.java.simpleName}@${Integer.toHexString(this.hashCode())}"
+    @OptIn(ExperimentalStdlibApi::class)
+    open var simpleName = "${this::class.java.simpleName}@${this.hashCode().toHexString()}"
 
-    var children: LinkedList<Drawable>?
+    var children: ArrayList<Drawable>?
         private set
 
     init {
         if (children.isNotEmpty()) {
-            this.children = children.filterNotNullTo(LinkedList<Drawable>()).also { list ->
+            this.children = children.filterNotNullTo(ArrayList<Drawable>(children.size)).also { list ->
                 list.fastEach {
                     it.parent = this
                 }
@@ -301,8 +307,8 @@ abstract class Drawable(
 
     var acceptsInput = false
 
-    var initialized = false
-        protected set
+    @get:JvmName("isInitialized")
+    val initialized get() = ::polyUI.isInitialized
 
     /**
      * The current input state of this drawable. Note that this value is **not responsible** for dispatching events
@@ -370,7 +376,7 @@ abstract class Drawable(
             inputState = if (value) INPUT_NONE else INPUT_DISABLED
         }
 
-    protected var operations: LinkedList<DrawableOp>? = null
+    protected var operations: ArrayList<DrawableOp>? = null
         private set
 
     /**
@@ -471,7 +477,7 @@ abstract class Drawable(
         }
 
         needsRedraw = false
-        preRender()
+        preRender(polyUI.delta)
         render()
         children?.fastEach {
             it.draw()
@@ -492,7 +498,7 @@ abstract class Drawable(
      * **make sure to call super [Drawable.preRender]!**
      */
     @MustBeInvokedByOverriders
-    protected open fun preRender() {
+    protected open fun preRender(delta: Long) {
         val renderer = renderer
         renderer.push()
         operations?.fastEach { it.apply() }
@@ -501,11 +507,11 @@ abstract class Drawable(
         val py = y
         var ran = false
         xScroll?.let {
-            x = it.update(polyUI.delta)
+            x = it.update(delta)
             ran = true
         }
         yScroll?.let {
-            y = it.update(polyUI.delta)
+            y = it.update(delta)
             ran = true
         }
         if (ran) {
@@ -523,15 +529,15 @@ abstract class Drawable(
         val sky = skewY != 0.0
         val s = scaleX != 1f || scaleY != 1f
         if (r || skx || sky || s) {
+            val mx = x + width / 2f
+            val my = y + height / 2f
             if (renderer.transformsWithPoint()) {
-                val mx = x + width / 2f
-                val my = x + height / 2f
                 if (r) renderer.rotate(rotation, mx, my)
                 if (skx) renderer.skewX(skewX, mx, my)
                 if (sky) renderer.skewY(skewY, mx, my)
                 if (s) renderer.scale(scaleX, scaleY, x, y)
             } else {
-                renderer.translate(x + width / 2f, y + height / 2f)
+                renderer.translate(mx, my)
                 if (r) renderer.rotate(rotation, 0f, 0f)
                 if (skx) renderer.skewX(skewX, 0f, 0f)
                 if (sky) renderer.skewY(skewY, 0f, 0f)
@@ -615,7 +621,7 @@ abstract class Drawable(
         needsRedraw = true
     }
 
-    private fun _clipChildren(children: LinkedList<Drawable>, tx: Float, ty: Float, tw: Float, th: Float) {
+    private fun _clipChildren(children: ArrayList<Drawable>, tx: Float, ty: Float, tw: Float, th: Float) {
         children.fastEach {
             if (!it.enabled) return@fastEach
             it.renders = it.intersects(tx, ty, tw, th)
@@ -627,7 +633,7 @@ abstract class Drawable(
      *
      * This is used for drawables that need to wait for an animation to finish before being removed.
      */
-    open fun canBeRemoved(): Boolean = operations.isNullOrEmpty() && (children?.allAre { it.canBeRemoved() } != false)
+    open fun canBeRemoved(): Boolean = operations.isNullOrEmpty() && (children?.fastAll { it.canBeRemoved() } != false)
 
     fun debugDraw() {
         if (!renders) return
@@ -715,13 +721,12 @@ abstract class Drawable(
         // asm: don't use accept as we don't want to dispatch to children
         eventHandlers?.maybeRemove(Event.Lifetime.Init::class.java, polyUI.settings.aggressiveCleanup)?.fastEach { it(this, Event.Lifetime.Init) }
         polyUI.positioner.position(this)
-        initialized = true
+        clipChildren()
 
         eventHandlers?.maybeRemove(Event.Lifetime.PostInit::class.java, polyUI.settings.aggressiveCleanup)?.fastEach { it(this, Event.Lifetime.PostInit) }
 
         // following all init events being removed, if it is empty, we can set it to null
         if (eventHandlers.isNullOrEmpty()) eventHandlers = null
-        clipChildren()
         if (polyUI.canUseFramebuffers) {
             if (countChildren() > polyUI.settings.minDrawablesForFramebuffer || (this === polyUI.master && polyUI.settings.isMasterFrameBuffer)) {
                 framebuffer = renderer.createFramebuffer(size.x, size.y)
@@ -750,19 +755,6 @@ abstract class Drawable(
             }
         }
         children?.fastEach { it.tryMakeScrolling() }
-    }
-
-    @ApiStatus.Experimental
-    @MustBeInvokedByOverriders
-    @Locking
-    @Synchronized
-    open fun reset() {
-        if (!initialized) return
-        this.x = 0f
-        this.y = 0f
-        this.atValid = false
-        this.initialized = false
-        children?.fastEach { it.reset() }
     }
 
     /**
@@ -880,9 +872,9 @@ abstract class Drawable(
             if (polyUI.settings.debug) PolyUI.LOGGER.warn("Dodged invalid op $drawableOp on ${this.simpleName}")
             return false
         }
-        if (operations == null) operations = LinkedList()
+        if (operations == null) operations = ArrayList(5)
         needsRedraw = true
-        return operations?.addOrReplace(drawableOp) == null
+        return operations?.add(drawableOp) == true
     }
 
     @Locking
@@ -909,9 +901,10 @@ abstract class Drawable(
     @Locking
     @Synchronized
     fun addChild(child: Drawable, recalculate: Boolean = true) {
-        if (children == null) children = LinkedList()
+        if (children == null) children = ArrayList()
         val children = this.children ?: throw ConcurrentModificationException("well, this sucks")
         child._parent = this
+        if (children.fastAny { it === child }) throw IllegalStateException("attempted to add the same drawable twice")
         children.add(child)
         if (initialized) {
             if (child.setup(polyUI)) {
@@ -950,14 +943,12 @@ abstract class Drawable(
         val children = this.children ?: throw NoSuchElementException("no children on $this")
         val it = children.getOrNull(index) ?: throw IndexOutOfBoundsException("index: $index, length: ${children.size}")
         it._parent = null
-        polyUI.inputManager.drop(it)
+        children.remove(it)
         if (initialized) {
+            polyUI.inputManager.drop(it)
             it.accept(Event.Lifetime.Removed)
-            children.remove(it)
             if (recalculate) recalculate()
             needsRedraw = true
-        } else {
-            children.remove(it)
         }
     }
 
@@ -1020,8 +1011,8 @@ abstract class Drawable(
         if (!acceptsInput && event !is Event.Lifetime) acceptsInput = true
         val ev = eventHandlers ?: HashMap(8)
         // asm: non-specific events will not override hashCode, so identityHashCode will return the same
-        val ls = if (event.hashCode() == System.identityHashCode(event)) ev.getOrPut(event::class.java) { LinkedList() }
-        else ev.getOrPut(event) { LinkedList() }
+        val ls = if (event.hashCode() == System.identityHashCode(event)) ev.getOrPut(event::class.java) { ArrayList(2) }
+        else ev.getOrPut(event) { ArrayList(2) }
         @Suppress("UNCHECKED_CAST")
         ls.add(handler as Drawable.(Event) -> Boolean)
         eventHandlers = ev

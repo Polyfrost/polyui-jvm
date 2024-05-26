@@ -71,8 +71,8 @@ open class DrawableDSL private constructor(val _this: Drawable) {
 
     fun image(image: String, alignment: Align = AlignDefault, init: (Image.() -> Unit)? = null) = image(image.image(), alignment, init)
 
-    fun text(text: String, alignment: Align = AlignDefault, init: (Text.() -> Unit)? = null): Text {
-        val o = Text(text = text, alignment = alignment).apply { init?.invoke(this) }
+    fun text(text: String, wrap: Float = 0f, alignment: Align = AlignDefault, init: (Text.() -> Unit)? = null): Text {
+        val o = Text(text = text, alignment = alignment, wrap = wrap).apply { init?.invoke(this) }
         _this.addChild(o)
         return o
     }

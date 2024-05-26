@@ -42,7 +42,7 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
     var hue = hue
         set(value) {
             if (field == value) return
-            field = value
+            field = value % 360f
             dirty = true
         }
 
@@ -51,8 +51,9 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
      */
     var saturation = saturation
         set(value) {
-            if (field == value) return
-            field = value.coerceIn(0f, 1f)
+            val v = value.coerceIn(0f, 1f)
+            if (field == v) return
+            field = v
             dirty = true
         }
 
@@ -61,8 +62,9 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
      */
     var brightness = brightness
         set(value) {
-            if (field == value) return
-            field = value.coerceIn(0f, 1f)
+            val v = value.coerceIn(0f, 1f)
+            if (field == v) return
+            field = v
             dirty = true
         }
 
@@ -71,8 +73,9 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
      */
     var alpha = alpha
         set(value) {
-            if (field == value) return
-            field = value.coerceIn(0f, 1f)
+            val v = value.coerceIn(0f, 1f)
+            if (field == v) return
+            field = v
             dirty = true
         }
 
@@ -152,8 +155,9 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
         return false
     }
 
+
     override fun toString(): String =
-        "Color(h=$hue, s=$saturation, b=$brightness, a=$alpha, hex=#${Integer.toHexString(argb).uppercase()})"
+        "Color(h=$hue, s=$saturation, b=$brightness, a=$alpha, hex=#${hexOf(this, false)})"
 
     override fun hashCode(): Int {
         var result = hue
@@ -162,15 +166,6 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
         result = 31f * result + alpha
         return result.toInt()
     }
-
-    /**
-     * Return a static java [Color][java.awt.Color] object of this color at the instant this method is called.
-     *
-     * Future changes to this color will not be reflected in the returned object.
-     *
-     * @since 1.1.51
-     */
-    fun toJavaColor() = java.awt.Color(argb, true)
 
     fun take(color: Color): Color {
         this.hue = color.hue
@@ -240,11 +235,13 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
         fun from(hex: String, alpha: Float = 1f) = from(hex, (alpha * 255).toInt())
 
         @JvmStatic
-        fun hexOf(color: Color, alpha: Boolean = true): String {
-            if (alpha) {
-                return "#${Integer.toHexString(color.argb).uppercase()}"
+        @OptIn(ExperimentalStdlibApi::class)
+        fun hexOf(color: Color, alpha: Boolean = true, hash: Boolean = true): String {
+            val c = if (alpha) color.argb else color.argb and 0x00FFFFFF
+            return when (hash) {
+                true -> "#${c.toHexString(HexFormat.UpperCase)}"
+                false -> c.toHexString(HexFormat.UpperCase)
             }
-            return "#${Integer.toHexString(color.argb and 0x00FFFFFF).uppercase()}"
         }
     }
 
@@ -263,14 +260,17 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
         @Transient
         protected var animation: Animation? = null
 
+        /**
+         * animation color data.
+         * ```
+         * hue, saturation, brightness
+         * fromR, fromG, fromB, fromA
+         * toR, toG, toB, toA
+         * ```
+         * @see recolor
+         */
         @Transient
-        protected var to: FloatArray? = null
-
-        @Transient
-        protected var from: FloatArray? = null
-
-        @Transient
-        protected var current: FloatArray? = null
+        protected var cdata: FloatArray? = null
 
         @Deprecated("This would convert an animatable color to an animatable one.", replaceWith = ReplaceWith("clone()"))
         override fun toAnimatable() = clone()
@@ -288,19 +288,13 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
             this.animation = null
             if (animation != null) {
                 this.animation = animation
-                val from = floatArrayOf(
-                    this.r.toFloat(),
-                    this.g.toFloat(),
-                    this.b.toFloat(),
-                    this.alpha,
-                )
-                this.from = from
-                current = FloatArray(4)
-                to = floatArrayOf(
-                    target.r.toFloat() - from[0],
-                    target.g.toFloat() - from[1],
-                    target.b.toFloat() - from[2],
-                    target.alpha - from[3],
+                val fr = this.r.toFloat()
+                val fg = this.g.toFloat()
+                val fb = this.b.toFloat()
+                this.cdata = floatArrayOf(
+                    0f, 0f, 0f,
+                    fr, fg, fb, this.alpha,
+                    target.r.toFloat() - fr, target.g.toFloat() - fg, target.b.toFloat() - fb, target.alpha - this.alpha
                 )
             } else {
                 this.hue = target.hue
@@ -320,27 +314,23 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
             if (animation != null) {
                 dirty = true
                 val animation = this.animation ?: return false
-                val from = this.from ?: return false
-                val to = this.to ?: return false
-                val current = this.current ?: return false
+                val c = this.cdata ?: return false
 
                 val progress = animation.update(deltaTimeNanos)
                 RGBtoHSB(
-                    (from[0] + to[0] * progress).toInt(),
-                    (from[1] + to[1] * progress).toInt(),
-                    (from[2] + to[2] * progress).toInt(),
-                    current,
+                    (c[3] + c[7] * progress).toInt(),
+                    (c[4] + c[8] * progress).toInt(),
+                    (c[5] + c[9] * progress).toInt(),
+                    c,
                 )
-                this.hue = current[0]
-                this.saturation = current[1]
-                this.brightness = current[2]
-                this.alpha = (from[3] + to[3] * progress)
+                this.alpha = (c[6] + c[10] * progress)
+                this.hue = c[0]
+                this.saturation = c[1]
+                this.brightness = c[2]
 
                 if (animation.isFinished) {
                     this.animation = null
-                    this.from = null
-                    this.to = null
-                    this.current = null
+                    this.cdata = null
                     return true
                 }
                 return false

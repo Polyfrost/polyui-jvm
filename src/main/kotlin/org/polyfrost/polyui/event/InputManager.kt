@@ -32,6 +32,7 @@ import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.property.Settings
 import org.polyfrost.polyui.utils.Clock
+import org.polyfrost.polyui.utils.fastEach
 import java.nio.file.Path
 
 /**
@@ -91,9 +92,7 @@ class InputManager(
      * @since 1.0.3
      */
     fun filesDropped(files: Array<Path>) {
-        if (focused?.hasListenersFor(Event.Focused.FileDrop::class.java) == true) {
-            focused?.accept(Event.Focused.FileDrop(files))
-        }
+        focused?.accept(Event.Focused.FileDrop(files))
     }
 
     /** This method should be called when a printable key is typed. This key should be **mapped to the user's keyboard layout!** */
@@ -122,9 +121,7 @@ class InputManager(
      */
     fun keyDown(code: Int) {
         if (keyBinder?.accept(code, true) == true) return
-        if(focused?.hasListenersFor(Event.Focused.UnmappedInput::class.java) == true) {
-            focused?.accept(Event.Focused.UnmappedInput(code, true, keyModifiers))
-        }
+        focused?.accept(Event.Focused.UnmappedInput(code, true, keyModifiers))
     }
 
     /**
@@ -134,9 +131,7 @@ class InputManager(
      */
     fun keyUp(code: Int) {
         if (keyBinder?.accept(code, false) == true) return
-        if (focused?.hasListenersFor(Event.Focused.UnmappedInput::class.java) == true) {
-            focused?.accept(Event.Focused.UnmappedInput(code, false, keyModifiers))
-        }
+        focused?.accept(Event.Focused.UnmappedInput(code, false, keyModifiers))
     }
 
     /**
@@ -265,19 +260,24 @@ class InputManager(
             unfocus()
         }
         mouseOver?.inputState = INPUT_HOVERED
-        dispatch(Event.Mouse.Released(button, mouseX, mouseY, keyModifiers), true)
-        val click = Event.Mouse.Clicked(button, mouseX, mouseY, clickAmount, keyModifiers)
-        if (clickAmount > 1) {
+
+        // fast path: no need to alloc or check for anything on simple
+        if (button == 0 && clickAmount == 1 && keyModifiers.isEmpty) {
+            val r = Event.Mouse.Released
+            r.set(mouseX, mouseY)
+            dispatch(r, true)
+            val c = Event.Mouse.Clicked
+            c.set(mouseX, mouseY)
+            if (!dispatch(c)) safeFocus(mouseOver)
+        } else {
+            dispatch(Event.Mouse.Released(button, mouseX, mouseY, keyModifiers), true)
+            val click = Event.Mouse.Clicked(button, mouseX, mouseY, clickAmount, keyModifiers)
             // asm: not many drawables will actually have double click listeners, so, we check and see if we can skip the dispatch.
             val mouseOver = mouseOver ?: return
             if (!mouseOver.hasListenersFor(click)) {
                 val click1 = Event.Mouse.Clicked(button, mouseX, mouseY, 1, keyModifiers)
-                dispatch(click1, true)
-                return
-            }
-        }
-        if (!dispatch(click) && button == 0 && clickAmount == 1) {
-            safeFocus(mouseOver)
+                dispatch(click1)
+            } else dispatch(click)
         }
     }
 
@@ -340,10 +340,15 @@ class InputManager(
      */
     fun focus(focusable: Drawable?): Boolean {
         if (focusable === focused) return false
-        require(focusable?.focusable != false) { "Cannot focus un-focusable drawable!" }
         focused?.accept(Event.Focused.Lost)
+        if (focusable == null) {
+            focused = null
+            return true
+        }
+        require(focusable.initialized) { "Cannot focus uninitialized drawable" }
+        require(focusable.focusable) { "Cannot focus un-focusable drawable" }
         focused = focusable
-        return focused?.accept(Event.Focused.Gained) == true
+        return focusable.accept(Event.Focused.Gained)
     }
 
     fun unfocus() = focus(null)

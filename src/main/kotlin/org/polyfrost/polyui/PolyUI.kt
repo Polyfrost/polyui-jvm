@@ -240,11 +240,15 @@ class PolyUI @JvmOverloads constructor(
     val iSize: Vec2.Immutable
         get() {
             return if (master.sizeValid) {
-                if (_iSize == null) _iSize = master.size.immutable()
-                _iSize!!
+                val iSize = _iSize
+                if (iSize == null) {
+                    val sz = master.size.immutable()
+                    this._iSize = sz
+                    sz
+                } else iSize
             } else Vec2.i_ONE
         }
-    private val executors: LinkedList<Clock.Executor> = LinkedList()
+    private val executors: ArrayList<Clock.Executor> = ArrayList(4)
 
     /**
      * the time since the last frame, in nanoseconds. It is used internally a lot for animations, etc.
@@ -473,17 +477,17 @@ class PolyUI @JvmOverloads constructor(
          * @since 0.22.0
          */
         @JvmField
-        var defaultFonts = FontFamily("Poppins", "Poppins.zip")
+        val defaultFonts = FontFamily("poppins", "poppins/")
 
         @JvmField
-        var monospaceFont = Font("JetBrainsMono-Regular.ttf")
+        val monospaceFont = Font("JetBrainsMono-Regular.ttf")
 
         /**
          * The fallback default image bundled with PolyUI
          * @since 0.11.0
          */
         @JvmField
-        var defaultImage = PolyImage("err.png")
+        val defaultImage = PolyImage("err.png")
 
         /**
          * Time the [block] and return how long it took, as well as logging with the [msg] if [log] is `true`.
