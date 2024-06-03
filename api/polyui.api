@@ -1236,7 +1236,9 @@ public final class org/polyfrost/polyui/input/Mouse$Companion {
 }
 
 public final class org/polyfrost/polyui/input/Translator {
-	public fun <init> (Lorg/polyfrost/polyui/property/Settings;Ljava/lang/String;)V
+	public fun <init> (Lorg/polyfrost/polyui/property/Settings;Ljava/lang/String;Ljava/util/HashMap;)V
+	public synthetic fun <init> (Lorg/polyfrost/polyui/property/Settings;Ljava/lang/String;Ljava/util/HashMap;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun addDelegate (Ljava/lang/String;)V
 	public final fun addKey (Ljava/lang/String;Ljava/lang/String;)V
 	public final fun addKeys (Ljava/util/Map;)V
 	public final fun addKeys ([Lkotlin/Pair;)V

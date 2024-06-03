@@ -25,8 +25,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.property.Settings
 import org.polyfrost.polyui.utils.dont
+import org.polyfrost.polyui.utils.fastEach
 import org.polyfrost.polyui.utils.getResourceStreamNullable
-import java.text.MessageFormat
 
 /**
  * # PolyTranslator
@@ -44,16 +44,17 @@ import java.text.MessageFormat
  *
  *  Keys can also be added using
  *
- *  The file contains a simple table of `key=value`, with each line meaning a new translation. It will return the key if the file is found but the key is not present. We recommend using dot notation for your keys:
+ *  The file contains a simple table of `my.key=value`, with each line meaning a new translation. It will return the key if the file is found but the key is not present. We recommend using dot notation for your keys:
  *  ```
  *  my.key=hello there!
  *  hello.world=This works well!
- *  something.else=I can also substitute in {0} objects using {1}!
+ *  something.else=I can also substitute in %s objects using %s!
+ *  really.useful=I use the sprintf(3) type format strings as specified by java.lang.String.format().
  *  ```
  *
- *  @see MessageFormat
+ *  @see java.util.Formatter
  */
-class Translator(private val settings: Settings, private val translationDir: String) {
+class Translator(private val settings: Settings, private val translationDir: String, map: HashMap<String, Text>? = null) {
     private var resourcePath = System.getProperty("polyui.locale")?.let { "$translationDir/$it.lang" }
         ?: run {
             val locale = java.util.Locale.getDefault()
@@ -61,13 +62,21 @@ class Translator(private val settings: Settings, private val translationDir: Str
         }
 
 
-    private val map = HashMap<String, Text>()
+    private val map = map ?: HashMap()
     private val queue = ArrayDeque<String>(4)
-//    var master: Layout? = null
-//        set(value) {
-//            if (value == null) return
-//            field = value
-//        }
+    private var delegates: ArrayList<Translator>? = null
+
+    /**
+     * add a *delegate* translator to this master translator.
+     *
+     * The specified [translationDir] will be used to load matching files of the current locale with keys.
+     * @since 1.2.1
+     */
+    fun addDelegate(translationDir: String) {
+        val delegates = delegates ?: ArrayList(2)
+        this.delegates = delegates
+        delegates.add(Translator(settings, translationDir, map))
+    }
 
     /**
      * Set to true to disable warnings when a translation is not found.
@@ -88,6 +97,7 @@ class Translator(private val settings: Settings, private val translationDir: Str
     /** set the locale of this translator. All the keys are cleared, and PolyUI is reloaded. */
     fun setLocale(locale: String) {
         resourcePath = "$translationDir/$locale.lang"
+        delegates?.fastEach { it.resourcePath = "${it.translationDir}/$locale.lang" }
         @Suppress("unchecked_cast") // kotlin moment
         val d = map.clone() as Map<String, Text>
         map.clear()
@@ -102,10 +112,15 @@ class Translator(private val settings: Settings, private val translationDir: Str
      * Add a file to the translation table, which will be used to load keys.
      *
      * Unless [now] is `true`, the file will only be loaded if the key is not found in the existing table.
+     *
+     * **Note:** Although this function is public it is technically internal API.
+     * using it directly probably won't work correctly when the locale is changed.
+     * You probably meant to use [addDelegate] instead.
      * @see Translator
      * @see getResourceStreamNullable
      * @since 0.17.5
      */
+    @ApiStatus.Internal
     fun loadKeys(resource: String, now: Boolean = false) {
         if (!now) {
             queue.add(resource)
@@ -113,15 +128,18 @@ class Translator(private val settings: Settings, private val translationDir: Str
             PolyUI.timed(true, "Loading translation table $resource...") {
                 getResourceStreamNullable(resource)?.reader()?.forEachLine {
                     if (it.isEmpty()) return@forEachLine
-                    val split = it.split("=")
-                    require(split.size == 2) { "Invalid key-value pair in $resource: $it" }
-                    val v = map[split[0]]
+                    val sep = it.indexOf('=')
+                    // assertThat: contains('=') && !startsWith('=') && !endsWith('=')
+                    require(sep > 0 && sep != it.length - 1) { "Invalid key-value pair in $resource: $it" }
+                    val key = it.substring(0, sep)
+                    val value = it.substring(sep + 1)
+                    val v = map[key]
                     if (v != null) {
-                        PolyUI.LOGGER.warn("Duplicate key: '${split[0]}', overwriting with $resource -> ${split[1]}")
-                        v.string = split[1]
+                        PolyUI.LOGGER.warn("Duplicate key: '$key', overwriting with $resource -> $value")
+                        v.string = value
                     } else {
-                        require('.' in split[0]) { "Invalid key ${split[0]}: keys must contain at least one dot" }
-                        map[split[0]] = Text.Simple(split[1])
+                        require('.' in key) { "Invalid key $key: keys must contain at least one dot" }
+                        map[key] = Text.Simple(value)
                     }
                 } ?: PolyUI.LOGGER.warn("\t\t> Table not found!")
             }
@@ -186,7 +204,7 @@ class Translator(private val settings: Settings, private val translationDir: Str
         class Formatted(private val text: Text, vararg val args: Any?) : Text by text {
             init {
                 try {
-                    string = MessageFormat.format(string, *args)
+                    string = string.format(*args)
                 } catch (e: Exception) {
                     PolyUI.LOGGER.error("Failed to format $string with ${args.contentToString()}!", e)
                 }
@@ -204,6 +222,35 @@ class Translator(private val settings: Settings, private val translationDir: Str
         }
     }
 
+    private fun translate0(key: String): Text? {
+        while (queue.isNotEmpty()) {
+            loadKeys(queue.removeFirst(), true)
+            val v = map[key]
+            if (v != null) return v
+        }
+
+        if (loadState == 0) {
+            PolyUI.LOGGER.warn("No translation for '$key'! Attempting to load global file. Country-specific features will be ignored.")
+            val s = "${resourcePath.substring(0, resourcePath.length - 7)}default.lang"
+            loadKeys(s, true)
+            loadState = if (s == "$translationDir/${settings.defaultLocale}.lang") {
+                2 // asm: dodge double load if files are same
+            } else {
+                1
+            }
+            val v = map[key]
+            if (v != null) return v
+        }
+        if (loadState == 1) {
+            PolyUI.LOGGER.warn("No translation for '$key'! Attempting to load default file. Locale features will be ignored.")
+            loadKeys("$translationDir/${settings.defaultLocale}.lang", true)
+            loadState = 2
+            val v = map[key]
+            if (v != null) return v
+        }
+        return null
+    }
+
     /** translate the provided key, returning the key as per the translation table.
      *
      * If the key is not present in the table, then the [resourcePath] file is checked for the key. The value is then returned.
@@ -213,34 +260,17 @@ class Translator(private val settings: Settings, private val translationDir: Str
     fun translate(key: String): Text {
         if (key.isEmpty()) return Text.Simple("").dont()
         if ('.' !in key) return Text.Simple(key).dont()
-        val text = map.getOrPut(key) {
-            while (queue.isNotEmpty()) {
-                loadKeys(queue.removeFirst(), true)
-                val v = map[key]
-                if (v != null) return@getOrPut v
+        val text = map[key] ?: run {
+            val new = translate0(key)
+            if (new != null) return new
+            delegates?.fastEach {
+                val delegated = it.translate0(key)
+                if (delegated != null) return delegated
             }
-
-            if (loadState == 0) {
-                PolyUI.LOGGER.warn("No translation for '$key'! Attempting to load global file. Country-specific features will be ignored.")
-                val s = "${resourcePath.substring(0, resourcePath.length - 7)}default.lang"
-                loadKeys(s, true)
-                loadState = if (s == "$translationDir/${settings.defaultLocale}.lang") {
-                    2 // asm: dodge double load if files are same
-                } else {
-                    1
-                }
-                val v = map[key]
-                if (v != null) return@getOrPut v
-            }
-            if (loadState == 1) {
-                PolyUI.LOGGER.warn("No translation for '$key'! Attempting to load default file. Locale features will be ignored.")
-                loadKeys("$translationDir/${settings.defaultLocale}.lang", true)
-                loadState = 2
-                val v = map[key]
-                if (v != null) return@getOrPut v
-            }
-            if(!dontWarn) PolyUI.LOGGER.warn("No translation for '$key'!")
-            Text.Simple(key)
+            if (!dontWarn) PolyUI.LOGGER.warn("No translation for '$key'!")
+            val dummy = Text.Simple(key)
+            map[key] = dummy
+            return dummy
         }
         return text
     }

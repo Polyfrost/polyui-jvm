@@ -71,7 +71,7 @@ fun main() {
         ),
         Group(
             Button("shuffle.svg".image(), "button.randomize").events {
-                Event.Mouse.Clicked(0) then { _ ->
+                Event.Mouse.Clicked then { _ ->
                     val it = parent.parent[5]
                     it.children?.shuffle()
                     it.repositionChildren()
@@ -79,7 +79,7 @@ fun main() {
             },
             Button("minus.svg".image()),
             Button("plus.svg".image()).events {
-                Event.Mouse.Clicked(0) then {
+                Event.Mouse.Clicked then {
                     parent.parent[5] = Group(
                         *Array(30) {
                             Block(size = Vec2(32f + (Random.nextFloat() * 100f), 32f)).withStates()

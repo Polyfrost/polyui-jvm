@@ -477,7 +477,7 @@ class PolyUI @JvmOverloads constructor(
          * @since 0.22.0
          */
         @JvmField
-        val defaultFonts = FontFamily("poppins", "poppins/")
+        val defaultFonts = FontFamily("Poppins", "poppins/")
 
         @JvmField
         val monospaceFont = Font("JetBrainsMono-Regular.ttf")

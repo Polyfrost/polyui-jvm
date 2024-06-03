@@ -23,6 +23,7 @@ package org.polyfrost.polyui
 
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.component.onClick
+import org.polyfrost.polyui.component.setFont
 import org.polyfrost.polyui.component.withStates
 import org.polyfrost.polyui.dsl.polyUI
 import org.polyfrost.polyui.renderer.impl.GLFWWindow
@@ -73,5 +74,9 @@ fun main() {
                 text("blink three times when u feel it kicking in")
             }
         }
+        text("wrapping text") { setFont { boldItalic } }
+        text("when am i gonna stop being wise for my age and just start being wise when am i gonna gonna stop being a pretty younger things to guys\n\n" +
+                "when will i stop being??\n" +
+                "they all say that it gets better, it gets better but what if i dont :(", wrap = 420f)
     }.open(window)
 }
