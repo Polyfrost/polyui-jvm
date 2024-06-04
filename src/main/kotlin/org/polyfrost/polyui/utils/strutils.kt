@@ -26,7 +26,6 @@ package org.polyfrost.polyui.utils
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.unit.by
 
 /**
  * append the given [Char][c] to this [StringBuilder], repeated [repeats] times.
@@ -165,13 +164,12 @@ private val currentLine = StringBuilder(32)
 fun String.wrap(
     maxWidth: Float,
     renderer: Renderer,
-    font: Font,
-    fontSize: Float,
+    font: Font, fontSize: Float,
     lines: ArrayList<Line>?,
 ): ArrayList<Line> {
     val ls = lines ?: ArrayList(5)
     if (this.isEmpty()) {
-        ls.add("" to (0f by fontSize))
+        ls.add("" to Vec2(1f, fontSize))
         return ls
     }
     if (maxWidth == 0f) {
@@ -179,81 +177,91 @@ fun String.wrap(
         return ls
     }
 
+    // asm: i have documented both these methods with comments as they are kinda hard to understand
+    // note: these are performance sensitive.
 
-    var s = 0
-    var e = this.indexOf(' ')
-    while (e != -1) {
-        processWord(this.substring(s, e), currentLine, fontSize, ls, renderer, font, maxWidth)
-        s = e + 1
-        e = this.indexOf(' ', s)
+    // firstly, create outer loop for each line and inner loop for each word in that line
+    var lns = 0
+    var lne = this.indexOf('\n')
+    // simple method of making it still process when there is no \n
+    if (lne == -1) lne = this.length - 1
+    while (lne != -1) {
+        // char before is a newline, so just skip and don't bother processing
+        if (lne == lns) {
+            ls.add("" to Vec2(1f, fontSize))
+        } else {
+            val line = currentLine
+            line.clear()
+            var s = lns
+            var e = this.indexOf(' ', s)
+            while (e != -1) {
+                // last character was a space, so just skip again as above
+                if (s == e) line.append(' ')
+                else this.substring(s, e).wrapWord(maxWidth, renderer, font, fontSize, ls)
+                s = e + 1
+                e = this.indexOf(' ', s)
+                // break when we try to go to the next line
+                if (e > lne) break
+            }
+            // finish processing anything remaining on this line
+            if (s < lne) this.substring(s, lne).wrapWord(maxWidth, renderer, font, fontSize, ls)
+            if (line.isNotEmpty()) {
+                val out = line.toString()
+                ls.add(out to renderer.textBounds(font, out, fontSize))
+            }
+        }
+        lns = lne + 1
+        lne = this.indexOf('\n', lns)
     }
-
-    // Add the last line
-    if (currentLine.isNotEmpty()) {
-        val out = currentLine.toString()
-        ls.add(out to renderer.textBounds(font, out, fontSize))
+    // add anything on the last line
+    if (lns != this.length) {
+        val final = this.substring(lns)
+        ls.add(final to renderer.textBounds(font, final, fontSize))
     }
-    currentLine.clear()
 
     return ls
 }
 
-private fun processWord(
-    word: String,
-    currentLine: StringBuilder,
-    fontSize: Float,
-    ls: ArrayList<Line>, renderer: Renderer, font: Font, maxWidth: Float
+private fun String.wrapWord(
+    maxWidth: Float,
+    renderer: Renderer,
+    font: Font, fontSize: Float,
+    lines: ArrayList<Line>,
 ) {
-    if (word.isEmpty()) return
-    val nl = word.indexOf('\n')
-    if (nl != -1) {
-        if (word.length == 1) {
-            // solo newline character
-            val out = currentLine.toString()
-            ls.add(out to renderer.textBounds(font, out, fontSize))
-            currentLine.clear()
-        } else {
-            if (nl != 0) currentLine.append(' ').append(word.substring(0, nl))
-            val out = currentLine.toString()
-            ls.add(out to renderer.textBounds(font, out, fontSize))
-            currentLine.clear()
-            processWord(word.substring(nl + 1), currentLine, fontSize, ls, renderer, font, maxWidth)
-        }
-        return
-    }
-
-    val wordLength = renderer.textBounds(font, word, fontSize).x
-
+    if (this.isEmpty()) return
+    val wordLength = renderer.textBounds(font, this, fontSize).x
+    val line = currentLine
 
     if (wordLength > maxWidth) {
         // ah. word is longer than the maximum wrap width
-        if (currentLine.isNotEmpty()) {
+        if (line.isNotEmpty()) {
             // Finish current line and start a new one with the long word
-            val out = currentLine.toString()
-            ls.add(out to renderer.textBounds(font, out, fontSize))
-            currentLine.clear()
+            val out = line.toString()
+            lines.add(out to renderer.textBounds(font, out, fontSize))
+            line.clear()
         }
 
         // add the long word to the lines, splitting it up into smaller chunks if needed
-        var remainingWord = word
+        var remainder = this
+        // lightweight method of stopping it getting stuck in this method if it can't fit even a single character in the given width
         var trap = 0
-        while (remainingWord.isNotEmpty()) {
-            val chunk = remainingWord.substringToWidth(renderer, font, fontSize, maxWidth)
-            ls.add(chunk.first to renderer.textBounds(font, chunk.first, fontSize))
-            remainingWord = chunk.second
+        while (remainder.isNotEmpty()) {
+            val (slice, rem) = remainder.substringToWidth(renderer, font, fontSize, maxWidth)
+            lines.add(slice to renderer.textBounds(font, slice, fontSize))
+            remainder = rem
             trap++
-            if (trap > 100) throw IllegalStateException("trapped trying to trim '$word' at size $fontSize")
+            if (trap > 100) throw IllegalStateException("trapped trying to trim '$this' at size $fontSize")
         }
-    } else if (currentLine.isEmpty()) {
-        currentLine.append(word)
-    } else if (renderer.textBounds(font, currentLine.toString(), fontSize).x + wordLength <= maxWidth) {
+    } else if (line.isEmpty()) {
+        line.append(this)
+    } else if (renderer.textBounds(font, line.toString(), fontSize).x + wordLength <= maxWidth) {
         // ok!
-        currentLine.append(' ').append(word)
+        line.append(' ').append(this)
     } else {
         // asm: word doesn't fit in current line, wrap it to the next line
-        val out = currentLine.append(' ').toString()
-        ls.add(out to renderer.textBounds(font, out, fontSize))
-        currentLine.clear().append(word)
+        val out = line.append(' ').toString()
+        lines.add(out to renderer.textBounds(font, out, fontSize))
+        line.clear().append(this)
     }
 }
 
