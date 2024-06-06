@@ -118,6 +118,13 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
     @JvmOverloads
     constructor(r: Int, g: Int, b: Int, alpha: Float = 1f) : this(RGBtoHSB(r, g, b), alpha)
 
+    constructor(hue: Float, saturation: Float, brightness: Float, alpha: Int = 255) : this(
+        hue,
+        saturation,
+        brightness,
+        alpha.toFloat() / 255f
+    )
+
     init {
         require(saturation in 0f..1f) { "Saturation must be between 0 and 1" }
         require(brightness in 0f..1f) { "Brightness must be between 0 and 1" }
@@ -234,6 +241,10 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
         @JvmStatic
         fun from(hex: String, alpha: Float = 1f) = from(hex, (alpha * 255).toInt())
 
+        /** Utility function to convert Java.awt.Color to PolyColor **/
+        @JvmStatic
+        fun from(color: java.awt.Color) = Color(color.red, color.green, color.blue, color.alpha)
+
         @JvmStatic
         @OptIn(ExperimentalStdlibApi::class)
         fun hexOf(color: Color, alpha: Boolean = true, hash: Boolean = true): String {
@@ -272,7 +283,10 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
         @Transient
         protected var cdata: FloatArray? = null
 
-        @Deprecated("This would convert an animatable color to an animatable one.", replaceWith = ReplaceWith("clone()"))
+        @Deprecated(
+            "This would convert an animatable color to an animatable one.",
+            replaceWith = ReplaceWith("clone()")
+        )
         override fun toAnimatable() = clone()
 
         /**
