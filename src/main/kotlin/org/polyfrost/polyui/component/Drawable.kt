@@ -251,13 +251,13 @@ abstract class Drawable(
      * returns `true` if the size of this drawable is valid (not zero)
      * @since 1.1.0
      */
-    inline val sizeValid get() = width > 0f && height > 0f
+    val sizeValid get() = size.x > 0f && size.y > 0f
 
     /**
      * returns `true` if the position of this drawable is valid (has been set)
      * @since 1.1.0
      */
-    var atValid = false
+    var atValid = x != 0f || y != 0f
         private set
 
     /**
