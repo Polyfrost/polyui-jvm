@@ -179,7 +179,6 @@ abstract class Drawable(
      */
     @ApiStatus.Internal
     var _color: PolyColor? = null
-        private set
 
     /**
      * The color of this drawable. can be any of the subtypes of this class depending on the current situation.

@@ -47,6 +47,7 @@ class Font @JvmOverloads constructor(
     val italic: Boolean = resourcePath.contains("italic", ignoreCase = true),
     val weight: Weight = Weight.entries.getByName(resourcePath.findLastAnyOf(Weight.entries.names(), ignoreCase = true)?.second) ?: Weight.Regular,
 ) : Resource(resourcePath) {
+    @Transient
     val name: String = resourcePath.substringAfterLast('/')
         .substringBeforeLast('.')
 

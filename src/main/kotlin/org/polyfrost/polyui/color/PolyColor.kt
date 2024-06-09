@@ -94,6 +94,7 @@ interface PolyColor {
         final override val brightness = brightness.coerceIn(0f, 1f)
         final override val alpha = alpha.coerceIn(0f, 1f)
 
+        @Transient
         final override val argb = HSBtoRGB(this.hue, this.saturation, this.brightness, this.alpha)
 
         override fun toString() = "Color($hue, $saturation, $brightness, $alpha)"
@@ -126,6 +127,7 @@ interface PolyColor {
                 field = value.coerceIn(0f, 1f)
             }
 
+        @Transient
         final override var argb = HSBtoRGB(this.hue, this.saturation, this.brightness, alpha)
             protected set
             get() {
@@ -143,6 +145,7 @@ interface PolyColor {
             this.alpha = to.alpha
         }
 
+        @Transient
         protected var dirty = false
 
         open fun update(deltaTimeNanos: Long) = false
@@ -155,6 +158,7 @@ interface PolyColor {
     }
 
     class Chroma(hue: Float, saturation: Float, brightness: Float, alpha: Float, var speedNanos: Long) : Mutable(hue, saturation, brightness, alpha) {
+        @Transient
         private var time = (this.hue * speedNanos.toFloat()).toLong()
 
         override fun update(deltaTimeNanos: Long): Boolean {
@@ -272,7 +276,7 @@ interface PolyColor {
 
         override fun hashCode() = (super.hashCode() * 31) + (color2.hashCode() * 31) + type.hashCode()
 
-        open class Mutable(protected open val color1: PolyColor.Mutable, color2: PolyColor.Mutable, type: Type) : Gradient(color1, color2, type) {
+        open class Mutable(@Transient protected open val color1: PolyColor.Mutable, color2: PolyColor.Mutable, type: Type) : Gradient(color1, color2, type) {
             override val color2: PolyColor.Mutable
                 get() = super.color2 as PolyColor.Mutable
 

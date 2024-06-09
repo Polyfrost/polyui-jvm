@@ -349,7 +349,6 @@ public class org/polyfrost/polyui/color/PolyColor$Animatable : org/polyfrost/pol
 	public fun <init> (FFFF)V
 	protected final fun getAnimation ()Lorg/polyfrost/polyui/animate/Animation;
 	protected final fun getCdata ()[F
-	public fun getUpdating ()Z
 	public fun recolor (Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/animate/Animation;)V
 	public static synthetic fun recolor$default (Lorg/polyfrost/polyui/color/PolyColor$Animatable;Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/animate/Animation;ILjava/lang/Object;)V
 	protected final fun setAnimation (Lorg/polyfrost/polyui/animate/Animation;)V
@@ -417,6 +416,7 @@ public class org/polyfrost/polyui/color/PolyColor$Gradient$Mutable : org/polyfro
 	public fun getColor2 ()Lorg/polyfrost/polyui/color/PolyColor$Mutable;
 	public synthetic fun getColor2 ()Lorg/polyfrost/polyui/color/PolyColor;
 	public final fun set (ILorg/polyfrost/polyui/color/PolyColor;)V
+	public fun update (J)Z
 }
 
 public abstract interface class org/polyfrost/polyui/color/PolyColor$Gradient$Type {
