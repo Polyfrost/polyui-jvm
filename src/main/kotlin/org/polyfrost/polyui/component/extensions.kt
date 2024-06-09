@@ -43,9 +43,7 @@ import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.data.FontFamily
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.seconds
-import org.polyfrost.polyui.unit.toChromaSpeed
 import org.polyfrost.polyui.utils.fastEach
-import kotlin.jvm.internal.Ref.LongRef
 import kotlin.math.abs
 
 private var dragging = false
@@ -521,41 +519,6 @@ fun <S : Drawable> S.onClick(func: S.(Event.Mouse.Clicked) -> Boolean): S {
 fun <S : Drawable> S.onClick(func: S.(Event.Mouse.Clicked) -> Unit): S {
     on(Event.Mouse.Clicked, func)
     return this
-}
-
-/**
- * Make the given color chroma, meaning it will change its hue over time.
- *
- * If you wish to change the speed of the color, you can change the value of the [LongRef] returned by [toChromaSpeed]:
- * ```
- * // apply the chroma to the color of this Drawable
- * val speed = 5.seconds.toChromaSpeed()
- * this.color.applyChroma(speed)
- *
- * // now you can mutate the speed at any point you like
- * speed.element = 10.seconds
- * ```
- *
- * @param speedNanos the speed of the chroma, in nanoseconds. The default is 5 seconds. use the [toChromaSpeed] extension function to convert from other units.
- * @return the [DrawableOp] that was applied to this drawable, so you can [remove][DrawableOp.remove] it later to stop the chroma.
- * @since 1.0.5
- */
-context(S)
-@ApiStatus.Experimental
-fun <S : Drawable> PolyColor.makeChroma(speedNanos: LongRef = 5.seconds.toChromaSpeed()): DrawableOp {
-    val p = object : DrawableOp(this@S) {
-        private var time = ((hue % 360f) * speedNanos.element.toFloat()).toLong()
-
-        override fun apply() {
-            time += polyUI.delta
-            val speed = speedNanos.element
-            hue = (time % speed) / speed.toFloat()
-        }
-
-        override fun unapply() = false
-    }
-    p.add()
-    return p
 }
 
 /**

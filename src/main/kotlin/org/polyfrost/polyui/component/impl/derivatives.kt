@@ -354,7 +354,7 @@ fun BoxedTextInput(
     Spacer(size = 6f by 6f),
     TextInput(placeholder = placeholder, text = initialValue, wrap = size?.x ?: 0f),
     Spacer(size = 6f by 6f),
-    Block(Text(post), alignment = Align(padding = 6f by 10f), radii = floatArrayOf(0f, 8f, 0f, 8f)).afterInit { color = polyUI.colors.page.bg.normal.toAnimatable() },
+    Block(Text(post), alignment = Align(padding = 6f by 10f), radii = floatArrayOf(0f, 8f, 0f, 8f)).afterInit { color = polyUI.colors.page.bg.normal },
     size = size,
     alignment = Align(padding = Vec2.ZERO)
 ).withBoarder()

@@ -25,7 +25,6 @@
 package org.polyfrost.polyui.utils
 
 import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.input.Translator
@@ -37,184 +36,9 @@ import kotlin.enums.EnumEntries
 import kotlin.jvm.internal.Ref
 import kotlin.math.PI
 import kotlin.math.abs
-import kotlin.math.floor
 import kotlin.math.min
 
-/** create a color from the given red, green, and blue integer values, and an alpha value `0f..1f` */
-@JvmOverloads
-fun rgba(r: Int, g: Int, b: Int, a: Float = 1f) = PolyColor(r, g, b, a)
-
-/**
- * Converts the components of a color, as specified by the HSB
- * model, to an equivalent set of values for the default RGB model.
- *
- * The `saturation` and `brightness` components
- * should be floating-point values between zero and one
- * (numbers in the range 0.0-1.0).  The `hue` component
- * can be any floating-point number.  The floor of this number is
- * subtracted from it to create a fraction between 0 and 1.  This
- * fractional number is then multiplied by 360 to produce the hue
- * angle in the HSB color model.
- *
- * The integer that is returned by [HSBtoRGB] encodes the
- * value of a color in bits 0-23 of an integer value that is the same
- * format used by the method getARGB().
- * This integer can be supplied as an argument to the
- * [toColor] method that takes a single integer argument to create a [PolyColor].
- * @param hue the hue component of the color
- * @param saturation the saturation of the color
- * @param brightness the brightness of the color
- * @return the RGB value of the color with the indicated hue,
- *                            saturation, and brightness.
- */
-@Suppress("FunctionName")
-fun HSBtoRGB(hue: Float, saturation: Float, brightness: Float): Int {
-    val r: Int
-    val g: Int
-    val b: Int
-    if (saturation == 0f) {
-        r = (brightness * 255.0f + 0.5f).toInt()
-        g = r
-        b = r
-    } else {
-        val h = (hue - floor(hue)) * 6.0f
-        val f = h - floor(h)
-        val p = brightness * (1.0f - saturation)
-        val q = brightness * (1.0f - saturation * f)
-        val t = brightness * (1.0f - saturation * (1.0f - f))
-        when (h.toInt()) {
-            0 -> {
-                r = (brightness * 255.0f + 0.5f).toInt()
-                g = (t * 255.0f + 0.5f).toInt()
-                b = (p * 255.0f + 0.5f).toInt()
-            }
-
-            1 -> {
-                r = (q * 255.0f + 0.5f).toInt()
-                g = (brightness * 255.0f + 0.5f).toInt()
-                b = (p * 255.0f + 0.5f).toInt()
-            }
-
-            2 -> {
-                r = (p * 255.0f + 0.5f).toInt()
-                g = (brightness * 255.0f + 0.5f).toInt()
-                b = (t * 255.0f + 0.5f).toInt()
-            }
-
-            3 -> {
-                r = (p * 255.0f + 0.5f).toInt()
-                g = (q * 255.0f + 0.5f).toInt()
-                b = (brightness * 255.0f + 0.5f).toInt()
-            }
-
-            4 -> {
-                r = (t * 255.0f + 0.5f).toInt()
-                g = (p * 255.0f + 0.5f).toInt()
-                b = (brightness * 255.0f + 0.5f).toInt()
-            }
-
-            5 -> {
-                r = (brightness * 255.0f + 0.5f).toInt()
-                g = (p * 255.0f + 0.5f).toInt()
-                b = (q * 255.0f + 0.5f).toInt()
-            }
-
-            else -> {
-                r = 0
-                g = 0
-                b = 0
-            }
-        }
-    }
-    return -0x1000000 or (r shl 16) or (g shl 8) or b
-}
-
-/**
- * Converts the components of a color, as specified by the default RGB
- * model, to an equivalent set of values for hue, saturation, and
- * brightness that are the three components of the HSB model.
- *
- * If the [out] argument is `null`, then a
- * new array is allocated to return the result. Otherwise, the method
- * returns the array [out], with the values put into that array.
- * @param r the red component of the color
- * @param g the green component of the color
- * @param b the blue component of the color
- * @param out the array used to return the three HSB values, or `null`
- * @return an array of three elements containing the hue, saturation, and brightness (in that order), of the color with the indicated red, green, and blue components.
- * @see PolyColor
- * @since 0.18.2
- */
-@Suppress("FunctionName", "NAME_SHADOWING")
-fun RGBtoHSB(r: Int, g: Int, b: Int, out: FloatArray? = null): FloatArray {
-    var hue: Float
-    val saturation: Float
-    val brightness: Float
-    val out = out ?: FloatArray(3)
-    var cmax = if (r > g) r else g
-    if (b > cmax) cmax = b
-    var cmin = if (r < g) r else g
-    if (b < cmin) cmin = b
-    val diff = (cmax - cmin).toFloat()
-
-    brightness = cmax.toFloat() / 255.0f
-    saturation = if (cmax != 0) diff / cmax.toFloat() else 0f
-    if (saturation == 0f) {
-        hue = 0f
-    } else {
-        val redc = (cmax - r).toFloat() / diff
-        val greenc = (cmax - g).toFloat() / diff
-        val bluec = (cmax - b).toFloat() / diff
-        hue = if (r == cmax) bluec - greenc else if (g == cmax) 2.0f + redc - bluec else 4.0f + greenc - redc
-        hue /= 6.0f
-        if (hue < 0f) hue += 1.0f
-    }
-    out[0] = hue
-    out[1] = saturation
-    out[2] = brightness
-    return out
-}
-
-/**
- * Takes an ARGB integer color and returns a [PolyColor] object.
- */
-fun Int.toColor() = PolyColor(RGBtoHSB(this shr 16 and 0xFF, this shr 8 and 0xFF, this and 0xFF), (this shr 24 and 0xFF) / 255f)
-
-inline val Int.red get() = this shr 16 and 0xFF
-
-inline val Int.green get() = this shr 8 and 0xFF
-
-inline val Int.blue get() = this and 0xFF
-
-inline val Int.alpha get() = this shr 24 and 0xFF
-
 inline fun Double.toRadians() = (this % 360.0) * (PI / 180.0)
-
-/**
- * Return a PolyUI compatible color object representative of this Java color object.
- * @see PolyColor.toJavaColor
- * @since 1.1.51
- */
-fun java.awt.Color.toPolyColor() = PolyColor(red, green, blue, alpha / 255f)
-
-/**
- * Return an animatable PolyUI color object representative of this Java color object.
- * @see PolyColor.toJavaColor
- * @since 1.1.51
- */
-fun java.awt.Color.toPolyColorAnimated(): PolyColor.Animated {
-    val hsb = RGBtoHSB(red, green, blue)
-    return PolyColor.Animated(hsb[0], hsb[1], hsb[2], alpha / 255f)
-}
-
-/**
- * Return a static java [Color][java.awt.Color] object of this color at the instant this method is called.
- *
- * Future changes to this color will not be reflected in the returned object.
- *
- * @since 1.1.51
- */
-fun PolyColor.toJavaColor() = java.awt.Color(argb, true)
 
 /**
  * Calculate the greatest common denominator of two integers.
@@ -404,7 +228,7 @@ fun PolyUI.open(window: Window) {
 }
 
 fun FloatArray.set(value: Float): FloatArray {
-    for(i in this.indices) {
+    for (i in this.indices) {
         this[i] = value
     }
     return this

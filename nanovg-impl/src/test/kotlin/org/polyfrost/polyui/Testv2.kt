@@ -22,7 +22,6 @@
 package org.polyfrost.polyui
 
 import org.polyfrost.polyui.animate.Animations
-import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.events
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.component.withStates
@@ -34,6 +33,7 @@ import org.polyfrost.polyui.renderer.impl.NVGRenderer
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.unit.ms
+import org.polyfrost.polyui.utils.hsba
 import org.polyfrost.polyui.utils.image
 import kotlin.random.Random
 
@@ -49,7 +49,7 @@ fun main() {
                 Event.Mouse.Clicked(0, amountClicks = 2) then {
                     Recolor(
                         this,
-                        PolyColor(Random.nextFloat(), Random.nextFloat(), Random.nextFloat(), 1f),
+                        hsba(Random.nextFloat(), Random.nextFloat(), Random.nextFloat(), 1f),
                         Animations.EaseInOutQuad.create(0.8.ms)
                     ).add()
                 }

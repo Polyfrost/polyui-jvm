@@ -28,13 +28,10 @@ import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Point
 import org.polyfrost.polyui.unit.by
-import org.polyfrost.polyui.utils.ensureSize
-import org.polyfrost.polyui.utils.image
-import org.polyfrost.polyui.utils.mapToArray
-import org.polyfrost.polyui.utils.radii
+import org.polyfrost.polyui.utils.*
 import kotlin.jvm.internal.Ref
 
-fun ColorPicker(color: Ref.ObjectRef<PolyColor.Animated>, faves: MutableList<PolyColor>, recents: MutableList<PolyColor>, polyUI: PolyUI?, openNow: Boolean = true, position: Point = Point.At): Block {
+fun ColorPicker(color: Ref.ObjectRef<PolyColor.Mutable>, faves: MutableList<PolyColor>, recents: MutableList<PolyColor>, polyUI: PolyUI?, openNow: Boolean = true, position: Point = Point.At): Block {
     faves.ensureSize(6) {
         PolyColor.TRANSPARENT
     }
@@ -81,7 +78,7 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Animated>, faves: MutableList<Pol
         ),
         BoxedTextInput(
             placeholder = "#FFFFFF",
-            initialValue = PolyColor.hexOf(color.element, alpha = false),
+            initialValue = color.element.toHex(alpha = false),
             size = 82f by 32f,
         ),
         BoxedTextInput(
@@ -122,7 +119,7 @@ private fun assign(p: Block, col: PolyColor) {
 }
 
 private class ColorPickingBox(
-    val theColor: Ref.ObjectRef<PolyColor.Animated>,
+    val theColor: Ref.ObjectRef<PolyColor.Mutable>,
 ) : Block(
     Block(size = 10f by 10f, radii = 5f.radii(), color = PolyColor.TRANSPARENT).draggable(
         onDrag = {
@@ -135,8 +132,8 @@ private class ColorPickingBox(
     ).withBoarder(PolyColor.WHITE, 2f),
     size = 200f by 200f,
 ) {
-    val grad1 = PolyColor.Gradient(
-        PolyColor.WHITE,
+    val grad1 = PolyColor.Gradient.Mutable(
+        PolyColor.WHITE.toMutable(),
         theColor.element,
         PolyColor.Gradient.Type.LeftToRight,
     )
@@ -147,7 +144,7 @@ private class ColorPickingBox(
     )
 
     override fun render() {
-        grad1.color2 = theColor.element
+        grad1.color2.recolor(theColor.element)
         val col = theColor.element
         val os = col.saturation
         val ob = col.brightness

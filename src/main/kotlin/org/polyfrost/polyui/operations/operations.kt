@@ -27,6 +27,9 @@ import org.polyfrost.polyui.animate.Animation
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.utils.toAnimatable
+import org.polyfrost.polyui.utils.toAnimatableGradient
+import org.polyfrost.polyui.utils.toMutable
 
 class Move<S : Drawable>(
     drawable: S,
@@ -214,27 +217,35 @@ class Recolor<S : Drawable>(
 
     init {
         var shouldReset = false
-        var color = self.color
         when (toColor) {
             is PolyColor.Gradient -> {
-                if (color !is PolyColor.Gradient || color.type != toColor.type) {
-                    self.color = PolyColor.Gradient(color, color.clone(), toColor.type)
+                val color = self.color
+                val grad = if (color is PolyColor.Gradient) {
+                    if (color.type != toColor.type) {
+                        PolyColor.Gradient.Animatable(color.toAnimatable(), color.color2.toAnimatable(), toColor.type)
+                    } else color.toAnimatableGradient()
+                } else {
+                    val copy = PolyColor.Animatable(color.hue, color.saturation, color.brightness, color.alpha)
+                    PolyColor.Gradient.Animatable(color.toAnimatable(), copy, toColor.type)
                 }
-                color = self.color as PolyColor.Gradient
                 // asm: double duration as animation is used twice
+                self.color = grad
                 animation?.let { it.durationNanos *= 2L }
-                color.recolor(0, toColor[0], animation)
-                color.recolor(1, toColor[1], animation)
+                grad.recolor(0, toColor[0], animation)
+                grad.recolor(1, toColor[1], animation)
             }
 
             else -> {
-                if (color is PolyColor.Gradient) {
+                if (self.color is PolyColor.Gradient) {
+                    self.color = (self.color as PolyColor.Gradient).toAnimatableGradient()
+                    val grad = self.color as PolyColor.Gradient.Animatable
                     animation?.let { it.durationNanos *= 2L }
-                    color.recolor(0, toColor, animation)
-                    color.recolor(1, toColor, animation)
+                    grad.recolor(0, toColor, animation)
+                    grad.recolor(1, toColor, animation)
                     shouldReset = true
                 } else {
-                    color.recolor(toColor, animation)
+                    self.color = self.color.toAnimatable()
+                    (self.color as PolyColor.Animatable).recolor(toColor, animation)
                 }
             }
         }
@@ -245,23 +256,23 @@ class Recolor<S : Drawable>(
         return toColor != self.color
     }
 
-    override fun apply() {
-        self.color.update(self.polyUI.delta)
-        self.needsRedraw = true
-    }
+    override fun apply() {}
 
     @Suppress("unchecked_cast")
     override fun unapply(): Boolean {
-        return if (self.color.updating) {
-            false
-        } else {
-            if (reset) {
-                self.color = toColor.toAnimatable()
-                self.color.hue = hueToReturnTo
-            }
+        val clr = self.color
+        self.needsRedraw = true
+        val finished = if (clr is PolyColor.Gradient.Mutable) {
+            if (clr.update(self.polyUI.delta)) {
+                if (reset) self.color = toColor.toMutable().also { it.hue = hueToReturnTo }
+                true
+            } else false
+        } else  (clr as PolyColor.Mutable).update(self.polyUI.delta)
+
+        if (finished) {
             onFinish?.invoke(this as S)
-            true
-        }
+            return true
+        } else return false
     }
 
     override fun apply(value: Float) {

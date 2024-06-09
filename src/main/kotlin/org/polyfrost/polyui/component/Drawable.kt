@@ -175,25 +175,41 @@ abstract class Drawable(
     private var fbc = 0
 
     /**
-     * Setting of this value could have undesirable results, and the [PolyColor.Animated.recolor] method should be used instead.
+     * internal storage for the color.
      */
-    @set:ApiStatus.Experimental
-    lateinit var color: PolyColor.Animated
+    @ApiStatus.Internal
+    var _color: PolyColor? = null
+        private set
 
-    private var _palette: Colors.Palette? = null
+    /**
+     * The color of this drawable. can be any of the subtypes of this class depending on the current situation.
+     *
+     * The only safe methods here generally are getting the current color. casting it is tricky as PolyUI supports many different 'types' of color,
+     * from gradients to chroma. For this reason, if you want to set it, use the [Recolor] operation on this drawable as it handles the conversions for you.
+     *
+     * **setting this value is marked as experimental as it is not generally advised**.
+     */
+    @set:ApiStatus.Internal
+    var color: PolyColor
+        get() = _color ?: throw UninitializedPropertyAccessException("Color is not initialized")
+        set(value) {
+            _color = value
+        }
+
+    private var _palette: Colors.Palette? = palette
 
     @SideEffects(["color", "palette"])
     var palette: Colors.Palette
         get() = _palette ?: throw UninitializedPropertyAccessException("Palette is not initialized")
         set(value) {
             _palette = value
-            if (::color.isInitialized) color.recolor(value.get(inputState))
+            val clr = _color ?: return
+            if (clr is PolyColor.Mutable) {
+                clr.recolor(value.get(inputState))
+            } else {
+                _color = value.get(inputState)
+            }
         }
-
-
-    init {
-        if (palette != null) this._palette = palette
-    }
 
     /**
      * Internal [x] position of this drawable.
@@ -714,7 +730,7 @@ abstract class Drawable(
         if (initialized) return false
         this.polyUI = polyUI
         if (_palette == null) palette = polyUI.colors.component.bg
-        if (!::color.isInitialized) this.color = palette.normal.toAnimatable()
+        if (_color == null) _color = palette.normal
         children?.fastEach {
             it.setup(polyUI)
         }

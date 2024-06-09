@@ -30,58 +30,32 @@ import org.polyfrost.polyui.utils.rgba
 /**
  * # Color
  *
- * The color used by PolyUI. It stores the color in the HSBA format, and can be converted to ARGB.
+ * *(revised 1.3)* The color used by PolyUI. It stores the color in the HSBA format, and can be converted to ARGB.
  *
- * @see [PolyColor.Animated]
+ * @see [PolyColor.Animatable]
  * @see [PolyColor.Gradient]
  */
-open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, brightness: Float, alpha: Float = 1f) : Cloneable {
+@Suppress("INAPPLICABLE_JVM_NAME")
+interface PolyColor {
     /**
      * The hue of this color. Can be any value, but is `mod 360`, so values are always between 0 and 360.
      */
-    var hue = hue
-        set(value) {
-            if (field == value) return
-            field = value % 360f
-            dirty = true
-        }
+    val hue: Float
 
     /**
      * The saturation of this color. Clamped between `0f..1f`.
      */
-    var saturation = saturation
-        set(value) {
-            val v = value.coerceIn(0f, 1f)
-            if (field == v) return
-            field = v
-            dirty = true
-        }
+    val saturation: Float
 
     /**
      * The brightness of this color. Clamped between `0f..1f`.
      */
-    var brightness = brightness
-        set(value) {
-            val v = value.coerceIn(0f, 1f)
-            if (field == v) return
-            field = v
-            dirty = true
-        }
+    val brightness: Float
 
     /**
      * The alpha of this color. Clamped between `0f..1f`.
      */
-    var alpha = alpha
-        set(value) {
-            val v = value.coerceIn(0f, 1f)
-            if (field == v) return
-            field = v
-            dirty = true
-        }
-
-    /** Set this to true to update the [argb] value. */
-    @Transient
-    var dirty = true
+    val alpha: Float
 
     /** return an integer representation of this color.
      * Utilizes bit-shifts to store the color as one 32-bit integer, like so:
@@ -91,172 +65,106 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
      *
      * @see org.polyfrost.polyui.utils.toColor
      */
-    @get:JvmName("getARGB")
-    @Transient
-    var argb: Int = 0
-        protected set
-        get() {
-            return if (dirty) {
-                HSBtoRGB(hue, saturation, brightness).let { rgb ->
-                    (rgb and 0x00FFFFFF) or ((alpha * 255f).toInt() shl 24)
-                }.also {
-                    dirty = false
-                    field = it
-                }
-            } else {
-                field
-            }
-        }
+    val argb: Int
 
-    open val transparent get() = this.argb == 0
-
-    @JvmOverloads
-    constructor(hsb: FloatArray, alpha: Float = 1f) : this(hsb[0], hsb[1], hsb[2], alpha)
-
-    constructor(rgba: IntArray) : this(rgba[0], rgba[1], rgba[2], rgba[3] / 255f)
-
-    @JvmOverloads
-    constructor(r: Int, g: Int, b: Int, alpha: Float = 1f) : this(RGBtoHSB(r, g, b), alpha)
-
-    init {
-        require(saturation in 0f..1f) { "Saturation must be between 0 and 1" }
-        require(brightness in 0f..1f) { "Brightness must be between 0 and 1" }
-        require(alpha in 0f..1f) { "Alpha must be between 0 and 1" }
-    }
+    /**
+     * @return true if the color is transparent (`alpha == 0f`)
+     */
+    open val transparent get() = alpha == 0f
 
     /** red value of this color, from 0 to 255 */
     @get:JvmName("red")
-    inline val r get() = argb shr 16 and 0xFF
+    val r get() = argb shr 16 and 0xFF
 
     /** green value of this color, from 0 to 255 */
     @get:JvmName("green")
-    inline val g get() = argb shr 8 and 0xFF
+    val g get() = argb shr 8 and 0xFF
 
     /** blue value of this color, from 0 to 255 */
     @get:JvmName("blue")
-    inline val b get() = argb and 0xFF
+    val b get() = argb and 0xFF
 
     /** alpha value of this color, from 0 to 255 */
     @get:JvmName("alpha")
-    inline val a get() = argb shr 24 and 0xFF
+    val a get() = argb shr 24 and 0xFF
 
-    /**
-     * @return a new, [animatable][Animated] version of this color
-     */
-    open fun toAnimatable() = Animated(hue, saturation, brightness, alpha)
+    open class Static(hue: Float, saturation: Float, brightness: Float, alpha: Float) : PolyColor {
+        final override val hue = hue % 360f
+        final override val saturation = saturation.coerceIn(0f, 1f)
+        final override val brightness = brightness.coerceIn(0f, 1f)
+        final override val alpha = alpha.coerceIn(0f, 1f)
 
-    public override fun clone() = Color(hue, saturation, brightness, alpha)
+        final override val argb = HSBtoRGB(this.hue, this.saturation, this.brightness, this.alpha)
 
-    override fun equals(other: Any?): Boolean {
-        if (other === this) return true
-        if (other is Color) {
-            return argb == other.argb
-        }
-        return false
+        override fun toString() = "Color($hue, $saturation, $brightness, $alpha)"
+
+        override fun equals(other: Any?) = other is PolyColor && other.argb == this.argb
+
+        override fun hashCode() = argb.hashCode()
     }
 
 
-    override fun toString(): String =
-        "Color(h=$hue, s=$saturation, b=$brightness, a=$alpha, hex=#${hexOf(this, false)})"
+    open class Mutable(hue: Float, saturation: Float, brightness: Float, alpha: Float) : PolyColor {
+        final override var hue = hue % 360f
+            set(value) {
+                dirty = true
+                field = value % 360f
+            }
+        final override var saturation = saturation.coerceIn(0f, 1f)
+            set(value) {
+                dirty = true
+                field = value.coerceIn(0f, 1f)
+            }
+        final override var brightness = brightness.coerceIn(0f, 1f)
+            set(value) {
+                dirty = true
+                field = value.coerceIn(0f, 1f)
+            }
+        final override var alpha = alpha.coerceIn(0f, 1f)
+            set(value) {
+                dirty = true
+                field = value.coerceIn(0f, 1f)
+            }
 
-    override fun hashCode(): Int {
-        var result = hue
-        result = 31f * result + saturation
-        result = 31f * result + brightness
-        result = 31f * result + alpha
-        return result.toInt()
-    }
-
-    fun take(color: Color): Color {
-        this.hue = color.hue
-        this.saturation = color.saturation
-        this.brightness = color.brightness
-        this.alpha = color.alpha
-        return this
-    }
-
-    companion object {
-        /** Transparent color. This should be used for checking in draw calls to prevent drawing of empty objects, e.g.
-         *
-         * `if (color == TRANSPARENT) return`
-         */
-        @JvmField
-        val TRANSPARENT = rgba(0, 0, 0, 0f)
-
-        @JvmField
-        val WHITE = rgba(255, 255, 255, 1f)
-
-        @JvmField
-        val BLACK = rgba(0, 0, 0, 1f)
-
-        /**
-         * Turn the given hex string into a color.
-         *
-         * - If it is 8 characters long, it is assumed to be in the format `#RRGGBBAA` (alpha optional)
-         * - If there is a leading `#`, it will be removed.
-         * - If it is 1 character long, the character is repeated e.g. `#f` -> `#ffffff`
-         * - If it is 2 characters long, the character is repeated e.g. `#0f` -> `#0f0f0f`
-         * - If it is 3 characters long, the character is repeated e.g. `#0fe` -> `#00ffee`
-         *
-         * @throws IllegalArgumentException if the hex string is not in a valid format
-         * @throws NumberFormatException if the hex string is not a valid hex string
-         */
-        @JvmStatic
-        fun from(hex: String): Color {
-            var hexColor = hex.removePrefix("#")
-            when (hexColor.length) {
-                1 -> hexColor = hexColor.repeat(6)
-                2 -> hexColor = hexColor.repeat(3)
-                3 -> hexColor = run {
-                    var newHex = ""
-                    hexColor.forEach {
-                        newHex += it.toString().repeat(2)
-                    }
-                    newHex
+        final override var argb = HSBtoRGB(this.hue, this.saturation, this.brightness, alpha)
+            protected set
+            get() {
+                if (dirty) {
+                    field = HSBtoRGB(hue, saturation, brightness, alpha)
+                    dirty = false
                 }
-
-                6 -> {}
-                8 -> {}
-                else -> throw IllegalArgumentException("Invalid hex color: $hex")
+                return field
             }
-            val r = hexColor.substring(0, 2).toInt(16)
-            val g = hexColor.substring(2, 4).toInt(16)
-            val b = hexColor.substring(4, 6).toInt(16)
-            val a = if (hexColor.length == 8) hexColor.substring(6, 8).toInt(16) else 255
-            return Color(r, g, b, a / 255f)
+
+        fun recolor(to: PolyColor) {
+            this.hue = to.hue
+            this.saturation = to.saturation
+            this.brightness = to.brightness
+            this.alpha = to.alpha
         }
 
-        /** @see from(hex) */
-        @JvmStatic
-        fun from(hex: String, alpha: Int = 255) = from(hex + alpha.toString(16))
+        protected var dirty = false
 
-        /** @see from(hex) */
-        @JvmStatic
-        fun from(hex: String, alpha: Float = 1f) = from(hex, (alpha * 255).toInt())
+        open fun update(deltaTimeNanos: Long) = false
 
-        @JvmStatic
-        @OptIn(ExperimentalStdlibApi::class)
-        fun hexOf(color: Color, alpha: Boolean = true, hash: Boolean = true): String {
-            val c = if (alpha) color.argb else color.argb and 0x00FFFFFF
-            return when (hash) {
-                true -> "#${c.toHexString(HexFormat.UpperCase)}"
-                false -> c.toHexString(HexFormat.UpperCase)
-            }
+        override fun toString() = "Color($hue, $saturation, $brightness, $alpha)"
+
+        override fun equals(other: Any?) = other is PolyColor && other.argb == this.argb
+
+        override fun hashCode() = argb.hashCode()
+    }
+
+    class Chroma(hue: Float, saturation: Float, brightness: Float, alpha: Float, var speedNanos: Long) : Mutable(hue, saturation, brightness, alpha) {
+        private var time = (this.hue * speedNanos.toFloat()).toLong()
+
+        override fun update(deltaTimeNanos: Long): Boolean {
+            time += deltaTimeNanos
+            hue = (time % speedNanos) / speedNanos.toFloat()
+            return false
         }
     }
 
-    /**
-     * An animatable version of [Color], that supports [recoloring][recolor] with animations.
-     */
-    open class Animated(
-        hue: Float,
-        saturation: Float,
-        brightness: Float,
-        alpha: Float,
-    ) : Color(hue, saturation, brightness, alpha) {
-        /** return if the color is still updating (i.e. it has an animation to finish) */
-        open val updating get() = animation != null
-
+    open class Animatable(hue: Float, saturation: Float, brightness: Float, alpha: Float) : Mutable(hue, saturation, brightness, alpha) {
         @Transient
         protected var animation: Animation? = null
 
@@ -272,9 +180,6 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
         @Transient
         protected var cdata: FloatArray? = null
 
-        @Deprecated("This would convert an animatable color to an animatable one.", replaceWith = ReplaceWith("clone()"))
-        override fun toAnimatable() = clone()
-
         /**
          * recolor this color to the target color, with the given animation type and duration.
          *
@@ -282,27 +187,24 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
          * @param animation animation to use. if it is null, the color will be set to the target color immediately.
          * @see [Gradient]
          */
-        open fun recolor(target: Color, animation: Animation? = null) {
-            if (target == this) return
+        open fun recolor(to: PolyColor, animation: Animation? = null) {
+            if (to == this) return
             // clear old animation
             this.animation = null
-            if (animation != null) {
-                this.animation = animation
-                val fr = this.r.toFloat()
-                val fg = this.g.toFloat()
-                val fb = this.b.toFloat()
-                this.cdata = floatArrayOf(
-                    0f, 0f, 0f,
-                    fr, fg, fb, this.alpha,
-                    target.r.toFloat() - fr, target.g.toFloat() - fg, target.b.toFloat() - fb, target.alpha - this.alpha
-                )
-            } else {
-                this.hue = target.hue
-                this.saturation = target.saturation
-                this.brightness = target.brightness
-                this.alpha = target.alpha
+            if (animation == null) {
+                return super.recolor(to)
             }
+            this.animation = animation
+            val fr = this.r.toFloat()
+            val fg = this.g.toFloat()
+            val fb = this.b.toFloat()
+            this.cdata = floatArrayOf(
+                0f, 0f, 0f,
+                fr, fg, fb, this.alpha,
+                to.r.toFloat() - fr, to.g.toFloat() - fg, to.b.toFloat() - fb, to.alpha - this.alpha
+            )
         }
+
 
         /**
          * update the color animation, if present.
@@ -310,7 +212,7 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
          *
          * @return true if the animation finished on this tick, false if otherwise
          * */
-        open fun update(deltaTimeNanos: Long): Boolean {
+        override fun update(deltaTimeNanos: Long): Boolean {
             if (animation != null) {
                 dirty = true
                 val animation = this.animation ?: return false
@@ -337,47 +239,69 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
             }
             return false
         }
-
-        override fun clone() = Animated(hue, saturation, brightness, alpha)
     }
 
-    /** A gradient color. */
-    class Gradient @JvmOverloads constructor(color1: Color, color2: Color, val type: Type = Type.TopLeftToBottomRight) :
-        Animated(color1.hue, color1.saturation, color1.brightness, color1.alpha) {
-        /**
-         * **WARNING:** the following code will NOT behave as expected:
-         * ```
-         * val colorToSet = rgba(...)
-         * myGradient.color1 = colorToSet
-         * assert(myGradient.color1 === colorToSet) // this will fail!
-         * ```
-         * this is due to how gradient colors are implemented. use the equals operator instead (`==`) to compare colors.
-         */
-        var color1: Animated
-            inline get() = this
-            set(value) {
-                hue = value.hue
-                saturation = value.saturation
-                brightness = value.brightness
-                alpha = value.alpha
-            }
 
-        var color2 = if (color2 !is Animated) color2.toAnimatable() else color2
-
-        @get:JvmName("getARGB1")
-        val argb1 get() = super.argb
-
-        @get:JvmName("getARGB2")
-        val argb2 get() = color2.argb
+    open class Gradient(color1: PolyColor, open val color2: PolyColor, val type: Type) : PolyColor by color1 {
+        operator fun get(index: Int) = when (index) {
+            0 -> this
+            1 -> color2
+            else -> throw IndexOutOfBoundsException("Invalid index $index: must be 0 or 1")
+        }
 
         override val transparent: Boolean
             get() = super.transparent && color2.transparent
 
-        override val updating: Boolean
-            get() = super.updating || color2.updating
+        val argb2 get() = color2.argb
 
-        init {
-            require(this.color2 !== this) { "color1 and color2 must be different objects" }
+        @get:JvmName("red2")
+        val r2 get() = color2.r
+
+        @get:JvmName("green2")
+        val g2 get() = color2.g
+
+        @get:JvmName("blue2")
+        val b2 get() = color2.b
+
+        @get:JvmName("alpha2")
+        val a2 get() = color2.a
+
+        override fun toString() = "${type}Gradient(Color($hue, $saturation, $brightness, $alpha) -> $color2)"
+
+        override fun equals(other: Any?) = other is Gradient && other.argb == this.argb && other.argb2 == this.argb2 && other.type == this.type
+
+        override fun hashCode() = (super.hashCode() * 31) + (color2.hashCode() * 31) + type.hashCode()
+
+        open class Mutable(protected open val color1: PolyColor.Mutable, color2: PolyColor.Mutable, type: Type) : Gradient(color1, color2, type) {
+            override val color2: PolyColor.Mutable
+                get() = super.color2 as PolyColor.Mutable
+
+            operator fun set(index: Int, to: PolyColor) {
+                when (index) {
+                    0 -> color1.recolor(to)
+                    1 -> color2.recolor(to)
+                    else -> throw IndexOutOfBoundsException("Invalid index $index: must be 0 or 1")
+                }
+            }
+
+            open fun update(deltaTimeNanos: Long) = color1.update(deltaTimeNanos) and color2.update(deltaTimeNanos)
+        }
+
+        open class Animatable(color1: PolyColor.Animatable, color2: PolyColor.Animatable, type: Type) : Mutable(color1, color2, type) {
+            override val color1: PolyColor.Animatable
+                // Trust Me Bro:tm:
+                get() = super.color1 as PolyColor.Animatable
+
+            override val color2: PolyColor.Animatable
+                get() = super.color2 as PolyColor.Animatable
+
+            open fun recolor(index: Int, to: PolyColor, animation: Animation? = null) {
+                when (index) {
+                    0 -> color1.recolor(to, animation)
+                    1 -> color2.recolor(to, animation)
+                    else -> throw IndexOutOfBoundsException("Invalid index $index: must be 0 or 1")
+                }
+            }
         }
 
         @Suppress("ConvertObjectToDataObject")
@@ -401,7 +325,7 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
              *
              * @throws IllegalArgumentException if innerRadius1 is larger than outerRadius2
              */
-            class Radial @JvmOverloads constructor(
+            data class Radial @JvmOverloads constructor(
                 val innerRadius: Float,
                 val outerRadius: Float,
                 val centerX: Float = -1f,
@@ -413,63 +337,23 @@ open class PolyColor @JvmOverloads constructor(hue: Float, saturation: Float, br
                 }
             }
 
-            class Box(val radius: Float, val feather: Float) : Type
+            data class Box(val radius: Float, val feather: Float) : Type
         }
+    }
 
-        override fun equals(other: Any?): Boolean {
-            if (other === this) return true
-            if (other is Gradient) {
-                return this.argb1 == other.argb1 && this.argb2 == other.argb2 && this.type == other.type
-            }
-            return false
-        }
-
-        operator fun get(index: Int): Color {
-            return when (index) {
-                0 -> this
-                1 -> color2
-                else -> throw IndexOutOfBoundsException("index must be 0 or 1")
-            }
-        }
-
-        operator fun set(index: Int, color: Color) = recolor(index, color)
-
-        override fun hashCode(): Int {
-            var result = super.hashCode()
-            result = 31 * result + color2.hashCode()
-            result = 31 * result + type.hashCode()
-            return result
-        }
-
-        override fun clone() = Gradient(this, color2, type)
-
-        /**
-         * [Animated.recolor] this gradient color.
-         * @param whichColor which color to recolor. 0 for the first color, 1 for the second color.
+    companion object Constants {
+        /** Transparent color. This should be used for checking in draw calls to prevent drawing of empty objects, e.g.
+         *
+         * `if (color == TRANSPARENT) return`
          */
-        fun recolor(whichColor: Int, target: Color, animation: Animation? = null) {
-            when (whichColor) {
-                0 -> super.recolor(target, animation)
-                1 -> color2.recolor(target, animation)
-                else -> throw IndexOutOfBoundsException("Invalid color index $whichColor: must be 0 or 1")
-            }
-        }
+        @JvmField
+        val TRANSPARENT = rgba(0, 0, 0, 0f)
 
-        override fun update(deltaTimeNanos: Long): Boolean {
-            return super.update(deltaTimeNanos) or color2.update(deltaTimeNanos)
-        }
+        @JvmField
+        val WHITE = rgba(255, 255, 255, 1f)
 
-        /**
-         * Deprecated, see [Component.recolor][org.polyfrost.polyui.operations.Recolor] for how to animate gradients.
-         */
-        @Deprecated(
-            "Gradient colors cannot be animated in this way. They can be animated separately using the given method.",
-            ReplaceWith("recolor(0, target, type, durationNanos)"),
-            DeprecationLevel.ERROR,
-        )
-        override fun recolor(target: Color, animation: Animation?) {
-            // nop
-        }
+        @JvmField
+        val BLACK = rgba(0, 0, 0, 1f)
     }
 }
 

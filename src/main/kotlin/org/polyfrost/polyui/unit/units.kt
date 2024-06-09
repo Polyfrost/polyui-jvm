@@ -25,7 +25,6 @@
 package org.polyfrost.polyui.unit
 
 import org.polyfrost.polyui.PolyUI
-import kotlin.jvm.internal.Ref.LongRef
 
 /** note that the smallest unit of time in PolyUI is 1 nanosecond. */
 @get:JvmName("nanoseconds")
@@ -55,8 +54,6 @@ inline val Number.hours get() = (toDouble() * 3_600_000_000_000.0).toLong()
 val AlignDefault = Align()
 
 inline val Number.vec get() = Vec2(toFloat(), toFloat())
-
-fun Long.toChromaSpeed() = LongRef().also { it.element = this }
 
 // so much more efficient to do it this way //
 inline infix fun Float.by(other: Float) = Vec2(this, other)

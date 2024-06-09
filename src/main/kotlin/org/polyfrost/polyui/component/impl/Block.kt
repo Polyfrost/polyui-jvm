@@ -47,7 +47,7 @@ constructor(
 
     init {
         require(radii.size == 4) { "Corner radius array must be 4 values" }
-        if (color != null) this.color = color.toAnimatable()
+        if (color != null) this.color = color
     }
 
     override fun render() {
