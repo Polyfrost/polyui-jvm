@@ -32,30 +32,30 @@ import org.polyfrost.polyui.utils.rgba
  *
  * *(revised 1.3)* The color used by PolyUI. It stores the color in the HSBA format, and can be converted to ARGB.
  *
- * @see [PolyColor.Animatable]
+ * @see [PolyColor.Animated]
  * @see [PolyColor.Gradient]
  */
 @Suppress("INAPPLICABLE_JVM_NAME")
-interface PolyColor {
+abstract class PolyColor {
     /**
      * The hue of this color. Can be any value, but is `mod 360`, so values are always between 0 and 360.
      */
-    val hue: Float
+    abstract val hue: Float
 
     /**
      * The saturation of this color. Clamped between `0f..1f`.
      */
-    val saturation: Float
+    abstract val saturation: Float
 
     /**
      * The brightness of this color. Clamped between `0f..1f`.
      */
-    val brightness: Float
+    abstract val brightness: Float
 
     /**
      * The alpha of this color. Clamped between `0f..1f`.
      */
-    val alpha: Float
+    abstract val alpha: Float
 
     /** return an integer representation of this color.
      * Utilizes bit-shifts to store the color as one 32-bit integer, like so:
@@ -65,7 +65,7 @@ interface PolyColor {
      *
      * @see org.polyfrost.polyui.utils.toColor
      */
-    val argb: Int
+    abstract val argb: Int
 
     /**
      * @return true if the color is transparent (`alpha == 0f`)
@@ -88,7 +88,28 @@ interface PolyColor {
     @get:JvmName("alpha")
     val a get() = argb shr 24 and 0xFF
 
-    open class Static(hue: Float, saturation: Float, brightness: Float, alpha: Float) : PolyColor {
+    override fun toString() = "Color($hue, $saturation, $brightness, $alpha)"
+
+    override fun equals(other: Any?) = other is PolyColor && other.argb == this.argb
+
+    override fun hashCode() = argb.hashCode()
+
+    /**
+     * Represents a color which is has some kind of operation that updates it based on time, for example, an animation.
+     */
+    interface Dynamic {
+        fun update(deltaTimeNanos: Long): Boolean
+    }
+
+    interface Mut {
+        fun recolor(to: PolyColor): Mut
+    }
+
+    interface Animatable : Mut {
+        fun recolor(to: PolyColor, animation: Animation? = null): Animatable
+    }
+
+    open class Static(hue: Float, saturation: Float, brightness: Float, alpha: Float) : PolyColor() {
         final override val hue = hue % 360f
         final override val saturation = saturation.coerceIn(0f, 1f)
         final override val brightness = brightness.coerceIn(0f, 1f)
@@ -96,16 +117,10 @@ interface PolyColor {
 
         @Transient
         final override val argb = HSBtoRGB(this.hue, this.saturation, this.brightness, this.alpha)
-
-        override fun toString() = "Color($hue, $saturation, $brightness, $alpha)"
-
-        override fun equals(other: Any?) = other is PolyColor && other.argb == this.argb
-
-        override fun hashCode() = argb.hashCode()
     }
 
 
-    open class Mutable(hue: Float, saturation: Float, brightness: Float, alpha: Float) : PolyColor {
+    open class Mutable(hue: Float, saturation: Float, brightness: Float, alpha: Float) : PolyColor(), Mut {
         final override var hue = hue % 360f
             set(value) {
                 dirty = true
@@ -138,26 +153,19 @@ interface PolyColor {
                 return field
             }
 
-        fun recolor(to: PolyColor) {
+        override fun recolor(to: PolyColor): Mutable {
             this.hue = to.hue
             this.saturation = to.saturation
             this.brightness = to.brightness
             this.alpha = to.alpha
+            return this
         }
 
         @Transient
         protected var dirty = false
-
-        open fun update(deltaTimeNanos: Long) = false
-
-        override fun toString() = "Color($hue, $saturation, $brightness, $alpha)"
-
-        override fun equals(other: Any?) = other is PolyColor && other.argb == this.argb
-
-        override fun hashCode() = argb.hashCode()
     }
 
-    class Chroma(hue: Float, saturation: Float, brightness: Float, alpha: Float, var speedNanos: Long) : Mutable(hue, saturation, brightness, alpha) {
+    class Chroma(hue: Float, saturation: Float, brightness: Float, alpha: Float, var speedNanos: Long) : Mutable(hue, saturation, brightness, alpha), Dynamic {
         @Transient
         private var time = (this.hue * speedNanos.toFloat()).toLong()
 
@@ -168,7 +176,7 @@ interface PolyColor {
         }
     }
 
-    open class Animatable(hue: Float, saturation: Float, brightness: Float, alpha: Float) : Mutable(hue, saturation, brightness, alpha) {
+    open class Animated(hue: Float, saturation: Float, brightness: Float, alpha: Float) : Mutable(hue, saturation, brightness, alpha), Dynamic, Animatable {
         @Transient
         protected var animation: Animation? = null
 
@@ -191,14 +199,15 @@ interface PolyColor {
          * @param animation animation to use. if it is null, the color will be set to the target color immediately.
          * @see [Gradient]
          */
-        open fun recolor(to: PolyColor, animation: Animation? = null) {
-            if (to == this) return
-            // clear old animation
-            this.animation = null
-            if (animation == null) {
-                return super.recolor(to)
+        override fun recolor(to: PolyColor, animation: Animation?): Animated {
+            if (to == this) return this
+            if (this.animation == null) {
+                if (animation == null) {
+                    super.recolor(to)
+                    return this
+                }
+                this.animation = animation
             }
-            this.animation = animation
             val fr = this.r.toFloat()
             val fg = this.g.toFloat()
             val fb = this.b.toFloat()
@@ -207,15 +216,11 @@ interface PolyColor {
                 fr, fg, fb, this.alpha,
                 to.r.toFloat() - fr, to.g.toFloat() - fg, to.b.toFloat() - fb, to.alpha - this.alpha
             )
+            return this
         }
 
+        override fun recolor(to: PolyColor) = recolor(to, null)
 
-        /**
-         * update the color animation, if present.
-         * After, the animation is cleared, and the color becomes static again.
-         *
-         * @return true if the animation finished on this tick, false if otherwise
-         * */
         override fun update(deltaTimeNanos: Long): Boolean {
             if (animation != null) {
                 dirty = true
@@ -246,29 +251,36 @@ interface PolyColor {
     }
 
 
-    open class Gradient(color1: PolyColor, open val color2: PolyColor, val type: Type) : PolyColor by color1 {
+    open class Gradient(open val color1: PolyColor, open val color2: PolyColor, val type: Type = Type.LeftToRight) : PolyColor() {
+        override val hue get() = color1.hue
+        override val saturation get() = color1.saturation
+        override val brightness get() = color1.brightness
+        override val alpha get() = color1.alpha
+        override val argb get() = color1.argb
+
+        val hue2 get() = color2.hue
+        val saturation2 get() = color2.saturation
+        val brightness2 get() = color2.brightness
+        val alpha2 get() = color2.alpha
+        val argb2 get() = color2.argb
+
+        override val transparent: Boolean
+            get() = super.transparent && color2.transparent
+
+        @get:JvmName("red2")
+        val r2 get() = color2.r
+        @get:JvmName("green2")
+        val g2 get() = color2.g
+        @get:JvmName("blue2")
+        val b2 get() = color2.b
+        @get:JvmName("alpha2")
+        val a2 get() = color2.a
+
         operator fun get(index: Int) = when (index) {
             0 -> this
             1 -> color2
             else -> throw IndexOutOfBoundsException("Invalid index $index: must be 0 or 1")
         }
-
-        override val transparent: Boolean
-            get() = super.transparent && color2.transparent
-
-        val argb2 get() = color2.argb
-
-        @get:JvmName("red2")
-        val r2 get() = color2.r
-
-        @get:JvmName("green2")
-        val g2 get() = color2.g
-
-        @get:JvmName("blue2")
-        val b2 get() = color2.b
-
-        @get:JvmName("alpha2")
-        val a2 get() = color2.a
 
         override fun toString() = "${type}Gradient(Color($hue, $saturation, $brightness, $alpha) -> $color2)"
 
@@ -276,7 +288,10 @@ interface PolyColor {
 
         override fun hashCode() = (super.hashCode() * 31) + (color2.hashCode() * 31) + type.hashCode()
 
-        open class Mutable(@Transient protected open val color1: PolyColor.Mutable, color2: PolyColor.Mutable, type: Type) : Gradient(color1, color2, type) {
+        open class Mutable(color1: PolyColor.Mutable, color2: PolyColor.Mutable, type: Type) : Gradient(color1, color2, type), Mut {
+            override val color1: PolyColor.Mutable
+                get() = super.color1 as PolyColor.Mutable
+
             override val color2: PolyColor.Mutable
                 get() = super.color2 as PolyColor.Mutable
 
@@ -288,16 +303,24 @@ interface PolyColor {
                 }
             }
 
-            open fun update(deltaTimeNanos: Long) = color1.update(deltaTimeNanos) and color2.update(deltaTimeNanos)
+            override fun recolor(to: PolyColor): Mutable {
+                if(to is Gradient) {
+                    color1.recolor(to.color1)
+                    color2.recolor(to.color2)
+                } else {
+                    color1.recolor(to)
+                    color2.recolor(to)
+                }
+                return this
+            }
         }
 
-        open class Animatable(color1: PolyColor.Animatable, color2: PolyColor.Animatable, type: Type) : Mutable(color1, color2, type) {
-            override val color1: PolyColor.Animatable
-                // Trust Me Bro:tm:
-                get() = super.color1 as PolyColor.Animatable
+        open class Animated(color1: PolyColor.Animated, color2: PolyColor.Animated, type: Type) : Mutable(color1, color2, type), Dynamic, Animatable {
+            override val color1: PolyColor.Animated
+                get() = super.color1 as PolyColor.Animated
 
-            override val color2: PolyColor.Animatable
-                get() = super.color2 as PolyColor.Animatable
+            override val color2: PolyColor.Animated
+                get() = super.color2 as PolyColor.Animated
 
             open fun recolor(index: Int, to: PolyColor, animation: Animation? = null) {
                 when (index) {
@@ -306,6 +329,19 @@ interface PolyColor {
                     else -> throw IndexOutOfBoundsException("Invalid index $index: must be 0 or 1")
                 }
             }
+
+            override fun recolor(to: PolyColor, animation: Animation?): Animated {
+                if(to is Gradient) {
+                    color1.recolor(to.color1, animation)
+                    color2.recolor(to.color2, animation)
+                } else {
+                    color1.recolor(to, animation)
+                    color2.recolor(to, animation)
+                }
+                return this
+            }
+
+            override fun update(deltaTimeNanos: Long) = color1.update(deltaTimeNanos) and color2.update(deltaTimeNanos)
         }
 
         @Suppress("ConvertObjectToDataObject")

@@ -59,6 +59,15 @@ interface Renderer : AutoCloseable {
     fun globalAlpha(alpha: Float)
 
     /**
+     * Set the alpha for all future draw calls ([globalAlpha]), and prevent any further calls ([setAlphaCap]) exceeding [alpha] until [resetGlobalAlpha] is called.
+     * @since 1.3.11
+     */
+    fun globalAlphaAndCap(alpha: Float) {
+        setAlphaCap(alpha)
+        globalAlpha(alpha)
+    }
+
+    /**
      * Set a maximum alpha for all future draw calls, in the range (0-1).
      *
      * If this is set, calls to [globalAlpha] will not exceed this value.

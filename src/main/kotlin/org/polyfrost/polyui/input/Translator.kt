@@ -72,10 +72,11 @@ class Translator(private val settings: Settings, private val translationDir: Str
      * The specified [translationDir] will be used to load matching files of the current locale with keys.
      * @since 1.2.1
      */
-    fun addDelegate(translationDir: String) {
+    fun addDelegate(translationDir: String): Translator {
         val delegates = delegates ?: ArrayList(2)
         this.delegates = delegates
         delegates.add(Translator(settings, translationDir, map))
+        return this
     }
 
     /**
@@ -95,7 +96,7 @@ class Translator(private val settings: Settings, private val translationDir: Str
     }
 
     /** set the locale of this translator. All the keys are cleared, and PolyUI is reloaded. */
-    fun setLocale(locale: String) {
+    fun setLocale(locale: String): Translator {
         resourcePath = "$translationDir/$locale.lang"
         delegates?.fastEach { it.resourcePath = "${it.translationDir}/$locale.lang" }
         @Suppress("unchecked_cast") // kotlin moment
@@ -106,6 +107,7 @@ class Translator(private val settings: Settings, private val translationDir: Str
             value.string = new.string
             map[key] = value
         }
+        return this
     }
 
     /**
@@ -121,7 +123,7 @@ class Translator(private val settings: Settings, private val translationDir: Str
      * @since 0.17.5
      */
     @ApiStatus.Internal
-    fun loadKeys(resource: String, now: Boolean = false) {
+    fun loadKeys(resource: String, now: Boolean = false): Translator {
         if (!now) {
             queue.add(resource)
         } else {
@@ -144,6 +146,7 @@ class Translator(private val settings: Settings, private val translationDir: Str
                 } ?: PolyUI.LOGGER.warn("\t\t> Table not found!")
             }
         }
+        return this
     }
 
     /**
@@ -153,10 +156,11 @@ class Translator(private val settings: Settings, private val translationDir: Str
      * @see Translator
      * @since 0.17.5
      */
-    fun addKeys(keys: Map<out String, String>) {
+    fun addKeys(keys: Map<out String, String>): Translator {
         for ((k, v) in keys) {
             addKey(k, v)
         }
+        return this
     }
 
     /**
@@ -171,10 +175,11 @@ class Translator(private val settings: Settings, private val translationDir: Str
      * @see Translator
      * @since 0.17.5
      */
-    fun addKeys(vararg pairs: Pair<String, String>) {
+    fun addKeys(vararg pairs: Pair<String, String>): Translator {
         for ((k, v) in pairs) {
             addKey(k, v)
         }
+        return this
     }
 
     /**
@@ -183,7 +188,7 @@ class Translator(private val settings: Settings, private val translationDir: Str
      * @see loadKeys
      * @since 0.17.5
      */
-    fun addKey(key: String, value: String) {
+    fun addKey(key: String, value: String): Translator {
         require('.' in key) { "Invalid key $key: keys must contain at least one dot" }
         val v = map[key]
         if (v == null) {
@@ -192,6 +197,7 @@ class Translator(private val settings: Settings, private val translationDir: Str
             PolyUI.LOGGER.warn("Duplicate key: '$key', overwriting with $value")
             v.string = value
         }
+        return this
     }
 
     interface Text {

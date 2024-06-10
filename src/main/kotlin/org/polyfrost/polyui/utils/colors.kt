@@ -44,9 +44,9 @@ fun Int.toColor(): PolyColor {
     return PolyColor.Static(cmps[0], cmps[1], cmps[2], (this shr 24 and 0xFF) / 255f)
 }
 
-fun PolyColor.Gradient.toAnimatableGradient() = if (this is PolyColor.Gradient.Animatable) this else PolyColor.Gradient.Animatable(this.toAnimatable(), color2.toAnimatable(), type)
+fun PolyColor.Gradient.toAnimatableGradient() = if (this is PolyColor.Gradient.Animated) this else PolyColor.Gradient.Animated(this.toAnimatable(), color2.toAnimatable(), type)
 
-fun PolyColor.toAnimatable() = if (this is PolyColor.Animatable) this else PolyColor.Animatable(this.hue, this.saturation, this.brightness, this.alpha)
+fun PolyColor.toAnimatable() = if (this is PolyColor.Animated) this else PolyColor.Animated(this.hue, this.saturation, this.brightness, this.alpha)
 
 fun PolyColor.toMutable() = if (this is PolyColor.Mutable) this else PolyColor.Mutable(this.hue, this.saturation, this.brightness, this.alpha)
 
@@ -112,16 +112,6 @@ inline val Int.alpha get() = this shr 24 and 0xFF
  * @since 1.1.51
  */
 fun java.awt.Color.toPolyColor() = rgba(red, green, blue, alpha / 255f)
-
-/**
- * Return an animatable PolyUI color object representative of this Java color object.
- * @see PolyColor.toJavaColor
- * @since 1.1.51
- */
-fun java.awt.Color.toAnimatedPolyColor(): PolyColor.Animatable {
-    val hsb = RGBtoHSB(red, green, blue)
-    return PolyColor.Animatable(hsb[0], hsb[1], hsb[2], alpha / 255f)
-}
 
 /**
  * Return a static java [Color][java.awt.Color] object of this color at the instant this method is called.

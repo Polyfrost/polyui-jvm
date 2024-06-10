@@ -47,7 +47,7 @@ open class TextInput(
     visibleSize: Vec2? = null,
     wrap: Float = 0f,
     vararg children: Drawable?,
-) : Text(text, font, fontSize, at, alignment, wrap, visibleSize, true, *children) {
+) : Text(text.translated().dont(), font, fontSize, at, alignment, wrap, visibleSize, true, *children) {
 
     private val selectBoxes = ArrayList<Pair<Vec2, Vec2>>()
 
@@ -301,7 +301,7 @@ open class TextInput(
     }
 
     /**
-     * `line to lineLength to lineIndex to linePos`
+     * `line to index to lineIndex to linePos`
      */
     private fun getLineByIndex(index: Int): Quad<String, Int, Int, Float> {
         require(index > -1) { "Index must not be negative" }

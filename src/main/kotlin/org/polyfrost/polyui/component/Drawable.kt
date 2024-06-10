@@ -203,7 +203,7 @@ abstract class Drawable(
         set(value) {
             _palette = value
             val clr = _color ?: return
-            if (clr is PolyColor.Mutable) {
+            if (clr is PolyColor.Mut) {
                 clr.recolor(value.get(inputState))
             } else {
                 _color = value.get(inputState)
@@ -564,8 +564,8 @@ abstract class Drawable(
                 y = 0f
             }
         }
-        if (alpha != 1f) renderer.globalAlpha(alpha)
-        else if (!enabled) renderer.globalAlpha(0.8f)
+        if (alpha != 1f) renderer.globalAlphaAndCap(alpha)
+        else if (!enabled) renderer.globalAlphaAndCap(0.8f)
     }
 
     /** draw script for this drawable. */
@@ -583,6 +583,7 @@ abstract class Drawable(
         }
         if (xScroll != null || yScroll != null) renderer.popScissor()
         renderer.pop()
+        renderer.globalAlphaAndCap(1f)
         if (acx != 0f) {
             x = acx
             y = acy

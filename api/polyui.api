@@ -328,35 +328,51 @@ public class org/polyfrost/polyui/color/LightTheme : org/polyfrost/polyui/color/
 	public fun getText ()Lorg/polyfrost/polyui/color/Colors$Text;
 }
 
-public abstract interface class org/polyfrost/polyui/color/PolyColor {
+public abstract class org/polyfrost/polyui/color/PolyColor {
 	public static final field BLACK Lorg/polyfrost/polyui/color/PolyColor;
 	public static final field Constants Lorg/polyfrost/polyui/color/PolyColor$Constants;
 	public static final field TRANSPARENT Lorg/polyfrost/polyui/color/PolyColor;
 	public static final field WHITE Lorg/polyfrost/polyui/color/PolyColor;
-	public fun alpha ()I
-	public fun blue ()I
+	public fun <init> ()V
+	public final fun alpha ()I
+	public final fun blue ()I
+	public fun equals (Ljava/lang/Object;)Z
 	public abstract fun getAlpha ()F
 	public abstract fun getArgb ()I
 	public abstract fun getBrightness ()F
 	public abstract fun getHue ()F
 	public abstract fun getSaturation ()F
 	public fun getTransparent ()Z
-	public fun green ()I
-	public fun red ()I
+	public final fun green ()I
+	public fun hashCode ()I
+	public final fun red ()I
+	public fun toString ()Ljava/lang/String;
 }
 
-public class org/polyfrost/polyui/color/PolyColor$Animatable : org/polyfrost/polyui/color/PolyColor$Mutable {
+public abstract interface class org/polyfrost/polyui/color/PolyColor$Animatable : org/polyfrost/polyui/color/PolyColor$Mut {
+	public abstract fun recolor (Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/animate/Animation;)Lorg/polyfrost/polyui/color/PolyColor$Animatable;
+	public static synthetic fun recolor$default (Lorg/polyfrost/polyui/color/PolyColor$Animatable;Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/animate/Animation;ILjava/lang/Object;)Lorg/polyfrost/polyui/color/PolyColor$Animatable;
+}
+
+public final class org/polyfrost/polyui/color/PolyColor$Animatable$DefaultImpls {
+	public static synthetic fun recolor$default (Lorg/polyfrost/polyui/color/PolyColor$Animatable;Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/animate/Animation;ILjava/lang/Object;)Lorg/polyfrost/polyui/color/PolyColor$Animatable;
+}
+
+public class org/polyfrost/polyui/color/PolyColor$Animated : org/polyfrost/polyui/color/PolyColor$Mutable, org/polyfrost/polyui/color/PolyColor$Animatable, org/polyfrost/polyui/color/PolyColor$Dynamic {
 	public fun <init> (FFFF)V
 	protected final fun getAnimation ()Lorg/polyfrost/polyui/animate/Animation;
 	protected final fun getCdata ()[F
-	public fun recolor (Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/animate/Animation;)V
-	public static synthetic fun recolor$default (Lorg/polyfrost/polyui/color/PolyColor$Animatable;Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/animate/Animation;ILjava/lang/Object;)V
+	public fun recolor (Lorg/polyfrost/polyui/color/PolyColor;)Lorg/polyfrost/polyui/color/PolyColor$Animated;
+	public synthetic fun recolor (Lorg/polyfrost/polyui/color/PolyColor;)Lorg/polyfrost/polyui/color/PolyColor$Mut;
+	public synthetic fun recolor (Lorg/polyfrost/polyui/color/PolyColor;)Lorg/polyfrost/polyui/color/PolyColor$Mutable;
+	public synthetic fun recolor (Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/animate/Animation;)Lorg/polyfrost/polyui/color/PolyColor$Animatable;
+	public fun recolor (Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/animate/Animation;)Lorg/polyfrost/polyui/color/PolyColor$Animated;
 	protected final fun setAnimation (Lorg/polyfrost/polyui/animate/Animation;)V
 	protected final fun setCdata ([F)V
 	public fun update (J)Z
 }
 
-public final class org/polyfrost/polyui/color/PolyColor$Chroma : org/polyfrost/polyui/color/PolyColor$Mutable {
+public final class org/polyfrost/polyui/color/PolyColor$Chroma : org/polyfrost/polyui/color/PolyColor$Mutable, org/polyfrost/polyui/color/PolyColor$Dynamic {
 	public fun <init> (FFFFJ)V
 	public final fun getSpeedNanos ()J
 	public final fun setSpeedNanos (J)V
@@ -366,57 +382,61 @@ public final class org/polyfrost/polyui/color/PolyColor$Chroma : org/polyfrost/p
 public final class org/polyfrost/polyui/color/PolyColor$Constants {
 }
 
-public final class org/polyfrost/polyui/color/PolyColor$DefaultImpls {
-	public static fun alpha (Lorg/polyfrost/polyui/color/PolyColor;)I
-	public static fun blue (Lorg/polyfrost/polyui/color/PolyColor;)I
-	public static fun getTransparent (Lorg/polyfrost/polyui/color/PolyColor;)Z
-	public static fun green (Lorg/polyfrost/polyui/color/PolyColor;)I
-	public static fun red (Lorg/polyfrost/polyui/color/PolyColor;)I
+public abstract interface class org/polyfrost/polyui/color/PolyColor$Dynamic {
+	public abstract fun update (J)Z
 }
 
 public class org/polyfrost/polyui/color/PolyColor$Gradient : org/polyfrost/polyui/color/PolyColor {
 	public fun <init> (Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/color/PolyColor$Gradient$Type;)V
-	public fun alpha ()I
+	public synthetic fun <init> (Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/color/PolyColor$Gradient$Type;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun alpha2 ()I
-	public fun blue ()I
 	public final fun blue2 ()I
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun get (I)Lorg/polyfrost/polyui/color/PolyColor;
 	public fun getAlpha ()F
+	public final fun getAlpha2 ()F
 	public fun getArgb ()I
 	public final fun getArgb2 ()I
 	public fun getBrightness ()F
+	public final fun getBrightness2 ()F
+	public fun getColor1 ()Lorg/polyfrost/polyui/color/PolyColor;
 	public fun getColor2 ()Lorg/polyfrost/polyui/color/PolyColor;
 	public fun getHue ()F
+	public final fun getHue2 ()F
 	public fun getSaturation ()F
+	public final fun getSaturation2 ()F
 	public fun getTransparent ()Z
 	public final fun getType ()Lorg/polyfrost/polyui/color/PolyColor$Gradient$Type;
-	public fun green ()I
 	public final fun green2 ()I
 	public fun hashCode ()I
-	public fun red ()I
 	public final fun red2 ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public class org/polyfrost/polyui/color/PolyColor$Gradient$Animatable : org/polyfrost/polyui/color/PolyColor$Gradient$Mutable {
-	public fun <init> (Lorg/polyfrost/polyui/color/PolyColor$Animatable;Lorg/polyfrost/polyui/color/PolyColor$Animatable;Lorg/polyfrost/polyui/color/PolyColor$Gradient$Type;)V
-	protected fun getColor1 ()Lorg/polyfrost/polyui/color/PolyColor$Animatable;
+public class org/polyfrost/polyui/color/PolyColor$Gradient$Animated : org/polyfrost/polyui/color/PolyColor$Gradient$Mutable, org/polyfrost/polyui/color/PolyColor$Animatable, org/polyfrost/polyui/color/PolyColor$Dynamic {
+	public fun <init> (Lorg/polyfrost/polyui/color/PolyColor$Animated;Lorg/polyfrost/polyui/color/PolyColor$Animated;Lorg/polyfrost/polyui/color/PolyColor$Gradient$Type;)V
+	public fun getColor1 ()Lorg/polyfrost/polyui/color/PolyColor$Animated;
 	public synthetic fun getColor1 ()Lorg/polyfrost/polyui/color/PolyColor$Mutable;
-	public fun getColor2 ()Lorg/polyfrost/polyui/color/PolyColor$Animatable;
+	public synthetic fun getColor1 ()Lorg/polyfrost/polyui/color/PolyColor;
+	public fun getColor2 ()Lorg/polyfrost/polyui/color/PolyColor$Animated;
 	public synthetic fun getColor2 ()Lorg/polyfrost/polyui/color/PolyColor$Mutable;
 	public synthetic fun getColor2 ()Lorg/polyfrost/polyui/color/PolyColor;
 	public fun recolor (ILorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/animate/Animation;)V
-	public static synthetic fun recolor$default (Lorg/polyfrost/polyui/color/PolyColor$Gradient$Animatable;ILorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/animate/Animation;ILjava/lang/Object;)V
+	public synthetic fun recolor (Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/animate/Animation;)Lorg/polyfrost/polyui/color/PolyColor$Animatable;
+	public fun recolor (Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/animate/Animation;)Lorg/polyfrost/polyui/color/PolyColor$Gradient$Animated;
+	public static synthetic fun recolor$default (Lorg/polyfrost/polyui/color/PolyColor$Gradient$Animated;ILorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/animate/Animation;ILjava/lang/Object;)V
+	public fun update (J)Z
 }
 
-public class org/polyfrost/polyui/color/PolyColor$Gradient$Mutable : org/polyfrost/polyui/color/PolyColor$Gradient {
+public class org/polyfrost/polyui/color/PolyColor$Gradient$Mutable : org/polyfrost/polyui/color/PolyColor$Gradient, org/polyfrost/polyui/color/PolyColor$Mut {
 	public fun <init> (Lorg/polyfrost/polyui/color/PolyColor$Mutable;Lorg/polyfrost/polyui/color/PolyColor$Mutable;Lorg/polyfrost/polyui/color/PolyColor$Gradient$Type;)V
-	protected fun getColor1 ()Lorg/polyfrost/polyui/color/PolyColor$Mutable;
+	public fun getColor1 ()Lorg/polyfrost/polyui/color/PolyColor$Mutable;
+	public synthetic fun getColor1 ()Lorg/polyfrost/polyui/color/PolyColor;
 	public fun getColor2 ()Lorg/polyfrost/polyui/color/PolyColor$Mutable;
 	public synthetic fun getColor2 ()Lorg/polyfrost/polyui/color/PolyColor;
+	public fun recolor (Lorg/polyfrost/polyui/color/PolyColor;)Lorg/polyfrost/polyui/color/PolyColor$Gradient$Mutable;
+	public synthetic fun recolor (Lorg/polyfrost/polyui/color/PolyColor;)Lorg/polyfrost/polyui/color/PolyColor$Mut;
 	public final fun set (ILorg/polyfrost/polyui/color/PolyColor;)V
-	public fun update (J)Z
 }
 
 public abstract interface class org/polyfrost/polyui/color/PolyColor$Gradient$Type {
@@ -471,37 +491,35 @@ public final class org/polyfrost/polyui/color/PolyColor$Gradient$Type$TopToBotto
 	public static final field INSTANCE Lorg/polyfrost/polyui/color/PolyColor$Gradient$Type$TopToBottom;
 }
 
-public class org/polyfrost/polyui/color/PolyColor$Mutable : org/polyfrost/polyui/color/PolyColor {
+public abstract interface class org/polyfrost/polyui/color/PolyColor$Mut {
+	public abstract fun recolor (Lorg/polyfrost/polyui/color/PolyColor;)Lorg/polyfrost/polyui/color/PolyColor$Mut;
+}
+
+public class org/polyfrost/polyui/color/PolyColor$Mutable : org/polyfrost/polyui/color/PolyColor, org/polyfrost/polyui/color/PolyColor$Mut {
 	public fun <init> (FFFF)V
-	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAlpha ()F
 	public final fun getArgb ()I
 	public final fun getBrightness ()F
 	protected final fun getDirty ()Z
 	public final fun getHue ()F
 	public final fun getSaturation ()F
-	public fun hashCode ()I
-	public final fun recolor (Lorg/polyfrost/polyui/color/PolyColor;)V
+	public synthetic fun recolor (Lorg/polyfrost/polyui/color/PolyColor;)Lorg/polyfrost/polyui/color/PolyColor$Mut;
+	public fun recolor (Lorg/polyfrost/polyui/color/PolyColor;)Lorg/polyfrost/polyui/color/PolyColor$Mutable;
 	public final fun setAlpha (F)V
 	protected final fun setArgb (I)V
 	public final fun setBrightness (F)V
 	protected final fun setDirty (Z)V
 	public final fun setHue (F)V
 	public final fun setSaturation (F)V
-	public fun toString ()Ljava/lang/String;
-	public fun update (J)Z
 }
 
 public class org/polyfrost/polyui/color/PolyColor$Static : org/polyfrost/polyui/color/PolyColor {
 	public fun <init> (FFFF)V
-	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAlpha ()F
 	public final fun getArgb ()I
 	public final fun getBrightness ()F
 	public final fun getHue ()F
 	public final fun getSaturation ()F
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
 }
 
 public abstract class org/polyfrost/polyui/component/Drawable : java/lang/Cloneable {
@@ -902,16 +920,19 @@ public final class org/polyfrost/polyui/event/Event$Change$Companion {
 
 public final class org/polyfrost/polyui/event/Event$Change$Number : org/polyfrost/polyui/event/Event$Change {
 	public fun <init> (Ljava/lang/Number;)V
+	public final fun component1 ()Ljava/lang/Number;
 	public final fun getAmount ()Ljava/lang/Number;
 }
 
 public final class org/polyfrost/polyui/event/Event$Change$State : org/polyfrost/polyui/event/Event$Change {
 	public fun <init> (Z)V
+	public final fun component1 ()Z
 	public final fun getState ()Z
 }
 
 public final class org/polyfrost/polyui/event/Event$Change$Text : org/polyfrost/polyui/event/Event$Change {
 	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
 	public final fun getText ()Ljava/lang/String;
 }
 
@@ -933,6 +954,7 @@ public final class org/polyfrost/polyui/event/Event$Focused$Companion {
 }
 
 public final class org/polyfrost/polyui/event/Event$Focused$FileDrop : org/polyfrost/polyui/event/Event$Focused {
+	public final fun component1 ()[Ljava/nio/file/Path;
 	public final fun getFiles ()[Ljava/nio/file/Path;
 	public fun toString ()Ljava/lang/String;
 }
@@ -942,6 +964,8 @@ public final class org/polyfrost/polyui/event/Event$Focused$Gained : org/polyfro
 }
 
 public final class org/polyfrost/polyui/event/Event$Focused$KeyPressed : org/polyfrost/polyui/event/Event$Focused {
+	public final fun component1 ()Lorg/polyfrost/polyui/input/Keys;
+	public final fun component2-V_44FwM ()B
 	public final fun getKey ()Lorg/polyfrost/polyui/input/Keys;
 	public final fun getMods-V_44FwM ()B
 	public fun toString ()Ljava/lang/String;
@@ -949,6 +973,8 @@ public final class org/polyfrost/polyui/event/Event$Focused$KeyPressed : org/pol
 }
 
 public final class org/polyfrost/polyui/event/Event$Focused$KeyReleased : org/polyfrost/polyui/event/Event$Focused {
+	public final fun component1 ()Lorg/polyfrost/polyui/input/Keys;
+	public final fun component2-V_44FwM ()B
 	public final fun getKey ()Lorg/polyfrost/polyui/input/Keys;
 	public final fun getMods-V_44FwM ()B
 	public fun toString ()Ljava/lang/String;
@@ -956,6 +982,8 @@ public final class org/polyfrost/polyui/event/Event$Focused$KeyReleased : org/po
 }
 
 public final class org/polyfrost/polyui/event/Event$Focused$KeyTyped : org/polyfrost/polyui/event/Event$Focused {
+	public final fun component1 ()C
+	public final fun component2-V_44FwM ()B
 	public final fun getKey ()C
 	public final fun getMods-V_44FwM ()B
 	public fun toString ()Ljava/lang/String;
@@ -1009,6 +1037,8 @@ public abstract interface class org/polyfrost/polyui/event/Event$Mouse : org/pol
 
 public abstract class org/polyfrost/polyui/event/Event$Mouse$ButtonBase : org/polyfrost/polyui/event/Event$Mouse {
 	public synthetic fun <init> (IFFBLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getButton ()I
 	public final fun getMods-V_44FwM ()B
@@ -1279,15 +1309,15 @@ public final class org/polyfrost/polyui/input/Mouse$Companion {
 public final class org/polyfrost/polyui/input/Translator {
 	public fun <init> (Lorg/polyfrost/polyui/property/Settings;Ljava/lang/String;Ljava/util/HashMap;)V
 	public synthetic fun <init> (Lorg/polyfrost/polyui/property/Settings;Ljava/lang/String;Ljava/util/HashMap;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun addDelegate (Ljava/lang/String;)V
-	public final fun addKey (Ljava/lang/String;Ljava/lang/String;)V
-	public final fun addKeys (Ljava/util/Map;)V
-	public final fun addKeys ([Lkotlin/Pair;)V
+	public final fun addDelegate (Ljava/lang/String;)Lorg/polyfrost/polyui/input/Translator;
+	public final fun addKey (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/polyui/input/Translator;
+	public final fun addKeys (Ljava/util/Map;)Lorg/polyfrost/polyui/input/Translator;
+	public final fun addKeys ([Lkotlin/Pair;)Lorg/polyfrost/polyui/input/Translator;
 	public final fun getDontWarn ()Z
-	public final fun loadKeys (Ljava/lang/String;Z)V
-	public static synthetic fun loadKeys$default (Lorg/polyfrost/polyui/input/Translator;Ljava/lang/String;ZILjava/lang/Object;)V
+	public final fun loadKeys (Ljava/lang/String;Z)Lorg/polyfrost/polyui/input/Translator;
+	public static synthetic fun loadKeys$default (Lorg/polyfrost/polyui/input/Translator;Ljava/lang/String;ZILjava/lang/Object;)Lorg/polyfrost/polyui/input/Translator;
 	public final fun setDontWarn (Z)V
-	public final fun setLocale (Ljava/lang/String;)V
+	public final fun setLocale (Ljava/lang/String;)Lorg/polyfrost/polyui/input/Translator;
 	public final fun translate (Ljava/lang/String;)Lorg/polyfrost/polyui/input/Translator$Text;
 	public final fun translate (Ljava/lang/String;[Ljava/lang/Object;)Lorg/polyfrost/polyui/input/Translator$Text$Formatted;
 }
@@ -1512,6 +1542,7 @@ public abstract interface class org/polyfrost/polyui/renderer/Renderer : java/la
 	public abstract fun dropShadow (FFFFFFF)V
 	public abstract fun endFrame ()V
 	public abstract fun globalAlpha (F)V
+	public fun globalAlphaAndCap (F)V
 	public fun hollowRect (FFFFLorg/polyfrost/polyui/color/PolyColor;FF)V
 	public abstract fun hollowRect (FFFFLorg/polyfrost/polyui/color/PolyColor;FFFFF)V
 	public fun hollowRect (FFFFLorg/polyfrost/polyui/color/PolyColor;F[F)V
@@ -1551,6 +1582,7 @@ public abstract interface class org/polyfrost/polyui/renderer/Renderer : java/la
 public final class org/polyfrost/polyui/renderer/Renderer$DefaultImpls {
 	public static fun close (Lorg/polyfrost/polyui/renderer/Renderer;)V
 	public static synthetic fun drawFramebuffer$default (Lorg/polyfrost/polyui/renderer/Renderer;Lorg/polyfrost/polyui/renderer/data/Framebuffer;FFFFILjava/lang/Object;)V
+	public static fun globalAlphaAndCap (Lorg/polyfrost/polyui/renderer/Renderer;F)V
 	public static fun hollowRect (Lorg/polyfrost/polyui/renderer/Renderer;FFFFLorg/polyfrost/polyui/color/PolyColor;FF)V
 	public static fun hollowRect (Lorg/polyfrost/polyui/renderer/Renderer;FFFFLorg/polyfrost/polyui/color/PolyColor;F[F)V
 	public static synthetic fun hollowRect$default (Lorg/polyfrost/polyui/renderer/Renderer;FFFFLorg/polyfrost/polyui/color/PolyColor;FFILjava/lang/Object;)V
@@ -1937,9 +1969,8 @@ public final class org/polyfrost/polyui/utils/ColorUtils {
 	public static final fun rgba (III)Lorg/polyfrost/polyui/color/PolyColor;
 	public static final fun rgba (IIIF)Lorg/polyfrost/polyui/color/PolyColor;
 	public static synthetic fun rgba$default (IIIFILjava/lang/Object;)Lorg/polyfrost/polyui/color/PolyColor;
-	public static final fun toAnimatable (Lorg/polyfrost/polyui/color/PolyColor;)Lorg/polyfrost/polyui/color/PolyColor$Animatable;
-	public static final fun toAnimatableGradient (Lorg/polyfrost/polyui/color/PolyColor$Gradient;)Lorg/polyfrost/polyui/color/PolyColor$Gradient$Animatable;
-	public static final fun toAnimatedPolyColor (Ljava/awt/Color;)Lorg/polyfrost/polyui/color/PolyColor$Animatable;
+	public static final fun toAnimatable (Lorg/polyfrost/polyui/color/PolyColor;)Lorg/polyfrost/polyui/color/PolyColor$Animated;
+	public static final fun toAnimatableGradient (Lorg/polyfrost/polyui/color/PolyColor$Gradient;)Lorg/polyfrost/polyui/color/PolyColor$Gradient$Animated;
 	public static final fun toColor (I)Lorg/polyfrost/polyui/color/PolyColor;
 	public static final fun toColor (Ljava/lang/String;)Lorg/polyfrost/polyui/color/PolyColor;
 	public static final fun toColor (Ljava/lang/String;F)Lorg/polyfrost/polyui/color/PolyColor;
