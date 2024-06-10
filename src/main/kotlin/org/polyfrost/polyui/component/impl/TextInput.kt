@@ -306,16 +306,16 @@ open class TextInput(
     private fun getLineByIndex(index: Int): Quad<String, Int, Int, Float> {
         require(index > -1) { "Index must not be negative" }
         var i = 0
-        var y = y
+        var y = y + spacing
         lines.fastEachIndexed { li, (it, bounds) ->
             if (index < i + it.length) {
                 return Quad(it, index - i, li, y)
             }
-            i += it.length
             y += bounds.y + spacing
+            i += it.length
         }
         val (ln, bounds) = lines.last()
-        return Quad(ln, ln.length, lines.lastIndex, height - spacing - bounds.y)
+        return Quad(ln, ln.length, lines.lastIndex, this.y + height - spacing - bounds.y)
     }
 
     private fun selections() {
@@ -338,11 +338,11 @@ open class TextInput(
             return
         }
         // funny - get it? realY and really are like the same !
-        var really = y
+        var really = slp + lines[si].second.y
         for (i in sli + 1 until eli) {
             val (_, bounds) = lines[i]
             selectBoxes.add((x - 1f by really) to bounds)
-            really += bounds.y
+            really += bounds.y + spacing
         }
         selection(sl, si, sl.length, slp)
         selection(el, 0, ei, elp)

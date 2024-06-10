@@ -77,8 +77,8 @@ open class DrawableDSL private constructor(val _this: Drawable) {
         return o
     }
 
-    fun textInput(text: String, placeholder: String = "polyui.textinput.placeholder", alignment: Align = AlignDefault, init: (TextInput.() -> Unit)? = null): TextInput {
-        val o = TextInput(text = text, placeholder = placeholder, alignment = alignment).apply { init?.invoke(this) }
+    fun textInput(text: String = "", wrap: Float = 0f, placeholder: String = "polyui.textinput.placeholder", alignment: Align = AlignDefault, init: (TextInput.() -> Unit)? = null): TextInput {
+        val o = TextInput(text = text, placeholder = placeholder, alignment = alignment, wrap = wrap).apply { init?.invoke(this) }
         _this.addChild(o)
         return o
     }

@@ -60,6 +60,16 @@ fun String.substringSafe(fromIndex: Int, toIndex: Int = lastIndex): String {
     return substring(fromIndex, toIndex)
 }
 
+fun String.remove(char: Char): String {
+    if (this.indexOf(char) == -1) return this
+    val sb = StringBuilder(this.length)
+    for (c in this) {
+        if (c == char) continue
+        sb.append(c)
+    }
+    return sb.toString()
+}
+
 fun String.dropAt(index: Int = lastIndex, amount: Int = 1): String {
     if (index - amount == 0) return ""
     if (index - amount < 0) return this
@@ -179,32 +189,31 @@ fun String.wrap(
 
     // asm: i have documented both these methods with comments as they are kinda hard to understand
     // note: these are performance sensitive.
+    val line = currentLine
 
     // firstly, create outer loop for each line and inner loop for each word in that line
     var lns = 0
     var lne = this.indexOf('\n')
     // simple method of making it still process when there is no \n
-    if (lne == -1) lne = this.length - 1
-    while (lne != -1) {
+    if (lne == -1) lne = this.length
+    while (lns < this.length) {
         // char before is a newline, so just skip and don't bother processing
         if (lne == lns) {
             ls.add("" to Vec2(1f, fontSize))
         } else {
-            val line = currentLine
             line.clear()
             var s = lns
             var e = this.indexOf(' ', s)
-            while (e != -1) {
+            while (e != -1 && e < lne) {
                 // last character was a space, so just skip again as above
                 if (s == e) line.append(' ')
                 else this.substring(s, e).wrapWord(maxWidth, renderer, font, fontSize, ls)
                 s = e + 1
                 e = this.indexOf(' ', s)
-                // break when we try to go to the next line
-                if (e > lne) break
             }
             // finish processing anything remaining on this line
             if (s < lne) this.substring(s, lne).wrapWord(maxWidth, renderer, font, fontSize, ls)
+            if (s == lne) line.append(' ')
             if (line.isNotEmpty()) {
                 val out = line.toString()
                 ls.add(out to renderer.textBounds(font, out, fontSize))
@@ -212,13 +221,12 @@ fun String.wrap(
         }
         lns = lne + 1
         lne = this.indexOf('\n', lns)
+        if (lne == -1) lne = this.length
     }
-    // add anything on the last line
-    if (lns != this.length) {
-        val final = this.substring(lns)
-        ls.add(final to renderer.textBounds(font, final, fontSize))
-    }
-
+    // uncomment to debug:
+//    val input = this.remove('\n')
+//    val output = ls.joinToString(separator = "") { it.first }
+//    require(output == input) { "wrap failed (wrong by ${input.levenshteinDistance(output)}) \n$input<END\n$output<END" }
     return ls
 }
 
