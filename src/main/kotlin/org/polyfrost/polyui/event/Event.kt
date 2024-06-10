@@ -36,6 +36,14 @@ import org.polyfrost.polyui.input.Mouse as MouseUtils
  * [text input changes][Change.Text], [initialization][Lifetime.Init]
  * and [destruction][Lifetime.Removed] of components are communicated through events.
  *
+ *
+ * *(since 1.3.1)* events can be destructured, like so:
+ * ```
+ * drawable.onClick { (x, y) ->
+ *  // access and use the x and y position of the mouse with a prettier syntax
+ * }
+ * ```
+ *
  * These events can be dispatched by your own components, and you can add your own events - though PolyUI comes with 22 events by default.
  *
  * ## event specificity
@@ -84,6 +92,9 @@ interface Event {
                 this.x = mx
                 this.y = my
             }
+
+            operator fun component1() = x
+            operator fun component2() = y
         }
 
         class Pressed internal constructor(button: Int, x: Float, y: Float, mods: Modifiers) : ButtonBase(button, x, y, mods) {
@@ -146,6 +157,7 @@ interface Event {
              */
             @JvmStatic
             val Pressed = Pressed(0)
+
             /**
              * Constant for [Event.Mouse.Released], for single left click events.
              * @since 1.2.0
@@ -204,17 +216,25 @@ interface Event {
             cancelled = true
         }
 
-        class Text @ApiStatus.Internal constructor(val text: String) : Change()
+        class Text @ApiStatus.Internal constructor(val text: String) : Change() {
+            operator fun component1() = text
+        }
 
-        class Number @ApiStatus.Internal constructor(val amount: kotlin.Number) : Change()
+        class Number @ApiStatus.Internal constructor(val amount: kotlin.Number) : Change() {
+            operator fun component1() = amount
+        }
 
-        class State @ApiStatus.Internal constructor(val state: Boolean) : Change()
+        class State @ApiStatus.Internal constructor(val state: Boolean) : Change() {
+            operator fun component1() = state
+        }
 
         companion object {
             @JvmStatic
             val Text = Text("")
+
             @JvmStatic
             val Number = Number(0)
+
             @JvmStatic
             val State = State(false)
         }
@@ -246,6 +266,9 @@ interface Event {
          */
         class KeyTyped internal constructor(val key: Char, val mods: Modifiers) : Focused {
             override fun toString() = "KeyTyped(${Keys.toStringPretty(key, mods)})"
+
+            operator fun component1() = key
+            operator fun component2() = mods
         }
 
         /**
@@ -258,12 +281,18 @@ interface Event {
             override fun toString(): String = "KeyPressed(${Keys.toString(key, mods)})"
 
             fun toStringPretty(): String = "KeyPressed(${Keys.toStringPretty(key, mods)})"
+
+            operator fun component1() = key
+            operator fun component2() = mods
         }
 
         class KeyReleased internal constructor(val key: Keys, val mods: Modifiers) : Focused {
             override fun toString(): String = "KeyReleased(${Keys.toString(key, mods)})"
 
             fun toStringPretty(): String = "KeyReleased(${Keys.toStringPretty(key, mods)})"
+
+            operator fun component1() = key
+            operator fun component2() = mods
         }
 
         class UnmappedInput internal constructor(val code: Int, val down: Boolean, val mods: Modifiers) : Focused {
@@ -278,17 +307,23 @@ interface Event {
          */
         class FileDrop internal constructor(val files: Array<Path>) : Focused {
             override fun toString() = "FileDrop(${files.joinToString()})"
+
+            operator fun component1() = files
         }
 
         companion object {
             @JvmStatic
             val KeyTyped = KeyTyped(0.toChar(), Modifiers(0))
+
             @JvmStatic
             val KeyPressed = KeyPressed(Keys.UNKNOWN, Modifiers(0))
+
             @JvmStatic
             val KeyReleased = KeyReleased(Keys.UNKNOWN, Modifiers(0))
+
             @JvmStatic
             val UnmappedInput = UnmappedInput(0, false, Modifiers(0))
+
             @JvmStatic
             val FileDrop = FileDrop(arrayOf())
         }

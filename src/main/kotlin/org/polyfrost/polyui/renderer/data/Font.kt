@@ -47,9 +47,7 @@ class Font @JvmOverloads constructor(
     val italic: Boolean = resourcePath.contains("italic", ignoreCase = true),
     val weight: Weight = Weight.entries.getByName(resourcePath.findLastAnyOf(Weight.entries.names(), ignoreCase = true)?.second) ?: Weight.Regular,
 ) : Resource(resourcePath) {
-    @Transient
-    val name: String = resourcePath.substringAfterLast('/')
-        .substringBeforeLast('.')
+    val name get() = resourcePath.substringAfterLast('/').substringBeforeLast('.')
 
     fun getAtStyle(weight: Weight, italic: Boolean): Font {
         require(family != null) { "getAtStyle() only works if this font is aware of its family" }

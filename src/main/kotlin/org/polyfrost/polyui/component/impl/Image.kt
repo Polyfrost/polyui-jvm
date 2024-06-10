@@ -44,7 +44,7 @@ open class Image(
     var image: PolyImage = image
         set(value) {
             field = value
-            renderer.initImage(value)
+            if (initialized) renderer.initImage(value)
         }
 
     override val shouldScroll get() = false
