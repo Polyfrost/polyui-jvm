@@ -35,7 +35,6 @@ import org.polyfrost.polyui.utils.rgba
  * @see [PolyColor.Animated]
  * @see [PolyColor.Gradient]
  */
-@Suppress("INAPPLICABLE_JVM_NAME")
 abstract class PolyColor {
     /**
      * The hue of this color. Can be any value, but is `mod 360`, so values are always between 0 and 360.
@@ -223,9 +222,9 @@ abstract class PolyColor {
 
         override fun update(deltaTimeNanos: Long): Boolean {
             if (animation != null) {
+                val animation = this.animation ?: return true
+                val c = this.cdata ?: return true
                 dirty = true
-                val animation = this.animation ?: return false
-                val c = this.cdata ?: return false
 
                 val progress = animation.update(deltaTimeNanos)
                 RGBtoHSB(
@@ -246,7 +245,7 @@ abstract class PolyColor {
                 }
                 return false
             }
-            return false
+            return true
         }
     }
 

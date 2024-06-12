@@ -27,6 +27,7 @@ package org.polyfrost.polyui.unit
  */
 open class Vec2(open var x: Float, open var y: Float) : Cloneable, Comparable<Vec2> {
     constructor() : this(0f, 0f)
+    constructor(copy: Vec2) : this(copy.x, copy.y)
 
     // rewrite counter: 3
     @get:JvmName("isNegative")
@@ -56,6 +57,11 @@ open class Vec2(open var x: Float, open var y: Float) : Cloneable, Comparable<Ve
             1 -> y = value
             else -> throw IndexOutOfBoundsException("Index: $index")
         }
+    }
+
+    fun set(x: Float, y: Float) {
+        this.x = x
+        this.y = y
     }
 
     fun min(x: Float, y: Float, respectRatio: Boolean = true) {
@@ -124,6 +130,11 @@ open class Vec2(open var x: Float, open var y: Float) : Cloneable, Comparable<Ve
         this.y = other.y
     }
 
+    fun zero() {
+        this.x = 0f
+        this.y = 0f
+    }
+
     /**
      * simple [min] function.
      */
@@ -153,9 +164,7 @@ open class Vec2(open var x: Float, open var y: Float) : Cloneable, Comparable<Ve
         return result
     }
 
-    public override fun clone(): Vec2 {
-        return super.clone() as Vec2
-    }
+    public override fun clone() = super.clone() as Vec2
 
     override fun toString() = "${x}x$y"
 
@@ -189,15 +198,6 @@ open class Vec2(open var x: Float, open var y: Float) : Cloneable, Comparable<Ve
 
         @JvmField
         val M1 = Vec2(-1f, -1f)
-
-        @JvmField
-        val RES_1080P = Vec2(1920f, 1080f)
-
-        @JvmField
-        val RES_1440P = Vec2(2560f, 1440f)
-
-        @JvmField
-        val RES_4K = Vec2(3840f, 2160f)
 
         @JvmStatic
         fun valueOf(x: Float, y: Float): Vec2 {

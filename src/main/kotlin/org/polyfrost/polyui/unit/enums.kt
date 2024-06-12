@@ -25,10 +25,10 @@ package org.polyfrost.polyui.unit
  * @param main the main axis, for example the X axis in a [Mode.Horizontal] autolayout.
  * @param cross the cross axis, for example the Y axis in a [Mode.Horizontal] autolayout.
  * @param mode the mode for the autolayout. Horizontal fills from left to right, and Vertical fills from top to bottom.
- * @param padding the padding between each item in the autolayout.
+ * @param pad the padding between each item in the autolayout.
  * @param maxRowSize the maximum row size to use if wrapping is required. set to `0` to specify you do not want to be wrapped.
  */
-data class Align(val main: Main = Main.Start, val cross: Cross = Cross.Center, val mode: Mode = Mode.Horizontal, val padding: Vec2 = Vec2(6f, 6f), val maxRowSize: Int = 50) {
+data class Align(val main: Main = Main.Start, val cross: Cross = Cross.Center, val mode: Mode = Mode.Horizontal, val pad: Vec2 = Vec2(6f, 6f), val maxRowSize: Int = 50) {
     enum class Main {
         /** Items are packed in order they are added from the start of the row. */
         Start,

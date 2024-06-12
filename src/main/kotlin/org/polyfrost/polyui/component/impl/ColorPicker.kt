@@ -70,7 +70,7 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Mutable>, faves: MutableList<Poly
                     }).withBoarder(PolyColor.WHITE, 2f),
                 ),
             ),
-            alignment = Align(padding = 16f by 8f),
+            alignment = Align(pad = 16f by 8f),
         ),
         Block(
             Text("polyui.color.hex"),
@@ -92,7 +92,7 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Mutable>, faves: MutableList<Poly
         Block(Image("info.svg"), size = 32f by 32f),
         *recents.mapToArray { Block(size = 32f by 32f, color = it).withBoarder() },
         size = 296f by 0f,
-        align = Align(padding = 8f by 8f),
+        align = Align(pad = 8f by 8f),
         polyUI = polyUI,
         openNow = openNow,
         position = position,

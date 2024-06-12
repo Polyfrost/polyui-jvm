@@ -27,7 +27,6 @@ import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Translator
-import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.Cursor
 import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.unit.Align
@@ -45,9 +44,8 @@ open class TextInput(
     at: Vec2? = null,
     alignment: Align = AlignDefault,
     visibleSize: Vec2? = null,
-    wrap: Float = 0f,
     vararg children: Drawable?,
-) : Text(text.translated().dont(), font, fontSize, at, alignment, wrap, visibleSize, true, *children) {
+) : Text(text.translated().dont(), font, fontSize, at, alignment, visibleSize, true, *children) {
 
     private val selectBoxes = ArrayList<Pair<Vec2, Vec2>>()
 
@@ -323,7 +321,7 @@ open class TextInput(
         if (select == caret) return
         val start: Int
         val end: Int
-        if(caret < select) {
+        if (caret < select) {
             start = caret
             end = select
         } else {
@@ -433,15 +431,8 @@ open class TextInput(
         _placeholder = polyUI.translator.translate(_placeholder.string)
         val bounds = renderer.textBounds(font, _placeholder.string, fontSize)
         size.smax(bounds)
+        if (text.isEmpty() && !hasVisibleSize) visibleSize = Vec2(size)
         return true
-    }
-
-    override fun updateTextBounds(renderer: Renderer) {
-        super.updateTextBounds(renderer)
-        if (text.isEmpty()) {
-            val bounds = renderer.textBounds(font, _placeholder.string, fontSize)
-            size.smax(bounds)
-        }
     }
 
     override fun debugString() = "placeholder: ${_placeholder.string}\ncaret: $caret;  select: $select;  selecting=$selecting\n${super.debugString()}"

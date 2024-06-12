@@ -6,7 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
 
 /**
- * no-alloc [List.forEach] which utilizes [RandomAccess] to get the elements.
+ * no-alloc [Iterable.forEach] which utilizes [RandomAccess] to get the elements.
  *
  * **note:** this method contains a simple check for [ConcurrentModificationException].
  * if concurrent modification is detected, **it will not throw an exception** and simply print `FAST_WARN_CONCURRENT_MODIFICATION`
@@ -27,7 +27,7 @@ inline fun <L, E> L.fastEach(func: (E) -> Unit) where L : List<E>, L : RandomAcc
 }
 
 /**
- * no-alloc [List.forEachIndexed] which utilizes [RandomAccess] to get the elements.
+ * no-alloc [Iterable.forEachIndexed] which utilizes [RandomAccess] to get the elements.
  *
  * **note:** this method contains a simple check for [ConcurrentModificationException].
  * if concurrent modification is detected, **it will not throw an exception** and simply print `WARN_CONCURRENT_MODIFICATION_IDX`
@@ -149,6 +149,22 @@ inline fun <L, E> L.fastAny(predicate: (E) -> Boolean): Boolean where L : List<E
 }
 
 /**
+ * Perform the given [transform] on every element in this list, and return a new array with the results.
+ *
+ * Equivalent to `this.map { transform(it) }.toTypedArray()`, but saves on the creation of an intermediate list.
+ *
+ * *this method is no-alloc, like other methods in this family such as [fastEach].*
+ */
+inline fun <L, E, reified R> L.mapToArray(transform: (E) -> R): Array<R> where L : List<E>, L : RandomAccess {
+    val out = arrayOfNulls<R>(size)
+    this.fastEachIndexed { i, it ->
+        out[i] = transform(it)
+    }
+    @Suppress("UNCHECKED_CAST")
+    return out as Array<R>
+}
+
+/**
  * Add the given [element] to this list if it is not in it already.
  *
  * Used when the performance hit of a [Set] is not worth it, such as if this operation is rare.
@@ -205,5 +221,3 @@ fun <L, E> L.cut(from: Int, to: Int): L where L : MutableList<E>, L : RandomAcce
 
     return this
 }
-
-fun <E> ArrayList<E>.copy() = ArrayList<E>(this)

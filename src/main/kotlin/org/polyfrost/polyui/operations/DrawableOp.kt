@@ -25,7 +25,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.animate.Animation
 import org.polyfrost.polyui.component.Drawable
 
-abstract class DrawableOp(protected val self: Drawable) {
+abstract class DrawableOp(protected open val self: Drawable) {
     abstract fun apply()
 
     abstract fun unapply(): Boolean
@@ -51,24 +51,22 @@ abstract class DrawableOp(protected val self: Drawable) {
      *
      * It is applied before and after rendering, for example a [Move], [Resize], or [Rotate] operation, or a transition.
      */
-    abstract class Animatable<T : Drawable>(self: T, protected val animation: Animation? = null, var onFinish: (T.() -> Unit)? = null) :
+    abstract class Animatable<S : Drawable>(self: S, protected val animation: Animation? = null, var onFinish: (S.() -> Unit)? = null) :
         DrawableOp(self) {
-        protected var isFinished = false
+        @get:Suppress("unchecked_cast")
+        final override val self: S
+            get() = super.self as S
 
         override fun apply() {
-            if (isFinished) return
             apply(animation?.update(self.polyUI.delta) ?: 1f)
             if (animation?.isFinished == false) self.needsRedraw = true
             return
         }
 
         override fun unapply(): Boolean {
-            if (isFinished) return true
             unapply(animation?.value ?: 1f)
             if (animation?.isFinished != false) {
-                isFinished = true
-                @Suppress("unchecked_cast")
-                onFinish?.invoke(self as T)
+                onFinish?.invoke(self)
                 onFinish = null
                 return true
             } else {
@@ -91,12 +89,10 @@ abstract class DrawableOp(protected val self: Drawable) {
 
         open fun reset() {
             animation?.reset()
-            isFinished = false
         }
 
         open fun reverse() {
             animation?.reverse()
-            isFinished = false
         }
 
         /** apply this drawable operation.

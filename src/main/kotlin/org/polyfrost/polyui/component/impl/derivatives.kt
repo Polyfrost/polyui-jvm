@@ -43,7 +43,7 @@ fun Button(leftImage: PolyImage? = null, text: String? = null, rightImage: PolyI
         if (leftImage != null) Image(leftImage) else null,
         if (text != null) Text(text, fontSize = fontSize, font = font) else null,
         if (rightImage != null) Image(rightImage) else null,
-        alignment = Align(main = Align.Main.Center, padding = padding),
+        alignment = Align(main = Align.Main.Center, pad = padding),
         at = at,
         size = size,
         radii = radii,
@@ -56,11 +56,11 @@ fun Switch(at: Vec2? = null, size: Float, padding: Float = 3f, state: Boolean = 
         Block(size = Vec2(circleSize, circleSize), radii = (circleSize / 2f).radii()).setPalette { text.primary },
         at = at,
         size = Vec2(size * lateralStretch, size),
-        alignment = Align(main = Align.Main.Start, padding = Vec2(padding, 0f)),
+        alignment = Align(main = Align.Main.Start, pad = Vec2(padding, 0f)),
         radii = (size / 2f).radii(),
     ).withStates().events {
         var switched = state
-        Event.Mouse.Clicked then {
+        Event.Mouse.Companion.Clicked then {
             if (hasListenersFor(Event.Change.State::class.java)) {
                 val ev = Event.Change.State(switched)
                 accept(ev)
@@ -109,7 +109,7 @@ fun Radiobutton(vararg entries: PolyImage, at: Vec2? = null, initial: Int = 0, f
  * `null to null` is not supported, and will throw an exception.
  */
 fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2? = null, initial: Int = 0, fontSize: Float = 12f, optionLateralPadding: Float = 6f, optionVerticalPadding: Float = 6f): Block {
-    val optAlign = Align(Align.Main.Center, padding = Vec2(optionLateralPadding, optionVerticalPadding))
+    val optAlign = Align(Align.Main.Center, pad = Vec2(optionLateralPadding, optionVerticalPadding))
     val buttons = entries.mapToArray { (img, text) ->
         require(img != null || text != null) { "image and text cannot both be null on Radiobutton" }
         Group(
@@ -159,10 +159,10 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2? = null, fontSiz
         Image("chevron-down.svg"),
         at = at,
         focusable = true,
-        alignment = Align(main = Align.Main.SpaceBetween, padding = Vec2(12f, 6f), maxRowSize = 0),
+        alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2(12f, 6f), maxRowSize = 0),
     ).withStates().withBoarder()
     val dropdown = Block(
-        alignment = Align(mode = Align.Mode.Vertical, padding = Vec2(padding, 6f)),
+        alignment = Align(mode = Align.Mode.Vertical, pad = Vec2(padding, 6f)),
         children = entries.mapToArray { (img, text) ->
             Group(
                 if (img != null) Image(img) else null,
@@ -207,7 +207,7 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2? = null, fontSiz
             val first = dropdown[initial]
             (this[0] as Text).text = ((if (first.children!!.size == 2) first[1] else first[0]) as Text).text
         }
-        Event.Mouse.Clicked then {
+        Event.Mouse.Companion.Clicked then {
             if (polyUI.inputManager.focused != null) {
                 polyUI.unfocus()
                 true
@@ -232,7 +232,7 @@ fun Slider(at: Vec2? = null, min: Float = 0f, max: Float = 100f, initialValue: F
                 radii = rad,
             ).setPalette { brand.fg },
             size = Vec2(barWidth, barHeight),
-            alignment = Align(Align.Main.Start, padding = Vec2.ZERO),
+            alignment = Align(Align.Main.Start, pad = Vec2.ZERO),
             radii = rad,
         ),
         Block(
@@ -278,7 +278,7 @@ fun Slider(at: Vec2? = null, min: Float = 0f, max: Float = 100f, initialValue: F
         },
         at = at,
         size = size,
-        alignment = Align(Align.Main.Start, padding = Vec2.ZERO),
+        alignment = Align(Align.Main.Start, pad = Vec2.ZERO),
     ).onClick {
         val bar = this[0]
         val ptr = this[1]
@@ -312,10 +312,10 @@ fun Checkbox(at: Vec2? = null, size: Float, state: Boolean = false): Drawable {
         },
         at = at,
         size = Vec2(size, size),
-        alignment = Align(padding = ((size - size / 1.25f) / 2f).vec),
+        alignment = Align(pad = ((size - size / 1.25f) / 2f).vec),
     ).events {
         var checked = state
-        Event.Mouse.Clicked then {
+        Event.Mouse.Companion.Clicked then {
             if (hasListenersFor(Event.Change.State::class.java)) {
                 val ev = Event.Change.State(checked)
                 accept(ev)
@@ -347,16 +347,12 @@ fun BoxedTextInput(
     post: String,
     size: Vec2? = null,
 ): Drawable = Block(
-    Spacer(size = 6f by 6f),
-    if (image != null) Image(image) else null,
-    if (image != null) Spacer(size = 6f by 6f) else null,
-    if (pre != null) Text(pre) else null,
-    Spacer(size = 6f by 6f),
-    TextInput(placeholder = placeholder, text = initialValue, wrap = size?.x ?: 0f),
-    Spacer(size = 6f by 6f),
-    Block(Text(post), alignment = Align(padding = 6f by 10f), radii = floatArrayOf(0f, 8f, 0f, 8f)).afterInit { color = polyUI.colors.page.bg.normal },
+    if (image != null) Image(image).padded(6f, 0f) else null,
+    if (pre != null) Text(pre).padded(6f, 0f) else null,
+    TextInput(placeholder = placeholder, text = initialValue, visibleSize = size),
+    Block(Text(post), alignment = Align(pad = 6f by 10f), radii = floatArrayOf(0f, 8f, 0f, 8f)).afterInit { color = polyUI.colors.page.bg.normal },
     size = size,
-    alignment = Align(padding = Vec2.ZERO)
+    alignment = Align(pad = Vec2.ZERO)
 ).withBoarder()
 
 fun BoxedTextInput(
@@ -368,7 +364,7 @@ fun BoxedTextInput(
 ): Drawable = Block(
     if (image != null) Image(image) else null,
     if (pre != null) Text(pre) else null,
-    TextInput(placeholder = placeholder, text = initialValue, wrap = size?.x ?: 0f),
+    TextInput(placeholder = placeholder, text = initialValue, visibleSize = size),
     size = size
 ).withBoarder()
 

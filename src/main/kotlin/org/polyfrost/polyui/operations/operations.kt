@@ -260,12 +260,14 @@ class Recolor<S : Drawable>(
 
     @Suppress("unchecked_cast")
     override fun unapply(): Boolean {
-        self.needsRedraw = true
         return if ((self.color as PolyColor.Dynamic).update(self.polyUI.delta)) {
             if (reset) self.color = toColor.toMutable().also { it.hue = hueToReturnTo }
-            onFinish?.invoke(self as S)
+            onFinish?.invoke(self)
             true
-        } else false
+        } else {
+            self.needsRedraw = true
+            false
+        }
     }
 
     override fun apply(value: Float) {

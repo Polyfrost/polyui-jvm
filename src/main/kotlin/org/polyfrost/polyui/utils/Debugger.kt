@@ -61,7 +61,7 @@ class Debugger(private val polyUI: PolyUI) {
     private var perf: String = ""
     private val formatter = DecimalFormat("#.###")
 
-    private val telemtryExecutor = Clock.FixedTimeExecutor(1.seconds) {
+    private val telemetryExecutor = Clock.FixedTimeExecutor(1.seconds) {
         val sb = StringBuilder(64)
         sb.append("fps: ").append(fps)
             .append(", avg/max/min: ")
@@ -97,7 +97,7 @@ class Debugger(private val polyUI: PolyUI) {
 
     init {
         if (polyUI.settings.debug) {
-            polyUI.addExecutor(telemtryExecutor)
+            polyUI.addExecutor(telemetryExecutor)
             val keyBinder = polyUI.keyBinder
             if (keyBinder == null) {
                 LOGGER.warn("PolyUI instance was created without a keybinder. Some debug features may not work.")
@@ -112,11 +112,11 @@ class Debugger(private val polyUI: PolyUI) {
                     polyUI.settings.debug = !polyUI.settings.debug
                     polyUI.master.needsRedraw = true
                     val s = if (polyUI.settings.debug) {
-                        polyUI.addExecutor(telemtryExecutor)
+                        polyUI.addExecutor(telemetryExecutor)
                         polyUI.keyBinder?.add(printBind, inspectBind)
                         "enabled"
                     } else {
-                        polyUI.removeExecutor(telemtryExecutor)
+                        polyUI.removeExecutor(telemetryExecutor)
                         polyUI.keyBinder?.remove(printBind)
                         polyUI.keyBinder?.remove(inspectBind)
                         "disabled"
@@ -234,13 +234,14 @@ class Debugger(private val polyUI: PolyUI) {
                 ("""
 parent: ${d._parent?.simpleName}   siblings: ${d._parent?.countChildren()?.dec()}
 children: ${d.countChildren()};  fbo: ${d.framebuffer}, renders: ${d.renders}
-at: ${d.x}x${d.y}
-size: ${d.size} visible: ${d._visibleSize}
+at: ${d.x}x${d.y}, pad: ${d.padding}
+size: ${d.size}, visible: ${if (d.hasVisibleSize) d.visibleSize else "null"}
 rgba: ${d.color.r}, ${d.color.g}, ${d.color.b}, ${d.color.a}
 scale: ${d.scaleX}x${d.scaleY};  skew: ${d.skewX}x${d.skewY}
 rotation: ${d.rotation};  alpha: ${d.alpha}
 redraw: ${d.needsRedraw};  ops=${d.operating};  scroll: ${d.scrolling}
 state: ${getInputStateString(d.inputState)}
+${d.alignment}
             """ + (d.debugString()?.let { "\n\n$it" } ?: "")).translated().dont(),
                 font = f
             ),

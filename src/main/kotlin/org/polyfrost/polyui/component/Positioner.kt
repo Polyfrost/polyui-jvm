@@ -25,6 +25,7 @@ import org.polyfrost.polyui.component.Positioner.Default.Aligner
 import org.polyfrost.polyui.component.Positioner.Default.Justifier
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
+import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.fastEach
 import kotlin.math.max
 
@@ -59,7 +60,7 @@ fun interface Positioner {
             val align = drawable.alignment
             val main = if (align.mode == Align.Mode.Horizontal) 0 else 1
             val crs = if (main == 0) 1 else 0
-            val padding = align.padding
+            val padding = align.pad
             val vs = drawable.visibleSize
             val mainPad = padding[main]
             val crossPad = padding[crs]
@@ -102,11 +103,14 @@ fun interface Positioner {
                 var rowMain = mainPad
                 var rowCross = 0f
                 var currentRow = ArrayList<Drawable>()
+                // measure and create rows
                 children.fastEach {
                     if (!it.enabled) return@fastEach
                     if (!it.sizeValid) position(it)
                     val ivs = it.visibleSize
-                    if (currentRow.isNotEmpty() && (rowMain + ivs[main] + mainPad > vs[main] || currentRow.size == maxRowSize)) {
+                    val ipad = it.padding ?: Vec2.ZERO
+                    val mainS = ipad[main] * 2f + ivs[main] + mainPad
+                    if (currentRow.isNotEmpty() && (rowMain + mainS > vs[main] || currentRow.size == maxRowSize)) {
                         rows.add(WrappingRow(rowMain, rowCross, currentRow))
                         currentRow = ArrayList(maxRowSize.coerceAtMost(10))
                         maxMain = max(maxMain, rowMain)
@@ -114,8 +118,8 @@ fun interface Positioner {
                         rowMain = mainPad
                         rowCross = 0f
                     }
-                    rowMain += ivs[main] + mainPad
-                    rowCross = max(rowCross, ivs[crs])
+                    rowMain += mainS
+                    rowCross = max(rowCross, ipad[crs] * 2f + ivs[crs])
                     currentRow.add(it)
                 }
                 if (currentRow.isNotEmpty()) {
@@ -153,14 +157,16 @@ fun interface Positioner {
                 var rowCross = 0f
                 val pad = crossPad * 2f
                 children.fastEach {
-                    if (!it.renders) return@fastEach
+                    if (!it.enabled) return@fastEach
                     if (!it.sizeValid) position(it)
+                    val ivs = it.visibleSize
+                    val ipad = it.padding ?: Vec2.ZERO
                     if (it.atValid) {
-                        rowCross = max(rowCross, it.at(crs) + it.visibleSize[crs] + pad)
-                        rowMain = max(rowMain, it.at(main) + it.visibleSize[main] + mainPad)
+                        rowMain = max(rowMain, it.at(main) + ivs[main] + mainPad + ipad[main] * 2f)
+                        rowCross = max(rowCross, it.at(crs) + ivs[crs] + pad + ipad[crs] * 2f)
                     } else {
-                        rowCross = max(rowCross, it.size[crs] + pad)
-                        rowMain += it.size[main] + mainPad
+                        rowMain += ivs[main] + mainPad + ipad[main] * 2f
+                        rowCross = max(rowCross, ivs[crs] + pad + ipad[crs] * 2f)
                     }
                 }
                 if (needsToCalcSize) {
@@ -219,7 +225,7 @@ fun interface Positioner {
         }
 
         private val cStart = Aligner { _, it, min, padding, crs ->
-            it.at(crs, min + padding)
+            it.at(crs, min + padding + (it.padding ?: Vec2.ZERO)[crs])
         }
 
         private val cCenter = Aligner { rowCross, it, min, _, crs ->
@@ -227,30 +233,32 @@ fun interface Positioner {
         }
 
         private val cEnd = Aligner { rowCross, it, min, padding, crs ->
-            it.at(crs, min + rowCross - it.visibleSize[crs] - padding)
+            it.at(crs, min + rowCross - (it.visibleSize[crs] + (it.padding ?: Vec2.ZERO)[crs] * 2f) - padding)
         }
 
         private val mProgressive = Justifier { current, it, padding, main, _ ->
-            it.at(main, current)
-            return@Justifier current + it.visibleSize[main] + padding
+            val p = (it.padding ?: Vec2.ZERO)[main]
+            it.at(main, current + p)
+            return@Justifier current + it.visibleSize[main] + padding + p * 2f
         }
 
         private val mBackwards = Justifier { current, it, padding, main, _ ->
-            val cur = current - it.visibleSize[main] - padding
+            val p = (it.padding ?: Vec2.ZERO)[main]
+            val cur = current - it.visibleSize[main] - padding - p
             it.at(main, cur)
-            return@Justifier cur
+            return@Justifier cur - p
         }
 
         private val mSpace = Justifier { current, it, padding, main, gap ->
-            it.at(main, current)
-            return@Justifier current + it.visibleSize[main] + padding + gap
+            val p = (it.padding ?: Vec2.ZERO)[main]
+            it.at(main, current + p)
+            return@Justifier current + it.visibleSize[main] + padding + gap + p * 2f
         }
 
         private fun fixVisibleSize(drawable: Drawable): Drawable {
             if (!drawable.hasVisibleSize) return drawable
             val vs = drawable.visibleSize
-            if (vs.x > drawable.size.x) vs.x = drawable.size.x
-            if (vs.y > drawable.size.y) vs.y = drawable.size.y
+            vs.smin(drawable.size)
             return drawable
         }
     }

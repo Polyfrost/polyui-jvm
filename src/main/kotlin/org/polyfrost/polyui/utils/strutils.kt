@@ -182,10 +182,6 @@ fun String.wrap(
         ls.add("" to Vec2(1f, fontSize))
         return ls
     }
-    if (maxWidth == 0f) {
-        ls.add(this to renderer.textBounds(font, this, fontSize))
-        return ls
-    }
 
     // asm: i have documented both these methods with comments as they are kinda hard to understand
     // note: these are performance sensitive.
@@ -201,22 +197,27 @@ fun String.wrap(
         if (lne == lns) {
             ls.add("" to Vec2(1f, fontSize))
         } else {
-            line.clear()
-            var s = lns
-            var e = this.indexOf(' ', s)
-            while (e != -1 && e < lne) {
-                // last character was a space, so just skip again as above
-                if (s == e) line.append(' ')
-                else this.substring(s, e).wrapWord(maxWidth, renderer, font, fontSize, ls)
-                s = e + 1
-                e = this.indexOf(' ', s)
-            }
-            // finish processing anything remaining on this line
-            if (s < lne) this.substring(s, lne).wrapWord(maxWidth, renderer, font, fontSize, ls)
-            if (s == lne) line.append(' ')
-            if (line.isNotEmpty()) {
-                val out = line.toString()
-                ls.add(out to renderer.textBounds(font, out, fontSize))
+            if (maxWidth == 0f) {
+                val l = this.substring(lns, lne)
+                ls.add(l to renderer.textBounds(font, l, fontSize))
+            } else {
+                line.clear()
+                var s = lns
+                var e = this.indexOf(' ', s)
+                while (e != -1 && e < lne) {
+                    // last character was a space, so just skip again as above
+                    if (s == e) line.append(' ')
+                    else this.substring(s, e).wrapWord(maxWidth, renderer, font, fontSize, ls)
+                    s = e + 1
+                    e = this.indexOf(' ', s)
+                }
+                // finish processing anything remaining on this line
+                if (s < lne) this.substring(s, lne).wrapWord(maxWidth, renderer, font, fontSize, ls)
+                if (s == lne) line.append(' ')
+                if (line.isNotEmpty()) {
+                    val out = line.toString()
+                    ls.add(out to renderer.textBounds(font, out, fontSize))
+                }
             }
         }
         lns = lne + 1

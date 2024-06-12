@@ -63,14 +63,14 @@ abstract class Drawable(
         focusable: Boolean = false,
     ) : this(children = children, at?.x ?: 0f, at?.y ?: 0f, alignment, size, visibleSize, palette, focusable)
 
-    var size: Vec2 = size?.mutable() ?: Vec2()
+    val size: Vec2 = size?.mutable() ?: Vec2()
 
     /**
      * internal field for [visibleSize].
      * @since 1.1.0
      */
     @ApiStatus.Internal
-    var _visibleSize: Vec2? = visibleSize?.mutable()
+    private var _visibleSize: Vec2? = visibleSize?.mutable()
 
     /**
      * The visible size of this drawable. This is used for clipping and scrolling.
@@ -85,20 +85,31 @@ abstract class Drawable(
      *
      * @since 1.1.0
      */
-    inline var visibleSize: Vec2
+    var visibleSize: Vec2
         get() = _visibleSize ?: size
         set(value) {
             _visibleSize = value
         }
 
     /**
+     * Padding for this drawable. This is used by the positioner to ensure that
+     * there is adequate space around each object in the UI.
+     *
+     * The positioner will use this value if it set, and it will add a level of padding directly to this
+     * drawable. **it is used in conjunction with the [Align.pad] property.**
+     *
+     * @since 1.4
+     */
+    var padding: Vec2? = null
+
+    /**
      * Returns `true` if this drawable has a visible size set.
      */
-    inline val hasVisibleSize get() = _visibleSize != null
+    val hasVisibleSize get() = _visibleSize != null
 
     @ApiStatus.Internal
     var _parent: Drawable? = null
-        set(value) {
+        private set(value) {
             if (value === field) return
             if (field != null) {
                 if (value != null) {
@@ -115,7 +126,7 @@ abstract class Drawable(
     @SideEffects(["_parent"])
     inline var parent: Drawable
         get() = _parent ?: error("cannot move outside of component tree")
-        set(value) {
+        private set(value) {
             _parent = value
         }
 
@@ -338,6 +349,7 @@ abstract class Drawable(
     @Dispatches("Lifetime.Enabled", "value != INPUT_DISABLED")
     @Dispatches("Mouse.Entered", "value > INPUT_NONE")
     @Dispatches("Mouse.Exited", "value == INPUT_NONE")
+    @set:ApiStatus.Internal
     var inputState = INPUT_NONE
         set(value) {
             if (field == value) return
@@ -810,8 +822,7 @@ abstract class Drawable(
         val sz = this.size
         val oldW = sz.x
         val oldH = sz.y
-        sz.x = 0f
-        sz.y = 0f
+        sz.zero()
         repositionChildren()
         x -= (sz.x - oldW) / 2f
         y -= (sz.y - oldH) / 2f
@@ -1046,7 +1057,7 @@ abstract class Drawable(
      * pass an event instance to this method for [specific][Event] events.
      * @since 1.1.61
      */
-    fun hasListenersFor(event: Class<out Event>) = eventHandlers?.containsKey(event) ?: false
+    fun hasListenersFor(event: Class<out Event>) = eventHandlers?.containsKey(event) == true
 
     /**
      * returns `true` if this drawable has any [specific][Event] event handlers registered for it.
@@ -1056,6 +1067,6 @@ abstract class Drawable(
      */
     fun hasListenersFor(event: Event): Boolean {
         val k: Any = if (System.identityHashCode(event) == event.hashCode()) event::class.java else event
-        return eventHandlers?.containsKey(k) ?: false
+        return eventHandlers?.containsKey(k) == true
     }
 }

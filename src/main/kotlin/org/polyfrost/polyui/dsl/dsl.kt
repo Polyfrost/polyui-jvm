@@ -71,20 +71,16 @@ open class DrawableDSL private constructor(val _this: Drawable) {
 
     fun image(image: String, alignment: Align = AlignDefault, init: (Image.() -> Unit)? = null) = image(image.image(), alignment, init)
 
-    fun text(text: String, wrap: Float = 0f, alignment: Align = AlignDefault, init: (Text.() -> Unit)? = null): Text {
-        val o = Text(text = text, alignment = alignment, wrap = wrap).apply { init?.invoke(this) }
+    fun text(text: String, visibleSize: Vec2? = null, alignment: Align = AlignDefault, init: (Text.() -> Unit)? = null): Text {
+        val o = Text(text = text, visibleSize = visibleSize, alignment = alignment).apply { init?.invoke(this) }
         _this.addChild(o)
         return o
     }
 
-    fun textInput(text: String = "", wrap: Float = 0f, placeholder: String = "polyui.textinput.placeholder", alignment: Align = AlignDefault, init: (TextInput.() -> Unit)? = null): TextInput {
-        val o = TextInput(text = text, placeholder = placeholder, alignment = alignment, wrap = wrap).apply { init?.invoke(this) }
+    fun textInput(text: String = "", visibleSize: Vec2? = null, placeholder: String = "polyui.textinput.placeholder", alignment: Align = AlignDefault, init: (TextInput.() -> Unit)? = null): TextInput {
+        val o = TextInput(text = text, visibleSize = visibleSize, placeholder = placeholder, alignment = alignment).apply { init?.invoke(this) }
         _this.addChild(o)
         return o
-    }
-
-    fun spacer(size: Vec2, init: (DrawableDSL.() -> Unit)? = null) {
-        _this.addChild(DrawableDSL(Spacer(size = size)).apply { init?.invoke(this) }._this)
     }
 
     fun group(alignment: Align = AlignDefault, init: DrawableDSL.(Group) -> Unit): Group {
@@ -100,7 +96,7 @@ open class DrawableDSL private constructor(val _this: Drawable) {
         var inputManager: InputManager? = null
         var translator: Translator? = null
         var backgroundColor: PolyColor? = null
-        var alignment: Align = Align(cross = Align.Cross.Start, padding = Vec2.ZERO)
+        var alignment: Align = Align(cross = Align.Cross.Start, pad = Vec2.ZERO)
         val colors: Colors = DarkTheme()
 
         var renderer: Renderer

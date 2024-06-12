@@ -87,7 +87,7 @@ class PolyUI @JvmOverloads constructor(
     inputManager: InputManager? = null,
     translator: Translator? = null,
     backgroundColor: PolyColor? = null,
-    masterAlignment: Align = Align(cross = Align.Cross.Start, padding = Vec2.ZERO),
+    masterAlignment: Align = Align(cross = Align.Cross.Start, pad = Vec2.ZERO),
     colors: Colors = DarkTheme(),
     size: Vec2? = null,
 ) {

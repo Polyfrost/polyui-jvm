@@ -200,20 +200,6 @@ inline fun <K, V, reified R> Map<K, V>.mapToArray(transform: (Map.Entry<K, V>) -
     return out as Array<R>
 }
 
-/**
- * Perform the given [transform] on every element in this list, and return a new array with the results.
- *
- * Equivalent to `this.map { transform(it) }.toTypedArray()`, but saves on the creation of an intermediate list.
- */
-inline fun <T, reified R> ArrayList<T>.mapToArray(transform: (T) -> R): Array<R> {
-    val out = arrayOfNulls<R>(size)
-    this.fastEachIndexed { i, it ->
-        out[i] = transform(it)
-    }
-    @Suppress("UNCHECKED_CAST")
-    return out as Array<R>
-}
-
 fun FloatArray.areValuesEqual(): Boolean {
     if (isEmpty()) return true
     val first = this[0]

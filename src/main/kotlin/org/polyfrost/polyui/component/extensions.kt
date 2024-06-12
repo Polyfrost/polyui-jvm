@@ -171,7 +171,6 @@ fun <S : Drawable> S.addHoverInfo(text: String?): S {
 
         override fun unapply(): Boolean {
             super.unapply()
-            isFinished = false
             return false
         }
     })
@@ -200,6 +199,16 @@ fun <S : Drawable> S.hide(state: Boolean = true): S {
 
 fun <S : Drawable> S.setAlpha(alpha: Float): S {
     this.alpha = alpha
+    return this
+}
+
+fun <S : Drawable> S.padded(xPad: Float, yPad: Float): S {
+    this.padding = Vec2(xPad, yPad)
+    return this
+}
+
+fun <S : Drawable> S.padded(padding: Vec2): S {
+    this.padding = padding
     return this
 }
 
@@ -409,7 +418,7 @@ fun <S : Drawable> S.setState(state: Byte): S {
 
 /**
  * Prioritize this drawable, meaning it will, in relation to its siblings:
- * - be drawn last
+ * - be drawn last (so visually on top)
  * - receive events first
  *
  * **this method is experimental as it may interfere with statically-typed references to children.**
@@ -427,7 +436,7 @@ fun <S : Drawable> S.prioritize(): S {
 
 /**
  * Relegate this drawable, meaning it will, in relation to its siblings:
- * - be drawn first
+ * - be drawn first (so visually on the bottom)
  * - receive events last
  *
  * **this method is experimental as it may interfere with statically-typed references to children.**
