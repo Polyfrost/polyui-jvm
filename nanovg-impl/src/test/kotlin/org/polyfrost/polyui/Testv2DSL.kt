@@ -78,6 +78,6 @@ fun main() {
         text("when am i gonna stop being wise for my age and just start being wise when am i gonna gonna stop being a pretty younger things to guys\n\n" +
                 "when will i stop being??\n" +
                 "they all say that it gets better, it gets better but what if i dont :(", visibleSize = 420f by 0f)
-        textInput()
+        textInput(visibleSize = 150f by 12f)
     }.open(window)
 }

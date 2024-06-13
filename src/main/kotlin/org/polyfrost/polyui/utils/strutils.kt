@@ -259,7 +259,7 @@ private fun String.wrapWord(
             lines.add(slice to renderer.textBounds(font, slice, fontSize))
             remainder = rem
             trap++
-            if (trap > 100) throw IllegalStateException("trapped trying to trim '$this' at size $fontSize")
+            if (trap > 100) throw IllegalStateException("trapped trying to trim '$this' at size $fontSize to width $maxWidth")
         }
     } else if (line.isEmpty()) {
         line.append(this)

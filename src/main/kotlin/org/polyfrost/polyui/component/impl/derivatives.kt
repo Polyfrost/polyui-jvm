@@ -24,6 +24,7 @@
 
 package org.polyfrost.polyui.component.impl
 
+import org.jetbrains.annotations.Contract
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.component.*
@@ -180,29 +181,28 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2? = null, fontSiz
                 true
             }
         },
-    ).namedId("DropdownMenu").hide().disable()
+    ).namedId("DropdownMenu")
     return it.events {
         Event.Focused.Gained then {
+            polyUI.master.addChild(dropdown, recalculate = false)
             dropdown.x = this.x
             dropdown.y = this.y + this.size.y
             if (dropdown.height != 0f) heightTracker = dropdown.height
             dropdown.height = 0f
-            dropdown.renders = true
-            dropdown.enabled = true
-            prioritize()
             Resize(dropdown, height = heightTracker, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
             Rotate(this[1], PI, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
         }
         Event.Focused.Lost then {
             Resize(dropdown, height = 0f, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)) {
-                dropdown.enabled = false
-                dropdown.renders = false
+                polyUI.master.removeChild(dropdown, recalculate = false)
             }.add()
             Rotate(this[1], 0.0, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
         }
-        Event.Lifetime.Init then {
-            polyUI.master.addChild(dropdown, recalculate = false)
+        Event.Lifetime.PostInit then {
+            dropdown.setup(polyUI)
+            val original = this.width
             this.width = dropdown.width
+            this[1].x += (this.width - original)
 
             val first = dropdown[initial]
             (this[0] as Text).text = ((if (first.children!!.size == 2) first[1] else first[0]) as Text).text
@@ -344,28 +344,15 @@ fun BoxedTextInput(
     pre: String? = null,
     placeholder: String = "polyui.textinput.placeholder",
     initialValue: String = "",
-    post: String,
+    post: String? = null,
     size: Vec2? = null,
 ): Drawable = Block(
     if (image != null) Image(image).padded(6f, 0f) else null,
     if (pre != null) Text(pre).padded(6f, 0f) else null,
     TextInput(placeholder = placeholder, text = initialValue, visibleSize = size),
-    Block(Text(post), alignment = Align(pad = 6f by 10f), radii = floatArrayOf(0f, 8f, 0f, 8f)).afterInit { color = polyUI.colors.page.bg.normal },
+    if (post != null) Block(Text(post), alignment = Align(pad = 6f by 10f), radii = floatArrayOf(0f, 8f, 0f, 8f)).afterInit { color = polyUI.colors.page.bg.normal } else null,
     size = size,
     alignment = Align(pad = Vec2.ZERO)
-).withBoarder()
-
-fun BoxedTextInput(
-    image: PolyImage? = null,
-    pre: String? = null,
-    placeholder: String = "polyui.textinput.placeholder",
-    initialValue: String = "",
-    size: Vec2? = null,
-): Drawable = Block(
-    if (image != null) Image(image) else null,
-    if (pre != null) Text(pre) else null,
-    TextInput(placeholder = placeholder, text = initialValue, visibleSize = size),
-    size = size
 ).withBoarder()
 
 /**
@@ -373,6 +360,7 @@ fun BoxedTextInput(
  * @param polyUI an instance of PolyUI. If `null`, [openNow] must be `false`, or else an exception will be thrown.
  * @param openNow if `true`, the menu is opened immediately. else, call [PolyUI.focus] on the return value to open it.
  */
+@Contract("_, _, _, null, false, _ -> fail")
 fun PopupMenu(vararg children: Drawable, size: Vec2? = null, align: Align = AlignDefault, polyUI: PolyUI?, openNow: Boolean = true, position: Point = Point.At): Block {
     val it = Block(
         focusable = true,
@@ -410,7 +398,7 @@ fun PopupMenu(vararg children: Drawable, size: Vec2? = null, align: Align = Alig
     }
     it.alpha = 0f
     if (openNow) {
-        polyUI ?: throw IllegalArgumentException("polyUI cannot be null if openNow is true")
+        require(polyUI != null) { "polyUI cannot be null if openNow is true" }
         polyUI.master.addChild(it, recalculate = false)
         polyUI.focus(it)
     }

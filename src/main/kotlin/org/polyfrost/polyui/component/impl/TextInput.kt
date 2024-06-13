@@ -27,6 +27,7 @@ import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Translator
+import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.Cursor
 import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.unit.Align
@@ -74,6 +75,12 @@ open class TextInput(
 
     private var _placeholder: Translator.Text = Translator.Text.Simple(placeholder)
 
+    var placeholder: String
+        get() = _placeholder.string
+        set(value) {
+            _placeholder.string = value
+        }
+
     init {
         acceptsInput = true
     }
@@ -81,11 +88,11 @@ open class TextInput(
     override fun render() {
         if (focused) {
             alpha = 1f
-            renderer.rect(cposx, cposy, 2f, fontSize, caretColor)
+            renderer.rect(cposx + this.x, cposy + this.y, 1.5f, fontSize, caretColor)
             selectBoxes.fastEach {
                 val (x, y) = it.first
                 val (w, h) = it.second
-                renderer.rect(x, y, w, h, polyUI.colors.page.border20)
+                renderer.rect(this.x + x, this.y + y, w, h, polyUI.colors.page.border20)
             }
         } else {
             alpha = 0.8f
@@ -99,7 +106,7 @@ open class TextInput(
     override fun accept(event: Event): Boolean {
         if (!enabled) return false
         needsRedraw = true
-        return when (event) {
+        val r = when (event) {
             is Event.Mouse.Entered -> {
                 polyUI.cursor = Cursor.Text
                 true
@@ -131,8 +138,10 @@ open class TextInput(
                 accept(event)
             }
 
-            else -> super.accept(event)
+            else -> false
         }
+        return if (!r) super.accept(event)
+        else true
     }
 
     fun accept(event: Event.Focused): Boolean {
@@ -148,6 +157,7 @@ open class TextInput(
             }
 
             is Event.Focused.KeyTyped -> {
+                if (caret > text.length) caret = text.length
                 if (event.mods.value < 2 /* mods == 0 || hasShift() */) {
                     if (caret != select) {
                         text = text.replace(selection, "")
@@ -184,6 +194,8 @@ open class TextInput(
                         }
                     }
                 }
+                caretPos()
+                selections()
             }
 
             is Event.Focused.KeyPressed -> {
@@ -257,11 +269,25 @@ open class TextInput(
 
                     else -> {}
                 }
+                caretPos()
+                selections()
             }
         }
-        caretPos()
-        selections()
         return false
+    }
+
+    fun dropToLastSpace() {
+        val tl = text.length
+        val c: Int
+        text.trimEnd().lastIndexOf(' ', caret).let {
+            c = if (it != -1) {
+                it
+            } else {
+                0
+            }
+        }
+        text = text.substring(0, caret) + text.substring(c)
+        if (tl != text.length) caret = c
     }
 
     private fun caretPos() {
@@ -270,8 +296,14 @@ open class TextInput(
             font,
             line.substring(0, idx),
             fontSize,
-        ).x + this.x
-        cposy = lni * (fontSize + spacing) + y
+        ).x
+        cposy = lni * (fontSize + spacing)
+
+        xScroll?.let {
+            val s = it.from
+            val e = s + visibleSize.x
+            // todo make it autoscroll using this method !
+        }
     }
 
     // todo make this work at some point
@@ -304,7 +336,7 @@ open class TextInput(
     private fun getLineByIndex(index: Int): Quad<String, Int, Int, Float> {
         require(index > -1) { "Index must not be negative" }
         var i = 0
-        var y = y + spacing
+        var y = spacing
         lines.fastEachIndexed { li, (it, bounds) ->
             if (index < i + it.length) {
                 return Quad(it, index - i, li, y)
@@ -313,7 +345,7 @@ open class TextInput(
             i += it.length
         }
         val (ln, bounds) = lines.last()
-        return Quad(ln, ln.length, lines.lastIndex, this.y + height - spacing - bounds.y)
+        return Quad(ln, ln.length, lines.lastIndex, height - spacing - bounds.y)
     }
 
     private fun selections() {
@@ -339,7 +371,7 @@ open class TextInput(
         var really = slp + lines[si].second.y
         for (i in sli + 1 until eli) {
             val (_, bounds) = lines[i]
-            selectBoxes.add((x - 1f by really) to bounds)
+            selectBoxes.add((-1f by really) to bounds)
             really += bounds.y + spacing
         }
         selection(sl, si, sl.length, slp)
@@ -350,7 +382,7 @@ open class TextInput(
         val start = renderer.textBounds(font, line.substring(0, startIndex), fontSize)
         val end = renderer.textBounds(font, line.substring(startIndex, endIndex), fontSize)
         val lh = max(start.y, end.y)
-        selectBoxes.add((x + start.x - 1f by linePos) to (end.x by lh))
+        selectBoxes.add((start.x - 1f by linePos) to (end.x by lh))
     }
 
     private fun caretFromMouse(mouseX: Float, mouseY: Float) {
@@ -374,20 +406,6 @@ open class TextInput(
                 0
             }
         }
-    }
-
-    fun dropToLastSpace() {
-        val tl = text.length
-        val c: Int
-        text.trimEnd().lastIndexOf(' ', caret).let {
-            c = if (it != -1) {
-                it
-            } else {
-                0
-            }
-        }
-        text = text.substring(0, caret) + text.substring(c)
-        if (tl != text.length) caret = c
     }
 
     fun toNextSpace() {
@@ -427,12 +445,17 @@ open class TextInput(
     }
 
     override fun setup(polyUI: PolyUI): Boolean {
-        if (!super.setup(polyUI)) return false
         _placeholder = polyUI.translator.translate(_placeholder.string)
-        val bounds = renderer.textBounds(font, _placeholder.string, fontSize)
-        size.smax(bounds)
-        if (text.isEmpty() && !hasVisibleSize) visibleSize = Vec2(size)
-        return true
+        return super.setup(polyUI)
+    }
+
+    override fun updateTextBounds(renderer: Renderer) {
+        super.updateTextBounds(renderer)
+        if (text.isEmpty()) {
+            val bounds = renderer.textBounds(font, _placeholder.string, fontSize)
+            size.smax(bounds)
+            visibleSize.x = max(visibleSize.x, bounds.x)
+        }
     }
 
     override fun debugString() = "placeholder: ${_placeholder.string}\ncaret: $caret;  select: $select;  selecting=$selecting\n${super.debugString()}"

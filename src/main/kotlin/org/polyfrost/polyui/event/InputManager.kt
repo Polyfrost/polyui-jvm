@@ -201,12 +201,12 @@ class InputManager(
         return c
     }
 
-    /** same as [rayCheck], but does not check for [Drawable.acceptsInput] or [Drawable.enabled]. */
+    /** same as [rayCheck], but does not check for [Drawable.acceptsInput]. */
     @ApiStatus.Experimental
     @Contract(pure = true)
     fun rayCheckUnsafe(it: Drawable, x: Float, y: Float): Drawable? {
         var c: Drawable? = null
-        if (it.isInside(x, y)) {
+        if (it.enabled && it.isInside(x, y)) {
             c = it
             it.children?.fastEach {
                 val n = rayCheckUnsafe(it, x, y)

@@ -38,52 +38,52 @@ import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.image
 
-open class DrawableDSL private constructor(val _this: Drawable) {
-    operator fun <S : Drawable> S.invoke(init: (DrawableDSL.(S) -> Unit)? = null): S {
-        val s = this.apply { init?.invoke(DrawableDSL(this), this) }
+open class DrawableDSL(@PublishedApi internal val _this: Drawable) {
+    inline operator fun <S : Drawable> S.invoke(init: (DrawableDSL.(S) -> Unit) = {}): S {
+        val s = this.apply { init.invoke(DrawableDSL(this), this) }
         _this.addChild(s)
         return s
     }
 
-    fun <S : Drawable> S.use(init: (DrawableDSL.(S) -> Unit)? = null): S {
-        val s = this.apply { init?.invoke(DrawableDSL(this), this) }
+    inline fun <S : Drawable> S.use(init: (DrawableDSL.(S) -> Unit) = {}): S {
+        val s = this.apply { init.invoke(DrawableDSL(this), this) }
         _this.addChild(s)
         return s
     }
 
-    fun <S : Drawable> S.add(init: (DrawableDSL.(S) -> Unit)? = null): S {
-        val s = this.apply { init?.invoke(DrawableDSL(this), this) }
+    inline fun <S : Drawable> S.add(init: (DrawableDSL.(S) -> Unit) = {}): S {
+        val s = this.apply { init.invoke(DrawableDSL(this), this) }
         _this.addChild(s)
         return s
     }
 
-    fun block(size: Vec2? = null, alignment: Align = AlignDefault, init: (DrawableDSL.(Block) -> Unit)? = null): Block {
-        val o = Block(size = size, alignment = alignment).apply { init?.invoke(DrawableDSL(this), this) }
+    inline fun block(size: Vec2? = null, alignment: Align = AlignDefault, init: (DrawableDSL.(Block) -> Unit) = {}): Block {
+        val o = Block(size = size, alignment = alignment).apply { init.invoke(DrawableDSL(this), this) }
         _this.addChild(o)
         return o
     }
 
-    fun image(image: PolyImage, alignment: Align = AlignDefault, init: (Image.() -> Unit)? = null): Image {
-        val o = Image(image = image, alignment = alignment).apply { init?.invoke(this) }
+    inline fun image(image: PolyImage, alignment: Align = AlignDefault, init: (Image.() -> Unit) = { }): Image {
+        val o = Image(image = image, alignment = alignment).apply { init.invoke(this) }
         _this.addChild(o)
         return o
     }
 
-    fun image(image: String, alignment: Align = AlignDefault, init: (Image.() -> Unit)? = null) = image(image.image(), alignment, init)
+    inline fun image(image: String, alignment: Align = AlignDefault, init: (Image.() -> Unit) = {}) = image(image.image(), alignment, init)
 
-    fun text(text: String, visibleSize: Vec2? = null, alignment: Align = AlignDefault, init: (Text.() -> Unit)? = null): Text {
-        val o = Text(text = text, visibleSize = visibleSize, alignment = alignment).apply { init?.invoke(this) }
+    inline fun text(text: String, visibleSize: Vec2? = null, alignment: Align = AlignDefault, init: Text.() -> Unit = {}): Text {
+        val o = Text(text = text, visibleSize = visibleSize, alignment = alignment).apply { init.invoke(this) }
         _this.addChild(o)
         return o
     }
 
-    fun textInput(text: String = "", visibleSize: Vec2? = null, placeholder: String = "polyui.textinput.placeholder", alignment: Align = AlignDefault, init: (TextInput.() -> Unit)? = null): TextInput {
-        val o = TextInput(text = text, visibleSize = visibleSize, placeholder = placeholder, alignment = alignment).apply { init?.invoke(this) }
+    inline fun textInput(text: String = "", visibleSize: Vec2? = null, placeholder: String = "polyui.textinput.placeholder", alignment: Align = AlignDefault, init: TextInput.() -> Unit = {}): TextInput {
+        val o = TextInput(text = text, visibleSize = visibleSize, placeholder = placeholder, alignment = alignment).apply { init.invoke(this) }
         _this.addChild(o)
         return o
     }
 
-    fun group(alignment: Align = AlignDefault, init: DrawableDSL.(Group) -> Unit): Group {
+    inline fun group(alignment: Align = AlignDefault, init: DrawableDSL.(Group) -> Unit): Group {
         val o = Group(alignment = alignment).apply { init.invoke(DrawableDSL(this), this) }
         _this.addChild(o)
         return o
@@ -106,7 +106,7 @@ open class DrawableDSL private constructor(val _this: Drawable) {
             }
 
         fun build() = PolyUI(
-            drawables = _this.children!!.toTypedArray(),
+            drawables = _this.children?.toTypedArray() ?: arrayOf<Drawable>(),
             renderer, settings, inputManager, translator, backgroundColor,
             alignment, colors, size
         )
@@ -123,3 +123,8 @@ private annotation class PolyUIDSL
 @JvmSynthetic
 @ApiStatus.Experimental
 inline fun polyUI(block: DrawableDSL.Master.() -> Unit) = DrawableDSL.Master().apply(block).build()
+
+@PolyUIDSL
+@JvmSynthetic
+@ApiStatus.Experimental
+inline fun Drawable.children(block: DrawableDSL.() -> Unit) = DrawableDSL(this).apply(block)

@@ -27,7 +27,8 @@ import org.polyfrost.polyui.component.Drawable
  * DSL for events.
  * @since 0.23.2
  */
-class EventDSL<S : Drawable>(val self: S) {
+@JvmInline
+value class EventDSL<S : Drawable>(val self: S) {
     // kotlin bug: resolution error means self.run {} has to be used
     // target fix is set for 2.1.0
     // https://youtrack.jetbrains.com/issue/KT-63581/
@@ -53,6 +54,7 @@ class EventDSL<S : Drawable>(val self: S) {
      * @see then
      * @since 0.19.2
      * */
+    @Suppress("INAPPLICABLE_JVM_NAME")
     @JvmName("to")
     @OverloadResolutionByLambdaReturnType
     infix fun <E : Event> E.then(handler: S.(E) -> Unit) = self.run {

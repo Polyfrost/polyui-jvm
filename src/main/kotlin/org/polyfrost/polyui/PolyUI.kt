@@ -436,7 +436,9 @@ class PolyUI @JvmOverloads constructor(
      * @param focusable the element to set focus on
      * @return true if focus was successfully set, false if the provided focusable is already focused
      */
-    fun focus(focusable: Drawable?) = inputManager.focus(focusable)
+    fun focus(focusable: Drawable?) {
+        if (inputManager.focus(focusable)) master.needsRedraw = true
+    }
 
     fun unfocus() = inputManager.unfocus()
 

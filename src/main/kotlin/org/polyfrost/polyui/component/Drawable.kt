@@ -332,6 +332,7 @@ abstract class Drawable(
     protected open val shouldScroll get() = true
 
     var acceptsInput = false
+        get() = field && enabled
 
     @get:JvmName("isInitialized")
     val initialized get() = ::polyUI.isInitialized
@@ -385,6 +386,7 @@ abstract class Drawable(
      * @since 0.21.4
      */
     open var renders = true
+        get() = field && enabled
         set(value) {
             if (field == value) return
             field = value
@@ -400,7 +402,9 @@ abstract class Drawable(
     inline var enabled
         get() = inputState > INPUT_DISABLED
         set(value) {
+            val o = inputState
             inputState = if (value) INPUT_NONE else INPUT_DISABLED
+            needsRedraw = o != inputState
         }
 
     protected var operations: ArrayList<DrawableOp>? = null
@@ -702,14 +706,28 @@ abstract class Drawable(
                 it.durationNanos = 0.6.seconds
                 it.to += if (yScroll == null && event.amountX == 0f) event.amountY
                 else event.amountX
-                it.to = it.to.coerceIn(it.from - (size.x - visibleSize.x), it.from)
+                val s = it.from - (size.x - visibleSize.x)
+                if (s >= it.from) {
+                    if (polyUI.settings.debug) PolyUI.LOGGER.info("removed x-scrolling from $simpleName as it was no longer necessary")
+                    this.x = it.from
+                    xScroll = null
+                    return@let
+                }
+                it.to = it.to.coerceIn(s, it.from)
                 ran = true
             }
 
             yScroll?.let {
                 it.durationNanos = 0.6.seconds
                 it.to += event.amountY
-                it.to = it.to.coerceIn(it.from - (size.y - visibleSize.y), it.from)
+                val s = it.from - (size.y - visibleSize.y)
+                if (s >= it.from) {
+                    if (polyUI.settings.debug) PolyUI.LOGGER.info("removed y-scrolling from $simpleName as it was no longer necessary")
+                    this.y = it.from
+                    yScroll = null
+                    return@let
+                }
+                it.to = it.to.coerceIn(s, it.from)
                 ran = true
             }
 
@@ -766,19 +784,33 @@ abstract class Drawable(
 
     @Locking(`when` = "this.shouldScroll && this.hasVisibleSize && this.visibleSize > this.size")
     fun tryMakeScrolling() {
+        if (!initialized) return
         if (shouldScroll && hasVisibleSize) {
             var scrolling = false
-            if (size.x > visibleSize.x && xScroll == null) {
-                scrolling = true
-                xScroll = Easing.Expo(Easing.Type.Out, 0L, x, x)
+            if (size.x > visibleSize.x) {
+                if (xScroll == null) {
+                    scrolling = true
+                    xScroll = Easing.Expo(Easing.Type.Out, 0L, x, x)
+                    if (polyUI.settings.debug) PolyUI.LOGGER.info("Enabled x-scrolling for $simpleName")
+                }
+            } else if (xScroll != null) {
+                if (polyUI.settings.debug) PolyUI.LOGGER.info("removed x-scrolling from $simpleName as it was no longer necessary")
+                this.x = xScroll?.from ?: this.x
+                xScroll = null
             }
-            if (size.y > visibleSize.y && yScroll == null) {
-                scrolling = true
-                yScroll = Easing.Expo(Easing.Type.Out, 0L, y, y)
+            if (size.y > visibleSize.y) {
+                if (yScroll == null) {
+                    scrolling = true
+                    yScroll = Easing.Expo(Easing.Type.Out, 0L, y, y)
+                    if (polyUI.settings.debug) PolyUI.LOGGER.info("Enabled y-scrolling for $simpleName")
+                }
+            } else if (yScroll != null) {
+                if (polyUI.settings.debug) PolyUI.LOGGER.info("removed y-scrolling from $simpleName as it was no longer necessary")
+                this.y = yScroll?.from ?: this.y
+                yScroll = null
             }
             if (scrolling) {
                 acceptsInput = true
-                if (polyUI.settings.debug) PolyUI.LOGGER.info("Enabled scrolling for $simpleName")
                 clipChildren()
             }
         }

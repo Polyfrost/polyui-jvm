@@ -44,6 +44,16 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
     }
 
     /**
+     * Mode that this text was created in. Must be one of [UNLIMITED], [WRAP], [SCROLLING_SINGLE_LINE], [LIMITED_WRAP].
+     * @since 1.4.1
+     */
+    protected val mode = if (visibleSize == null) UNLIMITED else when (visibleSize.y) {
+        0f -> WRAP
+        fontSize -> SCROLLING_SINGLE_LINE
+        else -> LIMITED_WRAP
+    }
+
+    /**
      * @since 1.0.6
      */
     var strikethrough = false
@@ -170,7 +180,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
                 renderer.line(x, hf, x + width, hf, color, 1f)
             }
             if (underline) {
-                val ff = y + height - spacing + 1f
+                val ff = y + height - spacing - 2f
                 renderer.line(x, ff, x + width, ff, color, 1f)
             }
             y += height + spacing
@@ -209,31 +219,80 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
             size.set(1f, fontSize)
             return
         }
-        text.wrap(if (hasVisibleSize) visibleSize.x else 0f, renderer, font, fontSize, lines)
+        val mode = mode
+        val maxWidth = when (mode) {
+            WRAP, LIMITED_WRAP -> visibleSize.x
+            else -> 0f
+        }
+        text.wrap(maxWidth, renderer, font, fontSize, lines)
         var w = 0f
         var h = 0f
         lines.fastEach { (_, bounds) ->
             w = kotlin.math.max(w, bounds.x)
-            h += bounds.y
+            h += bounds.y + spacing
         }
         size.set(w, h)
-        if (!hasVisibleSize || visibleSize.y == 0f) visibleSize = Vec2(w, h)
-        if (initialized) tryMakeScrolling()
+        when (mode) {
+            WRAP -> visibleSize.y = h
+            LIMITED_WRAP, SCROLLING_SINGLE_LINE -> tryMakeScrolling()
+        }
     }
 
     override fun calculateSize(): Vec2 {
         updateTextBounds()
-        // asm: wrap was specified, but no height so just set it
-        if (hasVisibleSize && visibleSize.y == 0f) {
-            visibleSize.y = size.y
-        }
         return size
     }
 
     override fun debugString() =
         """
-lines: ${lines.size}
+lines: ${lines.size}, mode=${getModeName(mode)}
 underline=$underline;  strike=$strikethrough;  italic=$italic
 font: ${font.resourcePath.substringAfterLast('/')}; size: $fontSize;  weight: $fontWeight
         """
+
+    companion object Mode {
+        /**
+         * Text can expand without any limits.
+         *
+         * Specified by a `null` [Drawable.visibleSize].
+         * @since 1.4.1
+         */
+        const val UNLIMITED: Byte = 0
+
+        /**
+         * Text can expand infinitely vertically, but has a horizontal (wrap) limit.
+         *
+         * Specified by a [Drawable.visibleSize] of `Vec2(wrapLimit, 0f)`
+         * @since 1.4.1
+         */
+        const val WRAP: Byte = 1
+
+        /**
+         * [WRAP], but has a limited amount of vertical lines.
+         *
+         * Specified by a [Drawable.visibleSize] of `Vec2(wrapLimit, maxHeight)`
+         * @since 1.4.1
+         */
+        const val LIMITED_WRAP: Byte = 2
+
+        /**
+         * A single line of text which will scroll indefinitely.
+         *
+         * Specified by a [Drawable.visibleSize] of `Vec2(width, fontSize)`
+         * @since 1.4.1
+         */
+        const val SCROLLING_SINGLE_LINE: Byte = 3
+
+        /**
+         * Return the name of the given constant.
+         */
+        @JvmStatic
+        fun getModeName(mode: Byte) = when (mode) {
+            UNLIMITED -> "UNLIMITED"
+            WRAP -> "WRAP"
+            LIMITED_WRAP -> "LIMITED_WRAP"
+            SCROLLING_SINGLE_LINE -> "SCROLLING_SINGLE_LINE"
+            else -> throw IllegalArgumentException("invalid mode $mode")
+        }
+    }
 }
