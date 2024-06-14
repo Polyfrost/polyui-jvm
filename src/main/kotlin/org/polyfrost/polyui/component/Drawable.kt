@@ -123,7 +123,7 @@ abstract class Drawable(
             field = value
         }
 
-    @SideEffects(["_parent"])
+    @SideEffects("_parent")
     inline var parent: Drawable
         get() = _parent ?: error("cannot move outside of component tree")
         private set(value) {
@@ -192,6 +192,19 @@ abstract class Drawable(
     var _color: PolyColor? = null
 
     /**
+     * focused flag for this drawable. Only ever true if [focusable] is true.
+     * @since 1.4.2
+     */
+    @set:ApiStatus.Internal
+    var focused = false
+        internal set(value) {
+            if (!focusable) return
+            if (value) accept(Event.Focused.Gained)
+            else accept(Event.Focused.Lost)
+            field = value
+        }
+
+    /**
      * The color of this drawable. can be any of the subtypes of this class depending on the current situation.
      *
      * The only safe methods here generally are getting the current color. casting it is tricky as PolyUI supports many different 'types' of color,
@@ -208,7 +221,7 @@ abstract class Drawable(
 
     private var _palette: Colors.Palette? = palette
 
-    @SideEffects(["color", "palette"])
+    @SideEffects("color", "palette")
     var palette: Colors.Palette
         get() = _palette ?: throw UninitializedPropertyAccessException("Palette is not initialized")
         set(value) {
@@ -235,7 +248,7 @@ abstract class Drawable(
     @ApiStatus.Internal
     var _y = y
 
-    @SideEffects(["x", "_x", "atValid", "this.children::x"], "value != x")
+    @SideEffects("x", "_x", "atValid", "this.children::x", `when` = "value != x")
     var x: Float
         inline get() = _x
         set(value) {
@@ -248,7 +261,7 @@ abstract class Drawable(
             }
         }
 
-    @SideEffects(["y", "_y", "atValid", "this.children::y"], "value != y")
+    @SideEffects("y", "_y", "atValid", "this.children::y", `when` = "value != y")
     var y: Float
         inline get() = _y
         set(value) {
@@ -320,7 +333,7 @@ abstract class Drawable(
 
     val scrolling get() = xScroll != null || yScroll != null
 
-    @SideEffects(["_parent.needsRedraw"], `when` = "field != value")
+    @SideEffects("_parent.needsRedraw", `when` = "field != value")
     var needsRedraw = true
         set(value) {
             if (value && !field) {
@@ -398,13 +411,13 @@ abstract class Drawable(
      *
      * @since 0.21.4
      */
-    @SideEffects(["inputState"])
+    @SideEffects("inputState")
     inline var enabled
         get() = inputState > INPUT_DISABLED
         set(value) {
-            val o = inputState
+            if (value && inputState != INPUT_DISABLED) return
             inputState = if (value) INPUT_NONE else INPUT_DISABLED
-            needsRedraw = o != inputState
+            needsRedraw = true
         }
 
     protected var operations: ArrayList<DrawableOp>? = null
@@ -599,7 +612,7 @@ abstract class Drawable(
         }
         if (xScroll != null || yScroll != null) renderer.popScissor()
         renderer.pop()
-        renderer.globalAlphaAndCap(1f)
+        renderer.setAlphaCap(1f)
         if (acx != 0f) {
             x = acx
             y = acy

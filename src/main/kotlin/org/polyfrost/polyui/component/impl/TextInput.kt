@@ -50,11 +50,6 @@ open class TextInput(
 
     private val selectBoxes = ArrayList<Pair<Vec2, Vec2>>()
 
-    // todo the old error stuff?
-
-    var focused = false
-        private set
-
     private val caretColor = PolyColor.WHITE
 
     private var cposx = 0f
@@ -147,12 +142,10 @@ open class TextInput(
     fun accept(event: Event.Focused): Boolean {
         when (event) {
             is Event.Focused.Gained -> {
-                focused = true
                 caretPos()
             }
 
             is Event.Focused.Lost -> {
-                focused = false
                 clearSelection()
             }
 

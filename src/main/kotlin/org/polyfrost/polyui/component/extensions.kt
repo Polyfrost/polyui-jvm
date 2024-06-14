@@ -549,6 +549,28 @@ fun <S : Drawable> Drawable.locate(id: String): S? {
 }
 
 /**
+ * Returns `true` if this drawable is a child of the specified [drawable].
+ * @see isRelatedTo
+ * @since 1.4.2
+ */
+fun Drawable.isChildOf(drawable: Drawable?): Boolean {
+    if (drawable == null) return false
+    var p: Drawable? = this._parent
+    while (p != null) {
+        if (p === drawable) return true
+        p = p._parent
+    }
+    return false
+}
+
+/**
+ * Returns `true` if this drawable is a child of the specified [drawable], or if the [drawable] is a child of this.
+ * @see isChildOf
+ * @since 1.4.2
+ */
+fun Drawable.isRelatedTo(drawable: Drawable?) = drawable != null && drawable.isChildOf(this) || this.isChildOf(drawable)
+
+/**
  * Bulk add method for all the builtin drawable operations in PolyUI.
  *
  * The default values of this method are all zeroes, meaning that nothing is done.

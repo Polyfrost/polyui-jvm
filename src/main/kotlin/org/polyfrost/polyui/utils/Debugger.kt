@@ -28,6 +28,7 @@ import org.polyfrost.polyui.PolyUI.Companion.INPUT_HOVERED
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_NONE
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
 import org.polyfrost.polyui.PolyUI.Companion.LOGGER
+import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.countChildren
 import org.polyfrost.polyui.component.events
@@ -39,6 +40,8 @@ import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
+import org.polyfrost.polyui.renderer.data.Font
+import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Point
 import org.polyfrost.polyui.unit.seconds
@@ -144,7 +147,7 @@ class Debugger(private val polyUI: PolyUI) {
             val fe = eval.indexOf(')')
             if (fe == -1) return false
             val fs = eval.indexOf('(')
-            if (fs == -1) return false
+            if (fs < 1) return false
             val fn = eval.substring(0, fs)
             val methods = target::class.java.allMethods(fn)
             // no args specified
@@ -166,30 +169,48 @@ class Debugger(private val polyUI: PolyUI) {
             LOGGER.warn("no methods matching $fn()")
             return false
         }
+        if (set == 0 || set == eval.length) return false
         val sn = "set${eval.substring(0, set).trim().capitalize()}"
         val arg = eval.substring(set + 1).trim()
         val methods = target::class.java.allMethods(sn)
         for (method in methods) {
             if (method.parameterCount != 1) continue
             val typ = method.parameterTypes[0]
-            if (typ == String::class.java) {
-                method.invoke(target, arg.removeSurrounding("\""))
-                return true
-            } else if (typ == Float::class.java) {
-                method.invoke(target, arg.toFloat())
-                return true
-            } else if (typ == Int::class.java) {
-                method.invoke(target, arg.toInt())
-                return true
-            } else if (typ == Double::class.java) {
-                method.invoke(target, arg.toDouble())
-                return true
-            } else if (typ == Boolean::class.java) {
-                method.invoke(target, arg.toBoolean())
-                return true
+            if (typ.isEnum) {
+                val const = try {
+                    java.lang.Enum.valueOf(typ as Class<out Enum<*>>, arg)
+                } catch (_: Exception) {
+                    null
+                }
+                return if (const != null) {
+                    method.invoke(target, const)
+                    true
+                } else false
             }
-            // todo advanced argument processing
-            LOGGER.warn("couldn't convert argument $arg to type $typ")
+            val p: Any? = when (typ) {
+                String::class.java -> arg
+                Float::class.java -> arg.toFloatOrNull()
+                Int::class.java -> arg.toIntOrNull()
+                Double::class.java -> arg.toDoubleOrNull()
+                Byte::class.java -> arg.toByteOrNull()
+                Boolean::class.java -> arg.toBoolean()
+                Font::class.java -> Font(arg)
+                PolyImage::class.java -> PolyImage(arg)
+                PolyColor::class.java -> {
+                    val split = arg.split(',').mapToArray { it.trim().toInt() }
+                    if (split.size < 3) null
+                    else if (split.size == 3) rgba(split[0], split[1], split[2])
+                    else rgba(split[0], split[1], split[2], split[3] / 255f)
+                }
+
+                else -> null
+            }
+            if (p == null) {
+                LOGGER.warn("couldn't convert argument $arg to type $typ")
+                return false
+            }
+            method.invoke(target, p)
+            return true
         }
         LOGGER.warn("no methods matching $sn($arg)")
         return false

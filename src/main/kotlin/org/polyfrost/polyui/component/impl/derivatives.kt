@@ -149,15 +149,15 @@ fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2? = null, ini
 /**
  * For images, use `Image to "string"` for each entry.
  */
-fun Dropdown(vararg entries: String, at: Vec2? = null, fontSize: Float = 12f, initial: Int = 0, padding: Float = 12f): Block {
-    return Dropdown(entries = entries.mapToArray { null to it }, at, fontSize, initial, padding)
+fun Dropdown(vararg entries: String, at: Vec2? = null, fontSize: Float = 12f, initial: Int = 0, padding: Float = 12f, textLength: Float = 0f): Block {
+    return Dropdown(entries = entries.mapToArray { null to it }, at, fontSize, initial, padding, textLength)
 }
 
-fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2? = null, fontSize: Float = 12f, initial: Int = 0, padding: Float = 12f): Block {
+fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2? = null, fontSize: Float = 12f, initial: Int = 0, padding: Float = 12f, textLength: Float = 0f): Block {
     var heightTracker = 0f
     val it = Block(
-        Text("", fontSize = fontSize),
-        Image("chevron-down.svg"),
+        Text("", fontSize = fontSize, visibleSize = if (textLength == 0f) null else Vec2(textLength, fontSize)),
+        Image("polyui/chevron-down.svg"),
         at = at,
         focusable = true,
         alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2(12f, 6f), maxRowSize = 0),
@@ -305,7 +305,7 @@ fun Slider(at: Vec2? = null, min: Float = 0f, max: Float = 100f, initialValue: F
 fun Checkbox(at: Vec2? = null, size: Float, state: Boolean = false): Drawable {
     return Block(
         Image(
-            image = PolyImage("check.svg"),
+            image = PolyImage("polyui/check.svg"),
             size = (size / 1.25f).vec,
         ).disable(!state).also {
             if (!state) it.alpha = 0f

@@ -40,17 +40,18 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Mutable>, faves: MutableList<Poly
     }
     val p = PopupMenu(
         Group(
-            Dropdown("polyui.color.solid", "polyui.color.gradient", "polyui.color.chroma"),
-            Image("close.svg".image()).setDestructivePalette().withStates().onClick {
+            Dropdown("polyui.color.solid", "polyui.color.gradient", "polyui.color.chroma", textLength = 152f),
+            Image("polyui/close.svg".image()).setDestructivePalette().withStates().onClick {
                 this.polyUI.unfocus()
             },
             size = 280f by 40f,
             alignment = Align(main = Align.Main.SpaceBetween),
-        ),
+        ).padded(12f, 12f),
         Group(
             ColorPickingBox(color),
             Image(
-                PolyImage("hue.png"),
+                PolyImage("polyui/color/hue.png"),
+                size = 16f by 200f,
                 radii = 8f.radii(),
                 children = arrayOf(
                     Block(at = 3f by 0f, size = 10f by 10f, radii = 5f.radii(), color = PolyColor.TRANSPARENT).draggable(withX = false, onDrag = {
@@ -60,7 +61,7 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Mutable>, faves: MutableList<Poly
                 ),
             ),
             Image(
-                PolyImage("alpha.png"),
+                PolyImage("polyui/color/alpha.png"),
                 size = 16f by 200f,
                 radii = 8f.radii(),
                 children = arrayOf(

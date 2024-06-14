@@ -12,4 +12,4 @@ import org.jetbrains.annotations.ApiStatus
 @Repeatable
 @Retention(AnnotationRetention.SOURCE)
 @ApiStatus.Experimental
-annotation class SideEffects(val values: Array<String> = [], val `when`: String = "")
+annotation class SideEffects(vararg val values: String, val `when`: String = "")

@@ -27,6 +27,7 @@ import org.polyfrost.polyui.PolyUI.Companion.INPUT_HOVERED
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_NONE
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
 import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.component.isRelatedTo
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Modifiers
@@ -146,9 +147,7 @@ class InputManager(
     @ApiStatus.Internal
     fun drop(it: Drawable? = null) {
         if (it != null) {
-            if (it === mouseOver) {
-                mouseOver = null
-            }
+            if (it === mouseOver) mouseOver = null
         } else mouseOver = null
     }
 
@@ -256,9 +255,9 @@ class InputManager(
             }
             clickTimer = curr
         }
-        if (focused?.isInside(mouseX, mouseY) != true) {
-            unfocus()
-        }
+//        if (focused?.isInside(mouseX, mouseY) != true) {
+//            focus(null)
+//        }
         mouseOver?.inputState = INPUT_HOVERED
 
         // fast path: no need to alloc or check for anything on simple
@@ -322,8 +321,10 @@ class InputManager(
      */
     fun dispatch(event: Event, bindable: Boolean = false, to: Drawable? = mouseOver): Boolean {
         if (bindable && keyBinder?.accept(event) == true) return true
+        val cf = event is Event.Focused
         var candidate = to
         while (candidate != null) {
+            if (cf && candidate.focusable) continue
             if (candidate.accept(event)) return true
             candidate = candidate._parent
         }
@@ -340,16 +341,19 @@ class InputManager(
      */
     fun focus(focusable: Drawable?): Boolean {
         if (focusable === focused) return false
-        focused?.accept(Event.Focused.Lost)
-        if (focusable == null) {
+        if (focusable == null || !focusable.isRelatedTo(focused)) {
+            var p = focused
+            while (p != null) {
+                p.focused = false
+                p = p._parent
+            }
             focused = null
-            return true
+            if (focusable == null) return true
         }
         require(focusable.initialized) { "Cannot focus uninitialized drawable" }
         require(focusable.focusable) { "Cannot focus un-focusable drawable" }
         focused = focusable
-        return focusable.accept(Event.Focused.Gained)
+        focusable.focused = true
+        return true
     }
-
-    fun unfocus() = focus(null)
 }

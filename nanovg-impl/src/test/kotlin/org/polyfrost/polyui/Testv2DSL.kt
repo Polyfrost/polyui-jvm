@@ -29,8 +29,7 @@ import org.polyfrost.polyui.dsl.polyUI
 import org.polyfrost.polyui.renderer.impl.GLFWWindow
 import org.polyfrost.polyui.renderer.impl.NVGRenderer
 import org.polyfrost.polyui.unit.by
-import org.polyfrost.polyui.utils.image
-import org.polyfrost.polyui.utils.open
+import org.polyfrost.polyui.utils.*
 
 fun main() {
     val window = GLFWWindow("PolyUI Test v2 (DSL)", 800, 500)
@@ -43,7 +42,10 @@ fun main() {
         }
         group {
             Button("moon.svg".image()).add()
-            Button("face-wink.svg".image(), "button.text").add()
+            Button("face-wink.svg".image(), "button.text").onClick {
+                ColorPicker(rgba(40, 250, 150).toMutable().ref(), mutableListOf(), mutableListOf(), polyUI)
+                true
+            }.add()
             Switch(size = 28f).add()
             Checkbox(size = 28f).add()
         }

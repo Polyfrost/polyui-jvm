@@ -440,7 +440,7 @@ class PolyUI @JvmOverloads constructor(
         if (inputManager.focus(focusable)) master.needsRedraw = true
     }
 
-    fun unfocus() = inputManager.unfocus()
+    fun unfocus() = inputManager.focus(null)
 
     /**
      * Return the key name for the given key code, or "Unknown" if the key is not mapped / no window is present.
@@ -479,17 +479,17 @@ class PolyUI @JvmOverloads constructor(
          * @since 0.22.0
          */
         @JvmField
-        val defaultFonts = FontFamily("Poppins", "poppins/")
+        val defaultFonts = FontFamily("Poppins", "polyui/fonts/poppins/")
 
         @JvmField
-        val monospaceFont = Font("JetBrainsMono-Regular.ttf")
+        val monospaceFont = Font("polyui/fonts/JetBrainsMono-Regular.ttf")
 
         /**
          * The fallback default image bundled with PolyUI
          * @since 0.11.0
          */
         @JvmField
-        val defaultImage = PolyImage("err.png")
+        val defaultImage = PolyImage("polyui/err.png")
 
         /**
          * Time the [block] and return how long it took, as well as logging with the [msg] if [log] is `true`.

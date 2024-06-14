@@ -98,6 +98,6 @@ fun main() {
         renderer = renderer,
     )
 
-    if (!PolyUI.isOnMac) window.setIcon("icon.png")
+    if (!PolyUI.isOnMac) window.setIcon("polyui/icon.png")
     window.open(polyUI)
 }
