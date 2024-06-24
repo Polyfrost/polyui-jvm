@@ -132,7 +132,7 @@ fun interface Positioner {
                     drawable.size[crs] = maxCross
                 }
                 fixVisibleSize(drawable)
-                rowCross = drawable.at(crs)
+                rowCross = drawable.at(crs) + crossPad
                 if (rows.size == 1) {
                     // asm: in this situation, the user specified a size, and as there is only 1 row, so we should
                     // make it so the actual cross limit is the size of the drawable
@@ -256,9 +256,9 @@ fun interface Positioner {
         }
 
         private fun fixVisibleSize(drawable: Drawable): Drawable {
-            if (!drawable.hasVisibleSize) return drawable
-            val vs = drawable.visibleSize
-            vs.smin(drawable.size)
+//            if (!drawable.hasVisibleSize) return drawable
+//            val vs = drawable.visibleSize
+//            vs.smin(drawable.size)
             return drawable
         }
     }

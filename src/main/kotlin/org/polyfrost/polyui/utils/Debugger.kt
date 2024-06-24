@@ -32,10 +32,8 @@ import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.countChildren
 import org.polyfrost.polyui.component.events
-import org.polyfrost.polyui.component.impl.Block
-import org.polyfrost.polyui.component.impl.PopupMenu
-import org.polyfrost.polyui.component.impl.Text
-import org.polyfrost.polyui.component.impl.TextInput
+import org.polyfrost.polyui.component.fix
+import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.KeyModifiers
@@ -149,6 +147,10 @@ class Debugger(private val polyUI: PolyUI) {
             val fs = eval.indexOf('(')
             if (fs < 1) return false
             val fn = eval.substring(0, fs)
+            if (fn == "fix") {
+                target.fix()
+                return true
+            }
             val methods = target::class.java.allMethods(fn)
             // no args specified
             if (fs + 1 == fe) {
@@ -170,8 +172,13 @@ class Debugger(private val polyUI: PolyUI) {
             return false
         }
         if (set == 0 || set == eval.length) return false
+        if(eval == "color = picker()") {
+            target.color = target.color.mutable()
+            ColorPicker(target.color.mutable().ref(), null, null, polyUI)
+            return true
+        }
         val sn = "set${eval.substring(0, set).trim().capitalize()}"
-        val arg = eval.substring(set + 1).trim()
+        val arg = eval.substring(set + 1).trim().removeSurrounding('"')
         val methods = target::class.java.allMethods(sn)
         for (method in methods) {
             if (method.parameterCount != 1) continue
@@ -234,11 +241,9 @@ class Debugger(private val polyUI: PolyUI) {
             polyUI.addExecutor(telemetryExecutor)
             val keyBinder = polyUI.keyBinder
             if (keyBinder == null) {
-                LOGGER.warn("PolyUI instance was created without a keybinder. Some debug features may not work.")
+                LOGGER.warn("PolyUI instance was created without a keybinder. Some debug features will not work.")
             } else {
-                keyBinder.add(printBind)
-                keyBinder.add(inspectBind)
-                keyBinder.add(evalBind)
+                keyBinder.add(printBind, inspectBind, evalBind)
             }
         }
         if (polyUI.settings.enableDebugKeybind) {
@@ -248,13 +253,11 @@ class Debugger(private val polyUI: PolyUI) {
                     polyUI.master.needsRedraw = true
                     val s = if (polyUI.settings.debug) {
                         polyUI.addExecutor(telemetryExecutor)
-                        polyUI.keyBinder?.add(printBind, inspectBind)
+                        polyUI.keyBinder?.add(printBind, inspectBind, evalBind)
                         "enabled"
                     } else {
                         polyUI.removeExecutor(telemetryExecutor)
-                        polyUI.keyBinder?.remove(printBind)
-                        polyUI.keyBinder?.remove(inspectBind)
-                        polyUI.keyBinder?.remove(evalBind)
+                        polyUI.keyBinder?.remove(printBind, inspectBind, evalBind)
                         "disabled"
                     }
                     LOGGER.info("Debug mode $s")
@@ -284,28 +287,26 @@ class Debugger(private val polyUI: PolyUI) {
                 fontSize = 10f,
             )
             master.debugDraw()
-            if (inputManager.focused == null) {
-                val mods = inputManager.keyModifiers
-                if (mods.hasControl) {
-                    val obj = inputManager.mouseOver
-                    if (obj != null) {
-                        val os = obj.toString()
-                        val w = renderer.textBounds(monospaceFont, os, 10f).x
-                        val pos = (mouseX - w / 2f).coerceIn(0f, this.size.x - w - 10f)
-                        renderer.rect(pos, mouseY - 14f, w + 10f, 14f, colors.component.bg.hovered)
-                        renderer.text(monospaceFont, pos + 5f, mouseY - 10f, text = os, colors.text.primary.normal, 10f)
-                        master.needsRedraw = true
-                    }
-                }
-                if (mods.hasShift) {
-                    val s = "${inputManager.mouseX}x${inputManager.mouseY}"
-                    val ww = renderer.textBounds(monospaceFont, s, 10f).x
-                    val ppos = (mouseX + 10f).coerceIn(0f, this.size.x - ww - 10f)
-                    val pposy = mouseY.coerceIn(0f, this.size.y - 14f)
-                    renderer.rect(ppos, pposy, ww + 10f, 14f, colors.component.bg.hovered)
-                    renderer.text(monospaceFont, ppos + 5f, pposy + 4f, text = s, colors.text.primary.normal, 10f)
+            val mods = inputManager.keyModifiers
+            if (mods.hasControl) {
+                val obj = inputManager.mouseOver
+                if (obj != null) {
+                    val os = obj.toString()
+                    val w = renderer.textBounds(monospaceFont, os, 10f).x
+                    val pos = (mouseX - w / 2f).coerceIn(0f, this.size.x - w - 10f)
+                    renderer.rect(pos, mouseY - 14f, w + 10f, 14f, colors.component.bg.hovered)
+                    renderer.text(monospaceFont, pos + 5f, mouseY - 10f, text = os, colors.text.primary.normal, 10f)
                     master.needsRedraw = true
                 }
+            }
+            if (mods.hasShift) {
+                val s = "${inputManager.mouseX}x${inputManager.mouseY}"
+                val ww = renderer.textBounds(monospaceFont, s, 10f).x
+                val ppos = (mouseX + 10f).coerceIn(0f, this.size.x - ww - 10f)
+                val pposy = mouseY.coerceIn(0f, this.size.y - 14f)
+                renderer.rect(ppos, pposy, ww + 10f, 14f, colors.component.bg.hovered)
+                renderer.text(monospaceFont, ppos + 5f, pposy + 4f, text = s, colors.text.primary.normal, 10f)
+                master.needsRedraw = true
             }
         }
     }
@@ -369,14 +370,14 @@ class Debugger(private val polyUI: PolyUI) {
             Text(
                 ("""
 parent: ${d._parent?.simpleName}   siblings: ${d._parent?.countChildren()?.dec()}
-children: ${d.countChildren()};  fbo: ${d.framebuffer}, renders: ${d.renders}
+children: ${d.countChildren()};  fbo: ${d.framebuffer}, renders: ${d.renders}, scrolling: ${if (!d.shouldScroll) "disabled" else if (d.scrolling) "on" else "off"}
 at: ${d.x}x${d.y}, pad: ${d.padding}
 size: ${d.size}, visible: ${if (d.hasVisibleSize) d.visibleSize else "null"}
 rgba: ${d.color.r}, ${d.color.g}, ${d.color.b}, ${d.color.a}
 scale: ${d.scaleX}x${d.scaleY};  skew: ${d.skewX}x${d.skewY}
 rotation: ${d.rotation};  alpha: ${d.alpha}
 redraw: ${d.needsRedraw};  ops=${d.operating};  scroll: ${d.scrolling}
-state: ${getInputStateString(d.inputState)}
+state: ${getInputStateString(d.inputState)}, focused: ${if (!d.focusable) "disabled" else if (d.focused) "yes" else "no"}
 ${d.alignment}
             """ + (d.debugString()?.let { "\n\n$it" } ?: "")).translated().dont(),
                 font = f

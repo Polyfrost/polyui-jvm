@@ -346,9 +346,10 @@ class GLFWWindow @JvmOverloads constructor(
                 }
                 time = glfwGetTime()
             }
+            if (polyUI.drew) glfwSwapBuffers(handle)
+
             if (timeout == 0L) glfwPollEvents()
             else glfwWaitEventsTimeout((timeout / 1_000_000_000.0))
-            if (polyUI.drew) glfwSwapBuffers(handle)
         }
 
         polyUI.cleanup()

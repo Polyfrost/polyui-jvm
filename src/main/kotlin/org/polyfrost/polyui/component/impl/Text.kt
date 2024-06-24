@@ -34,20 +34,25 @@ import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.utils.*
 
-open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f, at: Vec2? = null, alignment: Align = AlignDefault, visibleSize: Vec2? = null, focusable: Boolean = false, vararg children: Drawable?) :
+open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f, at: Vec2? = null, alignment: Align = AlignDefault, visibleSize: Vec2? = null, focusable: Boolean = false, limited: Boolean = false, vararg children: Drawable?) :
     Drawable(children = children, at, alignment, visibleSize = visibleSize, focusable = focusable) {
-    constructor(text: String, font: Font? = null, fontSize: Float = 12f, at: Vec2? = null, alignment: Align = AlignDefault, visibleSize: Vec2? = null, focusable: Boolean = false, vararg children: Drawable?) :
-            this(Translator.Text.Simple(text), font, fontSize, at, alignment, visibleSize, focusable, children = children)
+    constructor(text: String, font: Font? = null, fontSize: Float = 12f, at: Vec2? = null, alignment: Align = AlignDefault, visibleSize: Vec2? = null, focusable: Boolean = false, limited: Boolean = false, vararg children: Drawable?) :
+            this(Translator.Text.Simple(text), font, fontSize, at, alignment, visibleSize, focusable, limited, children = children)
 
     init {
         require(fontSize > 0f) { "Font size must be greater than 0" }
+        if (limited) {
+            require(visibleSize != null && visibleSize.y >= fontSize) { "visibleSize must be set and have a height larger than the fontSize" }
+            @Suppress("LeakingThis") // reason: this is safe as the only overrider is TextInput, and we don't do any unsafe operations
+            shouldScroll = false
+        }
     }
 
     /**
      * Mode that this text was created in. Must be one of [UNLIMITED], [WRAP], [SCROLLING_SINGLE_LINE], [LIMITED_WRAP].
      * @since 1.4.1
      */
-    protected val mode = if (visibleSize == null) UNLIMITED else when (visibleSize.y) {
+    protected val mode = if (visibleSize == null) UNLIMITED else if (limited) LIMITED else when (visibleSize.y) {
         0f -> WRAP
         fontSize -> SCROLLING_SINGLE_LINE
         else -> LIMITED_WRAP
@@ -65,26 +70,33 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
 
     // asm: initially it is a dummy object to save need for a field
     // it is immediately overwritten by setup()
-    // this is public so it can be inlined
-    @ApiStatus.Internal
-    var _translated = text
+    private var _text = text
         set(value) {
             if (field == value) return
             field = value
             if (initialized) updateTextBounds()
         }
 
-    var text: String
-        inline get() = _translated.string
+    open var text: String
+        get() = _text.string
         set(value) {
-            if (_translated.string == value) return
-            if (hasListenersFor(Event.Change.Text::class.java)) {
-                val ev = Event.Change.Text(value)
-                accept(ev)
-                if (ev.cancelled) return
+            if (_text.string == value) return
+            val old = _text.string
+            _text.string = value
+            if (initialized) {
+                updateTextBounds()
+                if (hasListenersFor(Event.Change.Text::class.java)) {
+                    val ev = Event.Change.Text(value)
+                    accept(ev)
+                    if (ev.cancelled) {
+                        // fuck. never mind!
+                        _text.string = old
+                        updateTextBounds()
+                        return
+                    }
+                }
             }
-            _translated.string = value
-            if (initialized) updateTextBounds()
+
         }
 
     /**
@@ -149,8 +161,8 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         set(value) {
             if (field == value) return
             field = value
-            fontSize = if (initialized) value * (polyUI.size.y / polyUI.iSize.y)
-            else value
+            fontSize = if (initialized) value * (polyUI.size.y / polyUI.iSize.y) else value
+            if (_font != null) spacing = (font.lineSpacing - 1f) * value
         }
 
     /**
@@ -161,7 +173,6 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         set(value) {
             if (field == value) return
             field = value
-            if (_font != null) spacing = (font.lineSpacing - 1f) * value
             if (initialized) updateTextBounds()
         }
 
@@ -197,11 +208,11 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
     override fun setup(polyUI: PolyUI): Boolean {
         if (initialized) return false
         palette = polyUI.colors.text.primary
-        if (_translated !is Translator.Text.Dont) {
-            _translated = if (_translated is Translator.Text.Formatted) {
-                polyUI.translator.translate(_translated.string, *(_translated as Translator.Text.Formatted).args)
+        if (_text !is Translator.Text.Dont) {
+            _text = if (_text is Translator.Text.Formatted) {
+                polyUI.translator.translate(_text.string, *(_text as Translator.Text.Formatted).args)
             } else {
-                polyUI.translator.translate(_translated.string)
+                polyUI.translator.translate(_text.string)
             }
             // asm: in translation files \\n is used for new line for some reason
             text = text.replace("\\n", "\n")
@@ -221,15 +232,26 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         }
         val mode = mode
         val maxWidth = when (mode) {
-            WRAP, LIMITED_WRAP -> visibleSize.x
+            LIMITED, WRAP, LIMITED_WRAP -> visibleSize.x
             else -> 0f
         }
         text.wrap(maxWidth, renderer, font, fontSize, lines)
         var w = 0f
-        var h = 0f
-        lines.fastEach { (_, bounds) ->
+        var h = spacing
+        var i = 0
+        lines.fastEach { (str, bounds) ->
             w = kotlin.math.max(w, bounds.x)
             h += bounds.y + spacing
+            if (mode == LIMITED && h >= visibleSize.y) {
+                // safe to not re-measure as we know the bounds will contain it.
+                // also won't co-mod thanks to fastEach
+                lines[i] = str.truncate(renderer, font, fontSize, bounds.x) to bounds
+                lines.cut(0, i)
+                size.set(w, h)
+                visibleSize.y = h
+                return
+            }
+            i++
         }
         size.set(w, h)
         when (mode) {
@@ -284,6 +306,11 @@ font: ${font.resourcePath.substringAfterLast('/')}; size: $fontSize;  weight: $f
         const val SCROLLING_SINGLE_LINE: Byte = 3
 
         /**
+         * Some text which is **not allowed to scroll**. It is instead trimmed using [truncate].
+         */
+        const val LIMITED: Byte = 4
+
+        /**
          * Return the name of the given constant.
          */
         @JvmStatic
@@ -292,6 +319,7 @@ font: ${font.resourcePath.substringAfterLast('/')}; size: $fontSize;  weight: $f
             WRAP -> "WRAP"
             LIMITED_WRAP -> "LIMITED_WRAP"
             SCROLLING_SINGLE_LINE -> "SCROLLING_SINGLE_LINE"
+            LIMITED -> "LIMITED"
             else -> throw IllegalArgumentException("invalid mode $mode")
         }
     }

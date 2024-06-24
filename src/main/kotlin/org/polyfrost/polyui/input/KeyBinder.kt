@@ -179,14 +179,24 @@ class KeyBinder(private val settings: Settings) {
         }
     }
 
+    fun remove(vararg binds: Bind) {
+        for (bind in binds) {
+            remove(bind)
+        }
+    }
+
     /**
-     * Begin recording for a keybind. This will return a CompletableFuture that will complete when the keybind is recorded.
+     * Begin recording for a keybind.
      *
-     * The keybind will be registered when the CompletableFuture completes.
+     * recording may be cancelled for the following reasons:
+     * - the ESC key is pressed
+     * - [record] is called again before the recording is completed, (i.e. starting a new one before the old one is finished)
+     * - the instance already has a keybind which matched the one being recorded
+     * - the keybind was attempted to be set to just left-click (which is not allowed)
      *
      * @param holdDurationNanos the duration that the keys have to be pressed in the resultant keybind
+     * @param callback the function that will be called when recording is completed. **not called if it is cancelled for any reason**.
      * @param function the function that will be run when the keybind is pressed
-     * @throws CancellationException if [Keys.ESCAPE] is pressed, or if a new recording is started before this one is completed.
      * @throws IllegalStateException if the keybind is already present
      * @since 0.24.0
      */

@@ -199,6 +199,7 @@ abstract class Drawable(
     var focused = false
         internal set(value) {
             if (!focusable) return
+            if (field == value) return
             if (value) accept(Event.Focused.Gained)
             else accept(Event.Focused.Lost)
             field = value
@@ -342,7 +343,20 @@ abstract class Drawable(
             field = value
         }
 
-    protected open val shouldScroll get() = true
+    open var shouldScroll = true
+        set(value) {
+            if (!value) {
+                if (xScroll != null) {
+                    this.x = xScroll?.from ?: this.x
+                    xScroll = null
+                }
+                if (yScroll != null) {
+                    this.y = yScroll?.from ?: this.y
+                    yScroll = null
+                }
+            }
+            field = value
+        }
 
     var acceptsInput = false
         get() = field && enabled
@@ -416,6 +430,7 @@ abstract class Drawable(
         get() = inputState > INPUT_DISABLED
         set(value) {
             if (value && inputState != INPUT_DISABLED) return
+            alpha = if (value) 1f else 0.8f
             inputState = if (value) INPUT_NONE else INPUT_DISABLED
             needsRedraw = true
         }
@@ -493,9 +508,12 @@ abstract class Drawable(
 
     /**
      * The alpha value of this drawable.
+     *
+     * **Note:** This value is clamped to the parent's alpha value.
      * @since 0.20.0
      */
     var alpha = 1f
+        get() = field.coerceIn(0f, _parent?.alpha ?: 1f)
 
     /** **a**t **c**ache **x** for transformations. */
     private var acx = 0f
@@ -593,8 +611,7 @@ abstract class Drawable(
                 y = 0f
             }
         }
-        if (alpha != 1f) renderer.globalAlphaAndCap(alpha)
-        else if (!enabled) renderer.globalAlphaAndCap(0.8f)
+        if (alpha != 1f) renderer.globalAlpha(alpha)
     }
 
     /** draw script for this drawable. */
@@ -612,7 +629,6 @@ abstract class Drawable(
         }
         if (xScroll != null || yScroll != null) renderer.popScissor()
         renderer.pop()
-        renderer.setAlphaCap(1f)
         if (acx != 0f) {
             x = acx
             y = acy
@@ -700,7 +716,7 @@ abstract class Drawable(
 
     /** add a debug render overlay for this drawable. This is always rendered regardless of the layout re-rendering if debug mode is on. */
     protected open fun debugRender() {
-        val color = if (inputState > INPUT_NONE) polyUI.colors.page.border20 else polyUI.colors.page.border10
+        val color = if (inputState > INPUT_NONE) polyUI.colors.page.border10 else polyUI.colors.page.border5
         val vs = visibleSize
         renderer.hollowRect(xScroll?.from ?: x, yScroll?.from ?: y, vs.x, vs.y, color, 1f)
     }
@@ -721,7 +737,6 @@ abstract class Drawable(
                 else event.amountX
                 val s = it.from - (size.x - visibleSize.x)
                 if (s >= it.from) {
-                    if (polyUI.settings.debug) PolyUI.LOGGER.info("removed x-scrolling from $simpleName as it was no longer necessary")
                     this.x = it.from
                     xScroll = null
                     return@let
@@ -735,7 +750,6 @@ abstract class Drawable(
                 it.to += event.amountY
                 val s = it.from - (size.y - visibleSize.y)
                 if (s >= it.from) {
-                    if (polyUI.settings.debug) PolyUI.LOGGER.info("removed y-scrolling from $simpleName as it was no longer necessary")
                     this.y = it.from
                     yScroll = null
                     return@let
@@ -772,8 +786,10 @@ abstract class Drawable(
     open fun setup(polyUI: PolyUI): Boolean {
         if (initialized) return false
         this.polyUI = polyUI
-        if (_palette == null) palette = polyUI.colors.component.bg
-        if (_color == null) _color = palette.normal
+        if (_color == null) {
+            if (_palette == null) palette = polyUI.colors.component.bg
+            _color = palette.normal
+        }
         children?.fastEach {
             it.setup(polyUI)
         }
@@ -798,34 +814,29 @@ abstract class Drawable(
     @Locking(`when` = "this.shouldScroll && this.hasVisibleSize && this.visibleSize > this.size")
     fun tryMakeScrolling() {
         if (!initialized) return
-        if (shouldScroll && hasVisibleSize) {
-            var scrolling = false
-            if (size.x > visibleSize.x) {
-                if (xScroll == null) {
-                    scrolling = true
-                    xScroll = Easing.Expo(Easing.Type.Out, 0L, x, x)
-                    if (polyUI.settings.debug) PolyUI.LOGGER.info("Enabled x-scrolling for $simpleName")
-                }
-            } else if (xScroll != null) {
-                if (polyUI.settings.debug) PolyUI.LOGGER.info("removed x-scrolling from $simpleName as it was no longer necessary")
-                this.x = xScroll?.from ?: this.x
-                xScroll = null
+        if (!shouldScroll) return
+        var scrolling = false
+        if (size.x > visibleSize.x) {
+            if (xScroll == null) {
+                scrolling = true
+                xScroll = Easing.Expo(Easing.Type.Out, 0L, x, x)
             }
-            if (size.y > visibleSize.y) {
-                if (yScroll == null) {
-                    scrolling = true
-                    yScroll = Easing.Expo(Easing.Type.Out, 0L, y, y)
-                    if (polyUI.settings.debug) PolyUI.LOGGER.info("Enabled y-scrolling for $simpleName")
-                }
-            } else if (yScroll != null) {
-                if (polyUI.settings.debug) PolyUI.LOGGER.info("removed y-scrolling from $simpleName as it was no longer necessary")
-                this.y = yScroll?.from ?: this.y
-                yScroll = null
+        } else if (xScroll != null) {
+            this.x = xScroll?.from ?: this.x
+            xScroll = null
+        }
+        if (size.y > visibleSize.y) {
+            if (yScroll == null) {
+                scrolling = true
+                yScroll = Easing.Expo(Easing.Type.Out, 0L, y, y)
             }
-            if (scrolling) {
-                acceptsInput = true
-                clipChildren()
-            }
+        } else if (yScroll != null) {
+            this.y = yScroll?.from ?: this.y
+            yScroll = null
+        }
+        if (scrolling) {
+            acceptsInput = true
+            clipChildren()
         }
         children?.fastEach { it.tryMakeScrolling() }
     }
@@ -941,7 +952,7 @@ abstract class Drawable(
     @Synchronized
     fun addOperation(drawableOp: DrawableOp): Boolean {
         if (!drawableOp.verify()) {
-            if (polyUI.settings.debug) PolyUI.LOGGER.warn("Dodged invalid op $drawableOp on ${this.simpleName}")
+//            if (polyUI.settings.debug) PolyUI.LOGGER.warn("Dodged invalid op $drawableOp on ${this.simpleName}")
             return false
         }
         if (operations == null) operations = ArrayList(5)

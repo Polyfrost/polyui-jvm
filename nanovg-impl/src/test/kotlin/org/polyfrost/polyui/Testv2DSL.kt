@@ -26,10 +26,15 @@ import org.polyfrost.polyui.component.onClick
 import org.polyfrost.polyui.component.setFont
 import org.polyfrost.polyui.component.withStates
 import org.polyfrost.polyui.dsl.polyUI
+import org.polyfrost.polyui.renderer.data.FontFamily
 import org.polyfrost.polyui.renderer.impl.GLFWWindow
 import org.polyfrost.polyui.renderer.impl.NVGRenderer
+import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.by
-import org.polyfrost.polyui.utils.*
+import org.polyfrost.polyui.utils.image
+import org.polyfrost.polyui.utils.open
+import org.polyfrost.polyui.utils.ref
+import org.polyfrost.polyui.utils.mutable
 
 fun main() {
     val window = GLFWWindow("PolyUI Test v2 (DSL)", 800, 500)
@@ -43,7 +48,8 @@ fun main() {
         group {
             Button("moon.svg".image()).add()
             Button("face-wink.svg".image(), "button.text").onClick {
-                ColorPicker(rgba(40, 250, 150).toMutable().ref(), mutableListOf(), mutableListOf(), polyUI)
+                color = color.mutable()
+                ColorPicker(color.mutable().ref(), mutableListOf(), mutableListOf(), polyUI)
                 true
             }.add()
             Switch(size = 28f).add()
@@ -76,10 +82,15 @@ fun main() {
                 text("blink three times when u feel it kicking in")
             }
         }
-        text("wrapping text") { setFont { boldItalic } }
-        text("when am i gonna stop being wise for my age and just start being wise when am i gonna gonna stop being a pretty younger things to guys\n\n" +
-                "when will i stop being??\n" +
-                "they all say that it gets better, it gets better but what if i dont :(", visibleSize = 420f by 0f)
-        textInput(visibleSize = 150f by 12f)
+        group(Align(mode = Align.Mode.Vertical)) {
+            text("wrapping text") { setFont(FontFamily::boldItalic) }
+            text(
+                "when am i gonna stop being wise for my age and just start being wise when am i gonna gonna stop being a pretty younger things to guys\n\n" +
+                        "when will i stop being??\n" +
+                        "they all say that it gets better, it gets better but what if i dont :(", visibleSize = 420f by 0f
+            )
+            text("i am some text that has been limited, so at some point i will stop showing up and i will just be cut off, which is a pretty handy feature.", limited = true, visibleSize = 400f by 12f)
+            textInput(visibleSize = 150f by 12f)
+        }
     }.open(window)
 }

@@ -36,7 +36,7 @@ class Settings {
      */
     @get:JvmName("isDebugMode")
     @set:JvmName("enableDebugMode")
-    var debug = System.getProperty("polyui.debug", "true").toBoolean()
+    var debug = System.getProperty("polyui.debug", "false").toBoolean()
 
     /** enable the debug keybind in the window (Ctrl+Shift+I)
      * @see debug*/
@@ -181,7 +181,7 @@ class Settings {
     @get:JvmName("isAggressiveCleanupEnabled")
     @set:JvmName("enableAggressiveCleanup")
     @ApiStatus.Experimental
-    var aggressiveCleanup = false
+    var aggressiveCleanup = true
 
     /**
      * This property will run the cleanup() method in a shutdown hook which will free memory used by PolyUI.

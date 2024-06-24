@@ -47,6 +47,14 @@ fun StringBuilder.append(c: Char, repeats: Int): StringBuilder {
     return this
 }
 
+fun String.removeSurrounding(char: Char): String {
+    if (this.length < 2) return this
+    if (this[0] == char && this[lastIndex] == char) {
+        return this.substring(1, lastIndex)
+    }
+    return this
+}
+
 fun String.substringSafe(fromIndex: Int, toIndex: Int = lastIndex): String {
     if (fromIndex > toIndex) {
         return substringSafe(toIndex, fromIndex)

@@ -44,11 +44,11 @@ fun Int.toColor(): PolyColor {
     return PolyColor.Static(cmps[0], cmps[1], cmps[2], (this shr 24 and 0xFF) / 255f)
 }
 
-fun PolyColor.Gradient.toAnimatableGradient() = if (this is PolyColor.Gradient.Animated) this else PolyColor.Gradient.Animated(this.toAnimatable(), color2.toAnimatable(), type)
+fun PolyColor.Gradient.animatableGradient() = if (this is PolyColor.Gradient.Animated) this else PolyColor.Gradient.Animated(this.animatable(), color2.animatable(), type)
 
-fun PolyColor.toAnimatable() = if (this is PolyColor.Animated) this else PolyColor.Animated(this.hue, this.saturation, this.brightness, this.alpha)
+fun PolyColor.animatable() = if (this is PolyColor.Animated) this else PolyColor.Animated(this.hue, this.saturation, this.brightness, this.alpha)
 
-fun PolyColor.toMutable() = if (this is PolyColor.Mutable) this else PolyColor.Mutable(this.hue, this.saturation, this.brightness, this.alpha)
+fun PolyColor.mutable() = if (this is PolyColor.Mutable) this else PolyColor.Mutable(this.hue, this.saturation, this.brightness, this.alpha)
 
 /**
  * Turn the given hex string into a color.
@@ -91,11 +91,11 @@ fun String.toColor(alpha: Float = 1f) = (this + (alpha * 255f).toInt().toString(
 
 @OptIn(ExperimentalStdlibApi::class)
 fun PolyColor.toHex(alpha: Boolean = true, hash: Boolean = true): String {
-    val c = if (alpha) argb else argb and 0x00FFFFFF
-    return when (hash) {
-        true -> "#${c.toHexString(HexFormat.UpperCase)}"
-        false -> c.toHexString(HexFormat.UpperCase)
+    val h = when (hash) {
+        true -> "#${rgba.toHexString(HexFormat.UpperCase)}"
+        false -> rgba.toHexString(HexFormat.UpperCase)
     }
+    return if (alpha) h else h.substring(0, h.length - 2)
 }
 
 inline val Int.red get() = this shr 16 and 0xFF

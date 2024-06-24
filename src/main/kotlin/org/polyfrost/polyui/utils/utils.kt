@@ -224,7 +224,7 @@ fun FloatArray.set(value: Float): FloatArray {
  * Ensure that this list is at least [size] elements long, and if it is not, add elements to it using the given [initializer].
  * @since 1.0.7
  */
-fun <T> MutableList<T>.ensureSize(size: Int, initializer: (Int) -> T): MutableList<T> {
+inline fun <T> MutableList<T>.ensureSize(size: Int, initializer: (Int) -> T): MutableList<T> {
     if (this.size < size) {
         for (i in this.size until size) {
             this.add(initializer(i))

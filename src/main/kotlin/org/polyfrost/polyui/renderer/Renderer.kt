@@ -53,30 +53,14 @@ interface Renderer : AutoCloseable {
      */
     fun endFrame()
 
-    /** Set the alpha for all future draw calls, in the range (0-1), until [reset][resetGlobalAlpha].
-     *
+    /**
+     * Set the alpha for all future draw calls, in the range (0-1), until [reset][resetGlobalAlpha].
      */
     fun globalAlpha(alpha: Float)
 
     /**
-     * Set the alpha for all future draw calls ([globalAlpha]), and prevent any further calls ([setAlphaCap]) exceeding [alpha] until [resetGlobalAlpha] is called.
-     * @since 1.3.11
-     */
-    fun globalAlphaAndCap(alpha: Float) {
-        setAlphaCap(alpha)
-        globalAlpha(alpha)
-    }
-
-    /**
-     * Set a maximum alpha for all future draw calls, in the range (0-1).
+     * reset the global alpha to normal.
      *
-     * If this is set, calls to [globalAlpha] will not exceed this value.
-     */
-    fun setAlphaCap(cap: Float)
-
-    /** reset the global alpha to normal.
-     *
-     * Respects the [setAlphaCap], so may not actually reset fully if cap is set to a value lower than 1.
      * @see globalAlpha
      */
     fun resetGlobalAlpha() = globalAlpha(1f)

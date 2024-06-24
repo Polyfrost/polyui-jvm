@@ -26,6 +26,7 @@ import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.input.Keys
+import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.Cursor
@@ -46,7 +47,7 @@ open class TextInput(
     alignment: Align = AlignDefault,
     visibleSize: Vec2? = null,
     vararg children: Drawable?,
-) : Text(text.translated().dont(), font, fontSize, at, alignment, visibleSize, true, *children) {
+) : Text(text.translated().dont(), font, fontSize, at, alignment, visibleSize, true, false, *children) {
 
     private val selectBoxes = ArrayList<Pair<Vec2, Vec2>>()
 
@@ -68,6 +69,11 @@ open class TextInput(
 
     val selection get() = text.substringSafe(caret, select)
 
+    /**
+     * used to induce a scroll on the component when the text is too long so it follows it
+     */
+    private val scrollEvent = Event.Mouse.Scrolled(-1000f, -1000f, Modifiers(0))
+
     private var _placeholder: Translator.Text = Translator.Text.Simple(placeholder)
 
     var placeholder: String
@@ -75,6 +81,11 @@ open class TextInput(
         set(value) {
             _placeholder.string = value
         }
+
+    @set:Deprecated("This property is not supported for TextInput", level = DeprecationLevel.HIDDEN)
+    override var shouldScroll
+        get() = true
+        set(_) {}
 
     init {
         acceptsInput = true
@@ -292,11 +303,7 @@ open class TextInput(
         ).x
         cposy = lni * (fontSize + spacing)
 
-        xScroll?.let {
-            val s = it.from
-            val e = s + visibleSize.x
-            // todo make it autoscroll using this method !
-        }
+        if (xScroll != null) accept(scrollEvent)
     }
 
     // todo make this work at some point
@@ -380,7 +387,7 @@ open class TextInput(
 
     private fun caretFromMouse(mouseX: Float, mouseY: Float) {
         val line = ((mouseY - y) / (fontSize + spacing)).toInt()
-        val p = lines[line.coerceAtMost(lines.lastIndex)].first.closestToPoint(renderer, font, fontSize, mouseX - x)
+        val p = lines[line.coerceIn(0, lines.lastIndex)].first.closestToPoint(renderer, font, fontSize, mouseX - x)
         caret = if (p == -1) text.length else p
         caretPos()
     }

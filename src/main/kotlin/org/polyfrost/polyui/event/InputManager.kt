@@ -103,6 +103,10 @@ class InputManager(
 
     /** This method should be called when a non-printable, but representable key is pressed. */
     fun keyDown(key: Keys) {
+        if (key == Keys.ESCAPE && focused != null) {
+            focus(null)
+            return
+        }
         val event = Event.Focused.KeyPressed(key, keyModifiers)
         if (keyBinder?.accept(event) == true) return
         focused?.accept(event)
@@ -139,7 +143,9 @@ class InputManager(
      * force the mouse position to be updated.
      * @since 0.18.5
      */
-    fun recalculate() = mouseMoved(mouseX, mouseY)
+    fun recalculate() {
+        master?.let { mouseOver = rayCheck(it, mouseX, mouseY) }
+    }
 
     /**
      * Drop the current mouse over drawable.
@@ -218,6 +224,7 @@ class InputManager(
 
     /** call this function to update the mouse position. */
     fun mouseMoved(x: Float, y: Float) {
+        if (mouseX == x && mouseY == y) return
         mouseX = x
         mouseY = y
         if (mouseDown) {
@@ -255,9 +262,6 @@ class InputManager(
             }
             clickTimer = curr
         }
-//        if (focused?.isInside(mouseX, mouseY) != true) {
-//            focus(null)
-//        }
         mouseOver?.inputState = INPUT_HOVERED
 
         // fast path: no need to alloc or check for anything on simple
@@ -265,6 +269,15 @@ class InputManager(
             val r = Event.Mouse.Released
             r.set(mouseX, mouseY)
             dispatch(r, true)
+            mouseOver?.let {
+                if (!it.isInside(mouseX, mouseY)) {
+                    mouseOver = null
+                    return
+                }
+            }
+            focused?.let {
+                if (!it.isInside(mouseX, mouseY)) unfocus()
+            }
             val c = Event.Mouse.Clicked
             c.set(mouseX, mouseY)
             if (!dispatch(c)) safeFocus(mouseOver)
@@ -329,6 +342,21 @@ class InputManager(
             candidate = candidate._parent
         }
         return false
+    }
+
+    fun unfocus() {
+        focused?.let {
+            it.focused = false
+            var p = it._parent
+            while (p != null) {
+                if (p.focused) {
+                    focused = p
+                    return
+                }
+                p = p._parent
+            }
+            focused = null
+        }
     }
 
     /**

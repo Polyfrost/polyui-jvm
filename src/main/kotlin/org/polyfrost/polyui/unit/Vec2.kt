@@ -151,6 +151,15 @@ open class Vec2(open var x: Float, open var y: Float) : Cloneable, Comparable<Ve
         this.y = kotlin.math.max(other.y, this.y)
     }
 
+    /**
+     * Remove the floating point part of the vector.
+     * @since 1.4.3
+     */
+    fun fix() {
+        x = x.toInt().toFloat()
+        y = y.toInt().toFloat()
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is Vec2) return false

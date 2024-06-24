@@ -19,6 +19,8 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+@file:OptIn(ExperimentalContracts::class)
+
 package org.polyfrost.polyui.dsl
 
 import org.jetbrains.annotations.ApiStatus
@@ -37,54 +39,88 @@ import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.image
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
 open class DrawableDSL(@PublishedApi internal val _this: Drawable) {
     inline operator fun <S : Drawable> S.invoke(init: (DrawableDSL.(S) -> Unit) = {}): S {
-        val s = this.apply { init.invoke(DrawableDSL(this), this) }
-        _this.addChild(s)
-        return s
+        init(DrawableDSL(this), this)
+        _this.addChild(this)
+        return this
     }
 
     inline fun <S : Drawable> S.use(init: (DrawableDSL.(S) -> Unit) = {}): S {
-        val s = this.apply { init.invoke(DrawableDSL(this), this) }
-        _this.addChild(s)
-        return s
+        contract {
+            callsInPlace(init, InvocationKind.EXACTLY_ONCE)
+        }
+        init(DrawableDSL(this), this)
+        _this.addChild(this)
+        return this
     }
 
     inline fun <S : Drawable> S.add(init: (DrawableDSL.(S) -> Unit) = {}): S {
-        val s = this.apply { init.invoke(DrawableDSL(this), this) }
-        _this.addChild(s)
-        return s
+        contract {
+            callsInPlace(init, InvocationKind.EXACTLY_ONCE)
+        }
+        init(DrawableDSL(this), this)
+        _this.addChild(this)
+        return this
     }
 
     inline fun block(size: Vec2? = null, alignment: Align = AlignDefault, init: (DrawableDSL.(Block) -> Unit) = {}): Block {
-        val o = Block(size = size, alignment = alignment).apply { init.invoke(DrawableDSL(this), this) }
+        contract {
+            callsInPlace(init, InvocationKind.EXACTLY_ONCE)
+        }
+        val o = Block(size = size, alignment = alignment)
+        init(DrawableDSL(o), o)
         _this.addChild(o)
         return o
     }
 
-    inline fun image(image: PolyImage, alignment: Align = AlignDefault, init: (Image.() -> Unit) = { }): Image {
-        val o = Image(image = image, alignment = alignment).apply { init.invoke(this) }
+    inline fun image(image: PolyImage, alignment: Align = AlignDefault, init: (Image.() -> Unit) = {}): Image {
+        contract {
+            callsInPlace(init, InvocationKind.EXACTLY_ONCE)
+        }
+        val o = Image(image = image, alignment = alignment)
+        init(o)
         _this.addChild(o)
         return o
     }
 
-    inline fun image(image: String, alignment: Align = AlignDefault, init: (Image.() -> Unit) = {}) = image(image.image(), alignment, init)
+    inline fun image(image: String, alignment: Align = AlignDefault, init: (Image.() -> Unit) = {}) {
+        contract {
+            callsInPlace(init, InvocationKind.EXACTLY_ONCE)
+        }
+        image(image.image(), alignment, init)
+    }
 
-    inline fun text(text: String, visibleSize: Vec2? = null, alignment: Align = AlignDefault, init: Text.() -> Unit = {}): Text {
-        val o = Text(text = text, visibleSize = visibleSize, alignment = alignment).apply { init.invoke(this) }
+    inline fun text(text: String, visibleSize: Vec2? = null, alignment: Align = AlignDefault, limited: Boolean = false, init: Text.() -> Unit = {}): Text {
+        contract {
+            callsInPlace(init, InvocationKind.EXACTLY_ONCE)
+        }
+        val o = Text(text = text, visibleSize = visibleSize, alignment = alignment, limited = limited)
+        init(o)
         _this.addChild(o)
         return o
     }
 
     inline fun textInput(text: String = "", visibleSize: Vec2? = null, placeholder: String = "polyui.textinput.placeholder", alignment: Align = AlignDefault, init: TextInput.() -> Unit = {}): TextInput {
-        val o = TextInput(text = text, visibleSize = visibleSize, placeholder = placeholder, alignment = alignment).apply { init.invoke(this) }
+        contract {
+            callsInPlace(init, InvocationKind.EXACTLY_ONCE)
+        }
+        val o = TextInput(text = text, visibleSize = visibleSize, placeholder = placeholder, alignment = alignment)
+        init(o)
         _this.addChild(o)
         return o
     }
 
     inline fun group(alignment: Align = AlignDefault, init: DrawableDSL.(Group) -> Unit): Group {
-        val o = Group(alignment = alignment).apply { init.invoke(DrawableDSL(this), this) }
+        contract {
+            callsInPlace(init, InvocationKind.EXACTLY_ONCE)
+        }
+        val o = Group(alignment = alignment)
+        init(DrawableDSL(o), o)
         _this.addChild(o)
         return o
     }
@@ -106,7 +142,7 @@ open class DrawableDSL(@PublishedApi internal val _this: Drawable) {
             }
 
         fun build() = PolyUI(
-            drawables = _this.children?.toTypedArray() ?: arrayOf<Drawable>(),
+            drawables = _this.children?.toTypedArray() ?: arrayOf(),
             renderer, settings, inputManager, translator, backgroundColor,
             alignment, colors, size
         )

@@ -66,6 +66,8 @@ abstract class PolyColor {
      */
     abstract val argb: Int
 
+    val rgba get() = (argb shl 8) or (argb ushr 24 and 0xFF)
+
     /**
      * @return true if the color is transparent (`alpha == 0f`)
      */

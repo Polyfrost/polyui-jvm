@@ -26,6 +26,7 @@ package org.polyfrost.polyui.component.impl
 
 import org.jetbrains.annotations.Contract
 import org.polyfrost.polyui.PolyUI
+import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.component.*
 import org.polyfrost.polyui.event.Event
@@ -76,7 +77,7 @@ fun Switch(at: Vec2? = null, size: Float, padding: Float = 3f, state: Boolean = 
         }
     }.namedId("Switch").also {
         if (state) {
-            it.afterParentInit(2) {
+            it.afterParentInit {
                 it.palette = polyUI.colors.brand.fg
                 this[0].x += this.height * (lateralStretch - 1f)
             }
@@ -160,7 +161,7 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2? = null, fontSiz
         Image("polyui/chevron-down.svg"),
         at = at,
         focusable = true,
-        alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2(12f, 6f), maxRowSize = 0),
+        alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2(8f, 6f), maxRowSize = 0),
     ).withStates().withBoarder()
     val dropdown = Block(
         alignment = Align(mode = Align.Mode.Vertical, pad = Vec2(padding, 6f)),
@@ -200,15 +201,14 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2? = null, fontSiz
         }
         Event.Lifetime.PostInit then {
             dropdown.setup(polyUI)
-            val original = this.width
             this.width = dropdown.width
-            this[1].x += (this.width - original)
+            this[1].x = this.x + (this.width - this[1].width - alignment.pad.x)
 
             val first = dropdown[initial]
             (this[0] as Text).text = ((if (first.children!!.size == 2) first[1] else first[0]) as Text).text
         }
         Event.Mouse.Companion.Clicked then {
-            if (polyUI.inputManager.focused != null) {
+            if (focused) {
                 polyUI.unfocus()
                 true
             } else false
@@ -255,11 +255,11 @@ fun Slider(at: Vec2? = null, min: Float = 0f, max: Float = 100f, initialValue: F
 
                 override fun unapply(value: Float) {
                     self.apply {
-                        val maxRadius = this.size.x / 2.8f
-                        val rads = maxRadius * value
-                        val circleSize = rads * 2f
-                        val offset = (this.size.x - circleSize) / 2f
-                        renderer.rect(x + offset, y + offset, circleSize, circleSize, polyUI.colors.brand.fg.normal, rads)
+                        val maxSize = this.size.x - 6f
+                        val maxRadius = this.radii[0] - 2f
+                        val current = maxSize * value
+                        val offset = (this.size.x - current) / 2f
+                        renderer.rect(x + offset, y + offset, current, current, polyUI.colors.brand.fg.normal, maxRadius * value)
                     }
                 }
 
@@ -279,20 +279,12 @@ fun Slider(at: Vec2? = null, min: Float = 0f, max: Float = 100f, initialValue: F
         at = at,
         size = size,
         alignment = Align(Align.Main.Start, pad = Vec2.ZERO),
-    ).onClick {
-        val bar = this[0]
+    ).onPress {
         val ptr = this[1]
-        val half = ptr.size.x / 2f
-        ptr.x = it.x - half
-        ptr.x = ptr.x.coerceIn(bar.x - half, bar.x + bar.size.x - half)
-        bar[0].width = ptr.x - bar.x + half
-
-        if (hasListenersFor(Event.Change.Number::class.java)) {
-            val progress = (ptr.x + half - bar.x) / size.x
-            var value = (max - min) * progress
-            if (!floating) value = value.toInt().toFloat()
-            accept(Event.Change.Number(value))
-        } else false
+        ptr.x = it.x - ptr.width / 2f
+        this.polyUI.inputManager.recalculate()
+        ptr.inputState = INPUT_PRESSED
+        ptr.accept(it)
     }.afterInit {
         val bar = this[0]
         val ptr = this[1]
@@ -344,15 +336,20 @@ fun BoxedTextInput(
     pre: String? = null,
     placeholder: String = "polyui.textinput.placeholder",
     initialValue: String = "",
+    fontSize: Float = 12f,
+    center: Boolean = false,
     post: String? = null,
     size: Vec2? = null,
 ): Drawable = Block(
     if (image != null) Image(image).padded(6f, 0f) else null,
     if (pre != null) Text(pre).padded(6f, 0f) else null,
-    TextInput(placeholder = placeholder, text = initialValue, visibleSize = size),
+    Group(
+        TextInput(placeholder = placeholder, text = initialValue, fontSize = fontSize).onType { parent.repositionChildren() },
+        alignment = Align(main = if(center) Align.Main.Center else Align.Main.Start, pad = Vec2.ZERO),
+        size = size,
+    ),
     if (post != null) Block(Text(post), alignment = Align(pad = 6f by 10f), radii = floatArrayOf(0f, 8f, 0f, 8f)).afterInit { color = polyUI.colors.page.bg.normal } else null,
-    size = size,
-    alignment = Align(pad = Vec2.ZERO)
+    alignment = Align(pad = Vec2.ZERO, main = Align.Main.SpaceBetween)
 ).withBoarder()
 
 /**
@@ -361,7 +358,7 @@ fun BoxedTextInput(
  * @param openNow if `true`, the menu is opened immediately. else, call [PolyUI.focus] on the return value to open it.
  */
 @Contract("_, _, _, null, false, _ -> fail")
-fun PopupMenu(vararg children: Drawable, size: Vec2? = null, align: Align = AlignDefault, polyUI: PolyUI?, openNow: Boolean = true, position: Point = Point.At): Block {
+fun PopupMenu(vararg children: Drawable?, size: Vec2? = null, align: Align = AlignDefault, polyUI: PolyUI?, openNow: Boolean = true, position: Point = Point.At): Block {
     val it = Block(
         focusable = true,
         size = size,

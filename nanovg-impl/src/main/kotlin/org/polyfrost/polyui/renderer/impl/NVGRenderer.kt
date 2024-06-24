@@ -43,7 +43,6 @@ import org.polyfrost.polyui.utils.toDirectByteBuffer
 import org.polyfrost.polyui.utils.toDirectByteBufferNT
 import java.nio.ByteBuffer
 import java.util.IdentityHashMap
-import kotlin.math.min
 import org.polyfrost.polyui.color.PolyColor as Color
 
 object NVGRenderer : Renderer {
@@ -57,7 +56,6 @@ object NVGRenderer : Renderer {
     private val fonts = IdentityHashMap<Font, NVGFont>()
     private var defaultFont: NVGFont? = null
     private var defaultImage = 0
-    private var alphaCap = 1f
     private var vg: Long = 0L
     private var raster: Long = 0L
     private var drawing = false
@@ -98,13 +96,7 @@ object NVGRenderer : Renderer {
         drawing = false
     }
 
-    override fun globalAlpha(alpha: Float) {
-        nvgGlobalAlpha(vg, min(alpha.coerceIn(0f, 1f), alphaCap))
-    }
-
-    override fun setAlphaCap(cap: Float) {
-        alphaCap = cap.coerceIn(0f, 1f)
-    }
+    override fun globalAlpha(alpha: Float) = nvgGlobalAlpha(vg, alpha)
 
     override fun translate(x: Float, y: Float) = nvgTranslate(vg, x, y)
 

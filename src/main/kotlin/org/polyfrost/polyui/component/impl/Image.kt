@@ -47,8 +47,6 @@ open class Image(
             if (initialized) renderer.initImage(value)
         }
 
-    override val shouldScroll get() = false
-
     override fun render() {
         renderer.image(image, x, y, width, height, radii, color.argb)
         backgroundColor?.let { renderer.rect(x, y, width, height, color, radii) }

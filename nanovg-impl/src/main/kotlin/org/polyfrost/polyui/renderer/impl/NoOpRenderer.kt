@@ -42,9 +42,6 @@ object NoOpRenderer : Renderer {
     override fun globalAlpha(alpha: Float) {
     }
 
-    override fun setAlphaCap(cap: Float) {
-    }
-
     override fun translate(x: Float, y: Float) {
     }
 

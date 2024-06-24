@@ -68,10 +68,6 @@ class AWTRenderer : Renderer {
         g2d.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha)
     }
 
-    override fun setAlphaCap(cap: Float) {
-        //ok
-    }
-
     override fun translate(x: Float, y: Float) {
         g2d.translate(x.toDouble(), y.toDouble())
     }

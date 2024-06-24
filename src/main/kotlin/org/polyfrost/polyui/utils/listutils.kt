@@ -209,7 +209,7 @@ fun <E> MutableList<E>.addOrReplace(element: E): E? {
  */
 fun <L, E> L.cut(from: Int, to: Int): L where L : MutableList<E>, L : RandomAccess {
     require(from <= to) { "from must be less than or equal to to ($from..$to)" }
-    require(from >= 0 && to < this.size) { "from and to must be within the bounds of the list (0..${this.size - 1})" }
+    require(from >= 0 && to < this.size) { "from and to must be within the bounds of the list (got $from..$to, expected 0..${this.size - 1})" }
 
     for (i in this.size - 1 downTo to + 1) {
         this.removeAt(i)

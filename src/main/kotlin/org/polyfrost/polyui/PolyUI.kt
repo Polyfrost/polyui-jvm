@@ -386,7 +386,6 @@ class PolyUI @JvmOverloads constructor(
         } else {
             drew = false
         }
-        val needsRedraw = master.needsRedraw
         if (!canPauseRendering) master.needsRedraw = true
         keyBinder?.update(delta, inputManager.mods)
         var wait = Long.MAX_VALUE
@@ -396,7 +395,7 @@ class PolyUI @JvmOverloads constructor(
             wait = min(wait, o)
             false
         }
-        return if (needsRedraw) 0L else wait
+        return if (master.needsRedraw) 0L else wait
     }
 
     /**
@@ -436,11 +435,11 @@ class PolyUI @JvmOverloads constructor(
      * @param focusable the element to set focus on
      * @return true if focus was successfully set, false if the provided focusable is already focused
      */
-    fun focus(focusable: Drawable?) {
+    fun focus(focusable: Drawable) {
         if (inputManager.focus(focusable)) master.needsRedraw = true
     }
 
-    fun unfocus() = inputManager.focus(null)
+    fun unfocus() = inputManager.unfocus()
 
     /**
      * Return the key name for the given key code, or "Unknown" if the key is not mapped / no window is present.

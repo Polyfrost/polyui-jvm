@@ -22,99 +22,122 @@
 package org.polyfrost.polyui.component.impl
 
 import org.polyfrost.polyui.PolyUI
+import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.*
+import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Point
+import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
-import org.polyfrost.polyui.utils.*
+import org.polyfrost.polyui.utils.image
+import org.polyfrost.polyui.utils.mutable
+import org.polyfrost.polyui.utils.radii
+import org.polyfrost.polyui.utils.toHex
 import kotlin.jvm.internal.Ref
+import kotlin.math.roundToInt
 
-fun ColorPicker(color: Ref.ObjectRef<PolyColor.Mutable>, faves: MutableList<PolyColor>, recents: MutableList<PolyColor>, polyUI: PolyUI?, openNow: Boolean = true, position: Point = Point.At): Block {
-    faves.ensureSize(6) {
-        PolyColor.TRANSPARENT
-    }
-    recents.ensureSize(6) {
-        PolyColor.TRANSPARENT
-    }
+fun ColorPicker(color: Ref.ObjectRef<PolyColor.Mutable>, faves: MutableList<PolyColor>?, recents: MutableList<PolyColor>?, polyUI: PolyUI?, openNow: Boolean = true, position: Point = Point.At): Block {
     val p = PopupMenu(
         Group(
             Dropdown("polyui.color.solid", "polyui.color.gradient", "polyui.color.chroma", textLength = 152f),
             Image("polyui/close.svg".image()).setDestructivePalette().withStates().onClick {
                 this.polyUI.unfocus()
             },
-            size = 280f by 40f,
-            alignment = Align(main = Align.Main.SpaceBetween),
-        ).padded(12f, 12f),
-        Group(
-            ColorPickingBox(color),
-            Image(
-                PolyImage("polyui/color/hue.png"),
-                size = 16f by 200f,
-                radii = 8f.radii(),
-                children = arrayOf(
-                    Block(at = 3f by 0f, size = 10f by 10f, radii = 5f.radii(), color = PolyColor.TRANSPARENT).draggable(withX = false, onDrag = {
-                        y = y.coerceIn(parent.y, parent.y + parent.height - height)
-                        color.element.hue = (y - parent.y) / (parent.height - height)
-                    }).withBoarder(PolyColor.WHITE, 2f),
-                ),
-            ),
-            Image(
-                PolyImage("polyui/color/alpha.png"),
-                size = 16f by 200f,
-                radii = 8f.radii(),
-                children = arrayOf(
-                    Block(at = 3f by 0f, size = 10f by 10f, radii = 5f.radii(), color = PolyColor.TRANSPARENT).draggable(withX = false, onDrag = {
-                        y = y.coerceIn(parent.y, parent.y + parent.height - height)
-                        color.element.alpha = 1f - (y - parent.y) / (parent.height - height)
-                    }).withBoarder(PolyColor.WHITE, 2f),
-                ),
-            ),
-            alignment = Align(pad = 16f by 8f),
+            size = 264f by 32f,
+            alignment = Align(pad = Vec2.ZERO, main = Align.Main.SpaceBetween),
         ),
-        Block(
-            Text("polyui.color.hex"),
-            size = 48f by 32f,
+        ColorPickingBox(color).onPress {
+            val picker = this[0]
+            picker.x = it.x - picker.width / 2f
+            picker.y = it.y - picker.height / 2f
+            this.polyUI.inputManager.recalculate()
+            picker.inputState = INPUT_PRESSED
+            picker.accept(it)
+        }.onDrag {
+            (this.parent[5][0][0] as TextInput).text = color.element.toHex(alpha = false)
+        },
+        Image(
+            PolyImage("polyui/color/hue.png"),
+            size = 16f by 200f,
+            radii = 8f.radii(),
+            children = arrayOf(
+                Block(size = 12f by 12f, radii = 6f.radii(), color = PolyColor.TRANSPARENT).draggable(withX = false, onDrag = {
+                    y = y.coerceIn(parent.y, parent.y + parent.height - height)
+                    color.element.hue = (y - parent.y) / (parent.height - height)
+                    (this.parent.parent[5][0][0] as TextInput).text = color.element.toHex(alpha = false)
+                }).withBoarder(PolyColor.WHITE, 2f),
+            ),
+            alignment = Align(pad = 2f by 2f)
+        ).padded(2f, 0f).onPress {
+            val picker = this[0]
+            picker.y = it.y - picker.height / 2f
+            this.polyUI.inputManager.recalculate()
+            picker.inputState = INPUT_PRESSED
+            picker.accept(it)
+        },
+        Image(
+            PolyImage("polyui/color/alpha.png"),
+            size = 16f by 200f,
+            radii = 8f.radii(),
+            children = arrayOf(
+                Block(size = 12f by 12f, radii = 6f.radii(), color = PolyColor.TRANSPARENT).draggable(withX = false, onDrag = {
+                    y = y.coerceIn(parent.y, parent.y + parent.height - height)
+                    color.element.alpha = 1f - (y - parent.y) / (parent.height - height)
+                    (this.parent.parent[6][0][0] as TextInput).text = (color.element.alpha * 100f).roundToInt().toString()
+                }).withBoarder(PolyColor.WHITE, 2f),
+            ),
+            alignment = Align(pad = 2f by 2f)
+        ).padded(2f, 0f).onPress {
+            val picker = this[0]
+            picker.y = it.y - picker.height / 2f
+            this.polyUI.inputManager.recalculate()
+            picker.inputState = INPUT_PRESSED
+            picker.accept(it)
+        },
+        Dropdown(
+            "polyui.color.hex",
+            "polyui.color.rgb",
         ),
         BoxedTextInput(
             placeholder = "#FFFFFF",
             initialValue = color.element.toHex(alpha = false),
-            size = 82f by 32f,
+            center = true,
+            size = 78f by 32f,
         ),
         BoxedTextInput(
-            placeholder = "100%",
-            initialValue = "${(color.element.alpha * 100f).toInt()}%",
-            size = 72f by 32f,
+            placeholder = "100",
+            initialValue = "${(color.element.alpha * 100f).toInt()}",
+            post = " % ",
+            center = true,
+            size = 42f by 32f
         ),
-        Block(Image("info.svg"), size = 48f by 32f),
-        Block(Image("info.svg"), size = 32f by 32f),
-        *faves.mapToArray { Block(size = 32f by 32f, color = it).withBoarder() },
-        Block(Image("info.svg"), size = 32f by 32f),
-        *recents.mapToArray { Block(size = 32f by 32f, color = it).withBoarder() },
-        size = 296f by 0f,
-        align = Align(pad = 8f by 8f),
+        Image("info.svg"),
+        size = 288f by 0f,
+        align = Align(pad = 12f by 12f),
         polyUI = polyUI,
         openNow = openNow,
         position = position,
     ).namedId("ColorPicker")
+
     if (openNow) assign(p, color.element)
     else p.afterInit { assign(p, color.element) }
     return p
 }
 
 private fun assign(p: Block, col: PolyColor) {
-    val box = p[1][0]
+    val box = p[1]
     val boxBlob = box[0]
     val hf = boxBlob.width / 2f
     boxBlob.x = (col.saturation * box.width) + box.x - hf
-    boxBlob.y = (col.brightness * box.height) + box.y - hf
+    boxBlob.y = ((1f - col.brightness) * box.height) + box.y - hf
 
-    val s1 = p[1][1]
+    val s1 = p[2]
     val s1Blob = s1[0]
     s1Blob.y = col.hue * (s1.height - s1Blob.height) + s1.y
 
-    val s2 = p[1][2]
+    val s2 = p[3]
     val s2Blob = s2[0]
     s2Blob.y = (1f - col.alpha) * (s2.height - s2Blob.height) + s2.y
 }
@@ -122,19 +145,20 @@ private fun assign(p: Block, col: PolyColor) {
 private class ColorPickingBox(
     val theColor: Ref.ObjectRef<PolyColor.Mutable>,
 ) : Block(
-    Block(size = 10f by 10f, radii = 5f.radii(), color = PolyColor.TRANSPARENT).draggable(
+    Block(size = 12f by 12f, radii = 6f.radii(), color = PolyColor.TRANSPARENT).draggable(
         onDrag = {
             val hf = width / 2f
             x = x.coerceIn(parent.x - hf, parent.x + parent.width - hf)
             y = y.coerceIn(parent.y - hf, parent.y + parent.height - hf)
             theColor.element.saturation = (x - parent.x + hf) / parent.width
-            theColor.element.brightness = (y - parent.y + hf) / parent.height
+            theColor.element.brightness = 1f - (y - parent.y + hf) / parent.height
+            parent.accept(Event.Mouse.Dragged)
         },
     ).withBoarder(PolyColor.WHITE, 2f),
     size = 200f by 200f,
 ) {
     val grad1 = PolyColor.Gradient.Mutable(
-        PolyColor.WHITE.toMutable(),
+        PolyColor.WHITE.mutable(),
         theColor.element,
         PolyColor.Gradient.Type.LeftToRight,
     )

@@ -55,6 +55,8 @@ val AlignDefault = Align()
 
 inline val Number.vec get() = Vec2(toFloat(), toFloat())
 
+inline fun Float.fix() = this.toInt().toFloat()
+
 // so much more efficient to do it this way //
 inline infix fun Float.by(other: Float) = Vec2(this, other)
 inline infix fun Float.by(other: Int) = Vec2(this, other.toFloat())

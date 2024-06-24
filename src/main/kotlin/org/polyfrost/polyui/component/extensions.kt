@@ -26,7 +26,6 @@ package org.polyfrost.polyui.component
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI.Companion.DANGER
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_HOVERED
-import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
 import org.polyfrost.polyui.PolyUI.Companion.SUCCESS
 import org.polyfrost.polyui.PolyUI.Companion.WARNING
 import org.polyfrost.polyui.animate.Animation
@@ -55,75 +54,49 @@ const val MIN_DRAG = 3f
  *
  */
 fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, free: Boolean = false, onStart: (S.() -> Unit)? = null, onDrag: (S.() -> Unit)? = null, onDrop: (S.() -> Unit)? = null): S {
-    var pressed = false
+    var started = false
     var px = 0f
     var py = 0f
     on(Event.Mouse.Pressed) {
         if (dragging) return@on false
         needsRedraw = true
         dragging = true
-        pressed = true
         px = it.x - x
         py = it.y - y
         false
     }
     on(Event.Mouse.Dragged) {
         if (dragging) {
-            needsRedraw = true
+            val mx = polyUI.inputManager.mouseX
+            val my = polyUI.inputManager.mouseY
+            if(!started) {
+                if(abs(px + x - mx) > MIN_DRAG || abs(py + y - my) > MIN_DRAG) {
+                    started = true
+                    onStart?.invoke(this)
+                    if(free && _parent !== polyUI.master) {
+                        parent.children!!.remove(this)
+                        polyUI.master.children!!.add(this)
+                    }
+                }
+            } else {
+                needsRedraw = true
+                if (withX) x = mx - px
+                if (withY) y = my - py
+                onDrag?.invoke(this)
+            }
         }
         false
     }
-    addOperation(object : DrawableOp(this) {
-        private var prevX = 0f
-        private var prevY = 0f
-        private var started = false
-
-        override fun apply() {
-            if (pressed) {
-                if (self.inputState != INPUT_PRESSED) {
-                    dragging = false
-                    if (started) {
-                        if (free && self._parent !== self.polyUI.master) {
-                            self.polyUI.master.children!!.remove(self)
-                            self.parent.children!!.add(self)
-                        }
-                        onDrop?.invoke(this@draggable)
-                        started = false
-                    }
-                    pressed = false
-                    return
-                }
-                if (!started) {
-                    // asm: only start dragging if it has moved at least MIN_DRAG
-                    if (abs(px + x - self.polyUI.inputManager.mouseX) > MIN_DRAG || abs(py + y - self.polyUI.inputManager.mouseY) > MIN_DRAG) {
-                        started = true
-                        onStart?.invoke(this@draggable)
-                        if (free && self._parent !== self.polyUI.master) {
-                            if (self.polyUI.inputManager.focused !== self) self.polyUI.unfocus()
-                            self.parent.children!!.remove(self)
-                            self.polyUI.master.children!!.add(self)
-                        }
-                    } else return
-                }
-                val mx = self.polyUI.inputManager.mouseX
-                val my = self.polyUI.inputManager.mouseY
-                var i = false
-                if (prevX != mx) {
-                    if (withX) self.x = mx - px
-                    i = true
-                }
-                if (prevY != my) {
-                    if (withY) self.y = my - py
-                    i = true
-                }
-                if (i) onDrag?.invoke(this@draggable)
-                prevX = mx
-                prevY = my
+    on(Event.Mouse.Released) {
+        if (started) {
+            if (free && _parent !== polyUI.master) {
+                parent.children!!.remove(this)
+                polyUI.master.children!!.add(this)
             }
+            onDrop?.invoke(this)
+            started = false
         }
-
-        override fun unapply() = false
-    })
+    }
     return this
 }
 
@@ -224,6 +197,20 @@ fun <S : Text> S.onChange(func: S.(String) -> Boolean): S {
         val res = func.invoke(this, it.text)
         it.cancelled = res
         res
+    }
+    return this
+}
+
+/**
+ * Add a listener for changes to the given String-type property.
+ *
+ * In PolyUI, this is for [Text] and [TextInput][org.polyfrost.polyui.component.impl.TextInput] only.
+ * @since 1.0.6
+ */
+fun <S : Text> S.onType(func: S.(String) -> Unit): S {
+    on(Event.Change.Text) {
+        func.invoke(this, it.text)
+        false
     }
     return this
 }
@@ -495,7 +482,7 @@ fun <S : Drawable> S.afterInit(function: S.(Event.Lifetime.PostInit) -> Unit): S
  */
 fun <S : Drawable> S.afterParentInit(depth: Int = 1, handler: S.() -> Unit): S {
     this.on(Event.Lifetime.PostInit) { _ ->
-        var it: Drawable = this
+        var it: Drawable = parent // will die if parent is null
         for (i in 0 until depth) {
             it._parent?.let { parent -> it = parent } ?: break
         }
@@ -527,6 +514,25 @@ fun <S : Drawable> S.onClick(func: S.(Event.Mouse.Clicked) -> Boolean): S {
 @OverloadResolutionByLambdaReturnType
 fun <S : Drawable> S.onClick(func: S.(Event.Mouse.Clicked) -> Unit): S {
     on(Event.Mouse.Clicked, func)
+    return this
+}
+
+fun <S : Drawable> S.onPress(func: S.(Event.Mouse.Pressed) -> Unit): S {
+    on(Event.Mouse.Pressed, func)
+    return this
+}
+
+fun <S : Drawable> S.onDrag(func: S.(Event.Mouse.Dragged) -> Unit): S {
+    on(Event.Mouse.Dragged, func)
+    return this
+}
+
+fun <S : Drawable> S.fix(): S {
+    x = x.toInt().toFloat()
+    y = y.toInt().toFloat()
+    size.fix()
+    visibleSize.fix()
+    children?.fastEach { it.fix() }
     return this
 }
 
