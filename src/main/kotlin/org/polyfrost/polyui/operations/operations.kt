@@ -23,6 +23,7 @@
 
 package org.polyfrost.polyui.operations
 
+import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animation
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Drawable
@@ -259,7 +260,12 @@ class Recolor<S : Drawable>(
     override fun apply() {}
 
     override fun unapply(): Boolean {
-        return if ((self.color as PolyColor.Dynamic).update(self.polyUI.delta)) {
+        val clr = self.color
+        if (clr !is PolyColor.Dynamic) {
+            PolyUI.LOGGER.error("cannot recolor a color which does not implement PolyColor.Dynamic. shouldn't have ended up here. this operation will be skipped.")
+            return true
+        }
+        return if (clr.update(self.polyUI.delta)) {
             if (reset) self.color = toColor.mutable().also { it.hue = hueToReturnTo }
             onFinish?.invoke(self)
             true

@@ -188,6 +188,7 @@ class PolyUI @JvmOverloads constructor(
      */
     inline val keyBinder get() = inputManager.keyBinder
     val translator = translator ?: Translator(this.settings, "")
+    val clock = Clock()
     var positioner: Positioner = Positioner.Default()
 
     /** weather this PolyUI instance drew on this frame.
@@ -372,7 +373,7 @@ class PolyUI @JvmOverloads constructor(
      */
     fun render(): Long {
         debugger.nframes++
-        delta = Clock.delta
+        delta = clock.delta
         if (master.needsRedraw) {
             val sz = master.size
             renderer.beginFrame(sz.x, sz.y, pixelRatio)

@@ -270,7 +270,7 @@ class Debugger(private val polyUI: PolyUI) {
 
     @ApiStatus.Internal
     fun takeReadings() {
-        val frameTime = (Clock.peek()) / 1_000_000.0
+        val frameTime = (polyUI.clock.peek()) / 1_000_000.0
         timeInFrames += frameTime
         if (frameTime > longestFrame) longestFrame = frameTime
         else if (frameTime < shortestFrame) shortestFrame = frameTime

@@ -35,7 +35,7 @@ import org.jetbrains.annotations.ApiStatus
  * @see Clock.FixedTimeExecutor
  * @see org.polyfrost.polyui.PolyUI.every
  */
-object Clock {
+class Clock {
     @PublishedApi
     internal var lastTime: Long = time
 
@@ -53,11 +53,13 @@ object Clock {
     @ApiStatus.Internal
     fun peek(): Long = time - lastTime
 
-    /**
-     * Get the current time in nanoseconds.
-     */
-    @JvmStatic
-    inline val time get() = System.nanoTime()
+    companion object {
+        /**
+         * Get the current time in nanoseconds.
+         */
+        @JvmStatic
+        inline val time get() = System.nanoTime()
+    }
 
     /**
      * Create a new Executor.

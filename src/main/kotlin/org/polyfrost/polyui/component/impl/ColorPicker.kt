@@ -85,7 +85,7 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Mutable>, faves: MutableList<Poly
                 Block(size = 12f by 12f, radii = 6f.radii(), color = PolyColor.TRANSPARENT).draggable(withX = false, onDrag = {
                     y = y.coerceIn(parent.y, parent.y + parent.height - height)
                     color.element.alpha = 1f - (y - parent.y) / (parent.height - height)
-                    (this.parent.parent[6][0][0] as TextInput).text = (color.element.alpha * 100f).roundToInt().toString()
+                    (this.parent.parent[6][0][0] as TextInput).text = "${(color.element.alpha * 100f).roundToInt()}"
                 }).withBoarder(PolyColor.WHITE, 2f),
             ),
             alignment = Align(pad = 2f by 2f)
