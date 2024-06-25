@@ -105,6 +105,8 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
     protected val lines = ArrayList<Line>()
 
     @ApiStatus.Internal
+    @get:JvmName("getFontOrNull")
+    @set:JvmName("setFontInternal")
     var _font: Font? = font
         set(value) {
             if (field == value) return

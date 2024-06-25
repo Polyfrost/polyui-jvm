@@ -26,15 +26,17 @@ import org.polyfrost.polyui.component.onClick
 import org.polyfrost.polyui.component.setFont
 import org.polyfrost.polyui.component.withStates
 import org.polyfrost.polyui.dsl.polyUI
+import org.polyfrost.polyui.operations.ShakeOp
 import org.polyfrost.polyui.renderer.data.FontFamily
 import org.polyfrost.polyui.renderer.impl.GLFWWindow
 import org.polyfrost.polyui.renderer.impl.NVGRenderer
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.by
+import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.image
+import org.polyfrost.polyui.utils.mutable
 import org.polyfrost.polyui.utils.open
 import org.polyfrost.polyui.utils.ref
-import org.polyfrost.polyui.utils.mutable
 
 fun main() {
     val window = GLFWWindow("PolyUI Test v2 (DSL)", 800, 500)
@@ -46,7 +48,9 @@ fun main() {
             fontSize = 20f
         }
         group {
-            Button("moon.svg".image()).add()
+            Button("moon.svg".image()).add().onClick {
+                ShakeOp(this, 0.2.seconds, 2).add()
+            }
             Button("face-wink.svg".image(), "button.text").onClick {
                 color = color.mutable()
                 ColorPicker(color.mutable().ref(), mutableListOf(), mutableListOf(), polyUI)

@@ -90,18 +90,14 @@ fun Switch(at: Vec2? = null, size: Float, padding: Float = 3f, state: Boolean = 
  *
  * For both strings and images, use `Image to "string"`.
  */
-fun Radiobutton(vararg entries: String, at: Vec2? = null, initial: Int = 0, fontSize: Float = 12f, optionLateralPadding: Float = 6f, optionVerticalPadding: Float = 6f): Block {
-    return Radiobutton(entries = entries.mapToArray { null to it }, at, initial, fontSize, optionLateralPadding, optionVerticalPadding)
-}
+fun Radiobutton(vararg entries: String, at: Vec2? = null, initial: Int = 0, fontSize: Float = 12f, optionLateralPadding: Float = 6f, optionVerticalPadding: Float = 6f) = Radiobutton(entries = entries.mapToArray { null to it }, at, initial, fontSize, optionLateralPadding, optionVerticalPadding)
 
 /**
  * For strings, use `"string"` for each entry.
  *
  * For both strings and images, use `Image to "string"`.
  */
-fun Radiobutton(vararg entries: PolyImage, at: Vec2? = null, initial: Int = 0, fontSize: Float = 12f, optionLateralPadding: Float = 6f, optionVerticalPadding: Float = 6f): Block {
-    return Radiobutton(entries = entries.mapToArray { it to null }, at, initial, fontSize, optionLateralPadding, optionVerticalPadding)
-}
+fun Radiobutton(vararg entries: PolyImage, at: Vec2? = null, initial: Int = 0, fontSize: Float = 12f, optionLateralPadding: Float = 6f, optionVerticalPadding: Float = 6f) = Radiobutton(entries = entries.mapToArray { it to null }, at, initial, fontSize, optionLateralPadding, optionVerticalPadding)
 
 /**
  * For just strings, use `"string"` for each entry.
@@ -294,41 +290,39 @@ fun Slider(at: Vec2? = null, min: Float = 0f, max: Float = 100f, initialValue: F
     }.namedId("Slider")
 }
 
-fun Checkbox(at: Vec2? = null, size: Float, state: Boolean = false): Drawable {
-    return Block(
-        Image(
-            image = PolyImage("polyui/check.svg"),
-            size = (size / 1.25f).vec,
-        ).disable(!state).also {
-            if (!state) it.alpha = 0f
-        },
-        at = at,
-        size = Vec2(size, size),
-        alignment = Align(pad = ((size - size / 1.25f) / 2f).vec),
-    ).events {
-        var checked = state
-        Event.Mouse.Companion.Clicked then {
-            if (hasListenersFor(Event.Change.State::class.java)) {
-                val ev = Event.Change.State(checked)
-                accept(ev)
-                if (ev.cancelled) return@then false
-            }
-            val check = this[0]
-            checked = !checked
-            palette = if (checked) polyUI.colors.brand.fg else polyUI.colors.component.bg
-            if (checked) {
-                check.enabled = true
-                Fade(check, 1f, false, Animations.EaseInOutQuad.create(0.1.seconds)).add()
-            } else {
-                Fade(check, 0f, false, Animations.EaseInOutQuad.create(0.1.seconds)) {
-                    check.enabled = false
-                }.add()
-            }
-            false
+fun Checkbox(at: Vec2? = null, size: Float, state: Boolean = false) = Block(
+    Image(
+        image = PolyImage("polyui/check.svg"),
+        size = (size / 1.25f).vec,
+    ).disable(!state).also {
+        if (!state) it.alpha = 0f
+    },
+    at = at,
+    size = Vec2(size, size),
+    alignment = Align(pad = ((size - size / 1.25f) / 2f).vec),
+).events {
+    var checked = state
+    Event.Mouse.Companion.Clicked then {
+        if (hasListenersFor(Event.Change.State::class.java)) {
+            val ev = Event.Change.State(checked)
+            accept(ev)
+            if (ev.cancelled) return@then false
         }
-    }.withStates().namedId("Checkbox").also {
-        if (state) it.setPalette { brand.fg }
+        val check = this[0]
+        checked = !checked
+        palette = if (checked) polyUI.colors.brand.fg else polyUI.colors.component.bg
+        if (checked) {
+            check.enabled = true
+            Fade(check, 1f, false, Animations.EaseInOutQuad.create(0.1.seconds)).add()
+        } else {
+            Fade(check, 0f, false, Animations.EaseInOutQuad.create(0.1.seconds)) {
+                check.enabled = false
+            }.add()
+        }
+        false
     }
+}.withStates().namedId("Checkbox").also {
+    if (state) it.setPalette { brand.fg }
 }
 
 fun BoxedTextInput(
@@ -340,12 +334,17 @@ fun BoxedTextInput(
     center: Boolean = false,
     post: String? = null,
     size: Vec2? = null,
-): Drawable = Block(
+) = Block(
     if (image != null) Image(image).padded(6f, 0f) else null,
     if (pre != null) Text(pre).padded(6f, 0f) else null,
     Group(
-        TextInput(placeholder = placeholder, text = initialValue, fontSize = fontSize).onType { parent.repositionChildren() },
-        alignment = Align(main = if(center) Align.Main.Center else Align.Main.Start, pad = Vec2.ZERO),
+        TextInput(placeholder = placeholder, text = initialValue, fontSize = fontSize).run {
+            on(Event.Change.Text) {
+                parent.repositionChildren()
+                parent.parent.accept(it)
+            }
+        },
+        alignment = Align(main = if (center) Align.Main.Center else Align.Main.Start, pad = Vec2.ZERO),
         size = size,
     ),
     if (post != null) Block(Text(post), alignment = Align(pad = 6f by 10f), radii = floatArrayOf(0f, 8f, 0f, 8f)).afterInit { color = polyUI.colors.page.bg.normal } else null,

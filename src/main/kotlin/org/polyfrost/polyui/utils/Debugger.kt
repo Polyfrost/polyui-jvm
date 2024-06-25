@@ -140,6 +140,12 @@ class Debugger(private val polyUI: PolyUI) {
     private fun processEval(target: Drawable?, eval: String): Boolean {
         if (eval.isEmpty()) return false
         if (target == null) return false
+        if (eval[0] == '[') {
+            val idx = eval.indexOf(']')
+            if (idx == -1 || idx + 2 > eval.length) return false
+            val child = eval.substring(1, idx).toIntOrNull() ?: return false
+            return processEval(target[child], eval.substring(idx + 2))
+        }
         val set = eval.indexOf('=')
         if (set == -1) {
             val fe = eval.indexOf(')')
@@ -172,7 +178,7 @@ class Debugger(private val polyUI: PolyUI) {
             return false
         }
         if (set == 0 || set == eval.length) return false
-        if(eval == "color = picker()") {
+        if (eval == "color = picker()") {
             target.color = target.color.mutable()
             ColorPicker(target.color.mutable().ref(), null, null, polyUI)
             return true
@@ -371,7 +377,7 @@ class Debugger(private val polyUI: PolyUI) {
                 ("""
 parent: ${d._parent?.simpleName}   siblings: ${d._parent?.countChildren()?.dec()}
 children: ${d.countChildren()};  fbo: ${d.framebuffer}, renders: ${d.renders}, scrolling: ${if (!d.shouldScroll) "disabled" else if (d.scrolling) "on" else "off"}
-at: ${d.x}x${d.y}, pad: ${d.padding}
+at: ${d.x}x${d.y}, pad: ${d.padding}, flags: ${decodeFlags(d)}
 size: ${d.size}, visible: ${if (d.hasVisibleSize) d.visibleSize else "null"}
 rgba: ${d.color.r}, ${d.color.g}, ${d.color.b}, ${d.color.a}
 scale: ${d.scaleX}x${d.scaleY};  skew: ${d.skewX}x${d.skewY}
@@ -386,6 +392,16 @@ ${d.alignment}
             polyUI = polyUI,
             position = Point.Below
         )
+    }
+
+    private fun decodeFlags(drawable: Drawable): String {
+        val sb = StringBuilder(4)
+        if (drawable.createdWithSetPosition) sb.append('P')
+        if (drawable.createdWithSetSize) sb.append('S')
+        if (drawable.rawResize) sb.append('R')
+        if (drawable.layoutIgnored) sb.append('I')
+        if (sb.isEmpty()) sb.append("none")
+        return sb.toString()
     }
 
     private fun getInputStateString(state: Byte) = when (state) {

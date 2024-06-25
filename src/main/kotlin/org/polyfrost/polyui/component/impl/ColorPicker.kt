@@ -26,15 +26,10 @@ import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.*
 import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.operations.ShakeOp
 import org.polyfrost.polyui.renderer.data.PolyImage
-import org.polyfrost.polyui.unit.Align
-import org.polyfrost.polyui.unit.Point
-import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.unit.by
-import org.polyfrost.polyui.utils.image
-import org.polyfrost.polyui.utils.mutable
-import org.polyfrost.polyui.utils.radii
-import org.polyfrost.polyui.utils.toHex
+import org.polyfrost.polyui.unit.*
+import org.polyfrost.polyui.utils.*
 import kotlin.jvm.internal.Ref
 import kotlin.math.roundToInt
 
@@ -105,7 +100,17 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Mutable>, faves: MutableList<Poly
             initialValue = color.element.toHex(alpha = false),
             center = true,
             size = 78f by 32f,
-        ),
+        ).onChange { text: String ->
+            if (text.isEmpty()) return@onChange false
+            if (text == "#") return@onChange false
+            try {
+                color.element.recolor(text.toColor())
+                false
+            } catch (e: Exception) {
+                ShakeOp(this, 0.2.seconds, 2).add()
+                true
+            }
+        },
         BoxedTextInput(
             placeholder = "100",
             initialValue = "${(color.element.alpha * 100f).toInt()}",

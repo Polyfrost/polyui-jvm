@@ -36,6 +36,7 @@ import org.polyfrost.polyui.operations.*
 import org.polyfrost.polyui.renderer.data.Framebuffer
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.*
+import kotlin.experimental.or
 
 /**
  * # Drawable
@@ -51,6 +52,7 @@ abstract class Drawable(
     size: Vec2? = null,
     visibleSize: Vec2? = null,
     palette: Colors.Palette? = null,
+    @get:JvmName("isFocusable")
     val focusable: Boolean = false,
 ) : Cloneable {
     constructor(
@@ -91,6 +93,8 @@ abstract class Drawable(
             _visibleSize = value
         }
 
+    private var _padding: Vec2? = null
+
     /**
      * Padding for this drawable. This is used by the positioner to ensure that
      * there is adequate space around each object in the UI.
@@ -100,14 +104,20 @@ abstract class Drawable(
      *
      * @since 1.4
      */
-    var padding: Vec2? = null
+    var padding: Vec2
+        get() = _padding ?: Vec2.ZERO
+        set(value) {
+            _padding = value
+        }
 
     /**
      * Returns `true` if this drawable has a visible size set.
      */
+    @get:JvmName("hasVisibleSize")
     val hasVisibleSize get() = _visibleSize != null
 
     @ApiStatus.Internal
+    @get:JvmName("getParentOrNull")
     var _parent: Drawable? = null
         private set(value) {
             if (value === field) return
@@ -131,13 +141,72 @@ abstract class Drawable(
         }
 
     /**
+     * returns `true` if the position of this drawable is valid (has been set)
+     * @since 1.1.0
+     */
+    @get:JvmName("isAtValid")
+    var atValid = x != 0f || y != 0f
+        private set
+
+    /**
+     * Flags that store various states of this drawable regarding the [Positioner] and resizing.
+     * Currently, the following is stored here:
+     * - bit 0: [rawResize]
+     * - bit 1: [createdWithSetSize]
+     * - bit 2: [createdWithSetPosition]
+     * - bit 3: [layoutIgnored]
+     *
+     * this means there are still 4 bits that can be used for simple boolean-type properties.
+     * this is protected so you can use it yourself, but more bits may be used internally in the future.
+     * In order to maintain forward compatability, you should use the highest indexes for your flags.
+     * @since 1.4.4
+     */
+    @ApiStatus.Internal
+    protected var layoutFlags: Byte = ((if (!sizeValid) 0b00000000 else 0b00000010) or (if (!atValid) 0b00000000 else 0b00000100)).toByte()
+
+    /**
      * This property controls weather this drawable resizes "raw", meaning it will **not** respect the aspect ratio.
      *
      * By default, it is `false`, so when resized, the smallest increase is used for both width and height. This means that it will stay at the same aspect ratio.
      *
      * @since 0.19.0
      */
-    var rawResize = false
+    @get:JvmName("isRawResize")
+    var rawResize: Boolean
+        get() = layoutFlags.toInt() and 0b00000001 == 0b00000001
+        set(value) {
+            layoutFlags = if (value) layoutFlags or 0b00000001 else layoutFlags or 0b11111110.toByte()
+        }
+
+    /**
+     * If true, this drawable will be ignored during the [Positioner]'s routine of placing drawables. Use this if
+     * you want to specify it manually based on something else, for example.
+     *
+     * *note: this used to be controlled by the [enabled] flag pre 1.4.4*.
+     *
+     * @since 1.4.4
+     */
+    @get:JvmName("isLayoutIgnored")
+    var layoutIgnored: Boolean
+        get() = layoutFlags.toInt() and 0b00001000 == 0b00001000
+        set(value) {
+            layoutFlags = if (value) layoutFlags or 0b00001000 else layoutFlags or 0b11110111.toByte()
+        }
+
+    /**
+     * Returns `true` if this drawable had a position specified at creation time.
+     * @since 1.4.4
+     */
+    @get:JvmName("createdWithSetPosition")
+    val createdWithSetPosition get() = layoutFlags.toInt() and 0b00000100 == 0b00000100
+
+    /**
+     * Returns `true if this drawable had a size specified at creation time.
+     * @since 1.4.4
+     */
+    @get:JvmName("createdWithSetSize")
+    val createdWithSetSize get() = layoutFlags.toInt() and 0b00000010 == 0b00000010
+
 
     private var eventHandlers: MutableMap<Any, ArrayList<(Drawable.(Event) -> Boolean)>>? = null
 
@@ -173,7 +242,8 @@ abstract class Drawable(
      * `true` if this drawable has any operations.
      * @since 1.0.3
      */
-    val operating get() = !operations.isNullOrEmpty()
+    @get:JvmName("isOperating")
+    inline val operating get() = !operations.isNullOrEmpty()
 
     @Locking
     @set:Synchronized
@@ -183,12 +253,14 @@ abstract class Drawable(
     /**
      * internal counter for framebuffer render count
      */
-    private var fbc = 0
+    private var fbc: Short = 0
 
     /**
      * internal storage for the color.
      */
     @ApiStatus.Internal
+    @get:JvmName("getColorOrNull")
+    @set:JvmName("setColorInternal")
     var _color: PolyColor? = null
 
     /**
@@ -196,6 +268,7 @@ abstract class Drawable(
      * @since 1.4.2
      */
     @set:ApiStatus.Internal
+    @get:JvmName("isFocused")
     var focused = false
         internal set(value) {
             if (!focusable) return
@@ -240,6 +313,8 @@ abstract class Drawable(
      * @since 1.1.0
      */
     @ApiStatus.Internal
+    @get:JvmName("getXInternal")
+    @set:JvmName("setXInternal")
     var _x = x
 
     /**
@@ -247,6 +322,8 @@ abstract class Drawable(
      * @since 1.1.0
      */
     @ApiStatus.Internal
+    @get:JvmName("getYInternal")
+    @set:JvmName("setYInternal")
     var _y = y
 
     @SideEffects("x", "_x", "atValid", "this.children::x", `when` = "value != x")
@@ -291,14 +368,8 @@ abstract class Drawable(
      * returns `true` if the size of this drawable is valid (not zero)
      * @since 1.1.0
      */
+    @get:JvmName("isSizeValid")
     val sizeValid get() = size.x > 0f && size.y > 0f
-
-    /**
-     * returns `true` if the position of this drawable is valid (has been set)
-     * @since 1.1.0
-     */
-    var atValid = x != 0f || y != 0f
-        private set
 
     /**
      * Return the position of this drawable as if it were a [Vec2].
@@ -332,9 +403,11 @@ abstract class Drawable(
     protected var yScroll: Animation? = null
         private set
 
+    @get:JvmName("isScrolling")
     val scrolling get() = xScroll != null || yScroll != null
 
     @SideEffects("_parent.needsRedraw", `when` = "field != value")
+    @get:JvmName("needsRedraw")
     var needsRedraw = true
         set(value) {
             if (value && !field) {
@@ -358,6 +431,7 @@ abstract class Drawable(
             field = value
         }
 
+    @get:JvmName("acceptsInput")
     var acceptsInput = false
         get() = field && enabled
 
@@ -426,8 +500,9 @@ abstract class Drawable(
      * @since 0.21.4
      */
     @SideEffects("inputState")
-    inline var enabled
-        get() = inputState > INPUT_DISABLED
+    @get:JvmName("isEnabled")
+    var enabled: Boolean
+        inline get() = inputState > INPUT_DISABLED
         set(value) {
             if (value && inputState != INPUT_DISABLED) return
             alpha = if (value) 1f else 0.8f
@@ -435,7 +510,10 @@ abstract class Drawable(
             needsRedraw = true
         }
 
-    protected var operations: ArrayList<DrawableOp>? = null
+    /**
+     * Storage for the operations of this drawable. May be null if never used.
+     */
+    var operations: ArrayList<DrawableOp>? = null
         private set
 
     /**
@@ -846,31 +924,30 @@ abstract class Drawable(
      *
      * Note that in most circumstances, [recalculate] is the method that you actually want.
      *
-     * **This method is experimental because it may interfere with children that were placed manually with the [at] property.**
      * @see recalculate
      * @since 1.0.2
      */
-    @ApiStatus.Experimental
     @Locking(`when` = "this.children != null")
     @Synchronized
     fun repositionChildren() {
         if (children == null) return
         children?.fastEach {
-            it.x = 0f
-            it.y = 0f
-            it.atValid = false
+            if (!it.createdWithSetPosition) {
+                it.x = 0f
+                it.y = 0f
+                it.atValid = false
+            }
         }
         polyUI.positioner.position(this)
         clipChildren()
+        resetScroll()
     }
 
     /**
      * Fully recalculate this drawable's size, and any of its children's positions.
      *
-     * **This method is experimental because it may interfere with children that were placed manually with the [at] property.**
      * @since 1.0.7
      */
-    @ApiStatus.Experimental
     @Locking(`when` = "this.children != null")
     @Synchronized
     fun recalculate() {
@@ -878,10 +955,14 @@ abstract class Drawable(
         val sz = this.size
         val oldW = sz.x
         val oldH = sz.y
-        sz.zero()
+        if (!createdWithSetSize) {
+            sz.zero()
+        }
         repositionChildren()
-        x -= (sz.x - oldW) / 2f
-        y -= (sz.y - oldH) / 2f
+        if (!createdWithSetSize) {
+            x -= (sz.x - oldW) / 2f
+            y -= (sz.y - oldH) / 2f
+        }
     }
 
     /**

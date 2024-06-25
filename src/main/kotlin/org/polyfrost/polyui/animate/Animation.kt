@@ -34,11 +34,7 @@ abstract class Animation(var durationNanos: Long, var from: Float, var to: Float
     inline val range get() = to - from
     var passedTime = 0f
         protected set
-    var isFinished: Boolean = false
-        protected set(value) {
-            if (field == value) return
-            field = value
-        }
+    inline val isFinished get() = passedTime >= durationNanos
 
     /**
      * finish the animation now.
@@ -52,7 +48,6 @@ abstract class Animation(var durationNanos: Long, var from: Float, var to: Float
     fun reset() {
         passedTime = 0f
         value = from
-        isFinished = false
     }
 
     fun reverse() {
@@ -68,8 +63,7 @@ abstract class Animation(var durationNanos: Long, var from: Float, var to: Float
     fun update(deltaTimeNanos: Long): Float {
         if (isFinished) return to
         passedTime += deltaTimeNanos
-        isFinished = passedTime >= durationNanos
-        value = if (isFinished) to else getValue(passedTime / durationNanos) * range + from
+        value = getValue((passedTime / durationNanos).coerceIn(0f, 1f)) * range + from
         return value
     }
 

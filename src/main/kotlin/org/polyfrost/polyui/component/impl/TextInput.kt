@@ -454,7 +454,7 @@ open class TextInput(
         if (text.isEmpty()) {
             val bounds = renderer.textBounds(font, _placeholder.string, fontSize)
             size.smax(bounds)
-            visibleSize.x = max(visibleSize.x, bounds.x)
+            visibleSize.smin(size)
         }
     }
 

@@ -62,5 +62,7 @@ open class Image(
         return super.setup(polyUI)
     }
 
+    override fun calculateSize() = image.size
+
     override fun debugString() = "image: ${image.resourcePath.substringAfterLast('/')} (${image.size})"
 }

@@ -42,6 +42,7 @@ import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.data.FontFamily
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.seconds
+import org.polyfrost.polyui.utils.fastAny
 import org.polyfrost.polyui.utils.fastEach
 import kotlin.math.abs
 
@@ -69,11 +70,11 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, fre
         if (dragging) {
             val mx = polyUI.inputManager.mouseX
             val my = polyUI.inputManager.mouseY
-            if(!started) {
-                if(abs(px + x - mx) > MIN_DRAG || abs(py + y - my) > MIN_DRAG) {
+            if (!started) {
+                if (abs(px + x - mx) > MIN_DRAG || abs(py + y - my) > MIN_DRAG) {
                     started = true
                     onStart?.invoke(this)
-                    if(free && _parent !== polyUI.master) {
+                    if (free && _parent !== polyUI.master) {
                         parent.children!!.remove(this)
                         polyUI.master.children!!.add(this)
                     }
@@ -192,25 +193,11 @@ fun <S : Drawable> S.padded(padding: Vec2): S {
  * @since 1.0.6
  */
 @JvmName("onChangeString")
-fun <S : Text> S.onChange(func: S.(String) -> Boolean): S {
+fun <S : Drawable> S.onChange(func: S.(String) -> Boolean): S {
     on(Event.Change.Text) {
         val res = func.invoke(this, it.text)
         it.cancelled = res
         res
-    }
-    return this
-}
-
-/**
- * Add a listener for changes to the given String-type property.
- *
- * In PolyUI, this is for [Text] and [TextInput][org.polyfrost.polyui.component.impl.TextInput] only.
- * @since 1.0.6
- */
-fun <S : Text> S.onType(func: S.(String) -> Unit): S {
-    on(Event.Change.Text) {
-        func.invoke(this, it.text)
-        false
     }
     return this
 }
@@ -286,21 +273,6 @@ fun <S : Text> S.setFont(font: FontFamily.() -> Font): S {
 
 fun <S : Text> S.secondary(): S {
     setPalette { text.secondary }
-    return this
-}
-
-/**
- * Add a validation function to this text component.
- *
- * The given [func] will have the text that is requested as the argument.
- * Return `false` to cancel the change, meaning the text will not be set.
- */
-fun <S : Text> S.addValidationFunction(func: S.(String) -> Boolean): S {
-    on(Event.Change.Text) {
-        if (!func(this, it.text)) {
-            it.cancel()
-        }
-    }
     return this
 }
 
@@ -576,6 +548,15 @@ fun Drawable.isChildOf(drawable: Drawable?): Boolean {
  */
 fun Drawable.isRelatedTo(drawable: Drawable?) = drawable != null && drawable.isChildOf(this) || this.isChildOf(drawable)
 
+/**
+ * Returns `true` if this drawable has a [DrawableOp] of the type [T].
+ *
+ * This can be used for operations on which no more than one of the same type can be active at once.
+ * @since 1.4.4
+ */
+inline fun <reified T : DrawableOp> Drawable.hasOperationOfType(): Boolean {
+    return operations?.fastAny { it is T } == true
+}
 /**
  * Bulk add method for all the builtin drawable operations in PolyUI.
  *

@@ -36,6 +36,8 @@ fun rgba(r: Int, g: Int, b: Int, a: Float = 1f): PolyColor {
 
 fun hsba(h: Float, s: Float, b: Float, a: Float = 1f) = PolyColor.Static(h, s, b, a)
 
+fun hex(hex: String) = hex.toColor()
+
 /**
  * Takes an ARGB integer color and returns a [PolyColor] object.
  */
@@ -74,15 +76,11 @@ fun String.toColor(): PolyColor {
             }
             newHex
         }
-
-        6 -> {}
-        8 -> {}
-        else -> throw IllegalArgumentException("Invalid hex color: $this")
     }
-    val r = hexColor.substring(0, 2).toInt(16)
-    val g = hexColor.substring(2, 4).toInt(16)
-    val b = hexColor.substring(4, 6).toInt(16)
-    val a = if (hexColor.length == 8) hexColor.substring(6, 8).toInt(16) else 255
+    val r = hexColor.substringOr(0, 2, "0").toInt(16)
+    val g = hexColor.substringOr(2, 4, "0").toInt(16)
+    val b = hexColor.substringOr(4, 6, "0").toInt(16)
+    val a = if (hexColor.length == 8) hexColor.substringOr(6, 8, "0").toInt(16) else 255
     return rgba(r, g, b, a / 255f)
 }
 

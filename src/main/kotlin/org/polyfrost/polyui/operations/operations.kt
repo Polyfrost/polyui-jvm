@@ -25,12 +25,16 @@ package org.polyfrost.polyui.operations
 
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animation
+import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.component.hasOperationOfType
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.animatable
 import org.polyfrost.polyui.utils.animatableGradient
 import org.polyfrost.polyui.utils.mutable
+import kotlin.math.PI
+import kotlin.math.sin
 
 class Move<S : Drawable>(
     drawable: S,
@@ -127,8 +131,7 @@ class Resize<S : Drawable>(
     private val th = if (add) height else height - oh
 
     override fun apply(value: Float) {
-        self.size.x = ow + (tw * value)
-        self.size.y = oh + (th * value)
+        self.size.set(ow + (tw * value), oh + (th * value))
         self.clipChildren()
     }
 
@@ -193,6 +196,17 @@ class Skew<S : Drawable>(
     override fun verify(): Boolean {
         return tx != 0.0 || ty != 0.0
     }
+}
+
+class ShakeOp<S : Drawable>(self: S, durationNanos: Long, oscillations: Int, private val range: Float = 4f) : DrawableOp.Animatable<S>(self, Animations.Linear.create(durationNanos)) {
+    private val start = self.x
+    private val oscillations = (oscillations * (PI * 2.0)).toFloat()
+    override fun apply(value: Float) {
+        self.x = start + sin(value * oscillations) * range
+        self.needsRedraw = true
+    }
+
+    override fun verify(): Boolean = !self.hasOperationOfType<ShakeOp<S>>()
 }
 
 /**

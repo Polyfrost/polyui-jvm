@@ -25,7 +25,6 @@ import org.polyfrost.polyui.component.Positioner.Default.Aligner
 import org.polyfrost.polyui.component.Positioner.Default.Justifier
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
-import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.fastEach
 import kotlin.math.max
 
@@ -43,8 +42,7 @@ fun interface Positioner {
             if (!drawable.sizeValid) {
                 val out = drawable.calculateSize()
                 if (out != null) {
-                    drawable.size.x = out.x
-                    drawable.size.y = out.y
+                    drawable.size.set(out)
                 }
             }
             val needsToCalcSize = !drawable.sizeValid
@@ -71,13 +69,12 @@ fun interface Positioner {
                 val ivs = it.visibleSize
                 if (!it.sizeValid) position(it)
                 if (needsToCalcSize) {
-                    drawable.size.x = ivs.x + mainPad * 2f
-                    drawable.size.y = ivs.y + crossPad * 2f
+                    drawable.size.set(ivs.x + mainPad * 2f, ivs.y + crossPad * 2f)
                 }
                 fixVisibleSize(drawable)
                 it.at(
                     main,
-                    drawable.x + when (align.main) {
+                    drawable.at(main) + when (align.main) {
                         Align.Main.Start -> mainPad
                         Align.Main.End -> vs[main] - ivs[main] - mainPad
                         else -> (vs[main] - ivs[main]) / 2f
@@ -85,12 +82,13 @@ fun interface Positioner {
                 )
                 it.at(
                     crs,
-                    drawable.y + when (align.cross) {
+                    drawable.at(crs) + when (align.cross) {
                         Align.Cross.Start -> crossPad
                         Align.Cross.End -> vs[crs] - ivs[crs] - crossPad
                         else -> (vs[crs] - ivs[crs]) / 2f
                     },
                 )
+                it.resetScroll()
                 return
             }
             val willWrap = align.maxRowSize != 0 && (vs[main] != 0f || align.maxRowSize != AlignDefault.maxRowSize)
@@ -105,10 +103,10 @@ fun interface Positioner {
                 var currentRow = ArrayList<Drawable>()
                 // measure and create rows
                 children.fastEach {
-                    if (!it.enabled) return@fastEach
+                    if (it.layoutIgnored) return@fastEach
                     if (!it.sizeValid) position(it)
                     val ivs = it.visibleSize
-                    val ipad = it.padding ?: Vec2.ZERO
+                    val ipad = it.padding
                     val mainS = ipad[main] * 2f + ivs[main] + mainPad
                     if (currentRow.isNotEmpty() && (rowMain + mainS > vs[main] || currentRow.size == maxRowSize)) {
                         rows.add(WrappingRow(rowMain, rowCross, currentRow))
@@ -139,7 +137,7 @@ fun interface Positioner {
                     val (theRowMain, _, row) = rows[0]
                     place(
                         align, row,
-                        vs[crs], drawable.at(crs), crossPad, crs,
+                        vs[crs], rowCross, crossPad, crs,
                         theRowMain, drawable.at(main), vs[main], mainPad, main,
                     )
                 } else {
@@ -157,10 +155,10 @@ fun interface Positioner {
                 var rowCross = 0f
                 val pad = crossPad * 2f
                 children.fastEach {
-                    if (!it.enabled) return@fastEach
+                    if (it.layoutIgnored) return@fastEach
                     if (!it.sizeValid) position(it)
                     val ivs = it.visibleSize
-                    val ipad = it.padding ?: Vec2.ZERO
+                    val ipad = it.padding
                     if (it.atValid) {
                         rowMain = max(rowMain, it.at(main) + ivs[main] + mainPad + ipad[main] * 2f)
                         rowCross = max(rowCross, it.at(crs) + ivs[crs] + pad + ipad[crs] * 2f)
@@ -213,6 +211,7 @@ fun interface Positioner {
                 if (it.atValid) return@fastEach
                 aligner.align(rowCross, it, minCross, padCross, crs)
                 current = justifier.justify(current, it, padMain, main, gap)
+                it.resetScroll()
             }
         }
 
@@ -225,7 +224,7 @@ fun interface Positioner {
         }
 
         private val cStart = Aligner { _, it, min, padding, crs ->
-            it.at(crs, min + padding + (it.padding ?: Vec2.ZERO)[crs])
+            it.at(crs, min + padding + it.padding[crs])
         }
 
         private val cCenter = Aligner { rowCross, it, min, _, crs ->
@@ -233,32 +232,31 @@ fun interface Positioner {
         }
 
         private val cEnd = Aligner { rowCross, it, min, padding, crs ->
-            it.at(crs, min + rowCross - (it.visibleSize[crs] + (it.padding ?: Vec2.ZERO)[crs] * 2f) - padding)
+            it.at(crs, min + rowCross - (it.visibleSize[crs] + it.padding[crs] * 2f) - padding)
         }
 
         private val mProgressive = Justifier { current, it, padding, main, _ ->
-            val p = (it.padding ?: Vec2.ZERO)[main]
+            val p = it.padding[main]
             it.at(main, current + p)
             return@Justifier current + it.visibleSize[main] + padding + p * 2f
         }
 
         private val mBackwards = Justifier { current, it, padding, main, _ ->
-            val p = (it.padding ?: Vec2.ZERO)[main]
+            val p = it.padding[main]
             val cur = current - it.visibleSize[main] - padding - p
             it.at(main, cur)
             return@Justifier cur - p
         }
 
         private val mSpace = Justifier { current, it, padding, main, gap ->
-            val p = (it.padding ?: Vec2.ZERO)[main]
+            val p = it.padding[main]
             it.at(main, current + p)
             return@Justifier current + it.visibleSize[main] + padding + gap + p * 2f
         }
 
         private fun fixVisibleSize(drawable: Drawable): Drawable {
-//            if (!drawable.hasVisibleSize) return drawable
-//            val vs = drawable.visibleSize
-//            vs.smin(drawable.size)
+            if (!drawable.hasVisibleSize) return drawable
+            drawable.visibleSize.smin(drawable.size)
             return drawable
         }
     }

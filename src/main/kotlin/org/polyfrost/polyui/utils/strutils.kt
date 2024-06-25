@@ -55,6 +55,11 @@ fun String.removeSurrounding(char: Char): String {
     return this
 }
 
+fun String.substringOr(fromIndex: Int, toIndex: Int, other: String): String {
+    if (fromIndex < 0 || toIndex < 0 || fromIndex > toIndex || toIndex > length) return other
+    return substring(fromIndex, toIndex)
+}
+
 fun String.substringSafe(fromIndex: Int, toIndex: Int = lastIndex): String {
     if (fromIndex > toIndex) {
         return substringSafe(toIndex, fromIndex)
