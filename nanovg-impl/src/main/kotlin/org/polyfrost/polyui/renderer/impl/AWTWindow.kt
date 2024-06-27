@@ -193,6 +193,9 @@ class AWTWindow(val title: String, width: Int, height: Int) : Window(width, heig
         }
     }
 
+    override fun breakPause() {
+    }
+
     override fun getKeyName(key: Int): String {
         return getKeyText(key)
     }

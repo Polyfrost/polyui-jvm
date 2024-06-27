@@ -398,6 +398,10 @@ class GLFWWindow @JvmOverloads constructor(
         )
     }
 
+    override fun breakPause() {
+//        glfwPostEmptyEvent()
+    }
+
     override fun getKeyName(key: Int) = glfwGetKeyName(key, glfwGetKeyScancode(key)) ?: "Unknown"
 
     fun fullscreen() {

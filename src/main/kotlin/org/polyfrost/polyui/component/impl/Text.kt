@@ -102,7 +102,10 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
     /**
      * A list of the lines of this text, and their corresponding width.
      */
-    protected val lines = ArrayList<Line>()
+    protected val lines = ArrayList<Line>(when(mode) {
+        WRAP, LIMITED_WRAP, LIMITED -> (visibleSize.y / fontSize).toInt()
+        else -> 1
+    })
 
     @ApiStatus.Internal
     @get:JvmName("getFontOrNull")
@@ -235,7 +238,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         }
         val mode = mode
         val maxWidth = when (mode) {
-            LIMITED, WRAP, LIMITED_WRAP -> visibleSize.x
+            LIMITED, WRAP, LIMITED_WRAP -> visWidth
             else -> 0f
         }
         text.wrap(maxWidth, renderer, font, fontSize, lines)
@@ -245,7 +248,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         lines.fastEach { (str, bounds) ->
             w = kotlin.math.max(w, bounds.x)
             h += bounds.y + spacing
-            if (mode == LIMITED && h >= visibleSize.y - fontSize) {
+            if (mode == LIMITED && h >= visHeight - fontSize) {
                 h -= spacing
                 // safe to not re-measure as we know the bounds will contain it.
                 // also won't co-mod thanks to fastEach
@@ -267,6 +270,8 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         }
     }
 
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("calculateSize")
     override fun calculateSize(): Vec2 {
         updateTextBounds()
         return size

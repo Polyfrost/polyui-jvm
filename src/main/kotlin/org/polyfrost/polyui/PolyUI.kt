@@ -29,6 +29,7 @@ import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.Positioner
 import org.polyfrost.polyui.component.impl.Block
 import org.polyfrost.polyui.component.impl.Group
+import org.polyfrost.polyui.component.radius
 import org.polyfrost.polyui.event.InputManager
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.KeyModifiers
@@ -175,7 +176,7 @@ class PolyUI(
      * This is the root layout of the UI. It is the parent of all other layouts.
      */
     val master = if (backgroundColor == null) Group(size = size, children = drawables, alignment = masterAlignment)
-    else Block(size = size, children = drawables, alignment = masterAlignment, color = backgroundColor, radii = 0f.radii())
+    else Block(size = size, children = drawables, alignment = masterAlignment, color = backgroundColor).radius(0f)
 
 
     val inputManager = inputManager?.with(master) ?: InputManager(master, KeyBinder(this.settings), this.settings)
@@ -218,6 +219,7 @@ class PolyUI(
             window?.setCursor(value)
         }
 
+    @get:JvmName("getSize")
     inline val size get() = master.size
 
     /**
@@ -231,6 +233,7 @@ class PolyUI(
      * @see resize
      * @since 1.0.5
      */
+    @get:JvmName("getInitialSize")
     var iSize = Vec2.ONE
         get() {
             if (field == Vec2.ONE && master.sizeValid) {
@@ -367,8 +370,7 @@ class PolyUI(
         debugger.nframes++
         delta = clock.delta
         if (master.needsRedraw) {
-            val sz = master.size
-            renderer.beginFrame(sz.x, sz.y, pixelRatio)
+            renderer.beginFrame(master.width, master.height, pixelRatio)
             window?.preRender(renderer)
             master.draw()
             debugger.takeReadings()

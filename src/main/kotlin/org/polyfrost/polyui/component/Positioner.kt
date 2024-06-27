@@ -41,7 +41,7 @@ fun interface Positioner {
             val polyUI = drawable.polyUI
             if (!drawable.sizeValid) {
                 val out = drawable.calculateSize()
-                if (out != null) {
+                if (out.isPositive) {
                     drawable.width = out.x
                     drawable.height = out.y
                 }
@@ -157,6 +157,7 @@ fun interface Positioner {
                 val cpad2 = crossPad * 2f
                 children.fastEach {
                     if (it.layoutIgnored) return@fastEach
+                    if (!it.sizeValid) position(it)
                     if (!it.sizeValid) position(it)
                     val ivs = it.visibleSize
                     val ipad = it.padding

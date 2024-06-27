@@ -108,12 +108,6 @@ inline fun cl1(a: Float, b: Float) = if (abs(a - 1f) <= abs(b - 1f)) a else b
  */
 inline fun min3(a: Int, b: Int, c: Int): Int = min(min(a, b), c)
 
-/** convert the given float into an array of 4 floats for radii. */
-inline fun Number.radii() = floatArrayOf(this.toFloat(), this.toFloat(), this.toFloat(), this.toFloat())
-
-/** convert the given floats into an array of 4 floats for radii. */
-inline fun radii(topLeft: Float, topRight: Float, bottomLeft: Float, bottomRight: Float) = floatArrayOf(topLeft, topRight, bottomLeft, bottomRight)
-
 /** print the object to stdout, then return it. */
 @Deprecated("remove in prod")
 inline fun <T> T.stdout(arg: Any? = null): T {
@@ -124,6 +118,7 @@ inline fun <T> T.stdout(arg: Any? = null): T {
 
 inline fun String.image() = PolyImage(this)
 
+@JvmName("image")
 inline fun String.image(size: Vec2) = PolyImage(this).also { it.size = size }
 
 inline fun String.translated(vararg args: Any?) = Translator.Text.Formatted(Translator.Text.Simple(this), *args)
@@ -199,7 +194,7 @@ inline fun <K, V, reified R> Map<K, V>.mapToArray(transform: (Map.Entry<K, V>) -
     return out as Array<R>
 }
 
-fun FloatArray.areValuesEqual(): Boolean {
+fun FloatArray.elementsEqual(): Boolean {
     if (isEmpty()) return true
     val first = this[0]
     for (i in 1 until size) {

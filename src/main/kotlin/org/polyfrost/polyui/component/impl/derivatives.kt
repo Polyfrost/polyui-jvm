@@ -35,11 +35,11 @@ import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.mapToArray
-import org.polyfrost.polyui.utils.radii
 import kotlin.experimental.or
 import kotlin.math.PI
 
-fun Button(leftImage: PolyImage? = null, text: String? = null, rightImage: PolyImage? = null, fontSize: Float = 12f, font: Font? = null, radii: FloatArray = 8f.radii(), padding: Vec2 = Vec2(12f, 6f), at: Vec2 = Vec2.ZERO, size: Vec2 = Vec2.ZERO): Block {
+@JvmName("Button")
+fun Button(leftImage: PolyImage? = null, text: String? = null, rightImage: PolyImage? = null, fontSize: Float = 12f, font: Font? = null, radii: FloatArray = floatArrayOf(8f), padding: Vec2 = Vec2(12f, 6f), at: Vec2 = Vec2.ZERO, size: Vec2 = Vec2.ZERO): Block {
     return Block(
         if (leftImage != null) Image(leftImage) else null,
         if (text != null) Text(text, fontSize = fontSize, font = font) else null,
@@ -51,15 +51,15 @@ fun Button(leftImage: PolyImage? = null, text: String? = null, rightImage: PolyI
     ).withStates().namedId("Button")
 }
 
+@JvmName("Switch")
 fun Switch(at: Vec2 = Vec2.ZERO, size: Float, padding: Float = 3f, state: Boolean = false, lateralStretch: Float = 1.8f): Block {
     val circleSize = size - (padding + padding)
     return Block(
-        Block(size = Vec2(circleSize, circleSize), radii = (circleSize / 2f).radii()).setPalette { text.primary },
+        Block(size = Vec2(circleSize, circleSize)).radius(circleSize / 2f).setPalette { text.primary },
         at = at,
         size = Vec2(size * lateralStretch, size),
         alignment = Align(main = Align.Main.Start, pad = Vec2(padding, 0f)),
-        radii = (size / 2f).radii(),
-    ).toggleable(state).namedId("Switch").apply {
+    ).radius(size / 2f).toggleable(state).namedId("Switch").apply {
         if (state) afterParentInit {
             this[0].x = this.x + this.width - this[0].width - padding
         }
@@ -75,6 +75,7 @@ fun Switch(at: Vec2 = Vec2.ZERO, size: Float, padding: Float = 3f, state: Boolea
  *
  * For both strings and images, use `Image to "string"`.
  */
+@JvmName("Radiobutton")
 fun Radiobutton(vararg entries: String, at: Vec2 = Vec2.ZERO, initial: Int = 0, fontSize: Float = 12f, optionLateralPadding: Float = 6f, optionVerticalPadding: Float = 6f) = Radiobutton(entries = entries.mapToArray { null to it }, at, initial, fontSize, optionLateralPadding, optionVerticalPadding)
 
 /**
@@ -82,6 +83,7 @@ fun Radiobutton(vararg entries: String, at: Vec2 = Vec2.ZERO, initial: Int = 0, 
  *
  * For both strings and images, use `Image to "string"`.
  */
+@JvmName("Radiobutton")
 fun Radiobutton(vararg entries: PolyImage, at: Vec2 = Vec2.ZERO, initial: Int = 0, fontSize: Float = 12f, optionLateralPadding: Float = 6f, optionVerticalPadding: Float = 6f) = Radiobutton(entries = entries.mapToArray { it to null }, at, initial, fontSize, optionLateralPadding, optionVerticalPadding)
 
 /**
@@ -91,6 +93,7 @@ fun Radiobutton(vararg entries: PolyImage, at: Vec2 = Vec2.ZERO, initial: Int = 
  *
  * `null to null` is not supported, and will throw an exception.
  */
+@JvmName("Radiobutton")
 fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2 = Vec2.ZERO, initial: Int = 0, fontSize: Float = 12f, optionLateralPadding: Float = 6f, optionVerticalPadding: Float = 6f): Block {
     val optAlign = Align(Align.Main.Center, pad = Vec2(optionLateralPadding, optionVerticalPadding))
     val buttons = entries.mapToArray { (img, text) ->
@@ -126,10 +129,12 @@ fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2 = Vec2.ZERO,
 /**
  * For images, use `Image to "string"` for each entry.
  */
+@JvmName("Dropdown")
 fun Dropdown(vararg entries: String, at: Vec2 = Vec2.ZERO, fontSize: Float = 12f, initial: Int = 0, padding: Float = 12f, textLength: Float = 0f): Block {
     return Dropdown(entries = entries.mapToArray { null to it }, at, fontSize, initial, padding, textLength)
 }
 
+@JvmName("Dropdown")
 fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fontSize: Float = 12f, initial: Int = 0, optPadding: Float = 12f, textLength: Float = 0f): Block {
     var heightTracker = 0f
     val it = Block(
@@ -163,7 +168,7 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fon
         Event.Focused.Gained then {
             polyUI.master.addChild(dropdown, recalculate = false)
             dropdown.x = this.x
-            dropdown.y = this.y + this.size.y
+            dropdown.y = this.y + this.height
             if (dropdown.height != 0f) heightTracker = dropdown.height
             dropdown.height = 0f
             Resize(dropdown, height = heightTracker, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
@@ -201,32 +206,29 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fon
 /**
  * Note that slider change events cannot be cancelled.
  */
+@JvmName("Slider")
 fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValue: Float = 0f, ptrSize: Float = 24f, scaleFactor: Float = 2f, floating: Boolean = true, instant: Boolean = false): Drawable {
     val barHeight = ptrSize / 2.8f
     val barWidth = (max - min) * scaleFactor
     val size = Vec2(barWidth + ptrSize, ptrSize)
-    val rad = (barHeight / 2f).radii()
 
     return Group(
         Block(
             Block(
                 size = Vec2(1f, barHeight),
-                radii = rad,
-            ).setPalette { brand.fg },
+            ).radius(barHeight / 2f).setPalette { brand.fg },
             size = Vec2(barWidth, barHeight),
             alignment = Align(Align.Main.Start, pad = Vec2.ZERO),
-            radii = rad,
         ),
         Block(
             size = ptrSize.vec,
-            radii = (ptrSize / 2f).radii(),
-        ).setPalette { text.primary }.withStates().draggable(withY = false, onDrag = {
+        ).radius(ptrSize / 2f).setPalette { text.primary }.withStates().draggable(withY = false, onDrag = {
             val bar = this.parent[0]
-            val half = this.size.x / 2f
-            this.x = this.x.coerceIn(bar.x - half, bar.x + bar.size.x - half)
+            val half = this.width / 2f
+            this.x = this.x.coerceIn(bar.x - half, bar.x + bar.width - half)
             bar[0].width = x - bar.x + half
             if (instant && hasListenersFor(Event.Change.Number::class.java)) {
-                val progress = (this.x + half - bar.x) / size.x
+                val progress = (this.x + half - bar.x) / width
                 var value = (max - min) * progress
                 if (!floating) value = value.toInt().toFloat()
                 accept(Event.Change.Number(value))
@@ -237,10 +239,10 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
 
                 override fun unapply(value: Float) {
                     self.apply {
-                        val maxSize = this.size.x - 6f
-                        val maxRadius = (this.radii[0] - 2f).coerceAtLeast(0f)
+                        val maxSize = this.width - 6f
+                        val maxRadius = (this.radii?.get(0)?.minus(2f))?.coerceAtLeast(0f) ?: 0f
                         val current = maxSize * value
-                        val offset = (this.size.x - current) / 2f
+                        val offset = (this.width - current) / 2f
                         renderer.rect(x + offset, y + offset, current, current, polyUI.colors.brand.fg.normal, maxRadius * value)
                     }
                 }
@@ -276,6 +278,7 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
     }.namedId("Slider")
 }
 
+@JvmName("Checkbox")
 fun Checkbox(at: Vec2 = Vec2.ZERO, size: Float, state: Boolean = false) = Block(
     Image(
         image = PolyImage("polyui/check.svg"),
@@ -286,6 +289,7 @@ fun Checkbox(at: Vec2 = Vec2.ZERO, size: Float, state: Boolean = false) = Block(
     alignment = Align(pad = ((size - size / 1.25f) / 2f).vec),
 ).namedId("Checkbox").toggleable(state).onToggle { this[0].fade(it) }
 
+@JvmName("BoxedTextInput")
 fun BoxedTextInput(
     image: PolyImage? = null,
     pre: String? = null,
@@ -299,7 +303,7 @@ fun BoxedTextInput(
     if (image != null) Image(image).padded(6f, 0f) else null,
     if (pre != null) Text(pre).padded(6f, 0f) else null,
     Group(
-        TextInput(placeholder = placeholder, text = initialValue, fontSize = fontSize, /*visibleSize = if (size != null) Vec2(size.x, fontSize) else null*/).run {
+        TextInput(placeholder = placeholder, text = initialValue, fontSize = fontSize, /*visibleSize = if (size != null) Vec2(width, fontSize) else null*/).run {
             on(Event.Change.Text) {
                 parent.repositionChildren()
                 parent.parent.accept(it)
@@ -318,6 +322,7 @@ fun BoxedTextInput(
  * @param openNow if `true`, the menu is opened immediately. else, call [PolyUI.focus] on the return value to open it.
  */
 @Contract("_, _, _, null, true, _ -> fail")
+@JvmName("PopupMenu")
 fun PopupMenu(vararg children: Drawable?, size: Vec2 = Vec2.ZERO, align: Align = AlignDefault, polyUI: PolyUI?, openNow: Boolean = true, position: Point = Point.At): Block {
     val it = Block(
         focusable = true,
@@ -333,18 +338,18 @@ fun PopupMenu(vararg children: Drawable?, size: Vec2 = Vec2.ZERO, align: Align =
             val sz = this.polyUI.size
             when (position) {
                 Point.At -> {
-                    x = mx.coerceIn(0f, sz.x - this.size.x)
-                    y = my.coerceIn(0f, sz.y - this.size.y)
+                    x = mx.coerceIn(0f, sz.x - this.width)
+                    y = my.coerceIn(0f, sz.y - this.height)
                 }
 
                 Point.Above -> {
-                    x = (mx - (this.size.x / 2f)).coerceIn(0f, sz.x - this.size.x)
-                    y = (my - this.size.y - 6f).coerceIn(0f, sz.y - this.size.y)
+                    x = (mx - (this.width / 2f)).coerceIn(0f, sz.x - this.width)
+                    y = (my - this.height - 6f).coerceIn(0f, sz.y - this.height)
                 }
 
                 Point.Below -> {
-                    x = (mx - (this.size.x / 2f)).coerceIn(0f, sz.x - this.size.x)
-                    y = (my + 12f).coerceIn(0f, sz.y - this.size.y)
+                    x = (mx - (this.width / 2f)).coerceIn(0f, sz.x - this.width)
+                    y = (my + 12f).coerceIn(0f, sz.y - this.height)
                 }
             }
             fadeIn(0.2.seconds)

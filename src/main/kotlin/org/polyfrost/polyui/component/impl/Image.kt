@@ -28,17 +28,15 @@ import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.utils.radii
 
 open class Image(
     image: PolyImage,
     at: Vec2 = Vec2.ZERO,
     size: Vec2 = Vec2.ZERO,
-    radii: FloatArray = 0f.radii(),
     var backgroundColor: PolyColor? = null,
     alignment: Align = AlignDefault,
     vararg children: Drawable?,
-) : Block(children = children, at, size, alignment, Vec2.ZERO, false, null, radii) {
+) : Block(children = children, at, size, alignment, Vec2.ZERO, false, null) {
     constructor(image: String) : this(PolyImage(image))
 
     var image: PolyImage = image
@@ -48,10 +46,24 @@ open class Image(
         }
 
     override fun render() {
-        renderer.image(image, x, y, width, height, radii, color.argb)
-        backgroundColor?.let { renderer.rect(x, y, width, height, color, radii) }
-        val outlineColor = boarderColor ?: return
-        renderer.hollowRect(x, y, width, height, outlineColor, boarderWidth, radii)
+        val radii = this.radii
+        when {
+            radii == null -> {
+                renderer.image(image, x, y, width, height, 0f, color.argb)
+                backgroundColor?.let { renderer.rect(x, y, width, height, it) }
+                borderColor?.let { renderer.hollowRect(x, y, width, height, it, borderWidth) }
+            }
+            radii.size < 4 -> {
+                renderer.image(image, x, y, width, height, radii[0], color.argb)
+                backgroundColor?.let { renderer.rect(x, y, width, height, it, radii[0]) }
+                borderColor?.let { renderer.hollowRect(x, y, width, height, it, borderWidth, radii[0]) }
+            }
+            else -> {
+                renderer.image(image, x, y, width, height, radii, color.argb)
+                backgroundColor?.let { renderer.rect(x, y, width, height, it, radii) }
+                borderColor?.let { renderer.hollowRect(x, y, width, height, it, borderWidth, radii) }
+            }
+        }
     }
 
     override fun setup(polyUI: PolyUI): Boolean {
@@ -62,6 +74,8 @@ open class Image(
         return super.setup(polyUI)
     }
 
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("calculateSize")
     override fun calculateSize() = image.size
 
     override fun debugString() = "image: ${image.resourcePath.substringAfterLast('/')} (${image.size})"

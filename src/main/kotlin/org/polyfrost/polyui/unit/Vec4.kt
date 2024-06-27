@@ -58,6 +58,9 @@ abstract class Vec4 : Comparable<Vec4>, Cloneable {
         override val w get() = wh.x
         override val h get() = wh.y
         override fun clone() = Impl(xy, wh)
+
+        override val isNegative: Boolean
+            get() = xy.isNegative && wh.isNegative
     }
 
     private class Single(override val x: Float) : Vec4() {
@@ -87,6 +90,7 @@ abstract class Vec4 : Comparable<Vec4>, Cloneable {
         fun of(x: Float, y: Float, w: Float, h: Float): Vec4 = Impl(Vec2(x, y), Vec2(w, h))
 
         @JvmStatic
+        @JvmName("of")
         fun of(x: Float, y: Float, dims: Vec2): Vec4 = Impl(Vec2(x, y), dims)
     }
 }

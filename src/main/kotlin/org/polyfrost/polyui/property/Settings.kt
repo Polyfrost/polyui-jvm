@@ -125,6 +125,8 @@ class Settings {
      * Scroll multiplier factor, which will multiply the returned value of the callback by this value.
      * First value is the X scroll multiplier, with the second being the Y scroll multiplier.
      */
+    @get:JvmName("getScrollMultiplier")
+    @set:JvmName("setScrollMultiplier")
     var scrollMultiplier = Vec2(4f, 4f)
 
     /** Weather to invert the scroll direction */
@@ -139,6 +141,8 @@ class Settings {
      * @see maximumSize
      * @since 0.18.4
      */
+    @get:JvmName("getMinimumSize")
+    @set:JvmName("setMinimumSize")
     var minimumSize = Vec2(100f, 100f)
 
     /**
@@ -148,6 +152,8 @@ class Settings {
      * @see minimumSize
      * @since 0.18.4
      */
+    @get:JvmName("getMaximumSize")
+    @set:JvmName("setMaximumSize")
     var maximumSize = Vec2(-1f, -1f)
 
     /**

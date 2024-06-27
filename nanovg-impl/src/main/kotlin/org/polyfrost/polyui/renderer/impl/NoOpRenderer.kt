@@ -85,7 +85,7 @@ object NoOpRenderer : Renderer {
     override fun textBounds(font: Font, text: String, fontSize: Float) = Vec2.ONE
 
     override fun initImage(image: PolyImage) {
-        if (image.invalid) image.size = Vec2.Immutable(18f, 18f)
+        if (!image.size.isPositive) image.size = Vec2(18f, 18f)
     }
 
     override fun image(

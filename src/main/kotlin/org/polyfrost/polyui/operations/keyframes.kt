@@ -108,11 +108,15 @@ class KeyFrames<T : Drawable>(self: T, animation: Animation) : DrawableOp.Animat
 @KeyFrameDSL
 class KeyFrame(val start: Float, prev: KeyFrame?) {
     var rotation: Double = prev?.rotation ?: 0.0
+    @get:JvmName("getPosition")
+    @set:JvmName("setPosition")
     var position: Vec2 = prev?.position ?: Vec2.ZERO
     var scaleX: Float = prev?.scaleX ?: 1f
     var scaleY: Float = prev?.scaleY ?: 1f
     var skewX: Double = prev?.skewX ?: 0.0
     var skewY: Double = prev?.skewY ?: 0.0
+    @get:JvmName("getSize")
+    @set:JvmName("setSize")
     var size: Vec2 = prev?.size ?: Vec2.ZERO
     var color: Color? = prev?.color
 

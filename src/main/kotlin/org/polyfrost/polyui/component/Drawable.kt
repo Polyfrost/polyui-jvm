@@ -52,8 +52,10 @@ abstract class Drawable(
     val alignment: Align = AlignDefault,
     open var width: Float = 0f,
     open var height: Float = 0f,
-    var visWidth: Float = 0f,
-    var visHeight: Float = 0f,
+    @ApiStatus.Internal
+    protected var visWidth: Float = 0f,
+    @ApiStatus.Internal
+    protected var visHeight: Float = 0f,
     palette: Colors.Palette? = null,
     @get:JvmName("isFocusable")
     val focusable: Boolean = false,
@@ -66,8 +68,10 @@ abstract class Drawable(
         visibleSize: Vec2 = Vec2.ZERO,
         palette: Colors.Palette? = null,
         focusable: Boolean = false,
-    ) : this(children = children, at.x, at.y, alignment, size.x, size.x, visibleSize.x, visibleSize.y, palette, focusable)
+    ) : this(children = children, at.x, at.y, alignment, size.x, size.y, visibleSize.x, visibleSize.y, palette, focusable)
 
+    @get:JvmName("getAt")
+    @set:JvmName("setAt")
     var at: Vec2
         get() = Vec2(x, y)
         set(value) {
@@ -75,6 +79,8 @@ abstract class Drawable(
             y = value.y
         }
 
+    @get:JvmName("getSize")
+    @set:JvmName("setSize")
     var size: Vec2
         get() = Vec2(width, height)
         set(value) {
@@ -91,6 +97,8 @@ abstract class Drawable(
      *
      * @since 1.1.0
      */
+    @get:JvmName("getVisibleSize")
+    @set:JvmName("setVisibleSize")
     var visibleSize get() = if(hasVisibleSize) Vec2(visWidth, visHeight) else size
         set(value) {
             visWidth = value.x
@@ -321,7 +329,7 @@ abstract class Drawable(
 
     @SideEffects("x", "_x", "atValid", "this.children::x", `when` = "value != x")
     var x: Float
-        inline get() = _x
+        get() = _x
         set(value) {
             if (value == _x) return
             val d = value - _x
@@ -333,7 +341,7 @@ abstract class Drawable(
 
     @SideEffects("y", "_y", "atValid", "this.children::y", `when` = "value != y")
     var y: Float
-        inline get() = _y
+        get() = _y
         set(value) {
             if (value == _y) return
             val d = value - _y
@@ -636,7 +644,7 @@ abstract class Drawable(
             ran = true
         }
         if (ran) {
-            renderer.pushScissor(xScroll?.from ?: x, yScroll?.from ?: y, visWidth, visHeight)
+            renderer.pushScissor(xScroll?.from ?: x, yScroll?.from ?: y, visibleSize.x, visibleSize.y)
             if (x != px) {
                 needsRedraw = true
             }
@@ -735,7 +743,8 @@ abstract class Drawable(
         val children = children ?: return
         val tx = xScroll?.from ?: x
         val ty = yScroll?.from ?: y
-        _clipChildren(children, tx, ty, visWidth, visHeight)
+        val vs = visibleSize
+        _clipChildren(children, tx, ty, vs.x, vs.y)
         needsRedraw = true
     }
 
@@ -769,12 +778,14 @@ abstract class Drawable(
      * A return value of `null` indicates this drawable is not able to infer its own size, as it is for example, a Block with no reference.
      * A drawable such as Text on the other hand, is able to infer its own size.
      */
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("calculateSize")
     open fun calculateSize(): Vec2 = Vec2.ZERO
 
     /** add a debug render overlay for this drawable. This is always rendered regardless of the layout re-rendering if debug mode is on. */
     protected open fun debugRender() {
         val color = if (inputState > INPUT_NONE) polyUI.colors.page.border10 else polyUI.colors.page.border5
-        renderer.hollowRect(xScroll?.from ?: x, yScroll?.from ?: y, visWidth, visHeight, color, 1f)
+        renderer.hollowRect(xScroll?.from ?: x, yScroll?.from ?: y, visibleSize.x, visibleSize.y, color, 1f)
     }
 
     /**
@@ -871,6 +882,7 @@ abstract class Drawable(
     protected fun tryMakeScrolling() {
         if (!initialized) return
         if (!shouldScroll) return
+        if (!hasVisibleSize) return
         var scrolling = false
         if (width > visWidth) {
             if (xScroll == null) {
@@ -1136,7 +1148,7 @@ abstract class Drawable(
         new.alpha = 0f
         if (new.setup(polyUI)) {
             val totalSx = polyUI.size.x / polyUI.iSize.x
-            val totalSy = polyUI.size.y / polyUI.size.y
+            val totalSy = polyUI.size.y / polyUI.iSize.y
             new.rescale(totalSx, totalSy, position = false)
         }
         new.x = old.x - (old.x - (old.xScroll?.from ?: old.x))

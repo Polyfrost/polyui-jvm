@@ -23,11 +23,14 @@ package org.polyfrost.polyui.unit
 
 /**
  * Class that represents a 2D vector.
+ *
+ * *(revised 1.5)* Vec2's are now purely syntactical sugar which are inlined and have no runtime overhead. Their representation in internal data structures
+ * has been replaced with floats instead.
  * @since 1.1.0
  */
 @JvmInline
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-value class Vec2(@PublishedApi internal val value: Long) {
+value class Vec2 private constructor(@PublishedApi internal val value: Long) {
     constructor(x: Float, y: Float) : this(x.toBits().toLong() or y.toBits().toLong().shl(32))
     // rewrite counter: 5
 
@@ -38,13 +41,13 @@ value class Vec2(@PublishedApi internal val value: Long) {
     inline val y: Float get() = java.lang.Float.intBitsToFloat(value.shr(32).toInt())
 
     // checks if the value is negative by checking the sign bits in one go
-    @kotlin.internal.InlineOnly
+//    @kotlin.internal.InlineOnly
     val isNegative get() = (value and ((1L shl 63) or (1L shl 31))) != 0L
 
     @kotlin.internal.InlineOnly
-    val isZero get() = value == 0L
+    inline val isZero get() = value == 0L
 
-    @kotlin.internal.InlineOnly
+//    @kotlin.internal.InlineOnly
     val isPositive get() = !isNegative && value != 0L
 
     operator fun get(index: Int) = when (index) {
@@ -59,8 +62,11 @@ value class Vec2(@PublishedApi internal val value: Long) {
     override fun toString() = "${x}x$y"
 
     companion object Constants {
+        @get:JvmName("ZERO")
         val ZERO = Vec2(0L)
 
-        val ONE = Vec2(1L)
+        // dw bout it :smile:
+        @get:JvmName("ONE")
+        val ONE = Vec2(0x3f8000003f800000L)
     }
 }

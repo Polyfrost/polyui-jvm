@@ -26,9 +26,8 @@ import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.utils.areValuesEqual
 import org.polyfrost.polyui.utils.cl1
-import org.polyfrost.polyui.utils.radii
+import org.polyfrost.polyui.utils.elementsEqual
 
 open class Block(
     vararg children: Drawable?,
@@ -38,28 +37,54 @@ open class Block(
     visibleSize: Vec2 = Vec2.ZERO,
     focusable: Boolean = false,
     color: PolyColor? = null,
-    var radii: FloatArray = 8f.radii(),
+    radii: FloatArray? = floatArrayOf(8f),
 ) : Drawable(children = children, at, alignment, size, visibleSize, focusable = focusable) {
-    var boarderColor: PolyColor? = null
-    var boarderWidth: Float = 2f
+    var borderColor: PolyColor? = null
+    var borderWidth: Float = 2f
+    var radii = radii
+        set(value) {
+            field = when {
+                value == null -> null
+                value.isEmpty() -> null
+                value.elementsEqual() && value[0] == 0f -> null
+                else -> value
+            }
+        }
 
     init {
-        require(radii.size == 4) { "Corner radius array must be 4 values" }
         if (color != null) this.color = color
     }
 
     override fun render() {
-        renderer.rect(x, y, width, height, color, radii)
-        val outlineColor = boarderColor ?: return
-        renderer.hollowRect(x, y, width, height, outlineColor, boarderWidth, radii)
+        val radii = this.radii
+        when {
+            radii == null -> {
+                renderer.rect(x, y, width, height, color)
+                borderColor?.let { renderer.hollowRect(x, y, width, height, it, borderWidth) }
+            }
+
+            radii.size < 4 -> {
+                renderer.rect(x, y, width, height, color, radii[0])
+                borderColor?.let { renderer.hollowRect(x, y, width, height, it, borderWidth, radii[0]) }
+            }
+
+            else -> {
+                renderer.rect(x, y, width, height, color, radii)
+                borderColor?.let { renderer.hollowRect(x, y, width, height, it, borderWidth, radii) }
+            }
+        }
     }
 
     override fun rescale(scaleX: Float, scaleY: Float, position: Boolean) {
         super.rescale(scaleX, scaleY, position)
-        if (radii.areValuesEqual()) {
-            val scale = cl1(scaleX, scaleY)
-            for (i in 0..3) {
-                radii[i] *= scale
+        val radii = this.radii
+        val scale = cl1(scaleX, scaleY)
+        when {
+            radii == null -> {}
+            radii.elementsEqual() -> {
+                for (i in radii.indices) {
+                    radii[i] *= scale
+                }
             }
         }
     }

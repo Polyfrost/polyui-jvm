@@ -29,7 +29,10 @@ import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.operations.ShakeOp
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.*
-import org.polyfrost.polyui.utils.*
+import org.polyfrost.polyui.utils.image
+import org.polyfrost.polyui.utils.mutable
+import org.polyfrost.polyui.utils.toColor
+import org.polyfrost.polyui.utils.toHex
 import kotlin.jvm.internal.Ref
 import kotlin.math.roundToInt
 
@@ -56,9 +59,8 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Mutable>, faves: MutableList<Poly
         Image(
             PolyImage("polyui/color/hue.png"),
             size = 16f by 200f,
-            radii = 8f.radii(),
             children = arrayOf(
-                Block(size = 12f by 12f, radii = 6f.radii(), color = PolyColor.TRANSPARENT).draggable(withX = false, onDrag = {
+                Block(size = 12f by 12f, color = PolyColor.TRANSPARENT).draggable(withX = false, onDrag = {
                     y = y.coerceIn(parent.y, parent.y + parent.height - height)
                     color.element.hue = (y - parent.y) / (parent.height - height)
                     (this.parent.parent[5][0][0] as TextInput).text = color.element.toHex(alpha = false)
@@ -75,13 +77,12 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Mutable>, faves: MutableList<Poly
         Image(
             PolyImage("polyui/color/alpha.png"),
             size = 16f by 200f,
-            radii = 8f.radii(),
             children = arrayOf(
-                Block(size = 12f by 12f, radii = 6f.radii(), color = PolyColor.TRANSPARENT).draggable(withX = false, onDrag = {
+                Block(size = 12f by 12f, color = PolyColor.TRANSPARENT).draggable(withX = false, onDrag = {
                     y = y.coerceIn(parent.y, parent.y + parent.height - height)
                     color.element.alpha = 1f - (y - parent.y) / (parent.height - height)
                     (this.parent.parent[6][0][0] as TextInput).text = "${(color.element.alpha * 100f).roundToInt()}"
-                }).withBoarder(PolyColor.WHITE, 2f),
+                }).radius(6f).withBoarder(PolyColor.WHITE, 2f),
             ),
             alignment = Align(pad = 2f by 2f)
         ).padded(2f, 0f).onPress {
@@ -152,7 +153,7 @@ private fun assign(p: Block, col: PolyColor) {
 private class ColorPickingBox(
     val theColor: Ref.ObjectRef<PolyColor.Mutable>,
 ) : Block(
-    Block(size = 12f by 12f, radii = 6f.radii(), color = PolyColor.TRANSPARENT).draggable(
+    Block(size = 12f by 12f, color = PolyColor.TRANSPARENT).draggable(
         onDrag = {
             val hf = width / 2f
             x = x.coerceIn(parent.x - hf, parent.x + parent.width - hf)
@@ -164,6 +165,9 @@ private class ColorPickingBox(
     ).withBoarder(PolyColor.WHITE, 2f),
     size = 200f by 200f,
 ) {
+    init {
+        radii = floatArrayOf(6f)
+    }
     val grad1 = PolyColor.Gradient.Mutable(
         PolyColor.WHITE.mutable(),
         theColor.element,
@@ -184,11 +188,11 @@ private class ColorPickingBox(
         col.alpha = 1f
         col.saturation = 1f
         col.brightness = 1f
-        renderer.rect(x, y, width, height, grad1, radii)
+        renderer.rect(x, y, width, height, grad1, radii!!)
         col.saturation = os
         col.brightness = ob
         col.alpha = oa
 
-        renderer.rect(x, y, width, height, grad2, radii)
+        renderer.rect(x, y, width, height, grad2, radii!!)
     }
 }

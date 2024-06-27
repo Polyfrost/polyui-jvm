@@ -24,6 +24,7 @@ package org.polyfrost.polyui.component.impl
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.component.ensureLargerThan
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Modifiers
@@ -38,7 +39,7 @@ import org.polyfrost.polyui.unit.Vec4
 import org.polyfrost.polyui.utils.*
 import kotlin.math.max
 
-open class TextInput(
+open class TextInput constructor(
     text: String = "",
     placeholder: String = "polyui.textinput.placeholder",
     font: Font? = null,
@@ -451,8 +452,7 @@ open class TextInput(
         super.updateTextBounds(renderer)
         if (text.isEmpty()) {
             val bounds = renderer.textBounds(font, _placeholder.string, fontSize)
-            width = width.coerceAtLeast(bounds.x)
-            height = height.coerceAtLeast(bounds.y)
+            ensureLargerThan(bounds)
             visWidth = visWidth.coerceAtLeast(bounds.x)
             visHeight = visHeight.coerceAtLeast(bounds.y)
         }

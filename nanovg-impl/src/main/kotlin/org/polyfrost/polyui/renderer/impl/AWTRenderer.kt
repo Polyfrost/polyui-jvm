@@ -140,11 +140,11 @@ class AWTRenderer : Renderer {
                 val a = ByteArray(buf.remaining())
                 buf.get(a)
                 img.raster.setDataElements(0, 0, w, h, a)
-                image.size = Vec2.Immutable(w.toFloat(), h.toFloat())
+                image.size = Vec2(w.toFloat(), h.toFloat())
                 return@getOrPut img
             }
             val img = ImageIO.read(image.stream())
-            image.size = Vec2.Immutable(img.width.toFloat(), img.height.toFloat())
+            image.size = Vec2(img.width.toFloat(), img.height.toFloat())
             img
         }
     }

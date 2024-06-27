@@ -44,6 +44,7 @@ import org.polyfrost.polyui.renderer.data.FontFamily
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.Clock
 import org.polyfrost.polyui.utils.fastEach
+import org.polyfrost.polyui.utils.set
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.math.abs
@@ -103,6 +104,7 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, fre
  * for 1 second or more.
  * @since 1.0.3
  */
+@JvmName("addHoverInfo")
 fun <S : Drawable> S.addHoverInfo(vararg drawables: Drawable?, size: Vec2 = Vec2.ZERO, align: Align = AlignDefault, position: Point = Point.Above): S {
     var mx = 0f
     var my = 0f
@@ -219,6 +221,7 @@ fun <S : Drawable> S.dontScroll(): S {
     return this
 }
 
+@JvmName("minimumSize")
 fun <S : Drawable> S.minimumSize(size: Vec2): S {
     this.shouldScroll = false
     this.visibleSize = size
@@ -468,15 +471,42 @@ fun <S : Drawable> S.withCursor(cursor: Cursor = Cursor.Clicker): S {
 }
 
 fun <S : Block> S.withBoarder(color: PolyColor, width: Float = 1f): S {
-    this.boarderColor = color
-    this.boarderWidth = width
+    this.borderColor = color
+    this.borderWidth = width
     return this
 }
 
 fun <S : Block> S.withBoarder(width: Float = 1f, color: (Colors.() -> PolyColor) = { page.border5 }): S {
     onInit {
-        this.boarderColor = polyUI.colors.color()
-        this.boarderWidth = width
+        this.borderColor = polyUI.colors.color()
+        this.borderWidth = width
+    }
+    return this
+}
+
+fun <S : Block> S.radius(radius: Float): S {
+    when(val radii = this.radii) {
+        null -> this.radii = floatArrayOf(radius)
+        else -> radii.set(radius)
+    }
+    return this
+}
+
+fun <S : Block> S.radii(radii: FloatArray): S {
+    this.radii = radii
+    return this
+}
+
+fun <S : Block> S.radii(topLeftRadius: Float, topRightRadius: Float, bottomLeftRadius: Float, bottomRightRadius: Float): S {
+    val radii = this.radii
+    when {
+        radii == null || radii.size < 4 -> this.radii = floatArrayOf(topLeftRadius, topRightRadius, bottomLeftRadius, bottomRightRadius)
+        else -> {
+            radii[0] = topLeftRadius
+            radii[1] = topRightRadius
+            radii[2] = bottomLeftRadius
+            radii[3] = bottomRightRadius
+        }
     }
     return this
 }
@@ -628,15 +658,14 @@ fun <S : Drawable> S.fix(): S {
     y = y.toInt().toFloat()
     width = width.toInt().toFloat()
     height = height.toInt().toFloat()
-    visWidth = visWidth.toInt().toFloat()
-    visHeight = visHeight.toInt().toFloat()
     children?.fastEach { it.fix() }
     return this
 }
 
-fun <S : Drawable> S.ensureLargerThan(vec2: Vec2) {
-    if (width < vec2.x) width = vec2.x
-    if (height < vec2.y) height = vec2.y
+@JvmName("ensureLargerThan")
+fun <S : Drawable> S.ensureLargerThan(vec: Vec2) {
+    if (width < vec.x) width = vec.x
+    if (height < vec.y) height = vec.y
 }
 
 /**
@@ -687,6 +716,7 @@ fun Drawable.isRelatedTo(drawable: Drawable?) = drawable != null && drawable.isC
  * This is the "by" version of this method, meaning that each value is added to the current one of this drawable.
  * See the [animateTo] method for the "to" equivalent, which sets each value to the provided one.
  */
+@JvmName("animateBy")
 fun Drawable.animateBy(
     at: Vec2 = Vec2.ZERO,
     size: Vec2 = Vec2.ZERO,
@@ -714,9 +744,9 @@ fun Drawable.animateBy(
  * This is the "to" version of this method, meaning that each value is set to the provided one.
  * See the [animateBy] method for the "by" equivalent, which adds each value to the current one of this drawable.
  */
+@JvmName("animateTo")
 fun Drawable.animateTo(
-    tx: Float = this.x,
-    ty: Float = this.y,
+    at: Vec2 = this.at,
     size: Vec2 = this.size,
     rotation: Double = this.rotation,
     skewX: Double = this.skewX,
@@ -726,7 +756,7 @@ fun Drawable.animateTo(
     color: PolyColor = this.color,
     animation: Animation? = null,
 ) {
-    if (tx != this.x || ty != this.y) Move(this, tx, ty, false, animation).add()
+    if (at != this.at) Move(this, at, false, animation).add()
     if (size != this.size) Resize(this, size, false, animation).add()
     if (rotation != this.rotation) Rotate(this, rotation, false, animation).add()
     if (skewX != this.skewX || skewY != this.skewY) Skew(this, skewX, skewY, false, animation).add()

@@ -47,4 +47,7 @@ class NoOpWindow(title: String, width: Int, height: Int) : Window(width, height)
     override fun getKeyName(key: Int) = "unknown"
 
     override fun supportsRenderPausing() = false
+
+    override fun breakPause() {
+    }
 }

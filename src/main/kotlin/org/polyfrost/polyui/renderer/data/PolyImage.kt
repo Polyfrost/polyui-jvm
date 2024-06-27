@@ -38,6 +38,8 @@ class PolyImage @JvmOverloads constructor(
     var width = 0f
     var height = 0f
 
+    @get:JvmName("getSize")
+    @set:JvmName("setSize")
     var size: Vec2
         get() = Vec2(width, height)
         set(value) {

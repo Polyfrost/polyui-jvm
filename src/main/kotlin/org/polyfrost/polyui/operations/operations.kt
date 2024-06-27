@@ -112,8 +112,8 @@ class Resize<S : Drawable>(
     constructor(drawable: S, size: Vec2, add: Boolean = true, animation: Animation? = null, onFinish: (S.() -> Unit)? = null) :
             this(drawable, size.x, size.y, add, animation, onFinish)
 
-    private val ow = self.size.x
-    private val oh = self.size.y
+    private val ow = self.width
+    private val oh = self.height
     private val tw = if (add) width else width - ow
     private val th = if (add) height else height - oh
 
