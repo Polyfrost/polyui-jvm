@@ -68,6 +68,7 @@ class InputManager(
     private var clickTimer: Long = 0L
 
     /** @see org.polyfrost.polyui.input.Modifiers */
+    @get:JvmName("getKeyModifiers")
     val keyModifiers get() = Modifiers(mods)
 
     /** the current key modifiers (raw). */

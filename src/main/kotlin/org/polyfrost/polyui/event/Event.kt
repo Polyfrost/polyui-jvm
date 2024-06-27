@@ -65,7 +65,7 @@ interface Event {
      * @see Mouse.Exited
      */
     interface Mouse : Event {
-        abstract class ButtonBase(val button: Int, x: Float, y: Float, val mods: Modifiers) : Mouse {
+        abstract class ButtonBase(val button: Int, x: Float, y: Float, @get:JvmName("getMods") val mods: Modifiers) : Mouse {
             var x = x
                 private set
             var y = y
@@ -128,7 +128,12 @@ interface Event {
             override fun toString(): String = "MouseClicked x$clicks(($x, $y), ${MouseUtils.toStringPretty(MouseUtils.fromValue(button), mods)})"
         }
 
-        class Scrolled internal constructor(val amountX: Float, val amountY: Float, val mods: Modifiers) : Mouse {}
+        class Scrolled internal constructor(val amountX: Float, val amountY: Float, @get:JvmName("getMods") val mods: Modifiers) : Mouse {
+            override fun toString(): String = "MouseScrolled($amountX, $amountY, $mods)"
+            fun component1() = amountX
+            fun component2() = amountY
+            fun component3() = mods
+        }
 
         /** acceptable by component and layout, when the mouse enters this drawable.
          * @see Exited */
@@ -274,7 +279,7 @@ interface Event {
          * @see [Keys]
          * @see [Modifiers]
          */
-        class KeyTyped internal constructor(val key: Char, val mods: Modifiers) : Focused {
+        class KeyTyped internal constructor(val key: Char, @get:JvmName("getMods") val mods: Modifiers) : Focused {
             override fun toString() = "KeyTyped(${Keys.toStringPretty(key, mods)})"
 
             operator fun component1() = key
@@ -287,7 +292,7 @@ interface Event {
          * @see [Keys]
          * @see [Modifiers]
          */
-        class KeyPressed internal constructor(val key: Keys, val mods: Modifiers) : Focused {
+        class KeyPressed internal constructor(val key: Keys, @get:JvmName("getMods") val mods: Modifiers) : Focused {
             override fun toString(): String = "KeyPressed(${Keys.toString(key, mods)})"
 
             fun toStringPretty(): String = "KeyPressed(${Keys.toStringPretty(key, mods)})"
@@ -296,7 +301,7 @@ interface Event {
             operator fun component2() = mods
         }
 
-        class KeyReleased internal constructor(val key: Keys, val mods: Modifiers) : Focused {
+        class KeyReleased internal constructor(val key: Keys, @get:JvmName("getMods") val mods: Modifiers) : Focused {
             override fun toString(): String = "KeyReleased(${Keys.toString(key, mods)})"
 
             fun toStringPretty(): String = "KeyReleased(${Keys.toStringPretty(key, mods)})"
@@ -305,7 +310,7 @@ interface Event {
             operator fun component2() = mods
         }
 
-        class UnmappedInput internal constructor(val code: Int, val down: Boolean, val mods: Modifiers) : Focused {
+        class UnmappedInput internal constructor(val code: Int, val down: Boolean, @get:JvmName("getMods") val mods: Modifiers) : Focused {
             override fun toString(): String = "UnmappedInput(key=$code ('${code.toChar()}'), down=$down, mods=$mods)"
         }
 

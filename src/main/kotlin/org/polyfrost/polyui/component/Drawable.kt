@@ -1155,7 +1155,7 @@ abstract class Drawable(
         new.y = old.y - (old.y - (old.yScroll?.from ?: old.y))
         // don't want to open a madly scrolled page
         new.resetScroll()
-        Fade(old, 0f, false, Animations.EaseInOutQuad.create(0.3.seconds)) {
+        Fade(old, 0f, false, Animations.Default.create(0.3.seconds)) {
             enabled = false
             children.remove(this)
             _parent = null

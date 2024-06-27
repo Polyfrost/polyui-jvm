@@ -112,6 +112,7 @@ enum class Keys(val keyName: String, val value: Short) {
          * For example, [LSHIFT][KeyModifiers.LSHIFT] + [LCONTROL][KeyModifiers.LCONTROL] + [INSERT][Keys.INSERT] would return `"LSHIFT+LCONTROL+INSERT"`
          * */
         @JvmStatic
+        @JvmName("toString")
         fun toString(key: Keys, modifiers: Modifiers = Modifiers(0)): String {
             return if (modifiers.isEmpty) {
                 key.name
@@ -126,6 +127,7 @@ enum class Keys(val keyName: String, val value: Short) {
          * For example, [LSHIFT][KeyModifiers.LSHIFT] + [LCONTROL][KeyModifiers.LCONTROL] + `a` would return `"LSHIFT+LCONTROL+a"`
          */
         @JvmStatic
+        @JvmName("toString")
         fun toString(key: Char, modifiers: Modifiers = Modifiers(0)): String {
             return if (modifiers.isEmpty) {
                 key.toString()
@@ -140,6 +142,7 @@ enum class Keys(val keyName: String, val value: Short) {
          * For example, [LSHIFT][KeyModifiers.LSHIFT] + [LCONTROL][KeyModifiers.LCONTROL] + [INSERT][Keys.INSERT] would return `"Left Shift + Left Control + Insert"`
          */
         @JvmStatic
+        @JvmName("toStringPretty")
         fun toStringPretty(key: Keys, modifiers: Modifiers = Modifiers(0)): String {
             return if (modifiers.isEmpty) {
                 key.keyName
@@ -154,6 +157,7 @@ enum class Keys(val keyName: String, val value: Short) {
          * For example, [LSHIFT][KeyModifiers.LSHIFT] + [LCONTROL][KeyModifiers.LCONTROL] + `a` would return `"Left Shift + Left Control + a"`
          */
         @JvmStatic
+        @JvmName("toStringPretty")
         fun toStringPretty(key: Char, modifiers: Modifiers = Modifiers(0)): String {
             return if (modifiers.isEmpty) {
                 key.toString()
@@ -189,6 +193,7 @@ enum class Mouse(val keyName: String, val value: Short) {
         }
 
         @JvmStatic
+        @JvmName("toString")
         fun toString(button: Mouse, modifiers: Modifiers = Modifiers(0)): String {
             return if (modifiers.isEmpty) {
                 button.name
@@ -198,6 +203,7 @@ enum class Mouse(val keyName: String, val value: Short) {
         }
 
         @JvmStatic
+        @JvmName("toStringPretty")
         fun toStringPretty(button: Mouse, modifiers: Modifiers = Modifiers(0)): String {
             return if (modifiers.isEmpty) {
                 button.keyName
@@ -238,21 +244,46 @@ enum class KeyModifiers(val value: Byte) {
  * @see KeyModifiers
  */
 @JvmInline
+@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 value class Modifiers(val value: Byte) {
-    val lShift get() = value.toInt() and 0b00000001 != 0
-    val rShift get() = value.toInt() and 0b00000010 != 0
-    val lCtrl get() = value.toInt() and 0b00000100 != 0
-    val rCtrl get() = value.toInt() and 0b00001000 != 0
-    val lAlt get() = value.toInt() and 0b00010000 != 0
-    val rAlt get() = value.toInt() and 0b00100000 != 0
-    val lMeta get() = value.toInt() and 0b01000000 != 0
-    val rMeta get() = value.toInt() and 0b10000000 != 0
+    @kotlin.internal.InlineOnly
+    inline val lShift get() = value.toInt() and 0b00000001 != 0
 
-    val isEmpty get() = value == 0.toByte()
-    val hasShift get() = value.toInt() and 0b00000011 != 0
-    val hasControl get() = value.toInt() and 0b00001100 != 0 || (PolyUI.isOnMac && value.toInt() and 0b11000000 != 0)
-    val hasAlt get() = value.toInt() and 0b00110000 != 0
-    val hasMeta get() = value.toInt() and 0b11000000 != 0
+    @kotlin.internal.InlineOnly
+    inline val rShift get() = value.toInt() and 0b00000010 != 0
+
+    @kotlin.internal.InlineOnly
+    inline val lCtrl get() = value.toInt() and 0b00000100 != 0
+
+    @kotlin.internal.InlineOnly
+    inline val rCtrl get() = value.toInt() and 0b00001000 != 0
+
+    @kotlin.internal.InlineOnly
+    inline val lAlt get() = value.toInt() and 0b00010000 != 0
+
+    @kotlin.internal.InlineOnly
+    inline val rAlt get() = value.toInt() and 0b00100000 != 0
+
+    @kotlin.internal.InlineOnly
+    inline val lMeta get() = value.toInt() and 0b01000000 != 0
+
+    @kotlin.internal.InlineOnly
+    inline val rMeta get() = value.toInt() and 0b10000000 != 0
+
+    @kotlin.internal.InlineOnly
+    inline val isEmpty get() = value == 0.toByte()
+
+    @kotlin.internal.InlineOnly
+    inline val hasShift get() = value.toInt() and 0b00000011 != 0
+
+    @kotlin.internal.InlineOnly
+    inline val hasControl get() = value.toInt() and 0b00001100 != 0 || (PolyUI.isOnMac && value.toInt() and 0b11000000 != 0)
+
+    @kotlin.internal.InlineOnly
+    inline val hasAlt get() = value.toInt() and 0b00110000 != 0
+
+    @kotlin.internal.InlineOnly
+    inline val hasMeta get() = value.toInt() and 0b11000000 != 0
 
     val prettyName: String
         get() {
@@ -284,11 +315,14 @@ value class Modifiers(val value: Byte) {
             return sb.substring(0, sb.length - 1)
         }
 
-    fun equal(other: Modifiers) = this.equal(other.value)
+    @kotlin.internal.InlineOnly
+    inline fun equal(other: Modifiers) = this.equal(other.value)
 
-    fun equalLenient(other: Byte) = this.equalLenient(Modifiers(other))
+    @kotlin.internal.InlineOnly
+    inline fun equalLenient(other: Byte) = this.equalLenient(Modifiers(other))
 
-    fun equalLenient(other: Modifiers) = this.hasAlt == other.hasAlt && this.hasControl == other.hasControl && this.hasShift == other.hasShift
+    @kotlin.internal.InlineOnly
+    inline fun equalLenient(other: Modifiers) = this.hasAlt == other.hasAlt && this.hasControl == other.hasControl && this.hasShift == other.hasShift
 
     fun equal(other: Byte): Boolean {
         if (PolyUI.isOnMac && this.hasControl) {

@@ -72,16 +72,16 @@ abstract class Animation(var durationNanos: Long, var from: Float, var to: Float
     public abstract override fun clone(): Animation
 
     enum class Type {
-        Linear,
+        Linear, Default,
+        EaseOutQuad, EaseInQuad, EaseInOutQuad,
+        EaseOutCubic, EaseInCubic, EaseInOutCubic,
+        EaseOutQuart, EaseInQuart, EaseInOutQuart,
+        EaseOutQuint, EaseInQuint, EaseInOutQuint,
         EaseOutBack, EaseInBack, EaseInOutBack,
         EaseOutBump, EaseInBump, EaseInOutBump,
-        EaseOutQuad, EaseInQuad, EaseInOutQuad,
-        EaseOutQuart, EaseInQuart, EaseInOutQuart,
-        EaseOutSine, EaseInSine, EaseInOutSine,
-        EaseOutQuint, EaseInQuint, EaseInOutQuint,
-        EaseOutCirc, EaseInCirc, EaseInOutCirc,
         EaseOutExpo, EaseInExpo, EaseInOutExpo,
-        EaseOutCubic, EaseInCubic, EaseInOutCubic,
+        EaseOutSine, EaseInSine, EaseInOutSine,
+        EaseOutCirc, EaseInCirc, EaseInOutCirc,
         EaseOutElastic, EaseInElastic, EaseInOutElastic;
 
         /** create an animation based on the type.
@@ -102,6 +102,10 @@ abstract class Animation(var durationNanos: Long, var from: Float, var to: Float
                 EaseOutQuad -> Easing.Quad(Easing.Type.Out, durationNanos, start, end)
                 EaseInOutQuad -> Easing.Quad(Easing.Type.InOut, durationNanos, start, end)
 
+                EaseInCubic -> Easing.Cubic(Easing.Type.In, durationNanos, start, end)
+                EaseOutCubic -> Easing.Cubic(Easing.Type.Out, durationNanos, start, end)
+                EaseInOutCubic -> Easing.Cubic(Easing.Type.InOut, durationNanos, start, end)
+
                 EaseInQuart -> Easing.Quart(Easing.Type.In, durationNanos, start, end)
                 EaseOutQuart -> Easing.Quart(Easing.Type.Out, durationNanos, start, end)
                 EaseInOutQuart -> Easing.Quart(Easing.Type.InOut, durationNanos, start, end)
@@ -112,7 +116,7 @@ abstract class Animation(var durationNanos: Long, var from: Float, var to: Float
 
                 EaseInCirc -> Easing.Circ(Easing.Type.In, durationNanos, start, end)
                 EaseOutCirc -> Easing.Circ(Easing.Type.Out, durationNanos, start, end)
-                EaseInOutCirc -> Easing.Circ(Easing.Type.InOut, durationNanos, start, end)
+                Default, EaseInOutCirc -> Easing.Circ(Easing.Type.InOut, durationNanos, start, end)
 
                 EaseInExpo -> Easing.Expo(Easing.Type.In, durationNanos, start, end)
                 EaseOutExpo -> Easing.Expo(Easing.Type.Out, durationNanos, start, end)
@@ -121,10 +125,6 @@ abstract class Animation(var durationNanos: Long, var from: Float, var to: Float
                 EaseInSine -> Easing.Sine(Easing.Type.In, durationNanos, start, end)
                 EaseOutSine -> Easing.Sine(Easing.Type.Out, durationNanos, start, end)
                 EaseInOutSine -> Easing.Sine(Easing.Type.InOut, durationNanos, start, end)
-
-                EaseInCubic -> Easing.Cubic(Easing.Type.In, durationNanos, start, end)
-                EaseOutCubic -> Easing.Cubic(Easing.Type.Out, durationNanos, start, end)
-                EaseInOutCubic -> Easing.Cubic(Easing.Type.InOut, durationNanos, start, end)
 
                 EaseInElastic -> Easing.Elastic(Easing.Type.In, durationNanos, start, end)
                 EaseOutElastic -> Easing.Elastic(Easing.Type.Out, durationNanos, start, end)

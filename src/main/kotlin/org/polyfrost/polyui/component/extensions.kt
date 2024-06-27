@@ -192,14 +192,14 @@ fun <S : Drawable> S.fade(`in`: Boolean, durationNanos: Long = 0.1.seconds): S {
             alpha = 1f
             return this
         }
-        Fade(this, 1f, false, Animations.EaseInOutQuad.create(durationNanos)).add()
+        Fade(this, 1f, false, Animations.Default.create(durationNanos)).add()
     } else {
         if (!initialized) {
             alpha = 0f
             enabled = false
             return this
         }
-        Fade(this, 0f, false, Animations.EaseInOutQuad.create(durationNanos)) {
+        Fade(this, 0f, false, Animations.Default.create(durationNanos)) {
             enabled = false
         }.add()
     }
@@ -216,11 +216,18 @@ fun <S : Drawable> S.named(name: String): S {
     return this
 }
 
+/**
+ * Instruct this drawable to refuse scrolling even if it needs to be.
+ */
 fun <S : Drawable> S.dontScroll(): S {
     this.shouldScroll = false
     return this
 }
 
+/**
+ * Specify a minimum size for this drawable. **Note that this will also disable scrolling due to optimizations**.
+ * @since 1.4.4
+ */
 @JvmName("minimumSize")
 fun <S : Drawable> S.minimumSize(size: Vec2): S {
     this.shouldScroll = false
@@ -238,6 +245,15 @@ fun <S : Drawable> S.hide(state: Boolean = true): S {
     return this
 }
 
+/**
+ * Specify that this drawable should be ignored during the layout stage.
+ *
+ * This means that it will **not be placed automatically** by the positioner.
+ *
+ * Additionally, this will ignore if there is no size set on this drawable and no way to infer it.**
+ * This means that, if you use this incorrectly **it will not be visible and may break things if your renderer doesn't like zero sizes.**
+ * @since 1.4.4
+ */
 fun <S : Drawable> S.ignoreLayout(state: Boolean = true): S {
     this.layoutIgnored = state
     return this
@@ -404,24 +420,24 @@ fun <S : Drawable> S.setDestructivePalette() = setPalette {
 }
 
 private val defEnter: Drawable.(Event.Mouse.Entered) -> Boolean = {
-    Recolor(this, this.palette.hovered, Animations.EaseInOutQuad.create(0.08.seconds)).add()
+    Recolor(this, this.palette.hovered, Animations.Default.create(0.08.seconds)).add()
     polyUI.cursor = Cursor.Clicker
     false
 }
 
 private val defExit: Drawable.(Event.Mouse.Exited) -> Boolean = {
-    Recolor(this, this.palette.normal, Animations.EaseInOutQuad.create(0.08.seconds)).add()
+    Recolor(this, this.palette.normal, Animations.Default.create(0.08.seconds)).add()
     polyUI.cursor = Cursor.Pointer
     false
 }
 
 private val defPressed: Drawable.(Event.Mouse.Pressed) -> Boolean = {
-    Recolor(this, this.palette.pressed, Animations.EaseInOutQuad.create(0.08.seconds)).add()
+    Recolor(this, this.palette.pressed, Animations.Default.create(0.08.seconds)).add()
     false
 }
 
 private val defReleased: Drawable.(Event.Mouse.Released) -> Boolean = {
-    Recolor(this, this.palette.hovered, Animations.EaseInOutQuad.create(0.08.seconds)).add()
+    Recolor(this, this.palette.hovered, Animations.Default.create(0.08.seconds)).add()
     false
 }
 
@@ -436,7 +452,7 @@ fun <S : Drawable> S.withStates(): S {
 fun <S : Drawable> S.withStates(
     consume: Boolean = false, showClicker: Boolean = true,
     animation: (() -> Animation)? = {
-        Animations.EaseInOutQuad.create(0.08.seconds)
+        Animations.Default.create(0.08.seconds)
     },
 ): S {
     on(Event.Mouse.Entered) {

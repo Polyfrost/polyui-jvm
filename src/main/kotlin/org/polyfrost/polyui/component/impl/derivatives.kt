@@ -66,7 +66,7 @@ fun Switch(at: Vec2 = Vec2.ZERO, size: Float, padding: Float = 3f, state: Boolea
     }.onToggle {
         val circle = this[0]
         val target = this.x + if(it) this.width - circle.width - padding else padding
-        Move(circle, target, add = false, animation = Animations.EaseInOutQuad.create(0.2.seconds)).add()
+        Move(circle, target, add = false, animation = Animations.Default.create(0.2.seconds)).add()
     }
 }
 
@@ -110,8 +110,8 @@ fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2 = Vec2.ZERO,
                 if (ev.cancelled) return@onClick false
             }
             val f = children.first()
-            Move(f, this.x, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
-            Resize(f, this.width, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
+            Move(f, this.x, this.y, add = false, animation = Animations.Default.create(0.15.seconds)).add()
+            Resize(f, this.width, this.height, add = false, animation = Animations.Default.create(0.15.seconds)).add()
             true
         }
     }
@@ -120,8 +120,11 @@ fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2 = Vec2.ZERO,
         children = buttons,
     ).afterInit { _ ->
         val target = this[initial]
-        val it = Block(at = target.at, size = target.size).setPalette(polyUI.colors.brand.fg)
+        val it = Block().ignoreLayout().setPalette(polyUI.colors.brand.fg)
         addChild(it, recalculate = false)
+        // asm: scaling is applied twice so we can just
+        it.at = target.at
+        it.size = target.size
         it.relegate()
     }.namedId("Radiobutton")
 }
@@ -171,14 +174,14 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fon
             dropdown.y = this.y + this.height
             if (dropdown.height != 0f) heightTracker = dropdown.height
             dropdown.height = 0f
-            Resize(dropdown, height = heightTracker, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
-            Rotate(this[1], PI, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
+            Resize(dropdown, height = heightTracker, add = false, animation = Animations.Default.create(0.15.seconds)).add()
+            Rotate(this[1], PI, add = false, animation = Animations.Default.create(0.15.seconds)).add()
         }
         Event.Focused.Lost then {
-            Resize(dropdown, height = 0f, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)) {
+            Resize(dropdown, height = 0f, add = false, animation = Animations.Default.create(0.15.seconds)) {
                 polyUI.master.removeChild(dropdown, recalculate = false)
             }.add()
-            Rotate(this[1], 0.0, add = false, animation = Animations.EaseInOutQuad.create(0.15.seconds)).add()
+            Rotate(this[1], 0.0, add = false, animation = Animations.Default.create(0.15.seconds)).add()
         }
         Event.Lifetime.PostInit then {
             dropdown.setup(polyUI)
@@ -234,7 +237,7 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
                 accept(Event.Change.Number(value))
             }
         }).events {
-            val op = object : DrawableOp.Animatable<Block>(self, Animations.EaseInOutQuad.create(0.15.seconds, 1f, 0f)) {
+            val op = object : DrawableOp.Animatable<Block>(self, Animations.Default.create(0.15.seconds, 1f, 0f)) {
                 override fun apply(value: Float) {}
 
                 override fun unapply(value: Float) {
@@ -356,7 +359,7 @@ fun PopupMenu(vararg children: Drawable?, size: Vec2 = Vec2.ZERO, align: Align =
             true
         }
         Event.Focused.Lost then {
-            Fade(this, 0f, false, Animations.EaseInOutQuad.create(0.2.seconds)) {
+            Fade(this, 0f, false, Animations.Default.create(0.2.seconds)) {
                 this.polyUI.master.removeChild(this, recalculate = false)
             }.add()
         }

@@ -48,6 +48,8 @@ fun interface Positioner {
             }
 
             if (!drawable.sizeValid) {
+                // hope they know what they are doing!
+                if (drawable.layoutIgnored) return
                 require(!children.isNullOrEmpty()) { "Drawable $drawable has no size and no children\nBacktrace: ${polyUI.debugger.debugString()}" }
             } else if (children.isNullOrEmpty()) {
                 drawable.fixVisibleSize()

@@ -41,14 +41,14 @@ value class Vec2 private constructor(@PublishedApi internal val value: Long) {
     inline val y: Float get() = java.lang.Float.intBitsToFloat(value.shr(32).toInt())
 
     // checks if the value is negative by checking the sign bits in one go
-//    @kotlin.internal.InlineOnly
-    val isNegative get() = (value and ((1L shl 63) or (1L shl 31))) != 0L
+    @kotlin.internal.InlineOnly
+    inline val isNegative get() = (value and ((1L shl 63) or (1L shl 31))) != 0L
 
     @kotlin.internal.InlineOnly
     inline val isZero get() = value == 0L
 
-//    @kotlin.internal.InlineOnly
-    val isPositive get() = !isNegative && value != 0L
+    @kotlin.internal.InlineOnly
+    inline val isPositive get() = !isNegative && value != 0L
 
     operator fun get(index: Int) = when (index) {
         0 -> x
@@ -56,8 +56,10 @@ value class Vec2 private constructor(@PublishedApi internal val value: Long) {
         else -> throw IndexOutOfBoundsException("Index: $index")
     }
 
-    operator fun component1() = x
-    operator fun component2() = y
+    @kotlin.internal.InlineOnly
+    inline operator fun component1() = x
+    @kotlin.internal.InlineOnly
+    inline operator fun component2() = y
 
     override fun toString() = "${x}x$y"
 

@@ -89,7 +89,7 @@ class PolyUI(
     backgroundColor: PolyColor? = null,
     masterAlignment: Align = Align(cross = Align.Cross.Start, pad = Vec2.ZERO),
     colors: Colors = DarkTheme(),
-    size: Vec2,
+    size: Vec2 = Vec2.ZERO,
 ) {
     init {
         renderer.init()

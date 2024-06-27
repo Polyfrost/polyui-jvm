@@ -41,7 +41,7 @@ import org.polyfrost.polyui.unit.Vec2
  *
  * The syntax is as follows:
  * ```
- * keyframed(2.seconds, Animations.EaseOutExpo) {
+ * keyframed(2.seconds, Animations.Default) {
  *      20 {    // at 20% or 0.4 seconds, the rotation will be 25 degrees
  *          rotation = 25.0
  *      }

@@ -225,7 +225,7 @@ class KeyBinder(private val settings: Settings) {
         downUnmappedKeys.clear()
     }
 
-    class Bind(val unmappedKeys: IntArray? = null, val keys: Array<Keys>? = null, val mouse: IntArray? = null, val mods: Modifiers = Modifiers(0), val durationNanos: Long = 0L, @Transient val action: () -> Boolean) {
+    class Bind(val unmappedKeys: IntArray? = null, val keys: Array<Keys>? = null, val mouse: IntArray? = null, @get:JvmName("getMods") val mods: Modifiers = Modifiers(0), val durationNanos: Long = 0L, @Transient val action: () -> Boolean) {
         constructor(chars: CharArray? = null, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: () -> Boolean) : this(
             chars?.map {
                 it.code
