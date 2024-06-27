@@ -70,5 +70,9 @@ value class Vec2 private constructor(@PublishedApi internal val value: Long) {
         // dw bout it :smile:
         @get:JvmName("ONE")
         val ONE = Vec2(0x3f8000003f800000L)
+
+        @JvmStatic
+        @JvmName("of")
+        fun of(x: Float, y: Float) = Vec2(x, y)
     }
 }

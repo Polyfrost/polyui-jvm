@@ -50,7 +50,7 @@ fun main() {
                     Recolor(
                         this,
                         hsba(Random.nextFloat(), Random.nextFloat(), Random.nextFloat(), 1f),
-                        Animations.EaseInOutQuad.create(0.8.ms)
+                        Animations.Default.create(0.8.ms)
                     ).add()
                 }
             },

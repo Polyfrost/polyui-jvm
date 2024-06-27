@@ -91,6 +91,19 @@ class PolyUI(
     colors: Colors = DarkTheme(),
     size: Vec2 = Vec2.ZERO,
 ) {
+    @JvmOverloads
+    constructor(
+        vararg drawables: Drawable,
+        renderer: Renderer,
+        settings: Settings? = null,
+        inputManager: InputManager? = null,
+        translator: Translator? = null,
+        backgroundColor: PolyColor? = null,
+        masterAlignment: Align = Align(cross = Align.Cross.Start, pad = Vec2.ZERO),
+        colors: Colors = DarkTheme(),
+        width: Float, height: Float
+    ) : this(drawables = drawables, renderer, settings, inputManager, translator, backgroundColor, masterAlignment, colors, Vec2(width, height))
+
     init {
         renderer.init()
     }

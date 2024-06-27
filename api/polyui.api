@@ -11,6 +11,14 @@ public final class org/polyfrost/polyui/PolyUI {
 	public static final field defaultImage Lorg/polyfrost/polyui/renderer/data/PolyImage;
 	public static final field isOnMac Z
 	public static final field monospaceFont Lorg/polyfrost/polyui/renderer/data/Font;
+	public fun <init> ([Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/renderer/Renderer;FF)V
+	public fun <init> ([Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/renderer/Renderer;Lorg/polyfrost/polyui/property/Settings;FF)V
+	public fun <init> ([Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/renderer/Renderer;Lorg/polyfrost/polyui/property/Settings;Lorg/polyfrost/polyui/event/InputManager;FF)V
+	public fun <init> ([Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/renderer/Renderer;Lorg/polyfrost/polyui/property/Settings;Lorg/polyfrost/polyui/event/InputManager;Lorg/polyfrost/polyui/input/Translator;FF)V
+	public fun <init> ([Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/renderer/Renderer;Lorg/polyfrost/polyui/property/Settings;Lorg/polyfrost/polyui/event/InputManager;Lorg/polyfrost/polyui/input/Translator;Lorg/polyfrost/polyui/color/PolyColor;FF)V
+	public fun <init> ([Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/renderer/Renderer;Lorg/polyfrost/polyui/property/Settings;Lorg/polyfrost/polyui/event/InputManager;Lorg/polyfrost/polyui/input/Translator;Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/unit/Align;FF)V
+	public fun <init> ([Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/renderer/Renderer;Lorg/polyfrost/polyui/property/Settings;Lorg/polyfrost/polyui/event/InputManager;Lorg/polyfrost/polyui/input/Translator;Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/unit/Align;Lorg/polyfrost/polyui/color/Colors;FF)V
+	public synthetic fun <init> ([Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/renderer/Renderer;Lorg/polyfrost/polyui/property/Settings;Lorg/polyfrost/polyui/event/InputManager;Lorg/polyfrost/polyui/input/Translator;Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/unit/Align;Lorg/polyfrost/polyui/color/Colors;FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> ([Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/renderer/Renderer;Lorg/polyfrost/polyui/property/Settings;Lorg/polyfrost/polyui/event/InputManager;Lorg/polyfrost/polyui/input/Translator;Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/unit/Align;Lorg/polyfrost/polyui/color/Colors;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> ([Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/renderer/Renderer;Lorg/polyfrost/polyui/property/Settings;Lorg/polyfrost/polyui/event/InputManager;Lorg/polyfrost/polyui/input/Translator;Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/unit/Align;Lorg/polyfrost/polyui/color/Colors;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun addExecutor (Lorg/polyfrost/polyui/utils/Clock$Executor;)V
@@ -1827,6 +1835,11 @@ public class org/polyfrost/polyui/renderer/data/Resource {
 }
 
 public final class org/polyfrost/polyui/unit/Align {
+	public fun <init> (FF)V
+	public fun <init> (Lorg/polyfrost/polyui/unit/Align$Main;FF)V
+	public fun <init> (Lorg/polyfrost/polyui/unit/Align$Main;Lorg/polyfrost/polyui/unit/Align$Cross;FF)V
+	public fun <init> (Lorg/polyfrost/polyui/unit/Align$Main;Lorg/polyfrost/polyui/unit/Align$Cross;Lorg/polyfrost/polyui/unit/Align$Mode;FF)V
+	public synthetic fun <init> (Lorg/polyfrost/polyui/unit/Align$Main;Lorg/polyfrost/polyui/unit/Align$Cross;Lorg/polyfrost/polyui/unit/Align$Mode;FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (Lorg/polyfrost/polyui/unit/Align$Main;Lorg/polyfrost/polyui/unit/Align$Cross;Lorg/polyfrost/polyui/unit/Align$Mode;JIILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (Lorg/polyfrost/polyui/unit/Align$Main;Lorg/polyfrost/polyui/unit/Align$Cross;Lorg/polyfrost/polyui/unit/Align$Mode;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lorg/polyfrost/polyui/unit/Align$Main;
@@ -1917,6 +1930,7 @@ public final class org/polyfrost/polyui/unit/Vec2 {
 	public static final fun get-impl (JI)F
 	public fun hashCode ()I
 	public static fun hashCode-impl (J)I
+	public static final fun of (FF)J
 	public fun toString ()Ljava/lang/String;
 	public static fun toString-impl (J)Ljava/lang/String;
 	public final synthetic fun unbox-impl ()J
@@ -1925,6 +1939,7 @@ public final class org/polyfrost/polyui/unit/Vec2 {
 public final class org/polyfrost/polyui/unit/Vec2$Constants {
 	public final fun ONE ()J
 	public final fun ZERO ()J
+	public final fun of (FF)J
 }
 
 public abstract class org/polyfrost/polyui/unit/Vec4 : java/lang/Cloneable, java/lang/Comparable {
