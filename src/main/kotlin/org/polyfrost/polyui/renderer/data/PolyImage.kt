@@ -21,7 +21,6 @@
 
 package org.polyfrost.polyui.renderer.data
 
-import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.renderer.data.PolyImage.Type
 import org.polyfrost.polyui.unit.Vec2
@@ -36,19 +35,17 @@ class PolyImage @JvmOverloads constructor(
     val type: Type = from(resourcePath),
 ) : Resource(resourcePath) {
 
-    /**
-     * Size of the image.
-     */
-    @set:ApiStatus.Internal
-    var size: Vec2.Immutable = Vec2.Immutable(-1f, -1f)
+    var width = 0f
+    var height = 0f
 
-    inline val width get() = size.x
-    inline val height get() = size.y
-    val invalid get() = size.x < 0f || size.y < 0f
+    var size: Vec2
+        get() = Vec2(width, height)
+        set(value) {
+            width = value.x
+            height = value.y
+        }
 
-    override fun toString(): String {
-        return "$type Image($resourcePath, ${if (!invalid) size.toString() else "??x??"})"
-    }
+    override fun toString() = "$type Image($resourcePath, ${if (size.isPositive) size.toString() else "??x??"})"
 
     override fun hashCode() = resourcePath.hashCode()
 

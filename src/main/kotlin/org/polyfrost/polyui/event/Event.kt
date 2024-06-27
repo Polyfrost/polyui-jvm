@@ -88,9 +88,10 @@ interface Event {
                 return result
             }
 
-            internal fun set(mx: Float, my: Float) {
+            internal fun set(mx: Float, my: Float): ButtonBase {
                 this.x = mx
                 this.y = my
+                return this
             }
 
             operator fun component1() = x
@@ -142,6 +143,12 @@ interface Event {
          * @since 1.0.8
          */
         object Dragged : Mouse
+
+        /**
+         * dispatched when the mouse is moved. Use `polyUI.mouseX` and `polyUI.mouseY` to get the current position.
+         * @since 1.5.0
+         */
+        object Moved : Mouse
 
         companion object {
             /**
@@ -218,14 +225,17 @@ interface Event {
 
         class Text @ApiStatus.Internal constructor(val text: String) : Change() {
             operator fun component1() = text
+            override fun toString() = text
         }
 
         class Number @ApiStatus.Internal constructor(val amount: kotlin.Number) : Change() {
             operator fun component1() = amount
+            override fun toString() = amount.toString()
         }
 
         class State @ApiStatus.Internal constructor(val state: Boolean) : Change() {
             operator fun component1() = state
+            override fun toString() = state.toString()
         }
 
         companion object {
@@ -296,7 +306,7 @@ interface Event {
         }
 
         class UnmappedInput internal constructor(val code: Int, val down: Boolean, val mods: Modifiers) : Focused {
-            override fun toString(): String = "UnmappedInput(key=$code, down=$down, mods=$mods)"
+            override fun toString(): String = "UnmappedInput(key=$code ('${code.toChar()}'), down=$down, mods=$mods)"
         }
 
         /**

@@ -36,11 +36,10 @@ import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.mapToArray
 import org.polyfrost.polyui.utils.radii
+import kotlin.experimental.or
 import kotlin.math.PI
-import kotlin.math.max
-import kotlin.math.min
 
-fun Button(leftImage: PolyImage? = null, text: String? = null, rightImage: PolyImage? = null, fontSize: Float = 12f, font: Font? = null, radii: FloatArray = 8f.radii(), padding: Vec2 = Vec2(12f, 6f), at: Vec2? = null, size: Vec2? = null): Block {
+fun Button(leftImage: PolyImage? = null, text: String? = null, rightImage: PolyImage? = null, fontSize: Float = 12f, font: Font? = null, radii: FloatArray = 8f.radii(), padding: Vec2 = Vec2(12f, 6f), at: Vec2 = Vec2.ZERO, size: Vec2 = Vec2.ZERO): Block {
     return Block(
         if (leftImage != null) Image(leftImage) else null,
         if (text != null) Text(text, fontSize = fontSize, font = font) else null,
@@ -52,7 +51,7 @@ fun Button(leftImage: PolyImage? = null, text: String? = null, rightImage: PolyI
     ).withStates().namedId("Button")
 }
 
-fun Switch(at: Vec2? = null, size: Float, padding: Float = 3f, state: Boolean = false, lateralStretch: Float = 1.8f): Block {
+fun Switch(at: Vec2 = Vec2.ZERO, size: Float, padding: Float = 3f, state: Boolean = false, lateralStretch: Float = 1.8f): Block {
     val circleSize = size - (padding + padding)
     return Block(
         Block(size = Vec2(circleSize, circleSize), radii = (circleSize / 2f).radii()).setPalette { text.primary },
@@ -60,28 +59,14 @@ fun Switch(at: Vec2? = null, size: Float, padding: Float = 3f, state: Boolean = 
         size = Vec2(size * lateralStretch, size),
         alignment = Align(main = Align.Main.Start, pad = Vec2(padding, 0f)),
         radii = (size / 2f).radii(),
-    ).withStates().events {
-        var switched = state
-        Event.Mouse.Companion.Clicked then {
-            if (hasListenersFor(Event.Change.State::class.java)) {
-                val ev = Event.Change.State(switched)
-                accept(ev)
-                if (ev.cancelled) return@then false
-            }
-            val circle = this[0]
-            val target = this.height * (lateralStretch - 1f)
-            switched = !switched
-            palette = if (switched) polyUI.colors.brand.fg else polyUI.colors.component.bg
-            Move(circle, if (switched) target else -target, 0f, true, Animations.EaseInOutQuad.create(0.2.seconds)).add()
-            false
+    ).toggleable(state).namedId("Switch").apply {
+        if (state) afterParentInit {
+            this[0].x = this.x + this.width - this[0].width - padding
         }
-    }.namedId("Switch").also {
-        if (state) {
-            it.afterParentInit {
-                it.palette = polyUI.colors.brand.fg
-                this[0].x += this.height * (lateralStretch - 1f)
-            }
-        }
+    }.onToggle {
+        val circle = this[0]
+        val target = this.x + if(it) this.width - circle.width - padding else padding
+        Move(circle, target, add = false, animation = Animations.EaseInOutQuad.create(0.2.seconds)).add()
     }
 }
 
@@ -90,14 +75,14 @@ fun Switch(at: Vec2? = null, size: Float, padding: Float = 3f, state: Boolean = 
  *
  * For both strings and images, use `Image to "string"`.
  */
-fun Radiobutton(vararg entries: String, at: Vec2? = null, initial: Int = 0, fontSize: Float = 12f, optionLateralPadding: Float = 6f, optionVerticalPadding: Float = 6f) = Radiobutton(entries = entries.mapToArray { null to it }, at, initial, fontSize, optionLateralPadding, optionVerticalPadding)
+fun Radiobutton(vararg entries: String, at: Vec2 = Vec2.ZERO, initial: Int = 0, fontSize: Float = 12f, optionLateralPadding: Float = 6f, optionVerticalPadding: Float = 6f) = Radiobutton(entries = entries.mapToArray { null to it }, at, initial, fontSize, optionLateralPadding, optionVerticalPadding)
 
 /**
  * For strings, use `"string"` for each entry.
  *
  * For both strings and images, use `Image to "string"`.
  */
-fun Radiobutton(vararg entries: PolyImage, at: Vec2? = null, initial: Int = 0, fontSize: Float = 12f, optionLateralPadding: Float = 6f, optionVerticalPadding: Float = 6f) = Radiobutton(entries = entries.mapToArray { it to null }, at, initial, fontSize, optionLateralPadding, optionVerticalPadding)
+fun Radiobutton(vararg entries: PolyImage, at: Vec2 = Vec2.ZERO, initial: Int = 0, fontSize: Float = 12f, optionLateralPadding: Float = 6f, optionVerticalPadding: Float = 6f) = Radiobutton(entries = entries.mapToArray { it to null }, at, initial, fontSize, optionLateralPadding, optionVerticalPadding)
 
 /**
  * For just strings, use `"string"` for each entry.
@@ -106,7 +91,7 @@ fun Radiobutton(vararg entries: PolyImage, at: Vec2? = null, initial: Int = 0, f
  *
  * `null to null` is not supported, and will throw an exception.
  */
-fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2? = null, initial: Int = 0, fontSize: Float = 12f, optionLateralPadding: Float = 6f, optionVerticalPadding: Float = 6f): Block {
+fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2 = Vec2.ZERO, initial: Int = 0, fontSize: Float = 12f, optionLateralPadding: Float = 6f, optionVerticalPadding: Float = 6f): Block {
     val optAlign = Align(Align.Main.Center, pad = Vec2(optionLateralPadding, optionVerticalPadding))
     val buttons = entries.mapToArray { (img, text) ->
         require(img != null || text != null) { "image and text cannot both be null on Radiobutton" }
@@ -132,13 +117,8 @@ fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2? = null, ini
         children = buttons,
     ).afterInit { _ ->
         val target = this[initial]
-        val it = Block(size = target.size.clone()).also {
-            it.x = target.x
-            it.y = target.y
-            it.palette = polyUI.colors.brand.fg
-        }
+        val it = Block(at = target.at, size = target.size).setPalette(polyUI.colors.brand.fg)
         addChild(it, recalculate = false)
-        it.size.set(target.size)
         it.relegate()
     }.namedId("Radiobutton")
 }
@@ -146,21 +126,21 @@ fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2? = null, ini
 /**
  * For images, use `Image to "string"` for each entry.
  */
-fun Dropdown(vararg entries: String, at: Vec2? = null, fontSize: Float = 12f, initial: Int = 0, padding: Float = 12f, textLength: Float = 0f): Block {
+fun Dropdown(vararg entries: String, at: Vec2 = Vec2.ZERO, fontSize: Float = 12f, initial: Int = 0, padding: Float = 12f, textLength: Float = 0f): Block {
     return Dropdown(entries = entries.mapToArray { null to it }, at, fontSize, initial, padding, textLength)
 }
 
-fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2? = null, fontSize: Float = 12f, initial: Int = 0, padding: Float = 12f, textLength: Float = 0f): Block {
+fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fontSize: Float = 12f, initial: Int = 0, optPadding: Float = 12f, textLength: Float = 0f): Block {
     var heightTracker = 0f
     val it = Block(
-        Text("", fontSize = fontSize, visibleSize = if (textLength == 0f) null else Vec2(textLength, fontSize)),
+        Text("", fontSize = fontSize, visibleSize = if (textLength == 0f) Vec2.ZERO else Vec2(textLength, fontSize)),
         Image("polyui/chevron-down.svg"),
         at = at,
         focusable = true,
-        alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2(8f, 6f), maxRowSize = 0),
+        alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2(8f, 8f), maxRowSize = 0),
     ).withStates().withBoarder()
     val dropdown = Block(
-        alignment = Align(mode = Align.Mode.Vertical, pad = Vec2(padding, 6f)),
+        alignment = Align(mode = Align.Mode.Vertical, pad = Vec2(optPadding, 6f)),
         children = entries.mapToArray { (img, text) ->
             Group(
                 if (img != null) Image(img) else null,
@@ -198,7 +178,13 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2? = null, fontSiz
         Event.Lifetime.PostInit then {
             dropdown.setup(polyUI)
             this.width = dropdown.width
+            // sets the #created-with-initial-size flag to true, meaning that if it is recalculated, it 'remembers' that it should be
+            // this big. not necessary normally important, only if they decided to recalculate the dropdown for any reason.
+            this.layoutFlags = layoutFlags or 0b00000010
             this[1].x = this.x + (this.width - this[1].width - alignment.pad.x)
+            val totalSx = polyUI.size.x / polyUI.iSize.x
+            val totalSy = polyUI.size.y / polyUI.iSize.y
+            dropdown.rescale(totalSx, totalSy, position = false)
 
             val first = dropdown[initial]
             (this[0] as Text).text = ((if (first.children!!.size == 2) first[1] else first[0]) as Text).text
@@ -215,7 +201,7 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2? = null, fontSiz
 /**
  * Note that slider change events cannot be cancelled.
  */
-fun Slider(at: Vec2? = null, min: Float = 0f, max: Float = 100f, initialValue: Float = 0f, ptrSize: Float = 24f, scaleFactor: Float = 2f, floating: Boolean = true, instant: Boolean = false): Drawable {
+fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValue: Float = 0f, ptrSize: Float = 24f, scaleFactor: Float = 2f, floating: Boolean = true, instant: Boolean = false): Drawable {
     val barHeight = ptrSize / 2.8f
     val barWidth = (max - min) * scaleFactor
     val size = Vec2(barWidth + ptrSize, ptrSize)
@@ -252,7 +238,7 @@ fun Slider(at: Vec2? = null, min: Float = 0f, max: Float = 100f, initialValue: F
                 override fun unapply(value: Float) {
                     self.apply {
                         val maxSize = this.size.x - 6f
-                        val maxRadius = this.radii[0] - 2f
+                        val maxRadius = (this.radii[0] - 2f).coerceAtLeast(0f)
                         val current = maxSize * value
                         val offset = (this.size.x - current) / 2f
                         renderer.rect(x + offset, y + offset, current, current, polyUI.colors.brand.fg.normal, maxRadius * value)
@@ -290,40 +276,15 @@ fun Slider(at: Vec2? = null, min: Float = 0f, max: Float = 100f, initialValue: F
     }.namedId("Slider")
 }
 
-fun Checkbox(at: Vec2? = null, size: Float, state: Boolean = false) = Block(
+fun Checkbox(at: Vec2 = Vec2.ZERO, size: Float, state: Boolean = false) = Block(
     Image(
         image = PolyImage("polyui/check.svg"),
         size = (size / 1.25f).vec,
-    ).disable(!state).also {
-        if (!state) it.alpha = 0f
-    },
+    ).fade(state),
     at = at,
     size = Vec2(size, size),
     alignment = Align(pad = ((size - size / 1.25f) / 2f).vec),
-).events {
-    var checked = state
-    Event.Mouse.Companion.Clicked then {
-        if (hasListenersFor(Event.Change.State::class.java)) {
-            val ev = Event.Change.State(checked)
-            accept(ev)
-            if (ev.cancelled) return@then false
-        }
-        val check = this[0]
-        checked = !checked
-        palette = if (checked) polyUI.colors.brand.fg else polyUI.colors.component.bg
-        if (checked) {
-            check.enabled = true
-            Fade(check, 1f, false, Animations.EaseInOutQuad.create(0.1.seconds)).add()
-        } else {
-            Fade(check, 0f, false, Animations.EaseInOutQuad.create(0.1.seconds)) {
-                check.enabled = false
-            }.add()
-        }
-        false
-    }
-}.withStates().namedId("Checkbox").also {
-    if (state) it.setPalette { brand.fg }
-}
+).namedId("Checkbox").toggleable(state).onToggle { this[0].fade(it) }
 
 fun BoxedTextInput(
     image: PolyImage? = null,
@@ -333,12 +294,12 @@ fun BoxedTextInput(
     fontSize: Float = 12f,
     center: Boolean = false,
     post: String? = null,
-    size: Vec2? = null,
+    size: Vec2 = Vec2.ZERO,
 ) = Block(
     if (image != null) Image(image).padded(6f, 0f) else null,
     if (pre != null) Text(pre).padded(6f, 0f) else null,
     Group(
-        TextInput(placeholder = placeholder, text = initialValue, fontSize = fontSize).run {
+        TextInput(placeholder = placeholder, text = initialValue, fontSize = fontSize, /*visibleSize = if (size != null) Vec2(size.x, fontSize) else null*/).run {
             on(Event.Change.Text) {
                 parent.repositionChildren()
                 parent.parent.accept(it)
@@ -347,7 +308,7 @@ fun BoxedTextInput(
         alignment = Align(main = if (center) Align.Main.Center else Align.Main.Start, pad = Vec2.ZERO),
         size = size,
     ),
-    if (post != null) Block(Text(post), alignment = Align(pad = 6f by 10f), radii = floatArrayOf(0f, 8f, 0f, 8f)).afterInit { color = polyUI.colors.page.bg.normal } else null,
+    if (post != null) Block(Text(post).secondary(), alignment = Align(pad = 6f by 10f), radii = floatArrayOf(0f, 8f, 0f, 8f)).afterInit { color = polyUI.colors.page.bg.normal } else null,
     alignment = Align(pad = Vec2.ZERO, main = Align.Main.SpaceBetween)
 ).withBoarder()
 
@@ -356,8 +317,8 @@ fun BoxedTextInput(
  * @param polyUI an instance of PolyUI. If `null`, [openNow] must be `false`, or else an exception will be thrown.
  * @param openNow if `true`, the menu is opened immediately. else, call [PolyUI.focus] on the return value to open it.
  */
-@Contract("_, _, _, null, false, _ -> fail")
-fun PopupMenu(vararg children: Drawable?, size: Vec2? = null, align: Align = AlignDefault, polyUI: PolyUI?, openNow: Boolean = true, position: Point = Point.At): Block {
+@Contract("_, _, _, null, true, _ -> fail")
+fun PopupMenu(vararg children: Drawable?, size: Vec2 = Vec2.ZERO, align: Align = AlignDefault, polyUI: PolyUI?, openNow: Boolean = true, position: Point = Point.At): Block {
     val it = Block(
         focusable = true,
         size = size,
@@ -365,26 +326,29 @@ fun PopupMenu(vararg children: Drawable?, size: Vec2? = null, align: Align = Ali
         children = children,
     ).events {
         Event.Focused.Gained then {
+            this.polyUI.master.addChild(this, recalculate = false)
+            alpha = 0f
             val mx = this.polyUI.mouseX
             val my = this.polyUI.mouseY
             val sz = this.polyUI.size
             when (position) {
                 Point.At -> {
-                    x = max(min(mx, sz.x - this.size.x), 0f)
-                    y = max(min(my, sz.y - this.size.y), 0f)
+                    x = mx.coerceIn(0f, sz.x - this.size.x)
+                    y = my.coerceIn(0f, sz.y - this.size.y)
                 }
 
                 Point.Above -> {
-                    x = max(min(mx - (this.size.x / 2f), sz.x), 0f)
-                    y = max(min(my - this.size.y - 12f, sz.y), 0f)
+                    x = (mx - (this.size.x / 2f)).coerceIn(0f, sz.x - this.size.x)
+                    y = (my - this.size.y - 6f).coerceIn(0f, sz.y - this.size.y)
                 }
 
                 Point.Below -> {
-                    x = max(min(mx - (this.size.x / 2f), sz.x - this.size.x), 0f)
-                    y = max(min(my + 12f, sz.y - this.size.y), 0f)
+                    x = (mx - (this.size.x / 2f)).coerceIn(0f, sz.x - this.size.x)
+                    y = (my + 12f).coerceIn(0f, sz.y - this.size.y)
                 }
             }
-            Fade(this, 1f, false, Animations.EaseInOutQuad.create(0.2.seconds)).add()
+            fadeIn(0.2.seconds)
+            true
         }
         Event.Focused.Lost then {
             Fade(this, 0f, false, Animations.EaseInOutQuad.create(0.2.seconds)) {
@@ -392,10 +356,8 @@ fun PopupMenu(vararg children: Drawable?, size: Vec2? = null, align: Align = Ali
             }.add()
         }
     }
-    it.alpha = 0f
     if (openNow) {
         require(polyUI != null) { "polyUI cannot be null if openNow is true" }
-        polyUI.master.addChild(it, recalculate = false)
         polyUI.focus(it)
     }
     return it

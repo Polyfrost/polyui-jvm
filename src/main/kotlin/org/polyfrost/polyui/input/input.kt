@@ -215,15 +215,19 @@ enum class Mouse(val keyName: String, val value: Short) {
 enum class KeyModifiers(val value: Byte) {
     LSHIFT(0b00000001),
     RSHIFT(0b00000010),
+    SHIFT(0b00000011),
 
     LCONTROL(0b00000100),
     RCONTROL(0b00001000),
+    CONTROL(0b00001100),
 
     LALT(0b00010000),
     RALT(0b00100000),
+    ALT(0b00110000),
 
     LMETA(0b01000000),
-    RMETA(-0b10000000),
+    RMETA(-0b010000000),
+    META(-0b01000000),
 
     /** you will never receive this value. */
     UNKNOWN(0),
@@ -244,7 +248,7 @@ value class Modifiers(val value: Byte) {
     val lMeta get() = value.toInt() and 0b01000000 != 0
     val rMeta get() = value.toInt() and 0b10000000 != 0
 
-    val isEmpty get() = value.toInt() == 0
+    val isEmpty get() = value == 0.toByte()
     val hasShift get() = value.toInt() and 0b00000011 != 0
     val hasControl get() = value.toInt() and 0b00001100 != 0 || (PolyUI.isOnMac && value.toInt() and 0b11000000 != 0)
     val hasAlt get() = value.toInt() and 0b00110000 != 0
@@ -252,6 +256,7 @@ value class Modifiers(val value: Byte) {
 
     val prettyName: String
         get() {
+            if (isEmpty) return "None"
             val sb = StringBuilder()
             if (lShift) sb.append("Left Shift + ")
             if (rShift) sb.append("Right Shift + ")
@@ -266,6 +271,7 @@ value class Modifiers(val value: Byte) {
 
     val name: String
         get() {
+            if (isEmpty) return "None"
             val sb = StringBuilder()
             if (lShift) sb.append("LSHIFT+")
             if (rShift) sb.append("RSHIFT+")
@@ -278,9 +284,11 @@ value class Modifiers(val value: Byte) {
             return sb.substring(0, sb.length - 1)
         }
 
-    fun equal(other: Modifiers): Boolean {
-        return this.equal(other.value)
-    }
+    fun equal(other: Modifiers) = this.equal(other.value)
+
+    fun equalLenient(other: Byte) = this.equalLenient(Modifiers(other))
+
+    fun equalLenient(other: Modifiers) = this.hasAlt == other.hasAlt && this.hasControl == other.hasControl && this.hasShift == other.hasShift
 
     fun equal(other: Byte): Boolean {
         if (PolyUI.isOnMac && this.hasControl) {
@@ -289,4 +297,6 @@ value class Modifiers(val value: Byte) {
         }
         return other == value
     }
+
+    override fun toString() = "$name ($value)"
 }

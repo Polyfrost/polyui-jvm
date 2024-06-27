@@ -28,7 +28,6 @@ import org.polyfrost.polyui.animate.Animation
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Drawable
-import org.polyfrost.polyui.component.hasOperationOfType
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.animatable
 import org.polyfrost.polyui.utils.animatableGradient
@@ -55,17 +54,13 @@ class Move<S : Drawable>(
     override fun apply(value: Float) {
         self.x = ox + (tx * value)
         self.y = oy + (ty * value)
-        self.polyUI.inputManager.recalculate()
+        if(!self.polyUI.inputManager.mouseDown) self.polyUI.inputManager.recalculate()
         self.resetScroll()
     }
 
-    override fun verify(): Boolean {
-        return tx != 0f || ty != 0f
-    }
+    override fun verify() = tx != 0f || ty != 0f
 
-    override fun equals(other: Any?): Boolean {
-        return other is Move<*> && other.self === self
-    }
+    override fun equals(other: Any?) = other is Move<*> && other.self === self
 }
 
 class Fade<S : Drawable>(
@@ -82,13 +77,9 @@ class Fade<S : Drawable>(
         self.alpha = ia + (ta * value)
     }
 
-    override fun equals(other: Any?): Boolean {
-        return other is Fade<*> && other.self === self
-    }
+    override fun verify() = ta != 0f
 
-    override fun verify(): Boolean {
-        return ta != 0f
-    }
+    override fun equals(other: Any?) = other is Fade<*> && other.self === self
 }
 
 class Rotate<S : Drawable>(
@@ -105,19 +96,15 @@ class Rotate<S : Drawable>(
         self.rotation = ir + (tr * value)
     }
 
-    override fun equals(other: Any?): Boolean {
-        return other is Rotate<*> && other.self === self
-    }
+    override fun verify() = tr != 0.0
 
-    override fun verify(): Boolean {
-        return tr != 0.0
-    }
+    override fun equals(other: Any?) = other is Rotate<*> && other.self === self
 }
 
 class Resize<S : Drawable>(
     drawable: S,
-    width: Float = drawable.size.x,
-    height: Float = drawable.size.y,
+    width: Float = drawable.width,
+    height: Float = drawable.height,
     add: Boolean = true,
     animation: Animation? = null,
     onFinish: (S.() -> Unit)? = null,
@@ -131,17 +118,14 @@ class Resize<S : Drawable>(
     private val th = if (add) height else height - oh
 
     override fun apply(value: Float) {
-        self.size.set(ow + (tw * value), oh + (th * value))
+        self.width = ow + (tw * value)
+        self.height = oh + (th * value)
         self.clipChildren()
     }
 
-    override fun equals(other: Any?): Boolean {
-        return other is Resize<*> && other.self === self
-    }
+    override fun verify() = tw != 0f || th != 0f
 
-    override fun verify(): Boolean {
-        return tw != 0f || th != 0f
-    }
+    override fun equals(other: Any?) = other is Resize<*> && other.self === self
 }
 
 class Scale<S : Drawable>(
@@ -162,13 +146,9 @@ class Scale<S : Drawable>(
         self.scaleY = sy + (ty * value)
     }
 
-    override fun equals(other: Any?): Boolean {
-        return other is Scale<*> && other.self === self
-    }
+    override fun verify() = tx != 0f || ty != 0f
 
-    override fun verify(): Boolean {
-        return tx != 0f || ty != 0f
-    }
+    override fun equals(other: Any?) = other is Scale<*> && other.self === self
 }
 
 class Skew<S : Drawable>(
@@ -189,24 +169,29 @@ class Skew<S : Drawable>(
         self.skewY = sy + (ty * value)
     }
 
-    override fun equals(other: Any?): Boolean {
-        return other is Skew<*> && other.self === self
-    }
+    override fun verify() = tx != 0.0 || ty != 0.0
 
-    override fun verify(): Boolean {
-        return tx != 0.0 || ty != 0.0
-    }
+    override fun equals(other: Any?) = other is Skew<*> && other.self === self
 }
 
-class ShakeOp<S : Drawable>(self: S, durationNanos: Long, oscillations: Int, private val range: Float = 4f) : DrawableOp.Animatable<S>(self, Animations.Linear.create(durationNanos)) {
-    private val start = self.x
+class ShakeOp<S : Drawable>(
+    drawable: S,
+    durationNanos: Long,
+    oscillations: Int,
+    private val range: Float = 4f,
+    onFinish: (S.() -> Unit)? = null
+) : DrawableOp.Animatable<S>(drawable, Animations.Linear.create(durationNanos), onFinish) {
+    private val start = drawable.x
     private val oscillations = (oscillations * (PI * 2.0)).toFloat()
+
     override fun apply(value: Float) {
         self.x = start + sin(value * oscillations) * range
         self.needsRedraw = true
     }
 
-    override fun verify(): Boolean = !self.hasOperationOfType<ShakeOp<S>>()
+    override fun exclusive() = true
+
+    override fun equals(other: Any?) = other is ShakeOp<*> && other.self === self
 }
 
 /**
@@ -267,9 +252,9 @@ class Recolor<S : Drawable>(
         reset = shouldReset
     }
 
-    override fun verify(): Boolean {
-        return toColor != self.color
-    }
+    override fun verify() = toColor != self.color
+
+    override fun equals(other: Any?) = other is Recolor<*> && other.self === self
 
     override fun apply() {}
 
@@ -289,11 +274,5 @@ class Recolor<S : Drawable>(
         }
     }
 
-    override fun apply(value: Float) {
-        // nop
-    }
-
-    override fun equals(other: Any?): Boolean {
-        return other is Recolor<*> && other.self === self
-    }
+    override fun apply(value: Float) {}
 }

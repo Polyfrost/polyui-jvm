@@ -103,7 +103,7 @@ fun String.truncate(
 ): String {
     require(width != 0f) { "Cannot truncate to zero width" }
     var resultWidth = renderer.textBounds(font, this, fontSize).x
-    if (resultWidth < width) return this
+    if (resultWidth <= width) return this
     val delimiterWidth = renderer.textBounds(font, limitText, fontSize).x
     var t = this
     while (resultWidth + delimiterWidth > width) {

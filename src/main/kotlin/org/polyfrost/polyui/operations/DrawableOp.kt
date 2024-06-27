@@ -38,6 +38,12 @@ abstract class DrawableOp(protected open val self: Drawable) {
      */
     open fun verify(): Boolean = true
 
+    /**
+     * If this is `true`, when this drawable operation is attempted to be added, if one is already present, instead of replacing it, it will be ignored.
+     * @since 1.5.0
+     */
+    open fun exclusive(): Boolean = false
+
     fun add() {
         self.addOperation(this)
     }

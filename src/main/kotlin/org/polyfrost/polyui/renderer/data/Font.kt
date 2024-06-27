@@ -41,12 +41,15 @@ class Font @JvmOverloads constructor(
     @Transient
     val letterSpacing: Float = 0f,
     @Transient
-    val lineSpacing: Float = 1.4f,
-    @Transient
+    val lineSpacing: Float = 1.2f,
     val family: FontFamily? = null,
+    @Transient
     val italic: Boolean = resourcePath.contains("italic", ignoreCase = true),
+    @Transient
     val weight: Weight = Weight.entries.getByName(resourcePath.findLastAnyOf(Weight.entries.names(), ignoreCase = true)?.second) ?: Weight.Regular,
 ) : Resource(resourcePath) {
+    private constructor() : this("")
+
     val name get() = resourcePath.substringAfterLast('/').substringBeforeLast('.')
 
     fun getAtStyle(weight: Weight, italic: Boolean): Font {

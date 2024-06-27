@@ -50,7 +50,6 @@ class KeyBinder(private val settings: Settings) {
     private val downUnmappedKeys = ArrayList<Int>(5)
     private val downKeys = ArrayList<Keys>(5)
     private var recordingTime = 0L
-    private var modifiers: Byte = 0
     private var recordingFunc: (() -> Boolean)? = null
     private var callback: ((Bind) -> Unit)? = null
 
@@ -60,7 +59,7 @@ class KeyBinder(private val settings: Settings) {
      * This method is public, but marked as internal. This is because it should only be called by the PolyUI instance, unless you are trying to externally force a keypress (which you probably shouldn't be)
      */
     @ApiStatus.Internal
-    fun accept(event: Event): Boolean {
+    fun accept(event: Event, mods: Byte): Boolean {
         when (event) {
             is Event.Mouse.Pressed -> {
                 if (event.mods.isEmpty) {
@@ -68,7 +67,7 @@ class KeyBinder(private val settings: Settings) {
                     return false
                 }
                 downMouseButtons.add(event.button)
-                completeRecording()
+                completeRecording(mods)
             }
 
             is Event.Mouse.Released -> {
@@ -81,7 +80,7 @@ class KeyBinder(private val settings: Settings) {
                     return false
                 }
                 downKeys.add(event.key)
-                completeRecording()
+                completeRecording(mods)
             }
 
             is Event.Focused.KeyReleased -> {
@@ -90,7 +89,7 @@ class KeyBinder(private val settings: Settings) {
 
             else -> return false
         }
-        return update(0L, modifiers)
+        return update(0L, mods)
     }
 
     /**
@@ -99,35 +98,34 @@ class KeyBinder(private val settings: Settings) {
      * This method is public, but marked as internal. This is because it should only be called by the PolyUI instance, unless you are trying to externally force a keypress (which you probably shouldn't be)
      */
     @ApiStatus.Internal
-    fun accept(key: Int, down: Boolean): Boolean {
+    fun accept(key: Int, down: Boolean, mods: Byte): Boolean {
         if (down) {
             downUnmappedKeys.add(key)
-            completeRecording()
+            completeRecording(mods)
         } else {
             downUnmappedKeys.remove(key)
         }
-        return update(0L, modifiers)
+        return update(0L, mods)
     }
 
     @ApiStatus.Internal
-    fun update(deltaTimeNanos: Long, keyModifiers: Byte): Boolean {
-        modifiers = keyModifiers
+    fun update(deltaTimeNanos: Long, mods: Byte): Boolean {
         if (!hasTimeSensitiveListeners && deltaTimeNanos > 0L) return false
         listeners.fastEach {
-            if (it.update(downUnmappedKeys, downKeys, downMouseButtons, keyModifiers, deltaTimeNanos)) {
+            if (it.update(downUnmappedKeys, downKeys, downMouseButtons, mods, deltaTimeNanos)) {
                 return true
             }
         }
         return false
     }
 
-    private fun completeRecording() {
+    private fun completeRecording(mods: Byte) {
         if (recordingFunc == null) return
         val b = Bind(
             if (downUnmappedKeys.size == 0) null else downUnmappedKeys.toIntArray(),
             if (downKeys.size == 0) null else downKeys.toTypedArray(),
             if (downMouseButtons.size == 0) null else downMouseButtons.toIntArray(),
-            Modifiers(modifiers),
+            Modifiers(mods),
             recordingTime,
             recordingFunc ?: throw ConcurrentModificationException("unlucky"),
         )
@@ -268,7 +266,7 @@ class KeyBinder(private val settings: Settings) {
 
         internal fun update(c: ArrayList<Int>, k: ArrayList<Keys>, m: ArrayList<Int>, mods: Byte, deltaTimeNanos: Long): Boolean {
             if (durationNanos == 0L && deltaTimeNanos > 0L) return false
-            if (unmappedKeys?.matches(c) != false && keys?.matches(k) != false && mouse?.matches(m) != false && this.mods.equal(mods)) {
+            if (unmappedKeys?.matches(c) != false && keys?.matches(k) != false && mouse?.matches(m) != false && this.mods.equalLenient(mods)) {
                 if (!ran) {
                     if (durationNanos != 0L) {
                         time += deltaTimeNanos

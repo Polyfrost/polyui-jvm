@@ -50,7 +50,13 @@ class InputManager(
     var mouseOver: Drawable? = null
         private set(value) {
             if (field === value) return
-            field?.inputState = INPUT_NONE
+            field?.let {
+                if (it.inputState == INPUT_PRESSED) {
+                    // safeguard to stop the drawable from getting stuck in a pressed state
+                    it.accept(Event.Mouse.Companion.Released.set(mouseX, mouseY))
+                }
+                it.inputState = INPUT_NONE
+            }
             value?.inputState = INPUT_HOVERED
             field = value
         }
@@ -108,14 +114,14 @@ class InputManager(
             return
         }
         val event = Event.Focused.KeyPressed(key, keyModifiers)
-        if (keyBinder?.accept(event) == true) return
+        if (keyBinder?.accept(event, mods) == true) return
         focused?.accept(event)
     }
 
     /** This method should be called when a non-printable, but representable key is released. */
     fun keyUp(key: Keys) {
         val event = Event.Focused.KeyReleased(key, keyModifiers)
-        if (keyBinder?.accept(event) == true) return
+        if (keyBinder?.accept(event, mods) == true) return
         focused?.accept(event)
     }
 
@@ -125,7 +131,7 @@ class InputManager(
      * This is used solely for keybinding, and so the key can be any value, as long as it is consistent, and unique to that key.
      */
     fun keyDown(code: Int) {
-        if (keyBinder?.accept(code, true) == true) return
+        if (keyBinder?.accept(code, true, mods) == true) return
         focused?.accept(Event.Focused.UnmappedInput(code, true, keyModifiers))
     }
 
@@ -135,7 +141,7 @@ class InputManager(
      * This is used solely for keybinding, and so the key can be any value, as long as it is consistent, and unique to that key.
      */
     fun keyUp(code: Int) {
-        if (keyBinder?.accept(code, false) == true) return
+        if (keyBinder?.accept(code, false, mods) == true) return
         focused?.accept(Event.Focused.UnmappedInput(code, false, keyModifiers))
     }
 
@@ -232,11 +238,14 @@ class InputManager(
             return
         }
         master?.let { mouseOver = rayCheck(it, x, y) }
+        dispatch(Event.Mouse.Moved)
     }
 
     fun mousePressed(button: Int) {
         if (button == 0) mouseDown = true
-        val event = Event.Mouse.Pressed(button, mouseX, mouseY, keyModifiers)
+        val event =
+            if (button == 0 && keyModifiers.isEmpty) Event.Mouse.Companion.Pressed.set(mouseX, mouseY) else
+                Event.Mouse.Pressed(button, mouseX, mouseY, keyModifiers)
         mouseOver?.inputState = INPUT_PRESSED
         dispatch(event, true)
     }
@@ -266,9 +275,7 @@ class InputManager(
 
         // fast path: no need to alloc or check for anything on simple
         if (button == 0 && clickAmount == 1 && keyModifiers.isEmpty) {
-            val r = Event.Mouse.Released
-            r.set(mouseX, mouseY)
-            dispatch(r, true)
+            dispatch(Event.Mouse.Companion.Released.set(mouseX, mouseY), true)
             mouseOver?.let {
                 if (!it.isInside(mouseX, mouseY)) {
                     mouseOver = null
@@ -278,9 +285,7 @@ class InputManager(
             focused?.let {
                 if (!it.isInside(mouseX, mouseY)) unfocus()
             }
-            val c = Event.Mouse.Clicked
-            c.set(mouseX, mouseY)
-            if (!dispatch(c)) safeFocus(mouseOver)
+            if (!dispatch(Event.Mouse.Companion.Clicked.set(mouseX, mouseY))) safeFocus(mouseOver)
         } else {
             dispatch(Event.Mouse.Released(button, mouseX, mouseY, keyModifiers), true)
             val click = Event.Mouse.Clicked(button, mouseX, mouseY, clickAmount, keyModifiers)
@@ -333,7 +338,7 @@ class InputManager(
      *
      */
     fun dispatch(event: Event, bindable: Boolean = false, to: Drawable? = mouseOver): Boolean {
-        if (bindable && keyBinder?.accept(event) == true) return true
+        if (bindable && keyBinder?.accept(event, mods) == true) return true
         val cf = event is Event.Focused
         var candidate = to
         while (candidate != null) {
@@ -378,7 +383,14 @@ class InputManager(
             focused = null
             if (focusable == null) return true
         }
-        require(focusable.initialized) { "Cannot focus uninitialized drawable" }
+        if (!focusable.initialized) {
+            val polyUI = master?.polyUI ?: throw IllegalArgumentException("Cannot focus uninitialized drawable")
+            if (focusable.setup(polyUI)) {
+                val totalSx = polyUI.size.x / polyUI.iSize.x
+                val totalSy = polyUI.size.y / polyUI.iSize.y
+                focusable.rescale(totalSx, totalSy, false)
+            }
+        }
         require(focusable.focusable) { "Cannot focus un-focusable drawable" }
         focused = focusable
         focusable.focused = true

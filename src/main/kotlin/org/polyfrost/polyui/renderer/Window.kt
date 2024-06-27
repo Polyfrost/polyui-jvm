@@ -68,9 +68,18 @@ abstract class Window(open var width: Int, open var height: Int, open var pixelR
      * Return true if your window supports "render pausing", a optimization technique which will not render any frames if not necessary.
      *
      * See [Settings.renderPausing][org.polyfrost.polyui.property.Settings.renderPausingEnabled] for a better explanation.
+     * @see breakPause
      * @since 0.25.1
      */
     abstract fun supportsRenderPausing(): Boolean
+
+    /**
+     * This function may be called by the PolyUI instance when it has something that it wants to do immediately.
+     *
+     * You can ignore this function if you do not [support render pausing][supportsRenderPausing].
+     * @since 1.5.0
+     */
+    abstract fun breakPause()
 
     /**
      * Get the clipboard string. This is used for the [org.polyfrost.polyui.component.impl.TextInput] class.

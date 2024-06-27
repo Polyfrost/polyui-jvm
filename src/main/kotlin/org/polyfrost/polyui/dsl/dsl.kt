@@ -68,7 +68,7 @@ open class DrawableDSL(@PublishedApi internal val _this: Drawable) {
         return this
     }
 
-    inline fun block(size: Vec2? = null, alignment: Align = AlignDefault, init: (DrawableDSL.(Block) -> Unit) = {}): Block {
+    inline fun block(size: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, init: (DrawableDSL.(Block) -> Unit) = {}): Block {
         contract {
             callsInPlace(init, InvocationKind.EXACTLY_ONCE)
         }
@@ -95,7 +95,7 @@ open class DrawableDSL(@PublishedApi internal val _this: Drawable) {
         image(image.image(), alignment, init)
     }
 
-    inline fun text(text: String, visibleSize: Vec2? = null, alignment: Align = AlignDefault, limited: Boolean = false, init: Text.() -> Unit = {}): Text {
+    inline fun text(text: String, visibleSize: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, limited: Boolean = false, init: Text.() -> Unit = {}): Text {
         contract {
             callsInPlace(init, InvocationKind.EXACTLY_ONCE)
         }
@@ -105,7 +105,7 @@ open class DrawableDSL(@PublishedApi internal val _this: Drawable) {
         return o
     }
 
-    inline fun textInput(text: String = "", visibleSize: Vec2? = null, placeholder: String = "polyui.textinput.placeholder", alignment: Align = AlignDefault, init: TextInput.() -> Unit = {}): TextInput {
+    inline fun textInput(text: String = "", visibleSize: Vec2 = Vec2.ZERO, placeholder: String = "polyui.textinput.placeholder", alignment: Align = AlignDefault, init: TextInput.() -> Unit = {}): TextInput {
         contract {
             callsInPlace(init, InvocationKind.EXACTLY_ONCE)
         }
@@ -126,7 +126,7 @@ open class DrawableDSL(@PublishedApi internal val _this: Drawable) {
     }
 
     class Master : DrawableDSL(Block()) {
-        var size: Vec2? = null
+        var size: Vec2 = Vec2.ZERO
         private var _renderer: Renderer? = null
         var settings = Settings()
         var inputManager: InputManager? = null

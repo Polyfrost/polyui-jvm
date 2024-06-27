@@ -102,6 +102,8 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Mutable>, faves: MutableList<Poly
             size = 78f by 32f,
         ).onChange { text: String ->
             if (text.isEmpty()) return@onChange false
+            if (text.startsWith('-')) return@onChange true
+            if (text.length > 8) return@onChange true
             if (text == "#") return@onChange false
             try {
                 color.element.recolor(text.toColor())

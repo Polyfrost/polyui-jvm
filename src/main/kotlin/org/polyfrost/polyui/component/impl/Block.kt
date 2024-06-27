@@ -30,14 +30,12 @@ import org.polyfrost.polyui.utils.areValuesEqual
 import org.polyfrost.polyui.utils.cl1
 import org.polyfrost.polyui.utils.radii
 
-open class Block
-@JvmOverloads
-constructor(
+open class Block(
     vararg children: Drawable?,
-    at: Vec2? = null,
-    size: Vec2? = null,
+    at: Vec2 = Vec2.ZERO,
+    size: Vec2 = Vec2.ZERO,
     alignment: Align = AlignDefault,
-    visibleSize: Vec2? = null,
+    visibleSize: Vec2 = Vec2.ZERO,
     focusable: Boolean = false,
     color: PolyColor? = null,
     var radii: FloatArray = 8f.radii(),

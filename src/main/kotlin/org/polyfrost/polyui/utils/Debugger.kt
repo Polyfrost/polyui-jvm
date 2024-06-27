@@ -38,6 +38,7 @@ import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
+import org.polyfrost.polyui.operations.ShakeOp
 import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Align
@@ -91,12 +92,12 @@ class Debugger(private val polyUI: PolyUI) {
 //        if (polyUI.drew) LOGGER.info(perf)
     }
 
-    private val printBind = KeyBinder.Bind('P', mods = mods(KeyModifiers.LCONTROL)) {
+    private val printBind = KeyBinder.Bind('P', mods = mods(KeyModifiers.CONTROL)) {
         LOGGER.info(debugString())
         true
     }
 
-    private val inspectBind = KeyBinder.Bind(chars = null, mouse = intArrayOf(0), mods = mods(KeyModifiers.LSHIFT), durationNanos = 0.4.seconds) {
+    private val inspectBind = KeyBinder.Bind(chars = null, mouse = intArrayOf(0), mods = mods(KeyModifiers.SHIFT), durationNanos = 0.4.seconds) {
         openDebugWindow(polyUI.inputManager.rayCheckUnsafe(polyUI.master, polyUI.mouseX, polyUI.mouseY))
         true
     }
@@ -111,9 +112,14 @@ class Debugger(private val polyUI: PolyUI) {
             Event.Focused.Companion.KeyPressed then {
                 parent.recalculate()
                 if (it.key == Keys.ENTER) {
-                    processEval(forEval, text)
-                    if (!it.mods.hasShift) text = ""
-                    polyUI.unfocus()
+                    if(!processEval(forEval, text)) {
+                        ShakeOp(parent, 0.2.seconds, oscillations = 2) {
+                            polyUI.unfocus()
+                        }.add()
+                    } else {
+                        if (!it.mods.hasShift) text = ""
+                        polyUI.unfocus()
+                    }
                 }
             }
             Event.Focused.Lost then {
@@ -122,7 +128,7 @@ class Debugger(private val polyUI: PolyUI) {
         },
     )
 
-    private val evalBind = KeyBinder.Bind(key = Keys.TAB, mods = mods(KeyModifiers.LSHIFT)) {
+    private val evalBind = KeyBinder.Bind(key = Keys.TAB, mods = mods(KeyModifiers.SHIFT)) {
         val forEval = polyUI.inputManager.rayCheckUnsafe(polyUI.master, polyUI.mouseX, polyUI.mouseY) ?: return@Bind false
         this.forEval = forEval
         (evalWindow[0] as TextInput).placeholder = "evaluate ${forEval.simpleName}..."
@@ -144,7 +150,7 @@ class Debugger(private val polyUI: PolyUI) {
             val idx = eval.indexOf(']')
             if (idx == -1 || idx + 2 > eval.length) return false
             val child = eval.substring(1, idx).toIntOrNull() ?: return false
-            return processEval(target[child], eval.substring(idx + 2))
+            return processEval(target[child], eval.substring(if(eval[idx + 1] == '.') idx + 2 else idx + 1))
         }
         val set = eval.indexOf('=')
         if (set == -1) {
@@ -174,7 +180,7 @@ class Debugger(private val polyUI: PolyUI) {
 //                methods[0].invoke(target)
 //                return true
 //            }
-            LOGGER.warn("no methods matching $fn()")
+            LOGGER.warn("no methods matching $fn() on $target")
             return false
         }
         if (set == 0 || set == eval.length) return false
@@ -225,7 +231,7 @@ class Debugger(private val polyUI: PolyUI) {
             method.invoke(target, p)
             return true
         }
-        LOGGER.warn("no methods matching $sn($arg)")
+        LOGGER.warn("no methods matching $sn($arg) on $target")
         return false
     }
 
@@ -254,7 +260,7 @@ class Debugger(private val polyUI: PolyUI) {
         }
         if (polyUI.settings.enableDebugKeybind) {
             polyUI.keyBinder?.add(
-                KeyBinder.Bind('I', mods = mods(KeyModifiers.LCONTROL, KeyModifiers.LSHIFT)) {
+                KeyBinder.Bind('I', mods = mods(KeyModifiers.CONTROL, KeyModifiers.SHIFT)) {
                     polyUI.settings.debug = !polyUI.settings.debug
                     polyUI.master.needsRedraw = true
                     val s = if (polyUI.settings.debug) {
@@ -306,6 +312,9 @@ class Debugger(private val polyUI: PolyUI) {
                 }
             }
             if (mods.hasShift) {
+
+            }
+            if (mods.hasAlt) {
                 val s = "${inputManager.mouseX}x${inputManager.mouseY}"
                 val ww = renderer.textBounds(monospaceFont, s, 10f).x
                 val ppos = (mouseX + 10f).coerceIn(0f, this.size.x - ww - 10f)
@@ -391,7 +400,14 @@ ${d.alignment}
             align = Align(maxRowSize = 1),
             polyUI = polyUI,
             position = Point.Below
-        )
+        ).events {
+            Event.Focused.KeyTyped then {
+                if (it.key == 'c' && it.mods.hasControl) {
+                    LOGGER.info("copied ID ${d.simpleName} to clipboard")
+                    polyUI.clipboard = d.simpleName
+                }
+            }
+        }
     }
 
     private fun decodeFlags(drawable: Drawable): String {

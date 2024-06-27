@@ -31,10 +31,10 @@ import org.polyfrost.polyui.unit.Vec2
  */
 class Group(
     vararg children: Drawable?,
-    at: Vec2? = null,
+    at: Vec2 = Vec2.ZERO,
     alignment: Align = AlignDefault,
-    size: Vec2? = null,
-    visibleSize: Vec2? = null,
+    size: Vec2 = Vec2.ZERO,
+    visibleSize: Vec2 = Vec2.ZERO,
 ) : Drawable(children = children, at, alignment, size, visibleSize) {
     override var renders: Boolean
         get() = super.renders && !children.isNullOrEmpty()

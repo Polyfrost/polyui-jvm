@@ -108,12 +108,12 @@ class KeyFrames<T : Drawable>(self: T, animation: Animation) : DrawableOp.Animat
 @KeyFrameDSL
 class KeyFrame(val start: Float, prev: KeyFrame?) {
     var rotation: Double = prev?.rotation ?: 0.0
-    var position: Vec2? = prev?.position
+    var position: Vec2 = prev?.position ?: Vec2.ZERO
     var scaleX: Float = prev?.scaleX ?: 1f
     var scaleY: Float = prev?.scaleY ?: 1f
     var skewX: Double = prev?.skewX ?: 0.0
     var skewY: Double = prev?.skewY ?: 0.0
-    var size: Vec2? = prev?.size
+    var size: Vec2 = prev?.size ?: Vec2.ZERO
     var color: Color? = prev?.color
 
     override fun toString() = "KeyFrame(toRotate $rotation, skews $skewX+$skewY, scales $scaleX+$scaleY, to $position, toSize $size, toColor $color)"

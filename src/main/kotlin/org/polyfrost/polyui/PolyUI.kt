@@ -42,7 +42,6 @@ import org.polyfrost.polyui.renderer.data.FontFamily
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.unit.immutable
 import org.polyfrost.polyui.utils.*
 import kotlin.math.min
 
@@ -80,7 +79,7 @@ import kotlin.math.min
  *
  * PolyUI also supports a variety of [animations][org.polyfrost.polyui.animate.Animation] and transitions, which can be used to make your UI more dynamic, along with dynamically [adding][Drawable.addChild] and [removing][Drawable.removeChild] components.
  */
-class PolyUI @JvmOverloads constructor(
+class PolyUI(
     vararg drawables: Drawable,
     val renderer: Renderer,
     settings: Settings? = null,
@@ -89,7 +88,7 @@ class PolyUI @JvmOverloads constructor(
     backgroundColor: PolyColor? = null,
     masterAlignment: Align = Align(cross = Align.Cross.Start, pad = Vec2.ZERO),
     colors: Colors = DarkTheme(),
-    size: Vec2? = null,
+    size: Vec2,
 ) {
     init {
         renderer.init()
@@ -175,8 +174,8 @@ class PolyUI @JvmOverloads constructor(
     /**
      * This is the root layout of the UI. It is the parent of all other layouts.
      */
-    val master = if (backgroundColor == null) Group(at = Vec2(), size = size, children = drawables, alignment = masterAlignment)
-    else Block(at = Vec2(), size = size, children = drawables, alignment = masterAlignment, color = backgroundColor, radii = 0f.radii())
+    val master = if (backgroundColor == null) Group(size = size, children = drawables, alignment = masterAlignment)
+    else Block(size = size, children = drawables, alignment = masterAlignment, color = backgroundColor, radii = 0f.radii())
 
 
     val inputManager = inputManager?.with(master) ?: InputManager(master, KeyBinder(this.settings), this.settings)
@@ -219,13 +218,7 @@ class PolyUI @JvmOverloads constructor(
             window?.setCursor(value)
         }
 
-    inline val size: Vec2 get() = master.size
-
-    private var _iSize: Vec2.Immutable? = null
-        set(value) {
-            field = value
-            if (settings.debug && field != value) LOGGER.info("initial size: $value")
-        }
+    inline val size get() = master.size
 
     /**
      * this property stores the initial size of this PolyUI instance.
@@ -238,16 +231,16 @@ class PolyUI @JvmOverloads constructor(
      * @see resize
      * @since 1.0.5
      */
-    val iSize: Vec2.Immutable
+    var iSize = Vec2.ONE
         get() {
-            return if (master.sizeValid) {
-                val iSize = _iSize
-                if (iSize == null) {
-                    val sz = master.size.immutable()
-                    this._iSize = sz
-                    sz
-                } else iSize
-            } else Vec2.i_ONE
+            if (field == Vec2.ONE && master.sizeValid) {
+                field = master.size
+            }
+            return field
+        }
+        private set(value) {
+            if (settings.debug && field != value) LOGGER.info("initial size: $value")
+            field = value
         }
     private val executors: ArrayList<Clock.Executor> = ArrayList(4)
 
@@ -273,10 +266,9 @@ class PolyUI @JvmOverloads constructor(
         if (master.children.isNullOrEmpty()) LOGGER.warn("PolyUI initialized with no children!")
         master.simpleName += " [Master]"
         master.setup(this)
-        master.tryMakeScrolling()
 
         this.keyBinder?.add(
-            KeyBinder.Bind('R', mods = mods(KeyModifiers.LCONTROL)) {
+            KeyBinder.Bind('R', mods = mods(KeyModifiers.CONTROL)) {
                 LOGGER.info("Reloading PolyUI")
                 resize(this.size.x, this.size.y, true)
                 true
@@ -330,7 +322,7 @@ class PolyUI @JvmOverloads constructor(
             window?.width = newWidth.toInt()
             window?.height = newHeight.toInt()
         }
-        if (!settings.maximumSize.negative) {
+        if (!settings.maximumSize.isNegative) {
             val (maxW, maxH) = settings.maximumSize
             if (newWidth > maxW || newHeight > maxH) {
                 LOGGER.warn("Cannot resize to size larger than maximum: ${newWidth}x${newHeight}")
@@ -358,7 +350,7 @@ class PolyUI @JvmOverloads constructor(
         }
 
         if (settings.debug) LOGGER.info("resize: ${newWidth}x$newHeight")
-        if (force && settings.forceSetsInitialSize) _iSize = Vec2(newWidth, newHeight).immutable()
+        if (force && settings.forceSetsInitialSize) iSize = Vec2(newWidth, newHeight)
 
         val sx = newWidth / size.x
         val sy = newHeight / size.y
@@ -392,7 +384,7 @@ class PolyUI @JvmOverloads constructor(
         var wait = Long.MAX_VALUE
         executors.fastRemoveIfReversed l@{
             val o = it.tick(delta)
-            if (o < 1L) return@l true
+            if (o < 0L) return@l true
             wait = min(wait, o)
             false
         }

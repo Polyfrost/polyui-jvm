@@ -22,7 +22,7 @@
 package org.polyfrost.polyui.property
 
 import org.jetbrains.annotations.ApiStatus
-import org.polyfrost.polyui.unit.by
+import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.milliseconds
 
 /** Settings for PolyUI.
@@ -125,7 +125,7 @@ class Settings {
      * Scroll multiplier factor, which will multiply the returned value of the callback by this value.
      * First value is the X scroll multiplier, with the second being the Y scroll multiplier.
      */
-    var scrollMultiplier: Pair<Float, Float> = 4f to 4f
+    var scrollMultiplier = Vec2(4f, 4f)
 
     /** Weather to invert the scroll direction */
     @get:JvmName("isNaturalScrolling")
@@ -139,7 +139,7 @@ class Settings {
      * @see maximumSize
      * @since 0.18.4
      */
-    var minimumSize = 100f by 100f
+    var minimumSize = Vec2(100f, 100f)
 
     /**
      * Set the maximum renderer size (width by height) that this instance can be resized to.
@@ -148,7 +148,7 @@ class Settings {
      * @see minimumSize
      * @since 0.18.4
      */
-    var maximumSize = -1f by -1f
+    var maximumSize = Vec2(-1f, -1f)
 
     /**
      * Set the renderer aspect ratio, with the ratio being width:height, e.g. `16 to 9` = `16:9`.

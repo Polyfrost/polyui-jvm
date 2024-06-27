@@ -34,7 +34,7 @@ import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.unit.by
+import org.polyfrost.polyui.unit.Vec4
 import org.polyfrost.polyui.utils.*
 import kotlin.math.max
 
@@ -43,13 +43,13 @@ open class TextInput(
     placeholder: String = "polyui.textinput.placeholder",
     font: Font? = null,
     fontSize: Float = 12f,
-    at: Vec2? = null,
+    at: Vec2 = Vec2.ZERO,
     alignment: Align = AlignDefault,
-    visibleSize: Vec2? = null,
+    visibleSize: Vec2 = Vec2.ZERO,
     vararg children: Drawable?,
 ) : Text(text.translated().dont(), font, fontSize, at, alignment, visibleSize, true, false, *children) {
 
-    private val selectBoxes = ArrayList<Pair<Vec2, Vec2>>()
+    private val selectBoxes = ArrayList<Vec4>()
 
     private val caretColor = PolyColor.WHITE
 
@@ -95,9 +95,7 @@ open class TextInput(
         if (focused) {
             alpha = 1f
             renderer.rect(cposx + this.x, cposy + this.y, 1.5f, fontSize, caretColor)
-            selectBoxes.fastEach {
-                val (x, y) = it.first
-                val (w, h) = it.second
+            selectBoxes.fastEach { (x, y, w, h) ->
                 renderer.rect(this.x + x, this.y + y, w, h, polyUI.colors.page.border20)
             }
         } else {
@@ -336,7 +334,7 @@ open class TextInput(
     private fun getLineByIndex(index: Int): Quad<String, Int, Int, Float> {
         require(index > -1) { "Index must not be negative" }
         var i = 0
-        var y = spacing
+        var y = 0f
         lines.fastEachIndexed { li, (it, bounds) ->
             if (index < i + it.length) {
                 return Quad(it, index - i, li, y)
@@ -371,7 +369,7 @@ open class TextInput(
         var really = slp + lines[si].second.y
         for (i in sli + 1 until eli) {
             val (_, bounds) = lines[i]
-            selectBoxes.add((-1f by really) to bounds)
+            selectBoxes.add(Vec4.of(-1f, really, bounds))
             really += bounds.y + spacing
         }
         selection(sl, si, sl.length, slp)
@@ -382,7 +380,7 @@ open class TextInput(
         val start = renderer.textBounds(font, line.substring(0, startIndex), fontSize)
         val end = renderer.textBounds(font, line.substring(startIndex, endIndex), fontSize)
         val lh = max(start.y, end.y)
-        selectBoxes.add((start.x - 1f by linePos) to (end.x by lh))
+        selectBoxes.add(Vec4.of(start.x - 1f, linePos, end.x, lh))
     }
 
     private fun caretFromMouse(mouseX: Float, mouseY: Float) {
@@ -453,8 +451,10 @@ open class TextInput(
         super.updateTextBounds(renderer)
         if (text.isEmpty()) {
             val bounds = renderer.textBounds(font, _placeholder.string, fontSize)
-            size.smax(bounds)
-            visibleSize.smin(size)
+            width = width.coerceAtLeast(bounds.x)
+            height = height.coerceAtLeast(bounds.y)
+            visWidth = visWidth.coerceAtLeast(bounds.x)
+            visHeight = visHeight.coerceAtLeast(bounds.y)
         }
     }
 

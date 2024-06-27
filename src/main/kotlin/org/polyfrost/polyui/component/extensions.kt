@@ -25,7 +25,6 @@ package org.polyfrost.polyui.component
 
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI.Companion.DANGER
-import org.polyfrost.polyui.PolyUI.Companion.INPUT_HOVERED
 import org.polyfrost.polyui.PolyUI.Companion.SUCCESS
 import org.polyfrost.polyui.PolyUI.Companion.WARNING
 import org.polyfrost.polyui.animate.Animation
@@ -33,69 +32,67 @@ import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.impl.Block
+import org.polyfrost.polyui.component.impl.PopupMenu
 import org.polyfrost.polyui.component.impl.Text
+import org.polyfrost.polyui.component.impl.TextInput
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.event.EventDSL
 import org.polyfrost.polyui.operations.*
 import org.polyfrost.polyui.renderer.data.Cursor
 import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.data.FontFamily
-import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.unit.seconds
-import org.polyfrost.polyui.utils.fastAny
+import org.polyfrost.polyui.unit.*
+import org.polyfrost.polyui.utils.Clock
 import org.polyfrost.polyui.utils.fastEach
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 import kotlin.math.abs
 
-private var dragging = false
 const val MIN_DRAG = 3f
 
 /**
  * Make this component draggable.
  * @param free if this is true, the component will be able to be dragged outside its parent.
- *
  */
 fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, free: Boolean = false, onStart: (S.() -> Unit)? = null, onDrag: (S.() -> Unit)? = null, onDrop: (S.() -> Unit)? = null): S {
     var started = false
     var px = 0f
     var py = 0f
     on(Event.Mouse.Pressed) {
-        if (dragging) return@on false
         needsRedraw = true
-        dragging = true
         px = it.x - x
         py = it.y - y
         false
     }
     on(Event.Mouse.Dragged) {
-        if (dragging) {
-            val mx = polyUI.inputManager.mouseX
-            val my = polyUI.inputManager.mouseY
-            if (!started) {
-                if (abs(px + x - mx) > MIN_DRAG || abs(py + y - my) > MIN_DRAG) {
-                    started = true
-                    onStart?.invoke(this)
-                    if (free && _parent !== polyUI.master) {
-                        parent.children!!.remove(this)
-                        polyUI.master.children!!.add(this)
-                    }
+        val mx = polyUI.inputManager.mouseX
+        val my = polyUI.inputManager.mouseY
+        if (!started) {
+            if (abs(px + x - mx) > MIN_DRAG || abs(py + y - my) > MIN_DRAG) {
+                started = true
+                onStart?.invoke(this)
+                if (free && _parent !== polyUI.master) {
+                    parent.children!!.remove(this)
+                    polyUI.master.children!!.add(this)
                 }
-            } else {
-                needsRedraw = true
-                if (withX) x = mx - px
-                if (withY) y = my - py
-                onDrag?.invoke(this)
             }
+        } else {
+            needsRedraw = true
+            if (withX) x = mx - px
+            if (withY) y = my - py
+            onDrag?.invoke(this)
         }
         false
     }
     on(Event.Mouse.Released) {
         if (started) {
             if (free && _parent !== polyUI.master) {
-                parent.children!!.remove(this)
-                polyUI.master.children!!.add(this)
+                polyUI.master.children!!.remove(this)
+                parent.children!!.add(this)
             }
-            onDrop?.invoke(this)
             started = false
+            needsRedraw = true
+            onDrop?.invoke(this)
         }
     }
     return this
@@ -106,48 +103,104 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, fre
  * for 1 second or more.
  * @since 1.0.3
  */
-fun <S : Drawable> S.addHoverInfo(text: String?): S {
-    if (text == null) return this
-    val obj = Block(Text(text)).hide()
-    obj.alpha = 0f
-    onInit {
-        obj.setup(polyUI)
-        (_parent ?: polyUI.master).addChild(obj, recalculate = false)
-        obj.renders = false
-        acceptsInput = true
-    }
+fun <S : Drawable> S.addHoverInfo(vararg drawables: Drawable?, size: Vec2 = Vec2.ZERO, align: Align = AlignDefault, position: Point = Point.Above): S {
     var mx = 0f
-    var open = false
-    addOperation(object : DrawableOp.Animatable<S>(this, Animations.Linear.create(1.seconds)) {
-        override fun apply() {
-            if (self.inputState == INPUT_HOVERED) {
-                super.apply()
-            }
-            if (open && mx != self.polyUI.mouseX) {
-                animation?.reset()
-                open = false
-                Fade(obj, 0f, false, Animations.EaseInOutQuad.create(0.1.seconds)) {
-                    renders = false
-                }.add()
+    var my = 0f
+    val popup = PopupMenu(*drawables, size = size, align = align, polyUI = null, openNow = false, position = position)
+    val exe = Clock.Bomb(0.5.seconds) {
+        polyUI.focus(popup)
+    }
+    on(Event.Mouse.Entered) {
+        mx = polyUI.inputManager.mouseX
+        my = polyUI.inputManager.mouseY
+        polyUI.addExecutor(exe)
+    }
+    on(Event.Mouse.Exited) {
+        if (popup.focused) polyUI.unfocus()
+        polyUI.removeExecutor(exe)
+    }
+    on(Event.Mouse.Moved) {
+        if (popup.focused) {
+            if (abs(mx - polyUI.inputManager.mouseX) > 3f || abs(my - polyUI.inputManager.mouseY) > 3f) {
+                polyUI.unfocus()
+                polyUI.addExecutor(exe)
             }
         }
+        exe.refuse()
+    }
+    return this
+}
 
-        override fun apply(value: Float) {
-            if (!open && value == 1f) {
-                mx = self.polyUI.mouseX
-                obj.x = (mx - obj.width / 2f).coerceIn(0f, self.polyUI.size.x - obj.width)
-                obj.y = (self.polyUI.mouseY - obj.height - 4f).coerceIn(0f, self.polyUI.size.y)
-                obj.renders = true
-                open = true
-                Fade(obj, 1f, false, Animations.EaseInOutQuad.create(0.1.seconds)).add()
-            }
+/**
+ * Make this drawable toggleable, meaning that, when clicked:
+ * - it will change its palette to the brand foreground color if it is toggled on, and to the component background color if it is toggled off.
+ * - it will emit a [Event.Change.State] event. you can use the [onToggle] function to easily listen to this event.
+ * @since 1.5.0
+ */
+fun <S : Drawable> S.toggleable(default: Boolean): S {
+    withStates()
+    var state = default
+    onClick {
+        state = !state
+        if (hasListenersFor(Event.Change.State::class.java)) {
+            val ev = Event.Change.State(state)
+            accept(ev)
+            if (ev.cancelled) return@onClick false
         }
+        palette = if (state) polyUI.colors.brand.fg else polyUI.colors.component.bg
+        false
+    }
+    if (state) setPalette { brand.fg }
+    return this
+}
 
-        override fun unapply(): Boolean {
-            super.unapply()
-            return false
+/**
+ * Use this to add a simple listener for the [Event.Change.State] event.
+ * @see [toggleable]
+ * @since 1.5.0
+ */
+fun <S : Drawable> S.onToggle(func: S.(Boolean) -> Unit): S {
+    on(Event.Change.State) {
+        func.invoke(this, it.state)
+        false
+    }
+    return this
+}
+
+/**
+ * Alias for [fade].
+ */
+fun <S : Drawable> S.fadeIn(durationNanos: Long = 0.1.seconds) = fade(true, durationNanos)
+
+/**
+ * Alias for [fade].
+ */
+fun <S : Drawable> S.fadeOut(durationNanos: Long = 0.1.seconds) = fade(false, durationNanos)
+
+/**
+ * Fade this drawable in or out, with a given duration.
+ *
+ * If it is not initialized, it applies the fade instantly.
+ * @since 1.5.0
+ */
+fun <S : Drawable> S.fade(`in`: Boolean, durationNanos: Long = 0.1.seconds): S {
+    if (`in`) {
+        enabled = true
+        if (!initialized) {
+            alpha = 1f
+            return this
         }
-    })
+        Fade(this, 1f, false, Animations.EaseInOutQuad.create(durationNanos)).add()
+    } else {
+        if (!initialized) {
+            alpha = 0f
+            enabled = false
+            return this
+        }
+        Fade(this, 0f, false, Animations.EaseInOutQuad.create(durationNanos)) {
+            enabled = false
+        }.add()
+    }
     return this
 }
 
@@ -161,6 +214,17 @@ fun <S : Drawable> S.named(name: String): S {
     return this
 }
 
+fun <S : Drawable> S.dontScroll(): S {
+    this.shouldScroll = false
+    return this
+}
+
+fun <S : Drawable> S.minimumSize(size: Vec2): S {
+    this.shouldScroll = false
+    this.visibleSize = size
+    return this
+}
+
 fun <S : Drawable> S.disable(state: Boolean = true): S {
     this.enabled = !state
     return this
@@ -171,20 +235,31 @@ fun <S : Drawable> S.hide(state: Boolean = true): S {
     return this
 }
 
+fun <S : Drawable> S.ignoreLayout(state: Boolean = true): S {
+    this.layoutIgnored = state
+    return this
+}
+
 fun <S : Drawable> S.setAlpha(alpha: Float): S {
     this.alpha = alpha
     return this
 }
 
 fun <S : Drawable> S.padded(xPad: Float, yPad: Float): S {
-    this.padding = Vec2(xPad, yPad)
+    this.padding = Vec4.of(xPad, yPad, xPad, yPad)
     return this
 }
 
-fun <S : Drawable> S.padded(padding: Vec2): S {
+fun <S : Drawable> S.padded(left: Float, top: Float, right: Float, bottom: Float): S {
+    this.padding = Vec4.of(left, top, right, bottom)
+    return this
+}
+
+fun <S : Drawable> S.padded(padding: Vec4): S {
     this.padding = padding
     return this
 }
+
 
 /**
  * Add a listener for changes to the given String-type property.
@@ -198,6 +273,46 @@ fun <S : Drawable> S.onChange(func: S.(String) -> Boolean): S {
         val res = func.invoke(this, it.text)
         it.cancelled = res
         res
+    }
+    return this
+}
+
+/**
+ * Make this TextInput only accept numbers between [min] and [max]. It will then dispatch a [Event.Change.Number] event.
+ *
+ * If [integral] is true, it will only accept integers.
+ *
+ * @since 1.5.0
+ */
+fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, integral: Boolean = false): S {
+    onChange { value: String ->
+        if (value.isEmpty()) return@onChange false
+        // don't fail when the user types a minus sign
+        if (value == "-") return@onChange false
+
+        if (integral && value.contains('.')) return@onChange true
+        // silently cancel if they try and type multiple zeroes
+        if (value == "-00") return@onChange true
+        if (value == "00") return@onChange true
+        try {
+            val v = value.toFloat()
+            // fail when out of range
+            if (v < min) {
+                text = "${if (integral) min.toInt() else min}"
+                ShakeOp(this, 0.2.seconds, 2).add()
+                false
+            } else if (v > max) {
+                text = "${if (integral) max.toInt() else max}"
+                ShakeOp(this, 0.2.seconds, 2).add()
+                false
+            } else {
+                !accept(Event.Change.Number(if (integral) v.toInt() else v))
+            }
+        } catch (_: NumberFormatException) {
+            // fail if it is a number
+            ShakeOp(this, 0.2.seconds, 2).add()
+            true
+        }
     }
     return this
 }
@@ -247,6 +362,11 @@ fun <S : Drawable> S.onChange(func: S.(Float) -> Boolean): S {
         it.cancelled = res
         res
     }
+    return this
+}
+
+fun <S : Drawable> S.setPalette(palette: Colors.Palette): S {
+    this.palette = palette
     return this
 }
 
@@ -458,7 +578,7 @@ fun <S : Drawable> S.afterParentInit(depth: Int = 1, handler: S.() -> Unit): S {
         for (i in 0 until depth) {
             it._parent?.let { parent -> it = parent } ?: break
         }
-        if (it.initialized) {
+        if (false) {
             handler(this@afterParentInit)
         } else {
             it.on(Event.Lifetime.PostInit) {
@@ -471,7 +591,11 @@ fun <S : Drawable> S.afterParentInit(depth: Int = 1, handler: S.() -> Unit): S {
 }
 
 @EventDSL.Marker
+@OptIn(ExperimentalContracts::class)
 inline fun <S : Drawable> S.events(dsl: EventDSL<S>.() -> Unit): S {
+    contract {
+        callsInPlace(dsl, kotlin.contracts.InvocationKind.EXACTLY_ONCE)
+    }
     EventDSL(this).apply(dsl)
     return this
 }
@@ -502,10 +626,17 @@ fun <S : Drawable> S.onDrag(func: S.(Event.Mouse.Dragged) -> Unit): S {
 fun <S : Drawable> S.fix(): S {
     x = x.toInt().toFloat()
     y = y.toInt().toFloat()
-    size.fix()
-    visibleSize.fix()
+    width = width.toInt().toFloat()
+    height = height.toInt().toFloat()
+    visWidth = visWidth.toInt().toFloat()
+    visHeight = visHeight.toInt().toFloat()
     children?.fastEach { it.fix() }
     return this
+}
+
+fun <S : Drawable> S.ensureLargerThan(vec2: Vec2) {
+    if (width < vec2.x) width = vec2.x
+    if (height < vec2.y) height = vec2.y
 }
 
 /**
@@ -549,15 +680,6 @@ fun Drawable.isChildOf(drawable: Drawable?): Boolean {
 fun Drawable.isRelatedTo(drawable: Drawable?) = drawable != null && drawable.isChildOf(this) || this.isChildOf(drawable)
 
 /**
- * Returns `true` if this drawable has a [DrawableOp] of the type [T].
- *
- * This can be used for operations on which no more than one of the same type can be active at once.
- * @since 1.4.4
- */
-inline fun <reified T : DrawableOp> Drawable.hasOperationOfType(): Boolean {
-    return operations?.fastAny { it is T } == true
-}
-/**
  * Bulk add method for all the builtin drawable operations in PolyUI.
  *
  * The default values of this method are all zeroes, meaning that nothing is done.
@@ -566,8 +688,8 @@ inline fun <reified T : DrawableOp> Drawable.hasOperationOfType(): Boolean {
  * See the [animateTo] method for the "to" equivalent, which sets each value to the provided one.
  */
 fun Drawable.animateBy(
-    at: Vec2? = null,
-    size: Vec2? = null,
+    at: Vec2 = Vec2.ZERO,
+    size: Vec2 = Vec2.ZERO,
     rotation: Double = 0.0,
     scaleX: Float = 0f,
     scaleY: Float = 0f,
@@ -576,8 +698,8 @@ fun Drawable.animateBy(
     color: PolyColor? = null,
     animation: Animation? = null,
 ) {
-    if (at != null) Move(this, at, true, animation).add()
-    if (size != null) Resize(this, size, true, animation).add()
+    if (!at.isZero) Move(this, at, true, animation).add()
+    if (!at.isZero) Resize(this, size, true, animation).add()
     if (rotation != 0.0) Rotate(this, rotation, true, animation).add()
     if (skewX != 0.0 || skewY != 0.0) Skew(this, skewX, skewY, true, animation).add()
     if (scaleX != 0f || scaleY != 0f) Scale(this, scaleX, scaleY, true, animation).add()

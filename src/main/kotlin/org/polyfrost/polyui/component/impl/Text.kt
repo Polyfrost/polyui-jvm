@@ -34,15 +34,15 @@ import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.utils.*
 
-open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f, at: Vec2? = null, alignment: Align = AlignDefault, visibleSize: Vec2? = null, focusable: Boolean = false, limited: Boolean = false, vararg children: Drawable?) :
+open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Drawable?) :
     Drawable(children = children, at, alignment, visibleSize = visibleSize, focusable = focusable) {
-    constructor(text: String, font: Font? = null, fontSize: Float = 12f, at: Vec2? = null, alignment: Align = AlignDefault, visibleSize: Vec2? = null, focusable: Boolean = false, limited: Boolean = false, vararg children: Drawable?) :
+    constructor(text: String, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Drawable?) :
             this(Translator.Text.Simple(text), font, fontSize, at, alignment, visibleSize, focusable, limited, children = children)
 
     init {
         require(fontSize > 0f) { "Font size must be greater than 0" }
         if (limited) {
-            require(visibleSize != null && visibleSize.y >= fontSize) { "visibleSize must be set and have a height larger than the fontSize" }
+            require(visibleSize.isPositive && visibleSize.y >= fontSize) { "visibleSize must be set and have a height larger than the fontSize" }
             @Suppress("LeakingThis") // reason: this is safe as the only overrider is TextInput, and we don't do any unsafe operations
             shouldScroll = false
         }
@@ -52,7 +52,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
      * Mode that this text was created in. Must be one of [UNLIMITED], [WRAP], [SCROLLING_SINGLE_LINE], [LIMITED_WRAP].
      * @since 1.4.1
      */
-    protected val mode = if (visibleSize == null) UNLIMITED else if (limited) LIMITED else when (visibleSize.y) {
+    protected val mode = if (!visibleSize.isPositive) UNLIMITED else if (limited) LIMITED else when (visibleSize.y) {
         0f -> WRAP
         fontSize -> SCROLLING_SINGLE_LINE
         else -> LIMITED_WRAP
@@ -219,7 +219,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
             // asm: in translation files \\n is used for new line for some reason
             text = text.replace("\\n", "\n")
         }
-        if (_font == null) _font = polyUI.fonts.regular
+        if (_font == null) font = polyUI.fonts.regular
         updateTextBounds(polyUI.renderer)
         super.setup(polyUI)
         return true
@@ -229,7 +229,8 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         lines.clear()
         if (text.isEmpty()) {
             lines.add("" to (1f by fontSize))
-            size.set(1f, fontSize)
+            width = 1f
+            height = fontSize
             return
         }
         val mode = mode
@@ -239,25 +240,29 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         }
         text.wrap(maxWidth, renderer, font, fontSize, lines)
         var w = 0f
-        var h = spacing
+        var h = 0f
         var i = 0
         lines.fastEach { (str, bounds) ->
             w = kotlin.math.max(w, bounds.x)
             h += bounds.y + spacing
-            if (mode == LIMITED && h >= visibleSize.y) {
+            if (mode == LIMITED && h >= visibleSize.y - fontSize) {
+                h -= spacing
                 // safe to not re-measure as we know the bounds will contain it.
                 // also won't co-mod thanks to fastEach
-                lines[i] = str.truncate(renderer, font, fontSize, bounds.x) to bounds
+                lines[i] = str.truncate(renderer, font, fontSize, w) to bounds
                 lines.cut(0, i)
-                size.set(w, h)
-                visibleSize.y = h
+                width = w
+                height = h
+                visHeight = h
                 return
             }
             i++
         }
-        size.set(w, h)
+        h -= spacing
+        width = w
+        height = h
         when (mode) {
-            WRAP -> visibleSize.y = h
+            WRAP -> visHeight = h
             LIMITED_WRAP, SCROLLING_SINGLE_LINE -> tryMakeScrolling()
         }
     }

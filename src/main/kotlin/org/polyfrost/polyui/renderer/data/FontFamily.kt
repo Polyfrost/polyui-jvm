@@ -38,35 +38,65 @@ import java.net.URI
 open class FontFamily(
     val name: String,
     path: String,
+    @Transient
     private val fallback: FontFamily? = null,
 ) {
-    protected val path = URI.create(path)
+    private constructor() : this("", "")
 
+    protected val path: URI = URI.create(path)
+
+    @delegate:Transient
     open val thin by lazy { fload(Font.Weight.Thin, false) }
+
+    @delegate:Transient
     open val thinItalic by lazy { fload(Font.Weight.Thin, true) }
 
+    @delegate:Transient
     open val extraLight by lazy { fload(Font.Weight.ExtraLight, false) }
+
+    @delegate:Transient
     open val extraLightItalic by lazy { fload(Font.Weight.ExtraLight, true) }
 
+    @delegate:Transient
     open val light by lazy { fload(Font.Weight.Light, false) }
+
+    @delegate:Transient
     open val lightItalic by lazy { fload(Font.Weight.Light, true) }
 
+    @delegate:Transient
     open val regular by lazy { fload(Font.Weight.Regular, false) }
+
+    @delegate:Transient
     open val regularItalic by lazy { fload(Font.Weight.Regular, true) }
 
+    @delegate:Transient
     open val medium by lazy { fload(Font.Weight.Medium, false) }
+
+    @delegate:Transient
     open val mediumItalic by lazy { fload(Font.Weight.Medium, true) }
 
+    @delegate:Transient
     open val semiBold by lazy { fload(Font.Weight.SemiBold, false) }
+
+    @delegate:Transient
     open val semiBoldItalic by lazy { fload(Font.Weight.SemiBold, true) }
 
+    @delegate:Transient
     open val bold by lazy { fload(Font.Weight.Bold, false) }
+
+    @delegate:Transient
     open val boldItalic by lazy { fload(Font.Weight.Bold, true) }
 
+    @delegate:Transient
     open val extraBold by lazy { fload(Font.Weight.ExtraBold, false) }
+
+    @delegate:Transient
     open val extraBoldItalic by lazy { fload(Font.Weight.ExtraBold, true) }
 
+    @delegate:Transient
     open val black by lazy { fload(Font.Weight.Black, false) }
+
+    @delegate:Transient
     open val blackItalic by lazy { fload(Font.Weight.Black, true) }
 
     /**
