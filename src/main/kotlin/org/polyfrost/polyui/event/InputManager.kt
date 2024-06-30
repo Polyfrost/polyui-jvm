@@ -26,7 +26,9 @@ import org.jetbrains.annotations.Contract
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_HOVERED
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_NONE
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
+import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.component.Inputtable
 import org.polyfrost.polyui.component.isRelatedTo
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.Keys
@@ -43,16 +45,16 @@ import java.nio.file.Path
  * @param keyBinder the key binder to use for this event manager. marked as internal as should not be accessed.
  */
 class InputManager(
-    private var master: Drawable?,
+    private var master: Inputtable?,
     var keyBinder: KeyBinder?,
     private val settings: Settings,
 ) {
-    var mouseOver: Drawable? = null
+    var mouseOver: Inputtable? = null
         private set(value) {
             if (field === value) return
             field?.let {
                 if (it.inputState == INPUT_PRESSED) {
-                    // safeguard to stop the drawable from getting stuck in a pressed state
+                    // safeguard to stop the component from getting stuck in a pressed state
                     it.accept(Event.Mouse.Companion.Released.set(mouseX, mouseY))
                 }
                 it.inputState = INPUT_NONE
@@ -82,20 +84,20 @@ class InputManager(
     /** tracker for the combo */
     private var clickedButton: Int = 0
 
-    var focused: Drawable? = null
+    var focused: Inputtable? = null
         private set
 
     /** weather or not the left button/primary click is DOWN (aka repeating) */
     var mouseDown = false
         private set
 
-    fun with(master: Drawable?): InputManager {
+    fun with(master: Inputtable?): InputManager {
         this.master = master
         return this
     }
 
     /**
-     * Call this method when files are dropped onto this window. The [Event.Focused.FileDrop] is then dispatched to the currently focused drawable.
+     * Call this method when files are dropped onto this window. The [Event.Focused.FileDrop] is then dispatched to the currently focused component.
      * @see focus
      * @since 1.0.3
      */
@@ -155,10 +157,10 @@ class InputManager(
     }
 
     /**
-     * Drop the current mouse over drawable.
+     * Drop the current mouse over component.
      */
     @ApiStatus.Internal
-    fun drop(it: Drawable? = null) {
+    fun drop(it: Inputtable? = null) {
         if (it != null) {
             if (it === mouseOver) mouseOver = null
         } else mouseOver = null
@@ -191,8 +193,8 @@ class InputManager(
     }
 
     /**
-     * perform a recursive ray check on the drawable.
-     * Each drawable will be checked with [Drawable.enabled], then [Drawable.isInside], then finally [Drawable.acceptsInput]
+     * perform a recursive ray check on the component.
+     * Each component will be checked with [Drawable.enabled], then [Drawable.isInside], then finally [Drawable.acceptsInput]
      * before it is considered a valid candidate.
      *
      * Note that this functions inclusion in public API is experimental.
@@ -201,11 +203,12 @@ class InputManager(
      */
     @ApiStatus.Experimental
     @Contract(pure = true)
-    fun rayCheck(it: Drawable, x: Float, y: Float): Drawable? {
-        var c: Drawable? = null
-        if (it.enabled && it.isInside(x, y)) {
+    fun rayCheck(it: Inputtable, x: Float, y: Float): Inputtable? {
+        var c: Inputtable? = null
+        if (it.isEnabled && it.isInside(x, y)) {
             if (it.acceptsInput) c = it
             it.children?.fastEach {
+                if (it !is Inputtable) return@fastEach
                 val n = rayCheck(it, x, y)
                 if (n != null) c = n
             }
@@ -213,12 +216,12 @@ class InputManager(
         return c
     }
 
-    /** same as [rayCheck], but does not check for [Drawable.acceptsInput]. */
+    /** same as [rayCheck], but does not check for [Inputtable.acceptsInput]. */
     @ApiStatus.Experimental
     @Contract(pure = true)
-    fun rayCheckUnsafe(it: Drawable, x: Float, y: Float): Drawable? {
-        var c: Drawable? = null
-        if (it.enabled && it.isInside(x, y)) {
+    fun rayCheckUnsafe(it: Component, x: Float, y: Float): Component? {
+        var c: Component? = null
+        if (it.isEnabled && it.isInside(x, y)) {
             c = it
             it.children?.fastEach {
                 val n = rayCheckUnsafe(it, x, y)
@@ -290,7 +293,7 @@ class InputManager(
         } else {
             dispatch(Event.Mouse.Released(button, mouseX, mouseY, keyModifiers), true)
             val click = Event.Mouse.Clicked(button, mouseX, mouseY, clickAmount, keyModifiers)
-            // asm: not many drawables will actually have double click listeners, so, we check and see if we can skip the dispatch.
+            // asm: not many components will actually have double click listeners, so, we check and see if we can skip the dispatch.
             val mouseOver = mouseOver ?: return
             if (!mouseOver.hasListenersFor(click)) {
                 val click1 = Event.Mouse.Clicked(button, mouseX, mouseY, 1, keyModifiers)
@@ -300,15 +303,15 @@ class InputManager(
     }
 
     /**
-     * try to focus a drawable, without throwing an exception.
-     * @return `true` if the drawable was focused successfully, and `false` if it is not [Drawable.focusable], or if it is already focused.
+     * try to focus a component, without throwing an exception.
+     * @return `true` if the component was focused successfully, and `false` if it is not [Drawable.focusable], or if it is already focused.
      * @see focus
      * @since 1.0.4
      */
-    fun safeFocus(drawable: Drawable?): Boolean {
-        if (drawable == null) return false
-        if (drawable.focusable) {
-            return focus(drawable)
+    fun safeFocus(component: Inputtable?): Boolean {
+        if (component == null) return false
+        if (component.focusable) {
+            return focus(component)
         }
         return false
     }
@@ -329,23 +332,24 @@ class InputManager(
     }
 
     /**
-     * Dispatch an event to the provided drawable.
+     * Dispatch an event to the provided component.
      *
-     * If the candidate drawable does not accept the event (returns `false`), it will be given to the parent, and so on.
+     * If the candidate component does not accept the event (returns `false`), it will be given to the parent, and so on.
      *
      * **Note that changing of the [to] parameter is experimental.**
      * @param bindable (*mostly internal parameter*) if `true`, the event will be given to the [keyBinder] for processing of keybindings,
-     * **before** being given to the candidate drawable. It will consume the event if a keybinding matches and accepts it.
+     * **before** being given to the candidate component. It will consume the event if a keybinding matches and accepts it.
      *
      */
-    fun dispatch(event: Event, bindable: Boolean = false, to: Drawable? = mouseOver): Boolean {
+    fun dispatch(event: Event, bindable: Boolean = false, to: Inputtable? = mouseOver): Boolean {
         if (bindable && keyBinder?.accept(event, mods) == true) return true
         val cf = event is Event.Focused
         var candidate = to
         while (candidate != null) {
             if (cf && candidate.focusable) continue
             if (candidate.accept(event)) return true
-            candidate = candidate._parent
+            if (candidate !is Drawable) return false
+            candidate = candidate._parent as? Inputtable
         }
         return false
     }
@@ -353,13 +357,17 @@ class InputManager(
     fun unfocus() {
         focused?.let {
             it.focused = false
-            var p = it._parent
+            if (it !is Drawable) {
+                focused = null
+                return
+            }
+            var p = it._parent as? Inputtable
             while (p != null) {
                 if (p.focused) {
                     focused = p
                     return
                 }
-                p = p._parent
+                p = p._parent as? Inputtable
             }
             focused = null
         }
@@ -368,31 +376,31 @@ class InputManager(
     /**
      * Sets the focus to the specified focusable element, throwing an exception if the provided element is not focusable.
      *
-     * @throws IllegalArgumentException if the provided drawable is not [Drawable.focusable]
+     * @throws IllegalArgumentException if the provided component is not [Drawable.focusable]
      * @param focusable the element to set focus on
      * @return true if focus was successfully set, false if the provided focusable is already focused
      * @see safeFocus
      */
-    fun focus(focusable: Drawable?): Boolean {
+    fun focus(focusable: Inputtable?): Boolean {
         if (focusable === focused) return false
         if (focusable == null || !focusable.isRelatedTo(focused)) {
             var p = focused
             while (p != null) {
                 p.focused = false
-                p = p._parent
+                p = p._parent as? Inputtable
             }
             focused = null
             if (focusable == null) return true
         }
         if (!focusable.initialized) {
-            val polyUI = master?.polyUI ?: throw IllegalArgumentException("Cannot focus uninitialized drawable")
+            val polyUI = (master as? Drawable)?.polyUI ?: throw IllegalArgumentException("Cannot focus uninitialized component")
             if (focusable.setup(polyUI)) {
                 val totalSx = polyUI.size.x / polyUI.iSize.x
                 val totalSy = polyUI.size.y / polyUI.iSize.y
                 focusable.rescale(totalSx, totalSy, false)
             }
         }
-        require(focusable.focusable) { "Cannot focus un-focusable drawable" }
+        require(focusable.focusable) { "Cannot focus un-focusable component" }
         focused = focusable
         focusable.focused = true
         return true

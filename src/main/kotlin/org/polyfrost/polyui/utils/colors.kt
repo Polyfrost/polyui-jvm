@@ -34,6 +34,11 @@ fun rgba(r: Int, g: Int, b: Int, a: Float = 1f): PolyColor {
     return PolyColor.Static(cmps[0], cmps[1], cmps[2], a)
 }
 
+fun argb(argb: Int): PolyColor {
+    val cmps = RGBtoHSB(argb shr 16 and 0xFF, argb shr 8 and 0xFF, argb and 0xFF)
+    return PolyColor.Static(cmps[0], cmps[1], cmps[2], (argb shr 24 and 0xFF) / 255f)
+}
+
 fun hsba(h: Float, s: Float, b: Float, a: Float = 1f) = PolyColor.Static(h, s, b, a)
 
 fun hex(hex: String) = hex.toColor()

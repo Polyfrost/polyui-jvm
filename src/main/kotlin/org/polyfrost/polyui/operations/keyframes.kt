@@ -61,7 +61,7 @@ import org.polyfrost.polyui.unit.Vec2
  * @param self the component to apply to.
  */
 @KeyFrameDSL
-class KeyFrames<T : Drawable>(self: T, animation: Animation) : DrawableOp.Animatable<T>(self, animation) {
+class KeyFrames<T : Drawable>(self: T, animation: Animation) : ComponentOp.Animatable<T>(self, animation) {
     private val keyframes = ArrayList<KeyFrame>(5)
     private var i = 0
     private inline val next get() = keyframes.getOrNull(i)

@@ -23,7 +23,7 @@ package org.polyfrost.polyui.component.impl
 
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.PolyColor
-import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.ensureLargerThan
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.input.Keys
@@ -39,7 +39,7 @@ import org.polyfrost.polyui.unit.Vec4
 import org.polyfrost.polyui.utils.*
 import kotlin.math.max
 
-open class TextInput constructor(
+open class TextInput(
     text: String = "",
     placeholder: String = "polyui.textinput.placeholder",
     font: Font? = null,
@@ -47,7 +47,7 @@ open class TextInput constructor(
     at: Vec2 = Vec2.ZERO,
     alignment: Align = AlignDefault,
     visibleSize: Vec2 = Vec2.ZERO,
-    vararg children: Drawable?,
+    vararg children: Component?,
 ) : Text(text.translated().dont(), font, fontSize, at, alignment, visibleSize, true, false, *children) {
 
     private val selectBoxes = ArrayList<Vec4>()
@@ -109,7 +109,7 @@ open class TextInput constructor(
     }
 
     override fun accept(event: Event): Boolean {
-        if (!enabled) return false
+        if (!isEnabled) return false
         needsRedraw = true
         val r = when (event) {
             is Event.Mouse.Entered -> {
@@ -302,7 +302,7 @@ open class TextInput constructor(
         ).x
         cposy = lni * (fontSize + spacing)
 
-        if (xScroll != null) accept(scrollEvent)
+        if (scrolling) accept(scrollEvent)
     }
 
     // todo make this work at some point
@@ -453,8 +453,6 @@ open class TextInput constructor(
         if (text.isEmpty()) {
             val bounds = renderer.textBounds(font, _placeholder.string, fontSize)
             ensureLargerThan(bounds)
-            visWidth = visWidth.coerceAtLeast(bounds.x)
-            visHeight = visHeight.coerceAtLeast(bounds.y)
         }
     }
 

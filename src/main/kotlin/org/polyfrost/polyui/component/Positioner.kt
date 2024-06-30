@@ -33,37 +33,39 @@ import kotlin.math.max
  * and components inside a layout.
  */
 fun interface Positioner {
-    fun position(drawable: Drawable)
+    fun position(component: Component)
 
     class Default : Positioner {
-        override fun position(drawable: Drawable) {
-            val children = drawable.children
-            val polyUI = drawable.polyUI
-            if (!drawable.sizeValid) {
-                val out = drawable.calculateSize()
+        override fun position(component: Component) {
+            val children = component.children
+            val polyUI = component.polyUI
+            if (!component.sizeValid) {
+                val out = component.calculateSize()
                 if (out.isPositive) {
-                    drawable.width = out.x
-                    drawable.height = out.y
+                    component.width = out.x
+                    component.height = out.y
                 }
             }
 
-            if (!drawable.sizeValid) {
+            if (!component.sizeValid) {
                 // hope they know what they are doing!
-                if (drawable.layoutIgnored) return
-                require(!children.isNullOrEmpty()) { "Drawable $drawable has no size and no children\nBacktrace: ${polyUI.debugger.debugString()}" }
+                if (component.layoutIgnored) return
+                require(!children.isNullOrEmpty()) { "Component $component has no size and no children\nBacktrace: ${polyUI.debugger.debugString()}" }
             } else if (children.isNullOrEmpty()) {
-                drawable.fixVisibleSize()
+                component.fixVisibleSize()
                 return
             }
 
             // asm: there are definitely children at this point, so we need to place them
             // we are unsure if there is a size at this point though
-            val align = drawable.alignment
+            val align = component.alignment
             val main = if (align.mode == Align.Mode.Horizontal) 0 else 1
             val crs = if (main == 0) 1 else 0
             val padding = align.pad
-            val mainPad = padding[main]
-            val crossPad = padding[crs]
+            val totalSx = if (component.positioned) polyUI.size.x / polyUI.iSize.x else 1f
+            val totalSy = if (component.positioned) polyUI.size.y / polyUI.iSize.y else 1f
+            val mainPad = padding[main] * totalSx
+            val crossPad = padding[crs] * totalSy
 
             if (children.size == 1) {
                 // asm: fast path: set a square size with the object centered
@@ -72,14 +74,14 @@ fun interface Positioner {
                 val ipad = it.padding
                 if (!it.sizeValid) position(it)
                 assignAndCheckSize(
-                    drawable, main, crs,
+                    component, main, crs,
                     ivs[main] + ipad[main] + ipad[main + 2] + (mainPad * 2f),
                     ivs[crs] + ipad[crs] + ipad[crs + 2] + (crossPad * 2f)
                 )
-                val vs = drawable.visibleSize
+                val vs = component.visibleSize
                 it.at(
                     main,
-                    drawable.at[main] + when (align.main) {
+                    component.at[main] + when (align.main) {
                         Align.Main.Start -> mainPad + ipad[main]
                         Align.Main.End -> vs[main] - ivs[main] - mainPad - ipad[main]
                         else -> (vs[main] - ivs[main]) / 2f
@@ -87,26 +89,26 @@ fun interface Positioner {
                 )
                 it.at(
                     crs,
-                    drawable.at[crs] + when (align.cross) {
+                    component.at[crs] + when (align.cross) {
                         Align.Cross.Start -> crossPad + ipad[crs]
                         Align.Cross.End -> vs[crs] - ivs[crs] - crossPad - ipad[crs]
                         else -> (vs[crs] - ivs[crs]) / 2f
                     },
                 )
-                it.resetScroll()
+                if (it is Scrollable) it.resetScroll()
                 return
             }
-            val willWrap = align.maxRowSize != 0 && (drawable.visibleSize[main] != 0f || align.maxRowSize != AlignDefault.maxRowSize)
+            val willWrap = align.maxRowSize != 0 && (component.visibleSize[main] != 0f || align.maxRowSize != AlignDefault.maxRowSize)
             if (willWrap) {
                 val rows = ArrayList<WrappingRow>()
                 val maxRowSize = align.maxRowSize
-                val wrapCap = drawable.visibleSize[main]
-                require(maxRowSize > 0) { "Drawable $drawable has max row size of $maxRowSize, needs to be greater than 0" }
+                val wrapCap = component.visibleSize[main]
+                require(maxRowSize > 0) { "Component $component has max row size of $maxRowSize, needs to be greater than 0" }
                 var maxMain = 0f
                 var maxCross = crossPad
                 var rowMain = mainPad
                 var rowCross = 0f
-                var currentRow = ArrayList<Drawable>()
+                var currentRow = ArrayList<Component>()
                 // measure and create rows
                 children.fastEach {
                     if (it.layoutIgnored) return@fastEach
@@ -131,24 +133,24 @@ fun interface Positioner {
                     maxMain = max(maxMain, rowMain)
                     maxCross += rowCross + crossPad
                 }
-                assignAndCheckSize(drawable, main, crs, maxMain, maxCross)
-                val vs = drawable.visibleSize
-                rowCross = drawable.at[crs]
+                assignAndCheckSize(component, main, crs, maxMain, maxCross)
+                val vs = component.visibleSize
+                rowCross = component.at[crs]
                 if (rows.size == 1) {
                     // asm: in this situation, the user specified a size, and as there is only 1 row, so we should
-                    // make it so the actual cross limit is the size of the drawable
+                    // make it so the actual cross limit is the size of the component
                     val (theRowMain, _, row) = rows[0]
                     place(
                         align, row,
                         vs[crs], rowCross, crossPad, crs,
-                        theRowMain, drawable.at[main], vs[main], mainPad, main,
+                        theRowMain, component.at[main], vs[main], mainPad, main,
                     )
                 } else {
                     rows.fastEach { (theRowMain, theRowCross, row) ->
                         place(
                             align, row,
                             theRowCross, rowCross, crossPad, crs,
-                            theRowMain, drawable.at[main], vs[main], mainPad, main,
+                            theRowMain, component.at[main], vs[main], mainPad, main,
                         )
                         rowCross += theRowCross + crossPad
                     }
@@ -173,19 +175,19 @@ fun interface Positioner {
                         rowCross = max(rowCross, itCross)
                     }
                 }
-                assignAndCheckSize(drawable, main, crs, rowMain, rowCross)
+                assignAndCheckSize(component, main, crs, rowMain, rowCross)
                 place(
                     align, children,
-                    drawable.size[crs], drawable.at[crs], crossPad, crs,
-                    rowMain, drawable.at[main], drawable.size[main], mainPad, main,
+                    component.size[crs], component.at[crs], crossPad, crs,
+                    rowMain, component.at[main], component.size[main], mainPad, main,
                 )
             }
         }
 
-        private data class WrappingRow(val rowMain: Float, val rowCross: Float, val row: ArrayList<Drawable>)
+        private data class WrappingRow(val rowMain: Float, val rowCross: Float, val row: ArrayList<out Component>)
 
         private fun place(
-            align: Align, row: ArrayList<Drawable>,
+            align: Align, row: ArrayList<out Component>,
             rowCross: Float, minCross: Float, padCross: Float, crs: Int,
             rowMain: Float, minMain: Float, maxMain: Float, padMain: Float, main: Int,
         ) {
@@ -213,22 +215,22 @@ fun interface Positioner {
                 if (it.createdWithSetPosition) return@fastEach
                 aligner.align(rowCross, it, minCross, padCross, crs)
                 current = justifier.justify(current, it, padMain, main, gap)
-                it.resetScroll()
+                if (it is Scrollable) it.resetScroll()
             }
         }
 
-        private fun assignAndCheckSize(drawable: Drawable, main: Int, crs: Int, mainValue: Float, crossValue: Float) {
-            if (drawable.size[main] <= 0f) drawable.size(main, mainValue)
-            if (drawable.size[crs] <= 0f) drawable.size(crs, crossValue)
-            drawable.fixVisibleSize()
+        private fun assignAndCheckSize(component: Component, main: Int, crs: Int, mainValue: Float, crossValue: Float) {
+            if (component.size[main] <= 0f) component.size(main, mainValue)
+            if (component.size[crs] <= 0f) component.size(crs, crossValue)
+            component.fixVisibleSize()
         }
 
         private fun interface Aligner {
-            fun align(rowCross: Float, it: Drawable, min: Float, padding: Float, crs: Int)
+            fun align(rowCross: Float, it: Component, min: Float, padding: Float, crs: Int)
         }
 
         private fun interface Justifier {
-            fun justify(current: Float, it: Drawable, padding: Float, main: Int, gap: Float): Float
+            fun justify(current: Float, it: Component, padding: Float, main: Int, gap: Float): Float
         }
 
         private val cStart = Aligner { _, it, min, padding, crs ->

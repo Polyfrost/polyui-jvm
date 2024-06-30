@@ -25,6 +25,7 @@ import org.apache.logging.log4j.LogManager
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.color.DarkTheme
 import org.polyfrost.polyui.color.PolyColor
+import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.Positioner
 import org.polyfrost.polyui.component.impl.Block
@@ -81,7 +82,7 @@ import kotlin.math.min
  * PolyUI also supports a variety of [animations][org.polyfrost.polyui.animate.Animation] and transitions, which can be used to make your UI more dynamic, along with dynamically [adding][Drawable.addChild] and [removing][Drawable.removeChild] components.
  */
 class PolyUI(
-    vararg drawables: Drawable,
+    vararg components: Component,
     val renderer: Renderer,
     settings: Settings? = null,
     inputManager: InputManager? = null,
@@ -93,7 +94,7 @@ class PolyUI(
 ) {
     @JvmOverloads
     constructor(
-        vararg drawables: Drawable,
+        vararg components: Component,
         renderer: Renderer,
         settings: Settings? = null,
         inputManager: InputManager? = null,
@@ -102,7 +103,7 @@ class PolyUI(
         masterAlignment: Align = Align(cross = Align.Cross.Start, pad = Vec2.ZERO),
         colors: Colors = DarkTheme(),
         width: Float, height: Float
-    ) : this(drawables = drawables, renderer, settings, inputManager, translator, backgroundColor, masterAlignment, colors, Vec2(width, height))
+    ) : this(components = components, renderer, settings, inputManager, translator, backgroundColor, masterAlignment, colors, Vec2(width, height))
 
     init {
         renderer.init()
@@ -188,8 +189,8 @@ class PolyUI(
     /**
      * This is the root layout of the UI. It is the parent of all other layouts.
      */
-    val master = if (backgroundColor == null) Group(size = size, children = drawables, alignment = masterAlignment)
-    else Block(size = size, children = drawables, alignment = masterAlignment, color = backgroundColor).radius(0f)
+    val master = if (backgroundColor == null) Group(size = size, children = components, alignment = masterAlignment)
+    else Block(size = size, children = components, alignment = masterAlignment, color = backgroundColor).radius(0f)
 
 
     val inputManager = inputManager?.with(master) ?: InputManager(master, KeyBinder(this.settings), this.settings)
@@ -512,7 +513,6 @@ class PolyUI(
             return time
         }
 
-        const val INPUT_DISABLED: Byte = -1
         const val INPUT_NONE: Byte = 0
         const val INPUT_HOVERED: Byte = 1
         const val INPUT_PRESSED: Byte = 2

@@ -39,7 +39,7 @@ import org.polyfrost.polyui.input.Mouse as MouseUtils
  *
  * *(since 1.3.1)* events can be destructured, like so:
  * ```
- * drawable.onClick { (x, y) ->
+ * component.onClick { (x, y) ->
  *  // access and use the x and y position of the mouse with a prettier syntax
  * }
  * ```
@@ -135,11 +135,11 @@ interface Event {
             fun component3() = mods
         }
 
-        /** acceptable by component and layout, when the mouse enters this drawable.
+        /** acceptable by component and layout, when the mouse enters this component.
          * @see Exited */
         object Entered : Mouse
 
-        /** acceptable by component and layout, when the mouse leaves this drawable.
+        /** acceptable by component and layout, when the mouse leaves this component.
          * @see Entered */
         object Exited : Mouse
 
@@ -317,7 +317,7 @@ interface Event {
         /**
          * This event is dispatched when files are dropped into this PolyUI instance.
          *
-         * In order to receive it, your drawable must have focus at the time of drop.
+         * In order to receive it, your component must have focus at the time of drop.
          * @since 1.0.3
          */
         class FileDrop internal constructor(val files: Array<Path>) : Focused {

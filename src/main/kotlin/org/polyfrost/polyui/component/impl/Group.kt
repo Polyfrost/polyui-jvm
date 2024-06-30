@@ -21,6 +21,7 @@
 
 package org.polyfrost.polyui.component.impl
 
+import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
@@ -30,16 +31,16 @@ import org.polyfrost.polyui.unit.Vec2
  * A drawable that contains other drawables, and does not render anything itself.
  */
 class Group(
-    vararg children: Drawable?,
+    vararg children: Component?,
     at: Vec2 = Vec2.ZERO,
     alignment: Align = AlignDefault,
     size: Vec2 = Vec2.ZERO,
     visibleSize: Vec2 = Vec2.ZERO,
 ) : Drawable(children = children, at, alignment, size, visibleSize) {
-    override var renders: Boolean
-        get() = super.renders && !children.isNullOrEmpty()
+    override var clipped: Boolean
+        get() = super.clipped && !children.isNullOrEmpty()
         set(value) {
-            super.renders = value
+            super.clipped = value
         }
 
     override fun render() {}

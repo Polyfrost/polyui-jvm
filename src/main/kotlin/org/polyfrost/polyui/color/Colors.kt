@@ -23,7 +23,6 @@
 
 package org.polyfrost.polyui.color
 
-import org.polyfrost.polyui.PolyUI.Companion.INPUT_DISABLED
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_HOVERED
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_NONE
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
@@ -70,7 +69,6 @@ interface Colors {
                 INPUT_NONE -> normal
                 INPUT_HOVERED -> hovered
                 INPUT_PRESSED -> pressed
-                INPUT_DISABLED -> disabled
                 else -> normal
             }
         }

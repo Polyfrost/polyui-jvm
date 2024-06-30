@@ -23,6 +23,7 @@ package org.polyfrost.polyui.component.impl
 
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
+import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.input.Translator
@@ -34,9 +35,9 @@ import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.utils.*
 
-open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Drawable?) :
+open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Component?) :
     Drawable(children = children, at, alignment, visibleSize = visibleSize, focusable = focusable) {
-    constructor(text: String, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Drawable?) :
+    constructor(text: String, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Component?) :
             this(Translator.Text.Simple(text), font, fontSize, at, alignment, visibleSize, focusable, limited, children = children)
 
     init {
@@ -102,7 +103,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
     /**
      * A list of the lines of this text, and their corresponding width.
      */
-    protected val lines = ArrayList<Line>(when(mode) {
+    protected val lines = ArrayList<Line>(/* initialCapacity = */ when(mode) {
         WRAP, LIMITED_WRAP, LIMITED -> (visibleSize.y / fontSize).toInt()
         else -> 1
     })
@@ -203,10 +204,9 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         }
     }
 
-    override fun rescale(scaleX: Float, scaleY: Float, position: Boolean) {
-        super.rescale(scaleX, scaleY, position)
-        val scale = cl1(scaleX, scaleY)
-        fontSize *= scale
+    override fun rescale0(scaleX: Float, scaleY: Float, position: Boolean) {
+        super.rescale0(scaleX, scaleY, position)
+        fontSize *= scaleY
     }
 
     @Suppress("deprecation_error")
@@ -238,7 +238,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         }
         val mode = mode
         val maxWidth = when (mode) {
-            LIMITED, WRAP, LIMITED_WRAP -> visWidth
+            LIMITED, WRAP, LIMITED_WRAP -> visibleSize.x
             else -> 0f
         }
         text.wrap(maxWidth, renderer, font, fontSize, lines)
@@ -248,7 +248,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         lines.fastEach { (str, bounds) ->
             w = kotlin.math.max(w, bounds.x)
             h += bounds.y + spacing
-            if (mode == LIMITED && h >= visHeight - fontSize) {
+            if (mode == LIMITED && h >= visibleSize.y - fontSize) {
                 h -= spacing
                 // safe to not re-measure as we know the bounds will contain it.
                 // also won't co-mod thanks to fastEach

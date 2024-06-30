@@ -27,7 +27,9 @@ import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animation
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.color.PolyColor
+import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.component.Scrollable
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.animatable
 import org.polyfrost.polyui.utils.animatableGradient
@@ -35,14 +37,14 @@ import org.polyfrost.polyui.utils.mutable
 import kotlin.math.PI
 import kotlin.math.sin
 
-class Move<S : Drawable>(
+class Move<S : Component>(
     drawable: S,
     x: Float = drawable.x,
     y: Float = drawable.y,
     add: Boolean = true,
     animation: Animation? = null,
     onFinish: (S.() -> Unit)? = null,
-) : DrawableOp.Animatable<S>(drawable, animation, onFinish) {
+) : ComponentOp.Animatable<S>(drawable, animation, onFinish) {
     constructor(drawable: S, at: Vec2, add: Boolean = true, animation: Animation? = null, onFinish: (S.() -> Unit)? = null) :
             this(drawable, at.x, at.y, add, animation, onFinish)
 
@@ -54,8 +56,8 @@ class Move<S : Drawable>(
     override fun apply(value: Float) {
         self.x = ox + (tx * value)
         self.y = oy + (ty * value)
-        if(!self.polyUI.inputManager.mouseDown) self.polyUI.inputManager.recalculate()
-        self.resetScroll()
+        if (!self.polyUI.inputManager.mouseDown) self.polyUI.inputManager.recalculate()
+        if (self is Scrollable) self.resetScroll()
     }
 
     override fun verify() = tx != 0f || ty != 0f
@@ -69,7 +71,7 @@ class Fade<S : Drawable>(
     add: Boolean = true,
     animation: Animation? = null,
     onFinish: (S.() -> Unit)? = null,
-) : DrawableOp.Animatable<S>(drawable, animation, onFinish) {
+) : ComponentOp.Animatable<S>(drawable, animation, onFinish) {
     private val ia = self.alpha
     private val ta = if (add) alpha else alpha - ia
 
@@ -88,7 +90,7 @@ class Rotate<S : Drawable>(
     add: Boolean = true,
     animation: Animation? = null,
     onFinish: (S.() -> Unit)? = null,
-) : DrawableOp.Animatable<S>(drawable, animation, onFinish) {
+) : ComponentOp.Animatable<S>(drawable, animation, onFinish) {
     private val ir = self.rotation
     private val tr = if (add) angleRad else angleRad - ir
 
@@ -101,14 +103,14 @@ class Rotate<S : Drawable>(
     override fun equals(other: Any?) = other is Rotate<*> && other.self === self
 }
 
-class Resize<S : Drawable>(
+class Resize<S : Component>(
     drawable: S,
     width: Float = drawable.width,
     height: Float = drawable.height,
     add: Boolean = true,
     animation: Animation? = null,
     onFinish: (S.() -> Unit)? = null,
-) : DrawableOp.Animatable<S>(drawable, animation, onFinish) {
+) : ComponentOp.Animatable<S>(drawable, animation, onFinish) {
     constructor(drawable: S, size: Vec2, add: Boolean = true, animation: Animation? = null, onFinish: (S.() -> Unit)? = null) :
             this(drawable, size.x, size.y, add, animation, onFinish)
 
@@ -135,7 +137,7 @@ class Scale<S : Drawable>(
     add: Boolean = true,
     animation: Animation? = null,
     onFinish: (S.() -> Unit)? = null,
-) : DrawableOp.Animatable<S>(drawable, animation, onFinish) {
+) : ComponentOp.Animatable<S>(drawable, animation, onFinish) {
     private val sx = self.scaleX
     private val sy = self.scaleY
     private val tx = if (add) scaleX else scaleX - sx
@@ -158,7 +160,7 @@ class Skew<S : Drawable>(
     add: Boolean = true,
     animation: Animation? = null,
     onFinish: (S.() -> Unit)? = null,
-) : DrawableOp.Animatable<S>(drawable, animation, onFinish) {
+) : ComponentOp.Animatable<S>(drawable, animation, onFinish) {
     private val sx = self.skewX
     private val sy = self.skewY
     private val tx = if (add) skewX else skewX - sx
@@ -174,19 +176,18 @@ class Skew<S : Drawable>(
     override fun equals(other: Any?) = other is Skew<*> && other.self === self
 }
 
-class ShakeOp<S : Drawable>(
+class ShakeOp<S : Component>(
     drawable: S,
     durationNanos: Long,
     oscillations: Int,
     private val range: Float = 4f,
     onFinish: (S.() -> Unit)? = null
-) : DrawableOp.Animatable<S>(drawable, Animations.Linear.create(durationNanos), onFinish) {
+) : ComponentOp.Animatable<S>(drawable, Animations.Linear.create(durationNanos), onFinish) {
     private val start = drawable.x
     private val oscillations = (oscillations * (PI * 2.0)).toFloat()
 
     override fun apply(value: Float) {
         self.x = start + sin(value * oscillations) * range
-        self.needsRedraw = true
     }
 
     override fun exclusive() = true
@@ -211,7 +212,7 @@ class Recolor<S : Drawable>(
     private val toColor: PolyColor,
     animation: Animation? = null,
     onFinish: (S.() -> Unit)? = null,
-) : DrawableOp.Animatable<S>(drawable, animation, onFinish) {
+) : ComponentOp.Animatable<S>(drawable, animation, onFinish) {
     private val hueToReturnTo = self.color.hue
     private val reset: Boolean
 

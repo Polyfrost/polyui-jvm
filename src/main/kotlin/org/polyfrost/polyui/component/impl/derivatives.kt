@@ -104,12 +104,13 @@ fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2 = Vec2.ZERO,
             alignment = optAlign,
         ).onClick {
             val children = parent.children!!
-            if (parent.hasListenersFor(Event.Change.Number::class.java)) {
+            val parent = parent
+            if (parent is Inputtable && parent.hasListenersFor(Event.Change.Number::class.java)) {
                 val ev = Event.Change.Number(children.indexOf(this) - 1)
                 parent.accept(ev)
                 if (ev.cancelled) return@onClick false
             }
-            val f = children.first()
+            val f = children.first() as Drawable
             Move(f, this.x, this.y, add = false, animation = Animations.Default.create(0.15.seconds)).add()
             Resize(f, this.width, this.height, add = false, animation = Animations.Default.create(0.15.seconds)).add()
             true
@@ -237,7 +238,7 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
                 accept(Event.Change.Number(value))
             }
         }).events {
-            val op = object : DrawableOp.Animatable<Block>(self, Animations.Default.create(0.15.seconds, 1f, 0f)) {
+            val op = object : ComponentOp.Animatable<Block>(self, Animations.Default.create(0.15.seconds, 1f, 0f)) {
                 override fun apply(value: Float) {}
 
                 override fun unapply(value: Float) {
@@ -308,8 +309,8 @@ fun BoxedTextInput(
     Group(
         TextInput(placeholder = placeholder, text = initialValue, fontSize = fontSize, /*visibleSize = if (size != null) Vec2(width, fontSize) else null*/).run {
             on(Event.Change.Text) {
-                parent.repositionChildren()
-                parent.parent.accept(it)
+                parent.position()
+                (parent.parent as? Inputtable)?.accept(it) == true
             }
         },
         alignment = Align(main = if (center) Align.Main.Center else Align.Main.Start, pad = Vec2.ZERO),
@@ -326,7 +327,7 @@ fun BoxedTextInput(
  */
 @Contract("_, _, _, null, true, _ -> fail")
 @JvmName("PopupMenu")
-fun PopupMenu(vararg children: Drawable?, size: Vec2 = Vec2.ZERO, align: Align = AlignDefault, polyUI: PolyUI?, openNow: Boolean = true, position: Point = Point.At): Block {
+fun PopupMenu(vararg children: Component?, size: Vec2 = Vec2.ZERO, align: Align = AlignDefault, polyUI: PolyUI?, openNow: Boolean = true, position: Point = Point.At): Block {
     val it = Block(
         focusable = true,
         size = size,

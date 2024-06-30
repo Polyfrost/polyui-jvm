@@ -50,22 +50,26 @@ import kotlin.contracts.contract
 import kotlin.math.abs
 
 const val MIN_DRAG = 3f
+private var dragging: Inputtable? = null
 
 /**
  * Make this component draggable.
  * @param free if this is true, the component will be able to be dragged outside its parent.
  */
-fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, free: Boolean = false, onStart: (S.() -> Unit)? = null, onDrag: (S.() -> Unit)? = null, onDrop: (S.() -> Unit)? = null): S {
+fun <S : Inputtable> S.draggable(withX: Boolean = true, withY: Boolean = true, free: Boolean = false, onStart: (S.() -> Unit)? = null, onDrag: (S.() -> Unit)? = null, onDrop: (S.() -> Unit)? = null): S {
     var started = false
     var px = 0f
     var py = 0f
     on(Event.Mouse.Pressed) {
-        needsRedraw = true
+        if(dragging != null) return@on false
+        dragging = this
+        if (this is Drawable) needsRedraw = true
         px = it.x - x
         py = it.y - y
         false
     }
     on(Event.Mouse.Dragged) {
+        if (dragging !== this) return@on false
         val mx = polyUI.inputManager.mouseX
         val my = polyUI.inputManager.mouseY
         if (!started) {
@@ -78,7 +82,7 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, fre
                 }
             }
         } else {
-            needsRedraw = true
+            if (this is Drawable) needsRedraw = true
             if (withX) x = mx - px
             if (withY) y = my - py
             onDrag?.invoke(this)
@@ -87,12 +91,13 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, fre
     }
     on(Event.Mouse.Released) {
         if (started) {
+            dragging = null
             if (free && _parent !== polyUI.master) {
                 polyUI.master.children!!.remove(this)
                 parent.children!!.add(this)
             }
             started = false
-            needsRedraw = true
+            if (this is Drawable) needsRedraw = true
             onDrop?.invoke(this)
         }
     }
@@ -105,7 +110,7 @@ fun <S : Drawable> S.draggable(withX: Boolean = true, withY: Boolean = true, fre
  * @since 1.0.3
  */
 @JvmName("addHoverInfo")
-fun <S : Drawable> S.addHoverInfo(vararg drawables: Drawable?, size: Vec2 = Vec2.ZERO, align: Align = AlignDefault, position: Point = Point.Above): S {
+fun <S : Inputtable> S.addHoverInfo(vararg drawables: Drawable?, size: Vec2 = Vec2.ZERO, align: Align = AlignDefault, position: Point = Point.Above): S {
     var mx = 0f
     var my = 0f
     val popup = PopupMenu(*drawables, size = size, align = align, polyUI = null, openNow = false, position = position)
@@ -113,8 +118,8 @@ fun <S : Drawable> S.addHoverInfo(vararg drawables: Drawable?, size: Vec2 = Vec2
         polyUI.focus(popup)
     }
     on(Event.Mouse.Entered) {
-        mx = polyUI.inputManager.mouseX
-        my = polyUI.inputManager.mouseY
+        mx = polyUI.mouseX
+        my = polyUI.mouseY
         polyUI.addExecutor(exe)
     }
     on(Event.Mouse.Exited) {
@@ -123,7 +128,7 @@ fun <S : Drawable> S.addHoverInfo(vararg drawables: Drawable?, size: Vec2 = Vec2
     }
     on(Event.Mouse.Moved) {
         if (popup.focused) {
-            if (abs(mx - polyUI.inputManager.mouseX) > 3f || abs(my - polyUI.inputManager.mouseY) > 3f) {
+            if (abs(mx - polyUI.mouseX) > 3f || abs(my - polyUI.mouseY) > 3f) {
                 polyUI.unfocus()
                 polyUI.addExecutor(exe)
             }
@@ -187,7 +192,7 @@ fun <S : Drawable> S.fadeOut(durationNanos: Long = 0.1.seconds) = fade(false, du
  */
 fun <S : Drawable> S.fade(`in`: Boolean, durationNanos: Long = 0.1.seconds): S {
     if (`in`) {
-        enabled = true
+        isEnabled = true
         if (!initialized) {
             alpha = 1f
             return this
@@ -196,65 +201,65 @@ fun <S : Drawable> S.fade(`in`: Boolean, durationNanos: Long = 0.1.seconds): S {
     } else {
         if (!initialized) {
             alpha = 0f
-            enabled = false
+            isEnabled = false
             return this
         }
         Fade(this, 0f, false, Animations.Default.create(durationNanos)) {
-            enabled = false
+            isEnabled = false
         }.add()
     }
     return this
 }
 
-fun <S : Drawable> S.namedId(name: String): S {
+fun <S : Component> S.namedId(name: String): S {
     this.simpleName = "$name@${this.simpleName.substringAfterLast('@')}"
     return this
 }
 
-fun <S : Drawable> S.named(name: String): S {
+fun <S : Component> S.named(name: String): S {
     this.simpleName = name
     return this
 }
 
 /**
- * Instruct this drawable to refuse scrolling even if it needs to be.
+ * Instruct this component to refuse scrolling even if it needs to be.
  */
-fun <S : Drawable> S.dontScroll(): S {
+fun <S : Scrollable> S.dontScroll(): S {
     this.shouldScroll = false
     return this
 }
 
 /**
- * Specify a minimum size for this drawable. **Note that this will also disable scrolling due to optimizations**.
+ * Specify a minimum size for this component. **Note that this will also disable scrolling due to optimizations**.
  * @since 1.4.4
  */
 @JvmName("minimumSize")
-fun <S : Drawable> S.minimumSize(size: Vec2): S {
+fun <S : Scrollable> S.minimumSize(size: Vec2): S {
     this.shouldScroll = false
     this.visibleSize = size
     return this
 }
 
-fun <S : Drawable> S.disable(state: Boolean = true): S {
-    this.enabled = !state
+fun <S : Inputtable> S.disable(state: Boolean = true): S {
+    this.isEnabled = !state
     return this
 }
 
-fun <S : Drawable> S.hide(state: Boolean = true): S {
-    this.renders = !state
+fun <S : Component> S.hide(state: Boolean = true): S {
+    this.clipped = !state
     return this
 }
 
 /**
- * Specify that this drawable should be ignored during the layout stage.
+ * Specify that this component should be ignored during the layout stage.
  *
  * This means that it will **not be placed automatically** by the positioner.
  *
- * Additionally, this will ignore if there is no size set on this drawable and no way to infer it.**
+ * Additionally, this will ignore if there is no size set on this component and no way to infer it.**
  * This means that, if you use this incorrectly **it will not be visible and may break things if your renderer doesn't like zero sizes.**
  * @since 1.4.4
  */
-fun <S : Drawable> S.ignoreLayout(state: Boolean = true): S {
+fun <S : Component> S.ignoreLayout(state: Boolean = true): S {
     this.layoutIgnored = state
     return this
 }
@@ -264,17 +269,17 @@ fun <S : Drawable> S.setAlpha(alpha: Float): S {
     return this
 }
 
-fun <S : Drawable> S.padded(xPad: Float, yPad: Float): S {
+fun <S : Component> S.padded(xPad: Float, yPad: Float): S {
     this.padding = Vec4.of(xPad, yPad, xPad, yPad)
     return this
 }
 
-fun <S : Drawable> S.padded(left: Float, top: Float, right: Float, bottom: Float): S {
+fun <S : Component> S.padded(left: Float, top: Float, right: Float, bottom: Float): S {
     this.padding = Vec4.of(left, top, right, bottom)
     return this
 }
 
-fun <S : Drawable> S.padded(padding: Vec4): S {
+fun <S : Component> S.padded(padding: Vec4): S {
     this.padding = padding
     return this
 }
@@ -287,7 +292,7 @@ fun <S : Drawable> S.padded(padding: Vec4): S {
  * @since 1.0.6
  */
 @JvmName("onChangeString")
-fun <S : Drawable> S.onChange(func: S.(String) -> Boolean): S {
+fun <S : Inputtable> S.onChange(func: S.(String) -> Boolean): S {
     on(Event.Change.Text) {
         val res = func.invoke(this, it.text)
         it.cancelled = res
@@ -343,7 +348,7 @@ fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, integral: Bool
  * @since 1.0.6
  */
 @JvmName("onChangeState")
-fun <S : Drawable> S.onChange(func: S.(Boolean) -> Boolean): S {
+fun <S : Inputtable> S.onChange(func: S.(Boolean) -> Boolean): S {
     on(Event.Change.State) {
         val res = func.invoke(this, it.state)
         it.cancelled = res
@@ -359,7 +364,7 @@ fun <S : Drawable> S.onChange(func: S.(Boolean) -> Boolean): S {
  * @since 1.0.6
  */
 @JvmName("onChangeIndex")
-fun <S : Drawable> S.onChange(func: S.(Int) -> Boolean): S {
+fun <S : Inputtable> S.onChange(func: S.(Int) -> Boolean): S {
     on(Event.Change.Number) {
         val res = func.invoke(this, it.amount.toInt())
         it.cancelled = res
@@ -375,7 +380,7 @@ fun <S : Drawable> S.onChange(func: S.(Int) -> Boolean): S {
  * @since 1.0.6
  */
 @JvmName("onChangeNumber")
-fun <S : Drawable> S.onChange(func: S.(Float) -> Boolean): S {
+fun <S : Inputtable> S.onChange(func: S.(Float) -> Boolean): S {
     on(Event.Change.Number) {
         val res = func.invoke(this, it.amount.toFloat())
         it.cancelled = res
@@ -501,7 +506,7 @@ fun <S : Block> S.withBoarder(width: Float = 1f, color: (Colors.() -> PolyColor)
 }
 
 fun <S : Block> S.radius(radius: Float): S {
-    when(val radii = this.radii) {
+    when (val radii = this.radii) {
         null -> this.radii = floatArrayOf(radius)
         else -> radii.set(radius)
     }
@@ -542,7 +547,7 @@ fun <S : Drawable> S.setState(state: Byte): S {
 }
 
 /**
- * Prioritize this drawable, meaning it will, in relation to its siblings:
+ * Prioritize this component, meaning it will, in relation to its siblings:
  * - be drawn last (so visually on top)
  * - receive events first
  *
@@ -551,7 +556,7 @@ fun <S : Drawable> S.setState(state: Byte): S {
  * @since 1.0.0
  */
 @ApiStatus.Experimental
-fun <S : Drawable> S.prioritize(): S {
+fun <S : Component> S.prioritize(): S {
     val children = _parent?.children ?: return this
     if (children.last() === this) return this
     children.remove(this)
@@ -560,7 +565,7 @@ fun <S : Drawable> S.prioritize(): S {
 }
 
 /**
- * Relegate this drawable, meaning it will, in relation to its siblings:
+ * Relegate this component, meaning it will, in relation to its siblings:
  * - be drawn first (so visually on the bottom)
  * - receive events last
  *
@@ -569,7 +574,7 @@ fun <S : Drawable> S.prioritize(): S {
  * @since 1.1.71
  */
 @ApiStatus.Experimental
-fun <S : Drawable> S.relegate(): S {
+fun <S : Component> S.relegate(): S {
     val children = _parent?.children ?: return this
     if (children.first() === this) return this
     children.remove(this)
@@ -578,10 +583,10 @@ fun <S : Drawable> S.relegate(): S {
 }
 
 /**
- * Returns a count of this drawable's children, including children of children.
+ * Returns a count of this component's children, including children of children.
  * @since 1.0.1
  */
-fun Drawable.countChildren(): Int {
+fun Component.countChildren(): Int {
     var i = children?.size ?: 0
     children?.fastEach {
         i += it.countChildren()
@@ -593,21 +598,21 @@ fun Drawable.countChildren(): Int {
  * @return `true` if this drawable has a child that intersects the provided rectangle.
  * @since 1.0.4
  */
-fun Drawable.hasChildIn(x: Float, y: Float, width: Float, height: Float): Boolean {
+fun Component.hasChildIn(x: Float, y: Float, width: Float, height: Float): Boolean {
     val children = this.children ?: return false
     children.fastEach {
-        if (!it.renders) return@fastEach
+        if (!it.clipped) return@fastEach
         if (it.intersects(x, y, width, height)) return true
     }
     return false
 }
 
-fun <S : Drawable> S.onInit(function: S.(Event.Lifetime.Init) -> Unit): S {
+fun <S : Inputtable> S.onInit(function: S.(Event.Lifetime.Init) -> Unit): S {
     on(Event.Lifetime.Init, function)
     return this
 }
 
-fun <S : Drawable> S.afterInit(function: S.(Event.Lifetime.PostInit) -> Unit): S {
+fun <S : Inputtable> S.afterInit(function: S.(Event.Lifetime.PostInit) -> Unit): S {
     on(Event.Lifetime.PostInit, function)
     return this
 }
@@ -618,19 +623,15 @@ fun <S : Drawable> S.afterInit(function: S.(Event.Lifetime.PostInit) -> Unit): S
  * This is used to run functions that may move or resize this drawable,
  * as if they were ran under this [Event.Lifetime.PostInit] they would be overwritten by the positioning logic.
  */
-fun <S : Drawable> S.afterParentInit(depth: Int = 1, handler: S.() -> Unit): S {
+fun <S : Inputtable> S.afterParentInit(depth: Int = 1, handler: S.() -> Unit): S {
     this.on(Event.Lifetime.PostInit) { _ ->
-        var it: Drawable = parent // will die if parent is null
+        var it: Component = parent // will die if parent is null
         for (i in 0 until depth) {
             it._parent?.let { parent -> it = parent } ?: break
         }
-        if (false) {
+        (it as? Inputtable)?.on(Event.Lifetime.PostInit) {
             handler(this@afterParentInit)
-        } else {
-            it.on(Event.Lifetime.PostInit) {
-                handler(this@afterParentInit)
-            }
-        }
+        } ?: throw IllegalArgumentException("Parent at depth $depth is not an Inputtable")
         false
     }
     return this
@@ -638,7 +639,7 @@ fun <S : Drawable> S.afterParentInit(depth: Int = 1, handler: S.() -> Unit): S {
 
 @EventDSL.Marker
 @OptIn(ExperimentalContracts::class)
-inline fun <S : Drawable> S.events(dsl: EventDSL<S>.() -> Unit): S {
+inline fun <S : Inputtable> S.events(dsl: EventDSL<S>.() -> Unit): S {
     contract {
         callsInPlace(dsl, kotlin.contracts.InvocationKind.EXACTLY_ONCE)
     }
@@ -648,28 +649,28 @@ inline fun <S : Drawable> S.events(dsl: EventDSL<S>.() -> Unit): S {
 
 @OverloadResolutionByLambdaReturnType
 @JvmName("onClickZ")
-fun <S : Drawable> S.onClick(func: S.(Event.Mouse.Clicked) -> Boolean): S {
+fun <S : Inputtable> S.onClick(func: S.(Event.Mouse.Clicked) -> Boolean): S {
     on(Event.Mouse.Clicked, func)
     return this
 }
 
 @OverloadResolutionByLambdaReturnType
-fun <S : Drawable> S.onClick(func: S.(Event.Mouse.Clicked) -> Unit): S {
+fun <S : Inputtable> S.onClick(func: S.(Event.Mouse.Clicked) -> Unit): S {
     on(Event.Mouse.Clicked, func)
     return this
 }
 
-fun <S : Drawable> S.onPress(func: S.(Event.Mouse.Pressed) -> Unit): S {
+fun <S : Inputtable> S.onPress(func: S.(Event.Mouse.Pressed) -> Unit): S {
     on(Event.Mouse.Pressed, func)
     return this
 }
 
-fun <S : Drawable> S.onDrag(func: S.(Event.Mouse.Dragged) -> Unit): S {
+fun <S : Inputtable> S.onDrag(func: S.(Event.Mouse.Dragged) -> Unit): S {
     on(Event.Mouse.Dragged, func)
     return this
 }
 
-fun <S : Drawable> S.fix(): S {
+fun <S : Component> S.fix(): S {
     x = x.toInt().toFloat()
     y = y.toInt().toFloat()
     width = width.toInt().toFloat()
@@ -679,20 +680,20 @@ fun <S : Drawable> S.fix(): S {
 }
 
 @JvmName("ensureLargerThan")
-fun <S : Drawable> S.ensureLargerThan(vec: Vec2) {
+fun <S : Component> S.ensureLargerThan(vec: Vec2) {
     if (width < vec.x) width = vec.x
     if (height < vec.y) height = vec.y
 }
 
 /**
- * Locate a drawable by its name.
+ * Locate a component by its name.
  *
- * This method is recursive, meaning it will search through all children of this drawable.
+ * This method is recursive, meaning it will search through all children of this component.
  * @param id the name of the drawable to locate.
  * @return the drawable with the given name, or `null` if it was not found.
  * @since 1.1.72
  */
-fun <S : Drawable> Drawable.locate(id: String): S? {
+fun <S : Component> Component.locate(id: String): S? {
     @Suppress("UNCHECKED_CAST")
     if (this.simpleName == id) return this as S
     children?.fastEach {
@@ -703,26 +704,26 @@ fun <S : Drawable> Drawable.locate(id: String): S? {
 }
 
 /**
- * Returns `true` if this drawable is a child of the specified [drawable].
+ * Returns `true` if this component is a child of the specified [component].
  * @see isRelatedTo
  * @since 1.4.2
  */
-fun Drawable.isChildOf(drawable: Drawable?): Boolean {
-    if (drawable == null) return false
-    var p: Drawable? = this._parent
+fun Component.isChildOf(component: Component?): Boolean {
+    if (component == null) return false
+    var p: Component? = this._parent
     while (p != null) {
-        if (p === drawable) return true
+        if (p === component) return true
         p = p._parent
     }
     return false
 }
 
 /**
- * Returns `true` if this drawable is a child of the specified [drawable], or if the [drawable] is a child of this.
+ * Returns `true` if this component is a child of the specified [component], or if the [component] is a child of this.
  * @see isChildOf
  * @since 1.4.2
  */
-fun Drawable.isRelatedTo(drawable: Drawable?) = drawable != null && drawable.isChildOf(this) || this.isChildOf(drawable)
+fun Component.isRelatedTo(component: Component?) = component != null && component.isChildOf(this) || this.isChildOf(component)
 
 /**
  * Bulk add method for all the builtin drawable operations in PolyUI.

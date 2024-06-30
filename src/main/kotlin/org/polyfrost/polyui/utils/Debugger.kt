@@ -23,16 +23,12 @@ package org.polyfrost.polyui.utils
 
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.PolyUI.Companion.INPUT_DISABLED
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_HOVERED
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_NONE
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
 import org.polyfrost.polyui.PolyUI.Companion.LOGGER
 import org.polyfrost.polyui.color.PolyColor
-import org.polyfrost.polyui.component.Drawable
-import org.polyfrost.polyui.component.countChildren
-import org.polyfrost.polyui.component.events
-import org.polyfrost.polyui.component.fix
+import org.polyfrost.polyui.component.*
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.input.KeyBinder
@@ -102,7 +98,7 @@ class Debugger(private val polyUI: PolyUI) {
         true
     }
 
-    private var forEval: Drawable? = null
+    private var forEval: Component? = null
 
     private val evalWindow = Block(
         TextInput(placeholder = "evaluate expression...", font = polyUI.monospaceFont).events {
@@ -123,7 +119,7 @@ class Debugger(private val polyUI: PolyUI) {
                 }
             }
             Event.Focused.Lost then {
-                parent.enabled = false
+                parent.isEnabled = false
             }
         },
     )
@@ -132,7 +128,7 @@ class Debugger(private val polyUI: PolyUI) {
         val forEval = polyUI.inputManager.rayCheckUnsafe(polyUI.master, polyUI.mouseX, polyUI.mouseY) ?: return@Bind false
         this.forEval = forEval
         (evalWindow[0] as TextInput).placeholder = "evaluate ${forEval.simpleName}..."
-        evalWindow.enabled = true
+        evalWindow.isEnabled = true
         if (!evalWindow.initialized) {
             polyUI.master.addChild(evalWindow, recalculate = false)
         } else evalWindow.recalculate()
@@ -143,7 +139,7 @@ class Debugger(private val polyUI: PolyUI) {
         true
     }
 
-    private fun processEval(target: Drawable?, eval: String): Boolean {
+    private fun processEval(target: Component?, eval: String): Boolean {
         if (eval.isEmpty()) return false
         if (target == null) return false
         if (eval[0] == '[') {
@@ -184,7 +180,7 @@ class Debugger(private val polyUI: PolyUI) {
             return false
         }
         if (set == 0 || set == eval.length) return false
-        if (eval == "color = picker()") {
+        if (target is Drawable && eval == "color = picker()") {
             target.color = target.color.mutable()
             ColorPicker(target.color.mutable().ref(), null, null, polyUI)
             return true
@@ -358,7 +354,7 @@ class Debugger(private val polyUI: PolyUI) {
         return sb.toString()
     }
 
-    private fun _debugString(list: ArrayList<Drawable>, depth: Int, sb: StringBuilder) {
+    private fun _debugString(list: ArrayList<Component>, depth: Int, sb: StringBuilder) {
         var i = 0
         var ii = 0
         val ndepth = depth + 1
@@ -377,7 +373,7 @@ class Debugger(private val polyUI: PolyUI) {
         if (ii != 0) sb.append('\n').append('\t', ndepth).append("... (").append(ii).append(" uninitialized)")
     }
 
-    fun openDebugWindow(d: Drawable?) {
+    fun openDebugWindow(d: Component?) {
         if (d == null) return
         val f = PolyUI.monospaceFont
         PopupMenu(
@@ -385,14 +381,14 @@ class Debugger(private val polyUI: PolyUI) {
             Text(
                 ("""
 parent: ${d._parent?.simpleName}   siblings: ${d._parent?.countChildren()?.dec()}
-children: ${d.countChildren()};  fbo: ${d.framebuffer}, renders: ${d.renders}, scrolling: ${if (!d.shouldScroll) "disabled" else if (d.scrolling) "on" else "off"}
+children: ${d.countChildren()};  renders: ${d.clipped}, ${if(d is Scrollable) "scrolling: ${if (!d.shouldScroll) "disabled" else if (d.scrollingX && d.scrollingY) "x+y" else if(d.scrollingX) "x" else if(d.scrollingY) "y" else "off"}" else ""}
 at: ${d.x}x${d.y}, pad: ${d.padding}, flags: ${decodeFlags(d)}
-size: ${d.size}, visible: ${if (d.hasVisibleSize) d.visibleSize else "null"}
-rgba: ${d.color.r}, ${d.color.g}, ${d.color.b}, ${d.color.a}
+size: ${d.size}, visible: ${if (d.visibleSize != d.size) d.visibleSize.toString() else "null"}
+${if(d is Drawable) """rgba: ${d.color.r}, ${d.color.g}, ${d.color.b}, ${d.color.a}
 scale: ${d.scaleX}x${d.scaleY};  skew: ${d.skewX}x${d.skewY}
 rotation: ${d.rotation};  alpha: ${d.alpha}
-redraw: ${d.needsRedraw};  ops=${d.operating};  scroll: ${d.scrolling}
-state: ${getInputStateString(d.inputState)}, focused: ${if (!d.focusable) "disabled" else if (d.focused) "yes" else "no"}
+redraw: ${d.needsRedraw};  ops=${d.isOperating};  fbo: ${d.framebuffer}""" else ""}
+${if(d is Inputtable) "state: ${getInputStateString(d.inputState)}, focused: ${if (!d.focusable) "disabled" else if (d.focused) "yes" else "no"}" else ""}
 ${d.alignment}
             """ + (d.debugString()?.let { "\n\n$it" } ?: "")).translated().dont(),
                 font = f
@@ -410,18 +406,17 @@ ${d.alignment}
         }
     }
 
-    private fun decodeFlags(drawable: Drawable): String {
+    private fun decodeFlags(component: Component): String {
         val sb = StringBuilder(4)
-        if (drawable.createdWithSetPosition) sb.append('P')
-        if (drawable.createdWithSetSize) sb.append('S')
-        if (drawable.rawResize) sb.append('R')
-        if (drawable.layoutIgnored) sb.append('I')
+        if (component.createdWithSetPosition) sb.append('P')
+        if (component.createdWithSetSize) sb.append('S')
+        if (component.rawResize) sb.append('R')
+        if (component.layoutIgnored) sb.append('I')
         if (sb.isEmpty()) sb.append("none")
         return sb.toString()
     }
 
     private fun getInputStateString(state: Byte) = when (state) {
-        INPUT_DISABLED -> "disabled"
         INPUT_NONE -> "none"
         INPUT_HOVERED -> "hovered"
         INPUT_PRESSED -> "pressed"

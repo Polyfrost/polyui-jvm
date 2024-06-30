@@ -160,7 +160,7 @@ private class ColorPickingBox(
             y = y.coerceIn(parent.y - hf, parent.y + parent.height - hf)
             theColor.element.saturation = (x - parent.x + hf) / parent.width
             theColor.element.brightness = 1f - (y - parent.y + hf) / parent.height
-            parent.accept(Event.Mouse.Dragged)
+            (parent as? Inputtable)?.accept(Event.Mouse.Dragged)
         },
     ).withBoarder(PolyColor.WHITE, 2f),
     size = 200f by 200f,

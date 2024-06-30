@@ -74,7 +74,7 @@ fun main() {
                 Event.Mouse.Clicked then { _ ->
                     val it = parent.parent[5]
                     it.children?.shuffle()
-                    it.repositionChildren()
+                    it.position()
                 }
             },
             Button("minus.svg".image()),

@@ -21,14 +21,14 @@
 
 package org.polyfrost.polyui.event
 
-import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.component.Inputtable
 
 /**
  * DSL for events.
  * @since 0.23.2
  */
 @JvmInline
-value class EventDSL<S : Drawable>(val self: S) {
+value class EventDSL<S : Inputtable>(val self: S) {
     // kotlin bug: resolution error means self.run {} has to be used
     // target fix is set for 2.1.0
     // https://youtrack.jetbrains.com/issue/KT-63581/

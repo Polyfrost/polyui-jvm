@@ -23,9 +23,10 @@ package org.polyfrost.polyui.operations
 
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.animate.Animation
+import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
 
-abstract class DrawableOp(protected open val self: Drawable) {
+abstract class ComponentOp<S : Component>(protected val self: S) {
     abstract fun apply()
 
     abstract fun unapply(): Boolean
@@ -57,15 +58,13 @@ abstract class DrawableOp(protected open val self: Drawable) {
      *
      * It is applied before and after rendering, for example a [Move], [Resize], or [Rotate] operation, or a transition.
      */
-    abstract class Animatable<S : Drawable>(self: S, protected val animation: Animation? = null, var onFinish: (S.() -> Unit)? = null) :
-        DrawableOp(self) {
-        @get:Suppress("unchecked_cast")
-        final override val self: S
-            get() = super.self as S
+    abstract class Animatable<S : Component>(self: S, protected val animation: Animation? = null, var onFinish: (S.() -> Unit)? = null) :
+        ComponentOp<S>(self) {
+
 
         override fun apply() {
             apply(animation?.update(self.polyUI.delta) ?: 1f)
-            if (animation?.isFinished == false) self.needsRedraw = true
+            if (animation?.isFinished == false && self is Drawable) self.needsRedraw = true
             return
         }
 

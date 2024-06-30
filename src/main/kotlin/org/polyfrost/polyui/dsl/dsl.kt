@@ -147,7 +147,7 @@ open class DrawableDSL(@PublishedApi internal val _this: Drawable) {
             }
 
         fun build() = PolyUI(
-            drawables = _this.children?.toTypedArray() ?: arrayOf(),
+            components = (_this.children as? List<Drawable>)?.toTypedArray() ?: arrayOf(),
             renderer, settings, inputManager, translator, backgroundColor,
             alignment, colors, size
         )

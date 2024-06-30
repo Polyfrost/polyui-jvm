@@ -180,16 +180,6 @@ class Settings {
     var cleanupAfterInit = true
 
     /**
-     * This property will make it so after a drawable is initialized, its initialization events are cleared, meaning that **`reset()` will fail.**
-     *
-     * @since 1.0.2
-     */
-    @get:JvmName("isAggressiveCleanupEnabled")
-    @set:JvmName("enableAggressiveCleanup")
-    @ApiStatus.Experimental
-    var aggressiveCleanup = true
-
-    /**
      * This property will run the cleanup() method in a shutdown hook which will free memory used by PolyUI.
      *
      * @since 0.20.1

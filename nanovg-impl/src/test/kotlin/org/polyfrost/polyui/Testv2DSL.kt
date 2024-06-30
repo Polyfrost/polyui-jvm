@@ -71,7 +71,7 @@ fun main() {
             Button("shuffle.svg".image(), "button.randomize").onClick {
                 val box = parent.parent[5]
                 box.children?.shuffle()
-                box.repositionChildren()
+                box.position()
             }.add()
             Button("minus.svg".image()).onClick {
                 val box = parent.parent[5]

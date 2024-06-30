@@ -22,15 +22,15 @@
 package org.polyfrost.polyui.component.impl
 
 import org.polyfrost.polyui.color.PolyColor
+import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.utils.cl1
 import org.polyfrost.polyui.utils.elementsEqual
 
 open class Block(
-    vararg children: Drawable?,
+    vararg children: Component?,
     at: Vec2 = Vec2.ZERO,
     size: Vec2 = Vec2.ZERO,
     alignment: Align = AlignDefault,
@@ -75,15 +75,14 @@ open class Block(
         }
     }
 
-    override fun rescale(scaleX: Float, scaleY: Float, position: Boolean) {
-        super.rescale(scaleX, scaleY, position)
+    override fun rescale0(scaleX: Float, scaleY: Float, position: Boolean) {
+        super.rescale0(scaleX, scaleY, position)
         val radii = this.radii
-        val scale = cl1(scaleX, scaleY)
         when {
             radii == null -> {}
             radii.elementsEqual() -> {
                 for (i in radii.indices) {
-                    radii[i] *= scale
+                    radii[i] *= scaleX
                 }
             }
         }
