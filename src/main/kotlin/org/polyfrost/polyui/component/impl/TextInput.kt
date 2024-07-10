@@ -50,7 +50,7 @@ open class TextInput(
     vararg children: Component?,
 ) : Text(text.translated().dont(), font, fontSize, at, alignment, visibleSize, true, false, *children) {
 
-    private val selectBoxes = ArrayList<Vec4>()
+    private val selectBoxes = ArrayList<Vec4>(2)
 
     private val caretColor = PolyColor.WHITE
 
@@ -332,19 +332,19 @@ open class TextInput(
     /**
      * `line to index to lineIndex to linePos`
      */
-    private fun getLineByIndex(index: Int): Quad<String, Int, Int, Float> {
+    private fun getLineByIndex(index: Int): LineData {
         require(index > -1) { "Index must not be negative" }
         var i = 0
         var y = 0f
         lines.fastEachIndexed { li, (it, bounds) ->
             if (index < i + it.length) {
-                return Quad(it, index - i, li, y)
+                return LineData(it, index - i, li, y)
             }
             y += bounds.y + spacing
             i += it.length
         }
         val (ln, bounds) = lines.last()
-        return Quad(ln, ln.length, lines.lastIndex, height - spacing - bounds.y)
+        return LineData(ln, ln.length, lines.lastIndex, height - spacing - bounds.y)
     }
 
     private fun selections() {
@@ -367,7 +367,7 @@ open class TextInput(
             return
         }
         // funny - get it? realY and really are like the same !
-        var really = slp + lines[si].second.y
+        var really = slp + lines[si].bounds.y
         for (i in sli + 1 until eli) {
             val (_, bounds) = lines[i]
             selectBoxes.add(Vec4.of(-1f, really, bounds))
@@ -386,7 +386,7 @@ open class TextInput(
 
     private fun caretFromMouse(mouseX: Float, mouseY: Float) {
         val line = ((mouseY - y) / (fontSize + spacing)).toInt()
-        val p = lines[line.coerceIn(0, lines.lastIndex)].first.closestToPoint(renderer, font, fontSize, mouseX - x)
+        val p = lines[line.coerceIn(0, lines.lastIndex)].string.closestToPoint(renderer, font, fontSize, mouseX - x)
         caret = if (p == -1) text.length else p
         caretPos()
     }
@@ -457,4 +457,6 @@ open class TextInput(
     }
 
     override fun debugString() = "placeholder: ${_placeholder.string}\ncaret: $caret;  select: $select;  selecting=$selecting\n${super.debugString()}"
+
+    private data class LineData(val line: String, val index: Int, val lineIndex: Int, val yPos: Float)
 }

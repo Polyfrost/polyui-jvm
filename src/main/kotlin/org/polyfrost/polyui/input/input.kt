@@ -287,31 +287,55 @@ value class Modifiers(val value: Byte) {
 
     val prettyName: String
         get() {
-            if (isEmpty) return "None"
+            if (isEmpty) return ""
             val sb = StringBuilder()
-            if (lShift) sb.append("Left Shift + ")
-            if (rShift) sb.append("Right Shift + ")
-            if (lCtrl) sb.append("Left Control + ")
-            if (rCtrl) sb.append("Right Control + ")
-            if (lAlt) sb.append("Left Alt + ")
-            if (rAlt) sb.append("Right Alt + ")
-            if (lMeta) sb.append("Left Meta + ")
-            if (rMeta) sb.append("Right Meta + ")
+            if (hasShift) sb.append("Shift + ")
+            else {
+                if (lShift) sb.append("Left Shift + ")
+                if (rShift) sb.append("Right Shift + ")
+            }
+            if (value.toInt() and 0b00001100 != 0) sb.append("Control + ")
+            else {
+                if (lCtrl) sb.append("Left Control + ")
+                if (rCtrl) sb.append("Right Control + ")
+            }
+            if (hasAlt) sb.append("Alt + ")
+            else {
+                if (lAlt) sb.append("Left Alt + ")
+                if (rAlt) sb.append("Right Alt + ")
+            }
+            if (hasMeta) sb.append("Meta + ")
+            else {
+                if (lMeta) sb.append("Left Meta + ")
+                if (rMeta) sb.append("Right Meta + ")
+            }
             return sb.substring(0, sb.length - 3)
         }
 
     val name: String
         get() {
-            if (isEmpty) return "None"
+            if (isEmpty) return ""
             val sb = StringBuilder()
-            if (lShift) sb.append("LSHIFT+")
-            if (rShift) sb.append("RSHIFT+")
-            if (lCtrl) sb.append("LCONTROL+")
-            if (rCtrl) sb.append("RCONTROL+")
-            if (lAlt) sb.append("LALT+")
-            if (rAlt) sb.append("RALT+")
-            if (lMeta) sb.append("LMETA+")
-            if (rMeta) sb.append("RMETA+")
+            if (hasShift) sb.append("SHIFT+")
+            else {
+                if (lShift) sb.append("LSHIFT+")
+                if (rShift) sb.append("RSHIFT+")
+            }
+            if (value.toInt() and 0b00001100 != 0) sb.append("CTRL+")
+            else {
+                if (lCtrl) sb.append("LCTRL+")
+                if (rCtrl) sb.append("RCTRL+")
+            }
+            if (hasAlt) sb.append("ALT+")
+            else {
+                if (lAlt) sb.append("LALT+")
+                if (rAlt) sb.append("RALT+")
+            }
+            if (hasMeta) sb.append("META+")
+            else {
+                if (lMeta) sb.append("LMETA+")
+                if (rMeta) sb.append("RMETA+")
+            }
             return sb.substring(0, sb.length - 1)
         }
 

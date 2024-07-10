@@ -85,6 +85,7 @@ interface Event {
             override fun hashCode(): Int {
                 var result = button
                 result = 31 * result + mods.hashCode()
+                result += ofs() * 31432901
                 return result
             }
 
@@ -96,6 +97,8 @@ interface Event {
 
             operator fun component1() = x
             operator fun component2() = y
+
+            abstract fun ofs(): Int
         }
 
         class Pressed internal constructor(button: Int, x: Float, y: Float, mods: Modifiers) : ButtonBase(button, x, y, mods) {
@@ -103,6 +106,8 @@ interface Event {
 
             override fun toString(): String =
                 "MousePressed(($x, $y), ${MouseUtils.toStringPretty(MouseUtils.fromValue(button), mods)})"
+
+            override fun ofs() = 8392
         }
 
         class Released internal constructor(button: Int, x: Float, y: Float, mods: Modifiers) : ButtonBase(button, x, y, mods) {
@@ -110,6 +115,8 @@ interface Event {
 
             override fun toString(): String =
                 "MouseReleased(($x, $y), ${MouseUtils.toStringPretty(MouseUtils.fromValue(button), mods)})"
+
+            override fun ofs() = 12489
         }
 
         class Clicked internal constructor(button: Int, x: Float, y: Float, val clicks: Int, mods: Modifiers) : ButtonBase(button, x, y, mods) {
@@ -126,6 +133,8 @@ interface Event {
             }
 
             override fun toString(): String = "MouseClicked x$clicks(($x, $y), ${MouseUtils.toStringPretty(MouseUtils.fromValue(button), mods)})"
+
+            override fun ofs() = 1321
         }
 
         class Scrolled internal constructor(val amountX: Float, val amountY: Float, @get:JvmName("getMods") val mods: Modifiers) : Mouse {
@@ -258,7 +267,7 @@ interface Event {
     /**
      * Events for focusable components (components which receive keyboard input)
      *
-     * In order to receive these events, the [focusable flag][org.polyfrost.polyui.component.Drawable.focusable] must be `true`.
+     * In order to receive these events, the [focusable flag][org.polyfrost.polyui.component.Inputtable.focusable] must be `true`.
      *
      * @see Focused.Gained
      * @see Focused.Lost

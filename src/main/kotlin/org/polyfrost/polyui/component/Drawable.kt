@@ -206,7 +206,7 @@ abstract class Drawable(
     @Synchronized
     fun draw() {
         if (!clipped) return
-        require(initialized) { "Drawable $simpleName is not initialized!" }
+        require(initialized) { "Drawable $name is not initialized!" }
 
         val framebuffer = framebuffer
         val binds = framebuffer != null && fbc < 3
@@ -331,7 +331,7 @@ abstract class Drawable(
         if (polyUI.canUseFramebuffers) {
             if (countChildren() > polyUI.settings.minDrawablesForFramebuffer || (this === polyUI.master && polyUI.settings.isMasterFrameBuffer)) {
                 framebuffer = renderer.createFramebuffer(width, height)
-                if (polyUI.settings.debug) PolyUI.LOGGER.info("Drawable ${this.simpleName} created with $framebuffer")
+                if (polyUI.settings.debug) PolyUI.LOGGER.info("Drawable ${this.name} created with $framebuffer")
             }
         }
         return true
@@ -346,9 +346,9 @@ abstract class Drawable(
     override fun toString(): String {
         return if (initialized) {
             if (sizeValid) {
-                "$simpleName(${x}x$y, $size)"
-            } else "$simpleName(being initialized)"
-        } else "$simpleName(not initialized)"
+                "$name(${x}x$y, $size)"
+            } else "$name(being initialized)"
+        } else "$name(not initialized)"
     }
 
     override operator fun get(index: Int) = super.get(index) as? Drawable ?: throw IllegalArgumentException("Object at $index on $this is not a Drawable")

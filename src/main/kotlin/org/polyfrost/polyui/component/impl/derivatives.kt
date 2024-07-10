@@ -110,7 +110,7 @@ fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2 = Vec2.ZERO,
                 parent.accept(ev)
                 if (ev.cancelled) return@onClick false
             }
-            val f = children.first() as Drawable
+            val f = children.first()
             Move(f, this.x, this.y, add = false, animation = Animations.Default.create(0.15.seconds)).add()
             Resize(f, this.width, this.height, add = false, animation = Animations.Default.create(0.15.seconds)).add()
             true

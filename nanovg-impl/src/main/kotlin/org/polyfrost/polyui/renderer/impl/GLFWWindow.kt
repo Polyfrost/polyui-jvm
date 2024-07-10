@@ -183,7 +183,7 @@ class GLFWWindow @JvmOverloads constructor(
             // p.s. I have performance tested this; and it is very fast (doesn't even show up on profiler). kotlin is good at int ranges lol
             if (keyCode in 255..348) {
                 if (keyCode < 340) {
-                    val key: Keys = when (keyCode) {
+                    val key = when (keyCode) {
                         GLFW_KEY_F1 -> Keys.F1
                         GLFW_KEY_F2 -> Keys.F2
                         GLFW_KEY_F3 -> Keys.F3
@@ -223,19 +223,18 @@ class GLFWWindow @JvmOverloads constructor(
                         polyUI.inputManager.keyUp(key)
                     }
                 } else {
-                    val key: KeyModifiers = (
-                            when (keyCode) {
-                                GLFW_KEY_LEFT_SHIFT -> KeyModifiers.LSHIFT
-                                GLFW_KEY_LEFT_CONTROL -> KeyModifiers.LCONTROL
-                                GLFW_KEY_LEFT_ALT -> KeyModifiers.LALT
-                                GLFW_KEY_LEFT_SUPER -> KeyModifiers.LMETA
-                                GLFW_KEY_RIGHT_SHIFT -> KeyModifiers.RSHIFT
-                                GLFW_KEY_RIGHT_CONTROL -> KeyModifiers.RCONTROL
-                                GLFW_KEY_RIGHT_ALT -> KeyModifiers.RALT
-                                GLFW_KEY_RIGHT_SUPER -> KeyModifiers.RMETA
-                                else -> KeyModifiers.UNKNOWN
-                            }
-                            )
+                    val key = when (keyCode) {
+                        GLFW_KEY_LEFT_SHIFT -> KeyModifiers.LSHIFT
+                        GLFW_KEY_LEFT_CONTROL -> KeyModifiers.LCONTROL
+                        GLFW_KEY_LEFT_ALT -> KeyModifiers.LALT
+                        GLFW_KEY_LEFT_SUPER -> KeyModifiers.LMETA
+                        GLFW_KEY_RIGHT_SHIFT -> KeyModifiers.RSHIFT
+                        GLFW_KEY_RIGHT_CONTROL -> KeyModifiers.RCONTROL
+                        GLFW_KEY_RIGHT_ALT -> KeyModifiers.RALT
+                        GLFW_KEY_RIGHT_SUPER -> KeyModifiers.RMETA
+                        else -> KeyModifiers.UNKNOWN
+                    }
+
                     if (action == GLFW_PRESS) {
                         polyUI.inputManager.addModifier(key.value)
                     } else {

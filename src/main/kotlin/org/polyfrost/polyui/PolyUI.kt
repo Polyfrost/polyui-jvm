@@ -25,12 +25,9 @@ import org.apache.logging.log4j.LogManager
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.color.DarkTheme
 import org.polyfrost.polyui.color.PolyColor
-import org.polyfrost.polyui.component.Component
-import org.polyfrost.polyui.component.Drawable
-import org.polyfrost.polyui.component.Positioner
+import org.polyfrost.polyui.component.*
 import org.polyfrost.polyui.component.impl.Block
 import org.polyfrost.polyui.component.impl.Group
-import org.polyfrost.polyui.component.radius
 import org.polyfrost.polyui.event.InputManager
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.KeyModifiers
@@ -281,7 +278,7 @@ class PolyUI(
     init {
         LOGGER.info("PolyUI initializing...")
         if (master.children.isNullOrEmpty()) LOGGER.warn("PolyUI initialized with no children!")
-        master.simpleName += " [Master]"
+        master.name += " [Master]"
         master.setup(this)
 
         this.keyBinder?.add(
@@ -444,7 +441,7 @@ class PolyUI(
      * @param focusable the element to set focus on
      * @return true if focus was successfully set, false if the provided focusable is already focused
      */
-    fun focus(focusable: Drawable) {
+    fun focus(focusable: Inputtable) {
         if (inputManager.focus(focusable)) master.needsRedraw = true
     }
 

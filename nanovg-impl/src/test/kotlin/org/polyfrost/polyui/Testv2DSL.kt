@@ -21,18 +21,14 @@
 
 package org.polyfrost.polyui
 
+import org.polyfrost.polyui.component.*
 import org.polyfrost.polyui.component.impl.*
-import org.polyfrost.polyui.component.onClick
-import org.polyfrost.polyui.component.setFont
-import org.polyfrost.polyui.component.withStates
 import org.polyfrost.polyui.dsl.polyUI
-import org.polyfrost.polyui.operations.ShakeOp
 import org.polyfrost.polyui.renderer.data.FontFamily
 import org.polyfrost.polyui.renderer.impl.GLFWWindow
 import org.polyfrost.polyui.renderer.impl.NVGRenderer
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.by
-import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.mutable
 import org.polyfrost.polyui.utils.open
@@ -49,7 +45,7 @@ fun main() {
         }
         group {
             Button("moon.svg".image()).add().onClick {
-                ShakeOp(this, 0.2.seconds, 2).add()
+                shake(); false
             }
             Button("face-wink.svg".image(), "button.text").onClick {
                 color = color.mutable()
@@ -63,7 +59,7 @@ fun main() {
         BoxedTextInput(pre = "Title:", post = "px").add()
         group {
             repeat(30) {
-                block(size = (32f + (Math.random().toFloat() * 100f)) by 32f).withStates()
+                block(size = (32f + (Math.random().toFloat() * 100f)) by 32f).withStates().add3dEffect(0.1, 0.1)
             }
             it.visibleSize = 350f by 120f
         }

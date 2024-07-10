@@ -49,7 +49,7 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
      * `val text = myLayout["Text@4cf777e8"] as Text`
      */
     @OptIn(ExperimentalStdlibApi::class)
-    open var simpleName = "${this::class.java.simpleName}@${this.hashCode().toHexString()}"
+    open var name = "${this::class.java.simpleName}@${this.hashCode().toHexString()}"
 
     lateinit var polyUI: PolyUI
         protected set
@@ -435,7 +435,7 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
     operator fun get(id: String): Component {
         val children = children ?: throw NoSuchElementException("no children on $this")
         children.fastEach {
-            if (it.simpleName == id) return it
+            if (it.name == id) return it
         }
         throw NoSuchElementException("no child with id $id")
     }

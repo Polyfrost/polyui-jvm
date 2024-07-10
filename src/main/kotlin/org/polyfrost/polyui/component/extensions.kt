@@ -99,7 +99,8 @@ fun <S : Inputtable> S.draggable(withX: Boolean = true, withY: Boolean = true, f
             started = false
             if (this is Drawable) needsRedraw = true
             onDrop?.invoke(this)
-        }
+            true
+        } else false
     }
     return this
 }
@@ -126,7 +127,7 @@ fun <S : Inputtable> S.addHoverInfo(vararg drawables: Drawable?, size: Vec2 = Ve
         if (popup.focused) polyUI.unfocus()
         polyUI.removeExecutor(exe)
     }
-    on(Event.Mouse.Moved) {
+    val stop: (S.(Event) -> Boolean) = {
         if (popup.focused) {
             if (abs(mx - polyUI.mouseX) > 3f || abs(my - polyUI.mouseY) > 3f) {
                 polyUI.unfocus()
@@ -134,7 +135,11 @@ fun <S : Inputtable> S.addHoverInfo(vararg drawables: Drawable?, size: Vec2 = Ve
             }
         }
         exe.refuse()
+        false
     }
+    on(Event.Mouse.Moved, stop)
+    on(Event.Mouse.Dragged, stop)
+    on(Event.Mouse.Scrolled, stop)
     return this
 }
 
@@ -166,7 +171,7 @@ fun <S : Drawable> S.toggleable(default: Boolean): S {
  * @see [toggleable]
  * @since 1.5.0
  */
-fun <S : Drawable> S.onToggle(func: S.(Boolean) -> Unit): S {
+fun <S : Inputtable> S.onToggle(func: S.(Boolean) -> Unit): S {
     on(Event.Change.State) {
         func.invoke(this, it.state)
         false
@@ -211,13 +216,35 @@ fun <S : Drawable> S.fade(`in`: Boolean, durationNanos: Long = 0.1.seconds): S {
     return this
 }
 
+/**
+ * Add a 3D hover effect to the specified drawable which slightly skews the object as the mouse moves across it,
+ * giving the appearance of it popping off the screen.
+ *
+ * @since 1.6.01
+ */
+fun <S : Drawable> S.add3dEffect(xIntensity: Double = 0.05, yIntensity: Double = 0.05): S {
+    val func: S.(Event) -> Boolean = {
+        val pw = (polyUI.mouseX - this.x) / this.width
+        val ph = (polyUI.mouseY - this.y) / this.height
+        this.skewX = (pw - 0.5f) * xIntensity
+        this.skewY = (ph - 0.5f) * (pw * 2f - 1f) * yIntensity
+        false
+    }
+    on(Event.Mouse.Moved, func)
+    on(Event.Mouse.Dragged, func)
+    on(Event.Mouse.Exited) {
+        Skew(this, 0.0, 0.0, false, Animations.Default.create(0.1.seconds)).add()
+    }
+    return this
+}
+
 fun <S : Component> S.namedId(name: String): S {
-    this.simpleName = "$name@${this.simpleName.substringAfterLast('@')}"
+    this.name = "$name@${this.name.substringAfterLast('@')}"
     return this
 }
 
 fun <S : Component> S.named(name: String): S {
-    this.simpleName = name
+    this.name = name
     return this
 }
 
@@ -323,19 +350,16 @@ fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, integral: Bool
             // fail when out of range
             if (v < min) {
                 text = "${if (integral) min.toInt() else min}"
-                ShakeOp(this, 0.2.seconds, 2).add()
-                false
+                shake(); false
             } else if (v > max) {
                 text = "${if (integral) max.toInt() else max}"
-                ShakeOp(this, 0.2.seconds, 2).add()
-                false
+                shake(); false
             } else {
                 !accept(Event.Change.Number(if (integral) v.toInt() else v))
             }
         } catch (_: NumberFormatException) {
             // fail if it is a number
-            ShakeOp(this, 0.2.seconds, 2).add()
-            true
+            shake(); true
         }
     }
     return this
@@ -424,35 +448,7 @@ fun <S : Drawable> S.setDestructivePalette() = setPalette {
     Colors.Palette(text.primary.normal, state.danger.hovered, state.danger.pressed, text.primary.disabled)
 }
 
-private val defEnter: Drawable.(Event.Mouse.Entered) -> Boolean = {
-    Recolor(this, this.palette.hovered, Animations.Default.create(0.08.seconds)).add()
-    polyUI.cursor = Cursor.Clicker
-    false
-}
-
-private val defExit: Drawable.(Event.Mouse.Exited) -> Boolean = {
-    Recolor(this, this.palette.normal, Animations.Default.create(0.08.seconds)).add()
-    polyUI.cursor = Cursor.Pointer
-    false
-}
-
-private val defPressed: Drawable.(Event.Mouse.Pressed) -> Boolean = {
-    Recolor(this, this.palette.pressed, Animations.Default.create(0.08.seconds)).add()
-    false
-}
-
-private val defReleased: Drawable.(Event.Mouse.Released) -> Boolean = {
-    Recolor(this, this.palette.hovered, Animations.Default.create(0.08.seconds)).add()
-    false
-}
-
-fun <S : Drawable> S.withStates(): S {
-    on(Event.Mouse.Entered, defEnter)
-    on(Event.Mouse.Exited, defExit)
-    on(Event.Mouse.Pressed, defPressed)
-    on(Event.Mouse.Released, defReleased)
-    return this
-}
+fun <S : Drawable> S.withStates() = withStatesCached()
 
 fun <S : Drawable> S.withStates(
     consume: Boolean = false, showClicker: Boolean = true,
@@ -695,7 +691,7 @@ fun <S : Component> S.ensureLargerThan(vec: Vec2) {
  */
 fun <S : Component> Component.locate(id: String): S? {
     @Suppress("UNCHECKED_CAST")
-    if (this.simpleName == id) return this as S
+    if (this.name == id) return this as S
     children?.fastEach {
         val res = it.locate<S>(id)
         if (res != null) return res
@@ -751,6 +747,11 @@ fun Drawable.animateBy(
     if (skewX != 0.0 || skewY != 0.0) Skew(this, skewX, skewY, true, animation).add()
     if (scaleX != 0f || scaleY != 0f) Scale(this, scaleX, scaleY, true, animation).add()
     if (color != null) Recolor(this, color, animation).add()
+}
+
+fun <S : Component> S.shake(): S {
+    ShakeOp(this, 0.2.seconds, 2).add()
+    return this
 }
 
 /**

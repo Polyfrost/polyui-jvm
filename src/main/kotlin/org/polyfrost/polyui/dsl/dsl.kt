@@ -150,7 +150,7 @@ open class DrawableDSL(@PublishedApi internal val _this: Drawable) {
             components = (_this.children as? List<Drawable>)?.toTypedArray() ?: arrayOf(),
             renderer, settings, inputManager, translator, backgroundColor,
             alignment, colors, size
-        )
+        ).also { _this.children?.clear() }
     }
 }
 

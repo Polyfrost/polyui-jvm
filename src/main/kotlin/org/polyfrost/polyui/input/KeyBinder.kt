@@ -51,7 +51,7 @@ class KeyBinder(private val settings: Settings) {
     private val downKeys = ArrayList<Keys>(5)
     private var recordingTime = 0L
     private var recordingFunc: (() -> Boolean)? = null
-    private var callback: ((Bind) -> Unit)? = null
+    private var callback: ((Bind?) -> Unit)? = null
 
     /**
      * accept a keystroke event. This will call all keybindings that match the event.
@@ -134,7 +134,6 @@ class KeyBinder(private val settings: Settings) {
         } else {
             if (settings.debug) PolyUI.LOGGER.info("Bind created: $b")
             callback?.invoke(b)
-            add(b)
             recordingTime = 0L
             callback = null
             recordingFunc = null
@@ -184,7 +183,7 @@ class KeyBinder(private val settings: Settings) {
     }
 
     /**
-     * Begin recording for a keybind.
+     * Begin recording for a keybind. The resulting keybind, which will be passed to the [callback], is **not registered automatically.**
      *
      * recording may be cancelled for the following reasons:
      * - the ESC key is pressed
@@ -193,12 +192,12 @@ class KeyBinder(private val settings: Settings) {
      * - the keybind was attempted to be set to just left-click (which is not allowed)
      *
      * @param holdDurationNanos the duration that the keys have to be pressed in the resultant keybind
-     * @param callback the function that will be called when recording is completed. **not called if it is cancelled for any reason**.
+     * @param callback the function that will be called when recording is completed. **the parameter will be `null` if it failed or was cancelled**.
      * @param function the function that will be run when the keybind is pressed
      * @throws IllegalStateException if the keybind is already present
      * @since 0.24.0
      */
-    fun record(holdDurationNanos: Long = 0L, callback: (Bind) -> Unit, function: () -> Boolean) {
+    fun record(holdDurationNanos: Long = 0L, callback: (Bind?) -> Unit, function: () -> Boolean) {
         if (settings.debug) PolyUI.LOGGER.info("Recording keybind began")
         if (recordingFunc != null) cancelRecord("New recording started")
         release()
@@ -211,6 +210,7 @@ class KeyBinder(private val settings: Settings) {
     fun cancelRecord(reason: String) {
         if (recordingFunc != null) PolyUI.LOGGER.warn("Keybind recording cancelled: $reason")
         recordingTime = 0L
+        callback?.invoke(null)
         callback = null
         recordingFunc = null
         release()

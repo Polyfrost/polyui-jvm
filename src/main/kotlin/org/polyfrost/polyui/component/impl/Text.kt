@@ -231,7 +231,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
     open fun updateTextBounds(renderer: Renderer = this.renderer) {
         lines.clear()
         if (text.isEmpty()) {
-            lines.add("" to (1f by fontSize))
+            lines.add(Line("", (1f by fontSize)))
             width = 1f
             height = fontSize
             return
@@ -252,7 +252,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
                 h -= spacing
                 // safe to not re-measure as we know the bounds will contain it.
                 // also won't co-mod thanks to fastEach
-                lines[i] = str.truncate(renderer, font, fontSize, w) to bounds
+                lines[i] = Line(str.truncate(renderer, font, fontSize, w), bounds)
                 lines.cut(0, i)
                 width = w
                 height = h

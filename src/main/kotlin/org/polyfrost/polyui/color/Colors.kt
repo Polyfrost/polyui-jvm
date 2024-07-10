@@ -31,7 +31,7 @@ import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
  * # Colors
  *
  * Colors is the color storage for [PolyUI][org.polyfrost.polyui.PolyUI].
- * All PolyUI [components][org.polyfrost.polyui.component.Drawable] use these colors.
+ * All PolyUI [drawables][org.polyfrost.polyui.component.Drawable] use these colors.
  * or even changed on the fly using the [field][org.polyfrost.polyui.PolyUI.colors] in the PolyUI instance, bringing theming to PolyUI.
  *
  * @since 0.17.0

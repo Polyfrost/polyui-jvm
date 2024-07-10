@@ -26,9 +26,11 @@ import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.*
 import org.polyfrost.polyui.event.Event
-import org.polyfrost.polyui.operations.ShakeOp
 import org.polyfrost.polyui.renderer.data.PolyImage
-import org.polyfrost.polyui.unit.*
+import org.polyfrost.polyui.unit.Align
+import org.polyfrost.polyui.unit.Point
+import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.mutable
 import org.polyfrost.polyui.utils.toColor
@@ -110,8 +112,7 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Mutable>, faves: MutableList<Poly
                 color.element.recolor(text.toColor())
                 false
             } catch (e: Exception) {
-                ShakeOp(this, 0.2.seconds, 2).add()
-                true
+                shake(); true
             }
         },
         BoxedTextInput(
@@ -165,9 +166,6 @@ private class ColorPickingBox(
     ).withBoarder(PolyColor.WHITE, 2f),
     size = 200f by 200f,
 ) {
-    init {
-        radii = floatArrayOf(6f)
-    }
     val grad1 = PolyColor.Gradient.Mutable(
         PolyColor.WHITE.mutable(),
         theColor.element,
@@ -188,11 +186,11 @@ private class ColorPickingBox(
         col.alpha = 1f
         col.saturation = 1f
         col.brightness = 1f
-        renderer.rect(x, y, width, height, grad1, radii!!)
+        renderer.rect(x, y, width, height, grad1, 6f)
         col.saturation = os
         col.brightness = ob
         col.alpha = oa
 
-        renderer.rect(x, y, width, height, grad2, radii!!)
+        renderer.rect(x, y, width, height, grad2, 6f)
     }
 }

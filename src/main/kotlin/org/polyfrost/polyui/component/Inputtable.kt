@@ -27,10 +27,14 @@ import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_HOVERED
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_NONE
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
+import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.event.Dispatches
 import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.operations.Recolor
+import org.polyfrost.polyui.renderer.data.Cursor
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.fastEach
 
 /**
@@ -45,7 +49,7 @@ abstract class Inputtable(
     @get:JvmName("isFocusable")
     val focusable: Boolean
 ) : Component(at, size, alignment) {
-    private var eventHandlers: MutableMap<Any, ArrayList<(Inputtable.(Event) -> Boolean)>>? = null
+    private var eventHandlers: MutableMap<Any, EventListener<Inputtable, Event>>? = null
 
 
     @get:JvmName("acceptsInput")
@@ -79,10 +83,18 @@ abstract class Inputtable(
     @set:ApiStatus.Internal
     var inputState = INPUT_NONE
         set(value) {
-            when (value) {
-                field -> return
-                INPUT_NONE -> accept(Event.Mouse.Exited)
-                INPUT_HOVERED, INPUT_PRESSED -> accept(Event.Mouse.Entered)
+            when {
+                value == field -> return
+                value == INPUT_NONE && field > INPUT_NONE -> {
+                    accept(Event.Mouse.Exited)
+                    var p: Component = this
+                    while (p is Inputtable) {
+                        if (!p.isInside(polyUI.mouseX, polyUI.mouseY)) p.accept(Event.Mouse.Exited)
+                        p = p._parent ?: break
+                    }
+                }
+
+                field == INPUT_NONE && value > INPUT_NONE -> accept(Event.Mouse.Entered)
             }
             field = value
         }
@@ -107,9 +119,9 @@ abstract class Inputtable(
         this.polyUI = polyUI
 
         children?.fastEach { it.setup(polyUI) }
-        removeHandlers(Event.Lifetime.Init)?.fastEach { it(this, Event.Lifetime.Init) }
+        removeHandlers(Event.Lifetime.Init)?.accept(this, Event.Lifetime.Init)
         position()
-        removeHandlers(Event.Lifetime.PostInit)?.fastEach { it(this, Event.Lifetime.PostInit) }
+        removeHandlers(Event.Lifetime.PostInit)?.accept(this, Event.Lifetime.PostInit)
         return true
     }
 
@@ -123,13 +135,11 @@ abstract class Inputtable(
         if (!isEnabled) return false
         val eh = eventHandlers ?: return false
         val handlers = eh[event::class.java] ?: eh[event] ?: return false
-        handlers.fastEach {
-            if (it(this, event)) return true
-        }
+        handlers.accept(this, event)
         return false
     }
 
-    protected fun removeHandlers(event: Event): ArrayList<(Inputtable.(Event) -> Boolean)>? {
+    private fun removeHandlers(event: Event): EventListener<Inputtable, Event>? {
         val eh = eventHandlers ?: return null
         val key: Any = if (System.identityHashCode(event) == event.hashCode()) event::class.java else event
         val out = eh.remove(key)
@@ -137,13 +147,23 @@ abstract class Inputtable(
         return out
     }
 
+    /**
+     * Clear all event handlers for this component.
+     * @since 1.1.61
+     */
+    @ApiStatus.Experimental
+    fun clearHandlers() {
+        eventHandlers = null
+    }
+
     @OverloadResolutionByLambdaReturnType
     fun <E : Event, S : Inputtable> S.on(event: E, handler: S.(E) -> Boolean): S {
+        if (eventHandlers === EventListener.stated) eventHandlers = EventListener.makeStated()
         if (!acceptsInput && event !is Event.Lifetime) acceptsInput = true
-        val ev = eventHandlers ?: HashMap(8)
+        val ev = eventHandlers ?: HashMap(8, 1f)
         // asm: non-specific events will not override hashCode, so identityHashCode will return the same
-        val ls = if (event.hashCode() == System.identityHashCode(event)) ev.getOrPut(event::class.java) { ArrayList(2) }
-        else ev.getOrPut(event) { ArrayList(2) }
+        val ls = if (event.hashCode() == System.identityHashCode(event)) ev.getOrPut(event::class.java) { EventListener() }
+        else ev.getOrPut(event) { EventListener() }
         @Suppress("UNCHECKED_CAST")
         ls.add(handler as Inputtable.(Event) -> Boolean)
         eventHandlers = ev
@@ -172,5 +192,92 @@ abstract class Inputtable(
     fun hasListenersFor(event: Event): Boolean {
         val k: Any = if (System.identityHashCode(event) == event.hashCode()) event::class.java else event
         return eventHandlers?.containsKey(k) == true
+    }
+
+    internal fun <S : Drawable> S.withStatesCached(): S {
+        eventHandlers?.putAll(EventListener.stated) ?: run { eventHandlers = EventListener.stated }
+        acceptsInput = true
+        return this
+    }
+
+    private class EventListener<S : Inputtable, E : Event> {
+        private var first: (S.(E) -> Boolean)? = null
+        private var second: (S.(E) -> Boolean)? = null
+        private var multi: ArrayList<(S.(E) -> Boolean)>? = null
+
+        fun accept(self: S, event: E): Boolean {
+            if (first?.invoke(self, event) == true) return true
+            if (second?.invoke(self, event) == true) return true
+            multi?.fastEach { if (it(self, event)) return true }
+            return false
+        }
+
+        fun add(handler: S.(E) -> Boolean) {
+            if (first == null) first = handler
+            else if (second == null) second = handler
+            else {
+                val multi = multi ?: ArrayList<S.(E) -> Boolean>(2).also { multi = it }
+                multi.add(handler)
+            }
+        }
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is EventListener<*, *>) return false
+            if (first != other.first) return false
+            if (second != other.second) return false
+            if (multi != other.multi) return false
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = first?.hashCode() ?: 0
+            result = 31 * result + (second?.hashCode() ?: 0)
+            result = 31 * result + (multi?.hashCode() ?: 0)
+            return result
+        }
+
+        companion object Cache {
+            private val defEnter: Drawable.(Event.Mouse.Entered) -> Boolean = {
+                Recolor(this, this.palette.hovered, Animations.Default.create(0.08.seconds)).add()
+                polyUI.cursor = Cursor.Clicker
+                false
+            }
+
+            private val defExit: Drawable.(Event.Mouse.Exited) -> Boolean = {
+                Recolor(this, this.palette.normal, Animations.Default.create(0.08.seconds)).add()
+                polyUI.cursor = Cursor.Pointer
+                false
+            }
+
+            private val defPressed: Drawable.(Event.Mouse.Pressed) -> Boolean = {
+                Recolor(this, this.palette.pressed, Animations.Default.create(0.08.seconds)).add()
+                false
+            }
+
+            private val defReleased: Drawable.(Event.Mouse.Released) -> Boolean = {
+                Recolor(this, this.palette.hovered, Animations.Default.create(0.08.seconds)).add()
+                false
+            }
+            val stated = makeStated()
+
+            @Suppress("UNCHECKED_CAST")
+            fun makeStated(): MutableMap<Any, EventListener<Inputtable, Event>> {
+                val out = HashMap<Any, EventListener<Inputtable, Event>>(8, 1f)
+                out[Event.Mouse.Entered::class.java] = EventListener<Inputtable, Event>().also {
+                    it.add(defEnter as Inputtable.(Event) -> Boolean)
+                }
+                out[Event.Mouse.Exited::class.java] = EventListener<Inputtable, Event>().also {
+                    it.add(defExit as Inputtable.(Event) -> Boolean)
+                }
+                out[Event.Mouse.Pressed] = EventListener<Inputtable, Event>().also {
+                    it.add(defPressed as Inputtable.(Event) -> Boolean)
+                }
+                out[Event.Mouse.Released] = EventListener<Inputtable, Event>().also {
+                    it.add(defReleased as Inputtable.(Event) -> Boolean)
+                }
+                return out
+            }
+        }
     }
 }

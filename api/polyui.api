@@ -24,7 +24,7 @@ public final class org/polyfrost/polyui/PolyUI {
 	public final fun cleanup ()V
 	public final fun every (JILkotlin/jvm/functions/Function0;)Lorg/polyfrost/polyui/utils/Clock$Executor;
 	public static synthetic fun every$default (Lorg/polyfrost/polyui/PolyUI;JILkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lorg/polyfrost/polyui/utils/Clock$Executor;
-	public final fun focus (Lorg/polyfrost/polyui/component/Drawable;)V
+	public final fun focus (Lorg/polyfrost/polyui/component/Inputtable;)V
 	public final fun getCanPauseRendering ()Z
 	public final fun getCanUseFramebuffers ()Z
 	public final fun getClipboard ()Ljava/lang/String;
@@ -550,13 +550,13 @@ public abstract class org/polyfrost/polyui/component/Component {
 	public fun getHeight ()F
 	public final fun getInitialized ()Z
 	public final fun getLayoutFlags ()B
+	public fun getName ()Ljava/lang/String;
 	protected final fun getOperations ()Ljava/util/ArrayList;
 	public final fun getPadding ()Lorg/polyfrost/polyui/unit/Vec4;
 	public final fun getParent ()Lorg/polyfrost/polyui/component/Component;
 	public final fun getParentOrNull ()Lorg/polyfrost/polyui/component/Component;
 	public final fun getPolyUI ()Lorg/polyfrost/polyui/PolyUI;
 	public fun getScreenAt ()J
-	public fun getSimpleName ()Ljava/lang/String;
 	public final fun getSize ()J
 	public fun getVisibleSize ()J
 	public fun getWidth ()F
@@ -589,12 +589,12 @@ public abstract class org/polyfrost/polyui/component/Component {
 	public fun setHeight (F)V
 	public final fun setLayoutFlags (B)V
 	public final fun setLayoutIgnored (Z)V
+	public fun setName (Ljava/lang/String;)V
 	protected final fun setOperations (Ljava/util/ArrayList;)V
 	public final fun setPadding (Lorg/polyfrost/polyui/unit/Vec4;)V
 	public final fun setParent (Lorg/polyfrost/polyui/component/Component;)V
 	protected final fun setPolyUI (Lorg/polyfrost/polyui/PolyUI;)V
 	public final fun setRawResize (Z)V
-	public fun setSimpleName (Ljava/lang/String;)V
 	public final fun setSize (J)V
 	public fun setWidth (F)V
 	public final fun setX (F)V
@@ -646,6 +646,8 @@ public abstract class org/polyfrost/polyui/component/Drawable : org/polyfrost/po
 
 public final class org/polyfrost/polyui/component/ExtensionsKt {
 	public static final field MIN_DRAG F
+	public static final fun add3dEffect (Lorg/polyfrost/polyui/component/Drawable;DD)Lorg/polyfrost/polyui/component/Drawable;
+	public static synthetic fun add3dEffect$default (Lorg/polyfrost/polyui/component/Drawable;DDILjava/lang/Object;)Lorg/polyfrost/polyui/component/Drawable;
 	public static final fun addHoverInfo (Lorg/polyfrost/polyui/component/Inputtable;[Lorg/polyfrost/polyui/component/Drawable;JLorg/polyfrost/polyui/unit/Align;Lorg/polyfrost/polyui/unit/Point;)Lorg/polyfrost/polyui/component/Inputtable;
 	public static synthetic fun addHoverInfo$default (Lorg/polyfrost/polyui/component/Inputtable;[Lorg/polyfrost/polyui/component/Drawable;JLorg/polyfrost/polyui/unit/Align;Lorg/polyfrost/polyui/unit/Point;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/Inputtable;
 	public static final fun afterInit (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
@@ -692,7 +694,7 @@ public final class org/polyfrost/polyui/component/ExtensionsKt {
 	public static final fun onDrag (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
 	public static final fun onInit (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
 	public static final fun onPress (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
-	public static final fun onToggle (Lorg/polyfrost/polyui/component/Drawable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Drawable;
+	public static final fun onToggle (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
 	public static final fun padded (Lorg/polyfrost/polyui/component/Component;FF)Lorg/polyfrost/polyui/component/Component;
 	public static final fun padded (Lorg/polyfrost/polyui/component/Component;FFFF)Lorg/polyfrost/polyui/component/Component;
 	public static final fun padded (Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/unit/Vec4;)Lorg/polyfrost/polyui/component/Component;
@@ -708,6 +710,7 @@ public final class org/polyfrost/polyui/component/ExtensionsKt {
 	public static final fun setPalette (Lorg/polyfrost/polyui/component/Drawable;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/polyui/component/Drawable;
 	public static final fun setPalette (Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/color/Colors$Palette;)Lorg/polyfrost/polyui/component/Drawable;
 	public static final fun setState (Lorg/polyfrost/polyui/component/Drawable;B)Lorg/polyfrost/polyui/component/Drawable;
+	public static final fun shake (Lorg/polyfrost/polyui/component/Component;)Lorg/polyfrost/polyui/component/Component;
 	public static final fun toggleable (Lorg/polyfrost/polyui/component/Drawable;Z)Lorg/polyfrost/polyui/component/Drawable;
 	public static final fun withBoarder (Lorg/polyfrost/polyui/component/impl/Block;FLkotlin/jvm/functions/Function1;)Lorg/polyfrost/polyui/component/impl/Block;
 	public static final fun withBoarder (Lorg/polyfrost/polyui/component/impl/Block;Lorg/polyfrost/polyui/color/PolyColor;F)Lorg/polyfrost/polyui/component/impl/Block;
@@ -725,6 +728,7 @@ public abstract class org/polyfrost/polyui/component/Inputtable : org/polyfrost/
 	public fun accept (Lorg/polyfrost/polyui/event/Event;)Z
 	public final fun acceptsInput ()Z
 	public final fun addEventhandler (Lorg/polyfrost/polyui/component/Inputtable;Lorg/polyfrost/polyui/event/Event;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
+	public final fun clearHandlers ()V
 	public final fun getInputState ()B
 	public final fun hasListenersFor (Ljava/lang/Class;)Z
 	public final fun hasListenersFor (Lorg/polyfrost/polyui/event/Event;)Z
@@ -732,7 +736,6 @@ public abstract class org/polyfrost/polyui/component/Inputtable : org/polyfrost/
 	public final fun isFocusable ()Z
 	public final fun isFocused ()Z
 	public final fun on (Lorg/polyfrost/polyui/component/Inputtable;Lorg/polyfrost/polyui/event/Event;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
-	protected final fun removeHandlers (Lorg/polyfrost/polyui/event/Event;)Ljava/util/ArrayList;
 	public final fun setAcceptsInput (Z)V
 	public fun setEnabled (Z)V
 	public final fun setInputState (B)V
@@ -828,8 +831,8 @@ public final class org/polyfrost/polyui/component/impl/Group : org/polyfrost/pol
 
 public class org/polyfrost/polyui/component/impl/Image : org/polyfrost/polyui/component/impl/Block {
 	public fun <init> (Ljava/lang/String;)V
-	public synthetic fun <init> (Lorg/polyfrost/polyui/renderer/data/PolyImage;JJLorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/unit/Align;[Lorg/polyfrost/polyui/component/Component;[FILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (Lorg/polyfrost/polyui/renderer/data/PolyImage;JJLorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/unit/Align;[Lorg/polyfrost/polyui/component/Component;[FLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lorg/polyfrost/polyui/renderer/data/PolyImage;JJLorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/unit/Align;[F[Lorg/polyfrost/polyui/component/Component;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lorg/polyfrost/polyui/renderer/data/PolyImage;JJLorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/unit/Align;[F[Lorg/polyfrost/polyui/component/Component;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun calculateSize ()J
 	public fun debugString ()Ljava/lang/String;
 	public final fun getBackgroundColor ()Lorg/polyfrost/polyui/color/PolyColor;
@@ -1118,6 +1121,7 @@ public abstract class org/polyfrost/polyui/event/Event$Mouse$ButtonBase : org/po
 	public final fun getX ()F
 	public final fun getY ()F
 	public fun hashCode ()I
+	public abstract fun ofs ()I
 }
 
 public final class org/polyfrost/polyui/event/Event$Mouse$Clicked : org/polyfrost/polyui/event/Event$Mouse$ButtonBase {
@@ -1126,6 +1130,7 @@ public final class org/polyfrost/polyui/event/Event$Mouse$Clicked : org/polyfros
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getClicks ()I
 	public fun hashCode ()I
+	public fun ofs ()I
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -1155,12 +1160,14 @@ public final class org/polyfrost/polyui/event/Event$Mouse$Moved : org/polyfrost/
 public final class org/polyfrost/polyui/event/Event$Mouse$Pressed : org/polyfrost/polyui/event/Event$Mouse$ButtonBase {
 	public synthetic fun <init> (IBILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (IBLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun ofs ()I
 	public fun toString ()Ljava/lang/String;
 }
 
 public final class org/polyfrost/polyui/event/Event$Mouse$Released : org/polyfrost/polyui/event/Event$Mouse$ButtonBase {
 	public synthetic fun <init> (IBILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (IBLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun ofs ()I
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -2095,6 +2102,19 @@ public final class org/polyfrost/polyui/utils/IOUtils {
 	public static final fun toDirectByteBufferNT ([B)Ljava/nio/ByteBuffer;
 }
 
+public final class org/polyfrost/polyui/utils/Line {
+	public synthetic fun <init> (Ljava/lang/String;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2-2K4fKj8 ()J
+	public final fun copy-K8uago8 (Ljava/lang/String;J)Lorg/polyfrost/polyui/utils/Line;
+	public static synthetic fun copy-K8uago8$default (Lorg/polyfrost/polyui/utils/Line;Ljava/lang/String;JILjava/lang/Object;)Lorg/polyfrost/polyui/utils/Line;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBounds-2K4fKj8 ()J
+	public final fun getString ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class org/polyfrost/polyui/utils/ListUtils {
 	public static final fun addIfAbsent (Ljava/util/List;Ljava/lang/Object;)V
 	public static final fun addOrReplace (Ljava/util/List;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2110,24 +2130,6 @@ public final class org/polyfrost/polyui/utils/ListUtils {
 
 public abstract interface annotation class org/polyfrost/polyui/utils/Locking : java/lang/annotation/Annotation {
 	public abstract fun when ()Ljava/lang/String;
-}
-
-public final class org/polyfrost/polyui/utils/Quad {
-	public fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
-	public final fun component1 ()Ljava/lang/Object;
-	public final fun component2 ()Ljava/lang/Object;
-	public final fun component3 ()Ljava/lang/Object;
-	public final fun component4 ()Ljava/lang/Object;
-	public final fun copy (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Lorg/polyfrost/polyui/utils/Quad;
-	public static synthetic fun copy$default (Lorg/polyfrost/polyui/utils/Quad;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;ILjava/lang/Object;)Lorg/polyfrost/polyui/utils/Quad;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getFirst ()Ljava/lang/Object;
-	public final fun getFourth ()Ljava/lang/Object;
-	public final fun getSecond ()Ljava/lang/Object;
-	public final fun getThird ()Ljava/lang/Object;
-	public fun hashCode ()I
-	public final fun toList (Lorg/polyfrost/polyui/utils/Quad;)Ljava/util/List;
-	public fun toString ()Ljava/lang/String;
 }
 
 public abstract interface annotation class org/polyfrost/polyui/utils/SideEffects : java/lang/annotation/Annotation {

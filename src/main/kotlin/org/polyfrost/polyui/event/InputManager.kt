@@ -27,7 +27,6 @@ import org.polyfrost.polyui.PolyUI.Companion.INPUT_HOVERED
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_NONE
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
 import org.polyfrost.polyui.component.Component
-import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.Inputtable
 import org.polyfrost.polyui.component.isRelatedTo
 import org.polyfrost.polyui.input.KeyBinder
@@ -172,6 +171,7 @@ class InputManager(
      */
     fun addModifier(modifier: Byte) {
         mods = (mods.toInt() or modifier.toInt()).toByte()
+        keyBinder?.update(0L, mods)
     }
 
     /**
@@ -180,6 +180,7 @@ class InputManager(
      */
     fun removeModifier(modifier: Byte) {
         mods = (mods.toInt() and modifier.toInt().inv()).toByte()
+        keyBinder?.update(0L, mods)
     }
 
     /**
@@ -194,7 +195,7 @@ class InputManager(
 
     /**
      * perform a recursive ray check on the component.
-     * Each component will be checked with [Drawable.enabled], then [Drawable.isInside], then finally [Drawable.acceptsInput]
+     * Each component will be checked with [Component.isEnabled], then [Component.isInside], then finally [Inputtable.acceptsInput]
      * before it is considered a valid candidate.
      *
      * Note that this functions inclusion in public API is experimental.
@@ -304,7 +305,7 @@ class InputManager(
 
     /**
      * try to focus a component, without throwing an exception.
-     * @return `true` if the component was focused successfully, and `false` if it is not [Drawable.focusable], or if it is already focused.
+     * @return `true` if the component was focused successfully, and `false` if it is not [Inputtable.focusable], or if it is already focused.
      * @see focus
      * @since 1.0.4
      */
@@ -348,7 +349,6 @@ class InputManager(
         while (candidate != null) {
             if (cf && candidate.focusable) continue
             if (candidate.accept(event)) return true
-            if (candidate !is Drawable) return false
             candidate = candidate._parent as? Inputtable
         }
         return false
@@ -357,10 +357,6 @@ class InputManager(
     fun unfocus() {
         focused?.let {
             it.focused = false
-            if (it !is Drawable) {
-                focused = null
-                return
-            }
             var p = it._parent as? Inputtable
             while (p != null) {
                 if (p.focused) {
@@ -376,7 +372,7 @@ class InputManager(
     /**
      * Sets the focus to the specified focusable element, throwing an exception if the provided element is not focusable.
      *
-     * @throws IllegalArgumentException if the provided component is not [Drawable.focusable]
+     * @throws IllegalArgumentException if the provided component is not [Inputtable.focusable]
      * @param focusable the element to set focus on
      * @return true if focus was successfully set, false if the provided focusable is already focused
      * @see safeFocus
@@ -393,7 +389,7 @@ class InputManager(
             if (focusable == null) return true
         }
         if (!focusable.initialized) {
-            val polyUI = (master as? Drawable)?.polyUI ?: throw IllegalArgumentException("Cannot focus uninitialized component")
+            val polyUI = master?.polyUI ?: throw IllegalArgumentException("Cannot focus uninitialized component")
             if (focusable.setup(polyUI)) {
                 val totalSx = polyUI.size.x / polyUI.iSize.x
                 val totalSy = polyUI.size.y / polyUI.iSize.y

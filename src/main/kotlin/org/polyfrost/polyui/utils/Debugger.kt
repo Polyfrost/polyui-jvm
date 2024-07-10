@@ -100,34 +100,37 @@ class Debugger(private val polyUI: PolyUI) {
 
     private var forEval: Component? = null
 
-    private val evalWindow = Block(
-        TextInput(placeholder = "evaluate expression...", font = polyUI.monospaceFont).events {
-            Event.Focused.Companion.KeyTyped then {
-                parent.recalculate()
-            }
-            Event.Focused.Companion.KeyPressed then {
-                parent.recalculate()
-                if (it.key == Keys.ENTER) {
-                    if(!processEval(forEval, text)) {
-                        ShakeOp(parent, 0.2.seconds, oscillations = 2) {
+    private val evalWindow by lazy {
+        Block(
+            TextInput(placeholder = "evaluate expression...", font = polyUI.monospaceFont).events {
+                Event.Focused.Companion.KeyTyped then {
+                    parent.recalculate()
+                }
+                Event.Focused.Companion.KeyPressed then {
+                    parent.recalculate()
+                    if (it.key == Keys.ENTER) {
+                        if (!processEval(forEval, text)) {
+                            ShakeOp(parent, 0.2.seconds, oscillations = 2) {
+                                polyUI.unfocus()
+                            }.add()
+                        } else {
+                            if (!it.mods.hasShift) text = ""
                             polyUI.unfocus()
-                        }.add()
-                    } else {
-                        if (!it.mods.hasShift) text = ""
-                        polyUI.unfocus()
+                        }
                     }
                 }
-            }
-            Event.Focused.Lost then {
-                parent.isEnabled = false
-            }
-        },
-    )
+                Event.Focused.Lost then {
+                    parent.isEnabled = false
+                }
+            },
+        )
+    }
 
     private val evalBind = KeyBinder.Bind(key = Keys.TAB, mods = mods(KeyModifiers.SHIFT)) {
         val forEval = polyUI.inputManager.rayCheckUnsafe(polyUI.master, polyUI.mouseX, polyUI.mouseY) ?: return@Bind false
         this.forEval = forEval
-        (evalWindow[0] as TextInput).placeholder = "evaluate ${forEval.simpleName}..."
+        val evalWindow = evalWindow
+        (evalWindow[0] as TextInput).placeholder = "evaluate ${forEval.name}..."
         evalWindow.isEnabled = true
         if (!evalWindow.initialized) {
             polyUI.master.addChild(evalWindow, recalculate = false)
@@ -146,7 +149,7 @@ class Debugger(private val polyUI: PolyUI) {
             val idx = eval.indexOf(']')
             if (idx == -1 || idx + 2 > eval.length) return false
             val child = eval.substring(1, idx).toIntOrNull() ?: return false
-            return processEval(target[child], eval.substring(if(eval[idx + 1] == '.') idx + 2 else idx + 1))
+            return processEval(target[child], eval.substring(if (eval[idx + 1] == '.') idx + 2 else idx + 1))
         }
         val set = eval.indexOf('=')
         if (set == -1) {
@@ -377,18 +380,18 @@ class Debugger(private val polyUI: PolyUI) {
         if (d == null) return
         val f = PolyUI.monospaceFont
         PopupMenu(
-            Text(d.simpleName, font = f, fontSize = 16f),
+            Text(d.name, font = f, fontSize = 16f),
             Text(
                 ("""
-parent: ${d._parent?.simpleName}   siblings: ${d._parent?.countChildren()?.dec()}
-children: ${d.countChildren()};  renders: ${d.clipped}, ${if(d is Scrollable) "scrolling: ${if (!d.shouldScroll) "disabled" else if (d.scrollingX && d.scrollingY) "x+y" else if(d.scrollingX) "x" else if(d.scrollingY) "y" else "off"}" else ""}
+parent: ${d._parent?.name}   siblings: ${d._parent?.countChildren()?.dec()}
+children: ${d.countChildren()};  renders: ${d.clipped}, ${if (d is Scrollable) "scrolling: ${if (!d.shouldScroll) "disabled" else if (d.scrollingX && d.scrollingY) "x+y" else if (d.scrollingX) "x" else if (d.scrollingY) "y" else "off"}" else ""}
 at: ${d.x}x${d.y}, pad: ${d.padding}, flags: ${decodeFlags(d)}
 size: ${d.size}, visible: ${if (d.visibleSize != d.size) d.visibleSize.toString() else "null"}
-${if(d is Drawable) """rgba: ${d.color.r}, ${d.color.g}, ${d.color.b}, ${d.color.a}
+${if (d is Drawable) """rgba: ${d.color.r}, ${d.color.g}, ${d.color.b}, ${d.color.a}
 scale: ${d.scaleX}x${d.scaleY};  skew: ${d.skewX}x${d.skewY}
 rotation: ${d.rotation};  alpha: ${d.alpha}
 redraw: ${d.needsRedraw};  ops=${d.isOperating};  fbo: ${d.framebuffer}""" else ""}
-${if(d is Inputtable) "state: ${getInputStateString(d.inputState)}, focused: ${if (!d.focusable) "disabled" else if (d.focused) "yes" else "no"}" else ""}
+${if (d is Inputtable) "state: ${if (d.acceptsInput) getInputStateString(d.inputState) else "never"}, focused: ${if (!d.focusable) "disabled" else if (d.focused) "yes" else "no"}" else ""}
 ${d.alignment}
             """ + (d.debugString()?.let { "\n\n$it" } ?: "")).translated().dont(),
                 font = f
@@ -399,8 +402,8 @@ ${d.alignment}
         ).events {
             Event.Focused.KeyTyped then {
                 if (it.key == 'c' && it.mods.hasControl) {
-                    LOGGER.info("copied ID ${d.simpleName} to clipboard")
-                    polyUI.clipboard = d.simpleName
+                    LOGGER.info("copied ID ${d.name} to clipboard")
+                    polyUI.clipboard = d.name
                 }
             }
         }

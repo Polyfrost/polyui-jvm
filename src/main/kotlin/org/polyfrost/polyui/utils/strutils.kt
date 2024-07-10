@@ -177,7 +177,7 @@ fun String.levenshteinDistance(other: String): Int {
     return d[length][other.length]
 }
 
-typealias Line = Pair<String, Vec2>
+data class Line(val string: String, val bounds: Vec2)
 
 private val currentLine = StringBuilder(32)
 
@@ -192,7 +192,7 @@ fun String.wrap(
 ): ArrayList<Line> {
     val ls = lines ?: ArrayList(5)
     if (this.isEmpty()) {
-        ls.add("" to Vec2(1f, fontSize))
+        ls.add(Line("", Vec2(1f, fontSize)))
         return ls
     }
 
@@ -208,11 +208,11 @@ fun String.wrap(
     while (lns < this.length) {
         // char before is a newline, so just skip and don't bother processing
         if (lne == lns) {
-            ls.add("" to Vec2(1f, fontSize))
+            ls.add(Line("", Vec2(1f, fontSize)))
         } else {
             if (maxWidth == 0f) {
                 val l = this.substring(lns, lne)
-                ls.add(l to renderer.textBounds(font, l, fontSize))
+                ls.add(Line(l, renderer.textBounds(font, l, fontSize)))
             } else {
                 line.clear()
                 var s = lns
@@ -229,7 +229,7 @@ fun String.wrap(
                 if (s == lne) line.append(' ')
                 if (line.isNotEmpty()) {
                     val out = line.toString()
-                    ls.add(out to renderer.textBounds(font, out, fontSize))
+                    ls.add(Line(out, renderer.textBounds(font, out, fontSize)))
                 }
             }
         }
@@ -259,7 +259,7 @@ private fun String.wrapWord(
         if (line.isNotEmpty()) {
             // Finish current line and start a new one with the long word
             val out = line.toString()
-            lines.add(out to renderer.textBounds(font, out, fontSize))
+            lines.add(Line(out, renderer.textBounds(font, out, fontSize)))
             line.clear()
         }
 
@@ -269,7 +269,7 @@ private fun String.wrapWord(
         var trap = 0
         while (remainder.isNotEmpty()) {
             val (slice, rem) = remainder.substringToWidth(renderer, font, fontSize, maxWidth)
-            lines.add(slice to renderer.textBounds(font, slice, fontSize))
+            lines.add(Line(slice, renderer.textBounds(font, slice, fontSize)))
             remainder = rem
             trap++
             if (trap > 100) throw IllegalStateException("trapped trying to trim '$this' at size $fontSize to width $maxWidth")
@@ -282,7 +282,7 @@ private fun String.wrapWord(
     } else {
         // asm: word doesn't fit in current line, wrap it to the next line
         val out = line.append(' ').toString()
-        lines.add(out to renderer.textBounds(font, out, fontSize))
+        lines.add(Line(out, renderer.textBounds(font, out, fontSize)))
         line.clear().append(this)
     }
 }
