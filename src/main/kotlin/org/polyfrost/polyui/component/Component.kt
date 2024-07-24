@@ -295,7 +295,8 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
     open var isEnabled = true
 
 
-    protected var operations: ArrayList<ComponentOp<*>>? = null
+    var operations: ArrayList<ComponentOp<*>>? = null
+        private set
 
     /**
      * `true` if this drawable has any operations.

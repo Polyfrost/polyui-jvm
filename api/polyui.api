@@ -551,7 +551,7 @@ public abstract class org/polyfrost/polyui/component/Component {
 	public final fun getInitialized ()Z
 	public final fun getLayoutFlags ()B
 	public fun getName ()Ljava/lang/String;
-	protected final fun getOperations ()Ljava/util/ArrayList;
+	public final fun getOperations ()Ljava/util/ArrayList;
 	public final fun getPadding ()Lorg/polyfrost/polyui/unit/Vec4;
 	public final fun getParent ()Lorg/polyfrost/polyui/component/Component;
 	public final fun getParentOrNull ()Lorg/polyfrost/polyui/component/Component;
@@ -590,7 +590,6 @@ public abstract class org/polyfrost/polyui/component/Component {
 	public final fun setLayoutFlags (B)V
 	public final fun setLayoutIgnored (Z)V
 	public fun setName (Ljava/lang/String;)V
-	protected final fun setOperations (Ljava/util/ArrayList;)V
 	public final fun setPadding (Lorg/polyfrost/polyui/unit/Vec4;)V
 	public final fun setParent (Lorg/polyfrost/polyui/component/Component;)V
 	protected final fun setPolyUI (Lorg/polyfrost/polyui/PolyUI;)V
@@ -672,6 +671,8 @@ public final class org/polyfrost/polyui/component/ExtensionsKt {
 	public static final fun fadeOut (Lorg/polyfrost/polyui/component/Drawable;J)Lorg/polyfrost/polyui/component/Drawable;
 	public static synthetic fun fadeOut$default (Lorg/polyfrost/polyui/component/Drawable;JILjava/lang/Object;)Lorg/polyfrost/polyui/component/Drawable;
 	public static final fun fix (Lorg/polyfrost/polyui/component/Component;)Lorg/polyfrost/polyui/component/Component;
+	public static final fun getTargetPosition (Lorg/polyfrost/polyui/component/Component;)J
+	public static final fun getTargetSize (Lorg/polyfrost/polyui/component/Component;)J
 	public static final fun hasChildIn (Lorg/polyfrost/polyui/component/Component;FFFF)Z
 	public static final fun hide (Lorg/polyfrost/polyui/component/Component;Z)Lorg/polyfrost/polyui/component/Component;
 	public static synthetic fun hide$default (Lorg/polyfrost/polyui/component/Component;ZILjava/lang/Object;)Lorg/polyfrost/polyui/component/Component;
@@ -1466,7 +1467,7 @@ public abstract class org/polyfrost/polyui/operations/ComponentOp$Animatable : o
 public final class org/polyfrost/polyui/operations/Fade : org/polyfrost/polyui/operations/ComponentOp$Animatable {
 	public fun <init> (Lorg/polyfrost/polyui/component/Drawable;FZLorg/polyfrost/polyui/animate/Animation;Lkotlin/jvm/functions/Function1;)V
 	public synthetic fun <init> (Lorg/polyfrost/polyui/component/Drawable;FZLorg/polyfrost/polyui/animate/Animation;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun equals (Ljava/lang/Object;)Z
+	public final fun getTargetAlpha ()F
 	public fun verify ()Z
 }
 
@@ -1512,7 +1513,7 @@ public final class org/polyfrost/polyui/operations/Move : org/polyfrost/polyui/o
 	public synthetic fun <init> (Lorg/polyfrost/polyui/component/Component;FFZLorg/polyfrost/polyui/animate/Animation;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (Lorg/polyfrost/polyui/component/Component;JZLorg/polyfrost/polyui/animate/Animation;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (Lorg/polyfrost/polyui/component/Component;JZLorg/polyfrost/polyui/animate/Animation;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun equals (Ljava/lang/Object;)Z
+	public final fun getTarget ()J
 	public fun verify ()Z
 }
 
@@ -1520,7 +1521,6 @@ public final class org/polyfrost/polyui/operations/Recolor : org/polyfrost/polyu
 	public fun <init> (Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/animate/Animation;Lkotlin/jvm/functions/Function1;)V
 	public synthetic fun <init> (Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/animate/Animation;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun apply ()V
-	public fun equals (Ljava/lang/Object;)Z
 	public fun unapply ()Z
 	public fun verify ()Z
 }
@@ -1530,21 +1530,22 @@ public final class org/polyfrost/polyui/operations/Resize : org/polyfrost/polyui
 	public synthetic fun <init> (Lorg/polyfrost/polyui/component/Component;FFZLorg/polyfrost/polyui/animate/Animation;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (Lorg/polyfrost/polyui/component/Component;JZLorg/polyfrost/polyui/animate/Animation;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (Lorg/polyfrost/polyui/component/Component;JZLorg/polyfrost/polyui/animate/Animation;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun equals (Ljava/lang/Object;)Z
+	public final fun getTarget ()J
 	public fun verify ()Z
 }
 
 public final class org/polyfrost/polyui/operations/Rotate : org/polyfrost/polyui/operations/ComponentOp$Animatable {
 	public fun <init> (Lorg/polyfrost/polyui/component/Drawable;DZLorg/polyfrost/polyui/animate/Animation;Lkotlin/jvm/functions/Function1;)V
 	public synthetic fun <init> (Lorg/polyfrost/polyui/component/Drawable;DZLorg/polyfrost/polyui/animate/Animation;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun equals (Ljava/lang/Object;)Z
+	public final fun getTargetRotation ()D
 	public fun verify ()Z
 }
 
 public final class org/polyfrost/polyui/operations/Scale : org/polyfrost/polyui/operations/ComponentOp$Animatable {
 	public fun <init> (Lorg/polyfrost/polyui/component/Drawable;FFZLorg/polyfrost/polyui/animate/Animation;Lkotlin/jvm/functions/Function1;)V
 	public synthetic fun <init> (Lorg/polyfrost/polyui/component/Drawable;FFZLorg/polyfrost/polyui/animate/Animation;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun equals (Ljava/lang/Object;)Z
+	public final fun getTargetScaleX ()F
+	public final fun getTargetScaleY ()F
 	public fun verify ()Z
 }
 
@@ -1558,7 +1559,8 @@ public final class org/polyfrost/polyui/operations/ShakeOp : org/polyfrost/polyu
 public final class org/polyfrost/polyui/operations/Skew : org/polyfrost/polyui/operations/ComponentOp$Animatable {
 	public fun <init> (Lorg/polyfrost/polyui/component/Drawable;DDZLorg/polyfrost/polyui/animate/Animation;Lkotlin/jvm/functions/Function1;)V
 	public synthetic fun <init> (Lorg/polyfrost/polyui/component/Drawable;DDZLorg/polyfrost/polyui/animate/Animation;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun equals (Ljava/lang/Object;)Z
+	public final fun getTargetSkewX ()D
+	public final fun getTargetSkewY ()D
 	public fun verify ()Z
 }
 
@@ -1959,7 +1961,6 @@ public final class org/polyfrost/polyui/unit/Vec2 {
 	public static final field Constants Lorg/polyfrost/polyui/unit/Vec2$Constants;
 	public static final synthetic fun box-impl (J)Lorg/polyfrost/polyui/unit/Vec2;
 	public static final fun compareTo-vnJkLQk (JJ)I
-	public static fun constructor-impl ()J
 	public static fun constructor-impl (FF)J
 	public fun equals (Ljava/lang/Object;)Z
 	public static fun equals-impl (JLjava/lang/Object;)Z

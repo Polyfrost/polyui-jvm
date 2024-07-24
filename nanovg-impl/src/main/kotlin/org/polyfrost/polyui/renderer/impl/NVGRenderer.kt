@@ -60,6 +60,7 @@ object NVGRenderer : Renderer {
     private var raster: Long = 0L
     private var drawing = false
     private val queue = ArrayList<() -> Unit>()
+    // ByteBuffer.of("px\u0000")
     private val PIXELS: ByteBuffer = MemoryUtil.memAlloc(3).put(112).put(120).put(0).flip() as ByteBuffer
     private val errorHandler: (Throwable) -> Unit = { LOGGER.error("failed to load resource!", it) }
 

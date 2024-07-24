@@ -31,8 +31,7 @@ package org.polyfrost.polyui.unit
 @JvmInline
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 value class Vec2 private constructor(@PublishedApi internal val value: Long) {
-    constructor() : this(0L)
-    constructor(x: Float, y: Float) : this(x.toBits().toLong() or y.toBits().toLong().shl(32))
+    constructor(x: Float, y: Float) : this(x.toBits().toLong().and(0xFFFFFFFF) or y.toBits().toLong().shl(32))
     // rewrite counter: 5
 
     @kotlin.internal.InlineOnly
@@ -43,7 +42,7 @@ value class Vec2 private constructor(@PublishedApi internal val value: Long) {
 
     // checks if the value is negative by checking the sign bits in one go
     @kotlin.internal.InlineOnly
-    inline val isNegative get() = (value and (0x8000000080000000u.toLong())) != 0L
+    inline val isNegative get() = value and 0x8000000080000000u.toLong() != 0L
 
     @kotlin.internal.InlineOnly
     inline val isZero get() = value == 0L
@@ -71,7 +70,7 @@ value class Vec2 private constructor(@PublishedApi internal val value: Long) {
 
     companion object Constants {
         @get:JvmName("ZERO")
-        val ZERO = Vec2()
+        val ZERO = Vec2(0L)
 
         // dw bout it :smile:
         @get:JvmName("ONE")

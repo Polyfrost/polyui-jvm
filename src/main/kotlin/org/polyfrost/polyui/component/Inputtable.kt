@@ -87,7 +87,7 @@ abstract class Inputtable(
                 value == field -> return
                 value == INPUT_NONE && field > INPUT_NONE -> {
                     accept(Event.Mouse.Exited)
-                    var p: Component = this
+                    var p = _parent
                     while (p is Inputtable) {
                         if (!p.isInside(polyUI.mouseX, polyUI.mouseY)) p.accept(Event.Mouse.Exited)
                         p = p._parent ?: break
@@ -195,7 +195,7 @@ abstract class Inputtable(
     }
 
     internal fun <S : Drawable> S.withStatesCached(): S {
-        eventHandlers?.putAll(EventListener.stated) ?: run { eventHandlers = EventListener.stated }
+        eventHandlers?.putAll(EventListener.makeStated()) ?: run { eventHandlers = EventListener.stated }
         acceptsInput = true
         return this
     }
@@ -259,22 +259,22 @@ abstract class Inputtable(
                 Recolor(this, this.palette.hovered, Animations.Default.create(0.08.seconds)).add()
                 false
             }
-            val stated = makeStated()
+            val stated = makeStated<Inputtable>()
 
             @Suppress("UNCHECKED_CAST")
-            fun makeStated(): MutableMap<Any, EventListener<Inputtable, Event>> {
-                val out = HashMap<Any, EventListener<Inputtable, Event>>(8, 1f)
-                out[Event.Mouse.Entered::class.java] = EventListener<Inputtable, Event>().also {
-                    it.add(defEnter as Inputtable.(Event) -> Boolean)
+            fun <S : Inputtable> makeStated(): MutableMap<Any, EventListener<S, Event>> {
+                val out = HashMap<Any, EventListener<S, Event>>(8, 1f)
+                out[Event.Mouse.Entered::class.java] = EventListener<S, Event>().also {
+                    it.add(defEnter as S.(Event) -> Boolean)
                 }
-                out[Event.Mouse.Exited::class.java] = EventListener<Inputtable, Event>().also {
-                    it.add(defExit as Inputtable.(Event) -> Boolean)
+                out[Event.Mouse.Exited::class.java] = EventListener<S, Event>().also {
+                    it.add(defExit as S.(Event) -> Boolean)
                 }
-                out[Event.Mouse.Pressed] = EventListener<Inputtable, Event>().also {
-                    it.add(defPressed as Inputtable.(Event) -> Boolean)
+                out[Event.Mouse.Pressed] = EventListener<S, Event>().also {
+                    it.add(defPressed as S.(Event) -> Boolean)
                 }
-                out[Event.Mouse.Released] = EventListener<Inputtable, Event>().also {
-                    it.add(defReleased as Inputtable.(Event) -> Boolean)
+                out[Event.Mouse.Released] = EventListener<S, Event>().also {
+                    it.add(defReleased as S.(Event) -> Boolean)
                 }
                 return out
             }

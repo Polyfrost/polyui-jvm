@@ -45,24 +45,24 @@ class Move<S : Component>(
     animation: Animation? = null,
     onFinish: (S.() -> Unit)? = null,
 ) : ComponentOp.Animatable<S>(drawable, animation, onFinish) {
-    constructor(drawable: S, at: Vec2, add: Boolean = true, animation: Animation? = null, onFinish: (S.() -> Unit)? = null) :
-            this(drawable, at.x, at.y, add, animation, onFinish)
+    constructor(drawable: S, to: Vec2, add: Boolean = true, animation: Animation? = null, onFinish: (S.() -> Unit)? = null) :
+            this(drawable, to.x, to.y, add, animation, onFinish)
 
     private val ox = self.x
     private val oy = self.y
     private val tx = if (add) x else x - ox
     private val ty = if (add) y else y - oy
+    @get:JvmName("getTarget")
+    val target get() = Vec2(ox + tx, oy + ty)
 
     override fun apply(value: Float) {
-        self.x = ox + (tx * value)
-        self.y = oy + (ty * value)
+        if (tx != 0f) self.x = ox + (tx * value)
+        if (ty != 0f) self.y = oy + (ty * value)
         if (!self.polyUI.inputManager.mouseDown) self.polyUI.inputManager.recalculate()
         if (self is Scrollable) self.resetScroll()
     }
 
     override fun verify() = tx != 0f || ty != 0f
-
-    override fun equals(other: Any?) = other is Move<*> && other.self === self
 }
 
 class Fade<S : Drawable>(
@@ -74,14 +74,13 @@ class Fade<S : Drawable>(
 ) : ComponentOp.Animatable<S>(drawable, animation, onFinish) {
     private val ia = self.alpha
     private val ta = if (add) alpha else alpha - ia
+    val targetAlpha get() = ia + ta
 
     override fun apply(value: Float) {
         self.alpha = ia + (ta * value)
     }
 
     override fun verify() = ta != 0f
-
-    override fun equals(other: Any?) = other is Fade<*> && other.self === self
 }
 
 class Rotate<S : Drawable>(
@@ -93,14 +92,13 @@ class Rotate<S : Drawable>(
 ) : ComponentOp.Animatable<S>(drawable, animation, onFinish) {
     private val ir = self.rotation
     private val tr = if (add) angleRad else angleRad - ir
+    val targetRotation get() = ir + tr
 
     override fun apply(value: Float) {
         self.rotation = ir + (tr * value)
     }
 
     override fun verify() = tr != 0.0
-
-    override fun equals(other: Any?) = other is Rotate<*> && other.self === self
 }
 
 class Resize<S : Component>(
@@ -118,6 +116,8 @@ class Resize<S : Component>(
     private val oh = self.height
     private val tw = if (add) width else width - ow
     private val th = if (add) height else height - oh
+    @get:JvmName("getTarget")
+    val target get() = Vec2(ow + tw, oh + th)
 
     override fun apply(value: Float) {
         self.width = ow + (tw * value)
@@ -126,8 +126,6 @@ class Resize<S : Component>(
     }
 
     override fun verify() = tw != 0f || th != 0f
-
-    override fun equals(other: Any?) = other is Resize<*> && other.self === self
 }
 
 class Scale<S : Drawable>(
@@ -142,6 +140,8 @@ class Scale<S : Drawable>(
     private val sy = self.scaleY
     private val tx = if (add) scaleX else scaleX - sx
     private val ty = if (add) scaleY else scaleY - sy
+    val targetScaleX get() = sx + tx
+    val targetScaleY get() = sy + ty
 
     override fun apply(value: Float) {
         self.scaleX = sx + (tx * value)
@@ -149,8 +149,6 @@ class Scale<S : Drawable>(
     }
 
     override fun verify() = tx != 0f || ty != 0f
-
-    override fun equals(other: Any?) = other is Scale<*> && other.self === self
 }
 
 class Skew<S : Drawable>(
@@ -165,6 +163,8 @@ class Skew<S : Drawable>(
     private val sy = self.skewY
     private val tx = if (add) skewX else skewX - sx
     private val ty = if (add) skewY else skewY - sy
+    val targetSkewX get() = sx + tx
+    val targetSkewY get() = sy + ty
 
     override fun apply(value: Float) {
         self.skewX = sx + (tx * value)
@@ -172,8 +172,6 @@ class Skew<S : Drawable>(
     }
 
     override fun verify() = tx != 0.0 || ty != 0.0
-
-    override fun equals(other: Any?) = other is Skew<*> && other.self === self
 }
 
 class ShakeOp<S : Component>(
@@ -254,8 +252,6 @@ class Recolor<S : Drawable>(
     }
 
     override fun verify() = toColor != self.color
-
-    override fun equals(other: Any?) = other is Recolor<*> && other.self === self
 
     override fun apply() {}
 

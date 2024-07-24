@@ -211,17 +211,16 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fon
  * Note that slider change events cannot be cancelled.
  */
 @JvmName("Slider")
-fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValue: Float = 0f, ptrSize: Float = 24f, scaleFactor: Float = 2f, floating: Boolean = true, instant: Boolean = false): Drawable {
+fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValue: Float = 0f, ptrSize: Float = 24f, length: Float = (max - min) * 2f, floating: Boolean = true, instant: Boolean = false): Drawable {
     val barHeight = ptrSize / 2.8f
-    val barWidth = (max - min) * scaleFactor
-    val size = Vec2(barWidth + ptrSize, ptrSize)
+    val size = Vec2(length + ptrSize, ptrSize)
 
     return Group(
         Block(
             Block(
                 size = Vec2(1f, barHeight),
             ).radius(barHeight / 2f).setPalette { brand.fg },
-            size = Vec2(barWidth, barHeight),
+            size = Vec2(length, barHeight),
             alignment = Align(Align.Main.Start, pad = Vec2.ZERO),
         ),
         Block(
@@ -276,7 +275,7 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
     }.afterInit {
         val bar = this[0]
         val ptr = this[1]
-        ptr.x = bar.x + barWidth * (initialValue / (max - min))
+        ptr.x = bar.x + length * (initialValue / (max - min))
         bar.x += ptrSize / 2f
         bar[0].width = ptr.x - bar.x + (ptrSize / 2f)
     }.namedId("Slider")
@@ -333,7 +332,7 @@ fun PopupMenu(vararg children: Component?, size: Vec2 = Vec2.ZERO, align: Align 
         size = size,
         alignment = align,
         children = children,
-    ).events {
+    ).withBoarder().events {
         Event.Focused.Gained then {
             this.polyUI.master.addChild(this, recalculate = false)
             alpha = 0f

@@ -70,7 +70,6 @@ abstract class Scrollable(
             }
         }
 
-
     @Locking
     @set:Synchronized
     private var xScroll: Animation? = null
@@ -122,17 +121,19 @@ abstract class Scrollable(
     fun pushScroll(delta: Long, renderer: Renderer): Boolean {
         val px = x
         val py = y
-        var ran = false
+        var push = false
         xScroll?.let {
             x = it.update(delta)
-            ran = true
+            push = true
         }
         yScroll?.let {
             y = it.update(delta)
-            ran = true
+            push = true
         }
-        if (ran) {
-            renderer.pushScissor(xScroll?.from ?: x, yScroll?.from ?: y, visibleSize.x, visibleSize.y)
+        if (push) {
+            val vs = visibleSize
+            val sa = screenAt
+            renderer.pushScissor(sa.x, sa.y, vs.x, vs.y)
             if (x != px || y != py) {
                 polyUI.inputManager.recalculate()
                 return true

@@ -61,7 +61,7 @@ fun <S : Inputtable> S.draggable(withX: Boolean = true, withY: Boolean = true, f
     var px = 0f
     var py = 0f
     on(Event.Mouse.Pressed) {
-        if(dragging != null) return@on false
+        if (dragging != null) return@on false
         dragging = this
         if (this is Drawable) needsRedraw = true
         px = it.x - x
@@ -275,6 +275,36 @@ fun <S : Inputtable> S.disable(state: Boolean = true): S {
 fun <S : Component> S.hide(state: Boolean = true): S {
     this.clipped = !state
     return this
+}
+
+/**
+ * Return the position that this drawable is currently moving to, or its current position if it is not moving.
+ *
+ * @see Move
+ * @see getTargetSize
+ * @since 1.6.02
+ */
+fun <S : Component> S.getTargetPosition(): Vec2 {
+    val operations = this.operations ?: return this.at
+    operations.fastEach {
+        if (it is Move) return it.target
+    }
+    return this.at
+}
+
+/**
+ * Return the size that this drawable is currently resizing to, or its current size if it is not resizing.
+ *
+ * @see Resize
+ * @see getTargetPosition
+ * @since 1.6.02
+ */
+fun <S : Component> S.getTargetSize(): Vec2 {
+    val operations = this.operations ?: return this.size
+    operations.fastEach {
+        if (it is Resize) return it.target
+    }
+    return this.size
 }
 
 /**
