@@ -19,7 +19,7 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-@file:Suppress("UNUSED", "NOTHING_TO_INLINE")
+@file:Suppress("UNUSED", "NOTHING_TO_INLINE", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 @file:JvmName("Utils")
 
 package org.polyfrost.polyui.utils
@@ -37,6 +37,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.min
 
+@kotlin.internal.InlineOnly
 inline fun Double.toRadians() = (this % 360.0) * (PI / 180.0)
 
 /**
@@ -69,7 +70,8 @@ fun <E : Enum<E>> EnumEntries<E>.getByName(name: String?, ignoreCase: Boolean = 
 /**
  * Return a list of the names of the entries in this enum.
  */
-fun EnumEntries<*>.names() = this.map { it.name }
+@kotlin.internal.InlineOnly
+inline fun EnumEntries<*>.names() = this.map { it.name }
 
 /**
  * Simplify a ratio of two integers.
@@ -87,6 +89,7 @@ fun Pair<Int, Int>.simplifyRatio(): Pair<Int, Int> {
  *
  * If `a == b`, then the result is `a`.
  */
+@kotlin.internal.InlineOnly
 inline fun cl0(a: Float, b: Float) = if (abs(a) <= abs(b)) a else b
 
 /**
@@ -96,6 +99,7 @@ inline fun cl0(a: Float, b: Float) = if (abs(a) <= abs(b)) a else b
  *
  * If `a == b`, then the result is `a`.
  */
+@kotlin.internal.InlineOnly
 inline fun cl1(a: Float, b: Float) = if (abs(a - 1f) <= abs(b - 1f)) a else b
 
 /**
@@ -106,6 +110,7 @@ inline fun cl1(a: Float, b: Float) = if (abs(a - 1f) <= abs(b - 1f)) a else b
  * @param c the third value
  * @return the minimum value among a, b, and c
  */
+@kotlin.internal.InlineOnly
 inline fun min3(a: Int, b: Int, c: Int): Int = min(min(a, b), c)
 
 /** print the object to stdout, then return it. */
@@ -116,15 +121,20 @@ inline fun <T> T.stdout(arg: Any? = null): T {
     return this
 }
 
+@kotlin.internal.InlineOnly
 inline fun String.image() = PolyImage(this)
 
 @JvmName("image")
+@kotlin.internal.InlineOnly
 inline fun String.image(size: Vec2) = PolyImage(this).also { it.size = size }
 
+@kotlin.internal.InlineOnly
 inline fun String.translated(vararg args: Any?) = Translator.Text.Formatted(Translator.Text.Simple(this), *args)
 
+@kotlin.internal.InlineOnly
 inline fun String.translated(): Translator.Text = Translator.Text.Simple(this)
 
+@kotlin.internal.InlineOnly
 inline fun Translator.Text.dont(): Translator.Text.Dont = if (this is Translator.Text.Dont) this else Translator.Text.Dont(this)
 
 fun mods(vararg mods: KeyModifiers): Modifiers {
@@ -144,6 +154,7 @@ fun mods(vararg mods: KeyModifiers): Modifiers {
  * @param from the index of the element to move
  * @param to the index to move the element to
  */
+@kotlin.internal.InlineOnly
 inline fun <E> Array<E>.moveElement(from: Int, to: Int) {
     val item = this[from]
     this[from] = this[to]
@@ -155,6 +166,7 @@ inline fun <E> Array<E>.moveElement(from: Int, to: Int) {
  *
  * Equivalent to `this.map { transform(it) }.toTypedArray()`, but saves on the creation of an intermediate list.
  */
+@kotlin.internal.InlineOnly
 inline fun <T, reified R> Array<T>.mapToArray(transform: (T) -> R): Array<R> {
     return Array(size) {
         transform(this[it])
@@ -166,6 +178,7 @@ inline fun <T, reified R> Array<T>.mapToArray(transform: (T) -> R): Array<R> {
  *
  * Equivalent to `this.map { transform(it) }.toTypedArray()`, but saves on the creation of an intermediate list.
  */
+@kotlin.internal.InlineOnly
 inline fun <T, reified R> Collection<T>.mapToArray(transform: (T) -> R): Array<R> {
     val out = arrayOfNulls<R>(size)
     var i = 0
@@ -181,8 +194,8 @@ inline fun <T, reified R> Collection<T>.mapToArray(transform: (T) -> R): Array<R
  * Perform the given [transform] on every element in this map, and return a new array with the results.
  *
  * Equivalent to `this.map { transform(it) }.toTypedArray()`, but saves on the creation of an intermediate list.
-
  */
+@kotlin.internal.InlineOnly
 inline fun <K, V, reified R> Map<K, V>.mapToArray(transform: (Map.Entry<K, V>) -> R): Array<R> {
     val out = arrayOfNulls<R>(size)
     var i = 0
@@ -203,7 +216,8 @@ fun FloatArray.elementsEqual(): Boolean {
     return true
 }
 
-fun PolyUI.open(window: Window) {
+@kotlin.internal.InlineOnly
+inline fun PolyUI.open(window: Window) {
     window.open(this)
 }
 
@@ -230,7 +244,8 @@ inline fun <T> MutableList<T>.ensureSize(size: Int, initializer: (Int) -> T): Mu
 /**
  * Box the given value into a [Ref.ObjectRef].
  */
-fun <T> T.ref(): Ref.ObjectRef<T> {
+@kotlin.internal.InlineOnly
+inline fun <T> T.ref(): Ref.ObjectRef<T> {
     val ref = Ref.ObjectRef<T>()
     ref.element = this
     return ref
@@ -239,7 +254,8 @@ fun <T> T.ref(): Ref.ObjectRef<T> {
 /**
  * Return the value of this [Ref.ObjectRef].
  */
-fun <T> Ref.ObjectRef<T>.deref(): T {
+@kotlin.internal.InlineOnly
+inline fun <T> Ref.ObjectRef<T>.deref(): T {
     return this.element
 }
 
@@ -247,11 +263,13 @@ fun <T> Ref.ObjectRef<T>.deref(): T {
  * Returns the value of the given [key] in the map, and if [shouldRemove] is `true` the value is also removed from the map.
  * @since 1.0.2
  */
+@kotlin.internal.InlineOnly
 inline fun <K, V> MutableMap<K, V>.maybeRemove(key: K, shouldRemove: Boolean): V? = if (shouldRemove) remove(key) else get(key)
 
 /**
  * Perform the given function on both elements of this pair. The highest common type of both elements is used as the type of the parameter.
  */
+@kotlin.internal.InlineOnly
 inline fun <T> Pair<T, T>.both(func: (T) -> Unit) {
     func(this.first)
     func(this.second)

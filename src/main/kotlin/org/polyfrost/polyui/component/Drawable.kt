@@ -297,8 +297,8 @@ abstract class Drawable(
         }
     }
 
-    override fun rescale0(scaleX: Float, scaleY: Float, position: Boolean) {
-        super.rescale0(scaleX, scaleY, position)
+    override fun rescale0(scaleX: Float, scaleY: Float, withChildren: Boolean) {
+        super.rescale0(scaleX, scaleY, withChildren)
         framebuffer?.let {
             renderer.delete(it)
             framebuffer = renderer.createFramebuffer(width, height)

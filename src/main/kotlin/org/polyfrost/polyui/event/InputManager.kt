@@ -390,11 +390,7 @@ class InputManager(
         }
         if (!focusable.initialized) {
             val polyUI = master?.polyUI ?: throw IllegalArgumentException("Cannot focus uninitialized component")
-            if (focusable.setup(polyUI)) {
-                val totalSx = polyUI.size.x / polyUI.iSize.x
-                val totalSy = polyUI.size.y / polyUI.iSize.y
-                focusable.rescale(totalSx, totalSy, false)
-            }
+            focusable.setup(polyUI)
         }
         require(focusable.focusable) { "Cannot focus un-focusable component" }
         focused = focusable

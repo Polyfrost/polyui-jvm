@@ -62,10 +62,18 @@ fun interface Positioner {
             val main = if (align.mode == Align.Mode.Horizontal) 0 else 1
             val crs = if (main == 0) 1 else 0
             val padding = align.pad
-            val totalSx = if (component.positioned) polyUI.size.x / polyUI.iSize.x else 1f
-            val totalSy = if (component.positioned) polyUI.size.y / polyUI.iSize.y else 1f
-            val mainPad = padding[main] * totalSx
-            val crossPad = padding[crs] * totalSy
+            val totalSx = polyUI.size.x / polyUI.iSize.x
+            val totalSy = polyUI.size.y / polyUI.iSize.y
+            val mainPad: Float
+            val crossPad: Float
+            if (component.positioned) {
+                mainPad = padding[main] * totalSx
+                crossPad = padding[crs] * totalSy
+            } else {
+                mainPad = padding[main]
+                crossPad = padding[crs]
+                component.rescale0(totalSx, totalSy, false)
+            }
 
             if (children.size == 1) {
                 // asm: fast path: set a square size with the object centered

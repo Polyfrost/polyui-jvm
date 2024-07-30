@@ -181,7 +181,7 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
     open val visibleSize get() = size
 
     open fun fixVisibleSize() {
-        if(size == visibleSize) return
+        if (size == visibleSize) return
         val vs = visibleSize
         width = width.coerceAtLeast(vs.x)
         height = height.coerceAtLeast(vs.y)
@@ -282,6 +282,7 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
      * @since 0.21.4
      */
     open var clipped = true
+        get() = field && isEnabled
         set(value) {
             if (field == value) return
             field = value
@@ -325,29 +326,36 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
 
     /**
      * Method that is called when the physical size of the total window area changes.
-     * @param position weather to scale the [at] property of this component as well. Note that this is a surface level change (by design), and will not affect children.
      */
     @Locking
-    @MustBeInvokedByOverriders
-    @Synchronized
-    fun rescale(scaleX: Float, scaleY: Float, position: Boolean = true) {
+    fun rescale(scaleX: Float, scaleY: Float) {
         if (rawResize) {
-            rescale0(scaleX, scaleY, position)
+            rescale0(scaleX, scaleY, true)
         } else {
             val s = cl1(scaleX, scaleY)
-            rescale0(s, s, position)
+            rescale0(s, s, true)
         }
     }
 
-    protected open fun rescale0(scaleX: Float, scaleY: Float, position: Boolean) {
-        if (position) {
-            _x *= scaleX
-            _y *= scaleY
-        }
+    /**
+     * raw rescale method that **does not check [rawResize] and uses the given scale factors directly**.
+     *
+     * ### You should be using [rescale] instead in 99% of cases.
+     * @param withChildren if `true`, this method will also rescale its children.
+     * *note: it will also rescale its children even if `withChildren` is `false` if the child has no children itself.*
+     */
+    @ApiStatus.Internal
+    @Locking
+    @MustBeInvokedByOverriders
+    @Synchronized
+    open fun rescale0(scaleX: Float, scaleY: Float, withChildren: Boolean) {
+        _x *= scaleX
+        _y *= scaleY
         width *= scaleX
         height *= scaleY
-
-        children?.fastEach { it.rescale0(scaleX, scaleY, true) }
+        children?.fastEach {
+            if (withChildren || it.children.isNullOrEmpty()) it.rescale0(scaleX, scaleY, true)
+        }
     }
 
     fun clipChildren() {
@@ -459,11 +467,7 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
         if (children.fastAny { it === child }) throw IllegalStateException("attempted to add the same component twice")
         children.add(child)
         if (initialized) {
-            if (child.setup(polyUI)) {
-                val totalSx = polyUI.size.x / polyUI.iSize.x
-                val totalSy = polyUI.size.y / polyUI.iSize.y
-                child.rescale(totalSx, totalSy, position = true)
-            }
+            child.setup(polyUI)
             if (!child.createdWithSetPosition) {
                 if (recalculate) recalculate()
                 else {
@@ -524,11 +528,7 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
             return
         }
         new._parent = this
-        if (new.setup(polyUI)) {
-            val totalSx = polyUI.size.x / polyUI.iSize.x
-            val totalSy = polyUI.size.y / polyUI.iSize.y
-            new.rescale(totalSx, totalSy, position = false)
-        }
+        new.setup(polyUI)
         val oldStatic = old.screenAt
         new.x = old.x - (old.x - oldStatic.x)
         new.y = old.y - (old.y - oldStatic.y)
@@ -552,6 +552,7 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
             new.alpha = 0f
             new.fadeIn(0.3.seconds)
         }
+        if (this is Scrollable) this.tryMakeScrolling()
     }
 
     /**

@@ -135,8 +135,7 @@ abstract class Inputtable(
         if (!isEnabled) return false
         val eh = eventHandlers ?: return false
         val handlers = eh[event::class.java] ?: eh[event] ?: return false
-        handlers.accept(this, event)
-        return false
+        return handlers.accept(this, event)
     }
 
     private fun removeHandlers(event: Event): EventListener<Inputtable, Event>? {
@@ -172,7 +171,7 @@ abstract class Inputtable(
 
     @JvmName("addEventhandler")
     @OverloadResolutionByLambdaReturnType
-    inline fun <E : Event, S : Inputtable> S.on(event: E, crossinline handler: S.(E) -> Unit): S = on(event) { handler(this, it); true }
+    inline fun <E : Event, S : Inputtable> S.on(event: E, crossinline handler: S.(E) -> Unit): S = on(event) { handler(this, it); false }
 
     // asm: uses java class because bootstrapping reflect for this is not worth the slightly better syntax tbh
     /**

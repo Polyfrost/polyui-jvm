@@ -1,4 +1,5 @@
 @file:JvmName("ListUtils")
+@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 
 package org.polyfrost.polyui.utils
 
@@ -15,6 +16,7 @@ import org.polyfrost.polyui.PolyUI
  * @see fastRemoveIfReversed
  * @see fastEachReversed
  */
+@kotlin.internal.InlineOnly
 inline fun <L, E> L.fastEach(func: (E) -> Unit) where L : List<E>, L : RandomAccess {
     for (i in indices) {
         // i can already hear the JIT crying in de-optimization: trap hit: unstable_if
@@ -36,6 +38,7 @@ inline fun <L, E> L.fastEach(func: (E) -> Unit) where L : List<E>, L : RandomAcc
  * @see fastRemoveIfReversed
  * @see fastEachReversed
  */
+@kotlin.internal.InlineOnly
 inline fun <L, E> L.fastEachIndexed(func: (Int, E) -> Unit) where L : List<E>, L : RandomAccess {
     for (i in indices) {
         if (i > this.size - 1) {
@@ -56,6 +59,7 @@ inline fun <L, E> L.fastEachIndexed(func: (Int, E) -> Unit) where L : List<E>, L
  * @see fastRemoveIfReversed
  * @see fastEach
  */
+@kotlin.internal.InlineOnly
 inline fun <L, E> L.fastEachReversed(func: (E) -> Unit) where L : List<E>, L : RandomAccess {
     for (i in indices.reversed()) {
         if (i > this.size - 1) {
@@ -78,6 +82,7 @@ inline fun <L, E> L.fastEachReversed(func: (E) -> Unit) where L : List<E>, L : R
  * @see fastRemoveIfReversed
  */
 @Deprecated("This method is less efficient than its reverse counterpart, which should be used where possible.", ReplaceWith("fastRemoveIfReversed"))
+@kotlin.internal.InlineOnly
 inline fun <L, E> L.fastRemoveIf(predicate: (E) -> Boolean) where L : MutableList<E>, L : RandomAccess {
     var i = 0
     while (i < this.size) {
@@ -98,6 +103,7 @@ inline fun <L, E> L.fastRemoveIf(predicate: (E) -> Boolean) where L : MutableLis
  * @since 1.2.0
  * @see fastEach
  */
+@kotlin.internal.InlineOnly
 inline fun <L, E> L.fastRemoveIfReversed(predicate: (E) -> Boolean) where L : MutableList<E>, L : RandomAccess {
     for (i in indices.reversed()) {
         if (predicate(this[i])) {
@@ -117,6 +123,7 @@ inline fun <L, E> L.fastRemoveIfReversed(predicate: (E) -> Boolean) where L : Mu
  * *this method is no-alloc, like other methods in this family such as [fastEach].*
  * @since 1.2.0
  */
+@kotlin.internal.InlineOnly
 inline fun <L, E> L.fastAll(predicate: (E) -> Boolean): Boolean where L : List<E>, L : RandomAccess {
     for (i in indices) {
         if (i > this.size - 1) throw ConcurrentModificationException()
@@ -138,6 +145,7 @@ inline fun <L, E> L.fastAll(predicate: (E) -> Boolean): Boolean where L : List<E
  * *this method is no-alloc, like other methods in this family such as [fastEach].*
  * @since 1.2.0
  */
+@kotlin.internal.InlineOnly
 inline fun <L, E> L.fastAny(predicate: (E) -> Boolean): Boolean where L : List<E>, L : RandomAccess {
     for (i in indices) {
         if (i > this.size - 1) throw ConcurrentModificationException()
@@ -155,6 +163,7 @@ inline fun <L, E> L.fastAny(predicate: (E) -> Boolean): Boolean where L : List<E
  *
  * *this method is no-alloc, like other methods in this family such as [fastEach].*
  */
+@kotlin.internal.InlineOnly
 inline fun <L, E, reified R> L.mapToArray(transform: (E) -> R): Array<R> where L : List<E>, L : RandomAccess {
     val out = arrayOfNulls<R>(size)
     this.fastEachIndexed { i, it ->

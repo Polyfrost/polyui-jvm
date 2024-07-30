@@ -691,6 +691,11 @@ fun <S : Inputtable> S.onPress(func: S.(Event.Mouse.Pressed) -> Unit): S {
     return this
 }
 
+fun <S : Inputtable> S.onRelease(func: S.(Event.Mouse.Released) -> Unit): S {
+    on(Event.Mouse.Released, func)
+    return this
+}
+
 fun <S : Inputtable> S.onDrag(func: S.(Event.Mouse.Dragged) -> Unit): S {
     on(Event.Mouse.Dragged, func)
     return this

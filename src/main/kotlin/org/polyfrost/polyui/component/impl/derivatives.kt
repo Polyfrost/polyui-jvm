@@ -65,7 +65,7 @@ fun Switch(at: Vec2 = Vec2.ZERO, size: Float, padding: Float = 3f, state: Boolea
         }
     }.onToggle {
         val circle = this[0]
-        val target = this.x + if(it) this.width - circle.width - padding else padding
+        val target = this.x + if (it) this.width - circle.width - padding else padding
         Move(circle, target, add = false, animation = Animations.Default.create(0.2.seconds)).add()
     }
 }
@@ -191,9 +191,6 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fon
             // this big. not necessary normally important, only if they decided to recalculate the dropdown for any reason.
             this.layoutFlags = layoutFlags or 0b00000010
             this[1].x = this.x + (this.width - this[1].width - alignment.pad.x)
-            val totalSx = polyUI.size.x / polyUI.iSize.x
-            val totalSy = polyUI.size.y / polyUI.iSize.y
-            dropdown.rescale(totalSx, totalSy, position = false)
 
             val first = dropdown[initial]
             (this[0] as Text).text = ((if (first.children!!.size == 2) first[1] else first[0]) as Text).text
@@ -215,6 +212,17 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
     val barHeight = ptrSize / 2.8f
     val size = Vec2(length + ptrSize, ptrSize)
 
+    val slide: Inputtable.() -> Float = {
+        val bar = this.parent[0]
+        val half = this.width / 2f
+        this.x = this.x.coerceIn(bar.x - half, bar.x + bar.width - half)
+        bar[0].width = x - bar.x + half
+        val progress = (this.x + half - bar.x) / bar.width
+        val value = (max - min) * progress
+        if (!floating) value.toInt().toFloat()
+        else value
+    }
+
     return Group(
         Block(
             Block(
@@ -226,15 +234,16 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
         Block(
             size = ptrSize.vec,
         ).radius(ptrSize / 2f).setPalette { text.primary }.withStates().draggable(withY = false, onDrag = {
-            val bar = this.parent[0]
-            val half = this.width / 2f
-            this.x = this.x.coerceIn(bar.x - half, bar.x + bar.width - half)
-            bar[0].width = x - bar.x + half
-            if (instant && hasListenersFor(Event.Change.Number::class.java)) {
-                val progress = (this.x + half - bar.x) / width
-                var value = (max - min) * progress
-                if (!floating) value = value.toInt().toFloat()
-                accept(Event.Change.Number(value))
+            val value = slide()
+            val p = parent as Inputtable
+            if (instant && p.hasListenersFor(Event.Change.Number::class.java)) {
+                p.accept(Event.Change.Number(value))
+            }
+        }, onDrop = {
+            val value = slide()
+            val p = parent as Inputtable
+            if (p.hasListenersFor(Event.Change.Number::class.java)) {
+                p.accept(Event.Change.Number(value))
             }
         }).events {
             val op = object : ComponentOp.Animatable<Block>(self, Animations.Default.create(0.15.seconds, 1f, 0f)) {
@@ -262,6 +271,11 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
             Event.Mouse.Entered then {
                 op.reverse()
             }
+            Event.Mouse.Released then {
+                val value = slide()
+                val p = parent as Inputtable
+                if (p.hasListenersFor(Event.Change.Number::class.java)) p.accept(Event.Change.Number(value))
+            }
         },
         at = at,
         size = size,
@@ -272,6 +286,7 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
         this.polyUI.inputManager.recalculate()
         ptr.inputState = INPUT_PRESSED
         ptr.accept(it)
+        ptr.slide()
     }.afterInit {
         val bar = this[0]
         val ptr = this[1]
@@ -306,7 +321,7 @@ fun BoxedTextInput(
     if (image != null) Image(image).padded(6f, 0f) else null,
     if (pre != null) Text(pre).padded(6f, 0f) else null,
     Group(
-        TextInput(placeholder = placeholder, text = initialValue, fontSize = fontSize, /*visibleSize = if (size != null) Vec2(width, fontSize) else null*/).run {
+        TextInput(placeholder = placeholder, text = initialValue, fontSize = fontSize /*visibleSize = if (size != null) Vec2(width, fontSize) else null*/).run {
             on(Event.Change.Text) {
                 parent.position()
                 (parent.parent as? Inputtable)?.accept(it) == true

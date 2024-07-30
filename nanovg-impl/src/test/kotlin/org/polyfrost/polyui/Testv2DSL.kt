@@ -78,7 +78,10 @@ fun main() {
             }.add()
             group {
                 Radiobutton("hello", "goodbye").add()
-                Slider().add()
+                Slider().add().onChange { value: Float ->
+                    (parent[2] as Text).text = value.toString()
+                    false
+                }
                 text("blink three times when u feel it kicking in")
             }
         }

@@ -227,8 +227,13 @@ class Debugger(private val polyUI: PolyUI) {
                 LOGGER.warn("couldn't convert argument $arg to type $typ")
                 return false
             }
-            method.invoke(target, p)
-            return true
+            try {
+                method.invoke(target, p)
+                return true
+            } catch (e: Exception) {
+                LOGGER.warn("failed to invoke $sn($arg) on $target", e)
+                return false
+            }
         }
         LOGGER.warn("no methods matching $sn($arg) on $target")
         return false

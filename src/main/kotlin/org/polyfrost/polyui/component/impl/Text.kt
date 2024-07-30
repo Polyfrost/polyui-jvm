@@ -103,10 +103,11 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
     /**
      * A list of the lines of this text, and their corresponding width.
      */
-    protected val lines = ArrayList<Line>(/* initialCapacity = */ when(mode) {
+    protected val lines = ArrayList<Line>(/* initialCapacity = */ when (mode) {
         WRAP, LIMITED_WRAP, LIMITED -> (visibleSize.y / fontSize).toInt()
         else -> 1
-    })
+    }
+    )
 
     @ApiStatus.Internal
     @get:JvmName("getFontOrNull")
@@ -204,8 +205,8 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         }
     }
 
-    override fun rescale0(scaleX: Float, scaleY: Float, position: Boolean) {
-        super.rescale0(scaleX, scaleY, position)
+    override fun rescale0(scaleX: Float, scaleY: Float, withChildren: Boolean) {
+        super.rescale0(scaleX, scaleY, withChildren)
         fontSize *= scaleY
     }
 

@@ -224,8 +224,8 @@ abstract class Scrollable(
         }
     }
 
-    override fun rescale0(scaleX: Float, scaleY: Float, position: Boolean) {
-        super.rescale0(scaleX, scaleY, position)
+    override fun rescale0(scaleX: Float, scaleY: Float, withChildren: Boolean) {
+        super.rescale0(scaleX, scaleY, withChildren)
         xScroll?.let { it.from *= scaleX; it.to *= scaleX }
         yScroll?.let { it.from *= scaleY; it.to *= scaleY }
         visWidth *= scaleX
