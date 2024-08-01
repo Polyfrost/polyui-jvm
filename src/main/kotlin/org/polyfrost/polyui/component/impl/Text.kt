@@ -278,6 +278,10 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         return size
     }
 
+    override fun fixVisibleSize() {
+        // due to how we use the scrolling mechanic, this method is not needed.
+    }
+
     override fun debugString() =
         """
 lines: ${lines.size}, mode=${getModeName(mode)}

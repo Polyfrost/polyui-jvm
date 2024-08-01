@@ -181,10 +181,10 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
     open val visibleSize get() = size
 
     open fun fixVisibleSize() {
-        if (size == visibleSize) return
-        val vs = visibleSize
-        width = width.coerceAtLeast(vs.x)
-        height = height.coerceAtLeast(vs.y)
+//        val vs = visibleSize
+//        if (size == vs) return
+//        width = width.coerceAtLeast(vs.x)
+//        height = height.coerceAtLeast(vs.y)
     }
 
     private var _padding: Vec4? = null
@@ -238,7 +238,7 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
      * If true, this component will be ignored during the [Positioner]'s routine of placing components. Use this if
      * you want to specify it manually based on something else, for example.
      *
-     * *note: this used to be controlled by the [clipped] flag pre 1.4.4*.
+     * *note: this used to be controlled by the [renders] flag pre 1.4.4*.
      *
      * @since 1.4.4
      */
@@ -281,8 +281,7 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
      *
      * @since 0.21.4
      */
-    open var clipped = true
-        get() = field && isEnabled
+    open var renders = true
         set(value) {
             if (field == value) return
             field = value
@@ -367,7 +366,7 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
 
     private fun _clipChildren(children: ArrayList<out Component>, tx: Float, ty: Float, tw: Float, th: Float) {
         children.fastEach {
-            it.clipped = it.intersects(tx, ty, tw, th)
+            it.renders = it.intersects(tx, ty, tw, th)
             it._clipChildren(it.children ?: return@fastEach, tx, ty, tw, th)
         }
     }
@@ -377,7 +376,7 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
      * @see intersects
      * @see isInside(Float, Float, Float, Float)
      */
-    open fun isInside(x: Float, y: Float): Boolean {
+    fun isInside(x: Float, y: Float): Boolean {
         val ta = screenAt
         val tx = ta.x
         val ty = ta.y
@@ -387,18 +386,23 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
         return x in tx..tx + tw && y in ty..ty + th
     }
 
+    @JvmName("contains")
+    operator fun contains(point: Vec2) = isInside(point.x, point.y)
+
+    operator fun contains(box: Vec4) = intersects(box.x, box.y, box.w, box.h)
+
     /**
      * @return `true` if the component has at least one point inside the given box (x, y, width, height).
      * @since 0.21.4
      */
-    open fun intersects(x: Float, y: Float, width: Float, height: Float): Boolean {
+    fun intersects(x: Float, y: Float, width: Float, height: Float): Boolean {
         val ta = screenAt
         val tx = ta.x
         val ty = ta.y
         val vs = this.visibleSize
         val tw = vs.x
         val th = vs.y
-        return (x <= tx + tw && tx <= x + width) && (y <= ty + th && ty <= y + height)
+        return (x < tx + tw && tx < x + width) && (y < ty + th && ty < y + height)
     }
 
     /**
@@ -464,6 +468,7 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
         if (children == null) children = ArrayList()
         val children = this.children ?: throw ConcurrentModificationException("well, this sucks")
         child.parent = this
+        child.isEnabled = true
         if (children.fastAny { it === child }) throw IllegalStateException("attempted to add the same component twice")
         children.add(child)
         if (initialized) {
@@ -498,6 +503,7 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
         val it = children.getOrNull(index) ?: throw IndexOutOfBoundsException("index: $index, length: ${children.size}")
         it._parent = null
         children.remove(it)
+        it.isEnabled = false
         if (initialized) {
             if (it is Inputtable) {
                 polyUI.inputManager.drop(it)
@@ -508,6 +514,15 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
                 accept(Event.Mouse.Scrolled)
             }
         }
+    }
+
+    /**
+     * Remove this component from its parent.
+     * @since 1.6.1
+     */
+    fun remove(recalculate: Boolean = true) {
+        val parent = this._parent ?: throw IllegalStateException("No parent to remove from")
+        parent.removeChild(parent.children?.indexOf(this) ?: throw ConcurrentModificationException(), recalculate)
     }
 
     /**

@@ -111,19 +111,19 @@ class Debugger(private val polyUI: PolyUI) {
                     if (it.key == Keys.ENTER) {
                         if (!processEval(forEval, text)) {
                             ShakeOp(parent, 0.2.seconds, oscillations = 2) {
-                                polyUI.unfocus()
+                                polyUI.inputManager.unfocus(this@then)
                             }.add()
                         } else {
                             if (!it.mods.hasShift) text = ""
-                            polyUI.unfocus()
+                            polyUI.inputManager.unfocus(this)
                         }
                     }
                 }
                 Event.Focused.Lost then {
-                    parent.isEnabled = false
+                    parent.remove(recalculate = false)
                 }
             },
-        )
+        ).disable()
     }
 
     private val evalBind = KeyBinder.Bind(key = Keys.TAB, mods = mods(KeyModifiers.SHIFT)) {
@@ -131,10 +131,7 @@ class Debugger(private val polyUI: PolyUI) {
         this.forEval = forEval
         val evalWindow = evalWindow
         (evalWindow[0] as TextInput).placeholder = "evaluate ${forEval.name}..."
-        evalWindow.isEnabled = true
-        if (!evalWindow.initialized) {
-            polyUI.master.addChild(evalWindow, recalculate = false)
-        } else evalWindow.recalculate()
+        if (!evalWindow.isEnabled) polyUI.master.addChild(evalWindow, recalculate = false)
         evalWindow.x = polyUI.mouseX - evalWindow.width / 2f
         evalWindow.y = polyUI.mouseY - 30f
         polyUI.focus(evalWindow[0])
@@ -389,13 +386,15 @@ class Debugger(private val polyUI: PolyUI) {
             Text(
                 ("""
 parent: ${d._parent?.name}   siblings: ${d._parent?.countChildren()?.dec()}
-children: ${d.countChildren()};  renders: ${d.clipped}, ${if (d is Scrollable) "scrolling: ${if (!d.shouldScroll) "disabled" else if (d.scrollingX && d.scrollingY) "x+y" else if (d.scrollingX) "x" else if (d.scrollingY) "y" else "off"}" else ""}
+children: ${d.countChildren()};  renders: ${d.renders}, ${if (d is Scrollable) "scrolling: ${if (!d.shouldScroll) "disabled" else if (d.scrollingX && d.scrollingY) "x+y" else if (d.scrollingX) "x" else if (d.scrollingY) "y" else "off"}" else ""}
 at: ${d.x}x${d.y}, pad: ${d.padding}, flags: ${decodeFlags(d)}
 size: ${d.size}, visible: ${if (d.visibleSize != d.size) d.visibleSize.toString() else "null"}
-${if (d is Drawable) """rgba: ${d.color.r}, ${d.color.g}, ${d.color.b}, ${d.color.a}
+${
+                    if (d is Drawable) """rgba: ${d.color.r}, ${d.color.g}, ${d.color.b}, ${d.color.a}
 scale: ${d.scaleX}x${d.scaleY};  skew: ${d.skewX}x${d.skewY}
 rotation: ${d.rotation};  alpha: ${d.alpha}
-redraw: ${d.needsRedraw};  ops=${d.isOperating};  fbo: ${d.framebuffer}""" else ""}
+redraw: ${d.needsRedraw};  ops=${d.isOperating};  fbo: ${d.framebuffer}""" else ""
+                }
 ${if (d is Inputtable) "state: ${if (d.acceptsInput) getInputStateString(d.inputState) else "never"}, focused: ${if (!d.focusable) "disabled" else if (d.focused) "yes" else "no"}" else ""}
 ${d.alignment}
             """ + (d.debugString()?.let { "\n\n$it" } ?: "")).translated().dont(),

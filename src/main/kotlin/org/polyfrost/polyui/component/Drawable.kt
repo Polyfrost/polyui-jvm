@@ -205,7 +205,7 @@ abstract class Drawable(
     @Locking
     @Synchronized
     fun draw() {
-        if (!clipped) return
+        if (!renders) return
         require(initialized) { "Drawable $name is not initialized!" }
 
         val framebuffer = framebuffer
@@ -306,10 +306,10 @@ abstract class Drawable(
     }
 
     fun debugDraw() {
-        if (!clipped) return
+        if (!renders) return
         debugRender()
         children?.fastEach {
-            if (!it.clipped) return@fastEach
+            if (!it.renders) return@fastEach
             if (it is Drawable) it.debugDraw()
         }
     }

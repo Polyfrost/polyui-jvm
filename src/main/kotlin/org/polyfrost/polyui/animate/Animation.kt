@@ -50,6 +50,20 @@ abstract class Animation(var durationNanos: Long, var from: Float, var to: Float
         value = from
     }
 
+    /**
+     * Set [from] to the current [value], extend [to] with [by], and reset the [passedTime] to 0.
+     *
+     * Essentially makes the animation curve start again with the new value appended.
+     * Might look odd with in-out ease functions.
+     *
+     * @since 1.6.1
+     */
+    fun extend(by: Float) {
+        this.from = this.value
+        this.to += by
+        passedTime = 0f
+    }
+
     fun reverse() {
         val temp = from
         from = to

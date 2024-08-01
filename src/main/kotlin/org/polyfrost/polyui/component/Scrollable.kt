@@ -79,7 +79,7 @@ abstract class Scrollable(
     private var yScroll: Animation? = null
 
     @get:JvmName("isScrolling")
-    val scrolling get() = xScroll != null || yScroll != null
+    val scrolling get() = yScroll != null || xScroll != null
 
     @get:JvmName("isScrollingX")
     val scrollingX get() = xScroll != null
@@ -91,11 +91,11 @@ abstract class Scrollable(
         set(value) {
             if (!value) {
                 if (xScroll != null) {
-                    this.x = xScroll?.from ?: this.x
+                    this.x = screenAt.x
                     xScroll = null
                 }
                 if (yScroll != null) {
-                    this.y = yScroll?.from ?: this.y
+                    this.y = screenAt.y
                     yScroll = null
                 }
             }
@@ -104,17 +104,20 @@ abstract class Scrollable(
 
     @Suppress("INAPPLICABLE_JVM_NAME")
     @get:JvmName("screenAt")
-    override val screenAt: Vec2
-        get() = Vec2(xScroll?.from ?: x, yScroll?.from ?: y)
+    final override var screenAt: Vec2 = Vec2.ZERO
+        get() = if (scrolling) field else this.at
+        private set
 
     override fun setup(polyUI: PolyUI): Boolean {
         if (!super.setup(polyUI)) return false
+        screenAt = at
         tryMakeScrolling()
         return true
     }
 
     override fun recalculate() {
         super.recalculate()
+        screenAt = at
         tryMakeScrolling()
     }
 
@@ -135,6 +138,7 @@ abstract class Scrollable(
             val sa = screenAt
             renderer.pushScissor(sa.x, sa.y, vs.x, vs.y)
             if (x != px || y != py) {
+                clipChildren()
                 polyUI.inputManager.recalculate()
                 return true
             }
@@ -143,7 +147,7 @@ abstract class Scrollable(
     }
 
     fun popScroll(renderer: Renderer) {
-        if (xScroll != null || yScroll != null) renderer.popScissor()
+        if (scrolling) renderer.popScissor()
     }
 
     override fun accept(event: Event): Boolean {
@@ -151,30 +155,29 @@ abstract class Scrollable(
         val res = super.accept(event)
         if (hasVisibleSize && event is Event.Mouse.Scrolled) {
             var ran = false
+            val screenAt = screenAt
             xScroll?.let {
-                it.durationNanos = 0.6.seconds
-                if (yScroll == null) it.to += event.amountY
-                it.to += event.amountX
-                val s = it.from - (width - visWidth)
-                if (s >= it.from) {
-                    this.x = it.from
+                if (yScroll == null) it.extend(event.amountY)
+                it.extend(event.amountX)
+                val s = screenAt.x - (width - visWidth)
+                if (s >= screenAt.x) {
+                    this.x = screenAt.x
                     xScroll = null
                     return@let
                 }
-                it.to = it.to.coerceIn(s, it.from)
+                it.to = it.to.coerceIn(s, screenAt.x)
                 ran = true
             }
 
             yScroll?.let {
-                it.durationNanos = 0.6.seconds
-                it.to += event.amountY
-                val s = it.from - (height - visHeight)
-                if (s >= it.from) {
-                    this.y = it.from
+                it.extend(event.amountY)
+                val s = screenAt.y - (height - visHeight)
+                if (s >= screenAt.y) {
+                    this.y = screenAt.y
                     yScroll = null
                     return@let
                 }
-                it.to = it.to.coerceIn(s, it.from)
+                it.to = it.to.coerceIn(s, screenAt.y)
                 ran = true
             }
 
@@ -196,19 +199,21 @@ abstract class Scrollable(
         if (width > visWidth) {
             if (xScroll == null) {
                 scrolling = true
-                xScroll = Easing.Expo(Easing.Type.Out, 0L, x, x)
+                screenAt = at
+                xScroll = Easing.Expo(Easing.Type.Out, 0.2.seconds, x, x)
             }
         } else if (xScroll != null) {
-            this.x = xScroll?.from ?: this.x
+            this.x = screenAt.x
             xScroll = null
         }
         if (height > visHeight) {
             if (yScroll == null) {
                 scrolling = true
-                yScroll = Easing.Expo(Easing.Type.Out, 0L, y, y)
+                screenAt = at
+                yScroll = Easing.Expo(Easing.Type.Out, 0.2.seconds, y, y)
             }
         } else if (yScroll != null) {
-            this.y = yScroll?.from ?: this.y
+            this.y = screenAt.y
             yScroll = null
         }
         if (scrolling) acceptsInput = true
@@ -219,13 +224,14 @@ abstract class Scrollable(
             visWidth = visWidth.coerceAtMost(width)
             visHeight = visHeight.coerceAtMost(height)
         } else {
-            super.fixVisibleSize()
+//            super.fixVisibleSize()
             hasVisibleSize = false
         }
     }
 
     override fun rescale0(scaleX: Float, scaleY: Float, withChildren: Boolean) {
         super.rescale0(scaleX, scaleY, withChildren)
+        screenAt *= Vec2(scaleX, scaleY)
         xScroll?.let { it.from *= scaleX; it.to *= scaleX }
         yScroll?.let { it.from *= scaleY; it.to *= scaleY }
         visWidth *= scaleX
@@ -239,6 +245,7 @@ abstract class Scrollable(
      * @since 1.0.5
      */
     fun resetScroll() {
+        screenAt = at
         xScroll?.let { it.from = x; it.to = x }
         yScroll?.let { it.from = y; it.to = y }
         _resetScroll(this)

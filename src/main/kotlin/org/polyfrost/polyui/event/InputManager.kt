@@ -36,6 +36,7 @@ import org.polyfrost.polyui.property.Settings
 import org.polyfrost.polyui.utils.Clock
 import org.polyfrost.polyui.utils.fastEach
 import java.nio.file.Path
+import kotlin.math.abs
 
 /**
  * # InputManager
@@ -66,6 +67,24 @@ class InputManager(
         private set
     var mouseY: Float = 0f
         private set
+
+    private var pressX = 0f
+    private var pressY = 0f
+
+    /**
+     * `true` if the mouse is currently dragging.
+     * @see Settings.dragThreshold
+     * @see Event.Mouse.Drag
+     * @since 1.6.1
+     */
+    var dragging = false
+        private set(value) {
+            if (field == value) return
+            field = value
+            if (value) mouseOver?.accept(Event.Mouse.Drag.Started)
+            else mouseOver?.accept(Event.Mouse.Drag.Ended)
+        }
+
     private var clickTimer: Long = 0L
 
     /** @see org.polyfrost.polyui.input.Modifiers */
@@ -239,7 +258,11 @@ class InputManager(
         mouseX = x
         mouseY = y
         if (mouseDown) {
-            dispatch(Event.Mouse.Dragged)
+            val threshold = settings.dragThreshold
+            if (abs(pressX - x) > threshold || abs(pressY - y) > threshold) {
+                dragging = true
+            }
+            if (dragging) mouseOver?.accept(Event.Mouse.Drag)
             return
         }
         master?.let { mouseOver = rayCheck(it, x, y) }
@@ -247,11 +270,15 @@ class InputManager(
     }
 
     fun mousePressed(button: Int) {
-        if (button == 0) mouseDown = true
+        if (button == 0) {
+            mouseDown = true
+            mouseOver?.inputState = INPUT_PRESSED
+            pressX = mouseX
+            pressY = mouseY
+        }
         val event =
-            if (button == 0 && keyModifiers.isEmpty) Event.Mouse.Companion.Pressed.set(mouseX, mouseY) else
-                Event.Mouse.Pressed(button, mouseX, mouseY, keyModifiers)
-        mouseOver?.inputState = INPUT_PRESSED
+            if (button == 0 && keyModifiers.isEmpty) Event.Mouse.Companion.Pressed.set(mouseX, mouseY)
+            else Event.Mouse.Pressed(button, mouseX, mouseY, keyModifiers)
         dispatch(event, true)
     }
 
@@ -259,6 +286,7 @@ class InputManager(
     fun mouseReleased(button: Int) {
         if (button == 0) {
             mouseDown = false
+            dragging = false
         }
         if (clickedButton != button) {
             clickedButton = button
@@ -367,6 +395,14 @@ class InputManager(
             }
             focused = null
         }
+    }
+
+    /**
+     * Unfocus the [target] if it currently is the [focused] drawable.
+     * @since 1.6.1
+     */
+    fun unfocus(target: Inputtable?) {
+        if (target === focused) unfocus()
     }
 
     /**

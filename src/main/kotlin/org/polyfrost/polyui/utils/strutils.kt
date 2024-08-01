@@ -177,7 +177,7 @@ fun String.levenshteinDistance(other: String): Int {
     return d[length][other.length]
 }
 
-data class Line(val string: String, val bounds: Vec2)
+data class Line(val string: String, @get:JvmName("bounds") val bounds: Vec2)
 
 private val currentLine = StringBuilder(32)
 

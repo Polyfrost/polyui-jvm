@@ -59,10 +59,10 @@ fun main() {
         BoxedTextInput(pre = "Title:", post = "px").add()
         group {
             repeat(30) {
-                block(size = (32f + (Math.random().toFloat() * 100f)) by 32f).withStates().add3dEffect(0.1, 0.1)
+                block(size = (32f + (Math.random().toFloat() * 100f)) by 32f).withStates()
             }
             it.visibleSize = 350f by 120f
-        }
+        }.makeRearrangeableGrid()
         group {
             Button("shuffle.svg".image(), "button.randomize").onClick {
                 val box = parent.parent[5]
@@ -95,5 +95,6 @@ fun main() {
             text("i am some text that has been limited, so at some point i will stop showing up and i will just be cut off, which is a pretty handy feature.", limited = true, visibleSize = 400f by 12f)
             textInput(visibleSize = 150f by 12f)
         }
+        BoxedNumericInput().add()
     }.open(window)
 }

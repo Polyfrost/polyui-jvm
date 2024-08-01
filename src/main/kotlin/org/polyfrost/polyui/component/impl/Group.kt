@@ -37,10 +37,10 @@ class Group(
     size: Vec2 = Vec2.ZERO,
     visibleSize: Vec2 = Vec2.ZERO,
 ) : Drawable(children = children, at, alignment, size, visibleSize) {
-    override var clipped: Boolean
-        get() = super.clipped && !children.isNullOrEmpty()
+    override var renders: Boolean
+        get() = super.renders && !children.isNullOrEmpty()
         set(value) {
-            super.clipped = value
+            super.renders = value
         }
 
     override fun render() {}

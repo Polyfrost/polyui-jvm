@@ -208,7 +208,7 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fon
  * Note that slider change events cannot be cancelled.
  */
 @JvmName("Slider")
-fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValue: Float = 0f, ptrSize: Float = 24f, length: Float = (max - min) * 2f, floating: Boolean = true, instant: Boolean = false): Drawable {
+fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValue: Float = 0f, ptrSize: Float = 24f, length: Float = (max - min) * 2f, integral: Boolean = false, instant: Boolean = false): Drawable {
     val barHeight = ptrSize / 2.8f
     val size = Vec2(length + ptrSize, ptrSize)
 
@@ -219,7 +219,7 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
         bar[0].width = x - bar.x + half
         val progress = (this.x + half - bar.x) / bar.width
         val value = (max - min) * progress
-        if (!floating) value.toInt().toFloat()
+        if (integral) value.toInt().toFloat()
         else value
     }
 
@@ -230,22 +230,22 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
             ).radius(barHeight / 2f).setPalette { brand.fg },
             size = Vec2(length, barHeight),
             alignment = Align(Align.Main.Start, pad = Vec2.ZERO),
-        ),
+        ).radius(barHeight / 2f),
         Block(
             size = ptrSize.vec,
-        ).radius(ptrSize / 2f).setPalette { text.primary }.withStates().draggable(withY = false, onDrag = {
+        ).radius(ptrSize / 2f).setPalette { text.primary }.withStates().draggable(withY = false).onDrag {
             val value = slide()
             val p = parent as Inputtable
             if (instant && p.hasListenersFor(Event.Change.Number::class.java)) {
                 p.accept(Event.Change.Number(value))
             }
-        }, onDrop = {
+        }.onDragEnd {
             val value = slide()
             val p = parent as Inputtable
             if (p.hasListenersFor(Event.Change.Number::class.java)) {
                 p.accept(Event.Change.Number(value))
             }
-        }).events {
+        }.events {
             val op = object : ComponentOp.Animatable<Block>(self, Animations.Default.create(0.15.seconds, 1f, 0f)) {
                 override fun apply(value: Float) {}
 
@@ -318,21 +318,71 @@ fun BoxedTextInput(
     post: String? = null,
     size: Vec2 = Vec2.ZERO,
 ) = Block(
-    if (image != null) Image(image).padded(6f, 0f) else null,
-    if (pre != null) Text(pre).padded(6f, 0f) else null,
+    if (image != null) Image(image).padded(6f, 0f, 0f, 0f) else null,
+    if (pre != null) Text(pre).padded(6f, 0f, 0f, 0f) else null,
     Group(
-        TextInput(placeholder = placeholder, text = initialValue, fontSize = fontSize /*visibleSize = if (size != null) Vec2(width, fontSize) else null*/).run {
+        TextInput(placeholder = placeholder, text = initialValue, fontSize = fontSize, visibleSize = if (size.isPositive) Vec2(size.x, fontSize) else Vec2.ZERO).run {
             on(Event.Change.Text) {
                 parent.position()
                 (parent.parent as? Inputtable)?.accept(it) == true
             }
         },
-        alignment = Align(main = if (center) Align.Main.Center else Align.Main.Start, pad = Vec2.ZERO),
+        alignment = Align(main = if (center) Align.Main.Center else Align.Main.Start, pad = Vec2(6f, 10f)),
         size = size,
-    ),
+    ).afterInit {
+        val input = this[0]
+        input.visibleSize = input.visibleSize.coerceAtMost(this.visibleSize - Vec2(alignment.pad.x * 2f, 0f))
+    },
     if (post != null) Block(Text(post).secondary(), alignment = Align(pad = 6f by 10f), radii = floatArrayOf(0f, 8f, 0f, 8f)).afterInit { color = polyUI.colors.page.bg.normal } else null,
     alignment = Align(pad = Vec2.ZERO, main = Align.Main.SpaceBetween)
 ).withBoarder()
+
+@JvmName("BoxedNumericInput")
+fun BoxedNumericInput(
+    image: PolyImage? = null,
+    pre: String? = null,
+    initialValue: Float = 0f,
+    min: Float = 0f,
+    max: Float = 100f,
+    step: Float = 1f,
+    integral: Boolean = false,
+    fontSize: Float = 12f,
+    center: Boolean = false,
+    post: String? = null,
+    radius: Float = 8f,
+    size: Vec2 = Vec2.ZERO,
+) = Group(
+    BoxedTextInput(
+        image, pre,
+        placeholder = "${if (integral) max.toInt() else max}",
+        initialValue = "${if (integral) initialValue.toInt() else initialValue}",
+        fontSize, center, post, size
+    ).also {
+        if (it.children?.size == 3) (it[1][0] as TextInput).numeric(min, max, integral)
+        else (it[0][0] as TextInput).numeric(min, max, integral)
+    }.radii(radius, 0f, radius, 0f),
+    Block(
+        Image("polyui/chevron-down.svg").onClick {
+            val boxed = parent.parent[0]
+            val text = if (boxed.children?.size == 3) boxed[1][0] as Text else boxed[0][0] as Text
+            val value = text.text.toFloat()
+            val newValue = (value + step).coerceIn(min, max)
+            text.text = if (integral) newValue.toInt().toString() else newValue.toString()
+            true
+        }.withStates().also { it.rotation = PI },
+        Image("polyui/chevron-down.svg").onClick {
+            val boxed = parent.parent[0]
+            val text = if (boxed.children?.size == 3) boxed[1][0] as Text else boxed[0][0] as Text
+            val value = text.text.toFloat()
+            val newValue = (value - step).coerceIn(min, max)
+            text.text = if (integral) newValue.toInt().toString() else newValue.toString()
+            true
+        }.withStates(),
+        radii = floatArrayOf(0f, radius, 0f, radius),
+        alignment = Align(mode = Align.Mode.Vertical, pad = Vec2.ZERO)
+    ),
+    alignment = Align(pad = Vec2.ZERO)
+)
 
 /**
  * Spawn a menu at the mouse position.

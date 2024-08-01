@@ -44,63 +44,78 @@ import org.polyfrost.polyui.renderer.data.FontFamily
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.Clock
 import org.polyfrost.polyui.utils.fastEach
+import org.polyfrost.polyui.utils.fastEachIndexed
 import org.polyfrost.polyui.utils.set
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.math.abs
 
-const val MIN_DRAG = 3f
-private var dragging: Inputtable? = null
-
 /**
- * Make this component draggable.
+ * Make this component draggable by the user with their mouse.
+ *
  * @param free if this is true, the component will be able to be dragged outside its parent.
+ * This is achieved by briefly removing this from its parent and adding it to the master.
  */
-fun <S : Inputtable> S.draggable(withX: Boolean = true, withY: Boolean = true, free: Boolean = false, onStart: (S.() -> Unit)? = null, onDrag: (S.() -> Unit)? = null, onDrop: (S.() -> Unit)? = null): S {
-    var started = false
+fun <S : Inputtable> S.draggable(withX: Boolean = true, withY: Boolean = true, free: Boolean = false): S {
     var px = 0f
     var py = 0f
-    on(Event.Mouse.Pressed) {
-        if (dragging != null) return@on false
-        dragging = this
-        if (this is Drawable) needsRedraw = true
-        px = it.x - x
-        py = it.y - y
-        false
-    }
-    on(Event.Mouse.Dragged) {
-        if (dragging !== this) return@on false
-        val mx = polyUI.inputManager.mouseX
-        val my = polyUI.inputManager.mouseY
-        if (!started) {
-            if (abs(px + x - mx) > MIN_DRAG || abs(py + y - my) > MIN_DRAG) {
-                started = true
-                onStart?.invoke(this)
-                if (free && _parent !== polyUI.master) {
-                    parent.children!!.remove(this)
-                    polyUI.master.children!!.add(this)
-                }
-            }
-        } else {
-            if (this is Drawable) needsRedraw = true
-            if (withX) x = mx - px
-            if (withY) y = my - py
-            onDrag?.invoke(this)
+    on(Event.Mouse.Drag.Started) {
+        px = polyUI.inputManager.mouseX - x
+        py = polyUI.inputManager.mouseY - y
+        if (free && _parent !== polyUI.master) {
+            parent.children!!.remove(this)
+            polyUI.master.children!!.add(this)
         }
         false
     }
-    on(Event.Mouse.Released) {
-        if (started) {
-            dragging = null
-            if (free && _parent !== polyUI.master) {
-                polyUI.master.children!!.remove(this)
-                parent.children!!.add(this)
+    on(Event.Mouse.Drag) {
+        val mx = polyUI.inputManager.mouseX
+        val my = polyUI.inputManager.mouseY
+        if (this is Drawable) needsRedraw = true
+        if (withX) x = mx - px
+        if (withY) y = my - py
+        false
+    }
+    on(Event.Mouse.Drag.Ended) {
+        if (free && _parent !== polyUI.master) {
+            polyUI.master.children!!.remove(this)
+            parent.children!!.add(this)
+        }
+        false
+    }
+    return this
+}
+
+/**
+ * Turn this component into a 'rearrangeable grid', meaning that the children in it
+ * can be dragged around and rearranged in any order by the user. It will automatically adapt and insert the children in
+ * the correct order.
+ *
+ * @since 1.6.1
+ */
+fun <S : Inputtable> S.makeRearrangeableGrid(): S {
+    children?.fastEach { cmp ->
+        val self = cmp as? Inputtable ?: return@fastEach
+        self.draggable().onDrag { _ ->
+            val px = x
+            val py = y
+            val pw = width
+            val siblings = parent.children ?: return@onDrag
+            siblings.fastEachIndexed { i, it ->
+                if (it === this) return@fastEachIndexed
+                if (it.intersects(px, py, pw, height)) {
+                    siblings.remove(this)
+                    val middleX = px + pw / 2f
+                    val itMiddleX = it.x + it.width / 2f
+                    siblings.add(if (middleX > itMiddleX) i else (i - 1).coerceAtLeast(0), this)
+                }
             }
-            started = false
-            if (this is Drawable) needsRedraw = true
-            onDrop?.invoke(this)
-            true
-        } else false
+            parent.position()
+            x = px
+            y = py
+        }.onDragEnd {
+            parent.position()
+        }
     }
     return this
 }
@@ -138,7 +153,7 @@ fun <S : Inputtable> S.addHoverInfo(vararg drawables: Drawable?, size: Vec2 = Ve
         false
     }
     on(Event.Mouse.Moved, stop)
-    on(Event.Mouse.Dragged, stop)
+    on(Event.Mouse.Drag, stop)
     on(Event.Mouse.Scrolled, stop)
     return this
 }
@@ -231,7 +246,7 @@ fun <S : Drawable> S.add3dEffect(xIntensity: Double = 0.05, yIntensity: Double =
         false
     }
     on(Event.Mouse.Moved, func)
-    on(Event.Mouse.Dragged, func)
+    on(Event.Mouse.Drag, func)
     on(Event.Mouse.Exited) {
         Skew(this, 0.0, 0.0, false, Animations.Default.create(0.1.seconds)).add()
     }
@@ -273,7 +288,7 @@ fun <S : Inputtable> S.disable(state: Boolean = true): S {
 }
 
 fun <S : Component> S.hide(state: Boolean = true): S {
-    this.clipped = !state
+    this.renders = !state
     return this
 }
 
@@ -385,10 +400,10 @@ fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, integral: Bool
                 text = "${if (integral) max.toInt() else max}"
                 shake(); false
             } else {
-                !accept(Event.Change.Number(if (integral) v.toInt() else v))
+                accept(Event.Change.Number(if (integral) v.toInt() else v))
             }
         } catch (_: NumberFormatException) {
-            // fail if it is a number
+            // fail if it is not a number
             shake(); true
         }
     }
@@ -627,7 +642,7 @@ fun Component.countChildren(): Int {
 fun Component.hasChildIn(x: Float, y: Float, width: Float, height: Float): Boolean {
     val children = this.children ?: return false
     children.fastEach {
-        if (!it.clipped) return@fastEach
+        if (!it.renders) return@fastEach
         if (it.intersects(x, y, width, height)) return true
     }
     return false
@@ -673,6 +688,21 @@ inline fun <S : Inputtable> S.events(dsl: EventDSL<S>.() -> Unit): S {
     return this
 }
 
+fun <S : Inputtable> S.onDrag(func: S.(Event.Mouse.Drag) -> Unit): S {
+    on(Event.Mouse.Drag, func)
+    return this
+}
+
+fun <S : Inputtable> S.onDragStart(func: S.(Event.Mouse.Drag.Started) -> Unit): S {
+    on(Event.Mouse.Drag.Started, func)
+    return this
+}
+
+fun <S : Inputtable> S.onDragEnd(func: S.(Event.Mouse.Drag.Ended) -> Unit): S {
+    on(Event.Mouse.Drag.Ended, func)
+    return this
+}
+
 @OverloadResolutionByLambdaReturnType
 @JvmName("onClickZ")
 fun <S : Inputtable> S.onClick(func: S.(Event.Mouse.Clicked) -> Boolean): S {
@@ -693,11 +723,6 @@ fun <S : Inputtable> S.onPress(func: S.(Event.Mouse.Pressed) -> Unit): S {
 
 fun <S : Inputtable> S.onRelease(func: S.(Event.Mouse.Released) -> Unit): S {
     on(Event.Mouse.Released, func)
-    return this
-}
-
-fun <S : Inputtable> S.onDrag(func: S.(Event.Mouse.Dragged) -> Unit): S {
-    on(Event.Mouse.Dragged, func)
     return this
 }
 

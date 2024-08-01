@@ -122,6 +122,12 @@ class Settings {
     var clearComboWhenMaxed = false
 
     /**
+     * The threshold for a drag to be considered a 'drag', meaning the drag event will begin to be dispatched, in pixels.
+     * @since 1.6.1
+     */
+    var dragThreshold = 3f
+
+    /**
      * Scroll multiplier factor, which will multiply the returned value of the callback by this value.
      * First value is the X scroll multiplier, with the second being the Y scroll multiplier.
      */

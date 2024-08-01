@@ -154,9 +154,26 @@ interface Event {
 
         /**
          * dispatched when the mouse is moved while left click is down. Use `polyUI.mouseX` and `polyUI.mouseY` to get the current position.
+         *
+         * *(revised 1.6.1)* [Drag.Started] is dispatched when the drag starts, and [Drag.Ended] is dispatched when the drag ends.
          * @since 1.0.8
+         * @see Drag.Started
+         * @see Drag.Ended
+         * @see InputManager
          */
-        object Dragged : Mouse
+        object Drag : Mouse {
+            /**
+             * Dispatched when the drag starts.
+             * @since 1.6.1
+             */
+            object Started : Mouse
+
+            /**
+             * Dispatched when the drag ends.
+             * @since 1.6.1
+             */
+            object Ended : Mouse
+        }
 
         /**
          * dispatched when the mouse is moved. Use `polyUI.mouseX` and `polyUI.mouseY` to get the current position.

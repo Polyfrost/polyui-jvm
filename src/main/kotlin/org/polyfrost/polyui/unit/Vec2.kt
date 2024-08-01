@@ -29,7 +29,7 @@ package org.polyfrost.polyui.unit
  * @since 1.1.0
  */
 @JvmInline
-@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "INAPPLICABLE_JVM_NAME")
 value class Vec2 private constructor(@PublishedApi internal val value: Long) {
     constructor(x: Float, y: Float) : this(x.toBits().toLong().and(0xFFFFFFFF) or y.toBits().toLong().shl(32))
     // rewrite counter: 5
@@ -58,15 +58,35 @@ value class Vec2 private constructor(@PublishedApi internal val value: Long) {
 
     @kotlin.internal.InlineOnly
     inline operator fun component1() = x
+
     @kotlin.internal.InlineOnly
     inline operator fun component2() = y
 
     override fun toString() = "${x}x$y"
 
+    @JvmName("compareTo")
     operator fun compareTo(size: Vec2): Int {
         val x = x.compareTo(size.x)
         return if (x != 0) x else y.compareTo(size.y)
     }
+
+    @JvmName("times")
+    operator fun times(other: Vec2) = Vec2(x * other.x, y * other.y)
+
+    @JvmName("div")
+    operator fun div(other: Vec2) = Vec2(x / other.x, y / other.y)
+
+    @JvmName("plus")
+    operator fun plus(other: Vec2) = Vec2(x + other.x, y + other.y)
+
+    @JvmName("minus")
+    operator fun minus(other: Vec2) = Vec2(x - other.x, y - other.y)
+
+    @JvmName("rem")
+    operator fun rem(other: Vec2) = Vec2(x % other.x, y % other.y)
+
+    @JvmName("coerceAtMost")
+    fun coerceAtMost(other: Vec2) = Vec2(x.coerceAtMost(other.x), y.coerceAtMost(other.y))
 
     companion object Constants {
         @get:JvmName("ZERO")
