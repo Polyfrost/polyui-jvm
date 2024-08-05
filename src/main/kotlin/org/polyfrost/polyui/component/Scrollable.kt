@@ -30,7 +30,7 @@ import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.seconds
-import org.polyfrost.polyui.utils.Locking
+import org.polyfrost.polyui.utils.annotations.Locking
 import org.polyfrost.polyui.utils.fastEach
 
 /**

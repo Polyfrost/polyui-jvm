@@ -96,7 +96,9 @@ fun <S : Inputtable> S.draggable(withX: Boolean = true, withY: Boolean = true, f
 fun <S : Inputtable> S.makeRearrangeableGrid(): S {
     children?.fastEach { cmp ->
         val self = cmp as? Inputtable ?: return@fastEach
-        self.draggable().onDrag { _ ->
+        self.draggable().onDragStart {
+            if (this is Drawable) alpha = 0.6f
+        }.onDrag { _ ->
             val px = x
             val py = y
             val pw = width
@@ -114,10 +116,24 @@ fun <S : Inputtable> S.makeRearrangeableGrid(): S {
             x = px
             y = py
         }.onDragEnd {
+            if (this is Drawable) {
+                alpha = 1f
+                needsRedraw = true
+            }
             parent.position()
+            true
         }
     }
     return this
+}
+
+/**
+ * Add the given [ComponentOp] to this component.
+ * @since 1.6.2
+ */
+context(S)
+fun <S : Component> ComponentOp.add() {
+    this@S.addOperation(this)
 }
 
 /**
@@ -287,6 +303,12 @@ fun <S : Inputtable> S.disable(state: Boolean = true): S {
     return this
 }
 
+fun <S : Drawable> S.disable(state: Boolean = true): S {
+    this.isEnabled = !state
+    this.alpha = if (state) 0.8f else 1f
+    return this
+}
+
 fun <S : Component> S.hide(state: Boolean = true): S {
     this.renders = !state
     return this
@@ -302,7 +324,7 @@ fun <S : Component> S.hide(state: Boolean = true): S {
 fun <S : Component> S.getTargetPosition(): Vec2 {
     val operations = this.operations ?: return this.at
     operations.fastEach {
-        if (it is Move) return it.target
+        if (it is Move<*>) return it.target
     }
     return this.at
 }
@@ -317,7 +339,7 @@ fun <S : Component> S.getTargetPosition(): Vec2 {
 fun <S : Component> S.getTargetSize(): Vec2 {
     val operations = this.operations ?: return this.size
     operations.fastEach {
-        if (it is Resize) return it.target
+        if (it is Resize<*>) return it.target
     }
     return this.size
 }
@@ -698,8 +720,21 @@ fun <S : Inputtable> S.onDragStart(func: S.(Event.Mouse.Drag.Started) -> Unit): 
     return this
 }
 
+@OverloadResolutionByLambdaReturnType
+@JvmName("onDragEndZ")
+fun <S : Inputtable> S.onDragEnd(func: S.(Event.Mouse.Drag.Ended) -> Boolean): S {
+    on(Event.Mouse.Drag.Ended, func)
+    return this
+}
+
+@OverloadResolutionByLambdaReturnType
 fun <S : Inputtable> S.onDragEnd(func: S.(Event.Mouse.Drag.Ended) -> Unit): S {
     on(Event.Mouse.Drag.Ended, func)
+    return this
+}
+
+fun <S : Inputtable> S.onScroll(func: S.(Event.Mouse.Scrolled) -> Unit): S {
+    on(Event.Mouse.Scrolled, func)
     return this
 }
 

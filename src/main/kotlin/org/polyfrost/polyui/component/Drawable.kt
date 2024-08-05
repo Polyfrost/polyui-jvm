@@ -32,8 +32,8 @@ import org.polyfrost.polyui.renderer.data.Framebuffer
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.utils.Locking
-import org.polyfrost.polyui.utils.SideEffects
+import org.polyfrost.polyui.utils.annotations.Locking
+import org.polyfrost.polyui.utils.annotations.SideEffects
 import org.polyfrost.polyui.utils.fastEach
 import org.polyfrost.polyui.utils.fastRemoveIfReversed
 

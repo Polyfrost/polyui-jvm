@@ -89,12 +89,12 @@ class Debugger(private val polyUI: PolyUI) {
     }
 
     private val printBind = KeyBinder.Bind('P', mods = mods(KeyModifiers.CONTROL)) {
-        LOGGER.info(debugString())
+        if (it) LOGGER.info(debugString())
         true
     }
 
     private val inspectBind = KeyBinder.Bind(chars = null, mouse = intArrayOf(0), mods = mods(KeyModifiers.SHIFT), durationNanos = 0.4.seconds) {
-        openDebugWindow(polyUI.inputManager.rayCheckUnsafe(polyUI.master, polyUI.mouseX, polyUI.mouseY))
+        if (it) openDebugWindow(polyUI.inputManager.rayCheckUnsafe(polyUI.master, polyUI.mouseX, polyUI.mouseY))
         true
     }
 
@@ -127,6 +127,7 @@ class Debugger(private val polyUI: PolyUI) {
     }
 
     private val evalBind = KeyBinder.Bind(key = Keys.TAB, mods = mods(KeyModifiers.SHIFT)) {
+        if (!it) return@Bind false
         val forEval = polyUI.inputManager.rayCheckUnsafe(polyUI.master, polyUI.mouseX, polyUI.mouseY) ?: return@Bind false
         this.forEval = forEval
         val evalWindow = evalWindow
@@ -262,6 +263,7 @@ class Debugger(private val polyUI: PolyUI) {
         if (polyUI.settings.enableDebugKeybind) {
             polyUI.keyBinder?.add(
                 KeyBinder.Bind('I', mods = mods(KeyModifiers.CONTROL, KeyModifiers.SHIFT)) {
+                    if (!it) return@Bind false
                     polyUI.settings.debug = !polyUI.settings.debug
                     polyUI.master.needsRedraw = true
                     val s = if (polyUI.settings.debug) {
@@ -313,7 +315,7 @@ class Debugger(private val polyUI: PolyUI) {
                 }
             }
             if (mods.hasShift) {
-
+                // todo
             }
             if (mods.hasAlt) {
                 val s = "${inputManager.mouseX}x${inputManager.mouseY}"

@@ -26,10 +26,26 @@ import org.polyfrost.polyui.animate.Animation
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
 
-abstract class ComponentOp<S : Component>(protected val self: S) {
-    abstract fun apply()
+/**
+ * # ComponentOp
+ *
+ * component operations represent simple procedures that are ran before
+ * and after every render cycle. They can support animations and verification.
+ *
+ * @since 1.6.1
+ */
+fun interface ComponentOp {
+    /**
+     * Apply the operation, this is called before the component is rendered.
+     */
+    fun apply()
 
-    abstract fun unapply(): Boolean
+    /**
+     * Unapply the operation. this is called after the component is rendered.
+     *
+     * return `true` to instantly remove this operation from the component.
+     */
+    fun unapply() = false
 
     /**
      * override this function to verify that this operation is valid, which is run before it is applied. (default: always `true`)
@@ -37,30 +53,21 @@ abstract class ComponentOp<S : Component>(protected val self: S) {
      * @return `true` if this operation is deemed to be valid.
      * @since 1.1.1
      */
-    open fun verify(): Boolean = true
+    fun verify() = true
 
     /**
      * If this is `true`, when this drawable operation is attempted to be added, if one is already present, instead of replacing it, it will be ignored.
      * @since 1.5.0
      */
-    open fun exclusive(): Boolean = false
-
-    fun add() {
-        self.addOperation(this)
-    }
-
-    fun remove() {
-        self.removeOperation(this)
-    }
+    fun exclusive() = false
 
     /**
      * Class to represent an operation that can be applied on a component that modifies it in some way.
      *
      * It is applied before and after rendering, for example a [Move], [Resize], or [Rotate] operation, or a transition.
      */
-    abstract class Animatable<S : Component>(self: S, protected val animation: Animation? = null, var onFinish: (S.() -> Unit)? = null) :
-        ComponentOp<S>(self) {
-
+    abstract class Animatable<S : Component>(protected val self: S, protected val animation: Animation? = null, var onFinish: (S.() -> Unit)? = null) :
+        ComponentOp {
 
         override fun apply() {
             apply(animation?.update(self.polyUI.delta) ?: 1f)
@@ -77,6 +84,10 @@ abstract class ComponentOp<S : Component>(protected val self: S) {
             } else {
                 return false
             }
+        }
+
+        fun add() {
+            self.addOperation(this)
         }
 
         /**

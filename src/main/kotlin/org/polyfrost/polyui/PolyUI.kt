@@ -22,6 +22,7 @@
 package org.polyfrost.polyui
 
 import org.apache.logging.log4j.LogManager
+import org.polyfrost.polyui.Settings
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.color.DarkTheme
 import org.polyfrost.polyui.color.PolyColor
@@ -32,7 +33,6 @@ import org.polyfrost.polyui.event.InputManager
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Translator
-import org.polyfrost.polyui.property.Settings
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.Window
 import org.polyfrost.polyui.renderer.data.Cursor
@@ -59,7 +59,7 @@ import kotlin.math.min
  *
  * ## Rendering Pipeline
  * PolyUI has the policy of ***'render what you need ONLY WHEN you need it'***.
- * Most of the time, PolyUI will be drawing frame buffers to the screen instead of drawing directly to the screen, as long as they are [suitably complex][org.polyfrost.polyui.property.Settings.minDrawablesForFramebuffer] for it to be worth it; or [not drawing at all][drew]!
+ * Most of the time, PolyUI will be drawing frame buffers to the screen instead of drawing directly to the screen, as long as they are [suitably complex][org.polyfrost.polyui.Settings.minDrawablesForFramebuffer] for it to be worth it; or [not drawing at all][drew]!
  * This allows us to have a very fast rendering pipeline, and allows us to have a lot of components on screen at once, without a performance hit.
  *
  * Rendering can be [requested][org.polyfrost.polyui.component.Drawable.needsRedraw] by components, and if so, it will be rendered during the next frame. This should only be requested if it is necessary, for example to do an animation or something.
@@ -209,7 +209,7 @@ class PolyUI(
      * `if (polyUI.drew) glfwSwapBuffers(handle)`
      *
      * This is very handy as it will *drastically* reduce required system resources. If you are looking for more efficiency optimizations,
-     * see the settings for [max fps][org.polyfrost.polyui.property.Settings.maxFPS] and [framebuffer settings][org.polyfrost.polyui.property.Settings.minDrawablesForFramebuffer].
+     * see the settings for [max fps][org.polyfrost.polyui.Settings.maxFPS] and [framebuffer settings][org.polyfrost.polyui.Settings.minDrawablesForFramebuffer].
      */
     var drew = false
         private set
@@ -393,7 +393,7 @@ class PolyUI(
             drew = false
         }
         if (!canPauseRendering) master.needsRedraw = true
-        keyBinder?.update(delta, inputManager.mods)
+        keyBinder?.update(delta, inputManager.mods, true)
         var wait = Long.MAX_VALUE
         executors.fastRemoveIfReversed l@{
             val o = it.tick(delta)

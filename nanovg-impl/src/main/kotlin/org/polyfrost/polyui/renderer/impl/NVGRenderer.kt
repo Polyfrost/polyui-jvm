@@ -60,6 +60,7 @@ object NVGRenderer : Renderer {
     private var raster: Long = 0L
     private var drawing = false
     private val queue = ArrayList<() -> Unit>()
+
     // ByteBuffer.of("px\u0000")
     private val PIXELS: ByteBuffer = MemoryUtil.memAlloc(3).put(112).put(120).put(0).flip() as ByteBuffer
     private val errorHandler: (Throwable) -> Unit = { LOGGER.error("failed to load resource!", it) }
@@ -70,18 +71,22 @@ object NVGRenderer : Renderer {
         require(vg != 0L) { "Could not initialize NanoVG" }
         require(raster != 0L) { "Could not initialize NanoSVG" }
 
-        val font = PolyUI.defaultFonts.regular
-        val fdata = font.load().toDirectByteBuffer()
-        val fit = NVGFont(nvgCreateFontMem(vg, font.name, fdata, false), fdata)
-        this.defaultFont = fit
-        fonts[font] = fit
+        if (defaultFont == null) {
+            val font = PolyUI.defaultFonts.regular
+            val fdata = font.load().toDirectByteBuffer()
+            val fit = NVGFont(nvgCreateFontMem(vg, font.name, fdata, false), fdata)
+            this.defaultFont = fit
+            fonts[font] = fit
+        }
 
-        val img = PolyUI.defaultImage
-        val idata = img.load().toDirectByteBuffer()
-        val iit = nvgCreateImageRGBA(vg, img.width.toInt(), img.height.toInt(), 0, idata)
-        require(iit != 0) { "NanoVG failed to initialize default image" }
-        images[img] = iit
-        this.defaultImage = iit
+        if (defaultImage == 0) {
+            val img = PolyUI.defaultImage
+            val idata = img.load().toDirectByteBuffer()
+            val iit = nvgCreateImageRGBA(vg, img.width.toInt(), img.height.toInt(), 0, idata)
+            require(iit != 0) { "NanoVG failed to initialize default image" }
+            images[img] = iit
+            this.defaultImage = iit
+        }
     }
 
     override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {

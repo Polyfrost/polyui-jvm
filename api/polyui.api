@@ -537,8 +537,8 @@ public abstract class org/polyfrost/polyui/component/Component {
 	public final fun at (IF)V
 	public fun calculateSize ()J
 	public final fun clipChildren ()V
-	public final fun contains (Lorg/polyfrost/polyui/unit/Vec4;)Z
 	public final fun contains (J)Z
+	public final fun contains (Lorg/polyfrost/polyui/unit/Vec4;)Z
 	public final fun createdWithSetPosition ()Z
 	public final fun createdWithSetSize ()Z
 	public fun debugString ()Ljava/lang/String;
@@ -648,6 +648,7 @@ public abstract class org/polyfrost/polyui/component/Drawable : org/polyfrost/po
 }
 
 public final class org/polyfrost/polyui/component/ExtensionsKt {
+	public static final fun add (Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/operations/ComponentOp;)V
 	public static final fun add3dEffect (Lorg/polyfrost/polyui/component/Drawable;DD)Lorg/polyfrost/polyui/component/Drawable;
 	public static synthetic fun add3dEffect$default (Lorg/polyfrost/polyui/component/Drawable;DDILjava/lang/Object;)Lorg/polyfrost/polyui/component/Drawable;
 	public static final fun addHoverInfo (Lorg/polyfrost/polyui/component/Inputtable;[Lorg/polyfrost/polyui/component/Drawable;JLorg/polyfrost/polyui/unit/Align;Lorg/polyfrost/polyui/unit/Point;)Lorg/polyfrost/polyui/component/Inputtable;
@@ -1458,30 +1459,34 @@ public final class org/polyfrost/polyui/input/Translator$Text$Simple : org/polyf
 	public fun toString ()Ljava/lang/String;
 }
 
-public abstract class org/polyfrost/polyui/operations/ComponentOp {
-	public fun <init> (Lorg/polyfrost/polyui/component/Component;)V
-	public final fun add ()V
+public abstract interface class org/polyfrost/polyui/operations/ComponentOp {
 	public abstract fun apply ()V
 	public fun exclusive ()Z
-	protected final fun getSelf ()Lorg/polyfrost/polyui/component/Component;
-	public final fun remove ()V
-	public abstract fun unapply ()Z
+	public fun unapply ()Z
 	public fun verify ()Z
 }
 
 public abstract class org/polyfrost/polyui/operations/ComponentOp$Animatable : org/polyfrost/polyui/operations/ComponentOp {
 	public fun <init> (Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/animate/Animation;Lkotlin/jvm/functions/Function1;)V
 	public synthetic fun <init> (Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/animate/Animation;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun add ()V
 	public fun apply ()V
 	protected abstract fun apply (F)V
 	public fun finishNow ()V
 	protected final fun getAnimation ()Lorg/polyfrost/polyui/animate/Animation;
 	public final fun getOnFinish ()Lkotlin/jvm/functions/Function1;
+	protected final fun getSelf ()Lorg/polyfrost/polyui/component/Component;
 	public fun reset ()V
 	public fun reverse ()V
 	public final fun setOnFinish (Lkotlin/jvm/functions/Function1;)V
 	public fun unapply ()Z
 	protected fun unapply (F)V
+}
+
+public final class org/polyfrost/polyui/operations/ComponentOp$DefaultImpls {
+	public static fun exclusive (Lorg/polyfrost/polyui/operations/ComponentOp;)Z
+	public static fun unapply (Lorg/polyfrost/polyui/operations/ComponentOp;)Z
+	public static fun verify (Lorg/polyfrost/polyui/operations/ComponentOp;)Z
 }
 
 public final class org/polyfrost/polyui/operations/Fade : org/polyfrost/polyui/operations/ComponentOp$Animatable {
@@ -1957,14 +1962,6 @@ public final class org/polyfrost/polyui/unit/Point : java/lang/Enum {
 
 public final class org/polyfrost/polyui/unit/Units {
 	public static final fun getAlignDefault ()Lorg/polyfrost/polyui/unit/Align;
-	public static final fun hours (Ljava/lang/Number;)J
-	public static final fun microseconds (Ljava/lang/Number;)J
-	public static final fun milliseconds (Ljava/lang/Number;)J
-	public static final fun minutes (Ljava/lang/Number;)J
-	public static final fun ms (Ljava/lang/Number;)J
-	public static final fun nanoseconds (Ljava/lang/Number;)J
-	public static final fun seconds (Ljava/lang/Number;)J
-	public static final fun secs (Ljava/lang/Number;)J
 	public static final fun toVec4 (J)Lorg/polyfrost/polyui/unit/Vec4;
 }
 
@@ -2122,12 +2119,12 @@ public final class org/polyfrost/polyui/utils/IOUtils {
 
 public final class org/polyfrost/polyui/utils/Line {
 	public synthetic fun <init> (Ljava/lang/String;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun bounds ()J
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2-2K4fKj8 ()J
 	public final fun copy-K8uago8 (Ljava/lang/String;J)Lorg/polyfrost/polyui/utils/Line;
 	public static synthetic fun copy-K8uago8$default (Lorg/polyfrost/polyui/utils/Line;Ljava/lang/String;JILjava/lang/Object;)Lorg/polyfrost/polyui/utils/Line;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getBounds ()J
 	public final fun getString ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;

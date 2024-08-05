@@ -95,6 +95,6 @@ fun main() {
             text("i am some text that has been limited, so at some point i will stop showing up and i will just be cut off, which is a pretty handy feature.", limited = true, visibleSize = 400f by 12f)
             textInput(visibleSize = 150f by 12f)
         }
-        BoxedNumericInput().add()
+        BoxedNumericInput(size = 40f by 32f).add()
     }.open(window)
 }

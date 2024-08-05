@@ -139,9 +139,9 @@ interface Event {
 
         class Scrolled internal constructor(val amountX: Float, val amountY: Float, @get:JvmName("getMods") val mods: Modifiers) : Mouse {
             override fun toString(): String = "MouseScrolled($amountX, $amountY, $mods)"
-            fun component1() = amountX
-            fun component2() = amountY
-            fun component3() = mods
+            operator fun component1() = amountX
+            operator fun component2() = amountY
+            operator fun component3() = mods
         }
 
         /** acceptable by component and layout, when the mouse enters this component.

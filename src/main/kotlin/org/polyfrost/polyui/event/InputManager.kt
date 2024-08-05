@@ -32,7 +32,7 @@ import org.polyfrost.polyui.component.isRelatedTo
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Modifiers
-import org.polyfrost.polyui.property.Settings
+import org.polyfrost.polyui.Settings
 import org.polyfrost.polyui.utils.Clock
 import org.polyfrost.polyui.utils.fastEach
 import java.nio.file.Path
@@ -78,12 +78,7 @@ class InputManager(
      * @since 1.6.1
      */
     var dragging = false
-        private set(value) {
-            if (field == value) return
-            field = value
-            if (value) mouseOver?.accept(Event.Mouse.Drag.Started)
-            else mouseOver?.accept(Event.Mouse.Drag.Ended)
-        }
+        private set
 
     private var clickTimer: Long = 0L
 
@@ -190,7 +185,7 @@ class InputManager(
      */
     fun addModifier(modifier: Byte) {
         mods = (mods.toInt() or modifier.toInt()).toByte()
-        keyBinder?.update(0L, mods)
+        keyBinder?.update(0L, mods, true)
     }
 
     /**
@@ -199,7 +194,7 @@ class InputManager(
      */
     fun removeModifier(modifier: Byte) {
         mods = (mods.toInt() and modifier.toInt().inv()).toByte()
-        keyBinder?.update(0L, mods)
+        keyBinder?.update(0L, mods, false)
     }
 
     /**
@@ -260,9 +255,12 @@ class InputManager(
         if (mouseDown) {
             val threshold = settings.dragThreshold
             if (abs(pressX - x) > threshold || abs(pressY - y) > threshold) {
-                dragging = true
+                if (!dragging) {
+                    dragging = true
+                    if (dispatch(Event.Mouse.Drag.Started)) return
+                }
             }
-            if (dragging) mouseOver?.accept(Event.Mouse.Drag)
+            if (dragging) dispatch(Event.Mouse.Drag)
             return
         }
         master?.let { mouseOver = rayCheck(it, x, y) }
@@ -284,10 +282,6 @@ class InputManager(
 
     /** call this function when a mouse button is released. */
     fun mouseReleased(button: Int) {
-        if (button == 0) {
-            mouseDown = false
-            dragging = false
-        }
         if (clickedButton != button) {
             clickedButton = button
             clickAmount = 1
@@ -307,8 +301,12 @@ class InputManager(
         mouseOver?.inputState = INPUT_HOVERED
 
         // fast path: no need to alloc or check for anything on simple
-        if (button == 0 && clickAmount == 1 && keyModifiers.isEmpty) {
-            dispatch(Event.Mouse.Companion.Released.set(mouseX, mouseY), true)
+        if (button == 0) {
+            mouseDown = false
+            if (dragging) {
+                dragging = false
+                if (dispatch(Event.Mouse.Drag.Ended)) return
+            }
             mouseOver?.let {
                 if (!it.isInside(mouseX, mouseY)) {
                     mouseOver = null
@@ -318,7 +316,10 @@ class InputManager(
             focused?.let {
                 if (!it.isInside(mouseX, mouseY)) unfocus()
             }
-            if (!dispatch(Event.Mouse.Companion.Clicked.set(mouseX, mouseY))) safeFocus(mouseOver)
+            if (clickAmount == 1 && keyModifiers.isEmpty) {
+                dispatch(Event.Mouse.Companion.Released.set(mouseX, mouseY), true)
+                if (!dispatch(Event.Mouse.Companion.Clicked.set(mouseX, mouseY))) safeFocus(mouseOver)
+            }
         } else {
             dispatch(Event.Mouse.Released(button, mouseX, mouseY, keyModifiers), true)
             val click = Event.Mouse.Clicked(button, mouseX, mouseY, clickAmount, keyModifiers)

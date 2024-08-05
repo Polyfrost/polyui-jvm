@@ -23,8 +23,8 @@ package org.polyfrost.polyui.input
 
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
+import org.polyfrost.polyui.Settings
 import org.polyfrost.polyui.event.Event
-import org.polyfrost.polyui.property.Settings
 import org.polyfrost.polyui.utils.addOrReplace
 import org.polyfrost.polyui.utils.fastEach
 
@@ -49,8 +49,9 @@ class KeyBinder(private val settings: Settings) {
     private val downMouseButtons = ArrayList<Int>(5)
     private val downUnmappedKeys = ArrayList<Int>(5)
     private val downKeys = ArrayList<Keys>(5)
+
     private var recordingTime = 0L
-    private var recordingFunc: (() -> Boolean)? = null
+    private var recordingFunc: ((Boolean) -> Boolean)? = null
     private var callback: ((Bind?) -> Unit)? = null
 
     /**
@@ -59,37 +60,42 @@ class KeyBinder(private val settings: Settings) {
      * This method is public, but marked as internal. This is because it should only be called by the PolyUI instance, unless you are trying to externally force a keypress (which you probably shouldn't be)
      */
     @ApiStatus.Internal
-    fun accept(event: Event, mods: Byte): Boolean {
-        when (event) {
-            is Event.Mouse.Pressed -> {
-                if (event.mods.isEmpty) {
-                    cancelRecord("Cannot bind to just left click")
-                    return false
-                }
+    fun accept(event: Event, mods: Byte) = when (event) {
+        is Event.Mouse.Pressed -> {
+            if (event.mods.isEmpty) {
+                cancelRecord("Cannot bind to just left click")
+                false
+            } else {
                 downMouseButtons.add(event.button)
                 completeRecording(mods)
+                update(0L, mods, true)
             }
+        }
 
-            is Event.Mouse.Released -> {
-                downMouseButtons.remove(event.button)
-            }
+        is Event.Mouse.Released -> {
+            val ret = update(0L, mods, false)
+            downMouseButtons.remove(event.button)
+            ret
+        }
 
-            is Event.Focused.KeyPressed -> {
-                if (event.key == Keys.ESCAPE) {
-                    cancelRecord("ESC key pressed")
-                    return false
-                }
+        is Event.Focused.KeyPressed -> {
+            if (event.key == Keys.ESCAPE) {
+                cancelRecord("ESC key pressed")
+                false
+            } else {
                 downKeys.add(event.key)
                 completeRecording(mods)
+                update(0L, mods, true)
             }
-
-            is Event.Focused.KeyReleased -> {
-                downKeys.remove(event.key)
-            }
-
-            else -> return false
         }
-        return update(0L, mods)
+
+        is Event.Focused.KeyReleased -> {
+            val ret = update(0L, mods, false)
+            downKeys.remove(event.key)
+            ret
+        }
+
+        else -> false
     }
 
     /**
@@ -98,21 +104,21 @@ class KeyBinder(private val settings: Settings) {
      * This method is public, but marked as internal. This is because it should only be called by the PolyUI instance, unless you are trying to externally force a keypress (which you probably shouldn't be)
      */
     @ApiStatus.Internal
-    fun accept(key: Int, down: Boolean, mods: Byte): Boolean {
-        if (down) {
-            downUnmappedKeys.add(key)
-            completeRecording(mods)
-        } else {
-            downUnmappedKeys.remove(key)
-        }
-        return update(0L, mods)
+    fun accept(key: Int, down: Boolean, mods: Byte) = if (down) {
+        downUnmappedKeys.add(key)
+        completeRecording(mods)
+        update(0L, mods, true)
+    } else {
+        val ret = update(0L, mods, false)
+        downUnmappedKeys.remove(key)
+        ret
     }
 
     @ApiStatus.Internal
-    fun update(deltaTimeNanos: Long, mods: Byte): Boolean {
+    fun update(deltaTimeNanos: Long, mods: Byte, down: Boolean): Boolean {
         if (!hasTimeSensitiveListeners && deltaTimeNanos > 0L) return false
         listeners.fastEach {
-            if (it.update(downUnmappedKeys, downKeys, downMouseButtons, mods, deltaTimeNanos)) {
+            if (it.update(downUnmappedKeys, downKeys, downMouseButtons, mods, deltaTimeNanos, down)) {
                 return true
             }
         }
@@ -193,11 +199,11 @@ class KeyBinder(private val settings: Settings) {
      *
      * @param holdDurationNanos the duration that the keys have to be pressed in the resultant keybind
      * @param callback the function that will be called when recording is completed. **the parameter will be `null` if it failed or was cancelled**.
-     * @param function the function that will be run when the keybind is pressed
+     * @param function the function that will be run when the keybind is pressed. **The parameter will be `true` if the keybind is pressed, and `false` if it is released.**
      * @throws IllegalStateException if the keybind is already present
      * @since 0.24.0
      */
-    fun record(holdDurationNanos: Long = 0L, callback: (Bind?) -> Unit, function: () -> Boolean) {
+    fun record(holdDurationNanos: Long = 0L, callback: (Bind?) -> Unit, function: (Boolean) -> Boolean) {
         if (settings.debug) PolyUI.LOGGER.info("Recording keybind began")
         if (recordingFunc != null) cancelRecord("New recording started")
         release()
@@ -225,16 +231,16 @@ class KeyBinder(private val settings: Settings) {
         downUnmappedKeys.clear()
     }
 
-    class Bind(val unmappedKeys: IntArray? = null, val keys: Array<Keys>? = null, val mouse: IntArray? = null, @get:JvmName("getMods") val mods: Modifiers = Modifiers(0), val durationNanos: Long = 0L, @Transient val action: () -> Boolean) {
-        constructor(chars: CharArray? = null, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: () -> Boolean) : this(
+    open class Bind(val unmappedKeys: IntArray? = null, val keys: Array<Keys>? = null, val mouse: IntArray? = null, @get:JvmName("getMods") val mods: Modifiers = Modifiers(0), val durationNanos: Long = 0L, @Transient val action: (Boolean) -> Boolean) {
+        constructor(chars: CharArray? = null, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: (Boolean) -> Boolean) : this(
             chars?.map {
                 it.code
             }?.toIntArray(),
             keys, mouse, mods, durationNanos, action,
         )
 
-        constructor(char: Char, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: () -> Boolean) : this(intArrayOf(char.code), keys, mouse, mods, durationNanos, action)
-        constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Array<Mouse>? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: () -> Boolean) : this(
+        constructor(char: Char, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: (Boolean) -> Boolean) : this(intArrayOf(char.code), keys, mouse, mods, durationNanos, action)
+        constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Array<Mouse>? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: (Boolean) -> Boolean) : this(
             unmappedKeys, keys,
             mouse?.map {
                 it.value.toInt()
@@ -242,7 +248,7 @@ class KeyBinder(private val settings: Settings) {
             mods, durationNanos, action,
         )
 
-        constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Mouse? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: () -> Boolean) : this(
+        constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Mouse? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: (Boolean) -> Boolean) : this(
             unmappedKeys, keys,
             mouse?.value?.let {
                 intArrayOf(it.toInt())
@@ -250,7 +256,7 @@ class KeyBinder(private val settings: Settings) {
             mods, durationNanos, action,
         )
 
-        constructor(unmappedKeys: IntArray? = null, key: Keys? = null, mouse: Array<Mouse>? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: () -> Boolean) : this(
+        constructor(unmappedKeys: IntArray? = null, key: Keys? = null, mouse: Array<Mouse>? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: (Boolean) -> Boolean) : this(
             unmappedKeys,
             key?.let {
                 arrayOf(it)
@@ -264,7 +270,7 @@ class KeyBinder(private val settings: Settings) {
         @Transient
         private var ran = false
 
-        internal fun update(c: ArrayList<Int>, k: ArrayList<Keys>, m: ArrayList<Int>, mods: Byte, deltaTimeNanos: Long): Boolean {
+        internal fun update(c: ArrayList<Int>, k: ArrayList<Keys>, m: ArrayList<Int>, mods: Byte, deltaTimeNanos: Long, down: Boolean): Boolean {
             if (durationNanos == 0L && deltaTimeNanos > 0L) return false
             if (unmappedKeys?.matches(c) != false && keys?.matches(k) != false && mouse?.matches(m) != false && this.mods.equalLenient(mods)) {
                 if (!ran) {
@@ -272,11 +278,10 @@ class KeyBinder(private val settings: Settings) {
                         time += deltaTimeNanos
                         if (time >= durationNanos) {
                             ran = true
-                            return action()
+                            return action(true)
                         }
                     } else {
-                        ran = true
-                        return action()
+                        return action(down)
                     }
                 }
             } else {

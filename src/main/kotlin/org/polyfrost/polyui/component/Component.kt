@@ -30,6 +30,8 @@ import org.polyfrost.polyui.operations.ComponentOp
 import org.polyfrost.polyui.operations.Fade
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.*
+import org.polyfrost.polyui.utils.annotations.Locking
+import org.polyfrost.polyui.utils.annotations.SideEffects
 import kotlin.experimental.and
 import kotlin.experimental.or
 
@@ -295,7 +297,7 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
     open var isEnabled = true
 
 
-    var operations: ArrayList<ComponentOp<*>>? = null
+    var operations: ArrayList<ComponentOp>? = null
         private set
 
     /**
@@ -552,11 +554,11 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
 
         polyUI.inputManager.drop(this as? Inputtable)
         if (old is Drawable) {
-            Fade(old, 0f, false, Animations.Default.create(0.3.seconds)) {
+            addOperation(Fade(old, 0f, false, Animations.Default.create(0.3.seconds)) {
                 isEnabled = false
                 children.remove(this)
                 _parent = null
-            }.add()
+            })
         } else {
             children.remove(old)
             old._parent = null
@@ -577,34 +579,34 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
     open fun debugString(): String? = null
 
     /**
-     * Add a [ComponentOp] to this drawable.
+     * Add a [ComponentOp] to this component.
      * @return `true` if the operation was added, `false` if it was replaced.
      */
-    @Locking(`when` = "drawableOp.verify() == true")
-    fun addOperation(componentOp: ComponentOp<*>): Boolean {
-        if (!componentOp.verify()) {
+    @Locking(`when` = "operation.verify() == true")
+    fun addOperation(operation: ComponentOp): Boolean {
+        if (!operation.verify()) {
 //            if (polyUI.settings.debug) PolyUI.LOGGER.warn("Dodged invalid op $drawableOp on ${this.simpleName}")
             return false
         }
         synchronized(this) {
-            val operations = this.operations ?: ArrayList<ComponentOp<*>>(3).also { operations = it; it.add(componentOp); return true }
-            val i = operations.indexOf(componentOp)
+            val operations = this.operations ?: ArrayList<ComponentOp>(3).also { operations = it; it.add(operation); return true }
+            val i = operations.indexOf(operation)
             return if (i == -1) {
                 if (this is Drawable) this.needsRedraw = true
-                operations.add(componentOp)
+                operations.add(operation)
                 true
-            } else if (componentOp.exclusive()) true
+            } else if (operation.exclusive()) true
             else {
                 if (this is Drawable) this.needsRedraw = true
-                operations[i] = componentOp
+                operations[i] = operation
                 false
             }
         }
     }
 
     @Locking
-    fun addOperation(vararg componentOps: ComponentOp<*>) {
-        for (drawableOp in componentOps) addOperation(drawableOp)
+    fun addOperation(vararg operations: ComponentOp) {
+        for (op in operations) addOperation(op)
     }
 
     /**
@@ -612,7 +614,7 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
      */
     @Locking(`when` = "operations != null")
     @Synchronized
-    fun removeOperation(componentOp: ComponentOp<*>) {
+    fun removeOperation(componentOp: ComponentOp) {
         this.operations?.apply {
             if (size == 1) operations = null
             else remove(componentOp)

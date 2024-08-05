@@ -19,7 +19,7 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.polyfrost.polyui.property
+package org.polyfrost.polyui
 
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.unit.Vec2

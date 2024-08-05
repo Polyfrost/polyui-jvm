@@ -379,8 +379,12 @@ fun BoxedNumericInput(
             true
         }.withStates(),
         radii = floatArrayOf(0f, radius, 0f, radius),
-        alignment = Align(mode = Align.Mode.Vertical, pad = Vec2.ZERO)
-    ),
+        alignment = Align(main = Align.Main.Center, mode = Align.Mode.Vertical, pad = Vec2(2f, 2f)),
+        size = Vec2(0f, 32f)
+    ).onScroll { (_, y) ->
+        if (y > 0f) this[0].accept(Event.Mouse.Clicked)
+        else this[1].accept(Event.Mouse.Clicked)
+    }.withBoarder(),
     alignment = Align(pad = Vec2.ZERO)
 )
 

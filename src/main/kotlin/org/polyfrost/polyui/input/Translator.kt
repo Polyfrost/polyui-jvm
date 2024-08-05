@@ -23,7 +23,7 @@ package org.polyfrost.polyui.input
 
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.property.Settings
+import org.polyfrost.polyui.Settings
 import org.polyfrost.polyui.utils.dont
 import org.polyfrost.polyui.utils.fastEach
 import org.polyfrost.polyui.utils.getResourceStreamNullable
@@ -37,7 +37,7 @@ import org.polyfrost.polyui.utils.getResourceStreamNullable
  *
  *  for example `/`[translationDir]`/en_GB.lang`.
  *
- *  This can also be set with `-Dpolyui.locale="ll_CC"` or using [Settings.defaultLocale][org.polyfrost.polyui.property.Settings.defaultLocale].
+ *  This can also be set with `-Dpolyui.locale="ll_CC"` or using [Settings.defaultLocale][org.polyfrost.polyui.Settings.defaultLocale].
  *
  *  If the file cannot be found, PolyUI will check for a file named `ll_default.lang` (for example `en_default.lang`) and use that instead if present.
  *  If that isn't found, it will use the default locale (above), and if that isn't found it will crash.

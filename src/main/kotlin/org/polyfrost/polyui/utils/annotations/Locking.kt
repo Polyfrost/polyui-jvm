@@ -19,7 +19,7 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.polyfrost.polyui.utils
+package org.polyfrost.polyui.utils.annotations
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Blocking

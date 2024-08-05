@@ -28,7 +28,7 @@ import org.polyfrost.polyui.PolyUI.Companion.INPUT_HOVERED
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_NONE
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
 import org.polyfrost.polyui.animate.Animations
-import org.polyfrost.polyui.event.Dispatches
+import org.polyfrost.polyui.utils.annotations.Dispatches
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.operations.Recolor
 import org.polyfrost.polyui.renderer.data.Cursor

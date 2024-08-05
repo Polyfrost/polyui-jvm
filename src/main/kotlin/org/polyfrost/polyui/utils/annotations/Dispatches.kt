@@ -1,4 +1,4 @@
-package org.polyfrost.polyui.event
+package org.polyfrost.polyui.utils.annotations
 
 import org.jetbrains.annotations.ApiStatus
 
