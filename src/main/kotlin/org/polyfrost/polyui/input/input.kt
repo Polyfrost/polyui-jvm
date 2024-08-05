@@ -22,6 +22,7 @@
 package org.polyfrost.polyui.input
 
 import org.polyfrost.polyui.PolyUI
+import kotlin.experimental.or
 
 /**
  * PolyUI's mapping for unprintable key codes.
@@ -70,40 +71,38 @@ enum class Keys(val keyName: String, val value: Short) {
     companion object {
         /** get the key from the given value. */
         @JvmStatic
-        fun fromValue(value: Int): Keys {
-            return when (value) {
-                1 -> F1
-                2 -> F2
-                3 -> F3
-                4 -> F4
-                5 -> F5
-                6 -> F6
-                7 -> F7
-                8 -> F8
-                9 -> F9
-                10 -> F10
-                11 -> F11
-                12 -> F12
+        fun fromValue(value: Int) = when (value) {
+            1 -> F1
+            2 -> F2
+            3 -> F3
+            4 -> F4
+            5 -> F5
+            6 -> F6
+            7 -> F7
+            8 -> F8
+            9 -> F9
+            10 -> F10
+            11 -> F11
+            12 -> F12
 
-                20 -> ESCAPE
+            20 -> ESCAPE
 
-                21 -> ENTER
-                22 -> TAB
-                23 -> BACKSPACE
-                24 -> INSERT
-                25 -> DELETE
-                26 -> PAGE_UP
-                27 -> PAGE_DOWN
-                28 -> HOME
-                29 -> END
+            21 -> ENTER
+            22 -> TAB
+            23 -> BACKSPACE
+            24 -> INSERT
+            25 -> DELETE
+            26 -> PAGE_UP
+            27 -> PAGE_DOWN
+            28 -> HOME
+            29 -> END
 
-                30 -> RIGHT
-                31 -> LEFT
-                32 -> DOWN
-                33 -> UP
+            30 -> RIGHT
+            31 -> LEFT
+            32 -> DOWN
+            33 -> UP
 
-                else -> UNKNOWN
-            }
+            else -> UNKNOWN
         }
 
         /**
@@ -113,12 +112,10 @@ enum class Keys(val keyName: String, val value: Short) {
          * */
         @JvmStatic
         @JvmName("toString")
-        fun toString(key: Keys, modifiers: Modifiers = Modifiers(0)): String {
-            return if (modifiers.isEmpty) {
-                key.name
-            } else {
-                "${modifiers.name}+${key.name}"
-            }
+        fun toString(key: Keys, modifiers: Modifiers = Modifiers(0)) = if (modifiers.isEmpty) {
+            key.name
+        } else {
+            "${modifiers.name}+${key.name}"
         }
 
         /**
@@ -128,12 +125,10 @@ enum class Keys(val keyName: String, val value: Short) {
          */
         @JvmStatic
         @JvmName("toString")
-        fun toString(key: Char, modifiers: Modifiers = Modifiers(0)): String {
-            return if (modifiers.isEmpty) {
-                key.toString()
-            } else {
-                "${modifiers.name}+$key"
-            }
+        fun toString(key: Char, modifiers: Modifiers = Modifiers(0)) = if (modifiers.isEmpty) {
+            key.toString()
+        } else {
+            "${modifiers.name}+$key"
         }
 
         /**
@@ -143,12 +138,10 @@ enum class Keys(val keyName: String, val value: Short) {
          */
         @JvmStatic
         @JvmName("toStringPretty")
-        fun toStringPretty(key: Keys, modifiers: Modifiers = Modifiers(0)): String {
-            return if (modifiers.isEmpty) {
-                key.keyName
-            } else {
-                "${modifiers.prettyName} + ${key.keyName}"
-            }
+        fun toStringPretty(key: Keys, modifiers: Modifiers = Modifiers(0)) = if (modifiers.isEmpty) {
+            key.keyName
+        } else {
+            "${modifiers.prettyName} + ${key.keyName}"
         }
 
         /**
@@ -158,12 +151,10 @@ enum class Keys(val keyName: String, val value: Short) {
          */
         @JvmStatic
         @JvmName("toStringPretty")
-        fun toStringPretty(key: Char, modifiers: Modifiers = Modifiers(0)): String {
-            return if (modifiers.isEmpty) {
-                key.toString()
-            } else {
-                "${modifiers.prettyName} + $key"
-            }
+        fun toStringPretty(key: Char, modifiers: Modifiers = Modifiers(0)) = if (modifiers.isEmpty) {
+            key.toString()
+        } else {
+            "${modifiers.prettyName} + $key"
         }
     }
 }
@@ -180,36 +171,30 @@ enum class Mouse(val keyName: String, val value: Short) {
 
     companion object {
         @JvmStatic
-        fun fromValue(value: Int): Mouse {
-            return when (value) {
-                0 -> LEFT_MOUSE
-                1 -> RIGHT_MOUSE
-                2 -> MIDDLE_MOUSE
-                3 -> MOUSE_3
-                4 -> MOUSE_4
-                5 -> MOUSE_5
-                else -> UNKNOWN
-            }
+        fun fromValue(value: Int) = when (value) {
+            0 -> LEFT_MOUSE
+            1 -> RIGHT_MOUSE
+            2 -> MIDDLE_MOUSE
+            3 -> MOUSE_3
+            4 -> MOUSE_4
+            5 -> MOUSE_5
+            else -> UNKNOWN
         }
 
         @JvmStatic
         @JvmName("toString")
-        fun toString(button: Mouse, modifiers: Modifiers = Modifiers(0)): String {
-            return if (modifiers.isEmpty) {
-                button.name
-            } else {
-                "${modifiers.name}+${button.name}"
-            }
+        fun toString(button: Mouse, modifiers: Modifiers = Modifiers(0)) = if (modifiers.isEmpty) {
+            button.name
+        } else {
+            "${modifiers.name}+${button.name}"
         }
 
         @JvmStatic
         @JvmName("toStringPretty")
-        fun toStringPretty(button: Mouse, modifiers: Modifiers = Modifiers(0)): String {
-            return if (modifiers.isEmpty) {
-                button.keyName
-            } else {
-                "${modifiers.prettyName} + ${button.keyName}"
-            }
+        fun toStringPretty(button: Mouse, modifiers: Modifiers = Modifiers(0)) = if (modifiers.isEmpty) {
+            button.keyName
+        } else {
+            "${modifiers.prettyName} + ${button.keyName}"
         }
     }
 }
@@ -246,6 +231,8 @@ enum class KeyModifiers(val value: Byte) {
 @JvmInline
 @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 value class Modifiers(val value: Byte) {
+    constructor(vararg modifiers: KeyModifiers) : this(modifiers.fold(0.toByte()) { acc, key -> acc or key.value })
+
     @kotlin.internal.InlineOnly
     inline val lShift get() = value.toInt() and 0b00000001 != 0
 

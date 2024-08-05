@@ -264,34 +264,46 @@ class KeyBinder(private val settings: Settings) {
             mouse, mods, durationNanos, action,
         )
 
+        constructor(modifiers: Modifiers = Modifiers(0), action: (Boolean) -> Boolean) : this(unmappedKeys = null, key = null, mouse = null, mods = modifiers, durationNanos = 0L, action = action)
+
         @Transient
         private var time = 0L
 
         @Transient
         private var ran = false
 
+        protected val isModsOnly get() = unmappedKeys == null && keys == null && mouse == null
+
         internal fun update(c: ArrayList<Int>, k: ArrayList<Keys>, m: ArrayList<Int>, mods: Byte, deltaTimeNanos: Long, down: Boolean): Boolean {
-            if (durationNanos == 0L && deltaTimeNanos > 0L) return false
-            if (unmappedKeys?.matches(c) != false && keys?.matches(k) != false && mouse?.matches(m) != false && this.mods.equalLenient(mods)) {
-                if (!ran) {
-                    if (durationNanos != 0L) {
-                        time += deltaTimeNanos
-                        if (time >= durationNanos) {
-                            ran = true
-                            return action(true)
-                        }
-                    } else {
-                        return action(down)
-                    }
-                }
-            } else {
+            if (!test(c, k, m, mods, deltaTimeNanos, down)) {
                 time = 0L
                 ran = false
+                return false
+            }
+            if (!ran) {
+                if (durationNanos != 0L) {
+                    time += deltaTimeNanos
+                    if (time >= durationNanos) {
+                        ran = true
+                        return action(true)
+                    }
+                } else {
+                    return action(down)
+                }
             }
             return false
         }
 
-        override fun toString(): String {
+        protected open fun test(c: ArrayList<Int>, k: ArrayList<Keys>, m: ArrayList<Int>, mods: Byte, deltaTimeNanos: Long, down: Boolean): Boolean {
+            if (durationNanos == 0L && deltaTimeNanos > 0L) return false
+            if (!unmappedKeys.matches(c)) return false
+            if (!keys.matches(k)) return false
+            if (!mouse.matches(m)) return false
+            if ((isModsOnly && !this.mods.equal(mods)) || !this.mods.equalLenient(mods)) return false
+            return true
+        }
+
+        final override fun toString(): String {
             val sb = StringBuilder()
             sb.append("KeyBind(")
             sb.append(keysToString())
@@ -328,7 +340,7 @@ class KeyBinder(private val settings: Settings) {
             return sb.toString()
         }
 
-        override fun equals(other: Any?): Boolean {
+        final override fun equals(other: Any?): Boolean {
             if (other !is Bind) return false
             if (other.unmappedKeys?.contentEquals(unmappedKeys) == false) return false
             if (other.keys?.contentEquals(keys) == false) return false
@@ -338,7 +350,7 @@ class KeyBinder(private val settings: Settings) {
             return true
         }
 
-        override fun hashCode(): Int {
+        final override fun hashCode(): Int {
             var result = unmappedKeys?.contentHashCode() ?: 0
             result = 31 * result + (keys?.contentHashCode() ?: 0)
             result = 31 * result + (mouse?.contentHashCode() ?: 0)
@@ -347,16 +359,17 @@ class KeyBinder(private val settings: Settings) {
             return result
         }
 
-        private fun <T> Array<T>.matches(other: ArrayList<T>): Boolean {
-            if (other.size == 0) return false
+        protected fun <T> Array<T>?.matches(other: ArrayList<T>): Boolean {
+            if (this == null) return other.size == 0
+            if (other.size != this.size) return false
             for (i in this) {
                 if (i !in other) return false
             }
             return true
         }
 
-        private fun IntArray.matches(other: ArrayList<Int>): Boolean {
-            if (other.size == 0) return false
+        protected fun IntArray?.matches(other: ArrayList<Int>): Boolean {
+            if (this == null) return other.size == 0
             for (i in this) {
                 if (i !in other) return false
             }

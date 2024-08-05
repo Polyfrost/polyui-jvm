@@ -25,8 +25,6 @@
 package org.polyfrost.polyui.utils
 
 import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.input.KeyModifiers
-import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.renderer.Window
 import org.polyfrost.polyui.renderer.data.PolyImage
@@ -136,14 +134,6 @@ inline fun String.translated(): Translator.Text = Translator.Text.Simple(this)
 
 @kotlin.internal.InlineOnly
 inline fun Translator.Text.dont(): Translator.Text.Dont = if (this is Translator.Text.Dont) this else Translator.Text.Dont(this)
-
-fun mods(vararg mods: KeyModifiers): Modifiers {
-    var i = 0
-    for (mod in mods) {
-        i = i or mod.value.toInt()
-    }
-    return Modifiers(i.toByte())
-}
 
 /**
  * Moves the given element from the [from] index to the [to] index.

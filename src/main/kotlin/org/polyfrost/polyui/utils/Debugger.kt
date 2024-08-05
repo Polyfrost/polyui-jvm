@@ -34,6 +34,7 @@ import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
+import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.operations.ShakeOp
 import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.data.PolyImage
@@ -88,12 +89,12 @@ class Debugger(private val polyUI: PolyUI) {
 //        if (polyUI.drew) LOGGER.info(perf)
     }
 
-    private val printBind = KeyBinder.Bind('P', mods = mods(KeyModifiers.CONTROL)) {
+    private val printBind = KeyBinder.Bind('P', mods = Modifiers(KeyModifiers.CONTROL)) {
         if (it) LOGGER.info(debugString())
         true
     }
 
-    private val inspectBind = KeyBinder.Bind(chars = null, mouse = intArrayOf(0), mods = mods(KeyModifiers.SHIFT), durationNanos = 0.4.seconds) {
+    private val inspectBind = KeyBinder.Bind(chars = null, mouse = intArrayOf(0), mods = Modifiers(KeyModifiers.SHIFT), durationNanos = 0.4.seconds) {
         if (it) openDebugWindow(polyUI.inputManager.rayCheckUnsafe(polyUI.master, polyUI.mouseX, polyUI.mouseY))
         true
     }
@@ -126,7 +127,7 @@ class Debugger(private val polyUI: PolyUI) {
         ).disable()
     }
 
-    private val evalBind = KeyBinder.Bind(key = Keys.TAB, mods = mods(KeyModifiers.SHIFT)) {
+    private val evalBind = KeyBinder.Bind(key = Keys.TAB, mods = Modifiers(KeyModifiers.SHIFT)) {
         if (!it) return@Bind false
         val forEval = polyUI.inputManager.rayCheckUnsafe(polyUI.master, polyUI.mouseX, polyUI.mouseY) ?: return@Bind false
         this.forEval = forEval
@@ -262,7 +263,7 @@ class Debugger(private val polyUI: PolyUI) {
         }
         if (polyUI.settings.enableDebugKeybind) {
             polyUI.keyBinder?.add(
-                KeyBinder.Bind('I', mods = mods(KeyModifiers.CONTROL, KeyModifiers.SHIFT)) {
+                KeyBinder.Bind('I', mods = Modifiers(KeyModifiers.CONTROL, KeyModifiers.SHIFT)) {
                     if (!it) return@Bind false
                     polyUI.settings.debug = !polyUI.settings.debug
                     polyUI.master.needsRedraw = true

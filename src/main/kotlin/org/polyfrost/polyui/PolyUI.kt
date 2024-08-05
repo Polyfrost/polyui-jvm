@@ -22,7 +22,6 @@
 package org.polyfrost.polyui
 
 import org.apache.logging.log4j.LogManager
-import org.polyfrost.polyui.Settings
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.color.DarkTheme
 import org.polyfrost.polyui.color.PolyColor
@@ -32,6 +31,7 @@ import org.polyfrost.polyui.component.impl.Group
 import org.polyfrost.polyui.event.InputManager
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.KeyModifiers
+import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.Window
@@ -41,7 +41,10 @@ import org.polyfrost.polyui.renderer.data.FontFamily
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.utils.*
+import org.polyfrost.polyui.utils.Clock
+import org.polyfrost.polyui.utils.Debugger
+import org.polyfrost.polyui.utils.addIfAbsent
+import org.polyfrost.polyui.utils.fastRemoveIfReversed
 import kotlin.math.min
 
 // todo rewrite this doc
@@ -282,7 +285,7 @@ class PolyUI(
         master.setup(this)
 
         this.keyBinder?.add(
-            KeyBinder.Bind('R', mods = mods(KeyModifiers.CONTROL)) {
+            KeyBinder.Bind('R', mods = Modifiers(KeyModifiers.CONTROL)) {
                 LOGGER.info("Reloading PolyUI")
                 resize(this.size.x, this.size.y, true)
                 true
@@ -453,7 +456,7 @@ class PolyUI(
     fun getKeyName(key: Int) = window?.getKeyName(key) ?: "Unknown"
 
     /**
-     * Time the [block] and return how long it took, as well as logging with the [msg] if [debug][org.polyfrost.polyui.property.Settings.debug] is active.
+     * Time the [block] and return how long it took, as well as logging with the [msg] if [debug][org.polyfrost.polyui.Settings.debug] is active.
      * @since 0.18.5
      */
     inline fun timed(msg: String? = null, block: () -> Unit) = timed(settings.debug, msg, block)
