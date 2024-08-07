@@ -133,10 +133,12 @@ abstract class Scrollable(
             y = it.update(delta)
             push = true
         }
-        if (push) {
+        if (hasVisibleSize) {
             val vs = visibleSize
             val sa = screenAt
             renderer.pushScissor(sa.x, sa.y, vs.x, vs.y)
+        }
+        if (push) {
             if (x != px || y != py) {
                 clipChildren()
                 polyUI.inputManager.recalculate()
@@ -147,7 +149,7 @@ abstract class Scrollable(
     }
 
     fun popScroll(renderer: Renderer) {
-        if (scrolling) renderer.popScissor()
+        if (hasVisibleSize) renderer.popScissor()
     }
 
     override fun accept(event: Event): Boolean {

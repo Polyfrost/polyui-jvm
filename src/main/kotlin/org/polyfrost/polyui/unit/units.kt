@@ -26,35 +26,27 @@ package org.polyfrost.polyui.unit
 
 /** note that the smallest unit of time in PolyUI is 1 nanosecond. */
 @get:JvmName("nanoseconds")
-@kotlin.internal.InlineOnly
 inline val Number.nanoseconds get() = toLong()
 
 @get:JvmName("microseconds")
-@kotlin.internal.InlineOnly
 inline val Number.microseconds get() = (toDouble() * 1_000.0).toLong()
 
 @get:JvmName("milliseconds")
-@kotlin.internal.InlineOnly
 inline val Number.milliseconds get() = (toDouble() * 1_000_000.0).toLong()
 
 @get:JvmName("ms")
-@kotlin.internal.InlineOnly
 inline val Number.ms get() = (toDouble() * 1_000_000.0).toLong()
 
 @get:JvmName("seconds")
-@kotlin.internal.InlineOnly
 inline val Number.seconds get() = (toDouble() * 1_000_000_000.0).toLong()
 
 @get:JvmName("secs")
-@kotlin.internal.InlineOnly
 inline val Number.secs get() = (toDouble() * 1_000_000_000.0).toLong()
 
 @get:JvmName("minutes")
-@kotlin.internal.InlineOnly
 inline val Number.minutes get() = (toDouble() * 60_000_000_000.0).toLong()
 
 @get:JvmName("hours")
-@kotlin.internal.InlineOnly
 inline val Number.hours get() = (toDouble() * 3_600_000_000_000.0).toLong()
 
 val AlignDefault = Align()

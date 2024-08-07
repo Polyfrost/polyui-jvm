@@ -64,14 +64,9 @@ fun interface Positioner {
             val padding = align.pad
             val totalSx = polyUI.size.x / polyUI.iSize.x
             val totalSy = polyUI.size.y / polyUI.iSize.y
-            val mainPad: Float
-            val crossPad: Float
-            if (component.positioned) {
-                mainPad = padding[main] * totalSx
-                crossPad = padding[crs] * totalSy
-            } else {
-                mainPad = padding[main]
-                crossPad = padding[crs]
+            val mainPad = padding[main] * totalSx
+            val crossPad = padding[crs] * totalSy
+            if (!component.positioned) {
                 component.rescale0(totalSx, totalSy, false)
             }
 

@@ -31,7 +31,7 @@ package org.polyfrost.polyui.unit
 @JvmInline
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "INAPPLICABLE_JVM_NAME")
 value class Vec2 private constructor(@PublishedApi internal val value: Long) {
-    constructor(x: Float, y: Float) : this(x.toBits().toLong().and(0xFFFFFFFF) or y.toBits().toLong().shl(32))
+    constructor(x: Float, y: Float) : this(x.toRawBits().toLong().and(0xFFFFFFFF) or y.toRawBits().toLong().shl(32))
     // rewrite counter: 5
 
     @kotlin.internal.InlineOnly

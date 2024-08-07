@@ -1985,6 +1985,14 @@ public final class org/polyfrost/polyui/unit/Point : java/lang/Enum {
 
 public final class org/polyfrost/polyui/unit/Units {
 	public static final fun getAlignDefault ()Lorg/polyfrost/polyui/unit/Align;
+	public static final fun hours (Ljava/lang/Number;)J
+	public static final fun microseconds (Ljava/lang/Number;)J
+	public static final fun milliseconds (Ljava/lang/Number;)J
+	public static final fun minutes (Ljava/lang/Number;)J
+	public static final fun ms (Ljava/lang/Number;)J
+	public static final fun nanoseconds (Ljava/lang/Number;)J
+	public static final fun seconds (Ljava/lang/Number;)J
+	public static final fun secs (Ljava/lang/Number;)J
 	public static final fun toVec4 (J)Lorg/polyfrost/polyui/unit/Vec4;
 }
 
@@ -2140,6 +2148,51 @@ public final class org/polyfrost/polyui/utils/IOUtils {
 	public static final fun toDirectByteBufferNT ([B)Ljava/nio/ByteBuffer;
 }
 
+public final class org/polyfrost/polyui/utils/Int2IntMap {
+	public fun <init> (I)V
+	public final fun clear ()V
+	public final fun contains (I)Z
+	public final fun containsKey (I)Z
+	public final fun containsValue (I)Z
+	public final fun forEach (Lkotlin/jvm/functions/Function2;)V
+	public final fun get (I)I
+	public final fun getKeys ()[I
+	public final fun getOrPut (ILkotlin/jvm/functions/Function0;)I
+	public final fun getSize ()I
+	public final fun getValues ()[I
+	public final fun isEmpty ()Z
+	public final fun iterator ()Lorg/polyfrost/polyui/utils/Int2IntMap$Iter;
+	public final fun put (II)V
+	public final fun remove (I)I
+	public final fun set (II)V
+	public final fun setKeys ([I)V
+	public final fun setValues ([I)V
+	public final fun trim ()V
+}
+
+public final class org/polyfrost/polyui/utils/Int2IntMap$Entry {
+	public static final synthetic fun box-impl (J)Lorg/polyfrost/polyui/utils/Int2IntMap$Entry;
+	public static final fun component1-impl (J)I
+	public static final fun component2-impl (J)I
+	public static fun constructor-impl (J)J
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (JLjava/lang/Object;)Z
+	public static final fun equals-impl0 (JJ)Z
+	public static final fun getKey-impl (J)I
+	public static final fun getValue-impl (J)I
+	public fun hashCode ()I
+	public static fun hashCode-impl (J)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (J)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()J
+}
+
+public final class org/polyfrost/polyui/utils/Int2IntMap$Iter {
+	public fun <init> (Lorg/polyfrost/polyui/utils/Int2IntMap;)V
+	public final fun hasNext ()Z
+	public final fun next ()J
+}
+
 public final class org/polyfrost/polyui/utils/Line {
 	public synthetic fun <init> (Ljava/lang/String;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun bounds ()J
@@ -2178,7 +2231,6 @@ public final class org/polyfrost/polyui/utils/StringUtils {
 
 public final class org/polyfrost/polyui/utils/Utils {
 	public static final fun elementsEqual ([F)Z
-	public static final fun ensureSize (Ljava/util/List;ILkotlin/jvm/functions/Function1;)Ljava/util/List;
 	public static final fun gcd (II)I
 	public static final fun getByName (Lkotlin/enums/EnumEntries;Ljava/lang/String;Z)Ljava/lang/Enum;
 	public static synthetic fun getByName$default (Lkotlin/enums/EnumEntries;Ljava/lang/String;ZILjava/lang/Object;)Ljava/lang/Enum;

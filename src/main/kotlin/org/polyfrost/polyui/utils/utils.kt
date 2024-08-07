@@ -222,6 +222,7 @@ fun FloatArray.set(value: Float): FloatArray {
  * Ensure that this list is at least [size] elements long, and if it is not, add elements to it using the given [initializer].
  * @since 1.0.7
  */
+@kotlin.internal.InlineOnly
 inline fun <T> MutableList<T>.ensureSize(size: Int, initializer: (Int) -> T): MutableList<T> {
     if (this.size < size) {
         for (i in this.size until size) {
@@ -245,9 +246,7 @@ inline fun <T> T.ref(): Ref.ObjectRef<T> {
  * Return the value of this [Ref.ObjectRef].
  */
 @kotlin.internal.InlineOnly
-inline fun <T> Ref.ObjectRef<T>.deref(): T {
-    return this.element
-}
+inline fun <T> Ref.ObjectRef<T>.deref(): T = this.element
 
 /**
  * Returns the value of the given [key] in the map, and if [shouldRemove] is `true` the value is also removed from the map.

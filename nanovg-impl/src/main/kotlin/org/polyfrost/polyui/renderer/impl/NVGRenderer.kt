@@ -37,10 +37,7 @@ import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.data.Framebuffer
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.utils.cl1
-import org.polyfrost.polyui.utils.fastRemoveIfReversed
-import org.polyfrost.polyui.utils.toDirectByteBuffer
-import org.polyfrost.polyui.utils.toDirectByteBufferNT
+import org.polyfrost.polyui.utils.*
 import java.nio.ByteBuffer
 import java.util.IdentityHashMap
 import org.polyfrost.polyui.color.PolyColor as Color
@@ -52,9 +49,10 @@ object NVGRenderer : Renderer {
     private val nvgColor: NVGColor = NVGColor.malloc()
     private val nvgColor2: NVGColor = NVGColor.malloc()
     private val images = HashMap<PolyImage, Int>()
-    private val svgs = HashMap<PolyImage, Pair<NSVGImage, HashMap<Int, Int>>>()
+    private val svgs = HashMap<PolyImage, Pair<NSVGImage, Int2IntMap>>()
     private val fonts = IdentityHashMap<Font, NVGFont>()
     private var defaultFont: NVGFont? = null
+    private var defaultImageData: ByteArray? = null
     private var defaultImage = 0
     private var vg: Long = 0L
     private var raster: Long = 0L
@@ -80,12 +78,13 @@ object NVGRenderer : Renderer {
         }
 
         if (defaultImage == 0) {
-            val img = PolyUI.defaultImage
-            val idata = img.load().toDirectByteBuffer()
-            val iit = nvgCreateImageRGBA(vg, img.width.toInt(), img.height.toInt(), 0, idata)
-            require(iit != 0) { "NanoVG failed to initialize default image" }
-            images[img] = iit
-            this.defaultImage = iit
+            val iImage = PolyUI.defaultImage
+            val iData = iImage.load()
+            val iHandle = nvgCreateImageRGBA(vg, iImage.width.toInt(), iImage.height.toInt(), 0, iData.toDirectByteBuffer())
+            require(iHandle != 0) { "NanoVG failed to initialize default image" }
+            defaultImageData = iData
+            images[iImage] = iHandle
+            this.defaultImage = iHandle
         }
     }
 
@@ -202,7 +201,7 @@ object NVGRenderer : Renderer {
         svgs.remove(image).also {
             if (it != null) {
                 nsvgDelete(it.first)
-                it.second.values.forEach { handle ->
+                it.second.forEach { _, handle ->
                     nvgDeleteImage(vg, handle)
                 }
             }
@@ -485,13 +484,13 @@ object NVGRenderer : Renderer {
     private fun getImageSync(image: PolyImage, width: Float, height: Float): Int {
         return when (image.type) {
             PolyImage.Type.Vector -> {
-                val (svg, map) = svgs[image] ?: return svgLoad(image, image.load().toDirectByteBufferNT())
+                val (svg, map) = svgs[image] ?: return svgLoad(image, image.load { errorHandler(it); defaultImageData!! }.toDirectByteBufferNT())
                 if (!image.size.isPositive) image.size = Vec2(svg.width(), svg.height())
                 map.getOrPut(width.hashCode() * 31 + height.hashCode()) { svgResize(svg, width, height) }
             }
 
             PolyImage.Type.Raster -> {
-                images.getOrPut(image) { loadImage(image, image.load().toDirectByteBuffer()) }
+                images.getOrPut(image) { loadImage(image, image.load { errorHandler(it); defaultImageData!! }.toDirectByteBuffer()) }
             }
 
             else -> throw NoWhenBranchMatchedException("Please specify image type for $image")
@@ -501,7 +500,7 @@ object NVGRenderer : Renderer {
     private fun svgLoad(image: PolyImage, data: ByteBuffer): Int {
         val svg = nsvgParse(data, PIXELS, 96f) ?: throw IllegalStateException("Failed to parse SVG: ${image.resourcePath}")
         image.size = Vec2(svg.width(), svg.height())
-        val map = HashMap<Int, Int>(2)
+        val map = Int2IntMap(4)
         val o = svgResize(svg, svg.width(), svg.height())
         map[image.size.hashCode()] = o
         svgs[image] = svg to map
