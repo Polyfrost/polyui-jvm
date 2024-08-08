@@ -1524,10 +1524,10 @@ public final class org/polyfrost/polyui/input/Translator$Text$Simple : org/polyf
 public final class org/polyfrost/polyui/notify/Notifications {
 	public fun <init> (Lorg/polyfrost/polyui/PolyUI;I)V
 	public synthetic fun <init> (Lorg/polyfrost/polyui/PolyUI;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun enqueue ([Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/animate/Animation;)V
-	public final fun enqueueStandard (Lorg/polyfrost/polyui/notify/Notifications$Type;Ljava/lang/String;J)V
-	public final fun enqueueStandard (Lorg/polyfrost/polyui/notify/Notifications$Type;Ljava/lang/String;Ljava/lang/String;J)V
-	public static synthetic fun enqueueStandard$default (Lorg/polyfrost/polyui/notify/Notifications;Lorg/polyfrost/polyui/notify/Notifications$Type;Ljava/lang/String;Ljava/lang/String;JILjava/lang/Object;)V
+	public final fun enqueue ([Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/animate/Animation;)Lorg/polyfrost/polyui/component/impl/Block;
+	public final fun enqueueStandard (Lorg/polyfrost/polyui/notify/Notifications$Type;Ljava/lang/String;J)Lorg/polyfrost/polyui/component/impl/Block;
+	public final fun enqueueStandard (Lorg/polyfrost/polyui/notify/Notifications$Type;Ljava/lang/String;Ljava/lang/String;J)Lorg/polyfrost/polyui/component/impl/Block;
+	public static synthetic fun enqueueStandard$default (Lorg/polyfrost/polyui/notify/Notifications;Lorg/polyfrost/polyui/notify/Notifications$Type;Ljava/lang/String;Ljava/lang/String;JILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Block;
 }
 
 public final class org/polyfrost/polyui/notify/Notifications$Type : java/lang/Enum {
@@ -2002,11 +2002,15 @@ public final class org/polyfrost/polyui/unit/Vec2 {
 	public static final fun coerceAtMost (JJ)J
 	public static final fun compareTo (JJ)I
 	public static fun constructor-impl (FF)J
+	public static fun constructor-impl (J)J
 	public static final fun div (JJ)J
 	public fun equals (Ljava/lang/Object;)Z
 	public static fun equals-impl (JLjava/lang/Object;)Z
 	public static final fun equals-impl0 (JJ)Z
 	public static final fun get-impl (JI)F
+	public static final fun getBinary-impl (J)Ljava/lang/String;
+	public static final fun getHex-impl (J)Ljava/lang/String;
+	public final fun getValue ()J
 	public fun hashCode ()I
 	public static fun hashCode-impl (J)I
 	public static final fun minus (JJ)J

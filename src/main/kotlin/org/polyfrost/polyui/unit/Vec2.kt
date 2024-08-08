@@ -30,7 +30,7 @@ package org.polyfrost.polyui.unit
  */
 @JvmInline
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "INAPPLICABLE_JVM_NAME")
-value class Vec2 private constructor(@PublishedApi internal val value: Long) {
+value class Vec2(val value: Long) {
     constructor(x: Float, y: Float) : this(x.toRawBits().toLong().and(0xFFFFFFFF) or y.toRawBits().toLong().shl(32))
     // rewrite counter: 5
 
@@ -63,6 +63,9 @@ value class Vec2 private constructor(@PublishedApi internal val value: Long) {
     inline operator fun component2() = y
 
     override fun toString() = "${x}x$y"
+
+    val hex get() = "0x${value.toString(16)}"
+    val binary get() = "0b${value.toString(2)}"
 
     @JvmName("compareTo")
     operator fun compareTo(size: Vec2): Int {

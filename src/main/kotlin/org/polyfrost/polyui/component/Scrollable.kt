@@ -78,6 +78,8 @@ abstract class Scrollable(
     @set:Synchronized
     private var yScroll: Animation? = null
 
+    private var pushed = false
+
     @get:JvmName("isScrolling")
     val scrolling get() = yScroll != null || xScroll != null
 
@@ -133,12 +135,11 @@ abstract class Scrollable(
             y = it.update(delta)
             push = true
         }
-        if (hasVisibleSize) {
+        if (push) {
+            pushed = true
             val vs = visibleSize
             val sa = screenAt
             renderer.pushScissor(sa.x, sa.y, vs.x, vs.y)
-        }
-        if (push) {
             if (x != px || y != py) {
                 clipChildren()
                 polyUI.inputManager.recalculate()
@@ -149,7 +150,10 @@ abstract class Scrollable(
     }
 
     fun popScroll(renderer: Renderer) {
-        if (hasVisibleSize) renderer.popScissor()
+        if (pushed) {
+            renderer.popScissor()
+            pushed = false
+        }
     }
 
     override fun accept(event: Event): Boolean {

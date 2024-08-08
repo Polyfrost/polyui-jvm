@@ -43,7 +43,7 @@ class Notifications(private val polyUI: PolyUI, max: Int = 5) {
     private var lastY = 0f
     private var i = 0
 
-    fun enqueue(vararg components: Component, progressFunc: Animation) {
+    fun enqueue(vararg components: Component, progressFunc: Animation): Block {
         val out = Block(children = components, at = Vec2(polyUI.size.x + PADDING, 0f)).withBoarder().withStates()
         var failedToFinishNormally = false
         out.afterInit {
@@ -61,48 +61,33 @@ class Notifications(private val polyUI: PolyUI, max: Int = 5) {
                             failedToFinishNormally = true
                             return@Resize
                         }
-                        i--
-                        current[0] = null
-                        lastY += out.height + PADDING
-                        notifyFinish(out)
-                        Move(out, x = polyUI.size.x + PADDING, add = false, animation = Animations.Default.create(0.5.seconds), onFinish = {
-                            out.parent.removeChild(out, recalculate = false)
-                        }).add()
+                        finish(out)
                     }).add()
                 }, recalculate = false
             )
         }
         out.apply {
             on(Event.Mouse.Exited) {
-                if (failedToFinishNormally) {
-                    i--
-                    current[0] = null
-                    lastY += out.height + PADDING
-                    notifyFinish(out)
-                    Move(out, x = polyUI.size.x + PADDING, add = false, animation = Animations.Default.create(0.5.seconds), onFinish = {
-                        out.parent.removeChild(out, recalculate = false)
-                    }).add()
-                }
+                if (failedToFinishNormally) finish(out)
                 false
             }
         }
         out.setup(polyUI)
         queue.add(out)
         pop()
+        return out
     }
 
     @JvmOverloads
-    fun enqueueStandard(type: Type, title: String = type.title, description: String, durationNanos: Long) {
-        enqueue(
-            Block(
-                Image("polyui/chevron-down.svg".image(Vec2(32f, 32f))),
-                Text(title, fontSize = 14f).setFont { medium },
-                Text(description, fontSize = 12f),
-                size = Vec2(235f, 100f),
-            ),
-            progressFunc = Animations.Linear.create(durationNanos)
-        )
-    }
+    fun enqueueStandard(type: Type, title: String = type.title, description: String, durationNanos: Long) = enqueue(
+        Block(
+            Image(type.icon.image(Vec2(32f, 32f))),
+            Text(title, fontSize = 14f).setFont { medium },
+            Text(description, fontSize = 12f),
+            size = Vec2(235f, 100f),
+        ),
+        progressFunc = Animations.Linear.create(durationNanos)
+    )
 
     private fun pop() {
         if (queue.isEmpty() || i > current.size - 1) return
@@ -123,11 +108,17 @@ class Notifications(private val polyUI: PolyUI, max: Int = 5) {
         Success("polyui.success", "polyui/success.svg"),
     }
 
-    private fun notifyFinish(old: Component) {
+    private fun finish(old: Component) {
+        i--
+        current[0] = null
+        lastY += old.height + PADDING
         for (i in current.indices) {
             val it = current[i] ?: continue
             Move(it, x = 0f, y = old.height + PADDING, add = true, animation = Animations.Default.create(0.5.seconds)).add()
         }
         pop()
+        Move(old, x = polyUI.size.x + PADDING, add = false, animation = Animations.Default.create(0.5.seconds), onFinish = {
+            parent.removeChild(this, recalculate = false)
+        }).add()
     }
 }

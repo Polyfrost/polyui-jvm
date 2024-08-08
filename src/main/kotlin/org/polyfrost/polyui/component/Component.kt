@@ -29,9 +29,11 @@ import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.operations.ComponentOp
 import org.polyfrost.polyui.operations.Fade
 import org.polyfrost.polyui.unit.*
-import org.polyfrost.polyui.utils.*
 import org.polyfrost.polyui.utils.annotations.Locking
 import org.polyfrost.polyui.utils.annotations.SideEffects
+import org.polyfrost.polyui.utils.cl1
+import org.polyfrost.polyui.utils.fastAny
+import org.polyfrost.polyui.utils.fastEach
 import kotlin.experimental.and
 import kotlin.experimental.or
 
@@ -368,8 +370,18 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
 
     private fun _clipChildren(children: ArrayList<out Component>, tx: Float, ty: Float, tw: Float, th: Float) {
         children.fastEach {
-            it.renders = it.intersects(tx, ty, tw, th)
-            it._clipChildren(it.children ?: return@fastEach, tx, ty, tw, th)
+            val p = it.intersects(tx, ty, tw, th)
+            it.renders = p
+            // asm: don't bother checking children if this component is not visible
+            if (p) it._clipChildren(it.children ?: return@fastEach, tx, ty, tw, th)
+            else it._clipChildrenN(it.children ?: return@fastEach)
+        }
+    }
+
+    private fun _clipChildrenN(children: ArrayList<out Component>) {
+        children.fastEach {
+            it.renders = false
+            it._clipChildrenN(it.children ?: return@fastEach)
         }
     }
 
