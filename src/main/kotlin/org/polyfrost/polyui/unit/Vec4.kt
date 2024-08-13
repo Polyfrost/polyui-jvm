@@ -92,5 +92,9 @@ abstract class Vec4 : Comparable<Vec4>, Cloneable {
         @JvmStatic
         @JvmName("of")
         fun of(x: Float, y: Float, dims: Vec2): Vec4 = Impl(Vec2(x, y), dims)
+
+        @JvmStatic
+        @JvmName("of")
+        fun of(at: Vec2, size: Vec2): Vec4 = Impl(at, size)
     }
 }

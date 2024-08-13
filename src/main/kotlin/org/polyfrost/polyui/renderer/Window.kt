@@ -22,8 +22,8 @@
 package org.polyfrost.polyui.renderer
 
 import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.event.InputManager
-import org.polyfrost.polyui.renderer.data.Cursor
+import org.polyfrost.polyui.data.Cursor
+import org.polyfrost.polyui.input.InputManager
 
 /** # Window
  * This class represents the physical window that PolyUI will render to.
@@ -65,9 +65,9 @@ abstract class Window(open var width: Int, open var height: Int, open var pixelR
     open fun postRender(renderer: Renderer) {}
 
     /**
-     * Return true if your window supports "render pausing", a optimization technique which will not render any frames if not necessary.
+     * Return true if your window supports "render pausing", an optimization technique which will not render any frames if not necessary.
      *
-     * See [Settings.renderPausing][org.polyfrost.polyui.property.Settings.renderPausingEnabled] for a better explanation.
+     * See [Settings.renderPausing][org.polyfrost.polyui.Settings.renderPausingEnabled] for a better explanation.
      * @see breakPause
      * @since 0.25.1
      */

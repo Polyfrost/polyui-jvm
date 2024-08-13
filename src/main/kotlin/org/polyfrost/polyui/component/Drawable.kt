@@ -27,8 +27,10 @@ import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_NONE
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.color.PolyColor
+import org.polyfrost.polyui.component.extensions.countChildren
+import org.polyfrost.polyui.data.Framebuffer
 import org.polyfrost.polyui.operations.Recolor
-import org.polyfrost.polyui.renderer.data.Framebuffer
+import org.polyfrost.polyui.renderer.FramebufferController
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
@@ -208,9 +210,11 @@ abstract class Drawable(
         if (!renders) return
         require(initialized) { "Drawable $name is not initialized!" }
 
+        val renderer = renderer
         val framebuffer = framebuffer
         val binds = framebuffer != null && fbc < 3
         if (binds) {
+            renderer as FramebufferController
             if (!needsRedraw) {
                 renderer.drawFramebuffer(framebuffer!!, x, y)
                 return
@@ -229,6 +233,7 @@ abstract class Drawable(
 
         if (fbc > 0) fbc--
         if (binds) {
+            renderer as FramebufferController
             renderer.unbindFramebuffer()
             renderer.drawFramebuffer(framebuffer!!, x, y)
         }
@@ -300,6 +305,7 @@ abstract class Drawable(
     override fun rescale0(scaleX: Float, scaleY: Float, withChildren: Boolean) {
         super.rescale0(scaleX, scaleY, withChildren)
         framebuffer?.let {
+            val renderer = renderer as FramebufferController
             renderer.delete(it)
             framebuffer = renderer.createFramebuffer(width, height)
         }
@@ -330,6 +336,7 @@ abstract class Drawable(
         if (!super.setup(polyUI)) return false
         if (polyUI.canUseFramebuffers) {
             if (countChildren() > polyUI.settings.minDrawablesForFramebuffer || (this === polyUI.master && polyUI.settings.isMasterFrameBuffer)) {
+                val renderer = renderer as FramebufferController
                 framebuffer = renderer.createFramebuffer(width, height)
                 if (polyUI.settings.debug) PolyUI.LOGGER.info("Drawable ${this.name} created with $framebuffer")
             }

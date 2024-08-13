@@ -31,9 +31,9 @@ import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.Scrollable
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.utils.animatable
-import org.polyfrost.polyui.utils.animatableGradient
-import org.polyfrost.polyui.utils.mutable
+import org.polyfrost.polyui.color.animatable
+import org.polyfrost.polyui.color.animatableGradient
+import org.polyfrost.polyui.color.mutable
 import kotlin.math.PI
 import kotlin.math.sin
 

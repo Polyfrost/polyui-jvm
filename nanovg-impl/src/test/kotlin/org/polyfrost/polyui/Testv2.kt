@@ -22,18 +22,18 @@
 package org.polyfrost.polyui
 
 import org.polyfrost.polyui.animate.Animations
-import org.polyfrost.polyui.component.events
+import org.polyfrost.polyui.color.hsba
+import org.polyfrost.polyui.component.extensions.events
+import org.polyfrost.polyui.component.extensions.withStates
 import org.polyfrost.polyui.component.impl.*
-import org.polyfrost.polyui.component.withStates
+import org.polyfrost.polyui.data.Font
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.operations.Recolor
-import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.impl.GLFWWindow
 import org.polyfrost.polyui.renderer.impl.NVGRenderer
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.unit.ms
-import org.polyfrost.polyui.utils.hsba
 import org.polyfrost.polyui.utils.image
 import kotlin.random.Random
 

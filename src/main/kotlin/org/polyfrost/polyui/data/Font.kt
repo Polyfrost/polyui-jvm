@@ -19,7 +19,7 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.polyfrost.polyui.renderer.data
+package org.polyfrost.polyui.data
 
 import org.polyfrost.polyui.utils.getByName
 import org.polyfrost.polyui.utils.names

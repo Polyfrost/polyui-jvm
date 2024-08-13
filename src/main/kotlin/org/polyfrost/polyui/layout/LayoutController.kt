@@ -19,35 +19,14 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.polyfrost.polyui.renderer.impl
+package org.polyfrost.polyui.layout
 
-import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.renderer.Window
-import org.polyfrost.polyui.data.Cursor
+import org.polyfrost.polyui.component.Component
 
-class NoOpWindow(title: String, width: Int, height: Int) : Window(width, height) {
-    override fun open(polyUI: PolyUI): Window {
-        polyUI.window = this
-        while (true) {
-            polyUI.render()
-        }
-    }
-
-    override fun close() {
-    }
-
-    override fun getClipboard(): String? = null
-
-    override fun setClipboard(text: String?) {
-    }
-
-    override fun setCursor(cursor: Cursor) {
-    }
-
-    override fun getKeyName(key: Int) = "unknown"
-
-    override fun supportsRenderPausing() = false
-
-    override fun breakPause() {
-    }
+/**
+ * Positioning strategies are the methods used in PolyUI to place both components across the screen,
+ * and components inside a layout.
+ */
+fun interface LayoutController {
+    fun layout(component: Component)
 }

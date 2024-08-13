@@ -19,10 +19,10 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.polyfrost.polyui.renderer.data
+package org.polyfrost.polyui.data
 
 import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.renderer.data.PolyImage.Type
+import org.polyfrost.polyui.data.PolyImage.Type
 import org.polyfrost.polyui.unit.Vec2
 
 /**

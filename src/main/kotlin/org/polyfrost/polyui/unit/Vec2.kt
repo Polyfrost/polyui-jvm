@@ -26,6 +26,7 @@ package org.polyfrost.polyui.unit
  *
  * *(revised 1.5)* Vec2's are now purely syntactical sugar which are inlined and have no runtime overhead. Their representation in internal data structures
  * has been replaced with floats instead.
+ * @see Vec4
  * @since 1.1.0
  */
 @JvmInline

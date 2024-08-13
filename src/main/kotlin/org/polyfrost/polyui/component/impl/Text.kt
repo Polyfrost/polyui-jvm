@@ -28,7 +28,7 @@ import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.renderer.Renderer
-import org.polyfrost.polyui.renderer.data.Font
+import org.polyfrost.polyui.data.Font
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2

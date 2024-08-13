@@ -93,4 +93,4 @@ inline infix fun Double.by(other: Double) = Vec2(this.toFloat(), other.toFloat()
  * Create a Vec4 from a Vec2, copying the [Vec2.x] and [Vec2.y] values to [Vec4.w] and [Vec4.h] respectively.
  */
 @JvmName("toVec4")
-fun Vec2.toVec4() = Vec4.of(x, y, this)
+fun Vec2.toVec4() = Vec4.of(this, this)

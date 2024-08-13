@@ -24,7 +24,7 @@ package org.polyfrost.polyui.operations
 import org.polyfrost.polyui.animate.Animation
 import org.polyfrost.polyui.color.Color
 import org.polyfrost.polyui.component.Drawable
-import org.polyfrost.polyui.component.animateBy
+import org.polyfrost.polyui.component.extensions.animateBy
 import org.polyfrost.polyui.unit.Vec2
 
 /**
@@ -36,7 +36,7 @@ import org.polyfrost.polyui.unit.Vec2
  * for [mouse clicks][org.polyfrost.polyui.event.Event.Mouse.Clicked]; to in your initialization block; using the extension function [keyframed].
  *
  * Each keyframe can be added using a number between 0 (representing the start or 0%) to 100, representing the end or 100%.
- * Each keyframe can control the color, rotation, position, skew and size of the component (using this [function][org.polyfrost.polyui.component.animateTo]).
+ * Each keyframe can control the color, rotation, position, skew and size of the component (using this [function][org.polyfrost.polyui.component.extensions.animateTo]).
  * They support different animation curves and durations using the [animation] parameter.
  *
  * The syntax is as follows:

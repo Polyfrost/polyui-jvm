@@ -19,20 +19,18 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.polyfrost.polyui.event
+package org.polyfrost.polyui.input
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_HOVERED
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_NONE
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
+import org.polyfrost.polyui.Settings
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Inputtable
-import org.polyfrost.polyui.component.isRelatedTo
-import org.polyfrost.polyui.input.KeyBinder
-import org.polyfrost.polyui.input.Keys
-import org.polyfrost.polyui.input.Modifiers
-import org.polyfrost.polyui.Settings
+import org.polyfrost.polyui.component.extensions.isRelatedTo
+import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.utils.Clock
 import org.polyfrost.polyui.utils.fastEach
 import java.nio.file.Path

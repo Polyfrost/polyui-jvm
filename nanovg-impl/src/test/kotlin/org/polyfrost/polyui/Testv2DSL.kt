@@ -21,16 +21,16 @@
 
 package org.polyfrost.polyui
 
-import org.polyfrost.polyui.component.*
+import org.polyfrost.polyui.color.mutable
+import org.polyfrost.polyui.component.extensions.*
 import org.polyfrost.polyui.component.impl.*
+import org.polyfrost.polyui.data.FontFamily
 import org.polyfrost.polyui.dsl.polyUI
-import org.polyfrost.polyui.renderer.data.FontFamily
 import org.polyfrost.polyui.renderer.impl.GLFWWindow
 import org.polyfrost.polyui.renderer.impl.NVGRenderer
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.utils.image
-import org.polyfrost.polyui.utils.mutable
 import org.polyfrost.polyui.utils.open
 import org.polyfrost.polyui.utils.ref
 

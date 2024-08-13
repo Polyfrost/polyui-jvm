@@ -25,9 +25,9 @@
 package org.polyfrost.polyui.utils
 
 import org.polyfrost.polyui.PolyUI
+import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.renderer.Window
-import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Vec2
 import kotlin.enums.EnumEntries
 import kotlin.jvm.internal.Ref
@@ -75,9 +75,10 @@ inline fun EnumEntries<*>.names() = this.map { it.name }
  * Simplify a ratio of two integers.
  * @since 0.18.4
  */
-fun Pair<Int, Int>.simplifyRatio(): Pair<Int, Int> {
-    val gcd = first.gcd(second)
-    return Pair(first / gcd, second / gcd)
+@JvmName("simplifyRatio")
+fun Vec2.simplifyRatio(): Vec2 {
+    val gcd = x.toInt().gcd(y.toInt())
+    return Vec2(x / gcd, y / gcd)
 }
 
 /**

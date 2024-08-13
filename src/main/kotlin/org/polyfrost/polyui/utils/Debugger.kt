@@ -28,16 +28,25 @@ import org.polyfrost.polyui.PolyUI.Companion.INPUT_NONE
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
 import org.polyfrost.polyui.PolyUI.Companion.LOGGER
 import org.polyfrost.polyui.color.PolyColor
-import org.polyfrost.polyui.component.*
+import org.polyfrost.polyui.color.mutable
+import org.polyfrost.polyui.color.rgba
+import org.polyfrost.polyui.component.Component
+import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.component.Inputtable
+import org.polyfrost.polyui.component.Scrollable
+import org.polyfrost.polyui.component.extensions.countChildren
+import org.polyfrost.polyui.component.extensions.disable
+import org.polyfrost.polyui.component.extensions.events
+import org.polyfrost.polyui.component.extensions.fix
 import org.polyfrost.polyui.component.impl.*
+import org.polyfrost.polyui.data.Font
+import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.operations.ShakeOp
-import org.polyfrost.polyui.renderer.data.Font
-import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Point
 import org.polyfrost.polyui.unit.seconds
@@ -315,9 +324,9 @@ class Debugger(private val polyUI: PolyUI) {
                     master.needsRedraw = true
                 }
             }
-            if (mods.hasShift) {
+//            if (mods.hasShift) {
                 // todo
-            }
+//            }
             if (mods.hasAlt) {
                 val s = "${inputManager.mouseX}x${inputManager.mouseY}"
                 val ww = renderer.textBounds(monospaceFont, s, 10f).x

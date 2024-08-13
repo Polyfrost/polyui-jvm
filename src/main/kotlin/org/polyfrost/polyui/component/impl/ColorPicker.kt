@@ -25,16 +25,17 @@ import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.*
+import org.polyfrost.polyui.component.extensions.*
 import org.polyfrost.polyui.event.Event
-import org.polyfrost.polyui.renderer.data.PolyImage
+import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Point
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.utils.image
-import org.polyfrost.polyui.utils.mutable
-import org.polyfrost.polyui.utils.toColor
-import org.polyfrost.polyui.utils.toHex
+import org.polyfrost.polyui.color.mutable
+import org.polyfrost.polyui.color.toColor
+import org.polyfrost.polyui.color.toHex
 import kotlin.jvm.internal.Ref
 import kotlin.math.roundToInt
 

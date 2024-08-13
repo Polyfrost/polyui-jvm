@@ -22,9 +22,8 @@
 package org.polyfrost.polyui.renderer
 
 import org.polyfrost.polyui.color.Color
-import org.polyfrost.polyui.renderer.data.Font
-import org.polyfrost.polyui.renderer.data.Framebuffer
-import org.polyfrost.polyui.renderer.data.PolyImage
+import org.polyfrost.polyui.data.Font
+import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.unit.Vec2
 
 /**
@@ -34,7 +33,7 @@ import org.polyfrost.polyui.unit.Vec2
  *
  * It is also responsible for loading and caching all images and fonts, but this is down to you as a rendering implementation to implement.
  * for these functions, such as [image] and [text], an initialized [Font] or [PolyImage] instance will be given.
- * You can access the data using [Resource.stream][org.polyfrost.polyui.renderer.data.Resource.stream], and cache it for future use (ideally).
+ * You can access the data using [Resource.stream][org.polyfrost.polyui.data.Resource.stream], and cache it for future use (ideally).
  */
 interface Renderer : AutoCloseable {
     /**
@@ -276,14 +275,6 @@ interface Renderer : AutoCloseable {
     fun dropShadow(x: Float, y: Float, width: Float, height: Float, blur: Float, spread: Float, radius: Float)
 
     /**
-     * Return true if your rendering implementation supports usage of framebuffers.
-     *
-     * If this method returns `false`, you can be safe that [createFramebuffer] and [bindFramebuffer], etc. will never be called.
-     * @since 0.25.1
-     */
-    fun supportsFramebuffers(): Boolean
-
-    /**
      * Return `true` if your rendering implementation supports usage of `x` and `y` parameters on [scale], [rotate], [skewX], and [skewY].
      *
      * If you return `false`, PolyUI will automatically using [translate] to mimic this behavior.
@@ -291,29 +282,6 @@ interface Renderer : AutoCloseable {
      * @since 1.0.8
      */
     fun transformsWithPoint(): Boolean
-
-    /** Create a new framebuffer. It is down to you (as a rendering implementation) to cache this, and dispose of it as necessary.
-     * @return a PolyUI framebuffer object using the width and height passed to this method. This is used by PolyUI to identify it.
-     */
-    fun createFramebuffer(width: Float, height: Float): Framebuffer
-
-    /** Bind the given framebuffer. */
-    fun bindFramebuffer(fbo: Framebuffer)
-
-    /** Unbind the currently bound framebuffer. */
-    fun unbindFramebuffer()
-
-    /** draw the given framebuffer to the screen. */
-    fun drawFramebuffer(
-        fbo: Framebuffer,
-        x: Float,
-        y: Float,
-        width: Float = fbo.width,
-        height: Float = fbo.height,
-    )
-
-    /** Delete the given framebuffer. Ignore if null. */
-    fun delete(fbo: Framebuffer?)
 
     /** Delete the given font. Use this to free any native resources.
      * @since 0.20.1

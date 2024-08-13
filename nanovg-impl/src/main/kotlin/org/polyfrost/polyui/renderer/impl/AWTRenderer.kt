@@ -23,10 +23,9 @@ package org.polyfrost.polyui.renderer.impl
 
 import org.lwjgl.nanovg.NanoSVG
 import org.polyfrost.polyui.color.Color
+import org.polyfrost.polyui.data.Font
+import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.renderer.Renderer
-import org.polyfrost.polyui.renderer.data.Font
-import org.polyfrost.polyui.renderer.data.Framebuffer
-import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Vec2
 import java.awt.*
 import java.awt.geom.AffineTransform
@@ -188,19 +187,7 @@ class AWTRenderer : Renderer {
 
     override fun dropShadow(x: Float, y: Float, width: Float, height: Float, blur: Float, spread: Float, radius: Float) {}
 
-    override fun supportsFramebuffers() = false
-
     override fun transformsWithPoint() = false
-
-    override fun createFramebuffer(width: Float, height: Float) = throw NotImplementedError()
-
-    override fun bindFramebuffer(fbo: Framebuffer) {}
-
-    override fun unbindFramebuffer() {}
-
-    override fun drawFramebuffer(fbo: Framebuffer, x: Float, y: Float, width: Float, height: Float) {}
-
-    override fun delete(fbo: Framebuffer?) {}
 
     override fun delete(font: Font?) {
         fonts.remove(font)

@@ -24,7 +24,7 @@
 package org.polyfrost.polyui.utils
 
 import org.polyfrost.polyui.renderer.Renderer
-import org.polyfrost.polyui.renderer.data.Font
+import org.polyfrost.polyui.data.Font
 import org.polyfrost.polyui.unit.Vec2
 
 /**

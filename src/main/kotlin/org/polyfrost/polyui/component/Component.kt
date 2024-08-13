@@ -25,6 +25,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animations
+import org.polyfrost.polyui.component.extensions.fadeIn
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.operations.ComponentOp
 import org.polyfrost.polyui.operations.Fade
@@ -209,7 +210,7 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
         }
 
     /**
-     * Flags that store various states of this component regarding the [Positioner] and resizing.
+     * Flags that store various states of this component regarding the [org.polyfrost.polyui.layout.LayoutController] and resizing.
      * Currently, the following is stored here:
      * - bit 0: [rawResize]
      * - bit 1: [createdWithSetSize]
@@ -239,7 +240,7 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
         }
 
     /**
-     * If true, this component will be ignored during the [Positioner]'s routine of placing components. Use this if
+     * If true, this component will be ignored during the [org.polyfrost.polyui.layout.LayoutController]'s routine of placing components. Use this if
      * you want to specify it manually based on something else, for example.
      *
      * *note: this used to be controlled by the [renders] flag pre 1.4.4*.
@@ -271,7 +272,7 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
      * Returns `true` if this component has been initialized to the point where it has been positioned,
      * e.g. [Event.Lifetime.Init] has been dispatched, and [Event.Lifetime.PostInit] is about to be.
      *
-     * This can be used to distinguish (as a [Positioner]) if this is [setup] or [recalculate].
+     * This can be used to distinguish (as a [org.polyfrost.polyui.layout.LayoutController]) if this is [setup] or [recalculate].
      * @since 1.5.03
      */
     @get:JvmName("isPositioned")
@@ -430,7 +431,7 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
     @Locking(`when` = "this.children != null")
     @Synchronized
     open fun position() {
-        polyUI.positioner.position(this)
+        polyUI.layoutController.layout(this)
         layoutFlags = layoutFlags or 0b00010000
         clipChildren()
     }

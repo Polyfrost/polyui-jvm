@@ -23,9 +23,6 @@ package org.polyfrost.polyui.color
 
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animation
-import org.polyfrost.polyui.utils.HSBtoRGB
-import org.polyfrost.polyui.utils.RGBtoHSB
-import org.polyfrost.polyui.utils.rgba
 
 /**
  * # Color
@@ -62,7 +59,7 @@ abstract class PolyColor {
      * `0bAAAAAAAARRRRRRRRGGGGGGGGBBBBBBBB`
      * aka `0xAARRGGBB`
      *
-     * @see org.polyfrost.polyui.utils.toColor
+     * @see org.polyfrost.polyui.color.toColor
      */
     abstract val argb: Int
 

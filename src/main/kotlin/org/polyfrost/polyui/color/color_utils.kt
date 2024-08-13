@@ -22,9 +22,9 @@
 @file:Suppress("UNUSED")
 @file:JvmName("ColorUtils")
 
-package org.polyfrost.polyui.utils
+package org.polyfrost.polyui.color
 
-import org.polyfrost.polyui.color.PolyColor
+import org.polyfrost.polyui.utils.substringOr
 import kotlin.math.floor
 
 /** create a color from the given red, green, and blue integer values, and an alpha value `0f..1f` */

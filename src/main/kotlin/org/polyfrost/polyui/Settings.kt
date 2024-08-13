@@ -171,7 +171,9 @@ class Settings {
      * Set to `-1` to disable, or `0` to infer it automatically. Any other value is the aspect ratio.
      * @since 0.18.4
      */
-    var aspectRatio: Pair<Int, Int> = -1 to -1
+    @get:JvmName("getAspectRatio")
+    @set:JvmName("setAspectRatio")
+    var aspectRatio: Vec2 = Vec2(-1f, -1f)
 
     /**
      * This property will explicitly clean up after the initialization of PolyUI,

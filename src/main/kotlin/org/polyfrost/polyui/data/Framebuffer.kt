@@ -19,21 +19,17 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.polyfrost.polyui.renderer.data
+package org.polyfrost.polyui.data
 
 /**
- * # Cursor
+ * Class that represents a framebuffer in PolyUI.
  *
- * This enum represents the different cursors that can be used in PolyUI.
+ * It contains very little information, and that is because it is entirely renderer-independent.
  *
+ * The way that PolyUI handles framebuffers is with this class, and it is down to the rendering implementation to handle it with caching, etc.
  */
-enum class Cursor {
-    /** classic, arrow pointer. */
-    Pointer,
-
-    /** `I` beam cursor used for text. */
-    Text,
-
-    /** the little hand which can click. */
-    Clicker,
+data class Framebuffer(val width: Float, val height: Float) {
+    override fun toString(): String {
+        return "Framebuffer($width x $height)"
+    }
 }

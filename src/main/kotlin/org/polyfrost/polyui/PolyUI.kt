@@ -25,20 +25,22 @@ import org.apache.logging.log4j.LogManager
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.color.DarkTheme
 import org.polyfrost.polyui.color.PolyColor
-import org.polyfrost.polyui.component.*
+import org.polyfrost.polyui.component.Component
+import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.component.Inputtable
+import org.polyfrost.polyui.component.extensions.radius
 import org.polyfrost.polyui.component.impl.Block
 import org.polyfrost.polyui.component.impl.Group
-import org.polyfrost.polyui.event.InputManager
-import org.polyfrost.polyui.input.KeyBinder
-import org.polyfrost.polyui.input.KeyModifiers
-import org.polyfrost.polyui.input.Modifiers
-import org.polyfrost.polyui.input.Translator
+import org.polyfrost.polyui.data.Cursor
+import org.polyfrost.polyui.data.Font
+import org.polyfrost.polyui.data.FontFamily
+import org.polyfrost.polyui.data.PolyImage
+import org.polyfrost.polyui.input.*
+import org.polyfrost.polyui.layout.FlexLayoutController
+import org.polyfrost.polyui.layout.LayoutController
+import org.polyfrost.polyui.renderer.FramebufferController
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.Window
-import org.polyfrost.polyui.renderer.data.Cursor
-import org.polyfrost.polyui.renderer.data.Font
-import org.polyfrost.polyui.renderer.data.FontFamily
-import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.Clock
@@ -171,7 +173,7 @@ class PolyUI(
      */
     inline val canPauseRendering get() = settings.renderPausingEnabled && window?.supportsRenderPausing() == true
 
-    inline val canUseFramebuffers get() = settings.framebuffersEnabled && renderer.supportsFramebuffers()
+    inline val canUseFramebuffers get() = settings.framebuffersEnabled && renderer is FramebufferController
 
     inline val pixelRatio get() = window?.pixelRatio ?: 1f
 
@@ -203,7 +205,7 @@ class PolyUI(
     inline val keyBinder get() = inputManager.keyBinder
     val translator = translator ?: Translator(this.settings, "")
     val clock = Clock()
-    var positioner: Positioner = Positioner.Default()
+    var layoutController: LayoutController = FlexLayoutController
 
     /** weather this PolyUI instance drew on this frame.
      *
@@ -351,8 +353,8 @@ class PolyUI(
         }
 
         val (num, denom) = settings.aspectRatio
-        if (num != -1 && denom != -1) {
-            val aspectRatio = num.toFloat() / denom.toFloat()
+        if (num != -1f && denom != -1f) {
+            val aspectRatio = num / denom
             if (newWidth / newHeight != aspectRatio) {
                 LOGGER.warn("Cannot resize to size with incorrect aspect ratio: ${newWidth}x${newHeight}, forcing changes, this may cause visual issues!")
                 val newAspectRatio = newWidth / newHeight

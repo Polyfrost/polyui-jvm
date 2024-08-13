@@ -31,7 +31,7 @@ import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.utils.annotations.Dispatches
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.operations.Recolor
-import org.polyfrost.polyui.renderer.data.Cursor
+import org.polyfrost.polyui.data.Cursor
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.seconds

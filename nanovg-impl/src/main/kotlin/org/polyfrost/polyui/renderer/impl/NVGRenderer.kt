@@ -32,10 +32,9 @@ import org.lwjgl.stb.STBImage.stbi_failure_reason
 import org.lwjgl.stb.STBImage.stbi_load_from_memory
 import org.lwjgl.system.MemoryUtil
 import org.polyfrost.polyui.PolyUI
+import org.polyfrost.polyui.data.Font
+import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.renderer.Renderer
-import org.polyfrost.polyui.renderer.data.Font
-import org.polyfrost.polyui.renderer.data.Framebuffer
-import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.*
 import java.nio.ByteBuffer
@@ -125,9 +124,6 @@ object NVGRenderer : Renderer {
 
     override fun popScissor() = nvgResetScissor(vg)
 
-    override fun drawFramebuffer(fbo: Framebuffer, x: Float, y: Float, width: Float, height: Float) {
-    }
-
     override fun text(
         font: Font,
         x: Float,
@@ -178,15 +174,6 @@ object NVGRenderer : Renderer {
         nvgFill(vg)
     }
 
-    override fun supportsFramebuffers() = false
-
-    override fun createFramebuffer(width: Float, height: Float): Framebuffer {
-        return Framebuffer(width, height)
-    }
-
-    override fun delete(fbo: Framebuffer?) {
-    }
-
     override fun delete(font: Font?) {
         fonts.remove(font)
     }
@@ -206,12 +193,6 @@ object NVGRenderer : Renderer {
                 }
             }
         }
-    }
-
-    override fun bindFramebuffer(fbo: Framebuffer) {
-    }
-
-    override fun unbindFramebuffer() {
     }
 
     override fun initImage(image: PolyImage) {

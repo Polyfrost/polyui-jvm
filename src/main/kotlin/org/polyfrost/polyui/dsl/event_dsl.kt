@@ -19,9 +19,10 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.polyfrost.polyui.event
+package org.polyfrost.polyui.dsl
 
 import org.polyfrost.polyui.component.Inputtable
+import org.polyfrost.polyui.event.Event
 
 /**
  * DSL for events.

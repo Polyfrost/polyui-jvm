@@ -24,14 +24,14 @@ package org.polyfrost.polyui.component.impl
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Component
-import org.polyfrost.polyui.component.ensureLargerThan
+import org.polyfrost.polyui.component.extensions.ensureLargerThan
+import org.polyfrost.polyui.data.Cursor
+import org.polyfrost.polyui.data.Font
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.renderer.Renderer
-import org.polyfrost.polyui.renderer.data.Cursor
-import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2

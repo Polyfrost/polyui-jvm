@@ -29,10 +29,11 @@ import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.component.*
+import org.polyfrost.polyui.component.extensions.*
+import org.polyfrost.polyui.data.Font
+import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.operations.*
-import org.polyfrost.polyui.renderer.data.Font
-import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.mapToArray
 import kotlin.experimental.or

@@ -34,10 +34,11 @@ import org.lwjgl.stb.STBImage
 import org.lwjgl.system.*
 import org.lwjgl.system.macosx.ObjCRuntime
 import org.polyfrost.polyui.PolyUI
+import org.polyfrost.polyui.data.Cursor
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.renderer.Window
-import org.polyfrost.polyui.renderer.data.Cursor
+import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.getResourceStream
 import org.polyfrost.polyui.utils.simplifyRatio
 import org.polyfrost.polyui.utils.toByteArray
@@ -321,12 +322,12 @@ class GLFWWindow @JvmOverloads constructor(
         val (maxW, maxH) = polyUI.settings.maximumSize
         glfwSetWindowSizeLimits(handle, minW.toInt(), minH.toInt(), maxW.toInt(), maxH.toInt())
 
-        if (polyUI.settings.aspectRatio.first == 0 || polyUI.settings.aspectRatio.second == 0) {
-            val ratio = (width to height).simplifyRatio()
-            LOGGER.info("Inferred aspect ratio: ${ratio.first}:${ratio.second}")
+        if (polyUI.settings.aspectRatio.x == 0f || polyUI.settings.aspectRatio.y == 0f) {
+            val ratio = Vec2(width.toFloat(), height.toFloat()).simplifyRatio()
+            LOGGER.info("Inferred aspect ratio: ${ratio.x}:${ratio.y}")
             polyUI.settings.aspectRatio = ratio
         }
-        glfwSetWindowAspectRatio(handle, polyUI.settings.aspectRatio.first, polyUI.settings.aspectRatio.second)
+        glfwSetWindowAspectRatio(handle, polyUI.settings.aspectRatio.x.toInt(), polyUI.settings.aspectRatio.y.toInt())
 
         var time = glfwGetTime()
         fpsCap = polyUI.settings.maxFPS.toDouble()

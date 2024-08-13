@@ -24,7 +24,7 @@ package org.polyfrost.polyui.renderer.impl
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.renderer.Window
-import org.polyfrost.polyui.renderer.data.Cursor
+import org.polyfrost.polyui.data.Cursor
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
