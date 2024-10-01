@@ -123,7 +123,10 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Mutable>, faves: MutableList<Poly
             center = true,
             size = 42f by 32f
         ),
-        Image("info.svg"),
+        Image(
+            "info.svg".image(),
+            size = 18f by 18f,
+        ),
         size = 288f by 0f,
         align = Align(pad = 12f by 12f),
         polyUI = polyUI,
