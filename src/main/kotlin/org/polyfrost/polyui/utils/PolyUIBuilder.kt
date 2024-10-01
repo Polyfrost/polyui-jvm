@@ -36,33 +36,35 @@ import org.polyfrost.polyui.unit.Vec2
 
 open class PolyUIBuilder {
     private var manager: InputManager? = null
-    private var renderer: Renderer? = null
+    var renderer: Renderer? = null
     private var translator: Translator? = null
     private var alignment = AlignDefault
     private var colors: Colors = DarkTheme()
     private var backgroundColor: PolyColor? = null
     val settings = Settings()
     var size = Vec2.ZERO
-    private var pauses = false
-    private var blurs = false
+    var pauses = false
+        private set
+    var blurs = false
+        private set
 
-    fun input(manager: InputManager?): PolyUIBuilder {
+    open fun input(manager: InputManager?): PolyUIBuilder {
         this.manager = manager
         return this
     }
 
-    fun translator(translator: Translator?): PolyUIBuilder {
+    open fun translator(translator: Translator?): PolyUIBuilder {
         this.translator = translator
         return this
     }
 
-    fun translatorDelegate(translationDir: String): PolyUIBuilder {
+    open fun translatorDelegate(translationDir: String): PolyUIBuilder {
         val translator = this.translator ?: Translator(settings, "", null).also { this.translator = it }
         translator.addDelegate(translationDir)
         return this
     }
 
-    fun align(alignment: Align): PolyUIBuilder {
+    open fun align(alignment: Align): PolyUIBuilder {
         this.alignment = alignment
         return this
     }
@@ -77,7 +79,7 @@ open class PolyUIBuilder {
         return this
     }
 
-    fun colors(colors: Colors): PolyUIBuilder {
+    open fun colors(colors: Colors): PolyUIBuilder {
         this.colors = colors
         return this
     }
@@ -87,22 +89,17 @@ open class PolyUIBuilder {
         return this
     }
 
-    fun backgroundColor(color: PolyColor?): PolyUIBuilder {
+    open fun backgroundColor(color: PolyColor?): PolyUIBuilder {
         this.backgroundColor = color
         return this
     }
 
-    fun renderer(renderer: Renderer?): PolyUIBuilder {
-        this.renderer = renderer
-        return this
-    }
-
-    fun size(width: Float, height: Float): PolyUIBuilder {
+    open fun size(width: Float, height: Float): PolyUIBuilder {
         this.size = Vec2(width, height)
         return this
     }
 
-    fun make(vararg components: Component): PolyUI {
+    open fun make(vararg components: Component): PolyUI {
         val renderer = renderer
         require(renderer != null) { "Renderer must be set" }
         return PolyUI(*components, renderer = renderer, settings = settings, inputManager = manager, translator = translator, backgroundColor = backgroundColor, masterAlignment = alignment, colors = colors, size = size)
