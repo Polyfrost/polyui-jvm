@@ -121,7 +121,7 @@ class AWTRenderer : Renderer {
         return Vec2(bounds.width.toFloat(), fontSize)
     }
 
-    override fun initImage(image: PolyImage) {
+    override fun initImage(image: PolyImage, size: Vec2) {
         getImage(image)
     }
 
@@ -139,11 +139,9 @@ class AWTRenderer : Renderer {
                 val a = ByteArray(buf.remaining())
                 buf.get(a)
                 img.raster.setDataElements(0, 0, w, h, a)
-                image.size = Vec2(w.toFloat(), h.toFloat())
                 return@getOrPut img
             }
             val img = ImageIO.read(image.stream())
-            image.size = Vec2(img.width.toFloat(), img.height.toFloat())
             img
         }
     }

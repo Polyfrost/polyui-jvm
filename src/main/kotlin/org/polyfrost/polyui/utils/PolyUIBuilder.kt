@@ -31,7 +31,6 @@ import org.polyfrost.polyui.input.InputManager
 import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.unit.Align
-import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
 
 /**
@@ -45,7 +44,7 @@ open class PolyUIBuilder {
         private set
     protected var translator: Translator? = null
         private set
-    protected var alignment = AlignDefault
+    protected var alignment = Align(cross = Align.Cross.Start, pad = Vec2.ZERO)
         private set
     protected var colors: Colors = DarkTheme()
         private set

@@ -22,9 +22,9 @@
 package org.polyfrost.polyui.renderer.impl
 
 import org.polyfrost.polyui.color.Color
-import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.data.Font
 import org.polyfrost.polyui.data.PolyImage
+import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.unit.Vec2
 
 object NoOpRenderer : Renderer {
@@ -83,8 +83,8 @@ object NoOpRenderer : Renderer {
 
     override fun textBounds(font: Font, text: String, fontSize: Float) = Vec2.ONE
 
-    override fun initImage(image: PolyImage) {
-        if (!image.size.isPositive) image.size = Vec2(18f, 18f)
+    override fun initImage(image: PolyImage, size: Vec2) {
+        if (!image.size.isPositive) PolyImage.setImageSize(image, Vec2(18f, 18f))
     }
 
     override fun image(

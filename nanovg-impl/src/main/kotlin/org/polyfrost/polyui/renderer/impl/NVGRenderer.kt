@@ -79,11 +79,9 @@ object NVGRenderer : Renderer {
         if (defaultImage == 0) {
             val iImage = PolyUI.defaultImage
             val iData = iImage.load()
-            val iHandle = nvgCreateImageRGBA(vg, iImage.width.toInt(), iImage.height.toInt(), 0, iData.toDirectByteBuffer())
-            require(iHandle != 0) { "NanoVG failed to initialize default image" }
             defaultImageData = iData
-            images[iImage] = iHandle
-            this.defaultImage = iHandle
+            this.defaultImage = loadImage(iImage, iData.toDirectByteBuffer())
+            require(this.defaultImage != 0) { "NanoVG failed to initialize default image" }
         }
     }
 
@@ -195,8 +193,8 @@ object NVGRenderer : Renderer {
         }
     }
 
-    override fun initImage(image: PolyImage) {
-        getImage(image, 0f, 0f)
+    override fun initImage(image: PolyImage, size: Vec2) {
+        getImage(image, size.x, size.y)
     }
 
     override fun rect(
@@ -436,16 +434,15 @@ object NVGRenderer : Renderer {
     }
 
     private fun getImage(image: PolyImage, width: Float, height: Float): Int {
-        if (image.loadSync) return getImageSync(image, width, height)
+        if (image.loadSync || (width == 0f && height == 0f)) return getImageSync(image, width, height)
         return when (image.type) {
             PolyImage.Type.Vector -> {
-                val (svg, map) = svgs.getOrPut(image) {
+                val (svg, map) = svgs[image] ?: run {
                     image.loadAsync(errorHandler) {
                         queue.add { svgLoad(image, it.toDirectByteBufferNT()) }
                     }
                     return defaultImage
                 }
-                if (!image.size.isPositive) image.size = Vec2(svg.width(), svg.height())
                 map.getOrPut(width.hashCode() * 31 + height.hashCode()) { svgResize(svg, width, height) }
             }
 
@@ -466,7 +463,7 @@ object NVGRenderer : Renderer {
         return when (image.type) {
             PolyImage.Type.Vector -> {
                 val (svg, map) = svgs[image] ?: return svgLoad(image, image.load { errorHandler(it); defaultImageData!! }.toDirectByteBufferNT())
-                if (!image.size.isPositive) image.size = Vec2(svg.width(), svg.height())
+                if (!image.size.isPositive) PolyImage.setImageSize(image, Vec2(svg.width(), svg.height()))
                 map.getOrPut(width.hashCode() * 31 + height.hashCode()) { svgResize(svg, width, height) }
             }
 
@@ -480,8 +477,8 @@ object NVGRenderer : Renderer {
 
     private fun svgLoad(image: PolyImage, data: ByteBuffer): Int {
         val svg = nsvgParse(data, PIXELS, 96f) ?: throw IllegalStateException("Failed to parse SVG: ${image.resourcePath}")
-        image.size = Vec2(svg.width(), svg.height())
         val map = Int2IntMap(4)
+        if (!image.size.isPositive) PolyImage.setImageSize(image, Vec2(svg.width(), svg.height()))
         val o = svgResize(svg, svg.width(), svg.height())
         map[image.size.hashCode()] = o
         svgs[image] = svg to map
@@ -489,8 +486,8 @@ object NVGRenderer : Renderer {
     }
 
     private fun svgResize(svg: NSVGImage, width: Float, height: Float): Int {
-        val wi = (width * 2f).toInt()
-        val hi = (height * 2f).toInt()
+        val wi = ((if (width == 0f) svg.width() else width) * 2f).toInt()
+        val hi = ((if (height == 0f) svg.height() else height) * 2f).toInt()
         val dst = MemoryUtil.memAlloc(wi * hi * 4)
         val scale = cl1(width / svg.width(), height / svg.height()) * 2f
         nsvgRasterize(raster, svg, 0f, 0f, scale, dst, wi, hi, wi * 4)
@@ -501,7 +498,7 @@ object NVGRenderer : Renderer {
         val w = IntArray(1)
         val h = IntArray(1)
         val d = stbi_load_from_memory(data, w, h, IntArray(1), 4) ?: throw IllegalStateException("Failed to load image ${image.resourcePath}: ${stbi_failure_reason()}")
-        image.size = Vec2(w[0].toFloat(), h[0].toFloat())
+        if (!image.size.isPositive) PolyImage.setImageSize(image, Vec2(w[0].toFloat(), h[0].toFloat()))
         return nvgCreateImageRGBA(vg, w[0], h[0], 0, d)
     }
 
