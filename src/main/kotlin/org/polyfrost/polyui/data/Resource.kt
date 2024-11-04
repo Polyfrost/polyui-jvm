@@ -24,7 +24,8 @@ package org.polyfrost.polyui.data
 import org.polyfrost.polyui.utils.getResourceStream
 import org.polyfrost.polyui.utils.toByteArray
 import java.io.InputStream
-import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ForkJoinPool
+import java.util.concurrent.ForkJoinTask
 
 /**
  * representation of a resource, which can be loaded asynchronously or synchronously.
@@ -111,7 +112,20 @@ open class Resource(val resourcePath: String, @Transient @get:JvmName("shouldLoa
     }
 
     private fun <T> doAsync(supplier: () -> T, func: (T, Throwable?) -> Unit) {
-        CompletableFuture.supplyAsync(supplier).whenComplete(func)
+        ForkJoinPool.commonPool().submit(object : ForkJoinTask<Void>() {
+            override fun getRawResult() = null
+
+            override fun exec() = try {
+                func(supplier(), null)
+                true
+            } catch (e: Throwable) {
+                func(null as T, e)
+                false
+            }
+
+            override fun setRawResult(value: Void?) {}
+        }
+        )
     }
 
 

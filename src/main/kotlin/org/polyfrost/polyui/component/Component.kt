@@ -633,4 +633,27 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
             else remove(componentOp)
         }
     }
+
+    /**
+     * Supply extra information to the [toString] representation of this object. Keep it short.
+     *
+     * @since 1.7.1
+     */
+    open fun extraToString(): String? = null
+
+    override fun toString(): String {
+        val sb = StringBuilder(48)
+        sb.append(name).append('(')
+        val ex = extraToString()
+        if (ex != null) {
+            sb.append(ex).append(", ")
+        }
+        if (initialized) {
+            if (sizeValid) {
+                sb.append(x).append('x').append(y).append(", ").append(size)
+            } else sb.append("being initialized")
+        } else sb.append("not initialized")
+
+        return sb.append(')').toString()
+    }
 }

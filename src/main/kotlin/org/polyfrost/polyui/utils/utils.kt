@@ -82,6 +82,27 @@ fun Vec2.simplifyRatio(): Vec2 {
 }
 
 /**
+ * [coerceIn] which doesn't require [a] to be less than [b].
+ *
+ * Ensures that this value lies in the specified range [a]..[b].
+ *
+ * @return this value if it's in the range, or the smaller of [a] or [b] if this value is less than it, or the higher bound if this value is greater than it.
+ *
+ * @since 1.7.1
+ */
+@kotlin.internal.InlineOnly
+inline fun Float.coerceWithin(a: Float, b: Float): Float {
+    if (a < b) {
+        if (this < a) return a
+        if (this > b) return b
+    } else {
+        if (this < b) return b
+        if (this > a) return a
+    }
+    return this
+}
+
+/**
  * Returns the value closer to zero.
  *
  * If either value is `NaN`, then the result is `NaN`.
@@ -123,10 +144,6 @@ inline fun <T> T.stdout(arg: Any? = null): T {
 @kotlin.internal.InlineOnly
 inline fun String.image() = PolyImage(this)
 
-@JvmName("image")
-@kotlin.internal.InlineOnly
-inline fun String.image(size: Vec2) = PolyImage(this).also { it.size = size }
-
 @kotlin.internal.InlineOnly
 inline fun String.translated(vararg args: Any?) = Translator.Text.Formatted(Translator.Text.Simple(this), *args)
 
@@ -135,6 +152,13 @@ inline fun String.translated(): Translator.Text = Translator.Text.Simple(this)
 
 @kotlin.internal.InlineOnly
 inline fun Translator.Text.dont(): Translator.Text.Dont = if (this is Translator.Text.Dont) this else Translator.Text.Dont(this)
+
+/**
+ * Return `null` if this collection is empty, otherwise return this collection.
+ * @since 1.7.02
+ */
+@kotlin.internal.InlineOnly
+inline fun <E> Collection<E>.nullIfEmpty() = if (this.isEmpty()) null else this
 
 /**
  * Moves the given element from the [from] index to the [to] index.

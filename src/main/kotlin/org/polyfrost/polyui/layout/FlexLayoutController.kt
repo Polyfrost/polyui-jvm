@@ -21,6 +21,7 @@
 
 package org.polyfrost.polyui.layout
 
+import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Scrollable
 import org.polyfrost.polyui.layout.FlexLayoutController.Aligner
@@ -45,7 +46,10 @@ object FlexLayoutController : LayoutController {
         if (!component.sizeValid) {
             // hope they know what they are doing!
             if (component.layoutIgnored) return
-            require(!children.isNullOrEmpty()) { "Component $component has no size and no children\nBacktrace: ${polyUI.debugger.debugString()}" }
+            if(children.isNullOrEmpty()) {
+                PolyUI.LOGGER.error("failed to initialize $component: was skipped as it has no size and no children")
+                return
+            }
         } else if (children.isNullOrEmpty()) {
             component.fixVisibleSize()
             return

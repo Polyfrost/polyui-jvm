@@ -318,7 +318,7 @@ class Debugger(private val polyUI: PolyUI) {
                 if (obj != null) {
                     val os = obj.toString()
                     val w = renderer.textBounds(monospaceFont, os, 10f).x
-                    val pos = (mouseX - w / 2f).coerceIn(0f, this.size.x - w - 10f)
+                    val pos = (mouseX - w / 2f).coerceWithin(0f, this.size.x - w - 10f)
                     renderer.rect(pos, mouseY - 14f, w + 10f, 14f, colors.component.bg.hovered)
                     renderer.text(monospaceFont, pos + 5f, mouseY - 10f, text = os, colors.text.primary.normal, 10f)
                     master.needsRedraw = true
@@ -330,8 +330,8 @@ class Debugger(private val polyUI: PolyUI) {
             if (mods.hasAlt) {
                 val s = "${inputManager.mouseX}x${inputManager.mouseY}"
                 val ww = renderer.textBounds(monospaceFont, s, 10f).x
-                val ppos = (mouseX + 10f).coerceIn(0f, this.size.x - ww - 10f)
-                val pposy = mouseY.coerceIn(0f, this.size.y - 14f)
+                val ppos = (mouseX + 10f).coerceWithin(0f, this.size.x - ww - 10f)
+                val pposy = mouseY.coerceWithin(0f, this.size.y - 14f)
                 renderer.rect(ppos, pposy, ww + 10f, 14f, colors.component.bg.hovered)
                 renderer.text(monospaceFont, ppos + 5f, pposy + 4f, text = s, colors.text.primary.normal, 10f)
                 master.needsRedraw = true
@@ -359,14 +359,11 @@ class Debugger(private val polyUI: PolyUI) {
      */
     fun debugString(): String {
         val sb = StringBuilder(1024).append(polyUI.toString())
-        val children = polyUI.master.children ?: run {
-            sb.append(" with 0 children, totalling 0 components.")
-            return sb.toString()
-        }
+        val children = polyUI.master.children ?: return sb.append(" with 0 children, totalling 0 components.").toString()
         sb.append(" with ${children.size} children, totalling ${polyUI.master.countChildren()} components:")
         children.fastEach {
-            sb.append("\n\t").append(it.toString())
-            _debugString(it.children ?: return@fastEach, 1, sb)
+            sb.append('\n').append(it.toString())
+            _debugString(it.children ?: return@fastEach, 0, sb)
         }
         return sb.toString()
     }

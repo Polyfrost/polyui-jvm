@@ -21,6 +21,7 @@
 
 package org.polyfrost.polyui.data
 
+import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.data.PolyImage.Type
 import org.polyfrost.polyui.unit.Vec2
@@ -35,16 +36,12 @@ class PolyImage @JvmOverloads constructor(
     val type: Type = from(resourcePath),
 ) : Resource(resourcePath) {
 
-    var width = 0f
-    var height = 0f
-
     @get:JvmName("getSize")
-    @set:JvmName("setSize")
-    var size: Vec2
-        get() = Vec2(width, height)
-        set(value) {
-            width = value.x
-            height = value.y
+    var size: Vec2 = Vec2.ZERO
+        private set(value) {
+            require(value.isPositive) { "Size must be positive ($value)" }
+            require(!field.isPositive) { "Size already set to $field (new: $value)" }
+            field = value
         }
 
     override fun toString() = "$type Image($resourcePath, ${if (size.isPositive) size.toString() else "??x??"})"
@@ -123,5 +120,11 @@ class PolyImage @JvmOverloads constructor(
                     "${icon.replace('.', '/')}/${style.style}/24px.svg",
             Type.Vector,
         )
+
+        @ApiStatus.Internal
+        @JvmStatic
+        fun setImageSize(image: PolyImage, size: Vec2) {
+            image.size = size
+        }
     }
 }

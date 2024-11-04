@@ -48,6 +48,9 @@ value class Vec2(val value: Long) {
     @kotlin.internal.InlineOnly
     inline val isZero get() = value == 0L
 
+    /**
+     * Checks if the value is positive and non-zero.
+     */
     @kotlin.internal.InlineOnly
     inline val isPositive get() = !isNegative && value != 0L
 

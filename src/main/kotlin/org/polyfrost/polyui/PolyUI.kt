@@ -303,12 +303,15 @@ class PolyUI(
             )
         }
         if (this.settings.cleanupAfterInit) {
-            val currentUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
+            val r = Runtime.getRuntime()
+            val currentUsage = r.totalMemory() - r.freeMemory()
             timed("Running Post-init Cleanup...") {
-                Runtime.getRuntime().gc()
+                r.gc()
             }
-            val newUsage = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
-            LOGGER.info("\t\t> Freed ${(currentUsage - newUsage) / 1024L}KB of memory")
+            if (this.settings.debug) {
+                val newUsage = r.totalMemory() - r.freeMemory()
+                LOGGER.info("\t\t> Freed ${(currentUsage - newUsage) / 1024L}KB of memory")
+            }
         }
         iSize // initialize the initial size
         LOGGER.info("PolyUI initialized!")

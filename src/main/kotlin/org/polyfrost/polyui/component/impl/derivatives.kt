@@ -28,13 +28,16 @@ import org.jetbrains.annotations.Contract
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
 import org.polyfrost.polyui.animate.Animations
-import org.polyfrost.polyui.component.*
+import org.polyfrost.polyui.component.Component
+import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.component.Inputtable
 import org.polyfrost.polyui.component.extensions.*
 import org.polyfrost.polyui.data.Font
 import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.operations.*
 import org.polyfrost.polyui.unit.*
+import org.polyfrost.polyui.utils.coerceWithin
 import org.polyfrost.polyui.utils.mapToArray
 import kotlin.experimental.or
 import kotlin.math.PI
@@ -411,18 +414,18 @@ fun PopupMenu(vararg children: Component?, size: Vec2 = Vec2.ZERO, align: Align 
             val sz = this.polyUI.size
             when (position) {
                 Point.At -> {
-                    x = mx.coerceIn(0f, sz.x - this.width)
-                    y = my.coerceIn(0f, sz.y - this.height)
+                    x = mx.coerceWithin(0f, sz.x - this.width)
+                    y = my.coerceWithin(0f, sz.y - this.height)
                 }
 
                 Point.Above -> {
-                    x = (mx - (this.width / 2f)).coerceIn(0f, sz.x - this.width)
-                    y = (my - this.height - 6f).coerceIn(0f, sz.y - this.height)
+                    x = (mx - (this.width / 2f)).coerceWithin(0f, sz.x - this.width)
+                    y = (my - this.height - 6f).coerceWithin(0f, sz.y - this.height)
                 }
 
                 Point.Below -> {
-                    x = (mx - (this.width / 2f)).coerceIn(0f, sz.x - this.width)
-                    y = (my + 12f).coerceIn(0f, sz.y - this.height)
+                    x = (mx - (this.width / 2f)).coerceWithin(0f, sz.x - this.width)
+                    y = (my + 12f).coerceWithin(0f, sz.y - this.height)
                 }
             }
             fadeIn(0.2.seconds)

@@ -350,13 +350,5 @@ abstract class Drawable(
      */
     public override fun clone() = (super.clone() as Drawable)
 
-    override fun toString(): String {
-        return if (initialized) {
-            if (sizeValid) {
-                "$name(${x}x$y, $size)"
-            } else "$name(being initialized)"
-        } else "$name(not initialized)"
-    }
-
     override operator fun get(index: Int) = super.get(index) as? Drawable ?: throw IllegalArgumentException("Object at $index on $this is not a Drawable")
 }

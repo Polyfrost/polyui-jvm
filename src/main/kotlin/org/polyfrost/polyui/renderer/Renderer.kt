@@ -166,7 +166,7 @@ interface Renderer : AutoCloseable {
     fun textBounds(font: Font, text: String, fontSize: Float): Vec2
 
     /** Function that can be called to explicitly initialize an image. This is used mainly for getting the size of an image, or to ensure an SVG has been rasterized. */
-    fun initImage(image: PolyImage)
+    fun initImage(image: PolyImage, size: Vec2)
 
     /**
      * Draw an image to the screen, per the given parameters.
@@ -175,8 +175,8 @@ interface Renderer : AutoCloseable {
         image: PolyImage,
         x: Float,
         y: Float,
-        width: Float = image.width,
-        height: Float = image.height,
+        width: Float,
+        height: Float,
         colorMask: Int = 0,
         topLeftRadius: Float,
         topRightRadius: Float,
@@ -218,11 +218,11 @@ interface Renderer : AutoCloseable {
     )
 
     /** @see image */
-    fun image(image: PolyImage, x: Float, y: Float, width: Float = image.width, height: Float = image.height, radius: Float = 0f, colorMask: Int = 0) =
+    fun image(image: PolyImage, x: Float, y: Float, width: Float, height: Float, radius: Float = 0f, colorMask: Int = 0) =
         image(image, x, y, width, height, colorMask, radius, radius, radius, radius)
 
     /** @see image */
-    fun image(image: PolyImage, x: Float, y: Float, width: Float = image.width, height: Float = image.height, radii: FloatArray, colorMask: Int = 0) =
+    fun image(image: PolyImage, x: Float, y: Float, width: Float, height: Float, radii: FloatArray, colorMask: Int = 0) =
         image(image, x, y, width, height, colorMask, radii[0], radii[1], radii[2], radii[3])
 
     /** @see rect */

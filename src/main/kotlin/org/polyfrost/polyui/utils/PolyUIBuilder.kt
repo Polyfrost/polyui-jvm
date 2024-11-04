@@ -34,52 +34,52 @@ import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
 
+/**
+ * Java-style builder for creating a [PolyUI] instance.
+ * @since 1.7.0
+ */
 open class PolyUIBuilder {
-    private var manager: InputManager? = null
-    var renderer: Renderer? = null
-    private var translator: Translator? = null
-    private var alignment = AlignDefault
-    private var colors: Colors = DarkTheme()
-    private var backgroundColor: PolyColor? = null
-    val settings = Settings()
-    var size = Vec2.ZERO
-    var pauses = false
+    protected var manager: InputManager? = null
         private set
-    var blurs = false
+    protected var renderer: Renderer? = null
+        private set
+    protected var translator: Translator? = null
+        private set
+    protected var alignment = AlignDefault
+        private set
+    protected var colors: Colors = DarkTheme()
+        private set
+    protected var backgroundColor: PolyColor? = null
+        private set
+    @get:JvmName("getSize")
+    var size = Vec2.ZERO
         private set
 
-    open fun input(manager: InputManager?): PolyUIBuilder {
+    val settings = Settings()
+
+
+    fun input(manager: InputManager?): PolyUIBuilder {
         this.manager = manager
         return this
     }
 
-    open fun translator(translator: Translator?): PolyUIBuilder {
+    fun translator(translator: Translator?): PolyUIBuilder {
         this.translator = translator
         return this
     }
 
-    open fun translatorDelegate(translationDir: String): PolyUIBuilder {
+    fun translatorDelegate(translationDir: String): PolyUIBuilder {
         val translator = this.translator ?: Translator(settings, "", null).also { this.translator = it }
         translator.addDelegate(translationDir)
         return this
     }
 
-    open fun align(alignment: Align): PolyUIBuilder {
+    fun align(alignment: Align): PolyUIBuilder {
         this.alignment = alignment
         return this
     }
 
-    fun pauses(): PolyUIBuilder {
-        pauses = true
-        return this
-    }
-
-    fun blurs(): PolyUIBuilder {
-        blurs = true
-        return this
-    }
-
-    open fun colors(colors: Colors): PolyUIBuilder {
+    fun colors(colors: Colors): PolyUIBuilder {
         this.colors = colors
         return this
     }
@@ -89,12 +89,23 @@ open class PolyUIBuilder {
         return this
     }
 
-    open fun backgroundColor(color: PolyColor?): PolyUIBuilder {
+    fun backgroundColor(color: PolyColor?): PolyUIBuilder {
         this.backgroundColor = color
         return this
     }
 
-    open fun size(width: Float, height: Float): PolyUIBuilder {
+    fun renderer(renderer: Renderer?): PolyUIBuilder {
+        this.renderer = renderer
+        return this
+    }
+
+    @JvmName("size")
+    fun size(size: Vec2): PolyUIBuilder {
+        this.size = size
+        return this
+    }
+
+    fun size(width: Float, height: Float): PolyUIBuilder {
         this.size = Vec2(width, height)
         return this
     }

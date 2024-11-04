@@ -43,7 +43,7 @@ open class Image(
     var image: PolyImage = image
         set(value) {
             field = value
-            if (initialized) renderer.initImage(value)
+            if (initialized) renderer.initImage(value, size)
         }
 
     override fun render() {
@@ -54,11 +54,13 @@ open class Image(
                 backgroundColor?.let { renderer.rect(x, y, width, height, it) }
                 borderColor?.let { renderer.hollowRect(x, y, width, height, it, borderWidth) }
             }
+
             radii.size < 4 -> {
                 renderer.image(image, x, y, width, height, radii[0], color.argb)
                 backgroundColor?.let { renderer.rect(x, y, width, height, it, radii[0]) }
                 borderColor?.let { renderer.hollowRect(x, y, width, height, it, borderWidth, radii[0]) }
             }
+
             else -> {
                 renderer.image(image, x, y, width, height, radii, color.argb)
                 backgroundColor?.let { renderer.rect(x, y, width, height, it, radii) }
@@ -69,7 +71,7 @@ open class Image(
 
     override fun setup(polyUI: PolyUI): Boolean {
         if (initialized) return false
-        polyUI.renderer.initImage(image)
+        polyUI.renderer.initImage(image, size)
         if (!sizeValid) size = image.size
         palette = polyUI.colors.text.primary
         return super.setup(polyUI)
@@ -80,4 +82,6 @@ open class Image(
     override fun calculateSize() = image.size
 
     override fun debugString() = "image: ${image.resourcePath.substringAfterLast('/')} (${image.size})"
+
+    override fun extraToString() = image.resourcePath.substringAfterLast('/')
 }
