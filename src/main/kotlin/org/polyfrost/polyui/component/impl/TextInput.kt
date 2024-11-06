@@ -203,6 +203,14 @@ open class TextInput(
 
             is Event.Focused.KeyPressed -> {
                 when (event.key) {
+                    Keys.ENTER -> {
+                        if (mode == SCROLLING_SINGLE_LINE) polyUI.unfocus()
+                        else {
+                            text += "\n"
+                            caret++
+                        }
+                    }
+
                     Keys.BACKSPACE -> {
                         if (select != caret) {
                             val f: Int

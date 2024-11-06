@@ -118,11 +118,12 @@ open class DrawableDSL(@PublishedApi internal val _this: Drawable) {
         return o
     }
 
-    inline fun group(alignment: Align = AlignDefault, init: DrawableDSL.(Group) -> Unit): Group {
+    @JvmName("group")
+    inline fun group(visibleSize: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, init: DrawableDSL.(Group) -> Unit): Group {
         contract {
             callsInPlace(init, InvocationKind.EXACTLY_ONCE)
         }
-        val o = Group(alignment = alignment)
+        val o = Group(visibleSize = visibleSize, alignment = alignment)
         init(DrawableDSL(o), o)
         _this.addChild(o)
         return o

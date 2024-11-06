@@ -46,7 +46,7 @@ object FlexLayoutController : LayoutController {
         if (!component.sizeValid) {
             // hope they know what they are doing!
             if (component.layoutIgnored) return
-            if(children.isNullOrEmpty()) {
+            if (children.isNullOrEmpty()) {
                 PolyUI.LOGGER.error("failed to initialize $component: was skipped as it has no size and no children")
                 return
             }
@@ -66,7 +66,7 @@ object FlexLayoutController : LayoutController {
         val mainPad = padding[main] * totalSx
         val crossPad = padding[crs] * totalSy
         if (!component.positioned) {
-            component.rescale0(totalSx, totalSy, false)
+            if (totalSx != 1f || totalSy != 1f) component.rescale0(totalSx, totalSy, false)
         }
 
         if (children.size == 1) {

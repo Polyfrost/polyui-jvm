@@ -22,6 +22,7 @@
 package org.polyfrost.polyui
 
 import org.polyfrost.polyui.color.mutable
+import org.polyfrost.polyui.component.Inputtable
 import org.polyfrost.polyui.component.extensions.*
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.data.FontFamily
@@ -29,7 +30,9 @@ import org.polyfrost.polyui.dsl.polyUI
 import org.polyfrost.polyui.renderer.impl.GLFWWindow
 import org.polyfrost.polyui.renderer.impl.NVGRenderer
 import org.polyfrost.polyui.unit.Align
+import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
+import org.polyfrost.polyui.unit.fix
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.open
 import org.polyfrost.polyui.utils.ref
@@ -55,7 +58,7 @@ fun main() {
             Switch(size = 28f).add()
             Checkbox(size = 28f).add()
         }
-        Dropdown("tomato", "orange", "banana", "lime").add()
+        Dropdown("monkey blur", "phosphor blur", "moulberry blur").add()
         BoxedTextInput(pre = "Title:", post = "px").add()
         group {
             repeat(30) {
@@ -63,7 +66,7 @@ fun main() {
             }
             it.visibleSize = 350f by 120f
         }.makeRearrangeableGrid()
-        group {
+        group(Vec2(800f, 120f)) {
             Button("shuffle.svg".image(), "button.randomize").onClick {
                 val box = parent.parent[5]
                 box.children?.shuffle()
@@ -77,15 +80,16 @@ fun main() {
                 parent.parent[5].addChild(Block(size = 32f + (Math.random().toFloat() * 100f) by 32f).withStates())
             }.add()
             group {
-                Radiobutton("hello", "goodbye").add()
-                Slider().add().onChange { value: Float ->
-                    (parent[2] as Text).text = value.toString()
+                Radiobutton("hello", "goodbye", "yes", "no").add()
+                Slider(length = 200f, min = 50f, max = 120f, instant = true, initialValue = 67f).add().onChange { value: Float ->
+                    (parent.parent.parent[8][0][0][0] as Text).text = value.fix(2).toString()
                     false
                 }
                 text("blink three times when u feel it kicking in")
+                Button(text = "select 3").onClick { (parent[0] as Inputtable).setRadiobuttonEntry(2); true }.add()
             }
         }
-        group(Align(mode = Align.Mode.Vertical)) {
+        group(alignment = Align(mode = Align.Mode.Vertical)) {
             text("wrapping text") { setFont(FontFamily::boldItalic) }
             text(
                 "when am i gonna stop being wise for my age and just start being wise when am i gonna gonna stop being a pretty younger things to guys\n\n" +
@@ -95,6 +99,11 @@ fun main() {
             text("i am some text that has been limited, so at some point i will stop showing up and i will just be cut off, which is a pretty handy feature.", limited = true, visibleSize = 400f by 12f)
             textInput(visibleSize = 150f by 12f)
         }
-        BoxedNumericInput(size = 40f by 32f).add()
+        BoxedNumericInput(min = 50f, max = 120f, size = 40f by 32f, initialValue = 67f).add().also {
+            it[0].onChange { value: Float ->
+                (polyUI.master[6][3][1]).setSliderValue(value, 50f, 120f)
+                false
+            }
+        }
     }.open(window)
 }

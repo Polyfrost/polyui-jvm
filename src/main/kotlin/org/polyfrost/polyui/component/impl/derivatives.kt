@@ -38,6 +38,7 @@ import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.operations.*
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.coerceWithin
+import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.mapToArray
 import kotlin.experimental.or
 import kotlin.math.PI
@@ -293,11 +294,8 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
         ptr.accept(it)
         ptr.slide()
     }.afterInit {
-        val bar = this[0]
-        val ptr = this[1]
-        ptr.x = bar.x + length * ((initialValue - min) / (max - min))
-        bar.x += ptrSize / 2f
-        bar[0].width = ptr.x - bar.x + (ptrSize / 2f)
+        this[0].x += ptrSize / 2f
+        setSliderValue(initialValue, min, max)
     }.namedId("Slider")
 }
 
@@ -364,28 +362,30 @@ fun BoxedNumericInput(
         fontSize, center, post, size
     ).also {
         require(initialValue in min..max) { "initial value $initialValue is out of range for numeric text input of $min..$max" }
-        if (it.children?.size == 3) (it[1][0] as TextInput).numeric(min, max, integral)
-        else (it[0][0] as TextInput).numeric(min, max, integral)
+        if (it.children?.size == 3) (it[1][0] as TextInput).numeric(min, max, integral, it)
+        else (it[0][0] as TextInput).numeric(min, max, integral, it)
     }.radii(radius, 0f, radius, 0f),
     Block(
-        Image("polyui/chevron-down.svg").onClick {
-            val boxed = parent.parent[0]
+        Image("polyui/chevron-down.svg".image(), size = Vec2(14f, 14f)).onClick {
+            val boxed = parent.parent[0] as Inputtable
             val text = if (boxed.children?.size == 3) boxed[1][0] as Text else boxed[0][0] as Text
             val value = text.text.toFloat()
-            val newValue = (value + step).coerceIn(min, max)
-            text.text = if (integral) newValue.toInt().toString() else newValue.toString()
+            val newValue = (value + step).coerceIn(min, max).run { if (integral) toInt() else this }
+            text.text = newValue.toString()
+            if (boxed.hasListenersFor(Event.Change.Number)) boxed.accept(Event.Change.Number(newValue))
             true
         }.withStates().also { it.rotation = PI },
-        Image("polyui/chevron-down.svg").onClick {
-            val boxed = parent.parent[0]
+        Image("polyui/chevron-down.svg".image(), size = Vec2(14f, 14f)).onClick {
+            val boxed = parent.parent[0] as Inputtable
             val text = if (boxed.children?.size == 3) boxed[1][0] as Text else boxed[0][0] as Text
             val value = text.text.toFloat()
-            val newValue = (value - step).coerceIn(min, max)
-            text.text = if (integral) newValue.toInt().toString() else newValue.toString()
+            val newValue = (value - step).coerceIn(min, max).run { if (integral) toInt() else this }
+            text.text = newValue.toString()
+            if (boxed.hasListenersFor(Event.Change.Number)) boxed.accept(Event.Change.Number(newValue))
             true
         }.withStates(),
         radii = floatArrayOf(0f, radius, 0f, radius),
-        alignment = Align(main = Align.Main.Center, mode = Align.Mode.Vertical, pad = Vec2(2f, 2f)),
+        alignment = Align(main = Align.Main.Center, mode = Align.Mode.Vertical, pad = Vec2(1f, 0f)),
         size = Vec2(0f, 32f)
     ).onScroll { (_, y) ->
         if (y > 0f) this[0].accept(Event.Mouse.Clicked)

@@ -21,11 +21,16 @@
 
 package org.polyfrost.polyui.component.extensions
 
+import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.component.Component
+import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.Inputtable
 import org.polyfrost.polyui.component.impl.Text
 import org.polyfrost.polyui.dsl.EventDSL
 import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.operations.Move
+import org.polyfrost.polyui.operations.Resize
+import org.polyfrost.polyui.unit.seconds
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
@@ -173,5 +178,53 @@ fun <S : Inputtable> S.onChange(func: S.(Float) -> Boolean): S {
         it.cancelled = res
         res
     }
+    return this
+}
+
+
+/**
+ * Set the value on this slider. Unfortunately due to current limitations you must provide the [min] and [max] values that were used for this slider.
+ *
+ * **Ensure this object is a slider before running this method, as otherwise strange errors may occur**.
+ *
+ * @since 1.7.2
+ */
+fun <S : Inputtable> S.setSliderValue(value: Float, min: Float = 0f, max: Float = 100f): S {
+    val bar = this[0]
+    val ptr = this[1]
+    ptr.x = bar.x + (bar.width - ptr.width) * ((value - min) / (max - min))
+    bar[0].width = ptr.x - bar.x + (ptr.width / 2f)
+    if (hasListenersFor(Event.Change.Number::class.java)) accept(Event.Change.Number(value))
+    return this
+}
+
+/**
+ * Toggle any element to the given [state] provided it was made with the [toggleable] method.
+ *
+ * @since 1.7.2
+ */
+fun <S : Drawable> S.toggle(state: Boolean): S {
+    if (palette == polyUI.colors.brand.fg && state) return this
+    if (palette == polyUI.colors.component.bg && !state) return this
+    accept(Event.Mouse.Clicked)
+    return this
+}
+
+/**
+ * Set the currently selected entry of this radiobutton to [index] (input is range-checked).
+ *
+ * **Ensure this object is a radiobutton before running this method, as otherwise strange errors may occur**.
+ *
+ * @since 1.7.2
+ */
+fun <S : Inputtable> S.setRadiobuttonEntry(index: Int): S {
+    val max = (children?.size ?: 0) - 1
+    require(index in 0..<max) { "Index $index is out of bounds for a radiobutton with only $max entries" }
+    val selector = this[0]
+    val selected = this[index + 1]
+    if (selector.x == selected.x) return this
+    Move(selector, selected.at, add = false, animation = Animations.Default.create(0.15.seconds)).add()
+    Resize(selector, selected.size, add = false, animation = Animations.Default.create(0.15.seconds)).add()
+    if (hasListenersFor(Event.Change.Number)) accept(Event.Change.Number(index))
     return this
 }

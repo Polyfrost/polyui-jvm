@@ -811,6 +811,10 @@ public final class org/polyfrost/polyui/component/extensions/EventsKt {
 	public static final fun onRelease (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
 	public static final fun onScroll (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
 	public static final fun onToggle (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
+	public static final fun setRadiobuttonEntry (Lorg/polyfrost/polyui/component/Inputtable;I)Lorg/polyfrost/polyui/component/Inputtable;
+	public static final fun setSliderValue (Lorg/polyfrost/polyui/component/Inputtable;FFF)Lorg/polyfrost/polyui/component/Inputtable;
+	public static synthetic fun setSliderValue$default (Lorg/polyfrost/polyui/component/Inputtable;FFFILjava/lang/Object;)Lorg/polyfrost/polyui/component/Inputtable;
+	public static final fun toggle (Lorg/polyfrost/polyui/component/Drawable;Z)Lorg/polyfrost/polyui/component/Drawable;
 }
 
 public final class org/polyfrost/polyui/component/extensions/ExtensionsKt {
@@ -830,8 +834,8 @@ public final class org/polyfrost/polyui/component/extensions/ExtensionsKt {
 	public static final fun minimumSize (Lorg/polyfrost/polyui/component/Scrollable;J)Lorg/polyfrost/polyui/component/Scrollable;
 	public static final fun named (Lorg/polyfrost/polyui/component/Component;Ljava/lang/String;)Lorg/polyfrost/polyui/component/Component;
 	public static final fun namedId (Lorg/polyfrost/polyui/component/Component;Ljava/lang/String;)Lorg/polyfrost/polyui/component/Component;
-	public static final fun numeric (Lorg/polyfrost/polyui/component/impl/TextInput;FFZ)Lorg/polyfrost/polyui/component/impl/TextInput;
-	public static synthetic fun numeric$default (Lorg/polyfrost/polyui/component/impl/TextInput;FFZILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/TextInput;
+	public static final fun numeric (Lorg/polyfrost/polyui/component/impl/TextInput;FFZLorg/polyfrost/polyui/component/Inputtable;)Lorg/polyfrost/polyui/component/impl/TextInput;
+	public static synthetic fun numeric$default (Lorg/polyfrost/polyui/component/impl/TextInput;FFZLorg/polyfrost/polyui/component/Inputtable;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/TextInput;
 	public static final fun padded (Lorg/polyfrost/polyui/component/Component;FF)Lorg/polyfrost/polyui/component/Component;
 	public static final fun padded (Lorg/polyfrost/polyui/component/Component;FFFF)Lorg/polyfrost/polyui/component/Component;
 	public static final fun padded (Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/unit/Vec4;)Lorg/polyfrost/polyui/component/Component;
@@ -1194,8 +1198,8 @@ public class org/polyfrost/polyui/dsl/DrawableDSL {
 	public final fun block (JLorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/impl/Block;
 	public static synthetic fun block$default (Lorg/polyfrost/polyui/dsl/DrawableDSL;JLorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Block;
 	public final fun get_this ()Lorg/polyfrost/polyui/component/Drawable;
-	public final fun group (Lorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/impl/Group;
-	public static synthetic fun group$default (Lorg/polyfrost/polyui/dsl/DrawableDSL;Lorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Group;
+	public final fun group (JLorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/impl/Group;
+	public static synthetic fun group$default (Lorg/polyfrost/polyui/dsl/DrawableDSL;JLorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Group;
 	public final fun image (Ljava/lang/String;Lorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function1;)V
 	public final fun image (Lorg/polyfrost/polyui/data/PolyImage;Lorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/polyui/component/impl/Image;
 	public static synthetic fun image$default (Lorg/polyfrost/polyui/dsl/DrawableDSL;Ljava/lang/String;Lorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V

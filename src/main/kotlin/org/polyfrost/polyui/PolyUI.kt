@@ -241,22 +241,12 @@ class PolyUI(
     /**
      * this property stores the initial size of this PolyUI instance.
      * It is used to make sure that new objects experience the same resizing as others.
-     *
-     * **note:** access to this too early will result in a size of `1x1`. As this value is used for scaling, this is not a problem.
-     * just be careful if you are using this value for anything else.
-     *
      * @see Settings.forceSetsInitialSize
      * @see resize
      * @since 1.0.5
      */
     @get:JvmName("getInitialSize")
-    var iSize = Vec2.ONE
-        get() {
-            if (field == Vec2.ONE && master.sizeValid) {
-                field = master.size
-            }
-            return field
-        }
+    var iSize = master.size
         private set(value) {
             if (settings.debug && field != value) LOGGER.info("initial size: $value")
             field = value

@@ -79,7 +79,7 @@ fun <S : Inputtable> S.addHoverInfo(vararg drawables: Drawable?, size: Vec2 = Ve
  *
  * @since 1.5.0
  */
-fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, integral: Boolean = false): S {
+fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, integral: Boolean = false, acceptor: Inputtable? = null): S {
     onChange { value: String ->
         if (value.isEmpty()) return@onChange false
         // don't fail when the user types a minus sign
@@ -90,21 +90,31 @@ fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, integral: Bool
         if (value == "-00") return@onChange true
         if (value == "00") return@onChange true
         try {
-            val v = value.toFloat()
-            // fail when out of range
-            if (v < min) {
-                text = "${if (integral) min.toInt() else min}"
-                shake(); false
-            } else if (v > max) {
-                text = "${if (integral) max.toInt() else max}"
-                shake(); false
-            } else {
-                accept(Event.Change.Number(if (integral) v.toInt() else v))
+            when (val v = value.toFloatOrNull()) {
+                null -> {
+                    shake(); true
+                }
+                in min..max -> {
+                    (acceptor ?: this).accept(Event.Change.Number(if (integral) v.toInt() else v))
+                }
+
+                else -> false
             }
         } catch (_: NumberFormatException) {
             // fail if it is not a number
             shake(); true
         }
+    }
+    on(Event.Focused.Lost) {
+        val value = text.toFloatOrNull()
+        if (value == null || value < min) {
+            text = "${if (integral) min.toInt() else min}"
+            shake()
+        } else if (value > max) {
+            text = "${if (integral) max.toInt() else max}"
+            shake()
+        }
+        false
     }
     return this
 }
