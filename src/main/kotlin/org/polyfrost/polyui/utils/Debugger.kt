@@ -121,11 +121,11 @@ class Debugger(private val polyUI: PolyUI) {
                     if (it.key == Keys.ENTER) {
                         if (!processEval(forEval, text)) {
                             ShakeOp(parent, 0.2.seconds, oscillations = 2) {
-                                polyUI.inputManager.unfocus(this@then)
+                                this@Debugger.polyUI.inputManager.unfocus(this@then)
                             }.add()
                         } else {
                             if (!it.mods.hasShift) text = ""
-                            polyUI.inputManager.unfocus(this)
+                            this@Debugger.polyUI.inputManager.unfocus(this)
                         }
                     }
                 }

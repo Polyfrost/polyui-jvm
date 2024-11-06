@@ -184,7 +184,7 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fon
         }
         Event.Focused.Lost then {
             Resize(dropdown, height = 0f, add = false, animation = Animations.Default.create(0.15.seconds)) {
-                polyUI.master.removeChild(dropdown, recalculate = false)
+                dropdown.parent.removeChild(dropdown, recalculate = false)
             }.add()
             Rotate(this[1], 0.0, add = false, animation = Animations.Default.create(0.15.seconds)).add()
         }
@@ -212,7 +212,8 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fon
  * Note that slider change events cannot be cancelled.
  */
 @JvmName("Slider")
-fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValue: Float = 0f, ptrSize: Float = 24f, length: Float = (max - min) * 2f, integral: Boolean = false, instant: Boolean = false): Drawable {
+fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValue: Float = min, ptrSize: Float = 24f, length: Float = (max - min) * 2f, integral: Boolean = false, instant: Boolean = false): Drawable {
+    require(initialValue in min..max) { "initial value $initialValue is out of range for slider of $min..$max" }
     val barHeight = ptrSize / 2.8f
     val size = Vec2(length + ptrSize, ptrSize)
 
@@ -222,7 +223,7 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
         this.x = this.x.coerceIn(bar.x - half, bar.x + bar.width - half)
         bar[0].width = x - bar.x + half
         val progress = (this.x + half - bar.x) / bar.width
-        val value = (max - min) * progress
+        val value = min + (max - min) * progress
         if (integral) value.toInt().toFloat()
         else value
     }
@@ -294,7 +295,7 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
     }.afterInit {
         val bar = this[0]
         val ptr = this[1]
-        ptr.x = bar.x + length * (initialValue / (max - min))
+        ptr.x = bar.x + length * ((initialValue - min) / (max - min))
         bar.x += ptrSize / 2f
         bar[0].width = ptr.x - bar.x + (ptrSize / 2f)
     }.namedId("Slider")
@@ -362,6 +363,7 @@ fun BoxedNumericInput(
         initialValue = "${if (integral) initialValue.toInt() else initialValue}",
         fontSize, center, post, size
     ).also {
+        require(initialValue in min..max) { "initial value $initialValue is out of range for numeric text input of $min..$max" }
         if (it.children?.size == 3) (it[1][0] as TextInput).numeric(min, max, integral)
         else (it[0][0] as TextInput).numeric(min, max, integral)
     }.radii(radius, 0f, radius, 0f),

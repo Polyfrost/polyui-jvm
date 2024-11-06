@@ -57,6 +57,16 @@ inline val Number.vec get() = Vec2(toFloat(), toFloat())
 @kotlin.internal.InlineOnly
 inline fun Float.fix() = this.toInt().toFloat()
 
+/**
+ * Fix the given float to the given number of decimal places [dps].
+ * @since 1.7.12
+ */
+@kotlin.internal.InlineOnly
+inline fun Float.fix(dps: Int): Float {
+    val fix = (10 * dps).toFloat()
+    return (this * fix).toInt() / fix
+}
+
 
 // so much more efficient to do it this way //
 @kotlin.internal.InlineOnly
