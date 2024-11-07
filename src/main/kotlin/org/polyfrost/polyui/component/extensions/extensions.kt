@@ -89,20 +89,18 @@ fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, integral: Bool
         // silently cancel if they try and type multiple zeroes
         if (value == "-00") return@onChange true
         if (value == "00") return@onChange true
-        try {
-            when (val v = value.toFloatOrNull()) {
-                null -> {
-                    shake(); true
-                }
-                in min..max -> {
-                    (acceptor ?: this).accept(Event.Change.Number(if (integral) v.toInt() else v))
-                }
-
-                else -> false
+        when (val v = value.toFloatOrNull()) {
+            null -> {
+                // fail when not a number
+                shake(); true
             }
-        } catch (_: NumberFormatException) {
-            // fail if it is not a number
-            shake(); true
+
+            in min..max -> {
+                (acceptor ?: this).accept(Event.Change.Number(if (integral) v.toInt() else v))
+            }
+
+            // asm: let them keep typing, we will validate once they leave the box (below)
+            else -> false
         }
     }
     on(Event.Focused.Lost) {

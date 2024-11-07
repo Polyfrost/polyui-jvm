@@ -317,17 +317,18 @@ class InputManager(
             if (clickAmount == 1 && keyModifiers.isEmpty) {
                 dispatch(Event.Mouse.Companion.Released.set(mouseX, mouseY), true)
                 if (!dispatch(Event.Mouse.Companion.Clicked.set(mouseX, mouseY))) safeFocus(mouseOver)
+                return
             }
-        } else {
-            dispatch(Event.Mouse.Released(button, mouseX, mouseY, keyModifiers), true)
-            val click = Event.Mouse.Clicked(button, mouseX, mouseY, clickAmount, keyModifiers)
-            // asm: not many components will actually have double click listeners, so, we check and see if we can skip the dispatch.
-            val mouseOver = mouseOver ?: return
-            if (!mouseOver.hasListenersFor(click)) {
-                val click1 = Event.Mouse.Clicked(button, mouseX, mouseY, 1, keyModifiers)
-                dispatch(click1)
-            } else dispatch(click)
         }
+
+        dispatch(Event.Mouse.Released(button, mouseX, mouseY, keyModifiers), true)
+        val click = Event.Mouse.Clicked(button, mouseX, mouseY, clickAmount, keyModifiers)
+        // asm: not many components will actually have double click listeners, so, we check and see if we can skip the dispatch.
+        val mouseOver = mouseOver ?: return
+        if (!mouseOver.hasListenersFor(click)) {
+            val click1 = Event.Mouse.Clicked(button, mouseX, mouseY, 1, keyModifiers)
+            dispatch(click1)
+        } else dispatch(click)
     }
 
     /**

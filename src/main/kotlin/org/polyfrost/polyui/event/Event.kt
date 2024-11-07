@@ -104,8 +104,7 @@ interface Event {
         class Pressed internal constructor(button: Int, x: Float, y: Float, mods: Modifiers) : ButtonBase(button, x, y, mods) {
             constructor(button: Int, mods: Modifiers = Modifiers(0)) : this(button, 0f, 0f, mods)
 
-            override fun toString(): String =
-                "MousePressed(($x, $y), ${MouseUtils.toStringPretty(MouseUtils.fromValue(button), mods)})"
+            override fun toString() = "MousePressed(($x, $y), ${MouseUtils.toStringPretty(MouseUtils.fromValue(button), mods)})"
 
             override fun ofs() = 8392
         }
@@ -113,8 +112,7 @@ interface Event {
         class Released internal constructor(button: Int, x: Float, y: Float, mods: Modifiers) : ButtonBase(button, x, y, mods) {
             constructor(button: Int, mods: Modifiers = Modifiers(0)) : this(button, 0f, 0f, mods)
 
-            override fun toString(): String =
-                "MouseReleased(($x, $y), ${MouseUtils.toStringPretty(MouseUtils.fromValue(button), mods)})"
+            override fun toString() = "MouseReleased(($x, $y), ${MouseUtils.toStringPretty(MouseUtils.fromValue(button), mods)})"
 
             override fun ofs() = 12489
         }
@@ -128,17 +126,15 @@ interface Event {
                 return result
             }
 
-            override fun equals(other: Any?): Boolean {
-                return super.equals(other) && other is Clicked && clicks == other.clicks
-            }
+            override fun equals(other: Any?) = super.equals(other) && other is Clicked && clicks == other.clicks
 
-            override fun toString(): String = "MouseClicked x$clicks(($x, $y), ${MouseUtils.toStringPretty(MouseUtils.fromValue(button), mods)})"
+            override fun toString() = "MouseClicked x$clicks(($x, $y), ${MouseUtils.toStringPretty(MouseUtils.fromValue(button), mods)})"
 
             override fun ofs() = 1321
         }
 
         class Scrolled internal constructor(val amountX: Float, val amountY: Float, @get:JvmName("getMods") val mods: Modifiers) : Mouse {
-            override fun toString(): String = "MouseScrolled($amountX, $amountY, $mods)"
+            override fun toString() = "MouseScrolled($amountX, $amountY, $mods)"
             operator fun component1() = amountX
             operator fun component2() = amountY
             operator fun component3() = mods
