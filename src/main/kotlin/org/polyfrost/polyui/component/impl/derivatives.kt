@@ -176,6 +176,10 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fon
     return it.events {
         Event.Focused.Gained then {
             polyUI.master.addChild(dropdown, recalculate = false)
+            if (dropdown.width != this.width) {
+                val scale = this.width / dropdown.width
+                dropdown.rescale(scale, scale)
+            }
             dropdown.x = this.x
             dropdown.y = this.y + this.height
             if (dropdown.height != 0f) heightTracker = dropdown.height
