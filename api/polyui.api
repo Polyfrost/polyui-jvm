@@ -677,6 +677,7 @@ public abstract class org/polyfrost/polyui/component/Component {
 	public fun rescale0 (FFZ)V
 	public final fun set (ILorg/polyfrost/polyui/component/Component;)V
 	public final fun set (Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/component/Component;)V
+	public final fun setAlignment (Lorg/polyfrost/polyui/unit/Align;)V
 	public final fun setAt (J)V
 	protected final fun setChildren (Ljava/util/ArrayList;)V
 	public fun setEnabled (Z)V

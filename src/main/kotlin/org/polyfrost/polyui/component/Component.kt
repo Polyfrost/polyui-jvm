@@ -47,7 +47,7 @@ import kotlin.experimental.or
  *
  * @since 1.6.0
  */
-abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefault) {
+abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) {
     /**
      * This is the name of this component, and you can use it to get components from a layout by ID, e.g:
      *
@@ -73,6 +73,21 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
         get() = _parent ?: error("cannot move outside of component tree")
         set(value) {
             _parent = value
+        }
+
+    /**
+     * The alignment properties of this component, which control global padding and how it positions it children.
+     *
+     * *(since 1.7.24)* this property can be changed at runtime, which will call [recalculate].
+     *
+     * @see Align
+     * @since 1.0.0
+     */
+    var alignment = alignment
+        set(value) {
+            if (field == value) return
+            field = value
+            recalculate()
         }
 
     private var _x = at.x
