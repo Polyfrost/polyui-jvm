@@ -186,10 +186,9 @@ abstract class Component(at: Vec2, size: Vec2, val alignment: Align = AlignDefau
     open val visibleSize get() = size
 
     open fun fixVisibleSize() {
-//        val vs = visibleSize
-//        if (size == vs) return
-//        width = width.coerceAtLeast(vs.x)
-//        height = height.coerceAtLeast(vs.y)
+        val vs = visibleSize
+        width = width.coerceAtLeast(vs.x)
+        height = height.coerceAtLeast(vs.y)
     }
 
     private var _padding: Vec4? = null

@@ -164,7 +164,6 @@ object FlexLayoutController : LayoutController {
             children.fastEach {
                 if (it.layoutIgnored) return@fastEach
                 if (!it.sizeValid) layout(it)
-                if (!it.sizeValid) layout(it)
                 val ivs = it.visibleSize
                 val ipad = it.padding
                 val itMain = ipad[main] + ivs[main] + ipad[main + 2] + mainPad

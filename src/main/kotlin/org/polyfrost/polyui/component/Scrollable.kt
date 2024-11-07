@@ -230,7 +230,7 @@ abstract class Scrollable(
             visWidth = visWidth.coerceAtMost(width)
             visHeight = visHeight.coerceAtMost(height)
         } else {
-//            super.fixVisibleSize()
+            super.fixVisibleSize()
             hasVisibleSize = false
         }
     }
