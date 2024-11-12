@@ -28,13 +28,13 @@ import org.polyfrost.polyui.PolyUI.Companion.INPUT_HOVERED
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_NONE
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
 import org.polyfrost.polyui.animate.Animations
-import org.polyfrost.polyui.utils.annotations.Dispatches
+import org.polyfrost.polyui.data.Cursor
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.operations.Recolor
-import org.polyfrost.polyui.data.Cursor
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.seconds
+import org.polyfrost.polyui.utils.annotations.Dispatches
 import org.polyfrost.polyui.utils.fastEach
 
 /**
@@ -60,13 +60,13 @@ abstract class Inputtable(
         get() = super.isEnabled
         set(value) {
             if (super.isEnabled == value) return
-            super.isEnabled = value
             if (value) {
                 accept(Event.Lifetime.Enabled)
             } else {
                 if (initialized) polyUI.inputManager.drop(this)
                 accept(Event.Lifetime.Disabled)
             }
+            super.isEnabled = value
         }
 
     /**

@@ -342,7 +342,7 @@ fun BoxedTextInput(
     },
     if (post != null) Block(Text(post).secondary(), alignment = Align(pad = 6f by 10f), radii = floatArrayOf(0f, 8f, 0f, 8f)).afterInit { color = polyUI.colors.page.bg.normal } else null,
     alignment = Align(pad = Vec2.ZERO, main = Align.Main.SpaceBetween)
-).withBoarder()
+).withBoarder().named("BoxedTextInput")
 
 @JvmName("BoxedNumericInput")
 fun BoxedNumericInput(
@@ -396,7 +396,7 @@ fun BoxedNumericInput(
         else this[1].accept(Event.Mouse.Clicked)
     }.withBoarder(),
     alignment = Align(pad = Vec2.ZERO)
-)
+).named("BoxedNumericInput")
 
 /**
  * Spawn a menu at the mouse position.
