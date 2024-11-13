@@ -405,7 +405,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
      * @see intersects
      * @see isInside(Float, Float, Float, Float)
      */
-    fun isInside(x: Float, y: Float): Boolean {
+    open fun isInside(x: Float, y: Float): Boolean {
         val ta = screenAt
         val tx = ta.x
         val ty = ta.y

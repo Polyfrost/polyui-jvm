@@ -38,6 +38,9 @@ import org.polyfrost.polyui.utils.annotations.Locking
 import org.polyfrost.polyui.utils.annotations.SideEffects
 import org.polyfrost.polyui.utils.fastEach
 import org.polyfrost.polyui.utils.fastRemoveIfReversed
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 /**
  * # Drawable
@@ -65,6 +68,12 @@ abstract class Drawable(
             this.children = null
         }
     }
+
+    override var visibleSize: Vec2
+        get() = super.visibleSize * Vec2(scaleX, scaleY)
+        set(value) {
+            super.visibleSize = value
+        }
 
     inline val renderer get() = polyUI.renderer
 
@@ -131,12 +140,14 @@ abstract class Drawable(
     var rotation: Double = 0.0
         set(value) {
             if (field == value) return
-            if (value == 0.0) {
+            if (value == 0.0 || value == 2 * PI) {
                 synchronized(this) {
                     // lock required!
                     field = value
                 }
-            } else field = value
+            } else {
+                field = (value % (2 * PI)).let { if (it < 0.0) it + (2 * PI) else it }
+            }
             needsRedraw = true
         }
 
@@ -300,6 +311,27 @@ abstract class Drawable(
             y = acy
             acx = 0f
         }
+    }
+
+    override fun isInside(x: Float, y: Float): Boolean {
+        if (rotation == 0.0) return super.isInside(x, y)
+        val ta = screenAt
+        val tx = ta.x
+        val ty = ta.y
+        val vs = this.visibleSize
+        val tw = vs.x
+        val th = vs.y
+
+        val cx = tx + tw / 2f
+        val cy = ty + th / 2f
+        val dx = x - cx
+        val dy = y - cy
+
+        val cosine = cos(-rotation)
+        val sine = sin(-rotation)
+        val rx = dx * cosine - dy * sine + cx
+        val ry = dx * sine + dy * cosine + cy
+        return rx in tx..(tx + tw) && ry in ty..(ty + th)
     }
 
     override fun rescale0(scaleX: Float, scaleY: Float, withChildren: Boolean) {
