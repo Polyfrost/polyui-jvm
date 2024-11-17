@@ -658,7 +658,7 @@ public abstract class org/polyfrost/polyui/component/Component {
 	public final fun getY ()F
 	public final fun intersects (FFFF)Z
 	public fun isEnabled ()Z
-	public final fun isInside (FF)Z
+	public fun isInside (FF)Z
 	public final fun isLayoutIgnored ()Z
 	public final fun isOperating ()Z
 	public final fun isPositioned ()Z
@@ -721,6 +721,9 @@ public abstract class org/polyfrost/polyui/component/Drawable : org/polyfrost/po
 	public final fun getScaleY ()F
 	public final fun getSkewX ()D
 	public final fun getSkewY ()D
+	public synthetic fun getVisibleSize ()J
+	public fun getVisibleSize-2K4fKj8 ()J
+	public fun isInside (FF)Z
 	public final fun needsRedraw ()Z
 	protected fun postRender ()V
 	protected fun preRender (J)V
@@ -736,6 +739,8 @@ public abstract class org/polyfrost/polyui/component/Drawable : org/polyfrost/po
 	public final fun setScaleY (F)V
 	public final fun setSkewX (D)V
 	public final fun setSkewY (D)V
+	public synthetic fun setVisibleSize (J)V
+	public fun setVisibleSize-vnJkLQk (J)V
 	public fun setup (Lorg/polyfrost/polyui/PolyUI;)Z
 }
 

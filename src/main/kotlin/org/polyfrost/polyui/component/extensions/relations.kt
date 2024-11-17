@@ -62,6 +62,20 @@ fun <S : Component> S.relegate(): S {
 }
 
 /**
+ * Register this component to be a child of [parent].
+ *
+ * This allows for an [Elementa](https://github.com/EssentialGG/Elementa)-style syntax to be used for creating UIs.
+ *
+ * @since 1.7.27
+ */
+@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+@kotlin.internal.InlineOnly
+inline infix fun <T : Component> T.childOf(parent: Component): T {
+    parent.addChild(this)
+    return this
+}
+
+/**
  * Locate a component by its name.
  *
  * This method is recursive, meaning it will search through all children of this component.
