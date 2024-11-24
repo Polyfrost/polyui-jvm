@@ -217,6 +217,7 @@ class Debugger(private val polyUI: PolyUI) {
                 String::class.java -> arg
                 Float::class.java -> arg.toFloatOrNull()
                 Int::class.java -> arg.toIntOrNull()
+                Long::class.java -> arg.toLongOrNull()
                 Double::class.java -> arg.toDoubleOrNull()
                 Byte::class.java -> arg.toByteOrNull()
                 Boolean::class.java -> arg.toBoolean()
