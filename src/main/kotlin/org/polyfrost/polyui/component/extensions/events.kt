@@ -45,11 +45,13 @@ inline fun <S : Inputtable> S.events(dsl: EventDSL<S>.() -> Unit): S {
 }
 
 fun <S : Inputtable> S.onInit(function: S.(Event.Lifetime.Init) -> Unit): S {
+    if (initialized) function(Event.Lifetime.Init)
     on(Event.Lifetime.Init, function)
     return this
 }
 
 fun <S : Inputtable> S.afterInit(function: S.(Event.Lifetime.PostInit) -> Unit): S {
+    if (initialized) function(Event.Lifetime.PostInit)
     on(Event.Lifetime.PostInit, function)
     return this
 }
@@ -89,6 +91,11 @@ fun <S : Inputtable> S.onClick(func: S.(Event.Mouse.Clicked) -> Boolean): S {
 @OverloadResolutionByLambdaReturnType
 fun <S : Inputtable> S.onClick(func: S.(Event.Mouse.Clicked) -> Unit): S {
     on(Event.Mouse.Clicked, func)
+    return this
+}
+
+fun <S : Inputtable> S.onRightClick(func: S.(Event.Mouse.Clicked) -> Unit): S {
+    on(Event.Mouse.Clicked(1), func)
     return this
 }
 
@@ -189,12 +196,12 @@ fun <S : Inputtable> S.onChange(func: S.(Float) -> Boolean): S {
  *
  * @since 1.7.2
  */
-fun <S : Inputtable> S.setSliderValue(value: Float, min: Float = 0f, max: Float = 100f): S {
+fun <S : Inputtable> S.setSliderValue(value: Float, min: Float = 0f, max: Float = 100f, dispatch: Boolean = true): S {
     val bar = this[0]
     val ptr = this[1]
     ptr.x = bar.x + (bar.width - ptr.width) * ((value - min) / (max - min))
     bar[0].width = ptr.x - bar.x + (ptr.width / 2f)
-    if (hasListenersFor(Event.Change.Number::class.java)) accept(Event.Change.Number(value))
+    if (dispatch && hasListenersFor(Event.Change.Number::class.java)) accept(Event.Change.Number(value))
     return this
 }
 

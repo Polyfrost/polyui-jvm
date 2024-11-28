@@ -92,8 +92,14 @@ value class Vec2(val value: Long) {
     @JvmName("rem")
     operator fun rem(other: Vec2) = Vec2(x % other.x, y % other.y)
 
+    @JvmName("coerceAtLeast")
+    fun coerceAtLeast(other: Vec2) = Vec2(x.coerceAtLeast(other.x), y.coerceAtLeast(other.y))
+
     @JvmName("coerceAtMost")
     fun coerceAtMost(other: Vec2) = Vec2(x.coerceAtMost(other.x), y.coerceAtMost(other.y))
+
+    @JvmName("coerceIn")
+    fun coerceIn(min: Vec2, max: Vec2) = Vec2(x.coerceIn(min.x, max.x), y.coerceIn(min.y, max.y))
 
     companion object Constants {
         @get:JvmName("ZERO")

@@ -281,11 +281,6 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
             Event.Mouse.Entered then {
                 op.reverse()
             }
-            Event.Mouse.Released then {
-                val value = slide()
-                val p = parent as Inputtable
-                if (p.hasListenersFor(Event.Change.Number::class.java)) p.accept(Event.Change.Number(value))
-            }
         },
         at = at,
         size = size,
@@ -299,7 +294,7 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
         ptr.slide()
     }.afterInit {
         this[0].x += ptrSize / 2f
-        setSliderValue(initialValue, min, max)
+        setSliderValue(initialValue, min, max, dispatch = false)
     }.namedId("Slider")
 }
 
@@ -348,9 +343,9 @@ fun BoxedTextInput(
 fun BoxedNumericInput(
     image: PolyImage? = null,
     pre: String? = null,
-    initialValue: Float = 0f,
     min: Float = 0f,
     max: Float = 100f,
+    initialValue: Float = min,
     step: Float = 1f,
     integral: Boolean = false,
     fontSize: Float = 12f,
@@ -374,18 +369,16 @@ fun BoxedNumericInput(
             val boxed = parent.parent[0] as Inputtable
             val text = if (boxed.children?.size == 3) boxed[1][0] as Text else boxed[0][0] as Text
             val value = text.text.toFloat()
-            val newValue = (value + step).coerceIn(min, max).run { if (integral) toInt() else this }
-            text.text = newValue.toString()
-            if (boxed.hasListenersFor(Event.Change.Number)) boxed.accept(Event.Change.Number(newValue))
+            val newValue = (value + step).coerceIn(min, max)
+            text.text = (if (integral) newValue.toInt() else newValue).toString()
             true
         }.withStates().also { it.rotation = PI },
         Image("polyui/chevron-down.svg".image(), size = Vec2(14f, 14f)).onClick {
             val boxed = parent.parent[0] as Inputtable
             val text = if (boxed.children?.size == 3) boxed[1][0] as Text else boxed[0][0] as Text
             val value = text.text.toFloat()
-            val newValue = (value - step).coerceIn(min, max).run { if (integral) toInt() else this }
-            text.text = newValue.toString()
-            if (boxed.hasListenersFor(Event.Change.Number)) boxed.accept(Event.Change.Number(newValue))
+            val newValue = (value - step).coerceIn(min, max)
+            text.text = (if (integral) newValue.toInt() else newValue).toString()
             true
         }.withStates(),
         radii = floatArrayOf(0f, radius, 0f, radius),

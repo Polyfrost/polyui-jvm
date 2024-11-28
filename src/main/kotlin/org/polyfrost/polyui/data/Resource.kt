@@ -36,7 +36,7 @@ import java.util.concurrent.ForkJoinTask
  * @see load
  * @see loadAsync
  */
-open class Resource(val resourcePath: String, @Transient @get:JvmName("shouldLoadSync") val loadSync: Boolean = ":/" !in resourcePath) {
+open class Resource(val resourcePath: String, @Transient @get:JvmName("shouldLoadSync") val loadSync: Boolean = "http" !in resourcePath) {
     @Volatile
     @Transient
     private var isInit = false

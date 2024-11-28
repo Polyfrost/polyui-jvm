@@ -612,7 +612,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
     @Locking(`when` = "operation.verify() == true")
     fun addOperation(operation: ComponentOp): Boolean {
         if (!operation.verify()) {
-//            if (polyUI.settings.debug) PolyUI.LOGGER.warn("Dodged invalid op $drawableOp on ${this.simpleName}")
+//            if (polyUI.settings.debug) PolyUI.LOGGER.warn("Dodged invalid op $operation on ${this.name}")
             return false
         }
         synchronized(this) {
