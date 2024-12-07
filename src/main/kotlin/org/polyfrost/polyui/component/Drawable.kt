@@ -143,7 +143,7 @@ abstract class Drawable(
             if (value == 0.0 || value == 2 * PI) {
                 synchronized(this) {
                     // lock required!
-                    field = value
+                    field = 0.0
                 }
             } else {
                 field = (value % (2 * PI)).let { if (it < 0.0) it + (2 * PI) else it }
@@ -217,7 +217,7 @@ abstract class Drawable(
 
     @Locking
     @Synchronized
-    fun draw() {
+    override fun draw() {
         if (!renders) return
         require(initialized) { "Drawable $name is not initialized!" }
 
@@ -237,9 +237,7 @@ abstract class Drawable(
         needsRedraw = false
         preRender(polyUI.delta)
         render()
-        children?.fastEach {
-            if (it is Drawable) it.draw()
-        }
+        children?.fastEach(Component::draw)
         postRender()
 
         if (fbc > 0) fbc--

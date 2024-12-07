@@ -341,6 +341,11 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         return true
     }
 
+    /**
+     * This method is called every frame, and is used to update the component.
+     */
+    open fun draw() {}
+
 
     /**
      * Method that is called when the physical size of the total window area changes.
@@ -360,7 +365,6 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
      *
      * ### You should be using [rescale] instead in 99% of cases.
      * @param withChildren if `true`, this method will also rescale its children.
-     * *note: it will also rescale its children even if `withChildren` is `false` if the child has no children itself.*
      */
     @ApiStatus.Internal
     @Locking
@@ -371,8 +375,8 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         _y *= scaleY
         width *= scaleX
         height *= scaleY
-        children?.fastEach {
-            if (withChildren || it.children.isNullOrEmpty()) it.rescale0(scaleX, scaleY, true)
+        if (withChildren) children?.fastEach {
+            it.rescale0(scaleX, scaleY, true)
         }
     }
 
