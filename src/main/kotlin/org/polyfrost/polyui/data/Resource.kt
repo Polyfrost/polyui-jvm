@@ -21,6 +21,7 @@
 
 package org.polyfrost.polyui.data
 
+import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.utils.getResourceStream
 import org.polyfrost.polyui.utils.toByteArray
 import java.io.InputStream
@@ -39,7 +40,10 @@ import java.util.concurrent.ForkJoinTask
 open class Resource(val resourcePath: String, @Transient @get:JvmName("shouldLoadSync") val loadSync: Boolean = "http" !in resourcePath) {
     @Volatile
     @Transient
-    private var isInit = false
+    private var initializing = false
+
+    @Transient
+    private var callbacks: ArrayList<() -> Unit>? = null
 
     /**
      * return the stream of this resource. **it is the caller's responsibility to close the stream.**
@@ -59,12 +63,12 @@ open class Resource(val resourcePath: String, @Transient @get:JvmName("shouldLoa
      * @see load
      */
     fun <T> loadAsync(errorHandler: (Throwable) -> Unit = { throw it }, mapper: (ByteArray) -> T & Any, consumer: (T & Any) -> Unit) {
-        if (isInit) return
-        isInit = true
+        if (initializing) return
+        initializing = true
         doAsync(supplier = { bytes().run(mapper) }) { it, err ->
             if (err != null) errorHandler(err)
             else consumer(it)
-            isInit = false
+            initializing = false
         }
     }
 
@@ -76,12 +80,12 @@ open class Resource(val resourcePath: String, @Transient @get:JvmName("shouldLoa
      * @see load
      */
     fun loadAsync(errorHandler: (Throwable) -> Unit = { throw it }, consumer: (ByteArray) -> Unit) {
-        if (isInit) return
-        isInit = true
+        if (initializing) return
+        initializing = true
         doAsync(supplier = { bytes() }) { it, err ->
             if (err != null) errorHandler(err)
             else consumer(it)
-            isInit = false
+            initializing = false
         }
     }
 
@@ -126,6 +130,32 @@ open class Resource(val resourcePath: String, @Transient @get:JvmName("shouldLoa
             override fun setRawResult(value: Void?) {}
         }
         )
+    }
+
+    /**
+     * Add a callback that will be executed once this resource has been successfully initialized by a rendering implementation.
+     *
+     * @since 1.7.31
+     */
+    fun onInit(func: () -> Unit) {
+        val callbacks = callbacks ?: ArrayList(2)
+        callbacks.add(func)
+        this.callbacks = callbacks
+    }
+
+    /**
+     * Use this method to execute any callbacks that were added before the resource was initialized.
+     *
+     * **This method needs to be called by a rendering implementation at the appropriate time.**
+     * @since 1.7.31
+     */
+    @ApiStatus.Internal
+    fun reportInit() {
+        val callbacks = callbacks ?: return
+        callbacks.forEach { it() }
+        callbacks.clear()
+        callbacks.trimToSize()
+        this.callbacks = null
     }
 
 

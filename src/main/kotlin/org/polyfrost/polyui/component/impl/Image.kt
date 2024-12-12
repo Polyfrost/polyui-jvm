@@ -44,7 +44,12 @@ open class Image(
         set(value) {
             field = value
             if (initialized) renderer.initImage(value, size)
+            else image.onInit { renderer.initImage(value, size) }
         }
+
+    init {
+        image.onInit { renderer.initImage(image, size) }
+    }
 
     override fun render() {
         val radii = this.radii
