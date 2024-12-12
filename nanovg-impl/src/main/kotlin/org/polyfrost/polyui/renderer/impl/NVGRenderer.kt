@@ -482,6 +482,7 @@ object NVGRenderer : Renderer {
         val o = svgResize(svg, svg.width(), svg.height())
         map[image.size.hashCode()] = o
         svgs[image] = svg to map
+        image.reportInit()
         return o
     }
 
@@ -499,6 +500,7 @@ object NVGRenderer : Renderer {
         val h = IntArray(1)
         val d = stbi_load_from_memory(data, w, h, IntArray(1), 4) ?: throw IllegalStateException("Failed to load image ${image.resourcePath}: ${stbi_failure_reason()}")
         if (!image.size.isPositive) PolyImage.setImageSize(image, Vec2(w[0].toFloat(), h[0].toFloat()))
+        image.reportInit()
         return nvgCreateImageRGBA(vg, w[0], h[0], 0, d)
     }
 

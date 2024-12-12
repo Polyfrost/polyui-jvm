@@ -44,11 +44,11 @@ open class Image(
         set(value) {
             field = value
             if (initialized) renderer.initImage(value, size)
-            else image.onInit { renderer.initImage(value, size) }
+            else image.onInit { needsRedraw = true }
         }
 
     init {
-        image.onInit { renderer.initImage(image, size) }
+        image.onInit { needsRedraw = true }
     }
 
     override fun render() {
