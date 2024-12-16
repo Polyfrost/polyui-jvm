@@ -133,7 +133,7 @@ open class Resource(val resourcePath: String, @Transient @get:JvmName("shouldLoa
     }
 
     /**
-     * Add a callback that will be executed once this resource has been successfully initialized by a rendering implementation.
+     * Add a callback that will be executed once this resource is about to be initialized by a rendering implementation.
      *
      * @since 1.7.31
      */
