@@ -619,9 +619,9 @@ public abstract class org/polyfrost/polyui/component/Component {
 	protected field polyUI Lorg/polyfrost/polyui/PolyUI;
 	public synthetic fun <init> (JJLorg/polyfrost/polyui/unit/Align;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (JJLorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun addChild (Lorg/polyfrost/polyui/component/Component;Z)V
+	public final fun addChild (Lorg/polyfrost/polyui/component/Component;IZ)V
 	public final fun addChild ([Lorg/polyfrost/polyui/component/Component;)V
-	public static synthetic fun addChild$default (Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/component/Component;ZILjava/lang/Object;)V
+	public static synthetic fun addChild$default (Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/component/Component;IZILjava/lang/Object;)V
 	public final fun addOperation (Lorg/polyfrost/polyui/operations/ComponentOp;)Z
 	public final fun addOperation ([Lorg/polyfrost/polyui/operations/ComponentOp;)V
 	public final fun at (IF)V
@@ -632,6 +632,7 @@ public abstract class org/polyfrost/polyui/component/Component {
 	public final fun createdWithSetPosition ()Z
 	public final fun createdWithSetSize ()Z
 	public fun debugString ()Ljava/lang/String;
+	public fun draw ()V
 	public fun extraToString ()Ljava/lang/String;
 	public fun fixVisibleSize ()V
 	public final fun get (FF)Lorg/polyfrost/polyui/component/Component;
@@ -707,7 +708,7 @@ public abstract class org/polyfrost/polyui/component/Drawable : org/polyfrost/po
 	public fun clone ()Lorg/polyfrost/polyui/component/Drawable;
 	public final fun debugDraw ()V
 	protected fun debugRender ()V
-	public final fun draw ()V
+	public fun draw ()V
 	public synthetic fun get (I)Lorg/polyfrost/polyui/component/Component;
 	public fun get (I)Lorg/polyfrost/polyui/component/Drawable;
 	public final fun getAlpha ()F
@@ -815,11 +816,12 @@ public final class org/polyfrost/polyui/component/extensions/EventsKt {
 	public static final fun onInit (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
 	public static final fun onPress (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
 	public static final fun onRelease (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
+	public static final fun onRightClick (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
 	public static final fun onScroll (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
 	public static final fun onToggle (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
 	public static final fun setRadiobuttonEntry (Lorg/polyfrost/polyui/component/Inputtable;I)Lorg/polyfrost/polyui/component/Inputtable;
-	public static final fun setSliderValue (Lorg/polyfrost/polyui/component/Inputtable;FFF)Lorg/polyfrost/polyui/component/Inputtable;
-	public static synthetic fun setSliderValue$default (Lorg/polyfrost/polyui/component/Inputtable;FFFILjava/lang/Object;)Lorg/polyfrost/polyui/component/Inputtable;
+	public static final fun setSliderValue (Lorg/polyfrost/polyui/component/Inputtable;FFFZ)Lorg/polyfrost/polyui/component/Inputtable;
+	public static synthetic fun setSliderValue$default (Lorg/polyfrost/polyui/component/Inputtable;FFFZILjava/lang/Object;)Lorg/polyfrost/polyui/component/Inputtable;
 	public static final fun toggle (Lorg/polyfrost/polyui/component/Drawable;Z)Lorg/polyfrost/polyui/component/Drawable;
 }
 
@@ -1132,7 +1134,7 @@ public final class org/polyfrost/polyui/data/Framebuffer {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class org/polyfrost/polyui/data/PolyImage : org/polyfrost/polyui/data/Resource {
+public class org/polyfrost/polyui/data/PolyImage : org/polyfrost/polyui/data/Resource {
 	public static final field Companion Lorg/polyfrost/polyui/data/PolyImage$Companion;
 	public fun <init> (Ljava/lang/String;)V
 	public fun <init> (Ljava/lang/String;Lorg/polyfrost/polyui/data/PolyImage$Type;)V
@@ -1192,6 +1194,8 @@ public class org/polyfrost/polyui/data/Resource {
 	public final fun loadAsync (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
 	public static synthetic fun loadAsync$default (Lorg/polyfrost/polyui/data/Resource;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public static synthetic fun loadAsync$default (Lorg/polyfrost/polyui/data/Resource;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun onInit (Lkotlin/jvm/functions/Function0;)V
+	public final fun reportInit ()V
 	public final fun shouldLoadSync ()Z
 	public fun stream ()Ljava/io/InputStream;
 	public fun toString ()Ljava/lang/String;
@@ -1531,6 +1535,7 @@ public final class org/polyfrost/polyui/input/KeyBinder {
 	public final fun getHasTimeSensitiveListeners ()Z
 	public final fun record (JLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
 	public static synthetic fun record$default (Lorg/polyfrost/polyui/input/KeyBinder;JLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun release ()V
 	public final fun remove (Lorg/polyfrost/polyui/input/KeyBinder$Bind;)V
 	public final fun remove ([Lorg/polyfrost/polyui/input/KeyBinder$Bind;)V
 	public final fun update (JBZ)Z
@@ -2062,7 +2067,9 @@ public final class org/polyfrost/polyui/unit/Units {
 public final class org/polyfrost/polyui/unit/Vec2 {
 	public static final field Constants Lorg/polyfrost/polyui/unit/Vec2$Constants;
 	public static final synthetic fun box-impl (J)Lorg/polyfrost/polyui/unit/Vec2;
+	public static final fun coerceAtLeast (JJ)J
 	public static final fun coerceAtMost (JJ)J
+	public static final fun coerceIn (JJJ)J
 	public static final fun compareTo (JJ)I
 	public static fun constructor-impl (FF)J
 	public static fun constructor-impl (J)J

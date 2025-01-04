@@ -497,13 +497,13 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
      */
     @Locking
     @Synchronized
-    fun addChild(child: Component, recalculate: Boolean = true) {
+    fun addChild(child: Component, index: Int = -1, recalculate: Boolean = true) {
         if (children == null) children = ArrayList()
         val children = this.children ?: throw ConcurrentModificationException("well, this sucks")
         child.parent = this
         child.isEnabled = true
         if (children.fastAny { it === child }) throw IllegalStateException("attempted to add the same component twice")
-        children.add(child)
+        if (index !in children.indices) children.add(child) else children.add(index, child)
         if (initialized) {
             child.setup(polyUI)
             if (!child.createdWithSetPosition) {
@@ -567,12 +567,16 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
     @Locking
     @Synchronized
     operator fun set(old: Component, new: Component?) {
-        require(initialized) { "$this must be setup at this point!" }
         val children = children ?: throw NoSuchElementException("no children on $this")
         val index = children.indexOf(old)
         require(index != -1) { "component $old is not a child of $this" }
         if (new == null) {
-            removeChild(old)
+            removeChild(index)
+            return
+        }
+        if (!initialized) {
+            removeChild(index)
+            addChild(new, index)
             return
         }
         new._parent = this

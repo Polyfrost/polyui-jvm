@@ -225,7 +225,8 @@ class KeyBinder(private val settings: Settings) {
     /**
      * Synthetically drop all pressed keys
      */
-    private fun release() {
+    @ApiStatus.Internal
+    fun release() {
         downKeys.clear()
         downMouseButtons.clear()
         downUnmappedKeys.clear()

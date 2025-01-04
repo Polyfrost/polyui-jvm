@@ -105,5 +105,6 @@ fun main() {
                 false
             }
         }
+        Image("https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png".image(), size = Vec2(280f, 210f)).add()
     }.open(window)
 }

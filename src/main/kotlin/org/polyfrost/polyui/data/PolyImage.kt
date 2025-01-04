@@ -31,7 +31,7 @@ import org.polyfrost.polyui.unit.Vec2
  * @param resourcePath the path to the [resource][org.polyfrost.polyui.utils.getResourceStream]
  * @param type the [image type][Type]. This is automatically inferred from the file extension normally, but you can manually select it.
  */
-class PolyImage @JvmOverloads constructor(
+open class PolyImage @JvmOverloads constructor(
     resourcePath: String,
     val type: Type = from(resourcePath),
 ) : Resource(resourcePath) {
