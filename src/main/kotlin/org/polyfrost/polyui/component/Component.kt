@@ -584,8 +584,6 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         val oldStatic = old.screenAt
         new.x = old.x - (old.x - oldStatic.x)
         new.y = old.y - (old.y - oldStatic.y)
-        // don't want to open a madly scrolled page
-        if (new is Scrollable) new.resetScroll()
 
         polyUI.inputManager.drop(this as? Inputtable)
         if (old is Drawable) {

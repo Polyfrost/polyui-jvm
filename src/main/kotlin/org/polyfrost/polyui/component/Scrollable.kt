@@ -119,7 +119,6 @@ abstract class Scrollable(
 
     override fun recalculate() {
         super.recalculate()
-        screenAt = at
         tryMakeScrolling()
     }
 
