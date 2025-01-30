@@ -298,12 +298,14 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
      *
      * This is controlled by [clipChildren] to save resources by not drawing components which cannot be seen.
      *
+     * **Note: (revised 1.7.385)** also returns `false` if the size of this component is invalid.
+     * *(this is implemented in an optimized way so it will only update when [renders] is modified).*
      * @since 0.21.4
      */
     open var renders = true
         set(value) {
-            if (field == value) return
-            field = value
+            field = if (sizeValid) value
+            else false
         }
 
     /**
@@ -392,7 +394,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
             val p = it.intersects(tx, ty, tw, th)
             it.renders = p
             // asm: don't bother checking children if this component is not visible
-            if (p) it._clipChildren(it.children ?: return@fastEach, tx, ty, tw, th)
+            if (it.renders) it._clipChildren(it.children ?: return@fastEach, tx, ty, tw, th)
         }
     }
 

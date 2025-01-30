@@ -60,13 +60,13 @@ abstract class Inputtable(
         get() = super.isEnabled
         set(value) {
             if (super.isEnabled == value) return
+            super.isEnabled = value
             if (value) {
                 accept(Event.Lifetime.Enabled)
             } else {
                 if (initialized) polyUI.inputManager.drop(this)
                 accept(Event.Lifetime.Disabled)
             }
-            super.isEnabled = value
         }
 
     /**
@@ -122,6 +122,8 @@ abstract class Inputtable(
         removeHandlers(Event.Lifetime.Init)?.accept(this, Event.Lifetime.Init)
         position()
         removeHandlers(Event.Lifetime.PostInit)?.accept(this, Event.Lifetime.PostInit)
+        // will fail if size is invalid
+        renders = renders
         return true
     }
 

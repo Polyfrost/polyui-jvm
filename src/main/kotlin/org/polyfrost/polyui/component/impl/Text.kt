@@ -25,10 +25,10 @@ import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.data.Font
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.renderer.Renderer
-import org.polyfrost.polyui.data.Font
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
@@ -269,6 +269,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
             WRAP -> visHeight = h
             LIMITED_WRAP, SCROLLING_SINGLE_LINE -> tryMakeScrolling()
         }
+        renders = renders
     }
 
     @Suppress("INAPPLICABLE_JVM_NAME")

@@ -79,6 +79,7 @@ open class Image(
         polyUI.renderer.initImage(image, size)
         if (!sizeValid) size = image.size
         palette = polyUI.colors.text.primary
+        renders = renders // fails if size is invalid
         return super.setup(polyUI)
     }
 

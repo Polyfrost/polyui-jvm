@@ -130,8 +130,10 @@ class Resize<S : Component>(
         self.height = oh + (th * value)
         if (withVisible) {
             self as Scrollable
-            val delta = Vec2(self.width - oldW, self.height - oldH)
-            self.visibleSize -= delta
+            if (self.hasVisibleSize) {
+                val delta = Vec2(self.width - oldW, self.height - oldH)
+                self.visibleSize += delta
+            }
         }
         self.clipChildren()
     }

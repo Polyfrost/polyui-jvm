@@ -291,7 +291,10 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
         this.polyUI.inputManager.recalculate()
         ptr.inputState = INPUT_PRESSED
         ptr.accept(it)
-        ptr.slide()
+        val value = ptr.slide()
+        if (hasListenersFor(Event.Change.Number::class.java)) {
+            accept(Event.Change.Number(value))
+        }
     }.afterInit {
         this[0].x += ptrSize / 2f
         setSliderValue(initialValue, min, max, dispatch = false)
