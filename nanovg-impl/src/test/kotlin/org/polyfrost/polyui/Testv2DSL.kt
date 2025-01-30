@@ -62,7 +62,10 @@ fun main() {
         BoxedTextInput(pre = "Title:", post = "px").add()
         group {
             repeat(30) {
-                block(size = (32f + (Math.random().toFloat() * 100f)) by 32f).withStates()
+                val len = 32f + (Math.random().toFloat() * 100f)
+                block(size = len by 32f) {
+                    text("hello my name is jeff", visibleSize = Vec2(len - 8f, 14f))
+                }.withStates()
             }
             it.visibleSize = 350f by 120f
         }.makeRearrangeableGrid()

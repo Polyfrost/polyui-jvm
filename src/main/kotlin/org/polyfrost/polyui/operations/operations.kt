@@ -27,13 +27,13 @@ import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animation
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.color.PolyColor
+import org.polyfrost.polyui.color.animatable
+import org.polyfrost.polyui.color.animatableGradient
+import org.polyfrost.polyui.color.mutable
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.Scrollable
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.color.animatable
-import org.polyfrost.polyui.color.animatableGradient
-import org.polyfrost.polyui.color.mutable
 import kotlin.math.PI
 import kotlin.math.sin
 
@@ -52,6 +52,7 @@ class Move<S : Component>(
     private val oy = self.y
     private val tx = if (add) x else x - ox
     private val ty = if (add) y else y - oy
+
     @get:JvmName("getTarget")
     val target get() = Vec2(ox + tx, oy + ty)
 
@@ -106,22 +107,32 @@ class Resize<S : Component>(
     width: Float = drawable.width,
     height: Float = drawable.height,
     add: Boolean = true,
+    withVisible: Boolean = true,
     animation: Animation? = null,
     onFinish: (S.() -> Unit)? = null,
 ) : ComponentOp.Animatable<S>(drawable, animation, onFinish) {
-    constructor(drawable: S, size: Vec2, add: Boolean = true, animation: Animation? = null, onFinish: (S.() -> Unit)? = null) :
-            this(drawable, size.x, size.y, add, animation, onFinish)
+    constructor(drawable: S, size: Vec2, add: Boolean = true, withVisible: Boolean = true, animation: Animation? = null, onFinish: (S.() -> Unit)? = null) :
+            this(drawable, size.x, size.y, add, withVisible, animation, onFinish)
 
     private val ow = self.width
     private val oh = self.height
     private val tw = if (add) width else width - ow
     private val th = if (add) height else height - oh
+
     @get:JvmName("getTarget")
     val target get() = Vec2(ow + tw, oh + th)
+    private val withVisible = withVisible && self is Scrollable
 
     override fun apply(value: Float) {
+        val oldW = self.width
+        val oldH = self.height
         self.width = ow + (tw * value)
         self.height = oh + (th * value)
+        if (withVisible) {
+            self as Scrollable
+            val delta = Vec2(self.width - oldW, self.height - oldH)
+            self.visibleSize -= delta
+        }
         self.clipChildren()
     }
 

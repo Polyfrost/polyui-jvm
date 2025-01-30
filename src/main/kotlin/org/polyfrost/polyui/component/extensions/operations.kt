@@ -60,7 +60,7 @@ fun Drawable.animateBy(
     animation: Animation? = null,
 ) {
     if (!at.isZero) Move(this, at, true, animation).add()
-    if (!at.isZero) Resize(this, size, true, animation).add()
+    if (!at.isZero) Resize(this, size, true, animation = animation).add()
     if (rotation != 0.0) Rotate(this, rotation, true, animation).add()
     if (skewX != 0.0 || skewY != 0.0) Skew(this, skewX, skewY, true, animation).add()
     if (scaleX != 0f || scaleY != 0f) Scale(this, scaleX, scaleY, true, animation).add()
@@ -88,7 +88,7 @@ fun Drawable.animateTo(
     animation: Animation? = null,
 ) {
     if (at != this.at) Move(this, at, false, animation).add()
-    if (size != this.size) Resize(this, size, false, animation).add()
+    if (size != this.size) Resize(this, size, false, animation = animation).add()
     if (rotation != this.rotation) Rotate(this, rotation, false, animation).add()
     if (skewX != this.skewX || skewY != this.skewY) Skew(this, skewX, skewY, false, animation).add()
     if (scaleX != this.scaleX || scaleY != this.scaleY) Scale(this, scaleX, scaleY, false, animation).add()

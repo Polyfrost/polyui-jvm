@@ -15,6 +15,11 @@ dependencies {
             runtimeOnly("$dep:natives-$platform")
         }
     }
+
+    testImplementation("com.electronwill.night-config:core:3.6.0")
+    testImplementation("com.electronwill.night-config:json:3.6.0")
+    testImplementation("com.electronwill.night-config:toml:3.6.0")
+    testImplementation("com.electronwill.night-config:yaml:3.6.0")
 }
 
 tasks.register<Jar>("testJar") {

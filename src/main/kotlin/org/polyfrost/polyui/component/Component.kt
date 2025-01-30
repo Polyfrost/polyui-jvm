@@ -393,14 +393,6 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
             it.renders = p
             // asm: don't bother checking children if this component is not visible
             if (p) it._clipChildren(it.children ?: return@fastEach, tx, ty, tw, th)
-            else it._clipChildrenN(it.children ?: return@fastEach)
-        }
-    }
-
-    private fun _clipChildrenN(children: ArrayList<out Component>) {
-        children.fastEach {
-            it.renders = false
-            it._clipChildrenN(it.children ?: return@fastEach)
         }
     }
 

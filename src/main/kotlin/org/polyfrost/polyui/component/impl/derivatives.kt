@@ -184,11 +184,11 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fon
             dropdown.y = this.y + this.height
             if (dropdown.height != 0f) heightTracker = dropdown.height
             dropdown.height = 0f
-            Resize(dropdown, height = heightTracker, add = false, animation = Animations.Default.create(0.15.seconds)).add()
+            Resize(dropdown, height = heightTracker, add = false, withVisible = false, animation = Animations.Default.create(0.15.seconds)).add()
             Rotate(this[1], PI, add = false, animation = Animations.Default.create(0.15.seconds)).add()
         }
         Event.Focused.Lost then {
-            Resize(dropdown, height = 0f, add = false, animation = Animations.Default.create(0.15.seconds)) {
+            Resize(dropdown, height = 0f, add = false, withVisible = false, animation = Animations.Default.create(0.15.seconds)) {
                 dropdown.parent.removeChild(dropdown, recalculate = false)
             }.add()
             Rotate(this[1], 0.0, add = false, animation = Animations.Default.create(0.15.seconds)).add()

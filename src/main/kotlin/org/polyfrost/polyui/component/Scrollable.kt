@@ -138,9 +138,11 @@ abstract class Scrollable(
             pushed = true
             val vs = visibleSize
             val sa = screenAt
-            renderer.pushScissor(sa.x, sa.y, vs.x, vs.y)
+            renderer.pushScissorIntersecting(sa.x, sa.y, vs.x, vs.y)
             if (x != px || y != py) {
-                clipChildren()
+                val dx = x - px
+                val dy = y - py
+                updateScrollingChildrenAndClip(this, dx, dy, Vec2(dx, dy), sa.x, sa.y, vs.x, vs.y)
                 polyUI.inputManager.recalculate()
                 return true
             }
@@ -188,7 +190,6 @@ abstract class Scrollable(
 
             if (ran) {
                 if (this is Drawable) needsRedraw = true
-                clipChildren()
                 return true
             }
         }
@@ -260,6 +261,27 @@ abstract class Scrollable(
         cur.children?.fastEach {
             if (it is Scrollable) it.resetScroll()
             else _resetScroll(it)
+        }
+    }
+
+    /**
+     * when this object has scrollable children, the [xScroll], [yScroll] and [screenAt] fields are **not** updated automatically.
+     *
+     * in order to make sure that these scrollable children move when the parent scrolls, we need to do this manually. as we are iterating over this
+     * component's children already, we can save some iterations by also doing [clipChildren] in this method.
+     *
+     * @since 1.7.38
+     */
+    private fun updateScrollingChildrenAndClip(cur: Component, dx: Float, dy: Float, vec: Vec2, tx: Float, ty: Float, tw: Float, th: Float) {
+        cur.children?.fastEach { cmp ->
+            if(cmp is Scrollable) {
+                cmp.xScroll?.let { it.from += dx; it.to += dx }
+                cmp.yScroll?.let { it.from += dy; it.to += dy }
+                cmp.screenAt += vec
+            }
+            val p = cmp.intersects(tx, ty, tw, th)
+            cmp.renders = p
+            updateScrollingChildrenAndClip(cmp, dx, dy, vec, tx, ty, tw, th)
         }
     }
 }
