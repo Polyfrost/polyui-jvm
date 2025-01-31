@@ -43,6 +43,9 @@ import org.polyfrost.polyui.utils.mapToArray
 import kotlin.experimental.or
 import kotlin.math.PI
 
+private val SEARCH = PolyImage("polyui/search.svg")
+private val CHEVRON_DOWN = PolyImage("polyui/chevron-down.svg")
+
 @JvmName("Button")
 fun Button(leftImage: PolyImage? = null, text: String? = null, rightImage: PolyImage? = null, fontSize: Float = 12f, font: Font? = null, radii: FloatArray = floatArrayOf(8f), padding: Vec2 = Vec2(12f, 6f), at: Vec2 = Vec2.ZERO, size: Vec2 = Vec2.ZERO): Block {
     return Block(
@@ -135,6 +138,10 @@ fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2 = Vec2.ZERO,
     }.namedId("Radiobutton")
 }
 
+//fun OrderedList(title: String, entries: MutableList<String>, at: Vec2 = Vec2.ZERO, fontSize: Float = 12f, padding = 12f, textLength: Float = 0f): Block {
+//
+//}
+
 /**
  * For images, use `Image to "string"` for each entry.
  */
@@ -146,9 +153,11 @@ fun Dropdown(vararg entries: String, at: Vec2 = Vec2.ZERO, fontSize: Float = 12f
 @JvmName("Dropdown")
 fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fontSize: Float = 12f, initial: Int = 0, optPadding: Float = 12f, textLength: Float = 0f): Block {
     var heightTracker = 0f
+    var titleText: String? = null
+    val title = TextInput("", fontSize = fontSize, visibleSize = Vec2(if (textLength == 0f) 200f else textLength, fontSize))
+    val icon = Image(CHEVRON_DOWN)
     val it = Block(
-        Text("", fontSize = fontSize, visibleSize = if (textLength == 0f) Vec2.ZERO else Vec2(textLength, fontSize)),
-        Image("polyui/chevron-down.svg"),
+        title, icon,
         at = at,
         focusable = true,
         alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2(8f, 8f), maxRowSize = 0),
@@ -160,7 +169,6 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fon
                 if (img != null) Image(img) else null,
                 Text(text, fontSize = fontSize).withStates()
             ).onClick { _ ->
-                val title = (it[0] as Text)
                 val self = ((if (children!!.size == 2) this[1] else this[0]) as Text).text
                 if (title.text == self) return@onClick false
                 if (it.hasListenersFor(Event.Change.Number::class.java)) {
@@ -185,13 +193,37 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fon
             if (dropdown.height != 0f) heightTracker = dropdown.height
             dropdown.height = 0f
             Resize(dropdown, height = heightTracker, add = false, withVisible = false, animation = Animations.Default.create(0.15.seconds)).add()
-            Rotate(this[1], PI, add = false, animation = Animations.Default.create(0.15.seconds)).add()
+            Rotate(icon, PI, add = false, animation = Animations.Default.create(0.15.seconds)).add()
         }
         Event.Focused.Lost then {
             Resize(dropdown, height = 0f, add = false, withVisible = false, animation = Animations.Default.create(0.15.seconds)) {
                 dropdown.parent.removeChild(dropdown, recalculate = false)
             }.add()
-            Rotate(this[1], 0.0, add = false, animation = Animations.Default.create(0.15.seconds)).add()
+            if (titleText != null) {
+                title.text = titleText!!
+                title.focused = false
+                titleText = null
+                icon.rotation = PI
+                icon.image = CHEVRON_DOWN
+            }
+            Rotate(icon, 0.0, add = false, animation = Animations.Default.create(0.15.seconds)).add()
+        }
+        Event.Focused.KeyTyped then {
+            if (titleText == null) {
+                titleText = title.text
+                title.placeholder = titleText!!
+                title.text = ""
+                icon.rotation = 0.0
+                icon.image = SEARCH
+            }
+            title.focused = true
+            title.acceptsInput = false
+            title.accept(it)
+            needsRedraw = true
+        }
+        Event.Focused.KeyPressed then {
+            title.accept(it)
+            needsRedraw = true
         }
         Event.Lifetime.PostInit then {
             dropdown.setup(polyUI)
@@ -199,10 +231,13 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fon
             // sets the #created-with-initial-size flag to true, meaning that if it is recalculated, it 'remembers' that it should be
             // this big. not necessary normally important, only if they decided to recalculate the dropdown for any reason.
             this.layoutFlags = layoutFlags or 0b00000010
-            this[1].x = this.x + (this.width - this[1].width - alignment.pad.x)
+            val space = (this.width - icon.width - alignment.pad.x)
+            icon.x = this.x + space
 
+            title.acceptsInput = false
             val first = dropdown[initial]
-            (this[0] as Text).text = ((if (first.children!!.size == 2) first[1] else first[0]) as Text).text
+            title.text = ((if (first.children!!.size == 2) first[1] else first[0]) as Text).text
+            if (textLength == 0f) title.visibleSize = Vec2(space - alignment.pad.x - 2f, fontSize)
         }
         Event.Mouse.Companion.Clicked then {
             if (focused) {

@@ -58,13 +58,13 @@ open class TextInput(
 
     private var cposy = 0f
 
-    private var caret = 0
+    private var caret = text.length
         set(value) {
             field = value
             if (!selecting) select = value
         }
 
-    private var select = 0
+    private var select = caret
 
     private var selecting = false
 
@@ -110,6 +110,7 @@ open class TextInput(
 
     override fun accept(event: Event): Boolean {
         if (!isEnabled) return false
+        if (!acceptsInput) return false
         needsRedraw = true
         val r = when (event) {
             is Event.Mouse.Entered -> {
@@ -310,7 +311,12 @@ open class TextInput(
         ).x
         cposy = lni * (fontSize + spacing)
 
-        if (scrolling) accept(scrollEvent)
+        if (scrolling) {
+            val o = acceptsInput
+            acceptsInput = true
+            accept(scrollEvent)
+            acceptsInput = o
+        }
     }
 
     // todo make this work at some point
