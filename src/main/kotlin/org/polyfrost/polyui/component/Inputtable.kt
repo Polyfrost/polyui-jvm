@@ -122,8 +122,6 @@ abstract class Inputtable(
         removeHandlers(Event.Lifetime.Init)?.accept(this, Event.Lifetime.Init)
         position()
         removeHandlers(Event.Lifetime.PostInit)?.accept(this, Event.Lifetime.PostInit)
-        // will fail if size is invalid
-        renders = renders
         return true
     }
 

@@ -299,14 +299,10 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
      * This is controlled by [clipChildren] to save resources by not drawing components which cannot be seen.
      *
      * **Note: (revised 1.7.385)** also returns `false` if the size of this component is invalid.
-     * *(this is implemented in an optimized way so it will only update when [renders] is modified).*
      * @since 0.21.4
      */
     open var renders = true
-        set(value) {
-            field = if (sizeValid) value
-            else false
-        }
+        get() = field && sizeValid
 
     /**
      * Disabled flag for this component. Dispatches the [Event.Lifetime.Disabled] and [Event.Lifetime.Enabled] events.

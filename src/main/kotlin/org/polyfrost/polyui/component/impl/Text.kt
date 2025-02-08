@@ -269,7 +269,6 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
             WRAP -> visHeight = h
             LIMITED_WRAP, SCROLLING_SINGLE_LINE -> tryMakeScrolling()
         }
-        renders = renders
     }
 
     @Suppress("INAPPLICABLE_JVM_NAME")
