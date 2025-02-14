@@ -82,8 +82,11 @@ fun <S : Inputtable> S.addHoverInfo(vararg drawables: Drawable?, size: Vec2 = Ve
 fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, integral: Boolean = false, acceptor: Inputtable? = null): S {
     onChange { value: String ->
         if (value.isEmpty()) return@onChange false
-        // don't fail when the user types a minus sign
-        if (value == "-") return@onChange false
+        // don't fail when the user types a minus sign (and minus values are allowed)
+        if (value == "-") {
+            if (min < 0f) return@onChange false
+            else return@onChange true
+        }
 
         if (integral && value.contains('.')) return@onChange true
         // silently cancel if they try and type multiple zeroes

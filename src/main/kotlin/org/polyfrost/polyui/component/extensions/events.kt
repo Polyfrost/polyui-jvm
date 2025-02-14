@@ -76,6 +76,16 @@ fun <S : Inputtable> S.afterParentInit(depth: Int = 1, handler: S.() -> Unit): S
     return this
 }
 
+fun <S : Inputtable> S.onFocusLost(func: S.(Event.Focused.Lost) -> Unit): S {
+    on(Event.Focused.Lost, func)
+    return this
+}
+
+fun <S : Inputtable> S.onFocusGained(func: S.(Event.Focused.Gained) -> Unit): S {
+    on(Event.Focused.Gained, func)
+    return this
+}
+
 fun <S : Inputtable> S.onScroll(func: S.(Event.Mouse.Scrolled) -> Unit): S {
     on(Event.Mouse.Scrolled, func)
     return this

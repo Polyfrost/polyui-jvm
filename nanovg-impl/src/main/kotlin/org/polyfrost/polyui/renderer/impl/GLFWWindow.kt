@@ -309,6 +309,7 @@ class GLFWWindow @JvmOverloads constructor(
             val h = hbuf[0]
 
             pixelRatio = max(sx, sy)
+            if (polyUI.settings.debug) LOGGER.info("Pixel ratio: $pixelRatio")
             polyUI.resize(
                 w.toFloat() / sx,
                 h.toFloat() / sy

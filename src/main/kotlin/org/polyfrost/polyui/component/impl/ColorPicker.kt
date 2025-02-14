@@ -24,18 +24,18 @@ package org.polyfrost.polyui.component.impl
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
 import org.polyfrost.polyui.color.PolyColor
-import org.polyfrost.polyui.component.*
+import org.polyfrost.polyui.color.mutable
+import org.polyfrost.polyui.color.toColor
+import org.polyfrost.polyui.color.toHex
+import org.polyfrost.polyui.component.Inputtable
 import org.polyfrost.polyui.component.extensions.*
-import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.data.PolyImage
+import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Point
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.utils.image
-import org.polyfrost.polyui.color.mutable
-import org.polyfrost.polyui.color.toColor
-import org.polyfrost.polyui.color.toHex
 import kotlin.jvm.internal.Ref
 import kotlin.math.roundToInt
 
@@ -109,11 +109,18 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Mutable>, faves: MutableList<Poly
             if (text.startsWith('-')) return@onChange true
             if (text.length > 8) return@onChange true
             if (text == "#") return@onChange false
+            val hueSlider = parent[2]
+            val lilGuy = hueSlider[0]
             try {
                 color.element.recolor(text.toColor())
+                lilGuy.y = hueSlider.y + color.element.hue * (hueSlider.height - lilGuy.height)
                 false
             } catch (e: Exception) {
                 shake(); true
+            }
+        }.apply {
+            (this[0][0] as Text).onFocusLost {
+                this.text = color.element.toHex(alpha = false)
             }
         },
         BoxedTextInput(
@@ -122,13 +129,21 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Mutable>, faves: MutableList<Poly
             post = " % ",
             center = true,
             size = 42f by 32f
-        ),
+        ).apply {
+            (this[0][0] as TextInput).numeric(0f, 100f, acceptor = this)
+        }.onChange { it: Float ->
+            val alphaSlider = parent[3]
+            val lilGuy = alphaSlider[0]
+            color.element.alpha = it / 100f
+            lilGuy.y = alphaSlider.y + (1f - color.element.alpha) * (alphaSlider.height - lilGuy.height)
+            false
+        },
         Image(
             "info.svg".image(),
             size = 18f by 18f,
-        ),
+        ).padded(0f, 7f),
         size = 288f by 0f,
-        align = Align(pad = 12f by 12f),
+        align = Align(pad = 12f by 12f, cross = Align.Cross.Start),
         polyUI = polyUI,
         openNow = openNow,
         position = position,

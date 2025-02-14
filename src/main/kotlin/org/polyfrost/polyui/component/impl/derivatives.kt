@@ -191,7 +191,7 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fon
             dropdown.x = this.x
             dropdown.y = this.y + this.height
             if (dropdown.height != 0f) heightTracker = dropdown.height
-            dropdown.height = 0f
+            dropdown.height = 0.01f
             Resize(dropdown, height = heightTracker, add = false, withVisible = false, animation = Animations.Default.create(0.15.seconds)).add()
             Rotate(icon, PI, add = false, animation = Animations.Default.create(0.15.seconds)).add()
         }
@@ -361,7 +361,7 @@ fun BoxedTextInput(
     if (image != null) Image(image).padded(6f, 0f, 0f, 0f) else null,
     if (pre != null) Text(pre).padded(6f, 0f, 0f, 0f) else null,
     Group(
-        TextInput(placeholder = placeholder, text = initialValue, fontSize = fontSize, visibleSize = if (size.isPositive) Vec2(size.x, fontSize) else Vec2.ZERO).run {
+        TextInput(placeholder = placeholder, text = initialValue, fontSize = fontSize, visibleSize = if (!center && size.isPositive) Vec2(size.x, fontSize) else Vec2.ZERO).run {
             on(Event.Change.Text) {
                 parent.position()
                 (parent.parent as? Inputtable)?.accept(it) == true
@@ -370,11 +370,13 @@ fun BoxedTextInput(
         alignment = Align(main = if (center) Align.Main.Center else Align.Main.Start, pad = Vec2(6f, 10f)),
         size = size,
     ).afterInit {
-        val input = this[0]
-        input.visibleSize = input.visibleSize.coerceAtMost(this.visibleSize - Vec2(alignment.pad.x * 2f, 0f))
+        if(!center) {
+            val input = this[0]
+            input.visibleSize = input.visibleSize.coerceAtMost(this.visibleSize - Vec2(alignment.pad.x * 2f, 0f))
+        }
     },
     if (post != null) Block(Text(post).secondary(), alignment = Align(pad = 6f by 10f), radii = floatArrayOf(0f, 8f, 0f, 8f)).afterInit { color = polyUI.colors.page.bg.normal } else null,
-    alignment = Align(pad = Vec2.ZERO, main = Align.Main.SpaceBetween)
+    alignment = Align(pad = Vec2.ZERO, main = Align.Main.SpaceBetween),
 ).withBoarder().named("BoxedTextInput")
 
 @JvmName("BoxedNumericInput")
