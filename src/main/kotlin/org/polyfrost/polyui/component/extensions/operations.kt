@@ -29,16 +29,6 @@ import org.polyfrost.polyui.operations.*
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.fastEach
 
-
-/**
- * Add the given [ComponentOp] to this component.
- * @since 1.6.2
- */
-context(S)
-fun <S : Component> ComponentOp.add() {
-    this@S.addOperation(this)
-}
-
 /**
  * Bulk add method for all the builtin drawable operations in PolyUI.
  *

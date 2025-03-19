@@ -204,6 +204,7 @@ class Debugger(private val polyUI: PolyUI) {
             val typ = method.parameterTypes[0]
             if (typ.isEnum) {
                 val const = try {
+                    @Suppress("UNCHECKED_CAST")
                     java.lang.Enum.valueOf(typ as Class<out Enum<*>>, arg)
                 } catch (_: Exception) {
                     null
@@ -414,7 +415,7 @@ ${d.alignment}
             polyUI = polyUI,
             position = Point.Below
         ).events {
-            Event.Focused.KeyTyped then {
+            Event.Focused.Companion.KeyTyped then {
                 if (it.key == 'c' && it.mods.hasControl) {
                     LOGGER.info("copied ID ${d.name} to clipboard")
                     polyUI.clipboard = d.name

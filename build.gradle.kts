@@ -55,8 +55,8 @@ allprojects {
             languageVersion = targetKotlinVersion
             apiVersion = targetKotlinVersion
             optIn.add("kotlin.experimental.ExperimentalTypeInference")
-            freeCompilerArgs = listOf(
-                "-Xcontext-receivers",
+            freeCompilerArgs.addAll(
+                "-Xnon-local-break-continue",
                 "-Xjvm-default=all-compatibility",
                 "-Xno-call-assertions",
                 "-Xno-receiver-assertions",
@@ -67,7 +67,6 @@ allprojects {
     }
 
     kotlinter {
-        ignoreFailures = false
         reporters = arrayOf("checkstyle", "plain")
     }
 

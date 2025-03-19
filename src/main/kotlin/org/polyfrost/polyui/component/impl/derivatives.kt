@@ -208,7 +208,7 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fon
             }
             Rotate(icon, 0.0, add = false, animation = Animations.Default.create(0.15.seconds)).add()
         }
-        Event.Focused.KeyTyped then {
+        Event.Focused.Companion.KeyTyped then {
             if (titleText == null) {
                 titleText = title.text
                 title.placeholder = titleText!!
@@ -221,7 +221,7 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fon
             title.accept(it)
             needsRedraw = true
         }
-        Event.Focused.KeyPressed then {
+        Event.Focused.Companion.KeyPressed then {
             title.accept(it)
             needsRedraw = true
         }
@@ -262,7 +262,7 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
         val half = this.width / 2f
         this.x = this.x.coerceIn(bar.x - half, bar.x + bar.width - half)
         bar[0].width = x - bar.x + half
-        val progress = (this.x + half - bar.x) / bar.width
+        val progress = ((this.x + half - bar.x) / bar.width).coerceIn(0f, 1f)
         val value = min + (max - min) * progress
         if (integral) value.toInt().toFloat()
         else value

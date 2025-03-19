@@ -853,7 +853,6 @@ public final class org/polyfrost/polyui/component/extensions/ExtensionsKt {
 }
 
 public final class org/polyfrost/polyui/component/extensions/OperationsKt {
-	public static final fun add (Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/operations/ComponentOp;)V
 	public static final fun animateBy (Lorg/polyfrost/polyui/component/Drawable;JJDFFDDLorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/animate/Animation;)V
 	public static synthetic fun animateBy$default (Lorg/polyfrost/polyui/component/Drawable;JJDFFDDLorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/animate/Animation;ILjava/lang/Object;)V
 	public static final fun animateTo (Lorg/polyfrost/polyui/component/Drawable;JJDDDFFLorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/animate/Animation;)V
@@ -1494,6 +1493,7 @@ public final class org/polyfrost/polyui/input/InputManager {
 	public final fun clearModifiers ()V
 	public final fun dispatch (Lorg/polyfrost/polyui/event/Event;ZLorg/polyfrost/polyui/component/Inputtable;)Z
 	public static synthetic fun dispatch$default (Lorg/polyfrost/polyui/input/InputManager;Lorg/polyfrost/polyui/event/Event;ZLorg/polyfrost/polyui/component/Inputtable;ILjava/lang/Object;)Z
+	public final fun drop ()V
 	public final fun drop (Lorg/polyfrost/polyui/component/Inputtable;)V
 	public static synthetic fun drop$default (Lorg/polyfrost/polyui/input/InputManager;Lorg/polyfrost/polyui/component/Inputtable;ILjava/lang/Object;)V
 	public final fun filesDropped ([Ljava/nio/file/Path;)V

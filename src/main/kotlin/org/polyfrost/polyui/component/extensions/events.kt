@@ -207,11 +207,12 @@ fun <S : Inputtable> S.onChange(func: S.(Float) -> Boolean): S {
  * @since 1.7.2
  */
 fun <S : Inputtable> S.setSliderValue(value: Float, min: Float = 0f, max: Float = 100f, dispatch: Boolean = true): S {
+    val v = value.coerceIn(min, max)
     val bar = this[0]
     val ptr = this[1]
-    ptr.x = bar.x + (bar.width - ptr.width) * ((value - min) / (max - min))
+    ptr.x = bar.x + (bar.width - ptr.width) * ((v - min) / (max - min))
     bar[0].width = ptr.x - bar.x + (ptr.width / 2f)
-    if (dispatch && hasListenersFor(Event.Change.Number::class.java)) accept(Event.Change.Number(value))
+    if (dispatch && hasListenersFor(Event.Change.Number::class.java)) accept(Event.Change.Number(v))
     return this
 }
 
@@ -228,20 +229,21 @@ fun <S : Drawable> S.toggle(state: Boolean): S {
 }
 
 /**
- * Set the currently selected entry of this radiobutton to [index] (input is range-checked).
+ * Set the currently selected entry of this radiobutton to [index] (input is coerced into the range of the radiobutton).
  *
  * **Ensure this object is a radiobutton before running this method, as otherwise strange errors may occur**.
+ * if it is obvious to the system that this is not a radiobutton, an [IllegalArgumentException] will be thrown.
  *
  * @since 1.7.2
  */
 fun <S : Inputtable> S.setRadiobuttonEntry(index: Int): S {
-    val max = (children?.size ?: 0) - 1
-    require(index in 0..<max) { "Index $index is out of bounds for a radiobutton with only $max entries" }
+    val max = (children?.size ?: throw IllegalArgumentException("Receiver $this is not a radiobutton")) - 1
+    val i = index.coerceIn(0, max)
     val selector = this[0]
-    val selected = this[index + 1]
+    val selected = this[i + 1]
     if (selector.x == selected.x) return this
     Move(selector, selected.at, add = false, animation = Animations.Default.create(0.15.seconds)).add()
     Resize(selector, selected.size, add = false, animation = Animations.Default.create(0.15.seconds)).add()
-    if (hasListenersFor(Event.Change.Number)) accept(Event.Change.Number(index))
+    if (hasListenersFor(Event.Change.Number)) accept(Event.Change.Number(i))
     return this
 }

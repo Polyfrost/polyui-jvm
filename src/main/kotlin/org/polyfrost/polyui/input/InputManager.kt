@@ -406,6 +406,23 @@ class InputManager(
     }
 
     /**
+     * Synthetically drop all the current input states.
+     *
+     * Useful for some window platforms which don't correctly create release events when the window loses focus.
+     * @since 1.7.4
+     */
+    fun drop() {
+        dragging = false
+        clickTimer = 0L
+        mods = 0
+        clickAmount = 0
+        clickedButton = 0
+        focused = null
+        mouseOver = null
+        mouseDown = false
+    }
+
+    /**
      * Sets the focus to the specified focusable element, throwing an exception if the provided element is not focusable.
      *
      * @throws IllegalArgumentException if the provided component is not [Inputtable.focusable]

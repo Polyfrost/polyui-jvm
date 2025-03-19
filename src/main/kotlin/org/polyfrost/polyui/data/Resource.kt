@@ -123,6 +123,7 @@ open class Resource(val resourcePath: String, @Transient @get:JvmName("shouldLoa
                 func(supplier(), null)
                 true
             } catch (e: Throwable) {
+                @Suppress("UNCHECKED_CAST")
                 func(null as T, e)
                 false
             }
