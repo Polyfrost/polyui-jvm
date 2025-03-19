@@ -227,10 +227,10 @@ abstract class Drawable(
         if (binds) {
             renderer as FramebufferController
             if (!needsRedraw) {
-                renderer.drawFramebuffer(framebuffer!!, x, y)
+                renderer.drawFramebuffer(framebuffer, x, y)
                 return
             }
-            renderer.bindFramebuffer(framebuffer!!)
+            renderer.bindFramebuffer(framebuffer)
             fbc++
         }
 
@@ -244,7 +244,7 @@ abstract class Drawable(
         if (binds) {
             renderer as FramebufferController
             renderer.unbindFramebuffer()
-            renderer.drawFramebuffer(framebuffer!!, x, y)
+            renderer.drawFramebuffer(framebuffer, x, y)
         }
     }
 
@@ -372,6 +372,18 @@ abstract class Drawable(
             }
         }
         return true
+    }
+
+    override fun position() {
+        // fix: scale now adjusts the visible size of the drawable, which means that the size would be different from what it should be.
+        // causes the children which are already placed in the correct position to be misplaced as they believe the drawable is bigger than it actually is
+        val oldSX = scaleX
+        val oldSY = scaleY
+        scaleX = 1f
+        scaleY = 1f
+        super.position()
+        scaleX = oldSX
+        scaleY = oldSY
     }
 
     /**
