@@ -60,12 +60,13 @@ abstract class Inputtable(
         get() = super.isEnabled
         set(value) {
             if (super.isEnabled == value) return
-            super.isEnabled = value
             if (value) {
+                super.isEnabled = true
                 accept(Event.Lifetime.Enabled)
             } else {
                 if (initialized) polyUI.inputManager.drop(this)
                 accept(Event.Lifetime.Disabled)
+                super.isEnabled = false
             }
         }
 
