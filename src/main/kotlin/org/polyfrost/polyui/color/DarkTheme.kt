@@ -31,7 +31,7 @@ open class DarkTheme : Colors {
     override val page = Colors.Page(
         bg = Colors.Palette(
             rgba(17, 23, 28), // Normal - #11171C
-            rgba(21, 28, 23), // Elevated/hovered - #151C22
+            rgba(21, 28, 34), // Elevated/hovered - #151C22
             rgba(14, 19, 23), // Pressed - #0E1317
             rgba(17, 23, 28, 0.5f), // Disabled - #11171C80
         ),
@@ -93,7 +93,7 @@ open class DarkTheme : Colors {
         ),
         success = Colors.Palette(
             rgba(35, 154, 96), // Normal - #239A60
-            rgba(26, 135, 82), // Elevated/hovered - #1A8B52
+            rgba(26, 139, 82), // Elevated/hovered - #1A8B52
             rgba(44, 172, 110), // Pressed - #2CAC6E
             rgba(35, 154, 96, 0.5f), // Disabled - #239A6080
         ),
@@ -117,7 +117,7 @@ open class DarkTheme : Colors {
             rgba(225, 229, 255, 0.5f), // Disabled - #E1E5FF80
         ),
         secondary = Colors.Palette(
-            rgba(120, 129, 141), // Normal - #78778D
+            rgba(120, 119, 141), // Normal - #78778D
             rgba(95, 104, 116), // Elevated/hovered - #5F6874
             rgba(130, 141, 155), // Pressed - #828D9B
             rgba(120, 129, 141, 0.5f), // Disabled - #78818D80
