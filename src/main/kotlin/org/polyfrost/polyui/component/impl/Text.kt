@@ -25,6 +25,10 @@ import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.component.impl.Text.Mode.LIMITED_WRAP
+import org.polyfrost.polyui.component.impl.Text.Mode.SCROLLING_SINGLE_LINE
+import org.polyfrost.polyui.component.impl.Text.Mode.UNLIMITED
+import org.polyfrost.polyui.component.impl.Text.Mode.WRAP
 import org.polyfrost.polyui.data.Font
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.input.Translator
@@ -34,6 +38,7 @@ import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.utils.*
+import kotlin.math.roundToInt
 
 open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Component?) :
     Drawable(children = children, at, alignment, visibleSize = visibleSize, focusable = focusable) {
@@ -190,8 +195,22 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         var y = this.y
         val strikethrough = strikethrough
         val underline = underline
-        lines.fastEach { (it, bounds) ->
+        val firstLine: Int
+        val lastLine: Int
+        if (mode == LIMITED_WRAP) {
+            firstLine = ((screenAt.y - y) / (fontSize + spacing)).roundToInt().coerceAtLeast(0)
+            val maxLines = (visibleSize.y / (fontSize + spacing)).roundToInt() + 1
+            lastLine = maxLines + firstLine
+        } else {
+            firstLine = 0
+            lastLine = 0
+        }
+        lines.fastEachIndexed { i, (it, bounds) ->
             val (width, height) = bounds
+            if (mode == LIMITED_WRAP && (i !in firstLine..<lastLine)) {
+                y += height + spacing
+                return@fastEachIndexed
+            }
             renderer.text(font, x, y, it, color, fontSize)
             if (strikethrough) {
                 val hf = y + height / 2f

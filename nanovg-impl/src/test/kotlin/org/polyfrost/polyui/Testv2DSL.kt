@@ -47,6 +47,7 @@ fun main() {
             fontSize = 20f
         }
         val slider: Drawable
+        var sliderTracker: TextInput? = null
         group {
             Button("moon.svg".image()).add().onClick {
                 shake(); false
@@ -86,7 +87,7 @@ fun main() {
             group {
                 val radiobutton = Radiobutton("hello", "goodbye", "yes", "no").add()
                 slider = Slider(length = 200f, min = 50f, max = 120f, instant = true, initialValue = 67f).add().onChange { value: Float ->
-                    (parent.parent.parent[8][0][0][0] as Text).text = value.fix(2).toString()
+                    sliderTracker?.text = value.fix(2).toString()
                     false
                 }
                 text("blink three times when u feel it kicking in")
@@ -109,7 +110,7 @@ fun main() {
             textInput(visibleSize = 150f by 12f)
         }
         BoxedNumericInput(min = 50f, max = 120f, size = 40f by 32f, initialValue = 67f).add().also {
-            it[0].onChange { value: Float ->
+            sliderTracker = it.getNumericTextInput().onChange { value: Float ->
                 slider.setSliderValue(value, 50f, 120f)
                 false
             }

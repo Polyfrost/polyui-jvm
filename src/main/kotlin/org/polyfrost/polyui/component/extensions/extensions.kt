@@ -79,7 +79,7 @@ fun <S : Inputtable> S.addHoverInfo(vararg drawables: Drawable?, size: Vec2 = Ve
  *
  * @since 1.5.0
  */
-fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, integral: Boolean = false, acceptor: Inputtable? = null): S {
+fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, integral: Boolean = false, acceptor: Inputtable = this): S {
     onChange { value: String ->
         if (value.isEmpty()) return@onChange false
         // don't fail when the user types a minus sign (and minus values are allowed)
@@ -99,7 +99,7 @@ fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, integral: Bool
             }
 
             in min..max -> {
-                (acceptor ?: this).accept(Event.Change.Number(if (integral) v.toInt() else v))
+                acceptor.accept(Event.Change.Number(if (integral) v.toInt() else v))
             }
 
             // asm: let them keep typing, we will validate once they leave the box (below)

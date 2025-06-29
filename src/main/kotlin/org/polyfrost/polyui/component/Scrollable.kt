@@ -278,8 +278,8 @@ abstract class Scrollable(
                 cmp.yScroll?.let { it.from += dy; it.to += dy }
                 cmp.screenAt += vec
             }
-            val p = cmp.intersects(tx, ty, tw, th)
-            cmp.renders = p
+            val isOutside = !cmp.intersects(tx, ty, tw, th)
+            cmp.clipped = isOutside
             updateScrollingChildrenAndClip(cmp, dx, dy, vec, tx, ty, tw, th)
         }
     }

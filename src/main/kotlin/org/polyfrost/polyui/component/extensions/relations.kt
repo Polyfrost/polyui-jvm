@@ -23,6 +23,8 @@ package org.polyfrost.polyui.component.extensions
 
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.component.Component
+import org.polyfrost.polyui.component.impl.Group
+import org.polyfrost.polyui.component.impl.TextInput
 import org.polyfrost.polyui.utils.fastEach
 
 /**
@@ -138,4 +140,26 @@ fun Component.hasChildIn(x: Float, y: Float, width: Float, height: Float): Boole
         if (it.intersects(x, y, width, height)) return true
     }
     return false
+}
+
+/**
+ * Return the actual [TextInput] from a [org.polyfrost.polyui.component.impl.BoxedTextInput] component.
+ *
+ * Will fail if the component is not the correct type, so make sure to check before you run this method.
+ * @since 1.8.2
+ */
+fun Component.getTextFromBoxedTextInput(): TextInput {
+    val children = this.children ?: throw IllegalStateException("$this is not a BoxedTextInput")
+    val last = children.lastOrNull() ?: throw IllegalStateException("$this is not a BoxedTextInput")
+    return if (last is Group) last[0] as TextInput else children[children.lastIndex - 1][0] as TextInput
+}
+
+/**
+ * Return the actual [TextInput] from a [org.polyfrost.polyui.component.impl.BoxedNumericInput] component.
+ *
+ * Will fail if the component is not the correct type, so make sure to check before you run this method.
+ * @since 1.8.2
+ */
+fun Component.getNumericTextInput(): TextInput {
+    return this[0].getTextFromBoxedTextInput()
 }

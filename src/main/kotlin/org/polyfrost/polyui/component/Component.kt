@@ -258,7 +258,6 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
      * you want to specify it manually based on something else, for example.
      *
      * *note: this used to be controlled by the [renders] flag pre 1.4.4*.
-     *
      * @since 1.4.4
      */
     @get:JvmName("isLayoutIgnored")
@@ -296,13 +295,23 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
     /**
      * Whether this component should be rendered.
      *
-     * This is controlled by [clipChildren] to save resources by not drawing components which cannot be seen.
-     *
      * **Note: (revised 1.7.385)** also returns `false` if the size of this component is invalid.
+     * **(revised 1.8.1)** also returns `false` if [clipped] is true.
      * @since 0.21.4
      */
     open var renders = true
-        get() = field && sizeValid
+        get() = field && sizeValid && !clipped
+
+    /**
+     * If `true`, this component will not be drawn as it is considered to be clipped outside of the screen,
+     * either by being outside its parent or the screen entirely.
+     * This is controlled by [clipChildren].
+     * @since 1.8.1
+     */
+    @set:ApiStatus.Internal
+    @get:JvmName("isClipped")
+    var clipped = false
+
 
     /**
      * Disabled flag for this component. Dispatches the [Event.Lifetime.Disabled] and [Event.Lifetime.Enabled] events.
@@ -387,10 +396,10 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
 
     private fun _clipChildren(children: ArrayList<out Component>, tx: Float, ty: Float, tw: Float, th: Float) {
         children.fastEach {
-            val p = it.intersects(tx, ty, tw, th)
-            it.renders = p
+            val isOutside = !it.intersects(tx, ty, tw, th)
+            it.clipped = isOutside
             // asm: don't bother checking children if this component is not visible
-            if (it.renders) it._clipChildren(it.children ?: return@fastEach, tx, ty, tw, th)
+            if (!isOutside) it._clipChildren(it.children ?: return@fastEach, tx, ty, tw, th)
         }
     }
 
@@ -400,13 +409,14 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
      * @see isInside(Float, Float, Float, Float)
      */
     open fun isInside(x: Float, y: Float): Boolean {
-        val ta = screenAt
-        val tx = ta.x
-        val ty = ta.y
-        val vs = this.visibleSize
-        val tw = vs.x
-        val th = vs.y
-        return x in tx..tx + tw && y in ty..ty + th
+        val (left, top) = screenAt
+        val (w, h) = this.visibleSize
+        val right = left + w
+        val bottom = top + h
+        return x in left..right && y in top..bottom
+        // OPT: screen bounds check is not present
+//        val (sx, sy) = polyUI.size
+//        return right > 0f && bottom > 0f && left < sx && top < sy
     }
 
     @JvmName("contains")
@@ -419,12 +429,8 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
      * @since 0.21.4
      */
     fun intersects(x: Float, y: Float, width: Float, height: Float): Boolean {
-        val ta = screenAt
-        val tx = ta.x
-        val ty = ta.y
-        val vs = this.visibleSize
-        val tw = vs.x
-        val th = vs.y
+        val (tx, ty) = screenAt
+        val (tw, th) = this.visibleSize
         return (x < tx + tw && tx < x + width) && (y < ty + th && ty < y + height)
     }
 
