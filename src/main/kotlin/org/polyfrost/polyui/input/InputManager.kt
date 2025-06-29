@@ -266,6 +266,7 @@ class InputManager(
     }
 
     fun mousePressed(button: Int) {
+        recalculate()
         if (button == 0) {
             mouseDown = true
             mouseOver?.inputState = INPUT_PRESSED

@@ -726,6 +726,7 @@ public abstract class org/polyfrost/polyui/component/Drawable : org/polyfrost/po
 	public fun getVisibleSize-2K4fKj8 ()J
 	public fun isInside (FF)Z
 	public final fun needsRedraw ()Z
+	public fun position ()V
 	protected fun postRender ()V
 	protected fun preRender (J)V
 	protected abstract fun render ()V
@@ -891,15 +892,15 @@ public final class org/polyfrost/polyui/component/extensions/VisualsKt {
 	public static final fun setState (Lorg/polyfrost/polyui/component/Drawable;B)Lorg/polyfrost/polyui/component/Drawable;
 	public static final fun shake (Lorg/polyfrost/polyui/component/Component;)Lorg/polyfrost/polyui/component/Component;
 	public static final fun toggleable (Lorg/polyfrost/polyui/component/Drawable;Z)Lorg/polyfrost/polyui/component/Drawable;
-	public static final fun withBoarder (Lorg/polyfrost/polyui/component/impl/Block;FLkotlin/jvm/functions/Function1;)Lorg/polyfrost/polyui/component/impl/Block;
-	public static final fun withBoarder (Lorg/polyfrost/polyui/component/impl/Block;Lorg/polyfrost/polyui/color/PolyColor;F)Lorg/polyfrost/polyui/component/impl/Block;
-	public static synthetic fun withBoarder$default (Lorg/polyfrost/polyui/component/impl/Block;FLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Block;
-	public static synthetic fun withBoarder$default (Lorg/polyfrost/polyui/component/impl/Block;Lorg/polyfrost/polyui/color/PolyColor;FILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Block;
+	public static final fun withBorder (Lorg/polyfrost/polyui/component/impl/Block;FLkotlin/jvm/functions/Function1;)Lorg/polyfrost/polyui/component/impl/Block;
+	public static final fun withBorder (Lorg/polyfrost/polyui/component/impl/Block;Lorg/polyfrost/polyui/color/PolyColor;F)Lorg/polyfrost/polyui/component/impl/Block;
+	public static synthetic fun withBorder$default (Lorg/polyfrost/polyui/component/impl/Block;FLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Block;
+	public static synthetic fun withBorder$default (Lorg/polyfrost/polyui/component/impl/Block;Lorg/polyfrost/polyui/color/PolyColor;FILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Block;
 	public static final fun withCursor (Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/data/Cursor;)Lorg/polyfrost/polyui/component/Drawable;
 	public static synthetic fun withCursor$default (Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/data/Cursor;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/Drawable;
-	public static final fun withStates (Lorg/polyfrost/polyui/component/Drawable;)Lorg/polyfrost/polyui/component/Drawable;
-	public static final fun withStates (Lorg/polyfrost/polyui/component/Drawable;ZZLkotlin/jvm/functions/Function0;)Lorg/polyfrost/polyui/component/Drawable;
-	public static synthetic fun withStates$default (Lorg/polyfrost/polyui/component/Drawable;ZZLkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/Drawable;
+	public static final fun withHoverStates (Lorg/polyfrost/polyui/component/Drawable;)Lorg/polyfrost/polyui/component/Drawable;
+	public static final fun withHoverStates (Lorg/polyfrost/polyui/component/Drawable;ZZLkotlin/jvm/functions/Function0;)Lorg/polyfrost/polyui/component/Drawable;
+	public static synthetic fun withHoverStates$default (Lorg/polyfrost/polyui/component/Drawable;ZZLkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/Drawable;
 }
 
 public class org/polyfrost/polyui/component/impl/Block : org/polyfrost/polyui/component/Drawable {
@@ -1197,6 +1198,7 @@ public class org/polyfrost/polyui/data/Resource {
 	public static synthetic fun loadAsync$default (Lorg/polyfrost/polyui/data/Resource;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public final fun onInit (Lkotlin/jvm/functions/Function0;)V
 	public final fun reportInit ()V
+	public final fun setLoadingClass (Ljava/lang/Class;)V
 	public final fun shouldLoadSync ()Z
 	public fun stream ()Ljava/io/InputStream;
 	public fun toString ()Ljava/lang/String;
@@ -1208,15 +1210,18 @@ public class org/polyfrost/polyui/dsl/DrawableDSL {
 	public static synthetic fun add$default (Lorg/polyfrost/polyui/dsl/DrawableDSL;Lorg/polyfrost/polyui/component/Drawable;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/Drawable;
 	public final fun block (JLorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/impl/Block;
 	public static synthetic fun block$default (Lorg/polyfrost/polyui/dsl/DrawableDSL;JLorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Block;
+	public final fun configure (Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/polyui/component/Drawable;
 	public final fun get_this ()Lorg/polyfrost/polyui/component/Drawable;
 	public final fun group (JLorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/impl/Group;
 	public static synthetic fun group$default (Lorg/polyfrost/polyui/dsl/DrawableDSL;JLorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Group;
-	public final fun image (Ljava/lang/String;Lorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function1;)V
+	public final fun image (Ljava/lang/String;Lorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/polyui/component/impl/Image;
 	public final fun image (Lorg/polyfrost/polyui/data/PolyImage;Lorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/polyui/component/impl/Image;
-	public static synthetic fun image$default (Lorg/polyfrost/polyui/dsl/DrawableDSL;Ljava/lang/String;Lorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static synthetic fun image$default (Lorg/polyfrost/polyui/dsl/DrawableDSL;Ljava/lang/String;Lorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Image;
 	public static synthetic fun image$default (Lorg/polyfrost/polyui/dsl/DrawableDSL;Lorg/polyfrost/polyui/data/PolyImage;Lorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Image;
 	public final fun invoke (Lorg/polyfrost/polyui/component/Drawable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Drawable;
 	public static synthetic fun invoke$default (Lorg/polyfrost/polyui/dsl/DrawableDSL;Lorg/polyfrost/polyui/component/Drawable;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/Drawable;
+	public final fun popup ([Lorg/polyfrost/polyui/component/Component;JLorg/polyfrost/polyui/unit/Align;Lorg/polyfrost/polyui/unit/Point;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/polyui/component/impl/Block;
+	public static synthetic fun popup$default (Lorg/polyfrost/polyui/dsl/DrawableDSL;[Lorg/polyfrost/polyui/component/Component;JLorg/polyfrost/polyui/unit/Align;Lorg/polyfrost/polyui/unit/Point;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Block;
 	public final fun text (Ljava/lang/String;JLorg/polyfrost/polyui/unit/Align;ZLkotlin/jvm/functions/Function1;)Lorg/polyfrost/polyui/component/impl/Text;
 	public static synthetic fun text$default (Lorg/polyfrost/polyui/dsl/DrawableDSL;Ljava/lang/String;JLorg/polyfrost/polyui/unit/Align;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Text;
 	public final fun textInput (Ljava/lang/String;JLjava/lang/String;Lorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/polyui/component/impl/TextInput;
@@ -1782,6 +1787,7 @@ public abstract class org/polyfrost/polyui/operations/ComponentOp$Animatable : o
 	public final fun add ()V
 	public fun apply ()V
 	protected abstract fun apply (F)V
+	public fun exclusive ()Z
 	public fun finishNow ()V
 	protected final fun getAnimation ()Lorg/polyfrost/polyui/animate/Animation;
 	public final fun getOnFinish ()Lkotlin/jvm/functions/Function1;
@@ -1791,6 +1797,7 @@ public abstract class org/polyfrost/polyui/operations/ComponentOp$Animatable : o
 	public final fun setOnFinish (Lkotlin/jvm/functions/Function1;)V
 	public fun unapply ()Z
 	protected fun unapply (F)V
+	public fun verify ()Z
 }
 
 public final class org/polyfrost/polyui/operations/ComponentOp$DefaultImpls {

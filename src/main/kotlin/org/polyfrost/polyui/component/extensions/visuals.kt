@@ -43,9 +43,9 @@ import org.polyfrost.polyui.operations.Skew
 import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.set
 
-fun <S : Drawable> S.withStates() = withStatesCached()
+fun <S : Drawable> S.withHoverStates() = withHoverStatesCached()
 
-fun <S : Drawable> S.withStates(
+fun <S : Drawable> S.withHoverStates(
     consume: Boolean = false, showClicker: Boolean = true,
     animation: (() -> Animation)? = {
         Animations.Default.create(0.08.seconds)
@@ -82,13 +82,13 @@ fun <S : Drawable> S.withCursor(cursor: Cursor = Cursor.Clicker): S {
     return this
 }
 
-fun <S : Block> S.withBoarder(color: PolyColor, width: Float = 1f): S {
+fun <S : Block> S.withBorder(color: PolyColor, width: Float = 1f): S {
     this.borderColor = color
     this.borderWidth = width
     return this
 }
 
-fun <S : Block> S.withBoarder(width: Float = 1f, color: (Colors.() -> PolyColor) = { page.border5 }): S {
+fun <S : Block> S.withBorder(width: Float = 1f, color: (Colors.() -> PolyColor) = { page.border5 }): S {
     onInit {
         this.borderColor = polyUI.colors.color()
         this.borderWidth = width
@@ -146,7 +146,7 @@ fun <S : Component> S.shake(): S {
  * @since 1.5.0
  */
 fun <S : Drawable> S.toggleable(default: Boolean): S {
-    withStates()
+    withHoverStates()
     var state = default
     onClick {
         state = !state

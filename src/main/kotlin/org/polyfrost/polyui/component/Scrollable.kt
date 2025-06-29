@@ -143,7 +143,6 @@ abstract class Scrollable(
                 val dx = x - px
                 val dy = y - py
                 updateScrollingChildrenAndClip(this, dx, dy, Vec2(dx, dy), sa.x, sa.y, vs.x, vs.y)
-                polyUI.inputManager.recalculate()
                 return true
             }
         }

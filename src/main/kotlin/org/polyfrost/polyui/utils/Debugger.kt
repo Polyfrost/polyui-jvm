@@ -153,6 +153,9 @@ class Debugger(private val polyUI: PolyUI) {
     private fun processEval(target: Component?, eval: String): Boolean {
         if (eval.isEmpty()) return false
         if (target == null) return false
+        if(eval.startsWith("settings.")) {
+            
+        }
         if (eval[0] == '[') {
             val idx = eval.indexOf(']')
             if (idx == -1 || idx + 2 > eval.length) return false

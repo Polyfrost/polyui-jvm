@@ -42,13 +42,30 @@ open class Resource(val resourcePath: String, @Transient @get:JvmName("shouldLoa
     @Transient
     private var initializing = false
 
+    private var loadingClass: Class<*> = Resource::class.java
+
+    /**
+     * Set the class that will be used to load this resource.
+     * This is useful if you want to load resources from a different classloader or package.
+     * **Note that** you can only set this once, and all subsequent calls will be ignored.
+     *
+     * If not set, the class that is used will be this class (`org.polyfrost.polyui.data.Resource`).
+     * @since 1.7.51
+     */
+    fun setLoadingClass(loadingClass: Class<*>) {
+        if (this.loadingClass != Resource::class.java) {
+            return // already set, ignore
+        }
+        this.loadingClass = loadingClass
+    }
+
     @Transient
     private var callbacks: ArrayList<() -> Unit>? = null
 
     /**
      * return the stream of this resource. **it is the caller's responsibility to close the stream.**
      */
-    open fun stream(): InputStream = getResourceStream(resourcePath)
+    open fun stream(): InputStream = getResourceStream(resourcePath, loadingClass)
 
     /**
      * Return this resource's contents as an array of bytes.

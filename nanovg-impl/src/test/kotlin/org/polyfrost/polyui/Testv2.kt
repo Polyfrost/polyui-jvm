@@ -24,7 +24,7 @@ package org.polyfrost.polyui
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.color.hsba
 import org.polyfrost.polyui.component.extensions.events
-import org.polyfrost.polyui.component.extensions.withStates
+import org.polyfrost.polyui.component.extensions.withHoverStates
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.data.Font
 import org.polyfrost.polyui.event.Event
@@ -65,7 +65,7 @@ fun main() {
         ),
         Group(
             *Array(30) {
-                Block(size = Vec2(32f + (Random.nextFloat() * 100f), 32f)).withStates() // .onInit { color.makeChroma() }
+                Block(size = Vec2(32f + (Random.nextFloat() * 100f), 32f)).withHoverStates() // .onInit { color.makeChroma() }
             },
             visibleSize = Vec2(350f, 120f),
         ),
@@ -82,7 +82,7 @@ fun main() {
                 Event.Mouse.Companion.Clicked then {
                     parent.parent[5] = Group(
                         *Array(30) {
-                            Block(size = Vec2(32f + (Random.nextFloat() * 100f), 32f)).withStates()
+                            Block(size = Vec2(32f + (Random.nextFloat() * 100f), 32f)).withHoverStates()
                         },
                         visibleSize = Vec2(350f, 120f),
                     )

@@ -29,6 +29,7 @@ import org.polyfrost.polyui.Settings
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.color.DarkTheme
 import org.polyfrost.polyui.color.PolyColor
+import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.data.PolyImage
@@ -37,20 +38,29 @@ import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
+import org.polyfrost.polyui.unit.Point
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.image
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
-open class DrawableDSL(@PublishedApi internal val _this: Drawable) {
-    inline operator fun <S : Drawable> S.invoke(init: (DrawableDSL.(S) -> Unit) = {}): S {
+open class DrawableDSL<T : Drawable>(@PublishedApi internal val _this: T) {
+    inline operator fun <S : Drawable> S.invoke(init: (DrawableDSL<S>.(S) -> Unit) = {}): S {
         init(DrawableDSL(this), this)
         _this.addChild(this)
         return this
     }
 
-    inline fun <S : Drawable> S.use(init: (DrawableDSL.(S) -> Unit) = {}): S {
+    inline fun configure(init: T.() -> Unit): T {
+        contract {
+            callsInPlace(init, InvocationKind.EXACTLY_ONCE)
+        }
+        init(_this)
+        return _this
+    }
+
+    inline fun <S : Drawable> S.use(init: (DrawableDSL<S>.(S) -> Unit) = {}): S {
         contract {
             callsInPlace(init, InvocationKind.EXACTLY_ONCE)
         }
@@ -59,7 +69,7 @@ open class DrawableDSL(@PublishedApi internal val _this: Drawable) {
         return this
     }
 
-    inline fun <S : Drawable> S.add(init: (DrawableDSL.(S) -> Unit) = {}): S {
+    inline fun <S : Drawable> S.add(init: (DrawableDSL<S>.(S) -> Unit) = {}): S {
         contract {
             callsInPlace(init, InvocationKind.EXACTLY_ONCE)
         }
@@ -69,7 +79,7 @@ open class DrawableDSL(@PublishedApi internal val _this: Drawable) {
     }
 
     @JvmName("block")
-    inline fun block(size: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, init: (DrawableDSL.(Block) -> Unit) = {}): Block {
+    inline fun block(size: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, init: (DrawableDSL<Block>.(Block) -> Unit) = {}): Block {
         contract {
             callsInPlace(init, InvocationKind.EXACTLY_ONCE)
         }
@@ -89,11 +99,11 @@ open class DrawableDSL(@PublishedApi internal val _this: Drawable) {
         return o
     }
 
-    inline fun image(image: String, alignment: Align = AlignDefault, init: (Image.() -> Unit) = {}) {
+    inline fun image(image: String, alignment: Align = AlignDefault, init: (Image.() -> Unit) = {}): Image {
         contract {
             callsInPlace(init, InvocationKind.EXACTLY_ONCE)
         }
-        image(image.image(), alignment, init)
+        return image(image.image(), alignment, init)
     }
 
     @JvmName("text")
@@ -104,6 +114,16 @@ open class DrawableDSL(@PublishedApi internal val _this: Drawable) {
         val o = Text(text = text, visibleSize = visibleSize, alignment = alignment, limited = limited)
         init(o)
         _this.addChild(o)
+        return o
+    }
+
+    @JvmName("popup")
+    inline fun popup(vararg children: Component?, size: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, position: Point = Point.At, init: Block.() -> Unit = {}): Block {
+        contract {
+            callsInPlace(init, InvocationKind.EXACTLY_ONCE)
+        }
+        val o = PopupMenu(children = children, size, alignment, _this.polyUI, true, position)
+        init(o)
         return o
     }
 
@@ -119,7 +139,7 @@ open class DrawableDSL(@PublishedApi internal val _this: Drawable) {
     }
 
     @JvmName("group")
-    inline fun group(visibleSize: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, init: DrawableDSL.(Group) -> Unit): Group {
+    inline fun group(visibleSize: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, init: DrawableDSL<Group>.(Group) -> Unit): Group {
         contract {
             callsInPlace(init, InvocationKind.EXACTLY_ONCE)
         }
@@ -129,7 +149,7 @@ open class DrawableDSL(@PublishedApi internal val _this: Drawable) {
         return o
     }
 
-    class Master : DrawableDSL(Block()) {
+    class Master : DrawableDSL<Block>(Block()) {
         @get:JvmName("getSize")
         @set:JvmName("setSize")
         var size: Vec2 = Vec2.ZERO
@@ -169,4 +189,4 @@ inline fun polyUI(block: DrawableDSL.Master.() -> Unit) = DrawableDSL.Master().a
 @PolyUIDSL
 @JvmSynthetic
 @ApiStatus.Experimental
-inline fun Drawable.children(block: DrawableDSL.() -> Unit) = DrawableDSL(this).apply(block)
+inline fun <T : Drawable> T.children(block: DrawableDSL<T>.() -> Unit) = DrawableDSL(this).apply(block)

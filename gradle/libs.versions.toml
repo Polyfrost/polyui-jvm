@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.1.10"
+kotlin = "2.2.0"
 log4j = "2.24.1"
 annotations = "26.0.2"
 kotlinter = "5.0.1"

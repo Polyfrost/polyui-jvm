@@ -43,7 +43,7 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Mutable>, faves: MutableList<Poly
     val p = PopupMenu(
         Group(
             Dropdown("polyui.color.solid", "polyui.color.gradient", "polyui.color.chroma", textLength = 152f),
-            Image("polyui/close.svg".image()).setDestructivePalette().withStates().onClick {
+            Image("polyui/close.svg".image()).setDestructivePalette().withHoverStates().onClick {
                 this.polyUI.inputManager.focus(null)
             },
             size = 264f by 32f,
@@ -67,7 +67,7 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Mutable>, faves: MutableList<Poly
                     y = y.coerceIn(parent.y, parent.y + parent.height - height)
                     color.element.hue = (y - parent.y) / (parent.height - height)
                     (this.parent.parent[5][0][0] as TextInput).text = color.element.toHex(alpha = false)
-                }.withBoarder(PolyColor.WHITE, 2f),
+                }.withBorder(PolyColor.WHITE, 2f),
             ),
             alignment = Align(pad = 2f by 2f)
         ).radius(8f).padded(2f, 0f).onPress {
@@ -85,7 +85,7 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Mutable>, faves: MutableList<Poly
                     y = y.coerceIn(parent.y, parent.y + parent.height - height)
                     color.element.alpha = 1f - (y - parent.y) / (parent.height - height)
                     (this.parent.parent[6][0][0] as TextInput).text = "${(color.element.alpha * 100f).roundToInt()}"
-                }.radius(6f).withBoarder(PolyColor.WHITE, 2f),
+                }.radius(6f).withBorder(PolyColor.WHITE, 2f),
             ),
             alignment = Align(pad = 2f by 2f)
         ).radius(8f).padded(2f, 0f).onPress {
@@ -180,7 +180,7 @@ private class ColorPickingBox(
         theColor.element.saturation = (x - parent.x + hf) / parent.width
         theColor.element.brightness = 1f - (y - parent.y + hf) / parent.height
         (parent as? Inputtable)?.accept(Event.Mouse.Drag)
-    }.withBoarder(PolyColor.WHITE, 2f),
+    }.withBorder(PolyColor.WHITE, 2f),
     size = 200f by 200f,
 ) {
     val grad1 = PolyColor.Gradient.Mutable(

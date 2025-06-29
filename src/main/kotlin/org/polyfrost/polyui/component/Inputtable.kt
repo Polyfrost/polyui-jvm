@@ -51,7 +51,6 @@ abstract class Inputtable(
 ) : Component(at, size, alignment) {
     private var eventHandlers: MutableMap<Any, EventListener<Inputtable, Event>>? = null
 
-
     @get:JvmName("acceptsInput")
     var acceptsInput = false
         get() = field && isEnabled
@@ -158,7 +157,7 @@ abstract class Inputtable(
 
     @OverloadResolutionByLambdaReturnType
     fun <E : Event, S : Inputtable> S.on(event: E, handler: S.(E) -> Boolean): S {
-        if (eventHandlers === EventListener.stated) eventHandlers = EventListener.makeStated()
+        if (eventHandlers === EventListener.hoverStates) eventHandlers = EventListener.makeHoverStates()
         if (!acceptsInput && event !is Event.Lifetime) acceptsInput = true
         val ev = eventHandlers ?: HashMap(8, 1f)
         // asm: non-specific events will not override hashCode, so identityHashCode will return the same
@@ -194,8 +193,8 @@ abstract class Inputtable(
         return eventHandlers?.containsKey(k) == true
     }
 
-    internal fun <S : Drawable> S.withStatesCached(): S {
-        eventHandlers?.putAll(EventListener.makeStated()) ?: run { eventHandlers = EventListener.stated }
+    internal fun <S : Drawable> S.withHoverStatesCached(): S {
+        eventHandlers?.putAll(EventListener.makeHoverStates()) ?: run { eventHandlers = EventListener.hoverStates }
         acceptsInput = true
         return this
     }
@@ -237,44 +236,44 @@ abstract class Inputtable(
             return result
         }
 
-        companion object Cache {
-            private val defEnter: Drawable.(Event.Mouse.Entered) -> Boolean = {
+        companion object HoverStateCache {
+            private val defaultEnter: Drawable.(Event.Mouse.Entered) -> Boolean = {
                 Recolor(this, this.palette.hovered, Animations.Default.create(0.08.seconds)).add()
                 polyUI.cursor = Cursor.Clicker
                 false
             }
 
-            private val defExit: Drawable.(Event.Mouse.Exited) -> Boolean = {
+            private val defaultExit: Drawable.(Event.Mouse.Exited) -> Boolean = {
                 Recolor(this, this.palette.normal, Animations.Default.create(0.08.seconds)).add()
                 polyUI.cursor = Cursor.Pointer
                 false
             }
 
-            private val defPressed: Drawable.(Event.Mouse.Pressed) -> Boolean = {
+            private val defaultPressed: Drawable.(Event.Mouse.Pressed) -> Boolean = {
                 Recolor(this, this.palette.pressed, Animations.Default.create(0.08.seconds)).add()
                 false
             }
 
-            private val defReleased: Drawable.(Event.Mouse.Released) -> Boolean = {
+            private val defaultReleased: Drawable.(Event.Mouse.Released) -> Boolean = {
                 Recolor(this, this.palette.hovered, Animations.Default.create(0.08.seconds)).add()
                 false
             }
-            val stated = makeStated<Inputtable>()
+            val hoverStates = makeHoverStates<Inputtable>()
 
             @Suppress("UNCHECKED_CAST")
-            fun <S : Inputtable> makeStated(): MutableMap<Any, EventListener<S, Event>> {
+            fun <S : Inputtable> makeHoverStates(): MutableMap<Any, EventListener<S, Event>> {
                 val out = HashMap<Any, EventListener<S, Event>>(8, 1f)
                 out[Event.Mouse.Entered::class.java] = EventListener<S, Event>().also {
-                    it.add(defEnter as S.(Event) -> Boolean)
+                    it.add(defaultEnter as S.(Event) -> Boolean)
                 }
                 out[Event.Mouse.Exited::class.java] = EventListener<S, Event>().also {
-                    it.add(defExit as S.(Event) -> Boolean)
+                    it.add(defaultExit as S.(Event) -> Boolean)
                 }
                 out[Event.Mouse.Pressed] = EventListener<S, Event>().also {
-                    it.add(defPressed as S.(Event) -> Boolean)
+                    it.add(defaultPressed as S.(Event) -> Boolean)
                 }
                 out[Event.Mouse.Released] = EventListener<S, Event>().also {
-                    it.add(defReleased as S.(Event) -> Boolean)
+                    it.add(defaultReleased as S.(Event) -> Boolean)
                 }
                 return out
             }

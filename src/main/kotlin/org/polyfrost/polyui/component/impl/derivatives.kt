@@ -56,7 +56,7 @@ fun Button(leftImage: PolyImage? = null, text: String? = null, rightImage: PolyI
         at = at,
         size = size,
         radii = radii,
-    ).withStates().namedId("Button")
+    ).withHoverStates().namedId("Button")
 }
 
 @JvmName("Switch")
@@ -108,7 +108,7 @@ fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2 = Vec2.ZERO,
         require(img != null || text != null) { "image and text cannot both be null on Radiobutton" }
         Group(
             if (img != null) Image(img) else null,
-            if (text != null) Text(text, fontSize = fontSize).withStates() else null,
+            if (text != null) Text(text, fontSize = fontSize).withHoverStates() else null,
             alignment = optAlign,
         ).onClick {
             val children = parent.children!!
@@ -161,13 +161,13 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fon
         at = at,
         focusable = true,
         alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2(8f, 8f), maxRowSize = 0),
-    ).withStates().withBoarder()
+    ).withHoverStates().withBorder()
     val dropdown = Block(
         alignment = Align(mode = Align.Mode.Vertical, pad = Vec2(optPadding, 6f)),
         children = entries.mapToArray { (img, text) ->
             Group(
                 if (img != null) Image(img) else null,
-                Text(text, fontSize = fontSize).withStates()
+                Text(text, fontSize = fontSize).withHoverStates()
             ).onClick { _ ->
                 val self = ((if (children!!.size == 2) this[1] else this[0]) as Text).text
                 if (title.text == self) return@onClick false
@@ -278,7 +278,7 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
         ).radius(barHeight / 2f),
         Block(
             size = ptrSize.vec,
-        ).radius(ptrSize / 2f).setPalette { text.primary }.withStates().draggable(withY = false).onDrag {
+        ).radius(ptrSize / 2f).setPalette { text.primary }.withHoverStates().draggable(withY = false).onDrag {
             val value = slide()
             val p = parent as Inputtable
             if (instant && p.hasListenersFor(Event.Change.Number::class.java)) {
@@ -377,7 +377,7 @@ fun BoxedTextInput(
     },
     if (post != null) Block(Text(post).secondary(), alignment = Align(pad = 6f by 10f), radii = floatArrayOf(0f, 8f, 0f, 8f)).afterInit { color = polyUI.colors.page.bg.normal } else null,
     alignment = Align(pad = Vec2.ZERO, main = Align.Main.SpaceBetween),
-).withBoarder().named("BoxedTextInput")
+).withBorder().named("BoxedTextInput")
 
 @JvmName("BoxedNumericInput")
 fun BoxedNumericInput(
@@ -412,7 +412,7 @@ fun BoxedNumericInput(
             val newValue = (value + step).coerceIn(min, max)
             text.text = (if (integral) newValue.toInt() else newValue).toString()
             true
-        }.withStates().also { it.rotation = PI },
+        }.withHoverStates().also { it.rotation = PI },
         Image("polyui/chevron-down.svg".image(), size = Vec2(14f, 14f)).onClick {
             val boxed = parent.parent[0] as Inputtable
             val text = if (boxed.children?.size == 3) boxed[1][0] as Text else boxed[0][0] as Text
@@ -420,14 +420,14 @@ fun BoxedNumericInput(
             val newValue = (value - step).coerceIn(min, max)
             text.text = (if (integral) newValue.toInt() else newValue).toString()
             true
-        }.withStates(),
+        }.withHoverStates(),
         radii = floatArrayOf(0f, radius, 0f, radius),
         alignment = Align(main = Align.Main.Center, mode = Align.Mode.Vertical, pad = Vec2(1f, 0f)),
         size = Vec2(0f, 32f)
     ).onScroll { (_, y) ->
         if (y > 0f) this[0].accept(Event.Mouse.Clicked)
         else this[1].accept(Event.Mouse.Clicked)
-    }.withBoarder(),
+    }.withBorder(),
     alignment = Align(pad = Vec2.ZERO)
 ).named("BoxedNumericInput")
 
@@ -444,7 +444,7 @@ fun PopupMenu(vararg children: Component?, size: Vec2 = Vec2.ZERO, align: Align 
         size = size,
         alignment = align,
         children = children,
-    ).withBoarder().events {
+    ).withBorder().events {
         Event.Focused.Gained then {
             this.polyUI.master.addChild(this, recalculate = false)
             alpha = 0f
