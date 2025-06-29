@@ -46,7 +46,7 @@ open class PolyUIBuilder {
         private set
     protected var alignment = Align(cross = Align.Cross.Start, pad = Vec2.ZERO)
         private set
-    protected var colors: Colors = DarkTheme()
+    var colors: Colors = DarkTheme()
         private set
     protected var backgroundColor: PolyColor? = null
         private set
@@ -90,6 +90,11 @@ open class PolyUIBuilder {
 
     fun backgroundColor(color: PolyColor?): PolyUIBuilder {
         this.backgroundColor = color
+        return this
+    }
+
+    fun backgroundColor(block: PolyUIBuilder.() -> PolyColor?): PolyUIBuilder {
+        this.backgroundColor = this.block()
         return this
     }
 
