@@ -30,6 +30,7 @@ import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.component.Inputtable
 import org.polyfrost.polyui.component.impl.Block
 import org.polyfrost.polyui.component.impl.Text
 import org.polyfrost.polyui.data.Cursor
@@ -259,6 +260,70 @@ fun <S : Drawable> S.add3dEffect(xIntensity: Double = 0.05, yIntensity: Double =
     on(Event.Mouse.Drag, func)
     on(Event.Mouse.Exited) {
         Skew(this, 0.0, 0.0, false, Animations.Default.create(0.1.seconds)).add()
+    }
+    return this
+}
+
+/**
+ * Use this method on your component if you plan on it being removed from the component tree and re-added later, to guard against the theming system
+ * not updating the component's palette as it was not referenced when the colors were changed.
+ *
+ * Why is this behavior not default? Because it is quite an unlikely scenario that a component will be removed and re-added,
+ * and having this run unnecessarily introduces a performance overhead.
+ *
+ * @since 1.8.3
+ * @see Colors
+ * @see org.polyfrost.polyui.PolyUI.colors
+ * @see org.polyfrost.polyui.PolyUI.fonts
+ */
+fun <T : Inputtable> T.addRethemingListeners(): T {
+    var oldColors: Colors? = null
+    var oldFonts: FontFamily? = null
+    onInit {
+        oldColors = polyUI.colors
+        oldFonts = polyUI.fonts
+    }
+    on(Event.Lifetime.Added) {
+        if (oldColors !== polyUI.colors) {
+            oldColors?.let { retheme(it, polyUI.colors) }
+            oldColors = polyUI.colors
+        }
+        if (oldFonts !== polyUI.fonts) {
+            oldFonts?.let { refont(it, polyUI.fonts) }
+            oldFonts = polyUI.fonts
+        }
+        false
+    }
+    return this
+}
+
+/**
+ * Perform a retheme operation on this component, changing its palette from the old [Colors] to the new [Colors], and all its children.
+ * @since 1.8.3
+ * @see refont
+ */
+fun Component.retheme(old: Colors, new: Colors): Component {
+    onAll<Drawable> {
+        val new = new.getNewPalette(it._palette, old) ?: run {
+            // asm: no valid palette was found, so we check for a color change. if still nothing found, just don't do anything
+            it.color = new.getNewColor(it.color, old) ?: it.color
+            it._palette
+        }
+        if (new != null) it.palette = new
+    }
+    return this
+}
+
+/**
+ * Perform a refont operation on this component, changing its font from the old [FontFamily] to the new [FontFamily], and all its children.
+ * @since 1.8.3
+ * @see retheme
+ */
+fun Component.refont(old: FontFamily, new: FontFamily): Component {
+    onAll<Text> {
+        if (it.font.family === old) {
+            it.font = new.get(it.fontWeight, it.italic)
+        }
     }
     return this
 }

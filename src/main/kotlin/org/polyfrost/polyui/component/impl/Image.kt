@@ -22,6 +22,7 @@
 package org.polyfrost.polyui.component.impl
 
 import org.polyfrost.polyui.PolyUI
+import org.polyfrost.polyui.color.Color
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.data.PolyImage
@@ -78,7 +79,9 @@ open class Image(
         if (initialized) return false
         polyUI.renderer.initImage(image, size)
         if (!sizeValid) size = image.size
-        palette = polyUI.colors.text.primary
+        if (image.type == PolyImage.Type.Vector) {
+            palette = polyUI.colors.text.primary
+        } else color = Color.WHITE
         return super.setup(polyUI)
     }
 

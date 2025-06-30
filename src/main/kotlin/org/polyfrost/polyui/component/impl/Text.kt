@@ -125,10 +125,10 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         }
 
     var font: Font
-        inline get() = _font ?: throw UninitializedPropertyAccessException("font")
+        inline get() = _font ?: throw UninitializedPropertyAccessException("font must be initialized (see _font)")
         set(value) {
             _font = value
-            spacing = (font.lineSpacing - 1f) * fontSize
+            spacing = (value.lineSpacing - 1f) * fontSize
         }
 
     /**
@@ -197,6 +197,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         val underline = underline
         val firstLine: Int
         val lastLine: Int
+        // asm: don't render lines that are not visible
         if (mode == LIMITED_WRAP) {
             firstLine = ((screenAt.y - y) / (fontSize + spacing)).roundToInt().coerceAtLeast(0)
             val maxLines = (visibleSize.y / (fontSize + spacing)).roundToInt() + 1

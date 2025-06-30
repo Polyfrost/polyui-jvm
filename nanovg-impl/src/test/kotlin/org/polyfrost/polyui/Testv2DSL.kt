@@ -21,8 +21,8 @@
 
 package org.polyfrost.polyui
 
+import org.polyfrost.polyui.color.DarkTheme
 import org.polyfrost.polyui.color.mutable
-import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.extensions.*
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.data.FontFamily
@@ -39,23 +39,36 @@ import org.polyfrost.polyui.utils.ref
 
 fun main() {
     val window = GLFWWindow("PolyUI Test v2 (DSL)", 800, 500)
+    val theme = DarkTheme()
+//    PolyUI.registeredFonts["comic"] = FontFamily("ComicNeue", "polyui/fonts/comic/")
+
     polyUI {
         size = 800f by 500f
         renderer = NVGRenderer
+        colors = theme
+        backgroundColor = theme.page.bg.normal
         image("polyfrost.png")
         text("text.dark") {
             fontSize = 20f
         }
-        val slider: Drawable
-        var sliderTracker: TextInput? = null
+        val slider = Slider(length = 200f, min = 50f, max = 120f, instant = true, initialValue = 67f)
+        val boxedNumericInput = BoxedNumericInput(min = 50f, max = 120f, size = 40f by 32f, initialValue = 67f).onChange { value: Float ->
+            slider.setSliderValue(value, 50f, 120f)
+            false
+        }
+        slider.onChange { value: Float ->
+            boxedNumericInput.getNumericTextInput().text = value.fix(2).toString()
+        }
+
         group {
             Button("moon.svg".image()).add().onClick {
-                shake(); false
+                shake()
+                false
             }
             Button("face-wink.svg".image(), "button.text").onClick {
                 color = color.mutable()
                 ColorPicker(color.mutable().ref(), mutableListOf(), mutableListOf(), polyUI)
-                true
+                false
             }.add()
             Switch(size = 28f).add()
             Checkbox(size = 28f).add()
@@ -85,11 +98,10 @@ fun main() {
                 theBox.addChild(Block(size = 32f + (Math.random().toFloat() * 100f) by 32f).withHoverStates())
             }.add()
             group {
-                val radiobutton = Radiobutton("hello", "goodbye", "yes", "no").add()
-                slider = Slider(length = 200f, min = 50f, max = 120f, instant = true, initialValue = 67f).add().onChange { value: Float ->
-                    sliderTracker?.text = value.fix(2).toString()
-                    false
+                val radiobutton = Radiobutton("hello", "goodbye", "yes", "no").add().onChange { index: Int ->
+                    println("radiobutton changed to $index")
                 }
+                slider.add()
                 text("blink three times when u feel it kicking in")
                 Button(text = "select 3").onClick { radiobutton.setRadiobuttonEntry(2); true }.add()
             }
@@ -109,12 +121,7 @@ fun main() {
             text("i am some text that has been limited, so at some point i will stop showing up and i will just be cut off, which is a pretty handy feature.", limited = true, visibleSize = 400f by 12f)
             textInput(visibleSize = 150f by 12f)
         }
-        BoxedNumericInput(min = 50f, max = 120f, size = 40f by 32f, initialValue = 67f).add().also {
-            sliderTracker = it.getNumericTextInput().onChange { value: Float ->
-                slider.setSliderValue(value, 50f, 120f)
-                false
-            }
-        }
+        boxedNumericInput.add()
         Image("https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png".image(), size = Vec2(280f, 210f)).add()
     }.open(window)
 }

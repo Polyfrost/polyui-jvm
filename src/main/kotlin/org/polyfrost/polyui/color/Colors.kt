@@ -37,6 +37,7 @@ import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
  * @since 0.17.0
  */
 interface Colors {
+    val name: String
     val page: Page
     val brand: Brand
     val onBrand: OnBrand
@@ -72,5 +73,54 @@ interface Colors {
                 else -> normal
             }
         }
+    }
+
+    /**
+     * Calculate and return the new [Palette] for the given [currentPalette] based on the current and new [Colors].
+     * This is useful for theming, where you want to change the palette of a component based on the current theme.
+     * If the [currentPalette] is not found in the current [Colors], it will return null.
+     *
+     * @since 1.8.3
+     * @see getNewColor
+     */
+    fun getNewPalette(currentPalette: Palette?, current: Colors): Palette? {
+        if (currentPalette == null) return null
+        return if (currentPalette === current.page.bg) page.bg
+        else if (currentPalette === current.page.fg) page.fg
+
+        else if (currentPalette === current.brand.fg) brand.fg
+        else if (currentPalette === current.brand.accent) brand.accent
+        else if (currentPalette === current.onBrand.fg) onBrand.fg
+        else if (currentPalette === current.onBrand.accent) onBrand.accent
+
+        else if (currentPalette === current.state.danger) state.danger
+        else if (currentPalette === current.state.warning) state.warning
+        else if (currentPalette === current.state.success) state.success
+
+        else if (currentPalette === current.component.bg) component.bg
+
+        else if (currentPalette === current.text.primary) text.primary
+        else if (currentPalette === current.text.secondary) text.secondary
+        else null
+    }
+
+    /**
+     * Calculate and return the new [Color] for the given [currentColor] based on the current and new [Colors].
+     * This is useful for theming, where you want to change the color of a component based on the current theme.
+     * If the [currentColor] is not found in the current [Colors], it will return null.
+     *
+     * @since 1.8.3
+     * @see getNewPalette
+     */
+    fun getNewColor(currentColor: Color, current: Colors): Color? {
+        return if (currentColor === current.page.bgOverlay) page.bgOverlay
+        else if (currentColor === current.page.fgOverlay) page.fgOverlay
+
+        else if (currentColor === current.page.border20) page.border20
+        else if (currentColor === current.page.border10) page.border10
+        else if (currentColor === current.page.border5) page.border5
+
+        else if (currentColor === current.component.bgDeselected) component.bgDeselected
+        else null
     }
 }

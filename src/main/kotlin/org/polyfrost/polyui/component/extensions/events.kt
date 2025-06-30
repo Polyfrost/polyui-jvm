@@ -125,12 +125,29 @@ fun <S : Inputtable> S.onRelease(func: S.(Event.Mouse.Released) -> Unit): S {
  * In PolyUI, this is for [Text] and [TextInput][org.polyfrost.polyui.component.impl.TextInput] only.
  * @since 1.0.6
  */
-@JvmName("onChangeString")
+@JvmName("onChangeStringZ")
+@OverloadResolutionByLambdaReturnType
 fun <S : Inputtable> S.onChange(func: S.(String) -> Boolean): S {
     on(Event.Change.Text) {
         val res = func.invoke(this, it.text)
         it.cancelled = res
         res
+    }
+    return this
+}
+
+/**
+ * Add a listener for changes to the given String-type property.
+ *
+ * In PolyUI, this is for [Text] and [TextInput][org.polyfrost.polyui.component.impl.TextInput] only.
+ * @since 1.0.6
+ */
+@JvmName("onChangeString")
+@OverloadResolutionByLambdaReturnType
+fun <S : Inputtable> S.onChange(func: S.(String) -> Unit): S {
+    on(Event.Change.Text) {
+        func.invoke(this, it.text)
+        false
     }
     return this
 }
@@ -156,10 +173,44 @@ fun <S : Inputtable> S.onToggle(func: S.(Boolean) -> Unit): S {
  * In PolyUI, this is for [Checkbox][org.polyfrost.polyui.component.impl.Checkbox] and [Switch][org.polyfrost.polyui.component.impl.Switch] only.
  * @since 1.0.6
  */
-@JvmName("onChangeState")
+@JvmName("onChangeStateZ")
+@OverloadResolutionByLambdaReturnType
 fun <S : Inputtable> S.onChange(func: S.(Boolean) -> Boolean): S {
     on(Event.Change.State) {
         val res = func.invoke(this, it.state)
+        it.cancelled = res
+        res
+    }
+    return this
+}
+
+/**
+ * Add a listener for changes to the given Boolean-type property.
+ *
+ * In PolyUI, this is for [Checkbox][org.polyfrost.polyui.component.impl.Checkbox] and [Switch][org.polyfrost.polyui.component.impl.Switch] only.
+ * @since 1.0.6
+ */
+@JvmName("onChangeState")
+@OverloadResolutionByLambdaReturnType
+fun <S : Inputtable> S.onChange(func: S.(Boolean) -> Unit): S {
+    on(Event.Change.State) {
+        func.invoke(this, it.state)
+        false
+    }
+    return this
+}
+
+/**
+ * Add a listener for changes to the given Int-type property.
+ *
+ * In PolyUI, this is for [Radiobutton][org.polyfrost.polyui.component.impl.Radiobutton], and [Dropdown][org.polyfrost.polyui.component.impl.Dropdown] only.
+ * @since 1.0.6
+ */
+@JvmName("onChangeIndexZ")
+@OverloadResolutionByLambdaReturnType
+fun <S : Inputtable> S.onChange(func: S.(Int) -> Boolean): S {
+    on(Event.Change.Number) {
+        val res = func.invoke(this, it.amount.toInt())
         it.cancelled = res
         res
     }
@@ -173,9 +224,26 @@ fun <S : Inputtable> S.onChange(func: S.(Boolean) -> Boolean): S {
  * @since 1.0.6
  */
 @JvmName("onChangeIndex")
-fun <S : Inputtable> S.onChange(func: S.(Int) -> Boolean): S {
+@OverloadResolutionByLambdaReturnType
+fun <S : Inputtable> S.onChange(func: S.(Int) -> Unit): S {
     on(Event.Change.Number) {
-        val res = func.invoke(this, it.amount.toInt())
+        func.invoke(this, it.amount.toInt())
+        false
+    }
+    return this
+}
+
+/**
+ * Add a listener for changes to the given Float-type property.
+ *
+ * In PolyUI, this is for [Slider][org.polyfrost.polyui.component.impl.Slider] only.
+ * @since 1.0.6
+ */
+@JvmName("onChangeNumberZ")
+@OverloadResolutionByLambdaReturnType
+fun <S : Inputtable> S.onChange(func: S.(Float) -> Boolean): S {
+    on(Event.Change.Number) {
+        val res = func.invoke(this, it.amount.toFloat())
         it.cancelled = res
         res
     }
@@ -189,11 +257,11 @@ fun <S : Inputtable> S.onChange(func: S.(Int) -> Boolean): S {
  * @since 1.0.6
  */
 @JvmName("onChangeNumber")
-fun <S : Inputtable> S.onChange(func: S.(Float) -> Boolean): S {
+@OverloadResolutionByLambdaReturnType
+fun <S : Inputtable> S.onChange(func: S.(Float) -> Unit): S {
     on(Event.Change.Number) {
-        val res = func.invoke(this, it.amount.toFloat())
-        it.cancelled = res
-        res
+        func.invoke(this, it.amount.toFloat())
+        false
     }
     return this
 }

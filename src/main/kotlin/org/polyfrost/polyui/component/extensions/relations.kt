@@ -163,3 +163,25 @@ fun Component.getTextFromBoxedTextInput(): TextInput {
 fun Component.getNumericTextInput(): TextInput {
     return this[0].getTextFromBoxedTextInput()
 }
+
+/**
+ * Perform a function on all matching components (itself and its children) of the given class.
+ * @since 1.8.3
+ */
+fun <T : Component> Component.onAll(cls: Class<T>, action: (T) -> Unit) {
+    if (cls.isInstance(this)) action(this as T)
+    val children = this.children ?: return
+    children.fastEach {
+        if (cls.isInstance(it)) action(it as T)
+        it.onAll(cls, action)
+    }
+}
+
+
+/**
+ * Perform a function on all matching components (itself and its children) of the given type.
+ * @since 1.8.3
+ */
+inline fun <reified T : Component> Component.onAll(noinline action: (T) -> Unit) {
+    onAll(T::class.java, action)
+}

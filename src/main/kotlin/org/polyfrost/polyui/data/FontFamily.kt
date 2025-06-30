@@ -169,4 +169,6 @@ open class FontFamily(
             Font(address, family = this, italic = italic, weight = weight)
         }
     }
+
+    override fun toString() = "FontFamily($name, $path, fallback=${fallback?.name})"
 }

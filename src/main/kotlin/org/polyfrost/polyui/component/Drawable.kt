@@ -110,7 +110,13 @@ abstract class Drawable(
             _color = value
         }
 
-    private var _palette: Colors.Palette? = palette
+    /**
+     * internal storage for the palette.
+     */
+    @ApiStatus.Internal
+    @get:JvmName("getColorOrNull")
+    @set:JvmName("setColorInternal")
+    var _palette: Colors.Palette? = palette
 
     @SideEffects("color", "palette")
     var palette: Colors.Palette

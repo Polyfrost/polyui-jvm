@@ -28,6 +28,8 @@ package org.polyfrost.polyui.color
  * @since 0.17.0
  */
 open class DarkTheme : Colors {
+    override val name: String
+        get() = "dark"
     override val page = Colors.Page(
         bg = Colors.Palette(
             rgba(17, 23, 28), // Normal - #11171C

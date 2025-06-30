@@ -24,11 +24,13 @@ package org.polyfrost.polyui
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.color.DarkTheme
+import org.polyfrost.polyui.color.LightTheme
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Component
-import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.Inputtable
 import org.polyfrost.polyui.component.extensions.radius
+import org.polyfrost.polyui.component.extensions.refont
+import org.polyfrost.polyui.component.extensions.retheme
 import org.polyfrost.polyui.component.impl.Block
 import org.polyfrost.polyui.component.impl.Group
 import org.polyfrost.polyui.data.Cursor
@@ -113,35 +115,37 @@ class PolyUI(
 
     val settings = settings ?: Settings()
 
-    /** Colors attached to this PolyUI instance. This contains all the colors needed for the UI.
+    /**
+     * Colors attached to this PolyUI instance. This contains all the colors needed for the UI.
      *
      * **Note that changing this value** can be an expensive operation while the UI is running, as it has to update all the components.
      * @since 0.17.0
      */
     var colors = colors
-//        get() = master.colors
-//        set(value) {
-//            timed("Changing colors from ${master.colors} to $value") {
-//                master.onAllLayouts {
-//     changeColors(value)
-//                }
-//            }
-//        }
+        set(value) {
+            if (field === value) return
+            timed("Changing colors from $field to $value") {
+                master.retheme(field, value)
+                master.needsRedraw = true
+                field = value
+            }
+        }
 
-    /** Fonts attached to this PolyUI instance. This contains all the fonts needed for the UI.
+    /**
+     * Fonts attached to this PolyUI instance. This contains all the fonts needed for the UI.
      *
      * **Note that changing this value** can be an expensive operation while the UI is running, as it has to update all the components.
      * @since 0.22.0
      */
     var fonts = defaultFonts
-//        get() = master.fonts
-//        set(value) {
-//            timed("Changing fonts from ${master.fonts} to $value") {
-//                master.onAllLayouts {
-//                    changeFonts(value)
-//                }
-//            }
-//        }
+        set(value) {
+            if (field === value) return
+            timed("Changing fonts from $field to $value") {
+                master.refont(field, value)
+                master.needsRedraw = true
+                field = value
+            }
+        }
 
     /**
      * Monospace font attached to this PolyUI instance. This is used for debugging and other purposes.
@@ -192,7 +196,7 @@ class PolyUI(
      * This is the root layout of the UI. It is the parent of all other layouts.
      */
     val master = if (backgroundColor == null) Group(size = size, children = components, alignment = masterAlignment)
-    else Block(size = size, children = components, alignment = masterAlignment, color = backgroundColor).radius(0f)
+    else Block(size = size, children = components, alignment = masterAlignment, color = backgroundColor).radius(0f).also { it.palette = colors.page.bg }
 
 
     val inputManager = inputManager?.with(master) ?: InputManager(master, KeyBinder(this.settings), this.settings)
@@ -506,6 +510,15 @@ class PolyUI(
             val time = Clock.time - now
             if (log) LOGGER.info("${if (msg != null) "\t\t> " else ""}took ${time / 1_000_000.0}ms")
             return time
+        }
+
+        val registeredFonts = HashMap<String, FontFamily>(8).also {
+            it["poppins"] = defaultFonts
+        }
+
+        val registeredThemes = HashMap<String, Colors>(8).also {
+            it["dark"] = DarkTheme()
+            it["light"] = LightTheme()
         }
 
         const val INPUT_NONE: Byte = 0

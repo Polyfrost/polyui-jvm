@@ -46,6 +46,11 @@ import kotlin.math.PI
 private val SEARCH = PolyImage("polyui/search.svg")
 private val CHEVRON_DOWN = PolyImage("polyui/chevron-down.svg")
 
+/**
+ * Simple button component, with text and up to 2 images.
+ *
+ * To use this button, you can use the [onClick] method to detect presses.
+ */
 @JvmName("Button")
 fun Button(leftImage: PolyImage? = null, text: String? = null, rightImage: PolyImage? = null, fontSize: Float = 12f, font: Font? = null, radii: FloatArray = floatArrayOf(8f), padding: Vec2 = Vec2(12f, 6f), at: Vec2 = Vec2.ZERO, size: Vec2 = Vec2.ZERO): Block {
     return Block(
@@ -59,6 +64,11 @@ fun Button(leftImage: PolyImage? = null, text: String? = null, rightImage: PolyI
     ).withHoverStates().namedId("Button")
 }
 
+/**
+ * Simple switch component.
+ *
+ * Use the [onToggle] method to detect changes in state, the parameter `it` in the method will be `true` if the switch is on, and `false` if it is off.
+ */
 @JvmName("Switch")
 fun Switch(at: Vec2 = Vec2.ZERO, size: Float, padding: Float = 3f, state: Boolean = false, lateralStretch: Float = 1.8f): Block {
     val circleSize = size - (padding + padding)
@@ -79,9 +89,15 @@ fun Switch(at: Vec2 = Vec2.ZERO, size: Float, padding: Float = 3f, state: Boolea
 }
 
 /**
+ * A radiobutton component, which allows you to select one of multiple options.
  * For images, use `Image` for each entry.
  *
  * For both strings and images, use `Image to "string"`.
+ *
+ * Changes can be detected using the [onChange] method with an [Event.Change.Number] event.
+ * the best usage is:
+ * ```
+ * radiobutton.onChange {
  */
 @JvmName("Radiobutton")
 fun Radiobutton(vararg entries: String, at: Vec2 = Vec2.ZERO, initial: Int = 0, fontSize: Float = 12f, optionLateralPadding: Float = 6f, optionVerticalPadding: Float = 6f) = Radiobutton(entries = entries.mapToArray { null to it }, at, initial, fontSize, optionLateralPadding, optionVerticalPadding)
@@ -180,7 +196,7 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fon
                 true
             }
         },
-    ).namedId("DropdownMenu")
+    ).addRethemingListeners().namedId("DropdownMenu")
     return it.events {
         Event.Focused.Gained then {
             polyUI.master.addChild(dropdown, recalculate = false)
@@ -370,7 +386,7 @@ fun BoxedTextInput(
         alignment = Align(main = if (center) Align.Main.Center else Align.Main.Start, pad = Vec2(6f, 10f)),
         size = size,
     ).afterInit {
-        if(!center) {
+        if (!center) {
             val input = this[0]
             input.visibleSize = input.visibleSize.coerceAtMost(this.visibleSize - Vec2(alignment.pad.x * 2f, 0f))
         }
@@ -401,8 +417,8 @@ fun BoxedNumericInput(
         fontSize, center, post, size
     ).also {
         require(initialValue in min..max) { "initial value $initialValue is out of range for numeric text input of $min..$max" }
-        if (it.children?.size == 3) (it[1][0] as TextInput).numeric(min, max, integral, it)
-        else (it[0][0] as TextInput).numeric(min, max, integral, it)
+        if (it.children?.size == 3) (it[1][0] as TextInput).numeric(min, max, integral)
+        else (it[0][0] as TextInput).numeric(min, max, integral)
     }.radii(radius, 0f, radius, 0f),
     Block(
         Image("polyui/chevron-down.svg".image(), size = Vec2(14f, 14f)).onClick {

@@ -159,7 +159,7 @@ open class DrawableDSL<T : Drawable>(@PublishedApi internal val _this: T) {
         var translator: Translator? = null
         var backgroundColor: PolyColor? = null
         var alignment: Align = Align(cross = Align.Cross.Start, pad = Vec2.ZERO)
-        val colors: Colors = DarkTheme()
+        var colors: Colors? = null
 
         var renderer: Renderer
             get() = _renderer ?: error("Renderer not set")
@@ -170,7 +170,7 @@ open class DrawableDSL<T : Drawable>(@PublishedApi internal val _this: T) {
         fun build() = PolyUI(
             components = _this.children?.toTypedArray() ?: arrayOf(),
             renderer, settings, inputManager, translator, backgroundColor,
-            alignment, colors, size
+            alignment, colors ?: DarkTheme(), size
         ).also { _this.children?.clear() }
     }
 }
