@@ -125,7 +125,7 @@ class PolyUI(
         set(value) {
             if (field === value) return
             timed("Changing colors from $field to $value") {
-                master.retheme(field, value)
+                master.retheme(field, value, settings.smoothThemeChanges)
                 master.needsRedraw = true
                 field = value
             }

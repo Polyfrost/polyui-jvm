@@ -177,8 +177,14 @@ fun <S : Drawable> S.setState(state: Byte): S {
     return this
 }
 
-fun <S : Drawable> S.setPalette(palette: Colors.Palette): S {
-    this.palette = palette
+fun <S : Drawable> S.setPalette(palette: Colors.Palette, animation: Boolean = false): S {
+    if (this._palette == palette) return this
+    this._palette = palette
+    if (animation) {
+        Recolor(this, palette.get(inputState), Animations.Default.create(0.5.seconds)).add()
+    } else {
+        (_color as? PolyColor.Mut)?.recolor(palette.get(inputState)) ?: run { _color = palette.get(inputState) }
+    }
     return this
 }
 
@@ -302,14 +308,15 @@ fun <T : Inputtable> T.addRethemingListeners(): T {
  * @since 1.8.3
  * @see refont
  */
-fun Component.retheme(old: Colors, new: Colors): Component {
+fun Component.retheme(old: Colors, new: Colors, animate: Boolean = false): Component {
     onAll<Drawable> {
         val new = new.getNewPalette(it._palette, old) ?: run {
             // asm: no valid palette was found, so we check for a color change. if still nothing found, just don't do anything
             it.color = new.getNewColor(it.color, old) ?: it.color
             it._palette
         }
-        if (new != null) it.palette = new
+        // asm: dont animate on components that are not currently shown (as otherwise they would do the animation later which looks weird)
+        if (new != null) it.setPalette(new, animate && it.renders)
     }
     return this
 }

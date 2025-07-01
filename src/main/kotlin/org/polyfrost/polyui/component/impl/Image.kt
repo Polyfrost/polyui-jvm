@@ -49,6 +49,8 @@ open class Image(
         }
 
     init {
+        // asm: in the case that the image is a remote resource and so is not yet loaded,
+        // we setup this callback so that the UI will update once the image is ready
         image.onInit { needsRedraw = true }
     }
 

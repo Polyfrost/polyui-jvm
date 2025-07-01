@@ -90,6 +90,8 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
             val old = _text.string
             _text.string = value
             if (initialized) {
+                // asm: in order for cancel to work, we need to update the text bounds first
+                // this means that in the event we do cancel, we can restore the old text
                 updateTextBounds()
                 if (hasListenersFor(Event.Change.Text::class.java)) {
                     val ev = Event.Change.Text(value)
@@ -200,7 +202,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         // asm: don't render lines that are not visible
         if (mode == LIMITED_WRAP) {
             firstLine = ((screenAt.y - y) / (fontSize + spacing)).roundToInt().coerceAtLeast(0)
-            val maxLines = (visibleSize.y / (fontSize + spacing)).roundToInt() + 1
+            val maxLines = (visibleSize.y / (fontSize + spacing)).roundToInt()
             lastLine = maxLines + firstLine
         } else {
             firstLine = 0
@@ -208,7 +210,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         }
         lines.fastEachIndexed { i, (it, bounds) ->
             val (width, height) = bounds
-            if (mode == LIMITED_WRAP && (i !in firstLine..<lastLine)) {
+            if (it.isEmpty() || (mode == LIMITED_WRAP && (i !in firstLine..<lastLine))) {
                 y += height + spacing
                 return@fastEachIndexed
             }
@@ -218,7 +220,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
                 renderer.line(x, hf, x + width, hf, color, 1f)
             }
             if (underline) {
-                val ff = y + height - spacing - 2f
+                val ff = y + height - spacing
                 renderer.line(x, ff, x + width, ff, color, 1f)
             }
             y += height + spacing
@@ -234,6 +236,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
     override fun setup(polyUI: PolyUI): Boolean {
         if (initialized) return false
         palette = polyUI.colors.text.primary
+        // asm: replace the text with the translated text, if available
         if (_text !is Translator.Text.Dont) {
             _text = if (_text is Translator.Text.Formatted) {
                 polyUI.translator.translate(_text.string, *(_text as Translator.Text.Formatted).args)
@@ -257,7 +260,6 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
             height = fontSize
             return
         }
-        val mode = mode
         val maxWidth = when (mode) {
             LIMITED, WRAP, LIMITED_WRAP -> visibleSize.x
             else -> 0f

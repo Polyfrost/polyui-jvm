@@ -28,6 +28,7 @@ import org.polyfrost.polyui.PolyUI.Companion.INPUT_NONE
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.extensions.countChildren
+import org.polyfrost.polyui.component.extensions.setPalette
 import org.polyfrost.polyui.data.Framebuffer
 import org.polyfrost.polyui.operations.Recolor
 import org.polyfrost.polyui.renderer.FramebufferController
@@ -122,8 +123,7 @@ abstract class Drawable(
     var palette: Colors.Palette
         get() = _palette ?: throw UninitializedPropertyAccessException("Palette is not initialized")
         set(value) {
-            _palette = value
-            (_color as? PolyColor.Mut)?.recolor(value.get(inputState)) ?: run { _color = value.get(inputState) }
+            setPalette(value, false)
         }
 
     @SideEffects("_parent.needsRedraw", `when` = "field != value")

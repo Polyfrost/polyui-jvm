@@ -23,8 +23,8 @@
 
 package org.polyfrost.polyui.utils
 
-import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.data.Font
+import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.unit.Vec2
 
 /**
@@ -108,7 +108,7 @@ fun String.truncate(
     var t = this
     while (resultWidth + delimiterWidth > width) {
         resultWidth = renderer.textBounds(font, t, fontSize).x
-        t = t.substring(0, t.length - 1)
+        t = t.dropLast(1)
     }
     t += limitText
     return t

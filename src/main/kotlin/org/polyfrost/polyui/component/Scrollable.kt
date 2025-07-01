@@ -136,13 +136,13 @@ abstract class Scrollable(
         }
         if (push) {
             pushed = true
-            val vs = visibleSize
-            val sa = screenAt
-            renderer.pushScissorIntersecting(sa.x, sa.y, vs.x, vs.y)
+            val (vsx, vsy) = visibleSize
+            val (sax, say) = screenAt
+            renderer.pushScissorIntersecting(sax, say, vsx, vsy)
             if (x != px || y != py) {
                 val dx = x - px
                 val dy = y - py
-                updateScrollingChildrenAndClip(this, dx, dy, Vec2(dx, dy), sa.x, sa.y, vs.x, vs.y)
+                updateScrollingChildrenAndClip(this, dx, dy, Vec2(dx, dy), sax, say, vsx, vsy)
                 return true
             }
         }

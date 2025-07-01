@@ -222,7 +222,7 @@ inline fun <K, V, reified R> Map<K, V>.mapToArray(transform: (Map.Entry<K, V>) -
     return out as Array<R>
 }
 
-fun FloatArray.elementsEqual(): Boolean {
+fun FloatArray.areElementsEqual(): Boolean {
     if (isEmpty()) return true
     val first = this[0]
     for (i in 1 until size) {

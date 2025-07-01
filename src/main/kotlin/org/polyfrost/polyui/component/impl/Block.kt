@@ -27,7 +27,7 @@ import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.utils.elementsEqual
+import org.polyfrost.polyui.utils.areElementsEqual
 
 open class Block(
     vararg children: Component?,
@@ -46,7 +46,7 @@ open class Block(
             field = when {
                 value == null -> null
                 value.isEmpty() -> null
-                value.elementsEqual() && value[0] == 0f -> null
+                value.areElementsEqual() && value[0] == 0f -> null
                 else -> value
             }
         }
@@ -80,7 +80,7 @@ open class Block(
         val radii = this.radii
         when {
             radii == null -> {}
-            radii.elementsEqual() -> {
+            radii.areElementsEqual() -> {
                 for (i in radii.indices) {
                     radii[i] *= scaleX
                 }

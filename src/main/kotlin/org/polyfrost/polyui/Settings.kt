@@ -75,7 +75,7 @@ class Settings {
      *
      * This value should be set to something relatively high, as the performance gain from using a framebuffer only works if there is a large amount of draw calls.
      *
-     * @see [org.polyfrost.polyui.component.countChildren]
+     * @see [org.polyfrost.polyui.component.extensions.countChildren]
      */
     @ApiStatus.Experimental
     var minDrawablesForFramebuffer: Int = 50
@@ -211,6 +211,15 @@ class Settings {
     @get:JvmName("forceSetsInitialSize")
     @set:JvmName("enableForceSettingInitialSize")
     var forceSetsInitialSize = false
+
+    /**
+     * Enable a smooth animation when the colors are changed.
+     * @see PolyUI.colors
+     * @since 1.8.3
+     */
+    @get:JvmName("isSmoothThemeChangesEnabled")
+    @set:JvmName("enableSmoothThemeChanges")
+    var smoothThemeChanges = true
 
     /** How to handle resource (image and font) loading errors.
      * @see resourcePolicy
