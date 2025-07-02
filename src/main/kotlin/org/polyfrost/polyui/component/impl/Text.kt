@@ -54,11 +54,13 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         }
     }
 
+    private val shouldBeUnlimited = !visibleSize.isPositive
+
     /**
      * Mode that this text was created in. Must be one of [UNLIMITED], [WRAP], [SCROLLING_SINGLE_LINE], [LIMITED_WRAP].
      * @since 1.4.1
      */
-    protected val mode get() = if (!visibleSize.isPositive) UNLIMITED else if (limited) LIMITED else when (visibleSize.y) {
+    protected val mode get() = if (shouldBeUnlimited) UNLIMITED else if (limited) LIMITED else when (visibleSize.y) {
         0f -> WRAP
         fontSize -> SCROLLING_SINGLE_LINE
         else -> LIMITED_WRAP
