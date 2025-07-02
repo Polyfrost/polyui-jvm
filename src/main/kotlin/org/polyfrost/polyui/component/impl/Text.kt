@@ -40,7 +40,7 @@ import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.utils.*
 import kotlin.math.roundToInt
 
-open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, private val limited: Boolean = false, vararg children: Component?) :
+open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Component?) :
     Drawable(children = children, at, alignment, visibleSize = visibleSize, focusable = focusable) {
     constructor(text: String, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Component?) :
             this(Translator.Text.Simple(text), font, fontSize, at, alignment, visibleSize, focusable, limited, children = children)
@@ -54,17 +54,16 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         }
     }
 
-    private val shouldBeUnlimited = !visibleSize.isPositive
-
     /**
      * Mode that this text was created in. Must be one of [UNLIMITED], [WRAP], [SCROLLING_SINGLE_LINE], [LIMITED_WRAP].
      * @since 1.4.1
      */
-    protected val mode get() = if (shouldBeUnlimited) UNLIMITED else if (limited) LIMITED else when (visibleSize.y) {
+    var mode = if (!visibleSize.isPositive) UNLIMITED else if (limited) LIMITED else when (visibleSize.y) {
         0f -> WRAP
         fontSize -> SCROLLING_SINGLE_LINE
         else -> LIMITED_WRAP
     }
+        private set
 
     /**
      * @since 1.0.6
@@ -289,6 +288,16 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         h -= spacing
         width = w
         height = h
+        // asm: we have a visible size, so we must have been externally set up
+        // (i.e, given a size by the layout manager from a parent) and so
+        // we must now recalculate what type of text we are.
+        if (mode == UNLIMITED && hasVisibleSize) {
+            if ((visibleSize.y / fontSize).toInt() == 1) {
+                visHeight = h
+                mode = SCROLLING_SINGLE_LINE
+            }
+            else mode = LIMITED_WRAP
+        }
         when (mode) {
             WRAP -> visHeight = h
             LIMITED_WRAP, SCROLLING_SINGLE_LINE -> tryMakeScrolling()

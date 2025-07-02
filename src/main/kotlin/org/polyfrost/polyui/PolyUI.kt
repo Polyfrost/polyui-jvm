@@ -277,6 +277,7 @@ class PolyUI(
         if (master.children.isNullOrEmpty()) LOGGER.warn("PolyUI initialized with no children!")
         master.name += " [Master]"
         master.setup(this)
+        master.clipChildren()
 
         this.keyBinder?.add(
             KeyBinder.Bind('R', mods = Modifiers(KeyModifiers.CONTROL)) {

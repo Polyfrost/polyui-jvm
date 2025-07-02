@@ -390,17 +390,13 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
 
     fun clipChildren() {
         val children = children ?: return
-        val static = screenAt
-        val vs = visibleSize
-        _clipChildren(children, static.x, static.y, vs.x, vs.y)
-    }
-
-    private fun _clipChildren(children: ArrayList<out Component>, tx: Float, ty: Float, tw: Float, th: Float) {
+        val (tx, ty) = screenAt
+        val (tw, th) = visibleSize
         children.fastEach {
             val isOutside = !it.intersects(tx, ty, tw, th)
             it.clipped = isOutside
             // asm: don't bother checking children if this component is not visible
-            if (!isOutside) it._clipChildren(it.children ?: return@fastEach, tx, ty, tw, th)
+            if (!isOutside) it.clipChildren()
         }
     }
 
@@ -449,7 +445,6 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         polyUI.layoutController.layout(this)
         // #positioned = true
         layoutFlags = layoutFlags or 0b00010000
-        clipChildren()
     }
 
     /**

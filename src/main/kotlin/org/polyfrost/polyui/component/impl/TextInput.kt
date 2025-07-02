@@ -81,6 +81,7 @@ open class TextInput(
         get() = _placeholder.string
         set(value) {
             _placeholder.string = value
+            if (initialized && text.isEmpty()) updateTextBounds(polyUI.renderer)
         }
 
     @set:Deprecated("This property is not supported for TextInput", level = DeprecationLevel.HIDDEN)

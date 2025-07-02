@@ -142,6 +142,7 @@ class Debugger(private val polyUI: PolyUI) {
         this.forEval = forEval
         val evalWindow = evalWindow
         (evalWindow[0] as TextInput).placeholder = "evaluate ${forEval.name}..."
+        if (evalWindow.initialized) evalWindow.recalculate()
         if (!evalWindow.isEnabled) polyUI.master.addChild(evalWindow, recalculate = false)
         evalWindow.x = polyUI.mouseX - evalWindow.width / 2f
         evalWindow.y = polyUI.mouseY - 30f
