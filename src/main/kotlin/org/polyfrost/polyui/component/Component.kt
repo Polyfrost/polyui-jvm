@@ -230,6 +230,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
      * - bit 1: [createdWithSetSize]
      * - bit 2: [createdWithSetPosition]
      * - bit 3: [layoutIgnored]
+     * - bit 4: [positioned]
      *
      * this means there are still 4 bits that can be used for simple boolean-type properties.
      * this is protected so you can use it yourself, but more bits may be used internally in the future.
@@ -343,8 +344,8 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
     open fun setup(polyUI: PolyUI): Boolean {
         if (initialized) return false
         this.polyUI = polyUI
-        children?.fastEach { it.setup(polyUI) }
         position()
+        children?.fastEach { it.setup(polyUI) }
         return true
     }
 
@@ -446,6 +447,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
     @Synchronized
     open fun position() {
         polyUI.layoutController.layout(this)
+        // #positioned = true
         layoutFlags = layoutFlags or 0b00010000
         clipChildren()
     }

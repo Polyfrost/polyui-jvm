@@ -25,6 +25,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.Settings
 import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.utils.IntArraySet
 import org.polyfrost.polyui.utils.addOrReplace
 import org.polyfrost.polyui.utils.fastEach
 
@@ -46,8 +47,8 @@ class KeyBinder(private val settings: Settings) {
      */
     var hasTimeSensitiveListeners = false
         private set
-    private val downMouseButtons = ArrayList<Int>(5)
-    private val downUnmappedKeys = ArrayList<Int>(5)
+    private val downMouseButtons = IntArraySet(5)
+    private val downUnmappedKeys = IntArraySet(5)
     private val downKeys = ArrayList<Keys>(5)
 
     private var recordingTime = 0L
@@ -275,7 +276,7 @@ class KeyBinder(private val settings: Settings) {
 
         protected val isModsOnly get() = unmappedKeys == null && keys == null && mouse == null
 
-        internal fun update(c: ArrayList<Int>, k: ArrayList<Keys>, m: ArrayList<Int>, mods: Byte, deltaTimeNanos: Long, down: Boolean): Boolean {
+        internal fun update(c: IntArraySet, k: ArrayList<Keys>, m: IntArraySet, mods: Byte, deltaTimeNanos: Long, down: Boolean): Boolean {
             if (!test(c, k, m, mods, deltaTimeNanos, down)) {
                 time = 0L
                 ran = false
@@ -295,7 +296,7 @@ class KeyBinder(private val settings: Settings) {
             return false
         }
 
-        protected open fun test(c: ArrayList<Int>, k: ArrayList<Keys>, m: ArrayList<Int>, mods: Byte, deltaTimeNanos: Long, down: Boolean): Boolean {
+        protected open fun test(c: IntArraySet, k: ArrayList<Keys>, m: IntArraySet, mods: Byte, deltaTimeNanos: Long, down: Boolean): Boolean {
             if (durationNanos == 0L && deltaTimeNanos > 0L) return false
             if (!unmappedKeys.matches(c)) return false
             if (!keys.matches(k)) return false
@@ -308,7 +309,7 @@ class KeyBinder(private val settings: Settings) {
             val sb = StringBuilder()
             sb.append("KeyBind(")
             sb.append(keysToString())
-            sb.append(")")
+            sb.append(')')
             return sb.toString()
         }
 
@@ -369,8 +370,9 @@ class KeyBinder(private val settings: Settings) {
             return true
         }
 
-        protected fun IntArray?.matches(other: ArrayList<Int>): Boolean {
+        protected fun IntArray?.matches(other: IntArraySet): Boolean {
             if (this == null) return other.size == 0
+            if (other.size != this.size) return false
             for (i in this) {
                 if (i !in other) return false
             }

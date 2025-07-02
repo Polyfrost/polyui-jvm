@@ -24,10 +24,8 @@ package org.polyfrost.polyui.layout
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Scrollable
-import org.polyfrost.polyui.layout.FlexLayoutController.Aligner
-import org.polyfrost.polyui.layout.FlexLayoutController.Justifier
 import org.polyfrost.polyui.unit.Align
-import org.polyfrost.polyui.unit.AlignDefault
+import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.fastEach
 import kotlin.math.max
 
@@ -35,6 +33,7 @@ object FlexLayoutController : LayoutController {
     override fun layout(component: Component) {
         val children = component.children
         val polyUI = component.polyUI
+        val iKnowHowBigIAm = component.createdWithSetSize
         if (!component.sizeValid) {
             val out = component.calculateSize()
             if (out.isPositive) {
@@ -70,6 +69,7 @@ object FlexLayoutController : LayoutController {
         val totalSy = polyUI.size.y / polyUI.iSize.y
         val mainPad = padding[main] * totalSx
         val crossPad = padding[crs] * totalSy
+
         if (!component.positioned) {
             if (totalSx != 1f || totalSy != 1f) component.rescale0(totalSx, totalSy, false)
         }
@@ -77,9 +77,19 @@ object FlexLayoutController : LayoutController {
         if (children.size == 1) {
             // asm: fast path: set a square size with the object centered
             val it = children.first()
-            val ivs = it.visibleSize
             val ipad = it.padding
-            if (!it.sizeValid) layout(it)
+            if (!it.sizeValid) {
+                val suggestedSize = if (iKnowHowBigIAm) {
+                    val myVs = component.visibleSize
+                    Vec2(
+                        myVs[main] - (ipad[main] + ipad[main + 2] + mainPad * 2f),
+                        myVs[crs] - (ipad[crs] + ipad[crs + 2] + crossPad * 2f)
+                    )
+//                    Vec2.ZERO
+                } else Vec2.ZERO
+                handleInvalidSize(it, suggestedSize, polyUI)
+            }
+            val ivs = it.visibleSize
             assignAndCheckSize(
                 component, main, crs,
                 ivs[main] + ipad[main] + ipad[main + 2] + (mainPad * 2f),
@@ -105,27 +115,39 @@ object FlexLayoutController : LayoutController {
             if (it is Scrollable) it.resetScroll()
             return
         }
-        val willWrap = align.maxRowSize != 0 && (component.visibleSize[main] != 0f || align.maxRowSize != AlignDefault.maxRowSize)
+        val willWrap = align.maxRowSize != 0
         if (willWrap) {
             val rows = ArrayList<WrappingRow>()
             val maxRowSize = align.maxRowSize
-            val wrapCap = component.visibleSize[main]
+            val wrapCap = component.visibleSize[main].let {
+                if (it == 0f) {
+                    // asm: we're going to check if the parent knows its size, and we will prefer to use that instead of the screen size
+                    val parent = component._parent
+                    if (parent != null && parent.sizeValid) parent.visibleSize[main].coerceAtMost(polyUI.master.size[main]) else polyUI.master.size[main]
+                } else it.coerceAtMost(polyUI.master.size[main])
+            }
             require(maxRowSize > 0) { "Component $component has max row size of $maxRowSize, needs to be greater than 0" }
             var maxMain = 0f
             var maxCross = crossPad
             var rowMain = mainPad
             var rowCross = 0f
-            var currentRow = ArrayList<Component>()
+            var currentRow = ArrayList<Component>(children.size.coerceAtMost(maxRowSize.coerceAtMost(10)))
             // measure and create rows
             children.fastEach {
                 if (it.layoutIgnored) return@fastEach
-                if (!it.sizeValid) layout(it)
+                // todo: maybe figure out if we can supply something plausible here as a suggested size?
+                if (!it.sizeValid) handleInvalidSize(it, Vec2.ZERO, polyUI)
+                if (it.visibleSize[main] > wrapCap && !iKnowHowBigIAm) {
+                    // asm: object is too large, ask it to recalculate its size (hopefully it will shrink, if not then oh well)
+                    it.setup(polyUI)
+                    it.recalculate()
+                }
                 val ivs = it.visibleSize
                 val ipad = it.padding
                 val mainS = ipad[main] + ipad[main + 2] + ivs[main] + mainPad
                 if (currentRow.isNotEmpty() && (rowMain + mainS > wrapCap || currentRow.size == maxRowSize)) {
                     rows.add(WrappingRow(rowMain, rowCross, currentRow))
-                    currentRow = ArrayList(maxRowSize.coerceAtMost(10))
+                    currentRow = ArrayList(children.size.coerceAtMost(maxRowSize.coerceAtMost(10)))
                     maxMain = max(maxMain, rowMain)
                     maxCross += rowCross + crossPad
                     rowMain = mainPad
@@ -168,7 +190,8 @@ object FlexLayoutController : LayoutController {
             val cpad2 = crossPad * 2f
             children.fastEach {
                 if (it.layoutIgnored) return@fastEach
-                if (!it.sizeValid) layout(it)
+                // todo as above
+                if (!it.sizeValid) handleInvalidSize(it, Vec2.ZERO, polyUI)
                 val ivs = it.visibleSize
                 val ipad = it.padding
                 val itMain = ipad[main] + ivs[main] + ipad[main + 2] + mainPad
@@ -188,6 +211,16 @@ object FlexLayoutController : LayoutController {
                 rowMain, component.at[main], component.size[main], mainPad, main,
             )
         }
+    }
+
+    private fun handleInvalidSize(child: Component, suggestedSize: Vec2, polyUI: PolyUI) {
+        if (suggestedSize != Vec2.ZERO) {
+            if (child is Scrollable) {
+                child.visibleSize = suggestedSize
+            }
+            child.size = suggestedSize
+        }
+        child.setup(polyUI)
     }
 
     private data class WrappingRow(val rowMain: Float, val rowCross: Float, val row: ArrayList<out Component>)
@@ -225,6 +258,9 @@ object FlexLayoutController : LayoutController {
         }
     }
 
+    /**
+     * assign the size of the component if it is not set.
+     */
     private fun assignAndCheckSize(component: Component, main: Int, crs: Int, mainValue: Float, crossValue: Float) {
         if (component.size[main] <= 0f) component.size(main, mainValue)
         if (component.size[crs] <= 0f) component.size(crs, crossValue)

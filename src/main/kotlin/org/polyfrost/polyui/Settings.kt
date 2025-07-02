@@ -221,6 +221,14 @@ class Settings {
     @set:JvmName("enableSmoothThemeChanges")
     var smoothThemeChanges = true
 
+    /**
+     * Enable or disable rounded corners for all [org.polyfrost.polyui.component.impl.Block].
+     * @since 1.8.3
+     */
+    @get:JvmName("areRoundedCornersEnabled")
+    @set:JvmName("enableRoundedCorners")
+    var roundedCorners = true
+
     /** How to handle resource (image and font) loading errors.
      * @see resourcePolicy
      */

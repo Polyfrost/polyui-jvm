@@ -47,7 +47,6 @@ object NVGRenderer : Renderer {
     private val nvgPaint: NVGPaint = NVGPaint.malloc()
     private val nvgColor: NVGColor = NVGColor.malloc()
     private val nvgColor2: NVGColor = NVGColor.malloc()
-    private val textBounds = FloatArray(4)
     private val lineHeight = FloatArray(1)
     private val images = HashMap<PolyImage, Int>()
     private val svgs = HashMap<PolyImage, Pair<NSVGImage, Int2IntMap>>()
@@ -300,16 +299,13 @@ object NVGRenderer : Renderer {
 
     @Suppress("NAME_SHADOWING")
     override fun textBounds(font: Font, text: String, fontSize: Float): Vec2 {
-        // nanovg trims single whitespace, so add an extra one (lol)
-        val text = text.let { if(text.endsWith(' ')) "$text " else it }
         nvgFontFaceId(vg, getFont(font))
         nvgTextAlign(vg, NVG_ALIGN_TOP or NVG_ALIGN_LEFT)
         nvgFontSize(vg, fontSize)
-        textBounds.fill(0f)
-        nvgTextBounds(vg, 0f, 0f, text, textBounds)
+        val width = nvgTextBounds(vg, 0f, 0f, text, null as FloatArray?)
         lineHeight[0] = 0f
         nvgTextMetrics(vg, null, null, lineHeight)
-        return Vec2(textBounds[2] - textBounds[0], lineHeight[0])
+        return Vec2(width, lineHeight[0])
     }
 
     private fun color(color: Color) {

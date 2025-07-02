@@ -70,7 +70,7 @@ fun main() {
                 ColorPicker(color.mutable().ref(), mutableListOf(), mutableListOf(), polyUI)
                 false
             }.add()
-            Switch(size = 28f).add()
+            Switch(size = 28f, state = true).add()
             Checkbox(size = 28f).add()
         }
         Dropdown("monkey blur", "phosphor blur", "moulberry blur").add()
@@ -79,14 +79,14 @@ fun main() {
             repeat(30) {
                 val len = 32f + (Math.random().toFloat() * 100f)
                 block(size = len by 32f) {
-                    text("hello my name is jeff", visibleSize = Vec2(len - 8f, 14f))
+                    text("hello my name is jeff")
                 }.withHoverStates()
             }
             configure {
                 visibleSize = 350f by 120f
             }
         }.makeRearrangeableGrid()
-        group(Vec2(800f, 120f)) {
+        group {
             Button("shuffle.svg".image(), "button.randomize").onClick {
                 theBox.children?.shuffle()
                 theBox.position()

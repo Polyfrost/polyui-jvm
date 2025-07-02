@@ -79,12 +79,13 @@ fun Switch(at: Vec2 = Vec2.ZERO, size: Float, padding: Float = 3f, state: Boolea
         alignment = Align(main = Align.Main.Start, pad = Vec2(padding, 0f)),
     ).radius(size / 2f).toggleable(state).namedId("Switch").apply {
         if (state) afterParentInit {
-            this[0].x = this.x + this.width - this[0].width - padding
+            val circle = this[0]
+            circle.x = 2f * this.x + this.width - circle.width - circle.x
         }
     }.onToggle {
         val circle = this[0]
-        val target = this.x + if (it) this.width - circle.width - padding else padding
-        Move(circle, target, add = false, animation = Animations.Default.create(0.2.seconds)).add()
+        val target = 2f * this.x + this.width - circle.width - circle.getTargetPosition().x
+        Move(circle, x = target, add = false, animation = Animations.Default.create(0.2.seconds)).add()
     }
 }
 
@@ -127,16 +128,18 @@ fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2 = Vec2.ZERO,
             if (text != null) Text(text, fontSize = fontSize).withHoverStates() else null,
             alignment = optAlign,
         ).onClick {
-            val children = parent.children!!
             val parent = parent
+            val children = parent.children!!
+            val selector = children.first()
+            // asm: dodge if it's the same
+            if (selector.x == this.x) return@onClick false
             if (parent is Inputtable && parent.hasListenersFor(Event.Change.Number::class.java)) {
                 val ev = Event.Change.Number(children.indexOf(this) - 1)
                 parent.accept(ev)
                 if (ev.cancelled) return@onClick false
             }
-            val f = children.first()
-            Move(f, this.x, this.y, add = false, animation = Animations.Default.create(0.15.seconds)).add()
-            Resize(f, this.width, this.height, add = false, animation = Animations.Default.create(0.15.seconds)).add()
+            Move(selector, this.x, this.y, add = false, animation = Animations.Default.create(0.15.seconds)).add()
+            Resize(selector, this.width, this.height, add = false, animation = Animations.Default.create(0.15.seconds)).add()
             true
         }
     }
@@ -313,7 +316,7 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
                 override fun unapply(value: Float) {
                     self.apply {
                         val maxSize = this.width - 6f
-                        val maxRadius = (this.radii?.get(0)?.minus(2f))?.coerceAtLeast(0f) ?: 0f
+                        val maxRadius = if (!polyUI.settings.roundedCorners) 0f else (this.radii?.get(0)?.minus(2f))?.coerceAtLeast(0f) ?: 0f
                         val current = maxSize * value
                         val offset = (this.width - current) / 2f
                         renderer.rect(x + offset, y + offset, current, current, polyUI.colors.brand.fg.normal, maxRadius * value)

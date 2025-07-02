@@ -40,7 +40,7 @@ import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.utils.*
 import kotlin.math.roundToInt
 
-open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Component?) :
+open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, private val limited: Boolean = false, vararg children: Component?) :
     Drawable(children = children, at, alignment, visibleSize = visibleSize, focusable = focusable) {
     constructor(text: String, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Component?) :
             this(Translator.Text.Simple(text), font, fontSize, at, alignment, visibleSize, focusable, limited, children = children)
@@ -58,7 +58,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
      * Mode that this text was created in. Must be one of [UNLIMITED], [WRAP], [SCROLLING_SINGLE_LINE], [LIMITED_WRAP].
      * @since 1.4.1
      */
-    protected val mode = if (!visibleSize.isPositive) UNLIMITED else if (limited) LIMITED else when (visibleSize.y) {
+    protected val mode get() = if (!visibleSize.isPositive) UNLIMITED else if (limited) LIMITED else when (visibleSize.y) {
         0f -> WRAP
         fontSize -> SCROLLING_SINGLE_LINE
         else -> LIMITED_WRAP
@@ -202,7 +202,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         // asm: don't render lines that are not visible
         if (mode == LIMITED_WRAP) {
             firstLine = ((screenAt.y - y) / (fontSize + spacing)).roundToInt().coerceAtLeast(0)
-            val maxLines = (visibleSize.y / (fontSize + spacing)).roundToInt()
+            val maxLines = (visibleSize.y / (fontSize + spacing)).roundToInt() + 1
             lastLine = maxLines + firstLine
         } else {
             firstLine = 0

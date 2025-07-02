@@ -190,7 +190,7 @@ fun String.wrap(
     font: Font, fontSize: Float,
     lines: ArrayList<Line>?,
 ): ArrayList<Line> {
-    val ls = lines ?: ArrayList(5)
+    val ls = lines ?: ArrayList(1)
     if (this.isEmpty()) {
         ls.add(Line("", Vec2(1f, fontSize)))
         return ls

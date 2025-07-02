@@ -79,6 +79,7 @@ public final class org/polyfrost/polyui/PolyUI$Companion {
 
 public final class org/polyfrost/polyui/Settings {
 	public fun <init> ()V
+	public final fun areRoundedCornersEnabled ()Z
 	public final fun enableComboClearing ()Z
 	public final fun enableDebugKeybind (Z)V
 	public final fun enableDebugMode (Z)V
@@ -87,7 +88,9 @@ public final class org/polyfrost/polyui/Settings {
 	public final fun enableInitCleanup (Z)V
 	public final fun enableNaturalScrolling (Z)V
 	public final fun enableRenderPausing (Z)V
+	public final fun enableRoundedCorners (Z)V
 	public final fun enableShutdownCleanup (Z)V
+	public final fun enableSmoothThemeChanges (Z)V
 	public final fun enableTranslationLoadingOnInit (Z)V
 	public final fun enableVSync (Z)V
 	public final fun forceSetsInitialSize ()Z
@@ -109,6 +112,7 @@ public final class org/polyfrost/polyui/Settings {
 	public final fun isMasterFrameBuffer ()Z
 	public final fun isNaturalScrolling ()Z
 	public final fun isRenderPausingEnabled ()Z
+	public final fun isSmoothThemeChangesEnabled ()Z
 	public final fun isVSyncEnabled ()Z
 	public final fun setAspectRatio (J)V
 	public final fun setComboMaxInterval (J)V
@@ -913,12 +917,14 @@ public final class org/polyfrost/polyui/component/extensions/VisualsKt {
 	public static final fun radii (Lorg/polyfrost/polyui/component/impl/Block;[F)Lorg/polyfrost/polyui/component/impl/Block;
 	public static final fun radius (Lorg/polyfrost/polyui/component/impl/Block;F)Lorg/polyfrost/polyui/component/impl/Block;
 	public static final fun refont (Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/data/FontFamily;Lorg/polyfrost/polyui/data/FontFamily;)Lorg/polyfrost/polyui/component/Component;
-	public static final fun retheme (Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/color/Colors;Lorg/polyfrost/polyui/color/Colors;)Lorg/polyfrost/polyui/component/Component;
+	public static final fun retheme (Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/color/Colors;Lorg/polyfrost/polyui/color/Colors;Z)Lorg/polyfrost/polyui/component/Component;
+	public static synthetic fun retheme$default (Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/color/Colors;Lorg/polyfrost/polyui/color/Colors;ZILjava/lang/Object;)Lorg/polyfrost/polyui/component/Component;
 	public static final fun secondary (Lorg/polyfrost/polyui/component/impl/Text;)Lorg/polyfrost/polyui/component/impl/Text;
 	public static final fun setDestructivePalette (Lorg/polyfrost/polyui/component/Drawable;)Lorg/polyfrost/polyui/component/Drawable;
 	public static final fun setFont (Lorg/polyfrost/polyui/component/impl/Text;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/polyui/component/impl/Text;
 	public static final fun setPalette (Lorg/polyfrost/polyui/component/Drawable;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/polyui/component/Drawable;
-	public static final fun setPalette (Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/color/Colors$Palette;)Lorg/polyfrost/polyui/component/Drawable;
+	public static final fun setPalette (Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/color/Colors$Palette;Z)Lorg/polyfrost/polyui/component/Drawable;
+	public static synthetic fun setPalette$default (Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/color/Colors$Palette;ZILjava/lang/Object;)Lorg/polyfrost/polyui/component/Drawable;
 	public static final fun setState (Lorg/polyfrost/polyui/component/Drawable;B)Lorg/polyfrost/polyui/component/Drawable;
 	public static final fun shake (Lorg/polyfrost/polyui/component/Component;)Lorg/polyfrost/polyui/component/Component;
 	public static final fun toggleable (Lorg/polyfrost/polyui/component/Drawable;Z)Lorg/polyfrost/polyui/component/Drawable;
@@ -1605,9 +1611,9 @@ public class org/polyfrost/polyui/input/KeyBinder$Bind {
 	public final fun hashCode ()I
 	protected final fun isModsOnly ()Z
 	public final fun keysToString ()Ljava/lang/String;
-	protected final fun matches ([ILjava/util/ArrayList;)Z
+	protected final fun matches ([ILorg/polyfrost/polyui/utils/IntArraySet;)Z
 	protected final fun matches ([Ljava/lang/Object;Ljava/util/ArrayList;)Z
-	protected fun test (Ljava/util/ArrayList;Ljava/util/ArrayList;Ljava/util/ArrayList;BJZ)Z
+	protected fun test (Lorg/polyfrost/polyui/utils/IntArraySet;Ljava/util/ArrayList;Lorg/polyfrost/polyui/utils/IntArraySet;BJZ)Z
 	public final fun toString ()Ljava/lang/String;
 }
 
@@ -2281,6 +2287,18 @@ public final class org/polyfrost/polyui/utils/Int2IntMap$Iter {
 	public final fun next ()J
 }
 
+public final class org/polyfrost/polyui/utils/IntArraySet {
+	public fun <init> (I)V
+	public final fun add (I)V
+	public final fun clear ()V
+	public final fun contains (I)Z
+	public final fun getSize ()I
+	public final fun isEmpty ()Z
+	public final fun remove (I)I
+	public final fun toIntArray ()[I
+	public final fun trimToSize ()V
+}
+
 public final class org/polyfrost/polyui/utils/Line {
 	public synthetic fun <init> (Ljava/lang/String;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun bounds ()J
@@ -2348,7 +2366,7 @@ public final class org/polyfrost/polyui/utils/StringUtils {
 }
 
 public final class org/polyfrost/polyui/utils/Utils {
-	public static final fun elementsEqual ([F)Z
+	public static final fun areElementsEqual ([F)Z
 	public static final fun gcd (II)I
 	public static final fun getByName (Lkotlin/enums/EnumEntries;Ljava/lang/String;Z)Ljava/lang/Enum;
 	public static synthetic fun getByName$default (Lkotlin/enums/EnumEntries;Ljava/lang/String;ZILjava/lang/Object;)Ljava/lang/Enum;

@@ -46,7 +46,7 @@ open class Block(
             field = when {
                 value == null -> null
                 value.isEmpty() -> null
-                value.areElementsEqual() && value[0] == 0f -> null
+                value[0] == 0f && value.areElementsEqual() -> null
                 else -> value
             }
         }
@@ -56,7 +56,7 @@ open class Block(
     }
 
     override fun render() {
-        val radii = this.radii
+        val radii = if (!polyUI.settings.roundedCorners) null else this.radii
         when {
             radii == null -> {
                 renderer.rect(x, y, width, height, color)

@@ -45,10 +45,7 @@ import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.Window
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.utils.Clock
-import org.polyfrost.polyui.utils.Debugger
-import org.polyfrost.polyui.utils.addIfAbsent
-import org.polyfrost.polyui.utils.fastRemoveIfReversed
+import org.polyfrost.polyui.utils.*
 import kotlin.math.min
 
 // todo rewrite this doc
@@ -142,6 +139,7 @@ class PolyUI(
             if (field === value) return
             timed("Changing fonts from $field to $value") {
                 master.refont(field, value)
+                master.recalculate()
                 master.needsRedraw = true
                 field = value
             }
@@ -282,10 +280,35 @@ class PolyUI(
 
         this.keyBinder?.add(
             KeyBinder.Bind('R', mods = Modifiers(KeyModifiers.CONTROL)) {
-                LOGGER.info("Reloading PolyUI")
-                resize(this.size.x, this.size.y, true)
+                if (it) {
+                    LOGGER.info("Reloading PolyUI")
+                    resize(this.size.x, this.size.y, true)
+                }
                 true
             },
+        )
+        // testing stuff that was actually pretty useful and cool so it's still here (yay!)
+        this.keyBinder?.add(
+            KeyBinder.Bind('=', mods = Modifiers(KeyModifiers.CONTROL)) {
+                if(it) {
+                    master.children?.fastEach {
+                        it.rescale(1.05f, 1.05f)
+                    }
+                    master.recalculate()
+                    master.needsRedraw = true
+                }
+                true
+            },
+            KeyBinder.Bind('-', mods = Modifiers(KeyModifiers.CONTROL)) {
+                if(it) {
+                    master.children?.fastEach {
+                        it.rescale(0.95f, 0.95f)
+                    }
+                    master.recalculate()
+                    master.needsRedraw = true
+                }
+                true
+            }
         )
         if (this.settings.debug) LOGGER.info(debugger.debugString())
         if (this.settings.cleanupOnShutdown) {

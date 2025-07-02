@@ -326,17 +326,34 @@ value class Modifiers(val value: Byte) {
             return sb.substring(0, sb.length - 1)
         }
 
+    /**
+     * *precise* equals, meaning that LSHIFT and RSHIFT are considered different, as well as LCONTROL and RCONTROL, etc.
+     * @see equalLenient
+     */
     @kotlin.internal.InlineOnly
     inline fun equal(other: Modifiers) = this.equal(other.value)
 
+    /**
+     * *lenient* equals, meaning that LSHIFT and RSHIFT are considered equal, as well as LCONTROL and RCONTROL, etc.
+     * @see equal
+     */
     @kotlin.internal.InlineOnly
     inline fun equalLenient(other: Byte) = this.equalLenient(Modifiers(other))
 
+    /**
+     * *lenient* equals, meaning that LSHIFT and RSHIFT are considered equal, as well as LCONTROL and RCONTROL, etc.
+     * @see equal
+     */
     @kotlin.internal.InlineOnly
     inline fun equalLenient(other: Modifiers) = this.hasAlt == other.hasAlt && this.hasControl == other.hasControl && this.hasShift == other.hasShift
 
+    /**
+     * *precise* equals, meaning that LSHIFT and RSHIFT are considered different, as well as LCONTROL and RCONTROL, etc.
+     *
+     */
     fun equal(other: Byte): Boolean {
         if (PolyUI.isOnMac && this.hasControl) {
+            // macOS: consider control as meta key (command)
             val i = other.toInt()
             return value.toInt() == i and 0b00111111 or (i shr 4)
         }
