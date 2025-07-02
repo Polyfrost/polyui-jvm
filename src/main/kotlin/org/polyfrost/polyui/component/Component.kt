@@ -147,7 +147,26 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
     }
 
     open var width = size.x
+//        set(value) {
+//            if(value == field) return
+//            field = value
+//            val peers = _parent?.children?.size ?: 0
+//            if (peers == 1) {
+//                println("running")
+//                _parent?.recalculate()
+//            }
+//        }
+
     open var height = size.y
+//        set(value) {
+//            if(value == field) return
+//            field = value
+//            val peers = _parent?.children?.size ?: 0
+//            if (peers == 1) {
+//                println("running")
+//                _parent?.recalculate()
+//            }
+//        }
 
     @get:JvmName("getSize")
     @set:JvmName("setSize")

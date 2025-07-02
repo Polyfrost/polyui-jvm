@@ -465,10 +465,9 @@ open class TextInput(
 
     override fun updateTextBounds(renderer: Renderer) {
         super.updateTextBounds(renderer)
-        if (text.isEmpty()) {
-            val bounds = renderer.textBounds(font, _placeholder.string, fontSize)
-            ensureLargerThan(bounds)
-        }
+        val bounds = renderer.textBounds(font, _placeholder.string, fontSize)
+        ensureLargerThan(bounds)
+        visibleSize = visibleSize.coerceAtLeast(bounds)
     }
 
     override fun debugString() = "placeholder: ${_placeholder.string}\ncaret: $caret;  select: $select;  selecting=$selecting\n${super.debugString()}"

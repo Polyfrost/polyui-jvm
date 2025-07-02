@@ -293,10 +293,16 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         // we must now recalculate what type of text we are.
         if (mode == UNLIMITED && hasVisibleSize) {
             if ((visibleSize.y / fontSize).toInt() == 1) {
-                visHeight = h
-                mode = SCROLLING_SINGLE_LINE
-            }
-            else mode = LIMITED_WRAP
+                // we were suggested a size that was silly, so ignore it.
+                if (visWidth > width) {
+                    mode = UNLIMITED
+                    hasVisibleSize = false
+                } else {
+                    // we were suggested a size which we ended up using, if a bit tall. we decrease the height and use it.
+                    visHeight = h
+                    mode = SCROLLING_SINGLE_LINE
+                }
+            } else mode = LIMITED_WRAP
         }
         when (mode) {
             WRAP -> visHeight = h
