@@ -407,6 +407,19 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         }
     }
 
+
+    /**
+     * rescale this component to be up to and scaling that has happened to this PolyUI instance.
+     * @since 1.9.3
+     */
+    @ApiStatus.Internal
+    @Locking
+    fun rescaleToPolyUIInstance() {
+        val totalSx = polyUI.size.x / polyUI.iSize.x
+        val totalSy = polyUI.size.y / polyUI.iSize.y
+        if (totalSx != 1f || totalSy != 1f) rescale(totalSx, totalSy)
+    }
+
     fun clipChildren() {
         val children = children ?: return
         val (tx, ty) = screenAt
@@ -517,7 +530,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         if (children.fastAny { it === child }) throw IllegalStateException("attempted to add the same component twice")
         if (index !in children.indices) children.add(child) else children.add(index, child)
         if (initialized) {
-            child.setup(polyUI)
+            if(child.setup(polyUI)) child.rescaleToPolyUIInstance()
             if (!child.createdWithSetPosition) {
                 if (recalculate) recalculate()
                 else {
@@ -592,7 +605,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
             return
         }
         new._parent = this
-        new.setup(polyUI)
+        if(new.setup(polyUI)) new.rescaleToPolyUIInstance()
         val oldStatic = old.screenAt
         new.x = old.x - (old.x - oldStatic.x)
         new.y = old.y - (old.y - oldStatic.y)

@@ -96,6 +96,16 @@ fun <S : Component> Component.locate(id: String): S? {
 }
 
 /**
+ * Returns the index of this component in its parent's children list.
+ * @return the index of this component, or -1 if it has no parent or is not a child of its parent.
+ * @since 1.9.3
+ */
+fun Component.getMyIndex(): Int {
+    val parent = _parent ?: return -1
+    return parent.children!!.indexOf(this)
+}
+
+/**
  * Returns `true` if this component is a child of the specified [component].
  * @see isRelatedTo
  * @since 1.4.2

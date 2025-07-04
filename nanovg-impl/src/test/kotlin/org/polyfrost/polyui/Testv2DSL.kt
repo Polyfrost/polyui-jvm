@@ -75,7 +75,7 @@ fun main() {
         }
         Dropdown("monkey blur", "phosphor blur", "moulberry blur").add()
         BoxedTextInput(pre = "Title:", post = "px").add()
-        val theBox = group {
+        var theBox = group {
             repeat(30) {
                 val len = 32f + (Math.random().toFloat() * 100f)
                 block(size = len by 32f) {
@@ -96,6 +96,19 @@ fun main() {
             }.add()
             Button("plus.svg".image()).onClick {
                 theBox.addChild(Block(size = 32f + (Math.random().toFloat() * 100f) by 32f).withHoverStates())
+            }.add()
+            Button(text = "reset the box").onClick {
+                val boxParent = theBox.parent
+                val idx = theBox.getMyIndex()
+                theBox = Group(
+                    *Array(30) {
+                        val len = 32f + (Math.random().toFloat() * 100f)
+                        Block(
+                            Text("he"), size = len by 32f
+                        ).withHoverStates()
+                    }, visibleSize = 350f by 120f
+                ).makeRearrangeableGrid()
+                boxParent[idx] = theBox
             }.add()
             group {
                 val radiobutton = Radiobutton("hello", "goodbye", "yes", "no").add().onChange { index: Int ->

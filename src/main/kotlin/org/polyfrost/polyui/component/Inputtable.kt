@@ -118,9 +118,9 @@ abstract class Inputtable(
         if (initialized) return false
         this.polyUI = polyUI
 
+        removeHandlers(Event.Lifetime.Init)?.accept(this, Event.Lifetime.Init)
         position()
         children?.fastEach { it.setup(polyUI) }
-        removeHandlers(Event.Lifetime.Init)?.accept(this, Event.Lifetime.Init)
         removeHandlers(Event.Lifetime.PostInit)?.accept(this, Event.Lifetime.PostInit)
         return true
     }

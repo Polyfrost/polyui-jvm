@@ -50,11 +50,6 @@ object FlexLayoutController : LayoutController {
                 return
             }
         } else if (children.isNullOrEmpty()) {
-            val totalSx = polyUI.size.x / polyUI.iSize.x
-            val totalSy = polyUI.size.y / polyUI.iSize.y
-            if (!component.positioned) {
-                if (totalSx != 1f || totalSy != 1f) component.rescale0(totalSx, totalSy, false)
-            }
             component.fixVisibleSize()
             return
         }
@@ -65,14 +60,8 @@ object FlexLayoutController : LayoutController {
         val main = if (align.mode == Align.Mode.Horizontal) 0 else 1
         val crs = if (main == 0) 1 else 0
         val padding = align.pad
-        val totalSx = polyUI.size.x / polyUI.iSize.x
-        val totalSy = polyUI.size.y / polyUI.iSize.y
-        val mainPad = padding[main] * totalSx
-        val crossPad = padding[crs] * totalSy
-
-        if (!component.positioned) {
-            if (totalSx != 1f || totalSy != 1f) component.rescale0(totalSx, totalSy, false)
-        }
+        val mainPad = padding[main]
+        val crossPad = padding[crs]
 
         if (children.size == 1) {
             // asm: fast path: set a square size with the object centered
