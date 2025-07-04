@@ -120,6 +120,9 @@ fun main() {
             )
             text("i am some text that has been limited, so at some point i will stop showing up and i will just be cut off, which is a pretty handy feature.", limited = true, visibleSize = 400f by 12f)
             textInput(visibleSize = 150f by 12f)
+            block(size = 60f by 18f, alignment = Align(main = Align.Main.Center)) {
+                text("hello")
+            }
         }
         boxedNumericInput.add()
         Image("https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png".image(), size = Vec2(280f, 210f)).add()

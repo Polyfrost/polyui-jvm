@@ -291,19 +291,24 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         // asm: we have a visible size, so we must have been externally set up
         // (i.e, given a size by the layout manager from a parent) and so
         // we must now recalculate what type of text we are.
-        if (mode == UNLIMITED && hasVisibleSize) {
-            if ((visibleSize.y / fontSize).toInt() == 1) {
-                // we were suggested a size that was silly, so ignore it.
-                if (visWidth > width) {
-                    mode = UNLIMITED
-                    hasVisibleSize = false
-                } else {
-                    // we were suggested a size which we ended up using, if a bit tall. we decrease the height and use it.
-                    visHeight = h
-                    mode = SCROLLING_SINGLE_LINE
-                }
-            } else mode = LIMITED_WRAP
+        if (hasVisibleSize) {
+            // ensure it is not silly small (the minimum size should be 1 line)
+            visHeight = visHeight.coerceAtLeast(fontSize)
+            if (mode == UNLIMITED) {
+                if ((visHeight / (fontSize + spacing)).roundToInt() == 1) {
+                    // we were suggested a size that was silly, so ignore it.
+                    if (visWidth > width) {
+                        mode = UNLIMITED
+                        hasVisibleSize = false
+                    } else {
+                        // we were suggested a size which we ended up using, if a bit tall. we decrease the height and use it.
+                        visHeight = h
+                        mode = SCROLLING_SINGLE_LINE
+                    }
+                } else mode = LIMITED_WRAP
+            }
         }
+
         when (mode) {
             WRAP -> visHeight = h
             LIMITED_WRAP, SCROLLING_SINGLE_LINE -> tryMakeScrolling()
