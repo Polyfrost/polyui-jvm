@@ -530,7 +530,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         if (children.fastAny { it === child }) throw IllegalStateException("attempted to add the same component twice")
         if (index !in children.indices) children.add(child) else children.add(index, child)
         if (initialized) {
-            if(child.setup(polyUI)) child.rescaleToPolyUIInstance()
+            if (child.setup(polyUI)) child.rescaleToPolyUIInstance()
             if (!child.createdWithSetPosition) {
                 if (recalculate) recalculate()
                 else {
@@ -605,7 +605,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
             return
         }
         new._parent = this
-        if(new.setup(polyUI)) new.rescaleToPolyUIInstance()
+        if (new.setup(polyUI)) new.rescaleToPolyUIInstance()
         val oldStatic = old.screenAt
         new.x = old.x - (old.x - oldStatic.x)
         new.y = old.y - (old.y - oldStatic.y)
@@ -616,14 +616,17 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
             addOperation(Fade(old, 0f, false, Animations.Default.create(0.3.seconds)) {
                 isEnabled = false
                 children.remove(this)
+                this.accept(Event.Lifetime.Removed)
                 _parent = null
             })
         } else {
             children.remove(old)
+            if (old is Inputtable) old.accept(Event.Lifetime.Removed)
             old._parent = null
             old.isEnabled = false
         }
         children.add(index, new)
+        if (new is Inputtable) new.accept(Event.Lifetime.Added)
         if (new is Drawable) {
             new.alpha = 0f
             new.fadeIn(0.3.seconds)
