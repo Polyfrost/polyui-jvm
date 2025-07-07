@@ -109,11 +109,13 @@ object FlexLayoutController : LayoutController {
             val rows = ArrayList<WrappingRow>()
             val maxRowSize = align.maxRowSize
             val wrapCap = component.visibleSize[main].let {
+                // asm: we do the layout at full (original) size so we need to undo it for this calculation
+                val invScalingFactor = polyUI.iSize[main] / polyUI.size[main]
                 if (it == 0f) {
                     // asm: we're going to check if the parent knows its size, and we will prefer to use that instead of the screen size
                     val parent = component._parent
-                    if (parent != null && parent.sizeValid) parent.visibleSize[main].coerceAtMost(polyUI.master.size[main]) else polyUI.master.size[main]
-                } else it.coerceAtMost(polyUI.master.size[main])
+                    if (parent != null && parent.sizeValid) (parent.visibleSize[main] * invScalingFactor).coerceAtMost(polyUI.master.size[main] * invScalingFactor) else polyUI.master.size[main] * invScalingFactor
+                } else it.coerceAtMost(polyUI.master.size[main] * invScalingFactor)
             }
             require(maxRowSize > 0) { "Component $component has max row size of $maxRowSize, needs to be greater than 0" }
             var maxMain = 0f

@@ -33,6 +33,10 @@ import org.polyfrost.polyui.color.mutable
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.Scrollable
+import org.polyfrost.polyui.component.extensions.getOperationValueOrElse
+import org.polyfrost.polyui.component.extensions.getTargetPosition
+import org.polyfrost.polyui.component.extensions.getTargetScale
+import org.polyfrost.polyui.component.extensions.getTargetSize
 import org.polyfrost.polyui.unit.Vec2
 import kotlin.math.PI
 import kotlin.math.sin
@@ -48,8 +52,15 @@ class Move<S : Component>(
     constructor(drawable: S, to: Vec2, add: Boolean = true, animation: Animation? = null, onFinish: (S.() -> Unit)? = null) :
             this(drawable, to.x, to.y, add, animation, onFinish)
 
-    private val ox = self.x
-    private val oy = self.y
+    private val ox: Float
+    private val oy: Float
+
+    init {
+        val pos = drawable.getTargetPosition()
+        ox = pos.x
+        oy = pos.y
+    }
+
     private val tx = if (add) x else x - ox
     private val ty = if (add) y else y - oy
 
@@ -73,7 +84,8 @@ class Fade<S : Drawable>(
     animation: Animation? = null,
     onFinish: (S.() -> Unit)? = null,
 ) : ComponentOp.Animatable<S>(drawable, animation, onFinish) {
-    private val ia = self.alpha
+    private val ia: Float = drawable.getOperationValueOrElse<Fade<*>, Float>(drawable.alpha) { it.targetAlpha }
+
     private val ta = if (add) alpha else alpha - ia
     val targetAlpha get() = ia + ta
 
@@ -91,7 +103,9 @@ class Rotate<S : Drawable>(
     animation: Animation? = null,
     onFinish: (S.() -> Unit)? = null,
 ) : ComponentOp.Animatable<S>(drawable, animation, onFinish) {
-    private val ir = self.rotation
+    private val ir: Double = drawable.getOperationValueOrElse<Rotate<*>, Double>(drawable.rotation) { it.targetRotation }
+
+
     private val tr = if (add) angleRad else angleRad - ir
     val targetRotation get() = ir + tr
 
@@ -114,8 +128,15 @@ class Resize<S : Component>(
     constructor(drawable: S, size: Vec2, add: Boolean = true, withVisible: Boolean = true, animation: Animation? = null, onFinish: (S.() -> Unit)? = null) :
             this(drawable, size.x, size.y, add, withVisible, animation, onFinish)
 
-    private val ow = self.width
-    private val oh = self.height
+    private val ow: Float
+    private val oh: Float
+
+    init {
+        val size = drawable.getTargetSize()
+        ow = size.x
+        oh = size.y
+    }
+
     private val tw = if (add) width else width - ow
     private val th = if (add) height else height - oh
 
@@ -149,8 +170,15 @@ class Scale<S : Drawable>(
     animation: Animation? = null,
     onFinish: (S.() -> Unit)? = null,
 ) : ComponentOp.Animatable<S>(drawable, animation, onFinish) {
-    private val sx = self.scaleX
-    private val sy = self.scaleY
+    private val sx: Float
+    private val sy: Float
+
+    init {
+        val scale = drawable.getTargetScale()
+        sx = scale.x
+        sy = scale.y
+    }
+
     private val tx = if (add) scaleX else scaleX - sx
     private val ty = if (add) scaleY else scaleY - sy
     val targetScaleX get() = sx + tx
@@ -172,8 +200,14 @@ class Skew<S : Drawable>(
     animation: Animation? = null,
     onFinish: (S.() -> Unit)? = null,
 ) : ComponentOp.Animatable<S>(drawable, animation, onFinish) {
-    private val sx = self.skewX
-    private val sy = self.skewY
+    private val sx: Double
+    private val sy: Double
+
+    init {
+        sx = drawable.getOperationValueOrElse<Skew<*>, Double>(drawable.skewX) { it.targetSkewX }
+        sy = drawable.getOperationValueOrElse<Skew<*>, Double>(drawable.skewY) { it.targetSkewY }
+    }
+
     private val tx = if (add) skewX else skewX - sx
     private val ty = if (add) skewY else skewY - sy
     val targetSkewX get() = sx + tx

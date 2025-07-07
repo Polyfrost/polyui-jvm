@@ -697,6 +697,7 @@ public abstract class org/polyfrost/polyui/component/Component {
 	public final fun removeOperation (Lorg/polyfrost/polyui/operations/ComponentOp;)V
 	public final fun rescale (FF)V
 	public fun rescale0 (FFZ)V
+	public final fun rescaleToPolyUIInstance ()V
 	public final fun set (ILorg/polyfrost/polyui/component/Component;)V
 	public final fun set (Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/component/Component;)V
 	public final fun setAlignment (Lorg/polyfrost/polyui/unit/Align;)V
@@ -887,11 +888,13 @@ public final class org/polyfrost/polyui/component/extensions/OperationsKt {
 	public static final fun animateTo (Lorg/polyfrost/polyui/component/Drawable;JJDDDFFLorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/animate/Animation;)V
 	public static synthetic fun animateTo$default (Lorg/polyfrost/polyui/component/Drawable;JJDDDFFLorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/animate/Animation;ILjava/lang/Object;)V
 	public static final fun getTargetPosition (Lorg/polyfrost/polyui/component/Component;)J
+	public static final fun getTargetScale (Lorg/polyfrost/polyui/component/Drawable;)J
 	public static final fun getTargetSize (Lorg/polyfrost/polyui/component/Component;)J
 }
 
 public final class org/polyfrost/polyui/component/extensions/RelationsKt {
 	public static final fun countChildren (Lorg/polyfrost/polyui/component/Component;)I
+	public static final fun getMyIndex (Lorg/polyfrost/polyui/component/Component;)I
 	public static final fun getNumericTextInput (Lorg/polyfrost/polyui/component/Component;)Lorg/polyfrost/polyui/component/impl/TextInput;
 	public static final fun getTextFromBoxedTextInput (Lorg/polyfrost/polyui/component/Component;)Lorg/polyfrost/polyui/component/impl/TextInput;
 	public static final fun hasChildIn (Lorg/polyfrost/polyui/component/Component;FFFF)Z
@@ -1026,7 +1029,7 @@ public class org/polyfrost/polyui/component/impl/Text : org/polyfrost/polyui/com
 	public final fun getFontWeight ()Lorg/polyfrost/polyui/data/Font$Weight;
 	public final fun getItalic ()Z
 	protected final fun getLines ()Ljava/util/ArrayList;
-	protected final fun getMode ()B
+	public final fun getMode ()B
 	public static final fun getModeName (B)Ljava/lang/String;
 	protected final fun getSpacing ()F
 	public final fun getStrikethrough ()Z
@@ -2289,14 +2292,13 @@ public final class org/polyfrost/polyui/utils/Int2IntMap$Iter {
 
 public final class org/polyfrost/polyui/utils/IntArraySet {
 	public fun <init> (I)V
-	public final fun add (I)V
+	public final fun add (I)Z
 	public final fun clear ()V
 	public final fun contains (I)Z
 	public final fun getSize ()I
 	public final fun isEmpty ()Z
 	public final fun remove (I)I
 	public final fun toIntArray ()[I
-	public final fun trimToSize ()V
 }
 
 public final class org/polyfrost/polyui/utils/Line {

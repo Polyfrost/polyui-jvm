@@ -86,13 +86,45 @@ fun Drawable.animateTo(
 }
 
 /**
+ * Attempts to get a value using [getter] from the operation of type [S] which is currently applied to this component.
+ * If no such operation is found, it returns the provided [orElse] value.
+ *
+ * This is useful for getting for example, the current **target** rotation of a [Rotate] operation, or the current **target** position of a [Move] operation
+ * so that when they are chained together, it doesn't move to the incorrect value, and the final position/rotation etc. is the one you expect.
+ *
+ * @since 1.9.5
+ */
+inline fun <reified S : ComponentOp, T> Component.getOperationValueOrElse(orElse: T, getter: (S) -> T): T {
+    val operations = this.operations ?: return orElse
+    operations.fastEach {
+        if (it is S) return getter(it)
+    }
+    return orElse
+}
+
+/**
+ * Return the scale that this drawable is currently scaling to, or its current scale if it is not scaling.
+ *
+ * @see Scale
+ * @since 1.9.5
+ */
+fun Drawable.getTargetScale(): Vec2 {
+    val operations = this.operations ?: return Vec2(this.scaleX, this.scaleY)
+    operations.fastEach {
+        if (it is Scale<*>) return Vec2(it.targetScaleX, it.targetScaleY)
+    }
+    return Vec2(this.scaleX, this.scaleY)
+}
+
+
+/**
  * Return the position that this component is currently moving to, or its current position if it is not moving.
  *
  * @see Move
  * @see getTargetSize
  * @since 1.6.02
  */
-fun <S : Component> S.getTargetPosition(): Vec2 {
+fun Component.getTargetPosition(): Vec2 {
     val operations = this.operations ?: return this.at
     operations.fastEach {
         if (it is Move<*>) return it.target
@@ -107,7 +139,7 @@ fun <S : Component> S.getTargetPosition(): Vec2 {
  * @see getTargetPosition
  * @since 1.6.02
  */
-fun <S : Component> S.getTargetSize(): Vec2 {
+fun Component.getTargetSize(): Vec2 {
     val operations = this.operations ?: return this.size
     operations.fastEach {
         if (it is Resize<*>) return it.target
