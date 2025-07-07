@@ -205,7 +205,7 @@ class PolyUI(
      * This value may be null as the key binder is optional.
      */
     inline val keyBinder get() = inputManager.keyBinder
-    val translator = translator ?: Translator(this.settings, "")
+    val translator = (translator ?: Translator(this.settings, "")).addDelegate("polyui")
     val clock = Clock()
     var layoutController: LayoutController = FlexLayoutController
 
@@ -291,7 +291,7 @@ class PolyUI(
         // testing stuff that was actually pretty useful and cool so it's still here (yay!)
         this.keyBinder?.add(
             KeyBinder.Bind('=', mods = Modifiers(KeyModifiers.CONTROL)) {
-                if(it) {
+                if (it) {
                     master.children?.fastEach {
                         it.rescale(1.05f, 1.05f)
                     }
@@ -301,7 +301,7 @@ class PolyUI(
                 true
             },
             KeyBinder.Bind('-', mods = Modifiers(KeyModifiers.CONTROL)) {
-                if(it) {
+                if (it) {
                     master.children?.fastEach {
                         it.rescale(0.95f, 0.95f)
                     }
