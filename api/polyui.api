@@ -909,6 +909,8 @@ public final class org/polyfrost/polyui/component/extensions/RelationsKt {
 public final class org/polyfrost/polyui/component/extensions/VisualsKt {
 	public static final fun add3dEffect (Lorg/polyfrost/polyui/component/Drawable;DD)Lorg/polyfrost/polyui/component/Drawable;
 	public static synthetic fun add3dEffect$default (Lorg/polyfrost/polyui/component/Drawable;DDILjava/lang/Object;)Lorg/polyfrost/polyui/component/Drawable;
+	public static final fun addRescalingListeners (Lorg/polyfrost/polyui/component/Inputtable;Z)Lorg/polyfrost/polyui/component/Inputtable;
+	public static synthetic fun addRescalingListeners$default (Lorg/polyfrost/polyui/component/Inputtable;ZILjava/lang/Object;)Lorg/polyfrost/polyui/component/Inputtable;
 	public static final fun addRethemingListeners (Lorg/polyfrost/polyui/component/Inputtable;)Lorg/polyfrost/polyui/component/Inputtable;
 	public static final fun fade (Lorg/polyfrost/polyui/component/Drawable;ZJ)Lorg/polyfrost/polyui/component/Drawable;
 	public static synthetic fun fade$default (Lorg/polyfrost/polyui/component/Drawable;ZJILjava/lang/Object;)Lorg/polyfrost/polyui/component/Drawable;
