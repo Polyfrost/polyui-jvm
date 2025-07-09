@@ -606,6 +606,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         }
         new._parent = this
         if (new.setup(polyUI)) new.rescaleToPolyUIInstance()
+        if (new is Inputtable) new.accept(Event.Lifetime.Added)
         val oldStatic = old.screenAt
         new.x = old.x - (old.x - oldStatic.x)
         new.y = old.y - (old.y - oldStatic.y)
@@ -626,7 +627,6 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
             old.isEnabled = false
         }
         children.add(index, new)
-        if (new is Inputtable) new.accept(Event.Lifetime.Added)
         if (new is Drawable) {
             new.alpha = 0f
             new.fadeIn(0.3.seconds)

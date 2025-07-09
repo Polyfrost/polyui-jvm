@@ -59,9 +59,11 @@ object FlexLayoutController : LayoutController {
         val align = component.alignment
         val main = if (align.mode == Align.Mode.Horizontal) 0 else 1
         val crs = if (main == 0) 1 else 0
+
         val padding = align.pad
-        val mainPad = padding[main]
-        val crossPad = padding[crs]
+        // asm: if we have already been positioned, we need to scale the padding
+        val mainPad = padding[main].let { if (component.positioned) it * (polyUI.size[main] / polyUI.iSize[main]) else it }
+        val crossPad = padding[crs].let { if (component.positioned) it * (polyUI.size[crs] / polyUI.iSize[crs]) else it }
 
         if (children.size == 1) {
             // asm: fast path: set a square size with the object centered
@@ -110,7 +112,7 @@ object FlexLayoutController : LayoutController {
             val maxRowSize = align.maxRowSize
             val wrapCap = component.visibleSize[main].let {
                 // asm: we do the layout at full (original) size so we need to undo it for this calculation
-                val invScalingFactor = polyUI.iSize[main] / polyUI.size[main]
+                val invScalingFactor = if (component.positioned) 1f else polyUI.iSize[main] / polyUI.size[main]
                 if (it == 0f) {
                     // asm: we're going to check if the parent knows its size, and we will prefer to use that instead of the screen size
                     val parent = component._parent
@@ -206,9 +208,7 @@ object FlexLayoutController : LayoutController {
 
     private fun handleInvalidSize(child: Component, suggestedSize: Vec2, polyUI: PolyUI) {
         if (suggestedSize != Vec2.ZERO) {
-            if (child is Scrollable) {
-                child.visibleSize = suggestedSize
-            }
+            if (child is Scrollable && child.hasVisibleSize) child.visibleSize = suggestedSize
             child.size = suggestedSize
         }
         child.setup(polyUI)

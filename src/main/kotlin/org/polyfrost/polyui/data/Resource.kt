@@ -42,6 +42,8 @@ open class Resource(val resourcePath: String, @Transient @get:JvmName("shouldLoa
     @Transient
     private var initializing = false
 
+    @Volatile
+    @Transient
     private var loadingClass: Class<*> = Resource::class.java
 
     /**
