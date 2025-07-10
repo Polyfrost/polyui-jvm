@@ -106,7 +106,7 @@ fun <S : Block> S.withBorder(width: Float = 1f, color: (Colors.() -> PolyColor) 
  */
 fun <S : Drawable> S.fade(`in`: Boolean, durationNanos: Long = 0.1.seconds): S {
     if (`in`) {
-        isEnabled = true
+        renders = true
         if (!initialized) {
             alpha = 1f
             return this
@@ -115,11 +115,11 @@ fun <S : Drawable> S.fade(`in`: Boolean, durationNanos: Long = 0.1.seconds): S {
     } else {
         if (!initialized) {
             alpha = 0f
-            isEnabled = false
+            renders = false
             return this
         }
         Fade(this, 0f, false, Animations.Default.create(durationNanos)) {
-            isEnabled = false
+            renders = false
         }.add()
     }
     return this

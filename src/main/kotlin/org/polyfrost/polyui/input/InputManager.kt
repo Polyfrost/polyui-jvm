@@ -168,7 +168,9 @@ class InputManager(
     }
 
     /**
-     * Drop the current mouse over component.
+     * If [it] is the current component which the mouse is over, it will be dropped.
+     *
+     * If [it] is `null`, the current mouseOver component will be dropped regardless of what it is.
      */
     @ApiStatus.Internal
     fun drop(it: Inputtable? = null) {

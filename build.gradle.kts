@@ -1,8 +1,5 @@
-import org.jetbrains.dokka.base.DokkaBase
-import org.jetbrains.dokka.base.DokkaBaseConfiguration
-import org.jetbrains.dokka.gradle.AbstractDokkaTask
+
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
-import java.time.Year
 
 plugins {
     `java-library`
@@ -11,15 +8,15 @@ plugins {
     alias(libs.plugins.kotlinter)
     alias(libs.plugins.kotlin.abi)
 //    alias(libs.plugins.git.hooks)
-    alias(libs.plugins.dokka)
+//    alias(libs.plugins.dokka)
     `maven-publish`
 }
 
-buildscript {
-    dependencies {
-        classpath(libs.dokka.base)
-    }
-}
+//buildscript {
+//    dependencies {
+//        classpath(libs.dokka.base)
+//    }
+//}
 
 group = "org.polyfrost"
 version = properties["version"] as String
@@ -31,7 +28,7 @@ allprojects {
     apply(plugin = rootProject.libs.plugins.kotlin.jvm.get().pluginId)
     apply(plugin = rootProject.libs.plugins.licenser.get().pluginId)
     apply(plugin = rootProject.libs.plugins.kotlinter.get().pluginId)
-    apply(plugin = rootProject.libs.plugins.dokka.get().pluginId)
+//    apply(plugin = rootProject.libs.plugins.dokka.get().pluginId)
     apply(plugin = "maven-publish")
 
     group = rootProject.group
@@ -76,49 +73,49 @@ allprojects {
     }
 
     tasks {
-        withType<AbstractDokkaTask> {
-            pluginConfiguration<DokkaBase, DokkaBaseConfiguration> {
-                val rootPath = "${rootProject.projectDir.absolutePath}/format/dokka"
-                customStyleSheets = file("$rootPath/styles").listFiles()?.toList() ?: throw IllegalStateException("Please add git submodule https://github.com/Polyfrost/BuildFormat to /format")
-                customAssets = file("$rootPath/assets").listFiles()!!.toList()
-                templatesDir = file("$rootPath/templates")
+//        withType<AbstractDokkaTask> {
+//            pluginConfiguration<DokkaBase, DokkaBaseConfiguration> {
+//                val rootPath = "${rootProject.projectDir.absolutePath}/format/dokka"
+//                customStyleSheets = file("$rootPath/styles").listFiles()?.toList() ?: throw IllegalStateException("Please add git submodule https://github.com/Polyfrost/BuildFormat to /format")
+//                customAssets = file("$rootPath/assets").listFiles()!!.toList()
+//                templatesDir = file("$rootPath/templates")
+//
+//                footerMessage = "© ${Year.now().value} PolyUI"
+//            }
 
-                footerMessage = "© ${Year.now().value} PolyUI"
-            }
+//            doLast {
+//                val scriptsOut = outputDirectory.get().asFile.resolve("scripts")
+//                val scriptsIn = file("${rootProject.projectDir}/format/dokka/scripts")
+//                if (project != rootProject) return@doLast
+//                scriptsIn.listFiles()!!.forEach {
+//                    it.copyTo(scriptsOut.resolve(it.name), overwrite = true)
+//                }
+//            }
+//        }
 
-            doLast {
-                val scriptsOut = outputDirectory.get().asFile.resolve("scripts")
-                val scriptsIn = file("${rootProject.projectDir}/format/dokka/scripts")
-                if (project != rootProject) return@doLast
-                scriptsIn.listFiles()!!.forEach {
-                    it.copyTo(scriptsOut.resolve(it.name), overwrite = true)
-                }
-            }
-        }
+//        build {
+//            dependsOn("format")
+//        }
 
-        build {
-            dependsOn("format")
-        }
+//        register("format") {
+//            group = "formatting"
+//            description = "Formats source code according to project style"
+//            dependsOn(applyLicenses, formatKotlin)
+//        }
 
-        register("format") {
-            group = "formatting"
-            description = "Formats source code according to project style"
-            dependsOn(applyLicenses, formatKotlin)
-        }
+//        create("dokkaJavadocJar", Jar::class.java) {
+//            group = "documentation"
+//            archiveClassifier = "javadoc"
+//            from(dokkaJavadoc)
+//        }
 
-        create("dokkaJavadocJar", Jar::class.java) {
-            group = "documentation"
-            archiveClassifier = "javadoc"
-            from(dokkaJavadoc)
-        }
-
-        create("dokkaHtmlJar", Jar::class.java) {
-            group = "documentation"
-            archiveBaseName = rootProject.name
-            archiveClassifier = "dokka"
-            from(dokkaHtml.get().outputDirectory)
-            duplicatesStrategy = DuplicatesStrategy.FAIL
-        }
+//        create("dokkaHtmlJar", Jar::class.java) {
+//            group = "documentation"
+//            archiveBaseName = rootProject.name
+//            archiveClassifier = "dokka"
+//            from(dokkaHtml.get().outputDirectory)
+//            duplicatesStrategy = DuplicatesStrategy.FAIL
+//        }
     }
 }
 
@@ -135,9 +132,9 @@ subprojects {
         archiveBaseName = "${rootProject.name}-${project.name}"
     }
 
-    tasks.named<Jar>("dokkaJavadocJar") {
-        archiveBaseName = "${rootProject.name}-${project.name}"
-    }
+//    tasks.named<Jar>("dokkaJavadocJar") {
+//        archiveBaseName = "${rootProject.name}-${project.name}"
+//    }
 }
 
 publishing {
@@ -152,16 +149,16 @@ publishing {
                 this.classifier = "sources"
             }
 
-            artifact(tasks.getByName<Jar>("dokkaJavadocJar").archiveFile) {
-                builtBy(tasks.getByName("dokkaJavadocJar"))
-                this.classifier = "javadoc"
-            }
+//            artifact(tasks.getByName<Jar>("dokkaJavadocJar").archiveFile) {
+//                builtBy(tasks.getByName("dokkaJavadocJar"))
+//                this.classifier = "javadoc"
+//            }
 
-            val dokka = rootProject.tasks.getByName<Jar>("dokkaHtmlJar")
-            artifact(dokka.archiveFile) {
-                builtBy(dokka)
-                classifier = "dokka"
-            }
+//            val dokka = rootProject.tasks.getByName<Jar>("dokkaHtmlJar")
+//            artifact(dokka.archiveFile) {
+//                builtBy(dokka)
+//                classifier = "dokka"
+//            }
         }
     }
 

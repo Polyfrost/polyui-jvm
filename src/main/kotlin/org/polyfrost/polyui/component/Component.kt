@@ -486,7 +486,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
      */
     @Locking(`when` = "this.children != null")
     @Synchronized
-    open fun recalculate() {
+    open fun recalculate(move: Boolean = true) {
         if (children == null) return
         val oldW = width
         val oldH = height
@@ -495,7 +495,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
             height = 0f
         }
         position()
-        if (!createdWithSetSize) {
+        if (move && !createdWithSetSize) {
             x -= (width - oldW) / 2f
             y -= (height - oldH) / 2f
         }
@@ -526,7 +526,6 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         if (children == null) children = ArrayList()
         val children = this.children ?: throw ConcurrentModificationException("well, this sucks")
         child.parent = this
-        child.isEnabled = true
         if (children.fastAny { it === child }) throw IllegalStateException("attempted to add the same component twice")
         if (index !in children.indices) children.add(child) else children.add(index, child)
         if (initialized) {
@@ -571,7 +570,6 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
                 accept(Event.Mouse.Scrolled)
             }
         }
-        it.isEnabled = false
     }
 
     /**
@@ -605,30 +603,36 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
             return
         }
         new._parent = this
-        new.isEnabled = true
         if (new.setup(polyUI)) new.rescaleToPolyUIInstance()
-        if (new is Inputtable) new.accept(Event.Lifetime.Added)
-        recalculate()
-        val oldStatic = old.screenAt
-        new.x = old.x - (old.x - oldStatic.x)
-        new.y = old.y - (old.y - oldStatic.y)
-        if (new is Scrollable) new.resetScroll()
 
         polyUI.inputManager.drop(this as? Inputtable)
+        val addedAsAnimation: Boolean
         if (old is Drawable) {
+            addedAsAnimation = true
             addOperation(Fade(old, 0f, false, Animations.Default.create(0.3.seconds)) {
                 children.remove(this)
                 this.accept(Event.Lifetime.Removed)
-                isEnabled = false
                 _parent = null
             })
         } else {
+            addedAsAnimation = false
             children.remove(old)
             if (old is Inputtable) old.accept(Event.Lifetime.Removed)
             old._parent = null
-            old.isEnabled = false
         }
+
         children.add(index, new)
+        if (new is Inputtable) new.accept(Event.Lifetime.Added)
+        val (oldScreenX, oldScreenY) = old.screenAt
+        val (oldX, oldY) = old.at
+        // asm: temporarily remove the old component so that it does not interfere with the recalculate
+        if (addedAsAnimation) children.remove(old)
+        recalculate(false)
+        if (addedAsAnimation) children.add(old)
+        new.x = oldX - (oldX - oldScreenX)
+        new.y = oldY - (oldY - oldScreenY)
+
+        if (new is Scrollable) new.resetScroll()
         if (new is Drawable) {
             new.alpha = 0f
             new.fadeIn(0.3.seconds)

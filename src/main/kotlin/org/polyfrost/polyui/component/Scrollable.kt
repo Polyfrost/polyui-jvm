@@ -117,8 +117,8 @@ abstract class Scrollable(
         return true
     }
 
-    override fun recalculate() {
-        super.recalculate()
+    override fun recalculate(move: Boolean) {
+        super.recalculate(move)
         tryMakeScrolling()
     }
 
