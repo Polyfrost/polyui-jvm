@@ -31,7 +31,6 @@ import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.input.Translator
-import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
@@ -460,14 +459,16 @@ open class TextInput(
 
     override fun setup(polyUI: PolyUI): Boolean {
         _placeholder = polyUI.translator.translate(_placeholder.string)
-        return super.setup(polyUI)
-    }
-
-    override fun updateTextBounds(renderer: Renderer) {
-        super.updateTextBounds(renderer)
+        // asm: we were suggested a size that we will use so we don't overflow our parent.
+        if (size.isPositive && size.y == fontSize) {
+            mode = SCROLLING_SINGLE_LINE
+        }
+        val ret = super.setup(polyUI)
+        // asm: make sure that we create ourselves large enough to fit the placeholder text
         val bounds = renderer.textBounds(font, _placeholder.string, fontSize)
         ensureLargerThan(bounds)
-        visibleSize = visibleSize.coerceAtLeast(bounds)
+        if (hasVisibleSize) visibleSize = visibleSize.coerceAtLeast(bounds)
+        return ret
     }
 
     override fun debugString() = "placeholder: ${_placeholder.string}\ncaret: $caret;  select: $select;  selecting=$selecting\n${super.debugString()}"

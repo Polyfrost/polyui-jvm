@@ -32,11 +32,11 @@ import org.polyfrost.polyui.operations.Fade
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.annotations.Locking
 import org.polyfrost.polyui.utils.annotations.SideEffects
-import org.polyfrost.polyui.utils.cl1
 import org.polyfrost.polyui.utils.fastAny
 import org.polyfrost.polyui.utils.fastEach
 import kotlin.experimental.and
 import kotlin.experimental.or
+import kotlin.math.min
 
 /**
  * # Component
@@ -382,7 +382,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         if (rawResize) {
             rescale0(scaleX, scaleY, true)
         } else {
-            val s = cl1(scaleX, scaleY)
+            val s = min(scaleX, scaleY)
             rescale0(s, s, true)
         }
     }
@@ -561,7 +561,6 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         val it = children.getOrNull(index) ?: throw IndexOutOfBoundsException("index: $index, length: ${children.size}")
         it._parent = null
         children.remove(it)
-        it.isEnabled = false
         if (initialized) {
             if (it is Inputtable) {
                 polyUI.inputManager.drop(it)
@@ -572,6 +571,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
                 accept(Event.Mouse.Scrolled)
             }
         }
+        it.isEnabled = false
     }
 
     /**
@@ -600,13 +600,15 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
             return
         }
         if (!initialized) {
-            removeChild(index)
+            removeChild(index, recalculate = false)
             addChild(new, index)
             return
         }
         new._parent = this
+        new.isEnabled = true
         if (new.setup(polyUI)) new.rescaleToPolyUIInstance()
         if (new is Inputtable) new.accept(Event.Lifetime.Added)
+        recalculate()
         val oldStatic = old.screenAt
         new.x = old.x - (old.x - oldStatic.x)
         new.y = old.y - (old.y - oldStatic.y)
@@ -615,9 +617,9 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         polyUI.inputManager.drop(this as? Inputtable)
         if (old is Drawable) {
             addOperation(Fade(old, 0f, false, Animations.Default.create(0.3.seconds)) {
-                isEnabled = false
                 children.remove(this)
                 this.accept(Event.Lifetime.Removed)
+                isEnabled = false
                 _parent = null
             })
         } else {

@@ -437,7 +437,7 @@ ${d.alignment}
             """ + (d.debugString()?.let { "\n\n$it" } ?: "")).translated().dont(),
                 font = f
             ),
-            align = Align(maxRowSize = 1),
+            align = Align(wrap = Align.Wrap.ALWAYS),
             polyUI = polyUI,
             position = Point.Below
         ).events {

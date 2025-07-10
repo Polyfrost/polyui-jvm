@@ -57,7 +57,7 @@ fun Button(leftImage: PolyImage? = null, text: String? = null, rightImage: PolyI
         if (leftImage != null) Image(leftImage) else null,
         if (text != null) Text(text, fontSize = fontSize, font = font) else null,
         if (rightImage != null) Image(rightImage) else null,
-        alignment = Align(main = Align.Main.Center, pad = padding),
+        alignment = Align(main = Align.Main.SpaceEvenly, pad = padding, wrap = Align.Wrap.NEVER),
         at = at,
         size = size,
         radii = radii,
@@ -80,6 +80,8 @@ fun Switch(at: Vec2 = Vec2.ZERO, size: Float, padding: Float = 3f, state: Boolea
     ).radius(size / 2f).toggleable(state).namedId("Switch").apply {
         if (state) afterParentInit {
             val circle = this[0]
+            // #created-with-set-position = true
+            circle.layoutFlags = circle.layoutFlags or 0b00000100
             circle.x = 2f * this.x + this.width - circle.width - circle.x
         }
     }.onToggle {
@@ -146,6 +148,7 @@ fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2 = Vec2.ZERO,
     return Block(
         at = at,
         children = buttons,
+        alignment = Align(wrap = Align.Wrap.NEVER)
     ).afterInit { _ ->
         val target = this[initial]
         val it = Block().ignoreLayout().setPalette(polyUI.colors.brand.fg)
@@ -179,7 +182,7 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fon
         title, icon,
         at = at,
         focusable = true,
-        alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2(8f, 8f), maxRowSize = 0),
+        alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2(8f, 8f), wrap = Align.Wrap.NEVER),
     ).withHoverStates().withBorder()
     val dropdown = Block(
         alignment = Align(mode = Align.Mode.Vertical, pad = Vec2(optPadding, 6f)),
@@ -291,13 +294,12 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
         Block(
             Block(
                 size = Vec2(1f, barHeight),
-            ).radius(barHeight / 2f).setPalette { brand.fg },
+            ).ignoreLayout().radius(barHeight / 2f).setPalette { brand.fg },
             size = Vec2(length, barHeight),
-            alignment = Align(Align.Main.Start, pad = Vec2.ZERO),
         ).radius(barHeight / 2f),
         Block(
             size = ptrSize.vec,
-        ).radius(ptrSize / 2f).setPalette { text.primary }.withHoverStates().draggable(withY = false).onDrag {
+        ).radius(ptrSize / 2f).setPalette { text.primary }.withHoverStates().draggable(withY = false).ignoreLayout().onDrag {
             val value = slide()
             val p = parent as Inputtable
             if (instant && p.hasListenersFor(Event.Change.Number::class.java)) {
@@ -338,7 +340,7 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
         },
         at = at,
         size = size,
-        alignment = Align(Align.Main.Start, pad = Vec2.ZERO),
+        alignment = Align(Align.Main.Center, pad = Vec2.ZERO),
     ).onPress {
         val ptr = this[1]
         ptr.x = it.x - ptr.width / 2f
@@ -350,7 +352,6 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
             accept(Event.Change.Number(value))
         }
     }.afterInit {
-        this[0].x += ptrSize / 2f
         setSliderValue(initialValue, min, max, dispatch = false)
     }.namedId("Slider")
 }
@@ -359,7 +360,6 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
 fun Checkbox(at: Vec2 = Vec2.ZERO, size: Float, state: Boolean = false) = Block(
     Image(
         image = PolyImage("polyui/check.svg"),
-        size = (size / 1.25f).vec,
     ).fade(state),
     at = at,
     size = Vec2(size, size),
@@ -395,7 +395,7 @@ fun BoxedTextInput(
         }
     },
     if (post != null) Block(Text(post).secondary(), alignment = Align(pad = 6f by 10f), radii = floatArrayOf(0f, 8f, 0f, 8f)).afterInit { color = polyUI.colors.page.bg.normal } else null,
-    alignment = Align(pad = Vec2.ZERO, main = Align.Main.SpaceBetween),
+    alignment = Align(pad = Vec2.ZERO, main = Align.Main.SpaceBetween, wrap = Align.Wrap.NEVER),
 ).withBorder().named("BoxedTextInput")
 
 @JvmName("BoxedNumericInput")
@@ -447,7 +447,7 @@ fun BoxedNumericInput(
         if (y > 0f) this[0].accept(Event.Mouse.Clicked)
         else this[1].accept(Event.Mouse.Clicked)
     }.withBorder(),
-    alignment = Align(pad = Vec2.ZERO)
+    alignment = Align(pad = Vec2.ZERO, wrap = Align.Wrap.NEVER)
 ).named("BoxedNumericInput")
 
 /**

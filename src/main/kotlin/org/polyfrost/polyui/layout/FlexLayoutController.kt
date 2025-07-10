@@ -64,10 +64,13 @@ object FlexLayoutController : LayoutController {
         // asm: if we have already been positioned, we need to scale the padding
         val mainPad = padding[main].let { if (component.positioned) it * (polyUI.size[main] / polyUI.iSize[main]) else it }
         val crossPad = padding[crs].let { if (component.positioned) it * (polyUI.size[crs] / polyUI.iSize[crs]) else it }
+        var sizeWithoutIgnored = 0
+        children.fastEach { if (!it.layoutIgnored) sizeWithoutIgnored++ }
 
-        if (children.size == 1) {
+        if (sizeWithoutIgnored == 1) {
             // asm: fast path: set a square size with the object centered
             val it = children.first()
+            it._parent = component
             val ipad = it.padding
             if (!it.sizeValid) {
                 val suggestedSize = if (iKnowHowBigIAm) {
@@ -76,7 +79,6 @@ object FlexLayoutController : LayoutController {
                         myVs[main] - (ipad[main] + ipad[main + 2] + mainPad * 2f),
                         myVs[crs] - (ipad[crs] + ipad[crs + 2] + crossPad * 2f)
                     )
-//                    Vec2.ZERO
                 } else Vec2.ZERO
                 handleInvalidSize(it, suggestedSize, polyUI)
             }
@@ -86,6 +88,7 @@ object FlexLayoutController : LayoutController {
                 ivs[main] + ipad[main] + ipad[main + 2] + (mainPad * 2f),
                 ivs[crs] + ipad[crs] + ipad[crs + 2] + (crossPad * 2f)
             )
+            if (it.layoutIgnored || it.createdWithSetPosition) return
             val vs = component.visibleSize
             it.at(
                 main,
@@ -106,27 +109,34 @@ object FlexLayoutController : LayoutController {
             if (it is Scrollable) it.resetScroll()
             return
         }
-        val willWrap = align.maxRowSize != 0
-        if (willWrap) {
-            val rows = ArrayList<WrappingRow>()
-            val maxRowSize = align.maxRowSize
-            val wrapCap = component.visibleSize[main].let {
+
+        if (align.wrap != Align.Wrap.NEVER) {
+            val rows = ArrayList<WrappingRow>(5)
+
+            val wrapCap = component.visibleSize[main].let { mySize ->
                 // asm: we do the layout at full (original) size so we need to undo it for this calculation
                 val invScalingFactor = if (component.positioned) 1f else polyUI.iSize[main] / polyUI.size[main]
-                if (it == 0f) {
-                    // asm: we're going to check if the parent knows its size, and we will prefer to use that instead of the screen size
+                val screenSize = polyUI.master.size[main] * invScalingFactor
+                // use our own size if we have it.
+                if (mySize != 0f) mySize.coerceAtMost(screenSize)
+                else {
                     val parent = component._parent
-                    if (parent != null && parent.sizeValid) (parent.visibleSize[main] * invScalingFactor).coerceAtMost(polyUI.master.size[main] * invScalingFactor) else polyUI.master.size[main] * invScalingFactor
-                } else it.coerceAtMost(polyUI.master.size[main] * invScalingFactor)
-            }
-            require(maxRowSize > 0) { "Component $component has max row size of $maxRowSize, needs to be greater than 0" }
+                    if (parent != null && parent.sizeValid) {
+                        // our parent knows how big it is, so we can use that
+                        (parent.visibleSize[main] * invScalingFactor).coerceAtMost(screenSize)
+                    } else screenSize // if not, we use the screen size
+                }
+            } + 1f // asm: add 1 to avoid rounding errors
+
             var maxMain = 0f
             var maxCross = crossPad
             var rowMain = mainPad
             var rowCross = 0f
-            var currentRow = ArrayList<Component>(children.size.coerceAtMost(maxRowSize.coerceAtMost(10)))
+            val rowMaxInitialSize = if(align.wrap == Align.Wrap.ALWAYS) 1 else 10
+            var currentRow = ArrayList<Component>(children.size.coerceAtMost(rowMaxInitialSize))
             // measure and create rows
             children.fastEach {
+                it._parent = component
                 if (it.layoutIgnored) return@fastEach
                 // todo: maybe figure out if we can supply something plausible here as a suggested size?
                 if (!it.sizeValid) handleInvalidSize(it, Vec2.ZERO, polyUI)
@@ -135,19 +145,19 @@ object FlexLayoutController : LayoutController {
                     it.setup(polyUI)
                     it.recalculate()
                 }
-                val ivs = it.visibleSize
-                val ipad = it.padding
-                val mainS = ipad[main] + ipad[main + 2] + ivs[main] + mainPad
-                if (currentRow.isNotEmpty() && (rowMain + mainS > wrapCap || currentRow.size == maxRowSize)) {
+                val itSize = it.visibleSize
+                val itPad = it.padding
+                val itMain = itPad[main] + itPad[main + 2] + itSize[main] + mainPad
+                if (currentRow.isNotEmpty() && (rowMain + itMain > wrapCap || align.wrap == Align.Wrap.ALWAYS)) {
                     rows.add(WrappingRow(rowMain, rowCross, currentRow))
-                    currentRow = ArrayList(children.size.coerceAtMost(maxRowSize.coerceAtMost(10)))
+                    currentRow = ArrayList(children.size.coerceAtMost(rowMaxInitialSize))
                     maxMain = max(maxMain, rowMain)
                     maxCross += rowCross + crossPad
                     rowMain = mainPad
                     rowCross = 0f
                 }
-                rowMain += mainS
-                rowCross = max(rowCross, ipad[crs] + ipad[crs + 2] + ivs[crs])
+                rowMain += itMain
+                rowCross = max(rowCross, itPad[crs] + itPad[crs + 2] + itSize[crs])
                 currentRow.add(it)
             }
             if (currentRow.isNotEmpty()) {
@@ -156,7 +166,7 @@ object FlexLayoutController : LayoutController {
                 maxCross += rowCross + crossPad
             }
             assignAndCheckSize(component, main, crs, maxMain, maxCross)
-            val vs = component.visibleSize
+            val mySize = component.visibleSize
             rowCross = component.at[crs]
             if (rows.size == 1) {
                 // asm: in this situation, the user specified a size, and as there is only 1 row, so we should
@@ -164,15 +174,15 @@ object FlexLayoutController : LayoutController {
                 val (theRowMain, _, row) = rows[0]
                 place(
                     align, row,
-                    vs[crs], rowCross, crossPad, crs,
-                    theRowMain, component.at[main], vs[main], mainPad, main,
+                    mySize[crs], rowCross, crossPad, crs,
+                    theRowMain, component.at[main], mySize[main], mainPad, main,
                 )
             } else {
                 rows.fastEach { (theRowMain, theRowCross, row) ->
                     place(
                         align, row,
                         theRowCross, rowCross, crossPad, crs,
-                        theRowMain, component.at[main], vs[main], mainPad, main,
+                        theRowMain, component.at[main], mySize[main], mainPad, main,
                     )
                     rowCross += theRowCross + crossPad
                 }
@@ -182,6 +192,7 @@ object FlexLayoutController : LayoutController {
             var rowCross = 0f
             val cpad2 = crossPad * 2f
             children.fastEach {
+                it._parent = component
                 if (it.layoutIgnored) return@fastEach
                 // todo as above
                 if (!it.sizeValid) handleInvalidSize(it, Vec2.ZERO, polyUI)
@@ -242,7 +253,7 @@ object FlexLayoutController : LayoutController {
             Align.Main.SpaceEvenly -> padMain + gap
         }
         row.fastEach {
-            if (it.createdWithSetPosition) return@fastEach
+            if (it.createdWithSetPosition || it.layoutIgnored) return@fastEach
             aligner.align(rowCross, it, minCross, padCross, crs)
             current = justifier.justify(current, it, padMain, main, gap)
             if (it is Scrollable) it.resetScroll()

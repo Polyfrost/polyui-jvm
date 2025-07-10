@@ -63,7 +63,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         fontSize -> SCROLLING_SINGLE_LINE
         else -> LIMITED_WRAP
     }
-        private set
+        protected set
 
     /**
      * @since 1.0.6
@@ -230,7 +230,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
 
     override fun rescale0(scaleX: Float, scaleY: Float, withChildren: Boolean) {
         super.rescale0(scaleX, scaleY, withChildren)
-        fontSize *= scaleY
+        fontSize = (height - (spacing * (lines.size - 1))) / lines.size
         // asm: fontSize would normally call this method, but if it isn't as it doesn't change, we need to do it manually
         if (initialized && scaleY == 1f) updateTextBounds(renderer)
     }
@@ -257,6 +257,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
 
     open fun updateTextBounds(renderer: Renderer = this.renderer) {
         lines.clear()
+        val suggestedSize = if (!this.initialized) this.size else Vec2.ZERO
         if (text.isEmpty()) {
             lines.add(Line("", (1f by fontSize)))
             width = 1f
@@ -293,14 +294,14 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         // asm: we have a visible size, so we must have been externally set up
         // (i.e, given a size by the layout manager from a parent) and so
         // we must now recalculate what type of text we are.
-        if (hasVisibleSize) {
+        if (suggestedSize != Vec2.ZERO) {
+            visibleSize = suggestedSize
             // ensure it is not silly small (the minimum size should be 1 line)
             visHeight = visHeight.coerceAtLeast(fontSize)
             if (mode == UNLIMITED) {
                 if ((visHeight / (fontSize + spacing)).roundToInt() == 1) {
                     // we were suggested a size that was silly, so ignore it.
                     if (visWidth > width) {
-                        mode = UNLIMITED
                         hasVisibleSize = false
                     } else {
                         // we were suggested a size which we ended up using, if a bit tall. we decrease the height and use it.

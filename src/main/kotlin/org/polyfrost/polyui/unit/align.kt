@@ -28,7 +28,7 @@ package org.polyfrost.polyui.unit
  * @param pad the padding between each item in the autolayout.
  * @param maxRowSize the maximum row size to use if wrapping is required. set to `0` to specify you do not want to be wrapped.
  */
-data class Align(val main: Main = Main.Start, val cross: Cross = Cross.Center, val mode: Mode = Mode.Horizontal, @get:JvmName("pad") val pad: Vec2 = Vec2(6f, 6f), val maxRowSize: Int = 50) {
+data class Align(val main: Main = Main.Start, val cross: Cross = Cross.Center, val mode: Mode = Mode.Horizontal, @get:JvmName("pad") val pad: Vec2 = Vec2(6f, 6f), val wrap: Wrap = Wrap.AUTO) {
     @JvmOverloads
     constructor(main: Main = Main.Start, cross: Cross = Cross.Center, mode: Mode = Mode.Horizontal, px: Float, py: Float) : this(main, cross, mode, Vec2(px, py))
     enum class Main {
@@ -65,6 +65,12 @@ data class Align(val main: Main = Main.Start, val cross: Cross = Cross.Center, v
 
         /** Items are packed from top to bottom, so the main axis is the y-axis and cross is the x-axis. */
         Vertical,
+    }
+
+    enum class Wrap {
+        NEVER,
+        ALWAYS,
+        AUTO
     }
 }
 
