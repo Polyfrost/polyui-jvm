@@ -153,7 +153,7 @@ fun Component.hasChildIn(x: Float, y: Float, width: Float, height: Float): Boole
 }
 
 /**
- * Return the actual [TextInput] from a [org.polyfrost.polyui.component.impl.BoxedTextInput] component.
+ * Return the actual [TextInput] from a [org.polyfrost.polyui.component.impl.BoxedTextInput] or [org.polyfrost.polyui.component.impl.BoxedNumericInput] component.
  *
  * Will fail if the component is not the correct type, so make sure to check before you run this method.
  * @since 1.8.2
@@ -162,16 +162,6 @@ fun Component.getTextFromBoxedTextInput(): TextInput {
     val children = this.children ?: throw IllegalStateException("$this is not a BoxedTextInput")
     val last = children.lastOrNull() ?: throw IllegalStateException("$this is not a BoxedTextInput")
     return if (last is Group) last[0] as TextInput else children[children.lastIndex - 1][0] as TextInput
-}
-
-/**
- * Return the actual [TextInput] from a [org.polyfrost.polyui.component.impl.BoxedNumericInput] component.
- *
- * Will fail if the component is not the correct type, so make sure to check before you run this method.
- * @since 1.8.2
- */
-fun Component.getNumericTextInput(): TextInput {
-    return this[0].getTextFromBoxedTextInput()
 }
 
 /**

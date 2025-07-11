@@ -87,7 +87,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         set(value) {
             if (field == value) return
             field = value
-            recalculate()
+            if (initialized) recalculate()
         }
 
     private var _x = at.x
