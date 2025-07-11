@@ -410,6 +410,7 @@ fun BoxedNumericInput(
     fontSize: Float = 12f,
     center: Boolean = false,
     post: String? = null,
+    arrows: Boolean = true,
     size: Vec2 = Vec2.ZERO,
 ) = BoxedTextInput(
     image, pre,
@@ -419,39 +420,41 @@ fun BoxedNumericInput(
 ).also {
     require(initialValue in min..max) { "initial value $initialValue is out of range for numeric text input of $min..$max" }
     it.getTextFromBoxedTextInput().numeric(min, max, integral, it)
-    it.children?.let { children ->
-        val arrowsUnit = Group(
-            Image("polyui/chevron-down.svg".image(), size = Vec2(14f, 14f)).onClick { _ ->
-                val text = it.getTextFromBoxedTextInput()
-                val value = text.text.toFloat()
-                val newValue = (value + step).coerceIn(min, max)
-                text.text = (if (integral) newValue.toInt() else newValue).toString()
-                true
-            }.withHoverStates().also { it.rotation = PI },
-            Image("polyui/chevron-down.svg".image(), size = Vec2(14f, 14f)).onClick { _ ->
-                val text = it.getTextFromBoxedTextInput()
-                val value = text.text.toFloat()
-                val newValue = (value - step).coerceIn(min, max)
-                text.text = (if (integral) newValue.toInt() else newValue).toString()
-                true
-            }.withHoverStates(),
-            alignment = Align(main = Align.Main.Center, mode = Align.Mode.Vertical, pad = Vec2(1f, 0f)),
-            size = Vec2(0f, 32f)
-        ).onScroll { (_, y) ->
-            if (y > 0f) this[0].accept(Event.Mouse.Clicked)
-            else this[1].accept(Event.Mouse.Clicked)
-        }
-        val last = children.last()
-        if (last is Block) {
-            // asm: cheat but is a lot cleaner
-            arrowsUnit.padded(-3f, 0f)
-            last.children?.first()?.padded(2f, 0f)
-            // asm: has a post box, so we will add the arrows into here instead.
-            last.alignment = Align(pad = Vec2(3f, 0f), wrap = Align.Wrap.NEVER)
-            last.addChild(arrowsUnit)
-        } else {
-            // asm: no post box, so we will add the arrows into the main block.
-            it.addChild(arrowsUnit)
+    if (arrows) {
+        it.children?.let { children ->
+            val arrowsUnit = Group(
+                Image("polyui/chevron-down.svg".image(), size = Vec2(14f, 14f)).onClick { _ ->
+                    val text = it.getTextFromBoxedTextInput()
+                    val value = text.text.toFloat()
+                    val newValue = (value + step).coerceIn(min, max)
+                    text.text = (if (integral) newValue.toInt() else newValue).toString()
+                    true
+                }.withHoverStates().also { it.rotation = PI },
+                Image("polyui/chevron-down.svg".image(), size = Vec2(14f, 14f)).onClick { _ ->
+                    val text = it.getTextFromBoxedTextInput()
+                    val value = text.text.toFloat()
+                    val newValue = (value - step).coerceIn(min, max)
+                    text.text = (if (integral) newValue.toInt() else newValue).toString()
+                    true
+                }.withHoverStates(),
+                alignment = Align(main = Align.Main.Center, mode = Align.Mode.Vertical, pad = Vec2(1f, 0f)),
+                size = Vec2(0f, 32f)
+            ).onScroll { (_, y) ->
+                if (y > 0f) this[0].accept(Event.Mouse.Clicked)
+                else this[1].accept(Event.Mouse.Clicked)
+            }
+            val last = children.last()
+            if (last is Block) {
+                // asm: cheat but is a lot cleaner
+                arrowsUnit.padded(-3f, 0f)
+                last.children?.first()?.padded(2f, 0f)
+                // asm: has a post box, so we will add the arrows into here instead.
+                last.alignment = Align(pad = Vec2(3f, 0f), wrap = Align.Wrap.NEVER)
+                last.addChild(arrowsUnit)
+            } else {
+                // asm: no post box, so we will add the arrows into the main block.
+                it.addChild(arrowsUnit)
+            }
         }
     }
 }.namedId("BoxedNumericInput")
