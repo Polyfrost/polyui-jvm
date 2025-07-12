@@ -52,12 +52,12 @@ fun main() {
             fontSize = 20f
         }
         val slider = Slider(length = 200f, min = 50f, max = 120f, instant = true, initialValue = 67f)
-        val boxedNumericInput = BoxedNumericInput(min = 50f, max = 120f, size = 40f by 32f, initialValue = 67f).onChange { value: Float ->
+        val boxedNumericInput = BoxedNumericInput(min = 50f, max = 120f, size = 40f by 32f, post = "Hi", initialValue = 67f).onChange { value: Float ->
             slider.setSliderValue(value, 50f, 120f)
             false
         }
         slider.onChange { value: Float ->
-            boxedNumericInput.getNumericTextInput().text = value.fix(2).toString()
+            boxedNumericInput.getTextFromBoxedTextInput().text = value.fix(2).toString()
         }
 
         group {
@@ -96,6 +96,7 @@ fun main() {
             }.add()
             Button("plus.svg".image()).onClick {
                 theBox.addChild(Block(size = 32f + (Math.random().toFloat() * 100f) by 32f).withHoverStates())
+                theBox.recalculate()
             }.add()
             Button(text = "reset the box").onClick {
                 val boxParent = theBox.parent
