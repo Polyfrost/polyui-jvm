@@ -963,8 +963,8 @@ public final class org/polyfrost/polyui/component/impl/ColorPickerKt {
 }
 
 public final class org/polyfrost/polyui/component/impl/Derivatives {
-	public static final fun BoxedNumericInput (Lorg/polyfrost/polyui/data/PolyImage;Ljava/lang/String;FFFFZFZLjava/lang/String;J)Lorg/polyfrost/polyui/component/impl/Block;
-	public static synthetic fun BoxedNumericInput$default (Lorg/polyfrost/polyui/data/PolyImage;Ljava/lang/String;FFFFZFZLjava/lang/String;JILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Block;
+	public static final fun BoxedNumericInput (Lorg/polyfrost/polyui/data/PolyImage;Ljava/lang/String;FFFFZFZLjava/lang/String;ZJ)Lorg/polyfrost/polyui/component/impl/Block;
+	public static synthetic fun BoxedNumericInput$default (Lorg/polyfrost/polyui/data/PolyImage;Ljava/lang/String;FFFFZFZLjava/lang/String;ZJILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Block;
 	public static final fun BoxedTextInput (Lorg/polyfrost/polyui/data/PolyImage;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FZLjava/lang/String;J)Lorg/polyfrost/polyui/component/impl/Block;
 	public static synthetic fun BoxedTextInput$default (Lorg/polyfrost/polyui/data/PolyImage;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FZLjava/lang/String;JILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Block;
 	public static final fun Button (Lorg/polyfrost/polyui/data/PolyImage;Ljava/lang/String;Lorg/polyfrost/polyui/data/PolyImage;FLorg/polyfrost/polyui/data/Font;[FJJJ)Lorg/polyfrost/polyui/component/impl/Block;

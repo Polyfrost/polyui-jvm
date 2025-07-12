@@ -299,15 +299,14 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
             // ensure it is not silly small (the minimum size should be 1 line)
             visHeight = visHeight.coerceAtLeast(fontSize)
             if (mode == UNLIMITED) {
-                if ((visHeight / (fontSize + spacing)).roundToInt() == 1) {
-                    // we were suggested a size that was silly, so ignore it.
-                    if (visWidth > width) {
-                        hasVisibleSize = false
-                    } else {
-                        // we were suggested a size which we ended up using, if a bit tall. we decrease the height and use it.
-                        visHeight = h
-                        mode = SCROLLING_SINGLE_LINE
-                    }
+                // we were suggested a size that was silly, so ignore it.
+                if (visWidth > width) {
+                    hasVisibleSize = false
+                } else if ((visHeight / (fontSize + spacing)).roundToInt() == 1) {
+                    // we were suggested a size which we ended up using, if a bit tall. we decrease the height and use it.
+                    visHeight = h
+                    mode = SCROLLING_SINGLE_LINE
+                    // we are going use the suggested size as a text box (limited wrap)
                 } else mode = LIMITED_WRAP
             }
         }
