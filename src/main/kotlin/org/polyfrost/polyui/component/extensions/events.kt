@@ -91,6 +91,16 @@ fun <S : Inputtable> S.onScroll(func: S.(Event.Mouse.Scrolled) -> Unit): S {
     return this
 }
 
+fun <S : Inputtable> S.onHover(func: S.(Event.Mouse.Entered) -> Unit): S {
+    on(Event.Mouse.Entered, func)
+    return this
+}
+
+fun <S : Inputtable> S.onHoverExit(func: S.(Event.Mouse.Exited) -> Unit): S {
+    on(Event.Mouse.Exited, func)
+    return this
+}
+
 @OverloadResolutionByLambdaReturnType
 @JvmName("onClickZ")
 fun <S : Inputtable> S.onClick(func: S.(Event.Mouse.Clicked) -> Boolean): S {

@@ -319,12 +319,8 @@ abstract class Drawable(
 
     override fun isInside(x: Float, y: Float): Boolean {
         if (rotation == 0.0) return super.isInside(x, y)
-        val ta = screenAt
-        val tx = ta.x
-        val ty = ta.y
-        val vs = this.visibleSize
-        val tw = vs.x
-        val th = vs.y
+        val (tx, ty) = screenAt
+        val (tw, th) = this.visibleSize
 
         val cx = tx + tw / 2f
         val cy = ty + th / 2f

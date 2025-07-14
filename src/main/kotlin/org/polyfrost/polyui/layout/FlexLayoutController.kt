@@ -248,7 +248,8 @@ object FlexLayoutController : LayoutController {
             else -> 0f
         }
         var current = minMain + when (align.main) {
-            Align.Main.Start, Align.Main.End, Align.Main.SpaceBetween -> padMain
+            Align.Main.Start, Align.Main.SpaceBetween -> padMain
+            Align.Main.End -> maxMain
             Align.Main.Center -> (maxMain / 2f) - (rowMain / 2f) + padMain
             Align.Main.SpaceEvenly -> padMain + gap
         }
@@ -293,7 +294,7 @@ object FlexLayoutController : LayoutController {
     private val mProgressive = Justifier { current, it, padding, main, _ ->
         val ipad = it.padding
         it.at(main, current + ipad[main])
-        return@Justifier current + it.visibleSize[main] + padding + ipad[main] + it.padding[main + 2]
+        return@Justifier current + it.visibleSize[main] + padding + ipad[main] + ipad[main + 2]
     }
 
     private val mBackwards = Justifier { current, it, padding, main, _ ->
