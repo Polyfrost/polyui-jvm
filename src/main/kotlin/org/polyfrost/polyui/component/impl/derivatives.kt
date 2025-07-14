@@ -364,7 +364,7 @@ fun Checkbox(at: Vec2 = Vec2.ZERO, size: Float, state: Boolean = false) = Block(
     at = at,
     size = Vec2(size, size),
     alignment = Align(pad = ((size - size / 1.25f) / 2f).vec),
-).namedId("Checkbox").toggleable(state).onToggle { this[0].fade(it) }
+).namedId("Checkbox").toggleable(state).radius(size / 4f).onToggle { this[0].fade(it) }
 
 @JvmName("BoxedTextInput")
 fun BoxedTextInput(
