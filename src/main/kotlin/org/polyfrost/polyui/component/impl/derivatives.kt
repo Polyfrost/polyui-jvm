@@ -460,6 +460,69 @@ fun BoxedNumericInput(
 }.namedId("BoxedNumericInput")
 
 /**
+ * Numeric text input, with an icon or a pre text that can be dragged to change the value.
+ * Note that either `icon` or `pre` must be provided, and not both, or neither, as an exception will be thrown.
+ *
+ * Compatible with [org.polyfrost.polyui.component.extensions.getTextFromBoxedTextInput].
+ * @since 1.10.5
+ */
+@Contract("null, null, _, _, _, _, _, _ -> fail")
+fun DraggingNumericTextInput(
+    icon: PolyImage? = null,
+    pre: String? = null,
+    min: Float = 0f,
+    max: Float = 100f,
+    initialValue: Float = min,
+    step: Float = 1f,
+    integral: Boolean = false,
+    fontSize: Float = 12f,
+    suffix: String? = null,
+    size: Vec2 = Vec2.ZERO
+): Block {
+    require(initialValue in min..max) { "initial value $initialValue is out of range for numeric text input of $min..$max" }
+
+    val pre = if (icon != null) Image(icon) else if (pre != null) Text(pre, fontSize = fontSize) else throw IllegalArgumentException("Either icon or pre text must be provided for DraggingNumericTextInput")
+    var prevX = 0f
+    pre.onDrag {
+        if (polyUI.mouseX == prevX) return@onDrag
+        val input = parent[1] as TextInput
+        val isNegative = polyUI.mouseX < prevX
+        if (input.text.isEmpty()) {
+            input.text = if (isNegative) "0" else step.toString()
+        } else {
+            val txt = if (suffix != null) input.text.removeSuffix(suffix) else input.text
+            input.text = txt.toFloatOrNull()?.let { if (isNegative) (it - step).coerceAtLeast(min) else (it + step).coerceAtMost(max) }.toString()
+            needsRedraw = true
+        }
+        prevX = polyUI.mouseX
+    }.apply {
+        if (suffix != null) onDragEnd {
+            (parent[1] as TextInput).text += suffix
+        }
+    }
+
+
+    return Block(
+        pre,
+        TextInput(
+            text = if (initialValue == 0f) "" else if (suffix != null) "$initialValue$suffix" else initialValue.toString(),
+            placeholder = if (suffix != null) "0$suffix" else "0",
+            fontSize = fontSize
+        ).numeric(min = min, max = max, integral = integral, ignoreSuffix = suffix).apply {
+            if (suffix != null) {
+                onFocusGained {
+                    this.text = this.text.removeSuffix(suffix)
+                }
+                onFocusLost {
+                    this.text += suffix
+                }
+            }
+        },
+        size = size
+    ).namedId("DraggingNumericTextInput")
+}
+
+/**
  * Spawn a menu at the mouse position.
  * @param polyUI an instance of PolyUI. If `null`, [openNow] must be `false`, or else an exception will be thrown.
  * @param openNow if `true`, the menu is opened immediately. else, call [PolyUI.focus] on the return value to open it.

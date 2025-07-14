@@ -79,8 +79,9 @@ fun <S : Inputtable> S.addHoverInfo(vararg drawables: Drawable?, size: Vec2 = Ve
  *
  * @since 1.5.0
  */
-fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, integral: Boolean = false, acceptor: Inputtable = this): S {
-    onChange { value: String ->
+fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, integral: Boolean = false, acceptor: Inputtable = this, ignoreSuffix: String? = null): S {
+    onChange { v: String ->
+        val value = if (ignoreSuffix != null) v.removeSuffix(ignoreSuffix) else v
         if (value.isEmpty()) return@onChange false
         // don't fail when the user types a minus sign (and minus values are allowed)
         if (value == "-") {
@@ -107,7 +108,8 @@ fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, integral: Bool
         }
     }
     on(Event.Focused.Lost) {
-        val value = text.toFloatOrNull()
+        val txt = if(ignoreSuffix != null) text.removeSuffix(ignoreSuffix) else text
+        val value = txt.toFloatOrNull()
         if (value == null || value < min) {
             text = "${if (integral) min.toInt() else min}"
             shake()

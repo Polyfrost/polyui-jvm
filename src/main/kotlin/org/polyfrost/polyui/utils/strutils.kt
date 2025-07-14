@@ -84,6 +84,7 @@ fun String.remove(char: Char): String {
 }
 
 fun String.dropAt(index: Int = lastIndex, amount: Int = 1): String {
+    val index = index.coerceIn(0, length)
     if (index - amount == 0) return substring(index)
     if (index - amount < 0) return this
     return substring(0, index - amount) + substring(index)

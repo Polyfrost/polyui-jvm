@@ -846,6 +846,8 @@ public final class org/polyfrost/polyui/component/extensions/EventsKt {
 	public static final fun onClickZ (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
 	public static final fun onFocusGained (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
 	public static final fun onFocusLost (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
+	public static final fun onHover (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
+	public static final fun onHoverExit (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
 	public static final fun onInit (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
 	public static final fun onPress (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
 	public static final fun onRelease (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
@@ -875,8 +877,8 @@ public final class org/polyfrost/polyui/component/extensions/ExtensionsKt {
 	public static final fun minimumSize (Lorg/polyfrost/polyui/component/Scrollable;J)Lorg/polyfrost/polyui/component/Scrollable;
 	public static final fun named (Lorg/polyfrost/polyui/component/Component;Ljava/lang/String;)Lorg/polyfrost/polyui/component/Component;
 	public static final fun namedId (Lorg/polyfrost/polyui/component/Component;Ljava/lang/String;)Lorg/polyfrost/polyui/component/Component;
-	public static final fun numeric (Lorg/polyfrost/polyui/component/impl/TextInput;FFZLorg/polyfrost/polyui/component/Inputtable;)Lorg/polyfrost/polyui/component/impl/TextInput;
-	public static synthetic fun numeric$default (Lorg/polyfrost/polyui/component/impl/TextInput;FFZLorg/polyfrost/polyui/component/Inputtable;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/TextInput;
+	public static final fun numeric (Lorg/polyfrost/polyui/component/impl/TextInput;FFZLorg/polyfrost/polyui/component/Inputtable;Ljava/lang/String;)Lorg/polyfrost/polyui/component/impl/TextInput;
+	public static synthetic fun numeric$default (Lorg/polyfrost/polyui/component/impl/TextInput;FFZLorg/polyfrost/polyui/component/Inputtable;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/TextInput;
 	public static final fun padded (Lorg/polyfrost/polyui/component/Component;FF)Lorg/polyfrost/polyui/component/Component;
 	public static final fun padded (Lorg/polyfrost/polyui/component/Component;FFFF)Lorg/polyfrost/polyui/component/Component;
 	public static final fun padded (Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/unit/Vec4;)Lorg/polyfrost/polyui/component/Component;
@@ -971,6 +973,8 @@ public final class org/polyfrost/polyui/component/impl/Derivatives {
 	public static synthetic fun Button$default (Lorg/polyfrost/polyui/data/PolyImage;Ljava/lang/String;Lorg/polyfrost/polyui/data/PolyImage;FLorg/polyfrost/polyui/data/Font;[FJJJILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Block;
 	public static final fun Checkbox (JFZ)Lorg/polyfrost/polyui/component/impl/Block;
 	public static synthetic fun Checkbox$default (JFZILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Block;
+	public static final fun DraggingNumericTextInput-EF8fEq0 (Lorg/polyfrost/polyui/data/PolyImage;Ljava/lang/String;FFFFZFLjava/lang/String;J)Lorg/polyfrost/polyui/component/impl/Block;
+	public static synthetic fun DraggingNumericTextInput-EF8fEq0$default (Lorg/polyfrost/polyui/data/PolyImage;Ljava/lang/String;FFFFZFLjava/lang/String;JILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Block;
 	public static final fun Dropdown ([Ljava/lang/String;JFIFF)Lorg/polyfrost/polyui/component/impl/Block;
 	public static final fun Dropdown ([Lkotlin/Pair;JFIFF)Lorg/polyfrost/polyui/component/impl/Block;
 	public static synthetic fun Dropdown$default ([Ljava/lang/String;JFIFFILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Block;
@@ -2135,6 +2139,7 @@ public final class org/polyfrost/polyui/unit/Vec2 {
 	public static fun constructor-impl (FF)J
 	public static fun constructor-impl (J)J
 	public static final fun div (JJ)J
+	public static final fun div-hsAGrF0 (JF)J
 	public fun equals (Ljava/lang/Object;)Z
 	public static fun equals-impl (JLjava/lang/Object;)Z
 	public static final fun equals-impl0 (JJ)Z
