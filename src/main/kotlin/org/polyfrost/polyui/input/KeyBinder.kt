@@ -276,6 +276,16 @@ class KeyBinder(private val settings: Settings) {
 
         protected val isModsOnly get() = unmappedKeys == null && keys == null && mouse == null
 
+        protected val isSingleKey: Boolean
+        init {
+            var i = 0
+            unmappedKeys?.let { i += it.size }
+            keys?.let { i += it.size }
+            mouse?.let { i += it.size }
+            i += mods.size
+            isSingleKey = i == 1
+        }
+
         internal fun update(c: IntArraySet, k: ArrayList<Keys>, m: IntArraySet, mods: Byte, deltaTimeNanos: Long, down: Boolean): Boolean {
             if (!test(c, k, m, mods, deltaTimeNanos, down)) {
                 time = 0L
@@ -363,6 +373,7 @@ class KeyBinder(private val settings: Settings) {
 
         protected fun <T> Array<T>?.matches(other: ArrayList<T>): Boolean {
             if (this == null) return other.size == 0
+            if (isSingleKey && this.size == 1) return other.contains(this[0])
             if (other.size != this.size) return false
             for (i in this) {
                 if (i !in other) return false
@@ -372,6 +383,7 @@ class KeyBinder(private val settings: Settings) {
 
         protected fun IntArray?.matches(other: IntArraySet): Boolean {
             if (this == null) return other.size == 0
+            if (isSingleKey && this.size == 1) return other.contains(this[0])
             if (other.size != this.size) return false
             for (i in this) {
                 if (i !in other) return false

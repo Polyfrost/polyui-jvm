@@ -272,6 +272,12 @@ value class Modifiers(val value: Byte) {
     @kotlin.internal.InlineOnly
     inline val hasMeta get() = value.toInt() and 0b11000000 != 0
 
+    /**
+     * Returns the number of modifiers set in this instance.
+     */
+    @kotlin.internal.InlineOnly
+    val size get() = value.countOneBits()
+
     val prettyName: String
         get() {
             if (isEmpty) return ""
