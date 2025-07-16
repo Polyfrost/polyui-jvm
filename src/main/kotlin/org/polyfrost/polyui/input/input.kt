@@ -276,7 +276,7 @@ value class Modifiers(val value: Byte) {
      * Returns the number of modifiers set in this instance.
      */
     @kotlin.internal.InlineOnly
-    val size get() = value.countOneBits()
+    inline val size get() = value.countOneBits()
 
     val prettyName: String
         get() {
