@@ -53,14 +53,12 @@ class IntArraySet(initialCapacity: Int) {
     }
 
     private fun resize(newSize: Int) {
-        val new = IntArray(newSize)
-        System.arraycopy(array, 0, new, 0, size)
-        array = new
+        array = array.copyOf(newSize)
     }
 
     fun toIntArray(): IntArray {
         val res = IntArray(size)
-        System.arraycopy(array, 0, res, 0, size)
+        array.copyInto(res, endIndex = size)
         return res
     }
 }

@@ -74,9 +74,8 @@ class KeyBinder(private val settings: Settings) {
         }
 
         is Event.Mouse.Released -> {
-            val ret = update(0L, mods, false)
             downMouseButtons.remove(event.button)
-            ret
+            update(0L, mods, false)
         }
 
         is Event.Focused.KeyPressed -> {
@@ -91,9 +90,8 @@ class KeyBinder(private val settings: Settings) {
         }
 
         is Event.Focused.KeyReleased -> {
-            val ret = update(0L, mods, false)
             downKeys.remove(event.key)
-            ret
+            update(0L, mods, false)
         }
 
         else -> false
@@ -110,9 +108,8 @@ class KeyBinder(private val settings: Settings) {
         completeRecording(mods)
         update(0L, mods, true)
     } else {
-        val ret = update(0L, mods, false)
         downUnmappedKeys.remove(key)
-        ret
+        update(0L, mods, false)
     }
 
     @ApiStatus.Internal
@@ -277,6 +274,7 @@ class KeyBinder(private val settings: Settings) {
         protected val isModsOnly get() = unmappedKeys == null && keys == null && mouse == null
 
         protected val isSingleKey: Boolean
+
         init {
             var i = 0
             unmappedKeys?.let { i += it.size }
@@ -289,19 +287,21 @@ class KeyBinder(private val settings: Settings) {
         internal fun update(c: IntArraySet, k: ArrayList<Keys>, m: IntArraySet, mods: Byte, deltaTimeNanos: Long, down: Boolean): Boolean {
             if (!test(c, k, m, mods, deltaTimeNanos, down)) {
                 time = 0L
-                ran = false
+                if (ran) {
+                    ran = false
+                    return action(false)
+                }
                 return false
             }
-            if (!ran) {
-                if (durationNanos != 0L) {
-                    time += deltaTimeNanos
-                    if (time >= durationNanos) {
-                        ran = true
-                        return action(true)
-                    }
-                } else {
-                    return action(down)
+            if (durationNanos != 0L) {
+                time += deltaTimeNanos
+                if (time >= durationNanos && !ran) {
+                    ran = true
+                    return action(true)
                 }
+            } else if (down && !ran) {
+                ran = true
+                return action(true)
             }
             return false
         }

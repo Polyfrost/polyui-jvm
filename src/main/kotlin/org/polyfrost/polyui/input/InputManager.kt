@@ -47,6 +47,7 @@ class InputManager(
     var keyBinder: KeyBinder?,
     private val settings: Settings,
 ) {
+    constructor(settings: Settings) : this(null, KeyBinder(settings), settings)
     var mouseOver: Inputtable? = null
         private set(value) {
             if (field === value) return

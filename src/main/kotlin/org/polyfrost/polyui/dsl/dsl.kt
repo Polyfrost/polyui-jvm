@@ -155,7 +155,8 @@ open class DrawableDSL<T : Drawable>(@PublishedApi internal val _this: T) {
         var size: Vec2 = Vec2.ZERO
         private var _renderer: Renderer? = null
         var settings = Settings()
-        var inputManager: InputManager? = null
+        var inputManager: InputManager? = InputManager(settings)
+        val keyBinder get() = inputManager?.keyBinder
         var translator: Translator? = null
         var backgroundColor: PolyColor? = null
         var alignment: Align = Align(cross = Align.Cross.Start, pad = Vec2.ZERO)
