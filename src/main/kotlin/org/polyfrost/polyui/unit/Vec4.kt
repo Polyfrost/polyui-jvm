@@ -2,6 +2,8 @@
 
 package org.polyfrost.polyui.unit
 
+import kotlin.math.sqrt
+
 /**
  * Class that represents a 4D vector.
  * @since 1.5.0
@@ -15,20 +17,20 @@ abstract class Vec4 : Comparable<Vec4>, Cloneable {
     open val isNegative: Boolean
         get() = x < 0f || y < 0f || w < 0f || h < 0f
 
-    fun compareTo(other: Float) = (x * x + y * y + w * w + h * h).compareTo(other * other)
+    open val magnitude2 get() = x * x + y * y + w * w + h * h
 
-    override fun compareTo(other: Vec4): Int {
-        return (x * x + y * y + w * w + h * h).compareTo(other.x * other.x + other.y * other.y + other.w * other.w + other.h * other.h)
-    }
+    val magnitude get() = sqrt(magnitude2)
 
-    open operator fun get(index: Int): Float {
-        return when (index) {
-            0 -> x
-            1 -> y
-            2 -> w
-            3 -> h
-            else -> throw IndexOutOfBoundsException("Index: $index")
-        }
+    fun compareTo(other: Float) = magnitude2.compareTo(other * other)
+
+    override fun compareTo(other: Vec4) = magnitude2.compareTo(other.magnitude2)
+
+    open operator fun get(index: Int) = when (index) {
+        0 -> x
+        1 -> y
+        2 -> w
+        3 -> h
+        else -> throw IndexOutOfBoundsException("Index: $index")
     }
 
     operator fun component1() = x
@@ -37,6 +39,8 @@ abstract class Vec4 : Comparable<Vec4>, Cloneable {
     operator fun component4() = h
 
     public abstract override fun clone(): Vec4
+
+    open fun copy(x: Float = this.x, y: Float = this.y, w: Float = this.w, h: Float = this.h) = of(x, y, w, h)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -61,6 +65,9 @@ abstract class Vec4 : Comparable<Vec4>, Cloneable {
 
         override val isNegative: Boolean
             get() = xy.isNegative && wh.isNegative
+
+        override val magnitude2: Float
+            get() = xy.magnitude2 + wh.magnitude2
     }
 
     private class Single(override val x: Float) : Vec4() {
@@ -70,6 +77,8 @@ abstract class Vec4 : Comparable<Vec4>, Cloneable {
 
         override val isNegative: Boolean
             get() = x < 0f
+
+        override val magnitude2 get() = (x * x) * 4f
 
         override fun clone() = Single(x)
 

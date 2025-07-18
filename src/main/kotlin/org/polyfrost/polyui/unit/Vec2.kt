@@ -54,6 +54,12 @@ value class Vec2(val value: Long) {
     @kotlin.internal.InlineOnly
     inline val isPositive get() = !isNegative && value != 0L
 
+    @kotlin.internal.InlineOnly
+    inline val magnitude2 get() = x * x + y * y
+
+    @kotlin.internal.InlineOnly
+    inline val magnitude get() = kotlin.math.sqrt(magnitude2)
+
     operator fun get(index: Int) = when (index) {
         0 -> x
         1 -> y
@@ -107,9 +113,8 @@ value class Vec2(val value: Long) {
         @get:JvmName("ZERO")
         val ZERO = Vec2(0L)
 
-        // dw bout it :smile:
         @get:JvmName("ONE")
-        val ONE = Vec2(0x3f8000003f800000L)
+        val ONE = Vec2(1f, 1f)
 
         @JvmStatic
         @JvmName("of")
