@@ -352,16 +352,114 @@ class Debugger(private val polyUI: PolyUI) {
                     master.needsRedraw = true
                 }
             }
-//            if (mods.hasShift) {
-            // todo
-//            }
-            if (mods.hasAlt) {
+            if (mods.hasShift) {
                 val s = "${inputManager.mouseX}x${inputManager.mouseY}"
                 val ww = renderer.textBounds(monospaceFont, s, 10f).x
                 val ppos = (mouseX + 10f).coerceWithin(0f, this.size.x - ww - 10f)
                 val pposy = mouseY.coerceWithin(0f, this.size.y - 14f)
                 renderer.rect(ppos, pposy, ww + 10f, 14f, colors.component.bg.hovered)
                 renderer.text(monospaceFont, ppos + 5f, pposy + 4f, text = s, colors.text.primary.normal, 10f)
+            }
+            if (mods.hasAlt) {
+                val hovered = inputManager.rayCheckUnsafe(polyUI.master, mouseX, mouseY) ?: return@apply
+                val parent = hovered._parent ?: polyUI.master
+
+                var closestLeft: Component? = null
+                var closestRight: Component? = null
+                var closestTop: Component? = null
+                var closestBottom: Component? = null
+
+                val hoveredSize = hovered.visibleSize
+                val hoveredCenterX = hovered.x + hoveredSize.x / 2f
+                val hoveredCenterY = hovered.y + hoveredSize.y / 2f
+
+                parent.children?.fastEach {
+                    if (it === hovered) return@fastEach
+
+                    val ivs = it.visibleSize
+                    val right = it.x + ivs.x
+                    val bottom = it.y + ivs.y
+
+                    if (right <= hovered.x) {
+                        if (closestLeft == null || right > (closestLeft.x + closestLeft.visibleSize.x)) {
+                            closestLeft = it
+                        }
+                    }
+
+                    if (it.x >= hovered.x + hoveredSize.x) {
+                        if (closestRight == null || it.x < closestRight.x) {
+                            closestRight = it
+                        }
+                    }
+
+                    if (bottom <= hovered.y) {
+                        if (closestTop == null || bottom > (closestTop.y + closestTop.visibleSize.y)) {
+                            closestTop = it
+                        }
+                    }
+
+                    if (it.y >= hovered.y + hoveredSize.y) {
+                        if (closestBottom == null || it.y < closestBottom.y) {
+                            closestBottom = it
+                        }
+                    }
+                }
+
+                val color = colors.text.primary.normal
+
+                closestLeft?.let {
+                    val endX = it.x + it.visibleSize.x
+                    val distance = hovered.x - endX
+                    if (distance == 0f) return@let
+                    renderer.line(hovered.x, hoveredCenterY, endX, hoveredCenterY, color, 1f)
+                    renderer.text(monospaceFont, (hovered.x + endX) / 2f, hoveredCenterY - 5f, distance.toInt().toString(), color, 10f)
+                } ?: run {
+                    val distance = hovered.x - parent.x
+                    if (distance == 0f) return@run
+                    renderer.line(hovered.x, hoveredCenterY, parent.x, hoveredCenterY, color, 1f)
+                    renderer.text(monospaceFont, parent.x + distance / 2f, hoveredCenterY - 5f, distance.toInt().toString(), color, 10f)
+                }
+
+                closestRight?.let {
+                    val startX = it.x
+                    val distance = startX - (hovered.x + hoveredSize.x)
+                    if (distance == 0f) return@let
+                    renderer.line(hovered.x + hoveredSize.x, hoveredCenterY, startX, hoveredCenterY, color, 1f)
+                    renderer.text(monospaceFont, hovered.x + hoveredSize.x + distance / 2f, hovered.y - 5f, distance.toInt().toString(), color, 10f)
+                } ?: run {
+                    val pvs = parent.visibleSize
+                    val distance = parent.x + pvs.x - (hovered.x + hoveredSize.x)
+                    if (distance == 0f) return@run
+                    renderer.line(hovered.x + hoveredSize.x, hoveredCenterY, parent.x + pvs.x, hoveredCenterY, color, 1f)
+                    renderer.text(monospaceFont, hovered.x + hoveredSize.x + distance / 2f, hovered.y - 5f, distance.toInt().toString(), color, 10f)
+                }
+
+                closestTop?.let {
+                    val endY = it.y + it.visibleSize.y
+                    val distance = hovered.y - endY
+                    if (distance == 0f) return@let
+                    renderer.line(hoveredCenterX, hovered.y, hoveredCenterX, endY, color, 1f)
+                    renderer.text(monospaceFont, hovered.x, endY + distance / 2f - 5f, distance.toInt().toString(), color, 10f)
+                } ?: run {
+                    val distance = hovered.y - parent.y
+                    if (distance == 0f) return@run
+                    renderer.line(hoveredCenterX, hovered.y, hoveredCenterX, parent.y, color, 1f)
+                    renderer.text(monospaceFont, hovered.x, parent.y + distance / 2f - 5f, distance.toInt().toString(), color, 10f)
+                }
+
+                closestBottom?.let {
+                    val startY = it.y
+                    val distance = startY - (hovered.y + hoveredSize.y)
+                    if (distance == 0f) return@let
+                    renderer.line(hoveredCenterX, hovered.y + hoveredSize.y, hoveredCenterX, startY, color, 1f)
+                    renderer.text(monospaceFont, hovered.x, hovered.y + hoveredSize.y + distance / 2f - 5f, distance.toInt().toString(), color, 10f)
+                } ?: run {
+                    val pvs = parent.visibleSize
+                    val distance = parent.y + pvs.y - (hovered.y + hoveredSize.y)
+                    if (distance == 0f) return@run
+                    renderer.line(hoveredCenterX, hovered.y + hoveredSize.y, hoveredCenterX, parent.y + pvs.y, color, 1f)
+                    renderer.text(monospaceFont, hovered.x, hovered.y + hoveredSize.y + distance / 2f - 5f, distance.toInt().toString(), color, 10f)
+                }
                 master.needsRedraw = true
             }
         }

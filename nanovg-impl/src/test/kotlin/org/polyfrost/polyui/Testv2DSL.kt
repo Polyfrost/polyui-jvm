@@ -51,6 +51,9 @@ fun main() {
         text("text.dark") {
             fontSize = 20f
         }
+        Checkbox(size = 25f).add()
+        Checkbox(size = 16f).add()
+        Checkbox(size = 40f).add()
         val slider = Slider(length = 200f, min = 50f, max = 120f, instant = true, initialValue = 67f)
         val boxedNumericInput = BoxedNumericInput(min = 50f, max = 120f, size = 40f by 32f, post = "Hi", initialValue = 67f).onChange { value: Float ->
             slider.setSliderValue(value, 50f, 120f)
