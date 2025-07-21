@@ -44,7 +44,7 @@ open class PolyUIBuilder {
         private set
     protected var translator: Translator? = null
         private set
-    protected var alignment = Align(cross = Align.Cross.Start, pad = Vec2.ZERO)
+    protected var alignment = Align(line = Align.Line.Start, pad = Vec2.ZERO)
         private set
     var colors: Colors = DarkTheme()
         private set

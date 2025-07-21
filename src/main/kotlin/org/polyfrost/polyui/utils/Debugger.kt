@@ -353,6 +353,7 @@ class Debugger(private val polyUI: PolyUI) {
                 }
             }
             if (mods.hasShift) {
+                master.needsRedraw = true
                 val s = "${inputManager.mouseX}x${inputManager.mouseY}"
                 val ww = renderer.textBounds(monospaceFont, s, 10f).x
                 val ppos = (mouseX + 10f).coerceWithin(0f, this.size.x - ww - 10f)

@@ -139,11 +139,11 @@ open class DrawableDSL<T : Drawable>(@PublishedApi internal val _this: T) {
     }
 
     @JvmName("group")
-    inline fun group(visibleSize: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, init: DrawableDSL<Group>.(Group) -> Unit): Group {
+    inline fun group(size: Vec2 = Vec2.ZERO, visibleSize: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, init: DrawableDSL<Group>.(Group) -> Unit): Group {
         contract {
             callsInPlace(init, InvocationKind.EXACTLY_ONCE)
         }
-        val o = Group(visibleSize = visibleSize, alignment = alignment)
+        val o = Group(size = size, visibleSize = visibleSize, alignment = alignment)
         init(DrawableDSL(o), o)
         _this.addChild(o)
         return o
@@ -159,7 +159,7 @@ open class DrawableDSL<T : Drawable>(@PublishedApi internal val _this: T) {
         val keyBinder get() = inputManager?.keyBinder
         var translator: Translator? = null
         var backgroundColor: PolyColor? = null
-        var alignment: Align = Align(cross = Align.Cross.Start, pad = Vec2.ZERO)
+        var alignment: Align = Align(line = Align.Line.Start, pad = Vec2.ZERO)
         var colors: Colors? = null
 
         var renderer: Renderer

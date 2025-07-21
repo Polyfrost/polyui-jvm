@@ -89,7 +89,7 @@ class PolyUI(
     inputManager: InputManager? = null,
     translator: Translator? = null,
     backgroundColor: PolyColor? = null,
-    masterAlignment: Align = Align(cross = Align.Cross.Start, pad = Vec2.ZERO),
+    masterAlignment: Align = Align(line = Align.Line.Start, pad = Vec2.ZERO),
     colors: Colors = DarkTheme(),
     size: Vec2 = Vec2.ZERO,
 ) {
@@ -101,7 +101,7 @@ class PolyUI(
         inputManager: InputManager? = null,
         translator: Translator? = null,
         backgroundColor: PolyColor? = null,
-        masterAlignment: Align = Align(cross = Align.Cross.Start, pad = Vec2.ZERO),
+        masterAlignment: Align = Align(line = Align.Line.Start, pad = Vec2.ZERO),
         colors: Colors = DarkTheme(),
         width: Float, height: Float
     ) : this(components = components, renderer, settings, inputManager, translator, backgroundColor, masterAlignment, colors, Vec2(width, height))

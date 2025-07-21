@@ -302,7 +302,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
                 // we were suggested a size that was silly, so ignore it.
                 if (visWidth > width) {
                     hasVisibleSize = false
-                } else if ((visHeight / (fontSize + spacing)).roundToInt() == 1) {
+                } else if ((visHeight / (fontSize + spacing)).toInt() == 1) {
                     // we were suggested a size which we ended up using, if a bit tall. we decrease the height and use it.
                     visHeight = h
                     mode = SCROLLING_SINGLE_LINE

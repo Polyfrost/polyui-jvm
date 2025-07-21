@@ -47,7 +47,7 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Mutable>, faves: MutableList<Poly
                 this.polyUI.inputManager.focus(null)
             },
             size = 264f by 32f,
-            alignment = Align(pad = Vec2.ZERO, main = Align.Main.SpaceBetween),
+            alignment = Align(pad = Vec2.ZERO, main = Align.Content.SpaceBetween),
         ),
         ColorPickingBox(color).onPress {
             val picker = this[0]
@@ -143,7 +143,7 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Mutable>, faves: MutableList<Poly
             size = 18f by 18f,
         ).padded(0f, 7f),
         size = 288f by 0f,
-        align = Align(pad = 12f by 12f, cross = Align.Cross.Start),
+        align = Align(pad = 12f by 12f, line = Align.Line.Start),
         polyUI = polyUI,
         openNow = openNow,
         position = position,

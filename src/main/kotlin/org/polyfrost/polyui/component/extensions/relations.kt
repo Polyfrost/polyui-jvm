@@ -46,6 +46,13 @@ fun <S : Component> S.prioritize(): S {
 }
 
 /**
+ * Return the list of Components that this Component is part of, i.e. return a list of
+ * this component's siblings. **Note that** this list will also include itself as a sibling.
+ * @since 1.10.12
+ */
+val Component.siblings get() = parent.children!!
+
+/**
  * Relegate this component, meaning it will, in relation to its siblings:
  * - be drawn first (so visually on the bottom)
  * - receive events last

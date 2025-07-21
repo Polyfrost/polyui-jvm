@@ -23,15 +23,24 @@ package org.polyfrost.polyui.unit
 
 /**
  * @param main the main axis, for example the X axis in a [Mode.Horizontal] autolayout.
- * @param cross the cross axis, for example the Y axis in a [Mode.Horizontal] autolayout.
+ * @param line the cross axis, for example the Y axis in a [Mode.Horizontal] autolayout.
  * @param mode the mode for the autolayout. Horizontal fills from left to right, and Vertical fills from top to bottom.
- * @param pad the padding between each item in the autolayout.
- * @param maxRowSize the maximum row size to use if wrapping is required. set to `0` to specify you do not want to be wrapped.
+ * @param padBetween the padding between each item in the autolayout.
+ * @param padEdges *(since 1.11.0)* the padding on the edges of the autolayout.
+ * @param wrap the wrap mode to use for the autolayout. [Wrap.AUTO] will wrap if the items do not fit in the available space, [Wrap.NEVER] will never wrap, and [Wrap.ALWAYS] will always wrap after each item.
+ *
+ * **Hot-Tip**: A wrap mode of [Wrap.ALWAYS] is usually equivalent to [Mode.Vertical] and [Wrap.NEVER], and is more efficient in terms of layout calculations.
  */
-data class Align(val main: Main = Main.Start, val cross: Cross = Cross.Center, val mode: Mode = Mode.Horizontal, @get:JvmName("pad") val pad: Vec2 = Vec2(6f, 6f), val wrap: Wrap = Wrap.AUTO) {
+data class Align(val main: Content = Content.Start, val cross: Content = Content.Center, val line: Line = Line.Center, val mode: Mode = Mode.Horizontal, @get:JvmName("padBetween") val padBetween: Vec2 = Vec2(6f, 6f), @get:JvmName("padEdges") val padEdges: Vec2 = Vec2(6f, 6f), val wrap: Wrap = Wrap.AUTO) {
+    constructor(main: Content = Content.Start, cross: Content = Content.Center, line: Line = Line.Center, mode: Mode = Mode.Horizontal, px: Float, py: Float) : this(main, cross, line, mode, Vec2(px, py), Vec2(px, py))
+
+    /**
+     * *(since 1.11.0)* the padding now supports seperate [padEdges] and [padBetween]. you can use that constructor instead if you wish.
+     */
     @JvmOverloads
-    constructor(main: Main = Main.Start, cross: Cross = Cross.Center, mode: Mode = Mode.Horizontal, px: Float, py: Float) : this(main, cross, mode, Vec2(px, py))
-    enum class Main {
+    constructor(main: Content = Content.Start, cross: Content = Content.Center, line: Line = Line.Center, mode: Mode = Mode.Horizontal, pad: Vec2 = Vec2(6f, 6f), wrap: Wrap = Wrap.AUTO) : this(main, cross, line, mode, pad, pad, wrap)
+
+    enum class Content {
         /** Items are packed in order they are added from the start of the row. */
         Start,
 
@@ -48,14 +57,14 @@ data class Align(val main: Main = Main.Start, val cross: Cross = Cross.Center, v
         SpaceEvenly,
     }
 
-    enum class Cross {
-        /** Each row is placed on after the other, with the first row at the top. */
+    enum class Line {
+        /** Each item in the is line is against the top edge. */
         Start,
 
-        /** Each row is placed on after the other, with the rows centered overall. */
+        /** Each item is centered on the current line. */
         Center,
 
-        /** Each row is placed on after the other, with the last row at the very bottom. */
+        /** Each item in the line is against the bottom edge. */
         End,
     }
 

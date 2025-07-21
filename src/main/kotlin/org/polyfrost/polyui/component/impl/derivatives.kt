@@ -57,7 +57,7 @@ fun Button(leftImage: PolyImage? = null, text: String? = null, rightImage: PolyI
         if (leftImage != null) Image(leftImage) else null,
         if (text != null) Text(text, fontSize = fontSize, font = font) else null,
         if (rightImage != null) Image(rightImage) else null,
-        alignment = Align(main = Align.Main.SpaceEvenly, pad = padding, wrap = Align.Wrap.NEVER),
+        alignment = Align(main = Align.Content.SpaceEvenly, wrap = Align.Wrap.NEVER, pad = padding),
         at = at,
         size = size,
         radii = radii,
@@ -76,7 +76,7 @@ fun Switch(at: Vec2 = Vec2.ZERO, size: Float, padding: Float = 3f, state: Boolea
         Block(size = Vec2(circleSize, circleSize)).radius(circleSize / 2f).setPalette { text.primary },
         at = at,
         size = Vec2(size * lateralStretch, size),
-        alignment = Align(main = Align.Main.Start, pad = Vec2(padding, 0f)),
+        alignment = Align(main = Align.Content.Start, pad = Vec2(padding, 0f)),
     ).radius(size / 2f).toggleable(state).namedId("Switch").apply {
         if (state) afterParentInit {
             val circle = this[0]
@@ -122,7 +122,7 @@ fun Radiobutton(vararg entries: PolyImage, at: Vec2 = Vec2.ZERO, initial: Int = 
  */
 @JvmName("Radiobutton")
 fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2 = Vec2.ZERO, initial: Int = 0, fontSize: Float = 12f, optionLateralPadding: Float = 6f, optionVerticalPadding: Float = 6f): Block {
-    val optAlign = Align(Align.Main.Center, pad = Vec2(optionLateralPadding, optionVerticalPadding))
+    val optAlign = Align(Align.Content.Center, pad = Vec2(optionLateralPadding, optionVerticalPadding))
     val buttons = entries.mapToArray { (img, text) ->
         require(img != null || text != null) { "image and text cannot both be null on Radiobutton" }
         Group(
@@ -131,12 +131,12 @@ fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2 = Vec2.ZERO,
             alignment = optAlign,
         ).onClick {
             val parent = parent
-            val children = parent.children!!
-            val selector = children.first()
+            val siblings = this.siblings
+            val selector = siblings.first()
             // asm: dodge if it's the same
             if (selector.x == this.x) return@onClick false
             if (parent is Inputtable && parent.hasListenersFor(Event.Change.Number::class.java)) {
-                val ev = Event.Change.Number(children.indexOf(this) - 1)
+                val ev = Event.Change.Number(siblings.indexOf(this) - 1)
                 parent.accept(ev)
                 if (ev.cancelled) return@onClick false
             }
@@ -182,7 +182,7 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fon
         title, icon,
         at = at,
         focusable = true,
-        alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2(8f, 8f), wrap = Align.Wrap.NEVER),
+        alignment = Align(main = Align.Content.SpaceBetween, pad = Vec2(8f, 8f), wrap = Align.Wrap.NEVER),
     ).withHoverStates().withBorder()
     val dropdown = Block(
         alignment = Align(mode = Align.Mode.Vertical, pad = Vec2(optPadding, 6f)),
@@ -194,7 +194,7 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fon
                 val self = ((if (children!!.size == 2) this[1] else this[0]) as Text).text
                 if (title.text == self) return@onClick false
                 if (it.hasListenersFor(Event.Change.Number::class.java)) {
-                    val ev = Event.Change.Number(parent.children!!.indexOf(this))
+                    val ev = Event.Change.Number(siblings.indexOf(this))
                     it.accept(ev)
                     if (ev.cancelled) return@onClick false
                 }
@@ -253,13 +253,13 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fon
             // sets the #created-with-initial-size flag to true, meaning that if it is recalculated, it 'remembers' that it should be
             // this big. not necessary normally important, only if they decided to recalculate the dropdown for any reason.
             this.layoutFlags = layoutFlags or 0b00000010
-            val space = (this.width - icon.width - alignment.pad.x)
+            val space = (this.width - icon.width - alignment.padEdges.x)
             icon.x = this.x + space
 
             title.acceptsInput = false
             val first = dropdown[initial]
             title.text = ((if (first.children!!.size == 2) first[1] else first[0]) as Text).text
-            if (textLength == 0f) title.visibleSize = Vec2(space - alignment.pad.x - 2f, fontSize)
+            if (textLength == 0f) title.visibleSize = Vec2(space - alignment.padEdges.x - 2f, fontSize)
         }
         Event.Mouse.Companion.Clicked then {
             if (focused) {
@@ -340,7 +340,7 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
         },
         at = at,
         size = size,
-        alignment = Align(Align.Main.Center, pad = Vec2.ZERO),
+        alignment = Align(Align.Content.Center, pad = Vec2.ZERO),
     ).onPress {
         val ptr = this[1]
         ptr.x = it.x - ptr.width / 2f
@@ -386,16 +386,16 @@ fun BoxedTextInput(
                 (parent.parent as? Inputtable)?.accept(it) == true
             }
         },
-        alignment = Align(main = if (center) Align.Main.Center else Align.Main.Start, pad = Vec2(6f, 10f)),
+        alignment = Align(main = if (center) Align.Content.Center else Align.Content.Start, pad = Vec2(6f, 10f)),
         size = size,
     ).afterInit {
         if (!center) {
             val input = this[0]
-            input.visibleSize = input.visibleSize.coerceAtMost(this.visibleSize - Vec2(alignment.pad.x * 2f, 0f))
+            input.visibleSize = input.visibleSize.coerceAtMost(this.visibleSize - Vec2(alignment.padEdges.x * 2f, 0f))
         }
     },
     if (post != null) Block(Text(post).secondary(), alignment = Align(pad = 6f by 10f), radii = floatArrayOf(0f, 8f, 0f, 8f)).afterInit { color = polyUI.colors.page.bg.normal } else null,
-    alignment = Align(pad = Vec2.ZERO, main = Align.Main.SpaceBetween, wrap = Align.Wrap.NEVER),
+    alignment = Align(pad = Vec2.ZERO, main = Align.Content.SpaceBetween, wrap = Align.Wrap.NEVER),
 ).withBorder().namedId("BoxedTextInput")
 
 @JvmName("BoxedNumericInput")
@@ -437,7 +437,7 @@ fun BoxedNumericInput(
                     text.text = (if (integral) newValue.toInt() else newValue).toString()
                     true
                 }.withHoverStates(),
-                alignment = Align(main = Align.Main.Center, mode = Align.Mode.Vertical, pad = Vec2(1f, 0f)),
+                alignment = Align(main = Align.Content.Center, mode = Align.Mode.Vertical, pad = Vec2(1f, 0f)),
                 size = Vec2(0f, 32f)
             ).onScroll { (_, y) ->
                 if (y > 0f) this[0].accept(Event.Mouse.Clicked)

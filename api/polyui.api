@@ -898,6 +898,7 @@ public final class org/polyfrost/polyui/component/extensions/OperationsKt {
 public final class org/polyfrost/polyui/component/extensions/RelationsKt {
 	public static final fun countChildren (Lorg/polyfrost/polyui/component/Component;)I
 	public static final fun getMyIndex (Lorg/polyfrost/polyui/component/Component;)I
+	public static final fun getSiblings (Lorg/polyfrost/polyui/component/Component;)Ljava/util/ArrayList;
 	public static final fun getTextFromBoxedTextInput (Lorg/polyfrost/polyui/component/Component;)Lorg/polyfrost/polyui/component/impl/TextInput;
 	public static final fun hasChildIn (Lorg/polyfrost/polyui/component/Component;FFFF)Z
 	public static final fun isChildOf (Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/component/Component;)Z
@@ -1258,8 +1259,8 @@ public class org/polyfrost/polyui/dsl/DrawableDSL {
 	public static synthetic fun block$default (Lorg/polyfrost/polyui/dsl/DrawableDSL;JLorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Block;
 	public final fun configure (Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/polyui/component/Drawable;
 	public final fun get_this ()Lorg/polyfrost/polyui/component/Drawable;
-	public final fun group (JLorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/impl/Group;
-	public static synthetic fun group$default (Lorg/polyfrost/polyui/dsl/DrawableDSL;JLorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Group;
+	public final fun group (JJLorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/impl/Group;
+	public static synthetic fun group$default (Lorg/polyfrost/polyui/dsl/DrawableDSL;JJLorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Group;
 	public final fun image (Ljava/lang/String;Lorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/polyui/component/impl/Image;
 	public final fun image (Lorg/polyfrost/polyui/data/PolyImage;Lorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/polyui/component/impl/Image;
 	public static synthetic fun image$default (Lorg/polyfrost/polyui/dsl/DrawableDSL;Ljava/lang/String;Lorg/polyfrost/polyui/unit/Align;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Image;
@@ -1283,6 +1284,7 @@ public final class org/polyfrost/polyui/dsl/DrawableDSL$Master : org/polyfrost/p
 	public final fun getBackgroundColor ()Lorg/polyfrost/polyui/color/PolyColor;
 	public final fun getColors ()Lorg/polyfrost/polyui/color/Colors;
 	public final fun getInputManager ()Lorg/polyfrost/polyui/input/InputManager;
+	public final fun getKeyBinder ()Lorg/polyfrost/polyui/input/KeyBinder;
 	public final fun getRenderer ()Lorg/polyfrost/polyui/renderer/Renderer;
 	public final fun getSettings ()Lorg/polyfrost/polyui/Settings;
 	public final fun getSize ()J
@@ -1540,6 +1542,7 @@ public final class org/polyfrost/polyui/event/Event$Mouse$Scrolled : org/polyfro
 }
 
 public final class org/polyfrost/polyui/input/InputManager {
+	public fun <init> (Lorg/polyfrost/polyui/Settings;)V
 	public fun <init> (Lorg/polyfrost/polyui/component/Inputtable;Lorg/polyfrost/polyui/input/KeyBinder;Lorg/polyfrost/polyui/Settings;)V
 	public final fun addModifier (B)V
 	public final fun clearModifiers ()V
@@ -1619,6 +1622,7 @@ public class org/polyfrost/polyui/input/KeyBinder$Bind {
 	public final fun getUnmappedKeys ()[I
 	public final fun hashCode ()I
 	protected final fun isModsOnly ()Z
+	protected final fun isSingleKey ()Z
 	public final fun keysToString ()Ljava/lang/String;
 	protected final fun matches ([ILorg/polyfrost/polyui/utils/IntArraySet;)Z
 	protected final fun matches ([Ljava/lang/Object;Ljava/util/ArrayList;)Z
@@ -2046,48 +2050,57 @@ public abstract class org/polyfrost/polyui/renderer/Window {
 }
 
 public final class org/polyfrost/polyui/unit/Align {
-	public fun <init> (FF)V
-	public fun <init> (Lorg/polyfrost/polyui/unit/Align$Main;FF)V
-	public fun <init> (Lorg/polyfrost/polyui/unit/Align$Main;Lorg/polyfrost/polyui/unit/Align$Cross;FF)V
-	public fun <init> (Lorg/polyfrost/polyui/unit/Align$Main;Lorg/polyfrost/polyui/unit/Align$Cross;Lorg/polyfrost/polyui/unit/Align$Mode;FF)V
-	public synthetic fun <init> (Lorg/polyfrost/polyui/unit/Align$Main;Lorg/polyfrost/polyui/unit/Align$Cross;Lorg/polyfrost/polyui/unit/Align$Mode;FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (Lorg/polyfrost/polyui/unit/Align$Main;Lorg/polyfrost/polyui/unit/Align$Cross;Lorg/polyfrost/polyui/unit/Align$Mode;JLorg/polyfrost/polyui/unit/Align$Wrap;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (Lorg/polyfrost/polyui/unit/Align$Main;Lorg/polyfrost/polyui/unit/Align$Cross;Lorg/polyfrost/polyui/unit/Align$Mode;JLorg/polyfrost/polyui/unit/Align$Wrap;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Lorg/polyfrost/polyui/unit/Align$Main;
-	public final fun component2 ()Lorg/polyfrost/polyui/unit/Align$Cross;
-	public final fun component3 ()Lorg/polyfrost/polyui/unit/Align$Mode;
-	public final fun component4-2K4fKj8 ()J
-	public final fun component5 ()Lorg/polyfrost/polyui/unit/Align$Wrap;
-	public final fun copy-0klutvU (Lorg/polyfrost/polyui/unit/Align$Main;Lorg/polyfrost/polyui/unit/Align$Cross;Lorg/polyfrost/polyui/unit/Align$Mode;JLorg/polyfrost/polyui/unit/Align$Wrap;)Lorg/polyfrost/polyui/unit/Align;
-	public static synthetic fun copy-0klutvU$default (Lorg/polyfrost/polyui/unit/Align;Lorg/polyfrost/polyui/unit/Align$Main;Lorg/polyfrost/polyui/unit/Align$Cross;Lorg/polyfrost/polyui/unit/Align$Mode;JLorg/polyfrost/polyui/unit/Align$Wrap;ILjava/lang/Object;)Lorg/polyfrost/polyui/unit/Align;
+	public fun <init> ()V
+	public fun <init> (Lorg/polyfrost/polyui/unit/Align$Content;)V
+	public fun <init> (Lorg/polyfrost/polyui/unit/Align$Content;Lorg/polyfrost/polyui/unit/Align$Content;)V
+	public fun <init> (Lorg/polyfrost/polyui/unit/Align$Content;Lorg/polyfrost/polyui/unit/Align$Content;Lorg/polyfrost/polyui/unit/Align$Line;)V
+	public fun <init> (Lorg/polyfrost/polyui/unit/Align$Content;Lorg/polyfrost/polyui/unit/Align$Content;Lorg/polyfrost/polyui/unit/Align$Line;Lorg/polyfrost/polyui/unit/Align$Mode;)V
+	public fun <init> (Lorg/polyfrost/polyui/unit/Align$Content;Lorg/polyfrost/polyui/unit/Align$Content;Lorg/polyfrost/polyui/unit/Align$Line;Lorg/polyfrost/polyui/unit/Align$Mode;FF)V
+	public synthetic fun <init> (Lorg/polyfrost/polyui/unit/Align$Content;Lorg/polyfrost/polyui/unit/Align$Content;Lorg/polyfrost/polyui/unit/Align$Line;Lorg/polyfrost/polyui/unit/Align$Mode;FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lorg/polyfrost/polyui/unit/Align$Content;Lorg/polyfrost/polyui/unit/Align$Content;Lorg/polyfrost/polyui/unit/Align$Line;Lorg/polyfrost/polyui/unit/Align$Mode;JJLorg/polyfrost/polyui/unit/Align$Wrap;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lorg/polyfrost/polyui/unit/Align$Content;Lorg/polyfrost/polyui/unit/Align$Content;Lorg/polyfrost/polyui/unit/Align$Line;Lorg/polyfrost/polyui/unit/Align$Mode;JJLorg/polyfrost/polyui/unit/Align$Wrap;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lorg/polyfrost/polyui/unit/Align$Content;Lorg/polyfrost/polyui/unit/Align$Content;Lorg/polyfrost/polyui/unit/Align$Line;Lorg/polyfrost/polyui/unit/Align$Mode;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lorg/polyfrost/polyui/unit/Align$Content;Lorg/polyfrost/polyui/unit/Align$Content;Lorg/polyfrost/polyui/unit/Align$Line;Lorg/polyfrost/polyui/unit/Align$Mode;JLorg/polyfrost/polyui/unit/Align$Wrap;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lorg/polyfrost/polyui/unit/Align$Content;Lorg/polyfrost/polyui/unit/Align$Content;Lorg/polyfrost/polyui/unit/Align$Line;Lorg/polyfrost/polyui/unit/Align$Mode;JLorg/polyfrost/polyui/unit/Align$Wrap;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lorg/polyfrost/polyui/unit/Align$Content;
+	public final fun component2 ()Lorg/polyfrost/polyui/unit/Align$Content;
+	public final fun component3 ()Lorg/polyfrost/polyui/unit/Align$Line;
+	public final fun component4 ()Lorg/polyfrost/polyui/unit/Align$Mode;
+	public final fun component5-2K4fKj8 ()J
+	public final fun component6-2K4fKj8 ()J
+	public final fun component7 ()Lorg/polyfrost/polyui/unit/Align$Wrap;
+	public final fun copy-yyvEHDk (Lorg/polyfrost/polyui/unit/Align$Content;Lorg/polyfrost/polyui/unit/Align$Content;Lorg/polyfrost/polyui/unit/Align$Line;Lorg/polyfrost/polyui/unit/Align$Mode;JJLorg/polyfrost/polyui/unit/Align$Wrap;)Lorg/polyfrost/polyui/unit/Align;
+	public static synthetic fun copy-yyvEHDk$default (Lorg/polyfrost/polyui/unit/Align;Lorg/polyfrost/polyui/unit/Align$Content;Lorg/polyfrost/polyui/unit/Align$Content;Lorg/polyfrost/polyui/unit/Align$Line;Lorg/polyfrost/polyui/unit/Align$Mode;JJLorg/polyfrost/polyui/unit/Align$Wrap;ILjava/lang/Object;)Lorg/polyfrost/polyui/unit/Align;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getCross ()Lorg/polyfrost/polyui/unit/Align$Cross;
-	public final fun getMain ()Lorg/polyfrost/polyui/unit/Align$Main;
+	public final fun getCross ()Lorg/polyfrost/polyui/unit/Align$Content;
+	public final fun getLine ()Lorg/polyfrost/polyui/unit/Align$Line;
+	public final fun getMain ()Lorg/polyfrost/polyui/unit/Align$Content;
 	public final fun getMode ()Lorg/polyfrost/polyui/unit/Align$Mode;
 	public final fun getWrap ()Lorg/polyfrost/polyui/unit/Align$Wrap;
 	public fun hashCode ()I
-	public final fun pad ()J
+	public final fun padBetween ()J
+	public final fun padEdges ()J
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class org/polyfrost/polyui/unit/Align$Cross : java/lang/Enum {
-	public static final field Center Lorg/polyfrost/polyui/unit/Align$Cross;
-	public static final field End Lorg/polyfrost/polyui/unit/Align$Cross;
-	public static final field Start Lorg/polyfrost/polyui/unit/Align$Cross;
+public final class org/polyfrost/polyui/unit/Align$Content : java/lang/Enum {
+	public static final field Center Lorg/polyfrost/polyui/unit/Align$Content;
+	public static final field End Lorg/polyfrost/polyui/unit/Align$Content;
+	public static final field SpaceBetween Lorg/polyfrost/polyui/unit/Align$Content;
+	public static final field SpaceEvenly Lorg/polyfrost/polyui/unit/Align$Content;
+	public static final field Start Lorg/polyfrost/polyui/unit/Align$Content;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/polyui/unit/Align$Cross;
-	public static fun values ()[Lorg/polyfrost/polyui/unit/Align$Cross;
+	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/polyui/unit/Align$Content;
+	public static fun values ()[Lorg/polyfrost/polyui/unit/Align$Content;
 }
 
-public final class org/polyfrost/polyui/unit/Align$Main : java/lang/Enum {
-	public static final field Center Lorg/polyfrost/polyui/unit/Align$Main;
-	public static final field End Lorg/polyfrost/polyui/unit/Align$Main;
-	public static final field SpaceBetween Lorg/polyfrost/polyui/unit/Align$Main;
-	public static final field SpaceEvenly Lorg/polyfrost/polyui/unit/Align$Main;
-	public static final field Start Lorg/polyfrost/polyui/unit/Align$Main;
+public final class org/polyfrost/polyui/unit/Align$Line : java/lang/Enum {
+	public static final field Center Lorg/polyfrost/polyui/unit/Align$Line;
+	public static final field End Lorg/polyfrost/polyui/unit/Align$Line;
+	public static final field Start Lorg/polyfrost/polyui/unit/Align$Line;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/polyui/unit/Align$Main;
-	public static fun values ()[Lorg/polyfrost/polyui/unit/Align$Main;
+	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/polyui/unit/Align$Line;
+	public static fun values ()[Lorg/polyfrost/polyui/unit/Align$Line;
 }
 
 public final class org/polyfrost/polyui/unit/Align$Mode : java/lang/Enum {
@@ -2178,9 +2191,13 @@ public abstract class org/polyfrost/polyui/unit/Vec4 : java/lang/Cloneable, java
 	public final fun component2 ()F
 	public final fun component3 ()F
 	public final fun component4 ()F
+	public fun copy (FFFF)Lorg/polyfrost/polyui/unit/Vec4;
+	public static synthetic fun copy$default (Lorg/polyfrost/polyui/unit/Vec4;FFFFILjava/lang/Object;)Lorg/polyfrost/polyui/unit/Vec4;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun get (I)F
 	public abstract fun getH ()F
+	public final fun getMagnitude ()F
+	public fun getMagnitude2 ()F
 	public abstract fun getW ()F
 	public abstract fun getX ()F
 	public abstract fun getY ()F

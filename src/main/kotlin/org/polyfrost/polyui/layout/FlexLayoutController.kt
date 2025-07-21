@@ -34,6 +34,7 @@ object FlexLayoutController : LayoutController {
         val children = component.children
         val polyUI = component.polyUI
         val iKnowHowBigIAm = component.createdWithSetSize
+        // step 1: query if we know our size. if we don't try calculateSize(), if not we are going to calculate it based on our children.
         if (!component.sizeValid) {
             val out = component.calculateSize()
             if (out.isPositive) {
@@ -43,6 +44,7 @@ object FlexLayoutController : LayoutController {
         }
 
         if (!component.sizeValid) {
+            // we don't know our size still, so we need to calculate it based on our children.
             // hope they know what they are doing!
             if (component.layoutIgnored) return
             if (children.isNullOrEmpty()) {
@@ -50,170 +52,183 @@ object FlexLayoutController : LayoutController {
                 return
             }
         } else if (children.isNullOrEmpty()) {
+            // no children, so nothing to position. just ensure the size isn't larger than itself and return.
             component.fixVisibleSize()
             return
         }
 
-        // asm: there are definitely children at this point, so we need to place them
-        // we are unsure if there is a size at this point though
+        // step 2: we might have a size, and we have children to place. lets calculate the padding.
         val align = component.alignment
         val main = if (align.mode == Align.Mode.Horizontal) 0 else 1
         val crs = if (main == 0) 1 else 0
 
-        val padding = align.pad
         // asm: if we have already been positioned, we need to scale the padding
-        val mainPad = padding[main].let { if (component.positioned) it * (polyUI.size[main] / polyUI.iSize[main]) else it }
-        val crossPad = padding[crs].let { if (component.positioned) it * (polyUI.size[crs] / polyUI.iSize[crs]) else it }
+        val mainPadEdges = align.padEdges[main].let { if (component.positioned) it * (polyUI.size[main] / polyUI.iSize[main]) else it }
+        val crossPadEdges = align.padEdges[crs].let { if (component.positioned) it * (polyUI.size[crs] / polyUI.iSize[crs]) else it }
+        val mainPadBetween = align.padBetween[main].let { if (component.positioned) it * (polyUI.size[main] / polyUI.iSize[main]) else it }
+        val crossPadBetween = align.padBetween[crs].let { if (component.positioned) it * (polyUI.size[crs] / polyUI.iSize[crs]) else it }
+        // figure out how many 'useful' children we have.
         var sizeWithoutIgnored = 0
         children.fastEach { if (!it.layoutIgnored) sizeWithoutIgnored++ }
 
         if (sizeWithoutIgnored == 1) {
-            // asm: fast path: set a square size with the object centered
-            val it = children.first()
-            it._parent = component
-            val ipad = it.padding
-            if (!it.sizeValid) {
+            // we only have 1 child, so as a fast path, we can set our size
+            val child = children.first()
+            child._parent = component
+            val ipad = child.padding
+            if (!child.sizeValid) {
+                // our child might not know how big it is, but as we know how big we are, we can suggest a size with confidence.
                 val suggestedSize = if (iKnowHowBigIAm) {
-                    val myVs = component.visibleSize
+                    val mySize = component.visibleSize
                     Vec2(
-                        myVs[main] - (ipad[main] + ipad[main + 2] + mainPad * 2f),
-                        myVs[crs] - (ipad[crs] + ipad[crs + 2] + crossPad * 2f)
+                        mySize[main] - (ipad[main] + ipad[main + 2] + mainPadEdges * 2f),
+                        mySize[crs] - (ipad[crs] + ipad[crs + 2] + crossPadEdges * 2f)
                     )
                 } else Vec2.ZERO
-                handleInvalidSize(it, suggestedSize, polyUI)
+                handleInvalidSize(child, suggestedSize, polyUI)
             }
-            val ivs = it.visibleSize
+
+            // lets try and assign ourself our size based on the child.
+            val ivs = child.visibleSize
             assignAndCheckSize(
                 component, main, crs,
-                ivs[main] + ipad[main] + ipad[main + 2] + (mainPad * 2f),
-                ivs[crs] + ipad[crs] + ipad[crs + 2] + (crossPad * 2f)
+                ivs[main] + ipad[main] + ipad[main + 2] + (mainPadEdges * 2f),
+                ivs[crs] + ipad[crs] + ipad[crs + 2] + (crossPadEdges * 2f)
             )
-            if (it.layoutIgnored || it.createdWithSetPosition) return
+            if (child.layoutIgnored || child.createdWithSetPosition) return
+            // now lets place the child in the middle.
             val vs = component.visibleSize
-            it.at(
+            child.at(
                 main,
                 component.at[main] + when (align.main) {
-                    Align.Main.Start -> mainPad + ipad[main]
-                    Align.Main.End -> vs[main] - ivs[main] - mainPad - ipad[main]
+                    Align.Content.Start -> mainPadEdges + ipad[main]
+                    Align.Content.End -> vs[main] - ivs[main] - mainPadEdges - ipad[main]
                     else -> (vs[main] - ivs[main]) / 2f
                 },
             )
-            it.at(
+            child.at(
                 crs,
-                component.at[crs] + when (align.cross) {
-                    Align.Cross.Start -> crossPad + ipad[crs]
-                    Align.Cross.End -> vs[crs] - ivs[crs] - crossPad - ipad[crs]
+                component.at[crs] + when (align.line) {
+                    Align.Line.Start -> crossPadEdges + ipad[crs]
+                    Align.Line.End -> vs[crs] - ivs[crs] - crossPadEdges - ipad[crs]
                     else -> (vs[crs] - ivs[crs]) / 2f
                 },
             )
-            if (it is Scrollable) it.resetScroll()
+            if (child is Scrollable) child.resetScroll()
             return
         }
 
-        if (align.wrap != Align.Wrap.NEVER) {
-            val rows = ArrayList<WrappingRow>(5)
+        // OK, we have atleast 2 children, so we need to do a proper layout.
+        val rows = ArrayList<WrappingRow>(when(align.wrap) {
+            Align.Wrap.NEVER -> 1
+            Align.Wrap.ALWAYS -> sizeWithoutIgnored
+            Align.Wrap.AUTO -> 5
+        })
 
-            val wrapCap = component.visibleSize[main].let { mySize ->
-                // asm: we do the layout at full (original) size so we need to undo it for this calculation
-                val invScalingFactor = if (component.positioned) 1f else polyUI.iSize[main] / polyUI.size[main]
-                val screenSize = polyUI.master.size[main] * invScalingFactor
-                // use our own size if we have it.
-                if (mySize != 0f) mySize.coerceAtMost(screenSize)
-                else {
-                    val parent = component._parent
-                    if (parent != null && parent.sizeValid) {
-                        // our parent knows how big it is, so we can use that
-                        (parent.visibleSize[main] * invScalingFactor).coerceAtMost(screenSize)
-                    } else screenSize // if not, we use the screen size
-                }
-            } + 1f // asm: add 1 to avoid rounding errors
-
-            var maxMain = 0f
-            var maxCross = crossPad
-            var rowMain = mainPad
-            var rowCross = 0f
-            val rowMaxInitialSize = if(align.wrap == Align.Wrap.ALWAYS) 1 else 10
-            var currentRow = ArrayList<Component>(children.size.coerceAtMost(rowMaxInitialSize))
-            // measure and create rows
-            children.fastEach {
-                it._parent = component
-                if (it.layoutIgnored) return@fastEach
-                // todo: maybe figure out if we can supply something plausible here as a suggested size?
-                if (!it.sizeValid) handleInvalidSize(it, Vec2.ZERO, polyUI)
-                if (it.visibleSize[main] > wrapCap && !iKnowHowBigIAm) {
-                    // asm: object is too large, ask it to recalculate its size (hopefully it will shrink, if not then oh well)
-                    it.setup(polyUI)
-                    it.recalculate()
-                }
-                val itSize = it.visibleSize
-                val itPad = it.padding
-                val itMain = itPad[main] + itPad[main + 2] + itSize[main] + mainPad
-                if (currentRow.isNotEmpty() && (rowMain + itMain > wrapCap || align.wrap == Align.Wrap.ALWAYS)) {
-                    rows.add(WrappingRow(rowMain, rowCross, currentRow))
-                    currentRow = ArrayList(children.size.coerceAtMost(rowMaxInitialSize))
-                    maxMain = max(maxMain, rowMain)
-                    maxCross += rowCross + crossPad
-                    rowMain = mainPad
-                    rowCross = 0f
-                }
-                rowMain += itMain
-                rowCross = max(rowCross, itPad[crs] + itPad[crs + 2] + itSize[crs])
-                currentRow.add(it)
+        // step 1: lets calculate the maximum size of the main axis, our wrap capacity.
+        val wrapCap = component.visibleSize[main].let { mySize ->
+            // asm: we do the layout at full (original) size so we need to undo it for this calculation
+            val invScalingFactor = if (component.positioned) 1f else polyUI.iSize[main] / polyUI.size[main]
+            val screenSize = polyUI.master.size[main] * invScalingFactor
+            // use our own size if we have it.
+            if (mySize != 0f) mySize.coerceAtMost(screenSize)
+            else {
+                val parent = component._parent
+                if (parent != null && parent.sizeValid) {
+                    // our parent knows how big it is, so we can use that
+                    (parent.visibleSize[main] * invScalingFactor).coerceAtMost(screenSize)
+                } else screenSize // if not, we use the screen size
             }
-            if (currentRow.isNotEmpty()) {
+        } + 1f - (mainPadEdges * 2f) // asm: add 1 to avoid rounding errors
+
+        var maxMain = 0f
+        var maxCross = crossPadEdges * 2f
+        var rowMain = 0f
+        var rowCross = 0f
+        val rowInitialSize = if (align.wrap == Align.Wrap.ALWAYS) 1 else children.size.coerceAtMost(10)
+        var currentRow = ArrayList<Component>(rowInitialSize)
+        // step 2: lets calculate our size, and calculate our rows of children, based on how many we can fit in the main axis.
+        children.fastEach {
+            it._parent = component
+            if (it.layoutIgnored) return@fastEach
+            // todo: maybe figure out if we can supply something plausible here as a suggested size?
+            if (!it.sizeValid) handleInvalidSize(it, Vec2.ZERO, polyUI)
+            if (it.visibleSize[main] > wrapCap && !iKnowHowBigIAm) {
+                // object is too large for this in its entirety (it is bigger than our wrap capacity), so we
+                // ask it to recalculate its size (hopefully it will shrink, if not then oh well)
+                it.setup(polyUI)
+                it.recalculate()
+            }
+            val itSize = it.visibleSize
+            val itPad = it.padding
+            val itMain = itPad[main] + itPad[main + 2] + itSize[main]
+            if (align.wrap != Align.Wrap.NEVER && currentRow.isNotEmpty() && (rowMain + itMain > wrapCap || align.wrap == Align.Wrap.ALWAYS)) {
+                // the row cannot accommodate this item, so we need to finish the current row and start a new one, then continue.
+                rowMain = rowMain - mainPadBetween + mainPadEdges * 2f
                 rows.add(WrappingRow(rowMain, rowCross, currentRow))
+                currentRow = ArrayList(rowInitialSize)
                 maxMain = max(maxMain, rowMain)
-                maxCross += rowCross + crossPad
+                maxCross += rowCross + crossPadBetween
+                rowMain = 0f
+                rowCross = 0f
             }
-            assignAndCheckSize(component, main, crs, maxMain, maxCross)
-            val mySize = component.visibleSize
-            rowCross = component.at[crs]
-            if (rows.size == 1) {
-                // asm: in this situation, the user specified a size, and as there is only 1 row, so we should
-                // make it so the actual cross limit is the size of the component
-                val (theRowMain, _, row) = rows[0]
-                place(
-                    align, row,
-                    mySize[crs], rowCross, crossPad, crs,
-                    theRowMain, component.at[main], mySize[main], mainPad, main,
-                )
-            } else {
-                rows.fastEach { (theRowMain, theRowCross, row) ->
-                    place(
-                        align, row,
-                        theRowCross, rowCross, crossPad, crs,
-                        theRowMain, component.at[main], mySize[main], mainPad, main,
-                    )
-                    rowCross += theRowCross + crossPad
-                }
+            rowMain += itMain + mainPadBetween
+            rowCross = max(rowCross, itPad[crs] + itPad[crs + 2] + itSize[crs])
+            currentRow.add(it)
+        }
+
+        // now we have calculated all the rows, we need to finalize the last row.
+        rowMain = rowMain - mainPadBetween + mainPadEdges * 2f // remove the last padding, add the edges.
+        if (currentRow.isNotEmpty()) {
+            rows.add(WrappingRow(rowMain, rowCross, currentRow))
+            maxMain = max(maxMain, rowMain)
+            // this is added then removed in the case that there wasn't a last row (otherwise we would never have added it above).
+            maxCross += rowCross + crossPadBetween
+        }
+        // remove the last padding, as we don't need it (there is no next row).
+        maxCross -= crossPadBetween
+
+        // we now know how big we are, so lets assign our size (if we can)
+        assignAndCheckSize(component, main, crs, maxMain, maxCross)
+        val mySize = component.visibleSize
+
+        // lets calculate where to place our rows on the cross axis.
+        val gap = when (align.cross) {
+            Align.Content.SpaceBetween -> {
+                val totalCross = maxCross - (rows.size - 1) * crossPadBetween
+                (mySize[crs] - totalCross) / (rows.size - 1)
             }
-        } else {
-            var rowMain = mainPad
-            var rowCross = 0f
-            val cpad2 = crossPad * 2f
-            children.fastEach {
-                it._parent = component
-                if (it.layoutIgnored) return@fastEach
-                // todo as above
-                if (!it.sizeValid) handleInvalidSize(it, Vec2.ZERO, polyUI)
-                val ivs = it.visibleSize
-                val ipad = it.padding
-                val itMain = ipad[main] + ivs[main] + ipad[main + 2] + mainPad
-                val itCross = cpad2 + ipad[crs] + ivs[crs] + ipad[crs + 2]
-                if (it.createdWithSetPosition) {
-                    rowMain = max(rowMain, it.at[main] + itMain)
-                    rowCross = max(rowCross, it.at[crs] + itCross)
-                } else {
-                    rowMain += itMain
-                    rowCross = max(rowCross, itCross)
-                }
+
+            Align.Content.SpaceEvenly -> {
+                val totalCross = maxCross - (rows.size + 1) * crossPadBetween + crossPadEdges
+                (mySize[crs] - totalCross) / (rows.size + 1)
             }
-            assignAndCheckSize(component, main, crs, rowMain, rowCross)
+
+            else -> 0f
+        }
+
+        rowCross = component.at[crs] + when (align.cross) {
+            Align.Content.Start, Align.Content.SpaceBetween -> crossPadEdges
+            Align.Content.End -> mySize[crs] - crossPadEdges
+            Align.Content.Center -> (mySize[crs] - maxCross) / 2f + crossPadEdges
+            Align.Content.SpaceEvenly -> gap
+        }
+
+        // lets place the rows.
+        rows.fastEach { (theRowMain, theRowCross, row) ->
+            if (align.cross == Align.Content.End) rowCross -= theRowCross
             place(
-                align, children,
-                component.size[crs], component.at[crs], crossPad, crs,
-                rowMain, component.at[main], component.size[main], mainPad, main,
+                align, row,
+                theRowCross, rowCross, crs,
+                theRowMain, component.at[main], mySize[main], mainPadEdges, mainPadBetween, main,
             )
+            when (align.cross) {
+                Align.Content.Start, Align.Content.Center -> rowCross += theRowCross + crossPadBetween
+                Align.Content.End -> rowCross -= crossPadBetween
+                Align.Content.SpaceBetween, Align.Content.SpaceEvenly -> rowCross += theRowCross + gap
+//                        Align.Content.SpaceEvenly -> rowCross += (theRowCross + crossPadBetween) / 2f
+
+            }
         }
     }
 
@@ -229,34 +244,34 @@ object FlexLayoutController : LayoutController {
 
     private fun place(
         align: Align, row: ArrayList<out Component>,
-        rowCross: Float, minCross: Float, padCross: Float, crs: Int,
-        rowMain: Float, minMain: Float, maxMain: Float, padMain: Float, main: Int,
+        rowCross: Float, minCross: Float, crs: Int,
+        rowMain: Float, minMain: Float, maxMain: Float, mainPadEdges: Float, mainPadBetween: Float, main: Int,
     ) {
-        val aligner = when (align.cross) {
-            Align.Cross.Start -> cStart
-            Align.Cross.Center -> cCenter
-            Align.Cross.End -> cEnd
+        val aligner = when (align.line) {
+            Align.Line.Start -> cStart
+            Align.Line.Center -> cCenter
+            Align.Line.End -> cEnd
         }
         val justifier = when (align.main) {
-            Align.Main.Start, Align.Main.Center -> mProgressive
-            Align.Main.End -> mBackwards
-            Align.Main.SpaceBetween, Align.Main.SpaceEvenly -> mSpace
+            Align.Content.Start, Align.Content.Center -> mProgressive
+            Align.Content.End -> mBackwards
+            Align.Content.SpaceBetween, Align.Content.SpaceEvenly -> mSpace
         }
         val gap = when (align.main) {
-            Align.Main.SpaceBetween -> (maxMain - rowMain) / (row.size - 1)
-            Align.Main.SpaceEvenly -> (maxMain - rowMain) / (row.size + 1)
+            Align.Content.SpaceBetween -> (maxMain - rowMain) / (row.size - 1)
+            Align.Content.SpaceEvenly -> (maxMain - rowMain) / (row.size + 1)
             else -> 0f
         }
         var current = minMain + when (align.main) {
-            Align.Main.Start, Align.Main.SpaceBetween -> padMain
-            Align.Main.End -> maxMain
-            Align.Main.Center -> (maxMain / 2f) - (rowMain / 2f) + padMain
-            Align.Main.SpaceEvenly -> padMain + gap
+            Align.Content.Start, Align.Content.SpaceBetween -> mainPadEdges
+            Align.Content.End -> maxMain - mainPadEdges
+            Align.Content.Center -> (maxMain / 2f) - (rowMain / 2f) + mainPadEdges
+            Align.Content.SpaceEvenly -> mainPadEdges + gap
         }
         row.fastEach {
             if (it.createdWithSetPosition || it.layoutIgnored) return@fastEach
-            aligner.align(rowCross, it, minCross, padCross, crs)
-            current = justifier.justify(current, it, padMain, main, gap)
+            aligner.align(rowCross, it, minCross, crs)
+            current = justifier.justify(current, it, mainPadBetween, main, gap)
             if (it is Scrollable) it.resetScroll()
         }
     }
@@ -271,42 +286,42 @@ object FlexLayoutController : LayoutController {
     }
 
     private fun interface Aligner {
-        fun align(rowCross: Float, it: Component, min: Float, padding: Float, crs: Int)
+        fun align(rowCross: Float, it: Component, min: Float, crs: Int)
     }
 
     private fun interface Justifier {
-        fun justify(current: Float, it: Component, padding: Float, main: Int, gap: Float): Float
+        fun justify(current: Float, it: Component, padBetween: Float, main: Int, gap: Float): Float
     }
 
-    private val cStart = Aligner { _, it, min, padding, crs ->
-        it.at(crs, min + padding + it.padding[crs])
+    private val cStart = Aligner { _, it, min, crs ->
+        it.at(crs, min + it.padding[crs])
     }
 
-    private val cCenter = Aligner { rowCross, it, min, _, crs ->
+    private val cCenter = Aligner { rowCross, it, min, crs ->
         it.at(crs, min + (rowCross / 2f) - (it.visibleSize[crs] / 2f))
     }
 
-    private val cEnd = Aligner { rowCross, it, min, padding, crs ->
+    private val cEnd = Aligner { rowCross, it, min, crs ->
         val ipad = it.padding
-        it.at(crs, min + rowCross - (it.visibleSize[crs] + ipad[crs] + ipad[crs + 2]) - padding)
+        it.at(crs, min + rowCross - (it.visibleSize[crs] + ipad[crs] + ipad[crs + 2]))
     }
 
-    private val mProgressive = Justifier { current, it, padding, main, _ ->
+    private val mProgressive = Justifier { current, it, padBetween, main, _ ->
         val ipad = it.padding
         it.at(main, current + ipad[main])
-        return@Justifier current + it.visibleSize[main] + padding + ipad[main] + ipad[main + 2]
+        return@Justifier current + it.visibleSize[main] + padBetween + ipad[main] + ipad[main + 2]
     }
 
-    private val mBackwards = Justifier { current, it, padding, main, _ ->
+    private val mBackwards = Justifier { current, it, padBetween, main, _ ->
         val ipad = it.padding
-        val cur = current - it.visibleSize[main] - padding - ipad[main + 2]
+        val cur = current - it.visibleSize[main] - ipad[main + 2]
         it.at(main, cur)
-        return@Justifier cur - ipad[main]
+        return@Justifier cur - ipad[main] - padBetween
     }
 
-    private val mSpace = Justifier { current, it, padding, main, gap ->
+    private val mSpace = Justifier { current, it, padBetween, main, gap ->
         val ipad = it.padding
         it.at(main, current + ipad[main])
-        return@Justifier current + it.visibleSize[main] + padding + gap + ipad[main] + ipad[main + 2]
+        return@Justifier current + it.visibleSize[main] + padBetween + gap + ipad[main] + ipad[main + 2]
     }
 }
