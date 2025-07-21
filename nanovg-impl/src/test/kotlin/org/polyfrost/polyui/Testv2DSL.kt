@@ -137,8 +137,15 @@ fun main() {
             )
             text("i am some text that has been limited, so at some point i will stop showing up and i will just be cut off, which is a pretty handy feature.", limited = true, visibleSize = 400f by 12f)
             textInput(visibleSize = 150f by 12f)
-            block(size = 60f by 18f, alignment = Align(main = Align.Main.Center)) {
-                text("hello")
+            group(size = Vec2(300f, 80f), alignment = Align(padEdges = Vec2(4f, 4f), main = Align.Content.SpaceEvenly, cross = Align.Content.SpaceEvenly)) {
+                block(60f by 30f)
+                block(40f by 30f)
+                block(40f by 30f)
+                block(60f by 30f)
+                block(60f by 30f)
+                block(40f by 30f)
+                block(40f by 30f)
+                block(60f by 30f)
             }
         }
         boxedNumericInput.add()
