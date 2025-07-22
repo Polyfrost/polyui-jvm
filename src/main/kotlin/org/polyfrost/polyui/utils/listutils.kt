@@ -111,7 +111,7 @@ inline fun <L, E> L.fastRemoveIfReversed(predicate: (E) -> Boolean) where L : Mu
             return
         }
         if (predicate(this[i])) {
-            this.removeAt(i)
+            this.removeAt(i.coerceAtMost(size - 1))
         }
     }
 }
