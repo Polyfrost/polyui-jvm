@@ -106,9 +106,12 @@ inline fun <L, E> L.fastRemoveIf(predicate: (E) -> Boolean) where L : MutableLis
 @kotlin.internal.InlineOnly
 inline fun <L, E> L.fastRemoveIfReversed(predicate: (E) -> Boolean) where L : MutableList<E>, L : RandomAccess {
     for (i in indices.reversed()) {
-        if (i > this.size - 1) PolyUI.LOGGER.error("FAST_WARN_CONCURRENT_MODIFICATION_RM_REV")
+        if (i > this.size - 1) {
+            PolyUI.LOGGER.error("FAST_WARN_CONCURRENT_MODIFICATION_RM_REV")
+            return
+        }
         if (predicate(this[i])) {
-            this.removeAt(i.coerceAtMost(size - 1))
+            this.removeAt(i)
         }
     }
 }
