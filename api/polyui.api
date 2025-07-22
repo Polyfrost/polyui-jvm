@@ -317,6 +317,16 @@ public final class org/polyfrost/polyui/animate/Linear : org/polyfrost/polyui/an
 	public fun clone ()Lorg/polyfrost/polyui/animate/Animation;
 }
 
+public final class org/polyfrost/polyui/animate/SetAnimation : java/lang/Enum {
+	public static final field Fade Lorg/polyfrost/polyui/animate/SetAnimation;
+	public static final field None Lorg/polyfrost/polyui/animate/SetAnimation;
+	public static final field SlideLeft Lorg/polyfrost/polyui/animate/SetAnimation;
+	public static final field SlideRight Lorg/polyfrost/polyui/animate/SetAnimation;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/polyui/animate/SetAnimation;
+	public static fun values ()[Lorg/polyfrost/polyui/animate/SetAnimation;
+}
+
 public final class org/polyfrost/polyui/color/ColorUtils {
 	public static final fun HSBtoRGB (FFFF)I
 	public static synthetic fun HSBtoRGB$default (FFFFILjava/lang/Object;)I
@@ -700,7 +710,10 @@ public abstract class org/polyfrost/polyui/component/Component {
 	public fun rescale0 (FFZ)V
 	public final fun rescaleToPolyUIInstance ()V
 	public final fun set (ILorg/polyfrost/polyui/component/Component;)V
+	public final fun set (Ljava/lang/String;Lorg/polyfrost/polyui/component/Component;)V
 	public final fun set (Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/component/Component;)V
+	public final fun set (Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/animate/SetAnimation;Lorg/polyfrost/polyui/animate/Animation;)V
+	public static synthetic fun set$default (Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/animate/SetAnimation;Lorg/polyfrost/polyui/animate/Animation;ILjava/lang/Object;)V
 	public final fun setAlignment (Lorg/polyfrost/polyui/unit/Align;)V
 	public final fun setAt (J)V
 	protected final fun setChildren (Ljava/util/ArrayList;)V
@@ -801,6 +814,8 @@ public abstract class org/polyfrost/polyui/component/Scrollable : org/polyfrost/
 	protected final fun getVisHeight ()F
 	protected final fun getVisWidth ()F
 	public fun getVisibleSize ()J
+	public final fun getXScroll ()Lorg/polyfrost/polyui/animate/Animation;
+	public final fun getYScroll ()Lorg/polyfrost/polyui/animate/Animation;
 	public final fun isScrolling ()Z
 	public final fun isScrollingX ()Z
 	public final fun isScrollingY ()Z
@@ -811,6 +826,7 @@ public abstract class org/polyfrost/polyui/component/Scrollable : org/polyfrost/
 	public final fun resetScroll ()V
 	public final fun screenAt ()J
 	public final fun setHasVisibleSize (Z)V
+	public final fun setScreenAt (J)V
 	public fun setShouldScroll (Z)V
 	protected final fun setVisHeight (F)V
 	protected final fun setVisWidth (F)V
@@ -1939,6 +1955,15 @@ public final class org/polyfrost/polyui/operations/Scale : org/polyfrost/polyui/
 	public synthetic fun <init> (Lorg/polyfrost/polyui/component/Drawable;FFZLorg/polyfrost/polyui/animate/Animation;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getTargetScaleX ()F
 	public final fun getTargetScaleY ()F
+	public fun verify ()Z
+}
+
+public final class org/polyfrost/polyui/operations/Scissor : org/polyfrost/polyui/operations/ComponentOp {
+	public fun <init> (FFFFLorg/polyfrost/polyui/renderer/Renderer;)V
+	public fun <init> (Lorg/polyfrost/polyui/unit/Vec4;Lorg/polyfrost/polyui/renderer/Renderer;)V
+	public fun apply ()V
+	public fun exclusive ()Z
+	public fun unapply ()Z
 	public fun verify ()Z
 }
 

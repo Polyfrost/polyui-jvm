@@ -72,11 +72,13 @@ abstract class Scrollable(
 
     @Locking
     @set:Synchronized
-    private var xScroll: Animation? = null
+    var xScroll: Animation? = null
+        private set
 
     @Locking
     @set:Synchronized
-    private var yScroll: Animation? = null
+    var yScroll: Animation? = null
+        private set
 
     private var pushed = false
 
@@ -106,9 +108,9 @@ abstract class Scrollable(
 
     @Suppress("INAPPLICABLE_JVM_NAME")
     @get:JvmName("screenAt")
+    @set:JvmName("setScreenAt")
     final override var screenAt: Vec2 = Vec2.ZERO
         get() = if (scrolling) field else this.at
-        private set
 
     override fun setup(polyUI: PolyUI): Boolean {
         if (!super.setup(polyUI)) return false
@@ -140,9 +142,7 @@ abstract class Scrollable(
             val (sax, say) = screenAt
             renderer.pushScissorIntersecting(sax, say, vsx, vsy)
             if (x != px || y != py) {
-                val dx = x - px
-                val dy = y - py
-                updateScrollingChildrenAndClip(this, dx, dy, Vec2(dx, dy), sax, say, vsx, vsy)
+                clipChildren()
                 return true
             }
         }
@@ -260,27 +260,6 @@ abstract class Scrollable(
         cur.children?.fastEach {
             if (it is Scrollable) it.resetScroll()
             else _resetScroll(it)
-        }
-    }
-
-    /**
-     * when this object has scrollable children, the [xScroll], [yScroll] and [screenAt] fields are **not** updated automatically.
-     *
-     * in order to make sure that these scrollable children move when the parent scrolls, we need to do this manually. as we are iterating over this
-     * component's children already, we can save some iterations by also doing [clipChildren] in this method.
-     *
-     * @since 1.7.38
-     */
-    private fun updateScrollingChildrenAndClip(cur: Component, dx: Float, dy: Float, vec: Vec2, tx: Float, ty: Float, tw: Float, th: Float) {
-        cur.children?.fastEach { cmp ->
-            if(cmp is Scrollable) {
-                cmp.xScroll?.let { it.from += dx; it.to += dx }
-                cmp.yScroll?.let { it.from += dy; it.to += dy }
-                cmp.screenAt += vec
-            }
-            val isOutside = !cmp.intersects(tx, ty, tw, th)
-            cmp.clipped = isOutside
-            updateScrollingChildrenAndClip(cmp, dx, dy, vec, tx, ty, tw, th)
         }
     }
 }

@@ -37,7 +37,9 @@ import org.polyfrost.polyui.component.extensions.getOperationValueOrElse
 import org.polyfrost.polyui.component.extensions.getTargetPosition
 import org.polyfrost.polyui.component.extensions.getTargetScale
 import org.polyfrost.polyui.component.extensions.getTargetSize
+import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.unit.Vec4
 import kotlin.math.PI
 import kotlin.math.sin
 
@@ -71,7 +73,6 @@ class Move<S : Component>(
         if (tx != 0f) self.x = ox + (tx * value)
         if (ty != 0f) self.y = oy + (ty * value)
         if (!self.polyUI.inputManager.mouseDown) self.polyUI.inputManager.recalculate()
-        if (self is Scrollable) self.resetScroll()
     }
 
     override fun verify() = tx != 0f || ty != 0f
@@ -319,4 +320,24 @@ class Recolor<S : Drawable>(
     }
 
     override fun apply(value: Float) {}
+}
+
+/**
+ * Simple scissor operation that scissors all rendering into the given [rectangle].
+ * This is completely separate from a component, so a [renderer] needs to be provided.
+ *
+ * @since 1.11.3
+ */
+class Scissor(private val rectangle: Vec4, private val renderer: Renderer) : ComponentOp {
+    constructor(x: Float, y: Float, width: Float, height: Float, renderer: Renderer) :
+            this(Vec4.of(x, y, width, height), renderer)
+    override fun apply() {
+        val (x, y, w, h) = rectangle
+        renderer.pushScissor(x, y, w, h)
+    }
+
+    override fun unapply(): Boolean {
+        renderer.popScissor()
+        return false
+    }
 }

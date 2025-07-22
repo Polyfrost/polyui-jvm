@@ -24,11 +24,14 @@ package org.polyfrost.polyui.component
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.polyfrost.polyui.PolyUI
+import org.polyfrost.polyui.animate.Animation
 import org.polyfrost.polyui.animate.Animations
-import org.polyfrost.polyui.component.extensions.fadeIn
+import org.polyfrost.polyui.animate.SetAnimation
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.operations.ComponentOp
 import org.polyfrost.polyui.operations.Fade
+import org.polyfrost.polyui.operations.Move
+import org.polyfrost.polyui.operations.Scissor
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.annotations.Locking
 import org.polyfrost.polyui.utils.annotations.SideEffects
@@ -102,6 +105,10 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
             _x = value
             children?.fastEach {
                 it.x += d
+                if (it is Scrollable && it.scrolling) {
+                    it.xScroll?.let { it.from += d; it.to += d }
+                    it.screenAt += Vec2(d, 0f)
+                }
             }
         }
 
@@ -114,6 +121,10 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
             _y = value
             children?.fastEach {
                 it.y += d
+                if (it is Scrollable && it.scrolling) {
+                    it.yScroll?.let { it.from += d; it.to += d }
+                    it.screenAt += Vec2(0f, d)
+                }
             }
         }
 
@@ -232,7 +243,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
      * there is adequate space around each object in the UI.
      *
      * The positioner will use this value if it set, and it will add a level of padding directly to this
-     * component. **it is used in conjunction with the [Align.pad] property.**
+     * component. **it is used in conjunction with the [Align.padBetween] property.**
      *
      * @since 1.4
      */
@@ -513,10 +524,6 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
 
     operator fun get(x: Float, y: Float) = children?.first { it.isInside(x, y) } ?: throw NoSuchElementException("no children on $this")
 
-    @Locking
-    operator fun set(old: Int, new: Component) = set(this[old], new)
-
-
     /**
      * the runtime equivalent of adding children to this component during the constructor.
      */
@@ -581,6 +588,15 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         parent.removeChild(parent.children?.indexOf(this) ?: throw ConcurrentModificationException(), recalculate)
     }
 
+    @Locking
+    operator fun set(old: Int, new: Component?) = set(this[old], new, SetAnimation.Fade)
+
+    @Locking
+    operator fun set(old: String, new: Component?) = set(this[old], new, SetAnimation.Fade)
+
+    @Locking
+    operator fun set(old: Component, new: Component?) = set(old, new, SetAnimation.Fade)
+
     /**
      * Replace a child of this component with another component.
      *
@@ -589,7 +605,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
      */
     @Locking
     @Synchronized
-    operator fun set(old: Component, new: Component?) {
+    fun set(old: Component, new: Component?, animation: SetAnimation, curve: Animation? = Animations.Default.create(0.3.seconds)) {
         val children = children ?: throw NoSuchElementException("no children on $this")
         val index = children.indexOf(old)
         require(index != -1) { "component $old is not a child of $this" }
@@ -607,13 +623,38 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
 
         polyUI.inputManager.drop(this as? Inputtable)
         val addedAsAnimation: Boolean
-        if (old is Drawable) {
+        if (old is Drawable && animation != SetAnimation.None) {
             addedAsAnimation = true
-            addOperation(Fade(old, 0f, false, Animations.Default.create(0.3.seconds)) {
+            // curve is used two times at once so just double its duration
+            curve?.durationNanos *= 2L
+            var scissor: Scissor? = null
+            val onFinish: (Drawable.() -> Unit) = {
                 children.remove(this)
                 this.accept(Event.Lifetime.Removed)
+                this.removeOperation(scissor)
+                needsRedraw = true
                 _parent = null
-            })
+            }
+            when (animation) {
+                SetAnimation.Fade -> Fade(old, 0f, false, curve, onFinish)
+                SetAnimation.SlideLeft -> {
+                    val (visX, visY) = old.screenAt
+                    val (visWidth, visHeight) = old.visibleSize
+                    scissor = Scissor(visX, visY, visWidth, visHeight, old.renderer)
+                    old.addOperation(scissor)
+                    Move(old, old.x - old.width, old.y, false, curve, onFinish)
+                }
+
+                SetAnimation.SlideRight -> {
+                    val (visX, visY) = old.screenAt
+                    val (visWidth, visHeight) = old.visibleSize
+                    scissor = Scissor(visX, visY, visWidth, visHeight, old.renderer)
+                    old.addOperation(scissor)
+                    Move(old, old.x + old.width, old.y, false, curve, onFinish)
+                }
+
+                else -> throw AssertionError("Impossible")
+            }.add()
         } else {
             addedAsAnimation = false
             children.remove(old)
@@ -631,11 +672,32 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         if (addedAsAnimation) children.add(old)
         new.x = oldX - (oldX - oldScreenX)
         new.y = oldY - (oldY - oldScreenY)
+        clipChildren()
 
-        if (new is Scrollable) new.resetScroll()
         if (new is Drawable) {
-            new.alpha = 0f
-            new.fadeIn(0.3.seconds)
+            when (animation) {
+                SetAnimation.Fade -> {
+                    new.alpha = 0f
+                    Fade(new, 1f, true, curve)
+                }
+
+                SetAnimation.SlideLeft -> {
+                    val pos = Vec2(new.x, new.y)
+                    new.x = new.x + new.width
+                    val op = Move(new, pos, false, curve)
+                    op
+                }
+
+                SetAnimation.SlideRight -> {
+                    val pos = Vec2(new.x, new.y)
+                    new.x = new.x - old.width
+                    val op = Move(new, pos, false, curve)
+                    op
+                }
+
+                else -> throw AssertionError("Impossible")
+            }.add()
+
         }
         if (this is Scrollable) this.tryMakeScrolling()
     }
@@ -682,10 +744,11 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
      */
     @Locking(`when` = "operations != null")
     @Synchronized
-    fun removeOperation(componentOp: ComponentOp) {
+    fun removeOperation(componentOp: ComponentOp?) {
+        if (componentOp == null) return
         this.operations?.apply {
             if (size == 1) operations = null
-            else remove(componentOp)
+            else remove(componentOp).also { if (!it) PolyUI.LOGGER.warn("Tried to remove a operation $componentOp from $this, but it wasn't present on this component!") }
         }
     }
 
