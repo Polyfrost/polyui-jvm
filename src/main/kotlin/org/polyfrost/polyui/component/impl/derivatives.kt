@@ -386,7 +386,7 @@ fun BoxedTextInput(
                 (parent.parent as? Inputtable)?.accept(it) == true
             }
         },
-        alignment = Align(main = if (center) Align.Content.Center else Align.Content.Start, pad = Vec2(6f, 10f)),
+        alignment = Align(main = if (center) Align.Content.Center else Align.Content.Start, cross = Align.Content.Center, pad = Vec2(6f, 10f)),
         size = size,
     ).afterInit {
         if (!center) {
@@ -518,6 +518,7 @@ fun DraggingNumericTextInput(
                 }
             }
         },
+        alignment = Align(cross = Align.Content.Center),
         size = size
     ).namedId("DraggingNumericTextInput")
 }
