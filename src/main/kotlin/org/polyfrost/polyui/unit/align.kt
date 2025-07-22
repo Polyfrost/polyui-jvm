@@ -31,14 +31,14 @@ package org.polyfrost.polyui.unit
  *
  * **Hot-Tip**: A wrap mode of [Wrap.ALWAYS] is usually equivalent to [Mode.Vertical] and [Wrap.NEVER], and is more efficient in terms of layout calculations.
  */
-data class Align(val main: Content = Content.Start, val cross: Content = Content.Center, val line: Line = Line.Center, val mode: Mode = Mode.Horizontal, @get:JvmName("padBetween") val padBetween: Vec2 = Vec2(6f, 6f), @get:JvmName("padEdges") val padEdges: Vec2 = Vec2(6f, 6f), val wrap: Wrap = Wrap.AUTO) {
-    constructor(main: Content = Content.Start, cross: Content = Content.Center, line: Line = Line.Center, mode: Mode = Mode.Horizontal, px: Float, py: Float) : this(main, cross, line, mode, Vec2(px, py), Vec2(px, py))
+data class Align(val main: Content = Content.Start, val cross: Content = Content.Start, val line: Line = Line.Start, val mode: Mode = Mode.Horizontal, @get:JvmName("padBetween") val padBetween: Vec2 = Vec2(6f, 6f), @get:JvmName("padEdges") val padEdges: Vec2 = Vec2(6f, 6f), val wrap: Wrap = Wrap.AUTO) {
+    constructor(main: Content = Content.Start, cross: Content = Content.Start, line: Line = Line.Start, mode: Mode = Mode.Horizontal, px: Float, py: Float) : this(main, cross, line, mode, Vec2(px, py), Vec2(px, py))
 
     /**
      * *(since 1.11.0)* the padding now supports seperate [padEdges] and [padBetween]. you can use that constructor instead if you wish.
      */
     @JvmOverloads
-    constructor(main: Content = Content.Start, cross: Content = Content.Center, line: Line = Line.Center, mode: Mode = Mode.Horizontal, pad: Vec2 = Vec2(6f, 6f), wrap: Wrap = Wrap.AUTO) : this(main, cross, line, mode, pad, pad, wrap)
+    constructor(main: Content = Content.Start, cross: Content = Content.Start, line: Line = Line.Start, mode: Mode = Mode.Horizontal, pad: Vec2 = Vec2(6f, 6f), wrap: Wrap = Wrap.AUTO) : this(main, cross, line, mode, pad, pad, wrap)
 
     enum class Content {
         /** Items are packed in order they are added from the start of the row. */
