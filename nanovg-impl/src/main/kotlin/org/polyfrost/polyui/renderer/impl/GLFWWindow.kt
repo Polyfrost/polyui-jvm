@@ -244,10 +244,12 @@ class GLFWWindow @JvmOverloads constructor(
                 }
                 return@glfwSetKeyCallback
             }
+
+            val code = if (keyCode in 0..255) keyCode.toChar().lowercaseChar().toInt() else keyCode
             if (action == GLFW_PRESS) {
-                polyUI.inputManager.keyDown(keyCode)
+                polyUI.inputManager.keyDown(code)
             } else {
-                polyUI.inputManager.keyUp(keyCode)
+                polyUI.inputManager.keyUp(code)
             }
         }
 

@@ -1748,6 +1748,7 @@ public final class org/polyfrost/polyui/input/Modifiers {
 	public static final synthetic fun box-impl (B)Lorg/polyfrost/polyui/input/Modifiers;
 	public static fun constructor-impl (B)B
 	public static fun constructor-impl ([Lorg/polyfrost/polyui/input/KeyModifiers;)B
+	public static final fun contains-impl (BB)Z
 	public static final fun equal-impl (BB)Z
 	public fun equals (Ljava/lang/Object;)Z
 	public static fun equals-impl (BLjava/lang/Object;)Z
@@ -2420,6 +2421,7 @@ public final class org/polyfrost/polyui/utils/StringUtils {
 	public static final fun substringSafe (Ljava/lang/String;II)Ljava/lang/String;
 	public static synthetic fun substringSafe$default (Ljava/lang/String;IIILjava/lang/Object;)Ljava/lang/String;
 	public static final fun substringToWidth (Ljava/lang/String;Lorg/polyfrost/polyui/renderer/Renderer;Lorg/polyfrost/polyui/data/Font;FF)Lkotlin/Pair;
+	public static final fun toString (Ljava/lang/Float;I)Ljava/lang/String;
 	public static final fun truncate (Ljava/lang/String;Lorg/polyfrost/polyui/renderer/Renderer;Lorg/polyfrost/polyui/data/Font;FFLjava/lang/String;)Ljava/lang/String;
 	public static synthetic fun truncate$default (Ljava/lang/String;Lorg/polyfrost/polyui/renderer/Renderer;Lorg/polyfrost/polyui/data/Font;FFLjava/lang/String;ILjava/lang/Object;)Ljava/lang/String;
 	public static final fun wrap (Ljava/lang/String;FLorg/polyfrost/polyui/renderer/Renderer;Lorg/polyfrost/polyui/data/Font;FLjava/util/ArrayList;)Ljava/util/ArrayList;

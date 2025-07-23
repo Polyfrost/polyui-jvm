@@ -26,6 +26,7 @@ package org.polyfrost.polyui.utils
 import org.polyfrost.polyui.data.Font
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.unit.fix
 
 /**
  * append the given [Char][c] to this [StringBuilder], repeated [repeats] times.
@@ -45,6 +46,24 @@ fun StringBuilder.append(c: Char, repeats: Int): StringBuilder {
         }
     }
     return this
+}
+
+/**
+ * Advanced Float toString() that supports a given number of decimal places.
+ *
+ * Additionally, it will remove trailing zeros from the decimal part, so that it will not show unnecessary zeros.
+ *
+ * @since 1.11.7
+ */
+fun Float?.toString(dps: Int): String {
+    if (this == null) return "0"
+    val v = this.fix(dps)
+    // remove trailing zeros
+    val vi = v.toInt()
+    return if(v == vi.toFloat()) {
+        // no decimal part
+        vi.toString()
+    } else v.toString()
 }
 
 fun String.removeSurrounding(char: Char): String {

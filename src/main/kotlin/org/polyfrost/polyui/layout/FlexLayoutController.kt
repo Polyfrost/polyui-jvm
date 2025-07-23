@@ -153,12 +153,13 @@ object FlexLayoutController : LayoutController {
             if (it.layoutIgnored) return@fastEach
             // todo: maybe figure out if we can supply something plausible here as a suggested size?
             if (!it.sizeValid) handleInvalidSize(it, Vec2.ZERO, polyUI)
-            if (it.visibleSize[main] > wrapCap && !iKnowHowBigIAm) {
+            // todo: removed as it introduced bugs with added UIs to a resized instance. wasn't very useful anyway
+//            if (it.visibleSize[main] > wrapCap && !iKnowHowBigIAm) {
                 // object is too large for this in its entirety (it is bigger than our wrap capacity), so we
                 // ask it to recalculate its size (hopefully it will shrink, if not then oh well)
-                it.setup(polyUI)
-                it.recalculate()
-            }
+//                it.setup(polyUI)
+//                it.recalculate()
+//            }
             val itSize = it.visibleSize
             val itPad = it.padding
             val itMain = itPad[main] + itPad[main + 2] + itSize[main]

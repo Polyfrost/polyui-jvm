@@ -40,6 +40,7 @@ import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.coerceWithin
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.mapToArray
+import org.polyfrost.polyui.utils.toString
 import kotlin.experimental.or
 import kotlin.math.PI
 
@@ -414,8 +415,8 @@ fun BoxedNumericInput(
     size: Vec2 = Vec2.ZERO,
 ) = BoxedTextInput(
     image, pre,
-    placeholder = "${if (integral) max.toInt() else max}",
-    initialValue = "${if (integral) initialValue.toInt() else initialValue}",
+    placeholder = "${if (integral) max.toInt() else max.toString(dps = 2)}",
+    initialValue = "${if (integral) initialValue.toInt() else initialValue.toString(dps = 2)}",
     fontSize, center, post, size
 ).also {
     require(initialValue in min..max) { "initial value $initialValue is out of range for numeric text input of $min..$max" }
@@ -427,14 +428,14 @@ fun BoxedNumericInput(
                     val text = it.getTextFromBoxedTextInput()
                     val value = text.text.toFloat()
                     val newValue = (value + step).coerceIn(min, max)
-                    text.text = (if (integral) newValue.toInt() else newValue).toString()
+                    text.text = if (integral) newValue.toInt().toString() else newValue.toString(dps = 2)
                     true
                 }.withHoverStates().also { it.rotation = PI },
                 Image("polyui/chevron-down.svg".image(), size = Vec2(14f, 14f)).onClick { _ ->
                     val text = it.getTextFromBoxedTextInput()
                     val value = text.text.toFloat()
                     val newValue = (value - step).coerceIn(min, max)
-                    text.text = (if (integral) newValue.toInt() else newValue).toString()
+                    text.text = if (integral) newValue.toInt().toString() else newValue.toString(dps = 2)
                     true
                 }.withHoverStates(),
                 alignment = Align(main = Align.Content.Center, mode = Align.Mode.Vertical, pad = Vec2(1f, 0f)),
@@ -488,10 +489,10 @@ fun DraggingNumericTextInput(
         val input = parent[1] as TextInput
         val isNegative = polyUI.mouseX < prevX
         if (input.text.isEmpty()) {
-            input.text = if (isNegative) "0" else step.toString()
+            input.text = if (isNegative) "0" else step.toString(dps = 2)
         } else {
             val txt = if (suffix != null) input.text.removeSuffix(suffix) else input.text
-            input.text = txt.toFloatOrNull()?.let { if (isNegative) (it - step).coerceAtLeast(min) else (it + step).coerceAtMost(max) }.toString()
+            input.text = txt.toFloatOrNull()?.let { if (isNegative) (it - step).coerceAtLeast(min) else (it + step).coerceAtMost(max) }.toString(dps = 2)
             needsRedraw = true
         }
         prevX = polyUI.mouseX
@@ -505,7 +506,7 @@ fun DraggingNumericTextInput(
     return Block(
         pre,
         TextInput(
-            text = if (initialValue == 0f) "" else if (suffix != null) "$initialValue$suffix" else initialValue.toString(),
+            text = if (initialValue == 0f) "" else if (suffix != null) "${initialValue.toString(dps = 2)}$suffix" else initialValue.toString(dps = 2),
             placeholder = if (suffix != null) "0$suffix" else "0",
             fontSize = fontSize
         ).numeric(min = min, max = max, integral = integral, ignoreSuffix = suffix).apply {

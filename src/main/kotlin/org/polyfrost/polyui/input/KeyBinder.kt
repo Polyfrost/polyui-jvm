@@ -233,12 +233,12 @@ class KeyBinder(private val settings: Settings) {
     open class Bind(val unmappedKeys: IntArray? = null, val keys: Array<Keys>? = null, val mouse: IntArray? = null, @get:JvmName("getMods") val mods: Modifiers = Modifiers(0), val durationNanos: Long = 0L, @Transient val action: (Boolean) -> Boolean) {
         constructor(chars: CharArray? = null, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: (Boolean) -> Boolean) : this(
             chars?.map {
-                it.code
+                it.lowercaseChar().code
             }?.toIntArray(),
             keys, mouse, mods, durationNanos, action,
         )
 
-        constructor(char: Char, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: (Boolean) -> Boolean) : this(intArrayOf(char.code), keys, mouse, mods, durationNanos, action)
+        constructor(char: Char, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: (Boolean) -> Boolean) : this(intArrayOf(char.lowercaseChar().code), keys, mouse, mods, durationNanos, action)
         constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Array<Mouse>? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: (Boolean) -> Boolean) : this(
             unmappedKeys, keys,
             mouse?.map {
