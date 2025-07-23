@@ -366,5 +366,17 @@ value class Modifiers(val value: Byte) {
         return other == value
     }
 
+    /**
+     * @return true if this modifier instance is contained in the given [other] byte.
+     */
+    fun contains(other: Byte): Boolean {
+        if (PolyUI.isOnMac && this.hasControl) {
+            // macOS: consider control as meta key (command)
+            val i = other.toInt()
+            return value.toInt() and 0b00111111 or (i shr 4) == i
+        }
+        return value == other || (value.toInt() and other.toInt() == value.toInt())
+    }
+
     override fun toString() = "$name ($value)"
 }

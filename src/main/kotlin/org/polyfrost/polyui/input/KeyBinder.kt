@@ -311,6 +311,7 @@ class KeyBinder(private val settings: Settings) {
             if (!unmappedKeys.matches(c)) return false
             if (!keys.matches(k)) return false
             if (!mouse.matches(m)) return false
+            if (isSingleKey && isModsOnly) return this.mods.contains(mods)
             if ((isModsOnly && !this.mods.equal(mods)) || !this.mods.equalLenient(mods)) return false
             return true
         }
@@ -372,7 +373,7 @@ class KeyBinder(private val settings: Settings) {
         }
 
         protected fun <T> Array<T>?.matches(other: ArrayList<T>): Boolean {
-            if (this == null) return other.size == 0
+            if (this == null) return if (isSingleKey) true else other.size == 0
             if (isSingleKey && this.size == 1) return other.contains(this[0])
             if (other.size != this.size) return false
             for (i in this) {
@@ -382,7 +383,7 @@ class KeyBinder(private val settings: Settings) {
         }
 
         protected fun IntArray?.matches(other: IntArraySet): Boolean {
-            if (this == null) return other.size == 0
+            if (this == null) return if (isSingleKey) true else other.size == 0
             if (isSingleKey && this.size == 1) return other.contains(this[0])
             if (other.size != this.size) return false
             for (i in this) {
