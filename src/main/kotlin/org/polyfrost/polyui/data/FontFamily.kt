@@ -39,7 +39,9 @@ open class FontFamily(
     val name: String,
     path: String,
     @Transient
-    private val fallback: FontFamily? = null,
+    val type: Type = Type.TrueType,
+    @Transient
+    val fallback: FontFamily? = null,
 ) {
     private constructor() : this("", "")
 
@@ -153,7 +155,7 @@ open class FontFamily(
      */
     protected open fun fload(weight: Font.Weight, italic: Boolean, origin: Font.Weight? = null): Font {
         val style = getStyle(weight, italic)
-        val p = "$name-$style.ttf"
+        val p = "$name-$style.${type.extension}"
         val address = path.resolve(p).toString()
         return if (!resourceExists(address)) {
             val fb = weight.fb
@@ -171,4 +173,16 @@ open class FontFamily(
     }
 
     override fun toString() = "FontFamily($name, $path, fallback=${fallback?.name})"
+
+    /**
+     * Represents the type of font file.
+     * @since 1.11.9
+     */
+    enum class Type(@Transient val extension: String) {
+        TrueType("ttf"), OpenType("otf");
+
+        fun getTypeFromFile(fileName: String): Type? {
+            return entries.find { fileName.endsWith(".${it.extension}") }
+        }
+    }
 }
