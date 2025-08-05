@@ -45,7 +45,7 @@ open class FontFamily(
 ) {
     private constructor() : this("", "")
 
-    protected val path: URI = URI.create(path)
+    protected val path: URI = URI.create(path.let { if (it.endsWith('/')) it else "$it/" })
 
     @delegate:Transient
     open val thin by lazy { fload(Font.Weight.Thin, false) }
