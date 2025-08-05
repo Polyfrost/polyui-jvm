@@ -683,7 +683,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
 
                 SetAnimation.SlideLeft -> {
                     val pos = Vec2(new.x, new.y)
-                    new.x = new.x + new.width
+                    new.x = new.x + old.width
                     val op = Move(new, pos, false, curve)
                     op
                 }
