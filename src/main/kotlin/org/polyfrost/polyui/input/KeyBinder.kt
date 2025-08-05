@@ -115,12 +115,13 @@ class KeyBinder(private val settings: Settings) {
     @ApiStatus.Internal
     fun update(deltaTimeNanos: Long, mods: Byte, down: Boolean): Boolean {
         if (!hasTimeSensitiveListeners && deltaTimeNanos > 0L) return false
+        var ret = false
         listeners.fastEach {
             if (it.update(downUnmappedKeys, downKeys, downMouseButtons, mods, deltaTimeNanos, down)) {
-                return true
+                ret = true
             }
         }
-        return false
+        return ret
     }
 
     private fun completeRecording(mods: Byte) {
@@ -263,7 +264,7 @@ class KeyBinder(private val settings: Settings) {
             mouse, mods, durationNanos, action,
         )
 
-        constructor(modifiers: Modifiers = Modifiers(0), action: (Boolean) -> Boolean) : this(unmappedKeys = null, key = null, mouse = null, mods = modifiers, durationNanos = 0L, action = action)
+        constructor(mods: Modifiers = Modifiers(0), action: (Boolean) -> Boolean) : this(unmappedKeys = null, key = null, mouse = null, mods = mods, durationNanos = 0L, action = action)
 
         @Transient
         private var time = 0L
@@ -311,9 +312,7 @@ class KeyBinder(private val settings: Settings) {
             if (!unmappedKeys.matches(c)) return false
             if (!keys.matches(k)) return false
             if (!mouse.matches(m)) return false
-            if (isSingleKey && isModsOnly) return this.mods.contains(mods)
-            if ((isModsOnly && !this.mods.equal(mods)) || !this.mods.equalLenient(mods)) return false
-            return true
+            return this.mods.containedBy(mods)
         }
 
         final override fun toString(): String {
@@ -373,9 +372,7 @@ class KeyBinder(private val settings: Settings) {
         }
 
         protected fun <T> Array<T>?.matches(other: ArrayList<T>): Boolean {
-            if (this == null) return if (isSingleKey) true else other.size == 0
-            if (isSingleKey && this.size == 1) return other.contains(this[0])
-            if (other.size != this.size) return false
+            if (this == null) return true
             for (i in this) {
                 if (i !in other) return false
             }
@@ -383,9 +380,7 @@ class KeyBinder(private val settings: Settings) {
         }
 
         protected fun IntArray?.matches(other: IntArraySet): Boolean {
-            if (this == null) return if (isSingleKey) true else other.size == 0
-            if (isSingleKey && this.size == 1) return other.contains(this[0])
-            if (other.size != this.size) return false
+            if (this == null) return true
             for (i in this) {
                 if (i !in other) return false
             }

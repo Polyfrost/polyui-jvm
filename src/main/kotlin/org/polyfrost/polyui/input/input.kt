@@ -367,7 +367,9 @@ value class Modifiers(val value: Byte) {
     }
 
     /**
-     * @return true if this modifier instance is contained in the given [other] byte.
+     * @return true if [other] is contained in this modifier sequence.
+     *
+     * For the inverse, see [containedBy].
      */
     fun contains(other: Byte): Boolean {
         if (PolyUI.isOnMac && this.hasControl) {
@@ -376,6 +378,21 @@ value class Modifiers(val value: Byte) {
             return value.toInt() and 0b00111111 or (i shr 4) == i
         }
         return value == other || (value.toInt() and other.toInt() == value.toInt())
+    }
+
+    /**
+     * @return true if this modifier instance is contained in the given [other] byte.
+     *
+     * For the inverse, see [contains].
+     * @since 1.11.8
+     */
+    fun containedBy(other: Byte): Boolean {
+        if (PolyUI.isOnMac && this.hasControl) {
+            // macOS: consider control as meta key (command)
+            val i = other.toInt()
+            return value.toInt() and 0b00111111 or (i shr 4) == value.toInt()
+        }
+        return other == value || (other.toInt() and value.toInt() == value.toInt())
     }
 
     override fun toString() = "$name ($value)"
