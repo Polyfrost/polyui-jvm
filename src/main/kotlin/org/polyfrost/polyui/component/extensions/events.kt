@@ -21,6 +21,8 @@
 
 package org.polyfrost.polyui.component.extensions
 
+import org.jetbrains.annotations.Contract
+import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
@@ -28,11 +30,17 @@ import org.polyfrost.polyui.component.Inputtable
 import org.polyfrost.polyui.component.impl.Text
 import org.polyfrost.polyui.dsl.EventDSL
 import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.event.State
+import org.polyfrost.polyui.operations.Fade
 import org.polyfrost.polyui.operations.Move
 import org.polyfrost.polyui.operations.Resize
+import org.polyfrost.polyui.unit.SpawnPos
 import org.polyfrost.polyui.unit.seconds
+import org.polyfrost.polyui.utils.coerceWithin
+import java.lang.ref.WeakReference
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
+import kotlin.experimental.or
 
 @EventDSL.Marker
 @OptIn(ExperimentalContracts::class)
@@ -126,6 +134,46 @@ fun <S : Inputtable> S.onPress(func: S.(Event.Mouse.Pressed) -> Unit): S {
 
 fun <S : Inputtable> S.onRelease(func: S.(Event.Mouse.Released) -> Unit): S {
     on(Event.Mouse.Released, func)
+    return this
+}
+
+/**
+ * Add a listener to this drawable for the given [state] property.
+ * This is a convenience method for [State.listen].
+ *
+ * @since 1.12.0
+ * @see State
+ */
+@OverloadResolutionByLambdaReturnType
+@JvmName("onChangeStateZ")
+fun <T, S : Inputtable> S.onChange(state: State<T>, func: S.(T) -> Boolean): S {
+    // ASM: possible memory leak if the drawable is removed as the state would still hold a reference to it
+    // so we use a WeakReference to avoid that
+    val weakSelfRef = WeakReference(this)
+    var listener: ((T) -> Boolean)? = null
+    listener = {
+        val self = weakSelfRef.get()
+        if (self == null) {
+            // If the drawable was garbage collected, we don't need to do anything
+            state.removeListener(listener!!)
+            false
+        } else func(self, it)
+    }
+    state.listen(listener)
+    return this
+}
+
+/**
+ * Add a listener to this drawable for the given [state] property.
+ * This is a convenience method for [State.listen].
+ *
+ * @since 1.12.0
+ * @see State
+ */
+@OverloadResolutionByLambdaReturnType
+@JvmName("onChangeState")
+fun <T, S : Inputtable> S.onChange(state: State<T>, func: S.(T) -> Unit): S {
+    onChange(state) { func(this, it); false }
     return this
 }
 
@@ -323,5 +371,69 @@ fun <S : Inputtable> S.setRadiobuttonEntry(index: Int): S {
     Move(selector, selected.at, add = false, animation = Animations.Default.create(0.15.seconds)).add()
     Resize(selector, selected.size, add = false, animation = Animations.Default.create(0.15.seconds)).add()
     if (hasListenersFor(Event.Change.Number)) accept(Event.Change.Number(i))
+    return this
+}
+
+
+/**
+ * Spawn the given component at the mouse position, or above/below it.
+ * **The component must be focusable**.
+ *
+ * @param openNow if true, the component will be focused immediately after spawning. [polyUI] **must not be null** in this case.
+ * @param position the position to spawn the component at, relative to the mouse position. **if the component was created with a set position, this will be ignored, and it will spawn at that position instead**.
+ * @since 1.12.0
+ * @see org.polyfrost.polyui.component.impl.PopupMenu
+ */
+@Contract("null, true, _ -> fail")
+fun <S : Inputtable> S.spawnAtMouse(polyUI: PolyUI?, openNow: Boolean = true, position: SpawnPos = SpawnPos.AtMouse): S {
+    require(focusable) { "Component $this must be focusable to spawn at mouse" }
+    this.events {
+        Event.Focused.Gained then {
+            this.polyUI.master.addChild(this, recalculate = false)
+            if(!this.createdWithSetPosition) {
+                val mx = this.polyUI.mouseX
+                val my = this.polyUI.mouseY
+                val sz = this.polyUI.size
+                when (position) {
+                    SpawnPos.AtMouse -> {
+                        x = mx.coerceWithin(0f, sz.x - this.width)
+                        y = my.coerceWithin(0f, sz.y - this.height)
+                    }
+
+                    SpawnPos.AboveMouse -> {
+                        x = (mx - (this.width / 2f)).coerceWithin(0f, sz.x - this.width)
+                        y = (my - this.height - 6f).coerceWithin(0f, sz.y - this.height)
+                    }
+
+                    SpawnPos.BelowMouse -> {
+                        x = (mx - (this.width / 2f)).coerceWithin(0f, sz.x - this.width)
+                        y = (my + 12f).coerceWithin(0f, sz.y - this.height)
+                    }
+                }
+            }
+            // we are going to set #created-with-set-position to true, so that the position is not recalculated again
+            this.layoutFlags = this.layoutFlags or 0b00000100
+            if (this is Drawable) {
+                alpha = 0f
+                fadeIn(0.2.seconds)
+            }
+            true
+        }
+
+        Event.Focused.Lost then {
+            if (this is Drawable) {
+                Fade(this, 0f, false, Animations.Default.create(0.2.seconds)) {
+                    this.polyUI.master.removeChild(this, recalculate = false)
+                }.add()
+            } else {
+                this.polyUI.master.removeChild(this, recalculate = false)
+            }
+        }
+    }
+
+    if (openNow) {
+        require(polyUI != null) { "polyUI cannot be null if openNow is true" }
+        polyUI.focus(this)
+    }
     return this
 }

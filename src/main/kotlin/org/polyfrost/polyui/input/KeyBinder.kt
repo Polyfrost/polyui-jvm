@@ -312,7 +312,7 @@ class KeyBinder(private val settings: Settings) {
             if (!unmappedKeys.matches(c)) return false
             if (!keys.matches(k)) return false
             if (!mouse.matches(m)) return false
-            return this.mods.containedBy(mods)
+            return this.mods.containedBy(Modifiers(mods))
         }
 
         final override fun toString(): String {

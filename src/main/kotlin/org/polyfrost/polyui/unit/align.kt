@@ -83,6 +83,6 @@ data class Align(val main: Content = Content.Start, val cross: Content = Content
     }
 }
 
-enum class Point {
-    Above, At, Below
+enum class SpawnPos {
+    AboveMouse, AtMouse, BelowMouse
 }

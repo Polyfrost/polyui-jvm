@@ -544,7 +544,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
                     child.y += y
                 }
             }
-            if (child is Inputtable) child.accept(Event.Lifetime.Added)
+            if (child is Inputtable) child.acceptAll(Event.Lifetime.Added)
         }
     }
 
@@ -570,7 +570,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         if (initialized) {
             if (it is Inputtable) {
                 polyUI.inputManager.drop(it)
-                it.accept(Event.Lifetime.Removed)
+                it.acceptAll(Event.Lifetime.Removed)
             }
             if (recalculate) recalculate()
             if (this is Scrollable) {
@@ -630,7 +630,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
             var scissor: Scissor? = null
             val onFinish: (Drawable.() -> Unit) = {
                 children.remove(this)
-                this.accept(Event.Lifetime.Removed)
+                this.acceptAll(Event.Lifetime.Removed)
                 this.removeOperation(scissor)
                 needsRedraw = true
                 _parent = null
@@ -658,12 +658,12 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         } else {
             addedAsAnimation = false
             children.remove(old)
-            if (old is Inputtable) old.accept(Event.Lifetime.Removed)
+            if (old is Inputtable) old.acceptAll(Event.Lifetime.Removed)
             old._parent = null
         }
 
         children.add(index, new)
-        if (new is Inputtable) new.accept(Event.Lifetime.Added)
+        if (new is Inputtable) new.acceptAll(Event.Lifetime.Added)
         val (oldScreenX, oldScreenY) = old.screenAt
         val (oldX, oldY) = old.at
         // asm: temporarily remove the old component so that it does not interfere with the recalculate

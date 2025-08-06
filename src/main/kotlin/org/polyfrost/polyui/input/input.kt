@@ -240,10 +240,10 @@ value class Modifiers(val value: Byte) {
     inline val rShift get() = value.toInt() and 0b00000010 != 0
 
     @kotlin.internal.InlineOnly
-    inline val lCtrl get() = value.toInt() and 0b00000100 != 0
+    inline val lCtrl get() = value.toInt() and 0b00000100 != 0 || (PolyUI.isOnMac && lMeta)
 
     @kotlin.internal.InlineOnly
-    inline val rCtrl get() = value.toInt() and 0b00001000 != 0
+    inline val rCtrl get() = value.toInt() and 0b00001000 != 0 || (PolyUI.isOnMac && rMeta)
 
     @kotlin.internal.InlineOnly
     inline val lAlt get() = value.toInt() and 0b00010000 != 0
@@ -264,7 +264,7 @@ value class Modifiers(val value: Byte) {
     inline val hasShift get() = value.toInt() and 0b00000011 != 0
 
     @kotlin.internal.InlineOnly
-    inline val hasControl get() = value.toInt() and 0b00001100 != 0 || (PolyUI.isOnMac && value.toInt() and 0b11000000 != 0)
+    inline val hasControl get() = value.toInt() and 0b00001100 != 0 || (PolyUI.isOnMac && hasMeta)
 
     @kotlin.internal.InlineOnly
     inline val hasAlt get() = value.toInt() and 0b00110000 != 0
@@ -386,13 +386,24 @@ value class Modifiers(val value: Byte) {
      * For the inverse, see [contains].
      * @since 1.11.8
      */
-    fun containedBy(other: Byte): Boolean {
-        if (PolyUI.isOnMac && this.hasControl) {
-            // macOS: consider control as meta key (command)
-            val i = other.toInt()
-            return value.toInt() and 0b00111111 or (i shr 4) == value.toInt()
-        }
-        return other == value || (other.toInt() and value.toInt() == value.toInt())
+    fun containedBy(other: Modifiers): Boolean {
+        if (lCtrl && rCtrl) return other.hasControl
+        else if (lCtrl) return other.lCtrl
+        else if (rCtrl) return other.rCtrl
+
+        if (lShift && rShift) return other.hasShift
+        else if (lShift) return other.lShift
+        else if (rShift) return other.rShift
+
+        if (lAlt && rAlt) return other.hasAlt
+        else if (lAlt) return other.lAlt
+        else if (rAlt) return other.rAlt
+
+        if (lMeta && rMeta) return other.hasMeta
+        else if (lMeta) return other.lMeta
+        else if (rMeta) return other.rMeta
+
+        return other.isEmpty
     }
 
     override fun toString() = "$name ($value)"

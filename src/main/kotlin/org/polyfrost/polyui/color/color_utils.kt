@@ -51,11 +51,11 @@ fun Int.toColor(): PolyColor {
     return PolyColor.Static(cmps[0], cmps[1], cmps[2], (this shr 24 and 0xFF) / 255f)
 }
 
-fun PolyColor.Gradient.animatableGradient() = if (this is PolyColor.Gradient.Animated) this else PolyColor.Gradient.Animated(this.animatable(), color2.animatable(), type)
+fun PolyColor.Gradient.asAnimatableGradient() = if (this is PolyColor.Gradient.Animated) this else PolyColor.Gradient.Animated(this.asAnimatable(), color2.asAnimatable(), type)
 
-fun PolyColor.animatable() = if (this is PolyColor.Animated) this else PolyColor.Animated(this.hue, this.saturation, this.brightness, this.alpha)
+fun PolyColor.asAnimatable() = if (this is PolyColor.Animated) this else PolyColor.Animated(this.hue, this.saturation, this.brightness, this.alpha)
 
-fun PolyColor.mutable() = if (this is PolyColor.Mutable) this else PolyColor.Mutable(this.hue, this.saturation, this.brightness, this.alpha)
+fun PolyColor.asMutable() = if (this is PolyColor.Mutable) this else PolyColor.Mutable(this.hue, this.saturation, this.brightness, this.alpha)
 
 /**
  * Turn the given hex string into a color.
@@ -69,7 +69,7 @@ fun PolyColor.mutable() = if (this is PolyColor.Mutable) this else PolyColor.Mut
  * @throws IllegalArgumentException if the hex string is not in a valid format
  * @throws NumberFormatException if the hex string is not a valid hex string
  */
-fun String.toColor(): PolyColor {
+fun String.toColor(alpha: Float = 1f): PolyColor {
     var hexColor = this.removePrefix("#")
     when (hexColor.length) {
         1 -> hexColor = hexColor.repeat(6)
@@ -85,12 +85,9 @@ fun String.toColor(): PolyColor {
     val r = hexColor.substringOr(0, 2, "0").toInt(16)
     val g = hexColor.substringOr(2, 4, "0").toInt(16)
     val b = hexColor.substringOr(4, 6, "0").toInt(16)
-    val a = if (hexColor.length == 8) hexColor.substringOr(6, 8, "0").toInt(16) else 255
-    return rgba(r, g, b, a / 255f)
+    val a = if (hexColor.length == 8) hexColor.substringOr(6, 8, "0").toInt(16) / 255f else alpha
+    return rgba(r, g, b, a)
 }
-
-/** @see toColor */
-fun String.toColor(alpha: Float = 1f) = (this + (alpha * 255f).toInt().toString(16)).toColor()
 
 @OptIn(ExperimentalStdlibApi::class)
 fun PolyColor.toHex(alpha: Boolean = true, hash: Boolean = true): String {

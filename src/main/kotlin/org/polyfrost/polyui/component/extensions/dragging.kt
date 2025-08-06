@@ -53,12 +53,14 @@ fun <S : Inputtable> S.draggable(withX: Boolean = true, withY: Boolean = true, f
         if (withY) y = my - py
         false
     }
-    on(Event.Mouse.Drag.Ended) {
-        if (free && _parent !== polyUI.master) {
-            polyUI.master.children!!.remove(this)
-            parent.children!!.add(this)
+    if (free) {
+        on(Event.Mouse.Drag.Ended) {
+            if (_parent !== polyUI.master) {
+                polyUI.master.children!!.remove(this)
+                parent.children!!.add(this)
+            }
+            false
         }
-        false
     }
     return this
 }
@@ -104,11 +106,27 @@ fun <S : Inputtable> S.makeRearrangeableGrid(): S {
     return this
 }
 
+@OverloadResolutionByLambdaReturnType
+@JvmName("onDragZ")
+fun <S : Inputtable> S.onDrag(func: S.(Event.Mouse.Drag) -> Boolean): S {
+    on(Event.Mouse.Drag, func)
+    return this
+}
+
+@OverloadResolutionByLambdaReturnType
 fun <S : Inputtable> S.onDrag(func: S.(Event.Mouse.Drag) -> Unit): S {
     on(Event.Mouse.Drag, func)
     return this
 }
 
+@OverloadResolutionByLambdaReturnType
+@JvmName("onDragStartZ")
+fun <S : Inputtable> S.onDragStart(func: S.(Event.Mouse.Drag.Started) -> Boolean): S {
+    on(Event.Mouse.Drag.Started, func)
+    return this
+}
+
+@OverloadResolutionByLambdaReturnType
 fun <S : Inputtable> S.onDragStart(func: S.(Event.Mouse.Drag.Started) -> Unit): S {
     on(Event.Mouse.Drag.Started, func)
     return this

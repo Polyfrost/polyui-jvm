@@ -61,10 +61,10 @@ abstract class Inputtable(
             if (super.isEnabled == value) return
             if (value) {
                 super.isEnabled = true
-                accept(Event.Lifetime.Enabled)
+                acceptAll(Event.Lifetime.Enabled)
             } else {
                 if (initialized) polyUI.inputManager.drop(this)
-                accept(Event.Lifetime.Disabled)
+                acceptAll(Event.Lifetime.Disabled)
                 super.isEnabled = false
             }
         }
@@ -136,6 +136,25 @@ abstract class Inputtable(
         val eh = eventHandlers ?: return false
         val handlers = eh[event::class.java] ?: eh[event] ?: return false
         return handlers.accept(this, event)
+    }
+
+    /**
+     * Accepts an event and calls all handlers for it, including those of this component's children.
+     * This is intended for [Event.Lifetime] events.
+     *
+     * @return true if any of the handlers returned true, false otherwise.
+     * @since 1.12.0
+     */
+    fun acceptAll(event: Event): Boolean {
+        if (!isEnabled) return false
+        val eh = eventHandlers ?: return false
+        val handlers = eh[event::class.java] ?: eh[event] ?: return false
+        var res = false
+        res = handlers.accept(this, event) || res
+        children?.fastEach { child ->
+            if (child is Inputtable) res = child.acceptAll(event) || res
+        }
+        return res
     }
 
     private fun removeHandlers(event: Event): EventListener<Inputtable, Event>? {

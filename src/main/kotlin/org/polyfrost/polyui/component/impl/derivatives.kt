@@ -35,9 +35,11 @@ import org.polyfrost.polyui.component.extensions.*
 import org.polyfrost.polyui.data.Font
 import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.event.Event
-import org.polyfrost.polyui.operations.*
+import org.polyfrost.polyui.operations.ComponentOp
+import org.polyfrost.polyui.operations.Move
+import org.polyfrost.polyui.operations.Resize
+import org.polyfrost.polyui.operations.Rotate
 import org.polyfrost.polyui.unit.*
-import org.polyfrost.polyui.utils.coerceWithin
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.mapToArray
 import org.polyfrost.polyui.utils.toString
@@ -169,24 +171,25 @@ fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2 = Vec2.ZERO,
  * For images, use `Image to "string"` for each entry.
  */
 @JvmName("Dropdown")
-fun Dropdown(vararg entries: String, at: Vec2 = Vec2.ZERO, fontSize: Float = 12f, initial: Int = 0, padding: Float = 12f, textLength: Float = 0f): Block {
-    return Dropdown(entries = entries.mapToArray { null to it }, at, fontSize, initial, padding, textLength)
+fun Dropdown(vararg entries: String, at: Vec2 = Vec2.ZERO, size: Vec2 = Vec2.ZERO, fontSize: Float = 12f, initial: Int = 0, padding: Float = 12f): Block {
+    return Dropdown(entries = entries.mapToArray { null to it }, at, size, fontSize, initial, padding)
 }
 
 @JvmName("Dropdown")
-fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fontSize: Float = 12f, initial: Int = 0, optPadding: Float = 12f, textLength: Float = 0f): Block {
+fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, size: Vec2 = Vec2.ZERO, fontSize: Float = 12f, initial: Int = 0, optPadding: Float = 12f): Block {
     var heightTracker = 0f
     var titleText: String? = null
-    val title = TextInput("", fontSize = fontSize, visibleSize = Vec2(if (textLength == 0f) 200f else textLength, fontSize))
+    val title = TextInput("", fontSize = fontSize, visibleSize = Vec2(0f, fontSize))
     val icon = Image(CHEVRON_DOWN)
     val it = Block(
         title, icon,
         at = at,
+        size = size,
         focusable = true,
         alignment = Align(main = Align.Content.SpaceBetween, pad = Vec2(8f, 8f), wrap = Align.Wrap.NEVER),
     ).withHoverStates().withBorder()
     val dropdown = Block(
-        alignment = Align(mode = Align.Mode.Vertical, pad = Vec2(optPadding, 6f)),
+        alignment = Align(mode = Align.Mode.Vertical, padBetween = Vec2(optPadding, 6f), line = if(size.isPositive) Align.Line.Start else Align.Line.Center),
         children = entries.mapToArray { (img, text) ->
             Group(
                 if (img != null) Image(img) else null,
@@ -250,7 +253,9 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fon
         }
         Event.Lifetime.PostInit then {
             dropdown.setup(polyUI)
-            this.width = dropdown.width
+            if (createdWithSetSize) {
+                dropdown.width = this.width
+            } else this.width = dropdown.width
             // sets the #created-with-initial-size flag to true, meaning that if it is recalculated, it 'remembers' that it should be
             // this big. not necessary normally important, only if they decided to recalculate the dropdown for any reason.
             this.layoutFlags = layoutFlags or 0b00000010
@@ -260,7 +265,7 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, fon
             title.acceptsInput = false
             val first = dropdown[initial]
             title.text = ((if (first.children!!.size == 2) first[1] else first[0]) as Text).text
-            if (textLength == 0f) title.visibleSize = Vec2(space - alignment.padEdges.x - 2f, fontSize)
+            title.visibleSize = Vec2(space - alignment.padEdges.x - 2f, fontSize)
         }
         Event.Mouse.Companion.Clicked then {
             if (focused) {
@@ -279,6 +284,7 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
     require(initialValue in min..max) { "initial value $initialValue is out of range for slider of $min..$max" }
     val barHeight = ptrSize / 2.8f
     val size = Vec2(length + ptrSize, ptrSize)
+    val nsteps = 10
 
     val slide: Inputtable.() -> Float = {
         val bar = this.parent[0]
@@ -313,7 +319,8 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
                 p.accept(Event.Change.Number(value))
             }
         }.events {
-            val op = object : ComponentOp.Animatable<Block>(self, Animations.Default.create(0.15.seconds, 1f, 0f)) {
+            val animation = Animations.Default.create(0.15.seconds, 1f, 0f)
+            val op = object : ComponentOp.Animatable<Block>(self, animation) {
                 override fun apply(value: Float) {}
 
                 override fun unapply(value: Float) {
@@ -324,35 +331,59 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
                         val offset = (this.width - current) / 2f
                         renderer.rect(x + offset, y + offset, current, current, polyUI.colors.brand.fg.normal, maxRadius * value)
                     }
+                    if (nsteps != 0) {
+                        (self.parent[0] as Drawable).apply {
+                            val stepSize = this.width / nsteps
+                            val current = (barHeight + 8f) * value
+                            val yPos = this.y + (this.height - current) / 2f
+                            for (i in 0 until nsteps) {
+                                val stepX = x + i * stepSize
+                                renderer.rect(stepX, yPos, 4f, value * current, color, 2f)
+                            }
+                        }
+                    }
                 }
 
                 override fun unapply(): Boolean {
-                    unapply(animation!!.value)
+                    unapply(this.animation!!.value)
                     return false
                 }
             }
             op.add()
             Event.Mouse.Exited then {
                 op.reverse()
+                animation.to = 0f
             }
             Event.Mouse.Entered then {
                 op.reverse()
+                animation.to = 1f
+            }
+            Event.Mouse.Companion.Pressed then {
+                animation.from = animation.value
+                animation.to = 0.8f
+                animation.reset()
+                // asm: don't move the slider if the mouse is inside the blob (they are doing a slide operation, not a click to set)
+                if (isInside(it.x, it.y)) return@then
+                x = it.x - width / 2f
+                this.polyUI.inputManager.recalculate()
+                inputState = INPUT_PRESSED
+                accept(it)
+                val value = slide()
+                if ((parent as Inputtable).hasListenersFor(Event.Change.Number::class.java)) {
+                    accept(Event.Change.Number(value))
+                }
+            }
+            Event.Mouse.Companion.Released then {
+                animation.from = animation.to
+                animation.to = 1f
+                animation.reset()
+                false
             }
         },
         at = at,
         size = size,
         alignment = Align(Align.Content.Center, pad = Vec2.ZERO),
-    ).onPress {
-        val ptr = this[1]
-        ptr.x = it.x - ptr.width / 2f
-        this.polyUI.inputManager.recalculate()
-        ptr.inputState = INPUT_PRESSED
-        ptr.accept(it)
-        val value = ptr.slide()
-        if (hasListenersFor(Event.Change.Number::class.java)) {
-            accept(Event.Change.Number(value))
-        }
-    }.afterInit {
+    ).afterInit {
         setSliderValue(initialValue, min, max, dispatch = false)
     }.namedId("Slider")
 }
@@ -388,7 +419,6 @@ fun BoxedTextInput(
             }
         },
         alignment = Align(main = if (center) Align.Content.Center else Align.Content.Start, cross = Align.Content.Center, pad = Vec2(6f, 10f)),
-        size = size,
     ).afterInit {
         if (!center) {
             val input = this[0]
@@ -396,7 +426,8 @@ fun BoxedTextInput(
         }
     },
     if (post != null) Block(Text(post).secondary(), alignment = Align(pad = 6f by 10f), radii = floatArrayOf(0f, 8f, 0f, 8f)).afterInit { color = polyUI.colors.page.bg.normal } else null,
-    alignment = Align(pad = Vec2.ZERO, main = Align.Content.SpaceBetween, wrap = Align.Wrap.NEVER),
+    alignment = Align(padEdges = Vec2.ZERO, main = Align.Content.SpaceBetween, wrap = Align.Wrap.NEVER),
+    size = size,
 ).withBorder().namedId("BoxedTextInput")
 
 @JvmName("BoxedNumericInput")
@@ -521,57 +552,20 @@ fun DraggingNumericTextInput(
         },
         alignment = Align(cross = Align.Content.Center),
         size = size
-    ).namedId("DraggingNumericTextInput")
+    ).withBorder().namedId("DraggingNumericTextInput")
 }
 
 /**
  * Spawn a menu at the mouse position.
  * @param polyUI an instance of PolyUI. If `null`, [openNow] must be `false`, or else an exception will be thrown.
  * @param openNow if `true`, the menu is opened immediately. else, call [PolyUI.focus] on the return value to open it.
+ * @see [spawnAtMouse] *(revised 1.12.0)* this function is now a wrapper for [Block.spawnAtMouse].
  */
 @Contract("_, _, _, null, true, _ -> fail")
 @JvmName("PopupMenu")
-fun PopupMenu(vararg children: Component?, size: Vec2 = Vec2.ZERO, align: Align = AlignDefault, polyUI: PolyUI?, openNow: Boolean = true, position: Point = Point.At): Block {
-    val it = Block(
-        focusable = true,
-        size = size,
-        alignment = align,
-        children = children,
-    ).withBorder().events {
-        Event.Focused.Gained then {
-            this.polyUI.master.addChild(this, recalculate = false)
-            alpha = 0f
-            val mx = this.polyUI.mouseX
-            val my = this.polyUI.mouseY
-            val sz = this.polyUI.size
-            when (position) {
-                Point.At -> {
-                    x = mx.coerceWithin(0f, sz.x - this.width)
-                    y = my.coerceWithin(0f, sz.y - this.height)
-                }
-
-                Point.Above -> {
-                    x = (mx - (this.width / 2f)).coerceWithin(0f, sz.x - this.width)
-                    y = (my - this.height - 6f).coerceWithin(0f, sz.y - this.height)
-                }
-
-                Point.Below -> {
-                    x = (mx - (this.width / 2f)).coerceWithin(0f, sz.x - this.width)
-                    y = (my + 12f).coerceWithin(0f, sz.y - this.height)
-                }
-            }
-            fadeIn(0.2.seconds)
-            true
-        }
-        Event.Focused.Lost then {
-            Fade(this, 0f, false, Animations.Default.create(0.2.seconds)) {
-                this.polyUI.master.removeChild(this, recalculate = false)
-            }.add()
-        }
-    }
-    if (openNow) {
-        require(polyUI != null) { "polyUI cannot be null if openNow is true" }
-        polyUI.focus(it)
-    }
-    return it
-}
+fun PopupMenu(vararg children: Component?, size: Vec2 = Vec2.ZERO, align: Align = AlignDefault, polyUI: PolyUI?, openNow: Boolean = true, spawnPos: SpawnPos = SpawnPos.AtMouse) = Block(
+    focusable = true,
+    size = size,
+    alignment = align,
+    children = children,
+).withBorder().spawnAtMouse(polyUI, openNow, spawnPos)

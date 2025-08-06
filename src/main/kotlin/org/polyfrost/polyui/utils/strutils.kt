@@ -56,7 +56,7 @@ fun StringBuilder.append(c: Char, repeats: Int): StringBuilder {
  * @since 1.11.7
  */
 fun Float?.toString(dps: Int): String {
-    if (this == null) return "0"
+    if (this == null || this == 0f) return "0"
     val v = this.fix(dps)
     // remove trailing zeros
     val vi = v.toInt()

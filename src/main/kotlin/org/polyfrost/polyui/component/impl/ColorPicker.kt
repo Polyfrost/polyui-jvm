@@ -24,28 +24,28 @@ package org.polyfrost.polyui.component.impl
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
 import org.polyfrost.polyui.color.PolyColor
-import org.polyfrost.polyui.color.mutable
+import org.polyfrost.polyui.color.asMutable
 import org.polyfrost.polyui.color.toColor
 import org.polyfrost.polyui.color.toHex
 import org.polyfrost.polyui.component.Inputtable
 import org.polyfrost.polyui.component.extensions.*
 import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.event.State
 import org.polyfrost.polyui.unit.Align
-import org.polyfrost.polyui.unit.Point
+import org.polyfrost.polyui.unit.SpawnPos
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.utils.image
-import kotlin.jvm.internal.Ref
-import kotlin.math.roundToInt
 
-fun ColorPicker(color: Ref.ObjectRef<PolyColor.Mutable>, faves: MutableList<PolyColor>?, recents: MutableList<PolyColor>?, polyUI: PolyUI?, openNow: Boolean = true, position: Point = Point.At): Block {
+fun ColorPicker(color: State<PolyColor.Mutable>, faves: MutableList<PolyColor>?, recents: MutableList<PolyColor>?, polyUI: PolyUI?, openNow: Boolean = true, position: SpawnPos = SpawnPos.AtMouse): Block {
+    var dodge = false
     val p = PopupMenu(
         Group(
-            Dropdown("polyui.color.solid", "polyui.color.gradient", "polyui.color.chroma", textLength = 152f),
+            Dropdown("polyui.color.solid", "polyui.color.gradient", "polyui.color.chroma", size = 200f by 32f),
             Image("polyui/close.svg".image()).setDestructivePalette().withHoverStates().onClick {
                 this.polyUI.inputManager.focus(null)
-            },
+            }.padded(0f, 1f, 8f, 0f),
             size = 264f by 32f,
             alignment = Align(pad = Vec2.ZERO, main = Align.Content.SpaceBetween),
         ),
@@ -56,8 +56,6 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Mutable>, faves: MutableList<Poly
             this.polyUI.inputManager.recalculate()
             picker.inputState = INPUT_PRESSED
             picker.accept(it)
-        }.onDrag {
-            (this.parent[5][0][0] as TextInput).text = color.element.toHex(alpha = false)
         },
         Image(
             PolyImage("polyui/color/hue.png"),
@@ -65,9 +63,11 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Mutable>, faves: MutableList<Poly
             children = arrayOf(
                 Block(size = 12f by 12f, color = PolyColor.TRANSPARENT).draggable(withX = false).onDrag {
                     y = y.coerceIn(parent.y, parent.y + parent.height - height)
-                    color.element.hue = (y - parent.y) / (parent.height - height)
-                    (this.parent.parent[5][0][0] as TextInput).text = color.element.toHex(alpha = false)
-                }.withBorder(PolyColor.WHITE, 2f),
+                    color.value.hue = (y - parent.y) / (parent.height - height)
+                    color.notify()
+                }.withBorder(PolyColor.WHITE, 2f).onChange(color) {
+                    y = (color.value.hue * (parent.height - height)) + parent.y
+                },
             ),
             alignment = Align(pad = 2f by 2f)
         ).radius(8f).padded(2f, 0f).onPress {
@@ -83,9 +83,11 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Mutable>, faves: MutableList<Poly
             children = arrayOf(
                 Block(size = 12f by 12f, color = PolyColor.TRANSPARENT).draggable(withX = false).onDrag {
                     y = y.coerceIn(parent.y, parent.y + parent.height - height)
-                    color.element.alpha = 1f - (y - parent.y) / (parent.height - height)
-                    (this.parent.parent[6][0][0] as TextInput).text = "${(color.element.alpha * 100f).roundToInt()}"
-                }.radius(6f).withBorder(PolyColor.WHITE, 2f),
+                    color.value.alpha = 1f - (y - parent.y) / (parent.height - height)
+                    color.notify()
+                }.radius(6f).withBorder(PolyColor.WHITE, 2f).onChange(color) {
+                    y = (1f - color.value.alpha) * (parent.height - height) + parent.y
+                },
             ),
             alignment = Align(pad = 2f by 2f)
         ).radius(8f).padded(2f, 0f).onPress {
@@ -95,64 +97,77 @@ fun ColorPicker(color: Ref.ObjectRef<PolyColor.Mutable>, faves: MutableList<Poly
             picker.inputState = INPUT_PRESSED
             picker.accept(it)
         },
-        Dropdown(
-            "polyui.color.hex",
-            "polyui.color.rgb",
+        Group(
+            Dropdown(
+                "polyui.color.hex",
+                "polyui.color.rgb",
+            ),
+            Group(
+                BoxedTextInput(
+                    placeholder = "#FFFFFF",
+                    initialValue = color.value.toHex(alpha = false),
+                    center = true,
+                    size = 78f by 32f,
+                ).onChange(color) {
+                    if (dodge) {
+                        dodge = false
+                    } else this.getTextFromBoxedTextInput().text = color.value.toHex(alpha = false)
+                }.onChange { text: String ->
+                    dodge = true
+                    if (text.isEmpty()) return@onChange false
+                    if (text.startsWith('-')) return@onChange true
+                    if (text.length > 8) return@onChange true
+                    if (text == "#") return@onChange false
+                    try {
+                        color.value.recolor(text.toColor(color.value.alpha))
+                        color.notify()
+                        false
+                    } catch (_: Exception) {
+                        shake(); true
+                    }
+                },
+                BoxedNumericInput(
+                    initialValue = color.value.alpha * 100f,
+                    post = " % ",
+                    center = true,
+                    arrows = false,
+                    size = Vec2(73f, 32f)
+                ).onChange { it: Float ->
+                    color.value.alpha = it / 100f
+                    color.notify()
+                    false
+                }.onChange(color) {
+                    this.getTextFromBoxedTextInput().text = (color.value.alpha * 100f).toInt().toString()
+                },
+                alignment = Align(padEdges = Vec2.ZERO, padBetween = Vec2(12f, 12f))
+            ),
+            Image(
+                "info.svg".image(),
+                size = 18f by 18f,
+            ).padded(0f, 7f),
+            alignment = Align(padEdges = Vec2.ZERO, padBetween = Vec2(12f, 12f))
         ),
-        BoxedTextInput(
-            placeholder = "#FFFFFF",
-            initialValue = color.element.toHex(alpha = false),
-            center = true,
-            size = 78f by 32f,
-        ).onChange { text: String ->
-            if (text.isEmpty()) return@onChange false
-            if (text.startsWith('-')) return@onChange true
-            if (text.length > 8) return@onChange true
-            if (text == "#") return@onChange false
-            val hueSlider = parent[2]
-            val lilGuy = hueSlider[0]
-            try {
-                color.element.recolor(text.toColor())
-                lilGuy.y = hueSlider.y + color.element.hue * (hueSlider.height - lilGuy.height)
-                false
-            } catch (e: Exception) {
-                shake(); true
-            }
-        }.apply {
-            (this[0][0] as Text).onFocusLost {
-                this.text = color.element.toHex(alpha = false)
-            }
-        },
-        BoxedTextInput(
-            placeholder = "100",
-            initialValue = "${(color.element.alpha * 100f).toInt()}",
-            post = " % ",
-            center = true,
-            size = 42f by 32f
-        ).apply {
-            (this[0][0] as TextInput).numeric(0f, 100f, acceptor = this)
-        }.onChange { it: Float ->
-            val alphaSlider = parent[3]
-            val lilGuy = alphaSlider[0]
-            color.element.alpha = it / 100f
-            lilGuy.y = alphaSlider.y + (1f - color.element.alpha) * (alphaSlider.height - lilGuy.height)
-            false
-        },
-        Image(
-            "info.svg".image(),
-            size = 18f by 18f,
-        ).padded(0f, 7f),
         size = 288f by 0f,
         align = Align(pad = 12f by 12f, line = Align.Line.Start),
         polyUI = polyUI,
         openNow = openNow,
-        position = position,
+        spawnPos = position,
     ).namedId("ColorPicker")
 
-    if (openNow) assign(p, color.element)
-    else p.afterInit { assign(p, color.element) }
+    if (openNow) assign(p, color.value)
+    else p.afterInit { assign(p, color.value) }
     return p
 }
+
+
+//fun ColorPicker2(color: State<PolyColor.Mutable>, polyUI: PolyUI?, openNow: Boolean = true, position: SpawnPos = SpawnPos.AtMouse): Block {
+//    Block(size = 288f by 0f, focusable = true, alignment = Align(pad = Vec2(12f, 12f))).children {
+//
+//    }
+//
+
+//
+//}
 
 private fun assign(p: Block, col: PolyColor) {
     val box = p[1]
@@ -171,21 +186,23 @@ private fun assign(p: Block, col: PolyColor) {
 }
 
 private class ColorPickingBox(
-    val theColor: Ref.ObjectRef<PolyColor.Mutable>,
+    val theColor: State<PolyColor.Mutable>,
 ) : Block(
     Block(size = 12f by 12f, color = PolyColor.TRANSPARENT).draggable().onDrag {
         val hf = width / 2f
         x = x.coerceIn(parent.x - hf, parent.x + parent.width - hf)
         y = y.coerceIn(parent.y - hf, parent.y + parent.height - hf)
-        theColor.element.saturation = (x - parent.x + hf) / parent.width
-        theColor.element.brightness = 1f - (y - parent.y + hf) / parent.height
+        theColor.value.saturation = (x - parent.x + hf) / parent.width
+        theColor.value.brightness = 1f - (y - parent.y + hf) / parent.height
         (parent as? Inputtable)?.accept(Event.Mouse.Drag)
+        theColor.notify()
+        Unit
     }.withBorder(PolyColor.WHITE, 2f),
     size = 200f by 200f,
 ) {
     val grad1 = PolyColor.Gradient.Mutable(
-        PolyColor.WHITE.mutable(),
-        theColor.element,
+        PolyColor.WHITE.asMutable(),
+        theColor.value,
         PolyColor.Gradient.Type.LeftToRight,
     )
     val grad2 = PolyColor.Gradient(
@@ -195,8 +212,8 @@ private class ColorPickingBox(
     )
 
     override fun render() {
-        grad1.color2.recolor(theColor.element)
-        val col = theColor.element
+        grad1.color2.recolor(theColor.value)
+        val col = theColor.value
         val os = col.saturation
         val ob = col.brightness
         val oa = col.alpha

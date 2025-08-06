@@ -258,7 +258,11 @@ class InputManager(
             if (abs(pressX - x) > threshold || abs(pressY - y) > threshold) {
                 if (!dragging) {
                     dragging = true
-                    if (dispatch(Event.Mouse.Drag.Started)) return
+                    if (dispatch(Event.Mouse.Drag.Started)) {
+                        // dragging was cancelled.
+                        dragging = false
+                        return
+                    }
                 }
             }
             if (dragging) dispatch(Event.Mouse.Drag)

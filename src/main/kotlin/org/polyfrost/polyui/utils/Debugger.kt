@@ -28,7 +28,7 @@ import org.polyfrost.polyui.PolyUI.Companion.INPUT_NONE
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
 import org.polyfrost.polyui.PolyUI.Companion.LOGGER
 import org.polyfrost.polyui.color.PolyColor
-import org.polyfrost.polyui.color.mutable
+import org.polyfrost.polyui.color.asMutable
 import org.polyfrost.polyui.color.rgba
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
@@ -42,13 +42,14 @@ import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.data.Font
 import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.event.State
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.operations.ShakeOp
 import org.polyfrost.polyui.unit.Align
-import org.polyfrost.polyui.unit.Point
+import org.polyfrost.polyui.unit.SpawnPos
 import org.polyfrost.polyui.unit.seconds
 import java.lang.reflect.Method
 import java.text.DecimalFormat
@@ -218,8 +219,8 @@ class Debugger(private val polyUI: PolyUI) {
         }
         if (set == 0 || set == eval.length) return false
         if (target is Drawable && eval == "color = picker()") {
-            target.color = target.color.mutable()
-            ColorPicker(target.color.mutable().ref(), null, null, polyUI)
+            target.color = target.color.asMutable()
+            ColorPicker(State(target.color.asMutable()), null, null, polyUI)
             return true
         }
         val sn = "set${eval.substring(0, set).trim().capitalize()}"
@@ -538,7 +539,7 @@ ${d.alignment}
             ),
             align = Align(wrap = Align.Wrap.ALWAYS),
             polyUI = polyUI,
-            position = Point.Below
+            spawnPos = SpawnPos.BelowMouse
         ).events {
             Event.Focused.Companion.KeyTyped then {
                 if (it.key == 'c' && it.mods.hasControl) {

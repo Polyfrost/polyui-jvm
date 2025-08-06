@@ -40,10 +40,10 @@ import kotlin.math.abs
  * @since 1.0.3
  */
 @JvmName("addHoverInfo")
-fun <S : Inputtable> S.addHoverInfo(vararg drawables: Drawable?, size: Vec2 = Vec2.ZERO, align: Align = AlignDefault, position: Point = Point.Above): S {
+fun <S : Inputtable> S.addHoverInfo(vararg drawables: Drawable?, size: Vec2 = Vec2.ZERO, align: Align = AlignDefault, position: SpawnPos = SpawnPos.AboveMouse): S {
     var mx = 0f
     var my = 0f
-    val popup = PopupMenu(*drawables, size = size, align = align, polyUI = null, openNow = false, position = position)
+    val popup = PopupMenu(*drawables, size = size, align = align, polyUI = null, openNow = false, spawnPos = position)
     val exe = Clock.Bomb(0.5.seconds) {
         polyUI.focus(popup)
     }
@@ -93,19 +93,13 @@ fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, integral: Bool
         // silently cancel if they try and type multiple zeroes
         if (value == "-00") return@onChange true
         if (value == "00") return@onChange true
-        when (val v = value.toFloatOrNull()) {
-            null -> {
-                // fail when not a number
-                shake(); true
-            }
-
-            in min..max -> {
-                acceptor.accept(Event.Change.Number(if (integral) v.toInt() else v))
-            }
-
-            // asm: let them keep typing, we will validate once they leave the box (below)
-            else -> false
+        val v = value.toFloatOrNull()?.coerceIn(min, max)
+        if(v == null) {
+            // fail when not a number
+            shake(); return@onChange true
         }
+        acceptor.accept(Event.Change.Number(if (integral) v.toInt() else v))
+        false
     }
     on(Event.Focused.Lost) {
         val txt = if(ignoreSuffix != null) text.removeSuffix(ignoreSuffix) else text

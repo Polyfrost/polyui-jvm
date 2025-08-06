@@ -38,7 +38,7 @@ import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
-import org.polyfrost.polyui.unit.Point
+import org.polyfrost.polyui.unit.SpawnPos
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.image
 import kotlin.contracts.ExperimentalContracts
@@ -118,7 +118,7 @@ open class DrawableDSL<T : Drawable>(@PublishedApi internal val _this: T) {
     }
 
     @JvmName("popup")
-    inline fun popup(vararg children: Component?, size: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, position: Point = Point.At, init: Block.() -> Unit = {}): Block {
+    inline fun popup(vararg children: Component?, size: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, position: SpawnPos = SpawnPos.AtMouse, init: Block.() -> Unit = {}): Block {
         contract {
             callsInPlace(init, InvocationKind.EXACTLY_ONCE)
         }
