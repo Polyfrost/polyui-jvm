@@ -1777,7 +1777,7 @@ public final class org/polyfrost/polyui/input/Modifiers {
 	public static final synthetic fun box-impl (B)Lorg/polyfrost/polyui/input/Modifiers;
 	public static fun constructor-impl (B)B
 	public static fun constructor-impl ([Lorg/polyfrost/polyui/input/KeyModifiers;)B
-	public static final fun containedBy-impl (BB)Z
+	public static final fun containedBy-JOIcb-U (BB)Z
 	public static final fun contains-impl (BB)Z
 	public static final fun equal-impl (BB)Z
 	public fun equals (Ljava/lang/Object;)Z

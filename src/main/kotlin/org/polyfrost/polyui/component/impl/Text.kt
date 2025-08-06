@@ -230,7 +230,8 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
 
     override fun rescale0(scaleX: Float, scaleY: Float, withChildren: Boolean) {
         super.rescale0(scaleX, scaleY, withChildren)
-        fontSize = (height - (spacing * (lines.size - 1))) / lines.size
+//        fontSize = (height - (spacing * (lines.size - 1))) / lines.size
+        fontSize *= scaleY
         // asm: fontSize would normally call this method, but if it isn't as it doesn't change, we need to do it manually
         if (initialized && scaleY == 1f) updateTextBounds(renderer)
     }
