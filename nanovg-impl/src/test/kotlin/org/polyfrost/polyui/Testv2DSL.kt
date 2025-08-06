@@ -22,11 +22,12 @@
 package org.polyfrost.polyui
 
 import org.polyfrost.polyui.color.DarkTheme
-import org.polyfrost.polyui.color.mutable
+import org.polyfrost.polyui.color.asMutable
 import org.polyfrost.polyui.component.extensions.*
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.data.FontFamily
 import org.polyfrost.polyui.dsl.polyUI
+import org.polyfrost.polyui.event.State
 import org.polyfrost.polyui.renderer.impl.GLFWWindow
 import org.polyfrost.polyui.renderer.impl.NVGRenderer
 import org.polyfrost.polyui.unit.Align
@@ -69,8 +70,8 @@ fun main() {
                 false
             }
             Button("face-wink.svg".image(), "button.text").onClick {
-                color = color.mutable()
-                ColorPicker(color.mutable().ref(), mutableListOf(), mutableListOf(), polyUI)
+                color = color.asMutable()
+                ColorPicker(State(color.asMutable()), mutableListOf(), mutableListOf(), polyUI)
                 false
             }.add()
             Switch(size = 28f, state = true).add()
