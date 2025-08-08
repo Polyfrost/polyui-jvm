@@ -38,5 +38,5 @@ PolyUI also supports a variety of [animations](src/main/kotlin/org/polyfrost/pol
 ## Examples
 - find some [components here](src/main/kotlin/org/polyfrost/polyui/component/impl).
 - find some [layouts here](src/main/kotlin/org/polyfrost/polyui/layout/impl).
-- find a simple example [here](nanovg-impl/src/test/kotlin/org/polyfrost/polyui/Test.kt).
+- find a simple example [here](nanovg-impl/src/test/kotlin/org/polyfrost/polyui/Testv2.kt).
 - find a rendering implementation [here](nanovg-impl/src/main/kotlin/org/polyfrost/polyui/renderer/impl/NVGRenderer.kt).
