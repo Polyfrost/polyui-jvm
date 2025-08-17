@@ -36,7 +36,6 @@ import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.unit.fix
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.open
-import org.polyfrost.polyui.utils.ref
 
 fun main() {
     val window = GLFWWindow("PolyUI Test v2 (DSL)", 800, 500)
@@ -71,7 +70,7 @@ fun main() {
             }
             Button("face-wink.svg".image(), "button.text").onClick {
                 color = color.asMutable()
-                ColorPicker(State(color.asMutable()), mutableListOf(), mutableListOf(), polyUI)
+                ColorPicker(State(color.asMutable()), mutableListOf(), mutableListOf(), polyUI, attachedDrawable = this)
                 false
             }.add()
             Switch(size = 28f, state = true).add()

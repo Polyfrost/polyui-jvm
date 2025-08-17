@@ -455,8 +455,8 @@ public abstract class org/polyfrost/polyui/color/PolyColor {
 	public static final field TRANSPARENT Lorg/polyfrost/polyui/color/PolyColor;
 	public static final field WHITE Lorg/polyfrost/polyui/color/PolyColor;
 	public fun <init> ()V
-	public final fun alpha ()I
-	public final fun blue ()I
+	public fun alpha ()I
+	public fun blue ()I
 	public fun equals (Ljava/lang/Object;)Z
 	public abstract fun getAlpha ()F
 	public abstract fun getArgb ()I
@@ -465,9 +465,9 @@ public abstract class org/polyfrost/polyui/color/PolyColor {
 	public final fun getRgba ()I
 	public abstract fun getSaturation ()F
 	public fun getTransparent ()Z
-	public final fun green ()I
+	public fun green ()I
 	public fun hashCode ()I
-	public final fun red ()I
+	public fun red ()I
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -619,19 +619,31 @@ public abstract interface class org/polyfrost/polyui/color/PolyColor$Mut {
 
 public class org/polyfrost/polyui/color/PolyColor$Mutable : org/polyfrost/polyui/color/PolyColor, org/polyfrost/polyui/color/PolyColor$Mut {
 	public fun <init> (FFFF)V
+	public synthetic fun alpha ()I
+	public synthetic fun blue ()I
+	public fun getA ()I
 	public final fun getAlpha ()F
 	public final fun getArgb ()I
+	public fun getB ()I
 	public final fun getBrightness ()F
 	protected final fun getDirty ()Z
+	public fun getG ()I
 	public final fun getHue ()F
+	public fun getR ()I
 	public final fun getSaturation ()F
+	public synthetic fun green ()I
 	public synthetic fun recolor (Lorg/polyfrost/polyui/color/PolyColor;)Lorg/polyfrost/polyui/color/PolyColor$Mut;
 	public fun recolor (Lorg/polyfrost/polyui/color/PolyColor;)Lorg/polyfrost/polyui/color/PolyColor$Mutable;
+	public synthetic fun red ()I
+	public fun setA (I)V
 	public final fun setAlpha (F)V
 	protected final fun setArgb (I)V
+	public fun setB (I)V
 	public final fun setBrightness (F)V
 	protected final fun setDirty (Z)V
+	public fun setG (I)V
 	public final fun setHue (F)V
+	public fun setR (I)V
 	public final fun setSaturation (F)V
 }
 
@@ -857,9 +869,11 @@ public final class org/polyfrost/polyui/component/extensions/EventsKt {
 	public static final fun onChangeNumber (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
 	public static final fun onChangeNumberZ (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
 	public static final fun onChangeState (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
-	public static final fun onChangeState (Lorg/polyfrost/polyui/component/Inputtable;Lorg/polyfrost/polyui/event/State;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
+	public static final fun onChangeState (Lorg/polyfrost/polyui/component/Inputtable;Lorg/polyfrost/polyui/event/State;ZLkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
+	public static synthetic fun onChangeState$default (Lorg/polyfrost/polyui/component/Inputtable;Lorg/polyfrost/polyui/event/State;ZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/Inputtable;
 	public static final fun onChangeStateZ (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
-	public static final fun onChangeStateZ (Lorg/polyfrost/polyui/component/Inputtable;Lorg/polyfrost/polyui/event/State;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
+	public static final fun onChangeStateZ (Lorg/polyfrost/polyui/component/Inputtable;Lorg/polyfrost/polyui/event/State;ZLkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
+	public static synthetic fun onChangeStateZ$default (Lorg/polyfrost/polyui/component/Inputtable;Lorg/polyfrost/polyui/event/State;ZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/Inputtable;
 	public static final fun onChangeString (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
 	public static final fun onChangeStringZ (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
 	public static final fun onClick (Lorg/polyfrost/polyui/component/Inputtable;Lkotlin/jvm/functions/Function2;)Lorg/polyfrost/polyui/component/Inputtable;
@@ -983,8 +997,8 @@ public class org/polyfrost/polyui/component/impl/Block : org/polyfrost/polyui/co
 }
 
 public final class org/polyfrost/polyui/component/impl/ColorPickerKt {
-	public static final fun ColorPicker (Lorg/polyfrost/polyui/event/State;Ljava/util/List;Ljava/util/List;Lorg/polyfrost/polyui/PolyUI;ZLorg/polyfrost/polyui/unit/SpawnPos;)Lorg/polyfrost/polyui/component/impl/Block;
-	public static synthetic fun ColorPicker$default (Lorg/polyfrost/polyui/event/State;Ljava/util/List;Ljava/util/List;Lorg/polyfrost/polyui/PolyUI;ZLorg/polyfrost/polyui/unit/SpawnPos;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Block;
+	public static final fun ColorPicker (Lorg/polyfrost/polyui/event/State;Ljava/util/List;Ljava/util/List;Lorg/polyfrost/polyui/PolyUI;ZLorg/polyfrost/polyui/unit/SpawnPos;Lorg/polyfrost/polyui/component/Drawable;)Lorg/polyfrost/polyui/component/impl/Block;
+	public static synthetic fun ColorPicker$default (Lorg/polyfrost/polyui/event/State;Ljava/util/List;Ljava/util/List;Lorg/polyfrost/polyui/PolyUI;ZLorg/polyfrost/polyui/unit/SpawnPos;Lorg/polyfrost/polyui/component/Drawable;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Block;
 }
 
 public final class org/polyfrost/polyui/component/impl/Derivatives {
@@ -1579,6 +1593,7 @@ public class org/polyfrost/polyui/event/State {
 	public fun <init> (Ljava/lang/Object;)V
 	public final fun getValue ()Ljava/lang/Object;
 	public final fun listen (Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/polyui/event/State;
+	public final fun listenToInstanceChange (Lkotlin/jvm/functions/Function1;)Lkotlin/jvm/functions/Function1;
 	public final fun listenZ (Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/polyui/event/State;
 	public final fun notify ()Z
 	protected fun notifyInternal (Ljava/lang/Object;)Z
@@ -2462,6 +2477,7 @@ public final class org/polyfrost/polyui/utils/Utils {
 	public static final fun gcd (II)I
 	public static final fun getByName (Lkotlin/enums/EnumEntries;Ljava/lang/String;Z)Ljava/lang/Enum;
 	public static synthetic fun getByName$default (Lkotlin/enums/EnumEntries;Ljava/lang/String;ZILjava/lang/Object;)Ljava/lang/Enum;
+	public static final fun getDigits (I)I
 	public static final fun set ([FF)[F
 	public static final fun simplifyRatio (J)J
 	public static final fun stdout (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;

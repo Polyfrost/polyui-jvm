@@ -264,6 +264,12 @@ abstract class Drawable(
     protected open fun preRender(delta: Long) {
         val renderer = renderer
         renderer.push()
+        val color = color
+        if (color is PolyColor.Chroma) {
+            color.update(delta)
+            needsRedraw = true
+        }
+
         operations?.fastEach { it.apply() }
 
         if (pushScroll(delta, renderer)) needsRedraw = true

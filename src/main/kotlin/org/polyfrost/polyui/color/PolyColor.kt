@@ -71,20 +71,24 @@ abstract class PolyColor {
     open val transparent get() = alpha == 0f
 
     /** red value of this color, from 0 to 255 */
+    @Suppress("INAPPLICABLE_JVM_NAME")
     @get:JvmName("red")
-    val r get() = argb shr 16 and 0xFF
+    open val r get() = argb shr 16 and 0xFF
 
     /** green value of this color, from 0 to 255 */
+    @Suppress("INAPPLICABLE_JVM_NAME")
     @get:JvmName("green")
-    val g get() = argb shr 8 and 0xFF
+    open val g get() = argb shr 8 and 0xFF
 
     /** blue value of this color, from 0 to 255 */
+    @Suppress("INAPPLICABLE_JVM_NAME")
     @get:JvmName("blue")
-    val b get() = argb and 0xFF
+    open val b get() = argb and 0xFF
 
     /** alpha value of this color, from 0 to 255 */
+    @Suppress("INAPPLICABLE_JVM_NAME")
     @get:JvmName("alpha")
-    val a get() = argb shr 24 and 0xFF
+    open val a get() = argb shr 24 and 0xFF
 
     override fun toString() = "Color($hue, $saturation, $brightness, $alpha)"
 
@@ -138,6 +142,43 @@ abstract class PolyColor {
             set(value) {
                 dirty = true
                 field = value.coerceIn(0f, 1f)
+            }
+
+        override var r: Int
+            get() = super.r
+            set(value) {
+                val o = RGBtoHSB(value, g, b)
+                hue = o[0]
+                saturation = o[1]
+                brightness = o[2]
+                dirty = true
+            }
+
+        override var g: Int
+            get() = super.g
+            set(value) {
+                val o = RGBtoHSB(r, value, b)
+                hue = o[0]
+                saturation = o[1]
+                brightness = o[2]
+                dirty = true
+            }
+
+        override var b: Int
+            get() = super.b
+            set(value) {
+                val o = RGBtoHSB(r, g, value)
+                hue = o[0]
+                saturation = o[1]
+                brightness = o[2]
+                dirty = true
+            }
+
+        override var a: Int
+            get() = super.a
+            set(value) {
+                dirty = true
+                alpha = value.coerceIn(0, 255).toFloat() / 255f
             }
 
         @Transient

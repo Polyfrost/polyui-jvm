@@ -146,7 +146,7 @@ fun <S : Inputtable> S.onRelease(func: S.(Event.Mouse.Released) -> Unit): S {
  */
 @OverloadResolutionByLambdaReturnType
 @JvmName("onChangeStateZ")
-fun <T, S : Inputtable> S.onChange(state: State<T>, func: S.(T) -> Boolean): S {
+fun <T, S : Inputtable> S.onChange(state: State<T>, instanceOnly: Boolean = false, func: S.(T) -> Boolean): S {
     // ASM: possible memory leak if the drawable is removed as the state would still hold a reference to it
     // so we use a WeakReference to avoid that
     val weakSelfRef = WeakReference(this)
@@ -159,7 +159,7 @@ fun <T, S : Inputtable> S.onChange(state: State<T>, func: S.(T) -> Boolean): S {
             false
         } else func(self, it)
     }
-    state.listen(listener)
+    if (instanceOnly) state.listenToInstanceChange(listener) else state.listen(listener)
     return this
 }
 
@@ -172,8 +172,8 @@ fun <T, S : Inputtable> S.onChange(state: State<T>, func: S.(T) -> Boolean): S {
  */
 @OverloadResolutionByLambdaReturnType
 @JvmName("onChangeState")
-fun <T, S : Inputtable> S.onChange(state: State<T>, func: S.(T) -> Unit): S {
-    onChange(state) { func(this, it); false }
+fun <T, S : Inputtable> S.onChange(state: State<T>, instanceOnly: Boolean = false, func: S.(T) -> Unit): S {
+    onChange(state, instanceOnly) { func(this, it); false }
     return this
 }
 
@@ -390,7 +390,7 @@ fun <S : Inputtable> S.spawnAtMouse(polyUI: PolyUI?, openNow: Boolean = true, po
     this.events {
         Event.Focused.Gained then {
             this.polyUI.master.addChild(this, recalculate = false)
-            if(!this.createdWithSetPosition) {
+            if (!this.createdWithSetPosition) {
                 val mx = this.polyUI.mouseX
                 val my = this.polyUI.mouseY
                 val sz = this.polyUI.size

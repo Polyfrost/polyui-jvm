@@ -17,7 +17,8 @@ import org.polyfrost.polyui.utils.fastEach
 open class State<T>(value: T) {
     var value: T = value
         set(value) {
-            if (field != value) {
+            if (field !== value) {
+                if (instanceChangeOnlyListener?.invoke(value) == true) return
                 if (notifyInternal(value)) return
                 field = value
             }
@@ -26,6 +27,7 @@ open class State<T>(value: T) {
     private var firstListener: ((T) -> Boolean)? = null
     private var secondListener: ((T) -> Boolean)? = null
     private var extraListeners: ArrayList<(T) -> Boolean>? = null
+    private var instanceChangeOnlyListener: ((T) -> Boolean)? = null
 
     fun notify() = notifyInternal(value)
 
@@ -41,6 +43,17 @@ open class State<T>(value: T) {
             if (it(value)) return true
         }
         return false
+    }
+
+    /**
+     * Add a listener that will **only be called when the instance of the value changes**, so when [notify] is called, it will **NOT** be called.
+     *
+     * Note that only one of these is supported, and that the other one will be replaced and returned.
+     */
+    fun listenToInstanceChange(listener: (T) -> Boolean): ((T) -> Boolean)? {
+        val old = instanceChangeOnlyListener
+        instanceChangeOnlyListener = listener
+        return old
     }
 
     @OverloadResolutionByLambdaReturnType

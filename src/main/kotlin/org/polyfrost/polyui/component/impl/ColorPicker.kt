@@ -27,22 +27,42 @@ import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.color.asMutable
 import org.polyfrost.polyui.color.toColor
 import org.polyfrost.polyui.color.toHex
+import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.Inputtable
 import org.polyfrost.polyui.component.extensions.*
 import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.event.State
-import org.polyfrost.polyui.unit.Align
-import org.polyfrost.polyui.unit.SpawnPos
-import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.unit.by
+import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.image
 
-fun ColorPicker(color: State<PolyColor.Mutable>, faves: MutableList<PolyColor>?, recents: MutableList<PolyColor>?, polyUI: PolyUI?, openNow: Boolean = true, position: SpawnPos = SpawnPos.AtMouse): Block {
-    var dodge = false
+fun ColorPicker(color: State<PolyColor.Mutable>, faves: MutableList<PolyColor>?, recents: MutableList<PolyColor>?, polyUI: PolyUI?, openNow: Boolean = true, position: SpawnPos = SpawnPos.AtMouse, attachedDrawable: Drawable? = null): Block {
+    attachedDrawable?.onChange(color, instanceOnly = true) {
+        this.color = it
+    }
     val p = PopupMenu(
         Group(
-            Dropdown("polyui.color.solid", "polyui.color.gradient", "polyui.color.chroma", size = 200f by 32f),
+            Dropdown("polyui.color.solid", "polyui.color.chroma", size = 200f by 32f).onChange { index: Int ->
+                val theColor = color.value
+                when (index) {
+                    0 -> {
+                        if (theColor is PolyColor.Chroma) {
+                            color.value = PolyColor.Mutable(theColor.hue, theColor.saturation, theColor.brightness, theColor.alpha)
+                        }
+                        val it = parent.siblings
+                        it[it.lastIndex] = StandardColorTypedOptions(color)
+                    }
+
+                    1 -> {
+                        if (theColor !is PolyColor.Chroma) {
+                            color.value = PolyColor.Chroma(theColor.hue, theColor.saturation, theColor.brightness, theColor.alpha, 2.seconds)
+                        }
+                        val it = parent.siblings
+                        it[it.lastIndex] = ChromaSliderUnit(color)
+                    }
+
+                }
+            },
             Image("polyui/close.svg".image()).setDestructivePalette().withHoverStates().onClick {
                 this.polyUI.inputManager.focus(null)
             }.padded(0f, 1f, 8f, 0f),
@@ -97,56 +117,7 @@ fun ColorPicker(color: State<PolyColor.Mutable>, faves: MutableList<PolyColor>?,
             picker.inputState = INPUT_PRESSED
             picker.accept(it)
         },
-        Group(
-            Dropdown(
-                "polyui.color.hex",
-                "polyui.color.rgb",
-            ),
-            Group(
-                BoxedTextInput(
-                    placeholder = "#FFFFFF",
-                    initialValue = color.value.toHex(alpha = false),
-                    center = true,
-                    size = 78f by 32f,
-                ).onChange(color) {
-                    if (dodge) {
-                        dodge = false
-                    } else this.getTextFromBoxedTextInput().text = color.value.toHex(alpha = false)
-                }.onChange { text: String ->
-                    dodge = true
-                    if (text.isEmpty()) return@onChange false
-                    if (text.startsWith('-')) return@onChange true
-                    if (text.length > 8) return@onChange true
-                    if (text == "#") return@onChange false
-                    try {
-                        color.value.recolor(text.toColor(color.value.alpha))
-                        color.notify()
-                        false
-                    } catch (_: Exception) {
-                        shake(); true
-                    }
-                },
-                BoxedNumericInput(
-                    initialValue = color.value.alpha * 100f,
-                    post = " % ",
-                    center = true,
-                    arrows = false,
-                    size = Vec2(73f, 32f)
-                ).onChange { it: Float ->
-                    color.value.alpha = it / 100f
-                    color.notify()
-                    false
-                }.onChange(color) {
-                    this.getTextFromBoxedTextInput().text = (color.value.alpha * 100f).toInt().toString()
-                },
-                alignment = Align(padEdges = Vec2.ZERO, padBetween = Vec2(12f, 12f))
-            ),
-            Image(
-                "info.svg".image(),
-                size = 18f by 18f,
-            ).padded(0f, 7f),
-            alignment = Align(padEdges = Vec2.ZERO, padBetween = Vec2(12f, 12f))
-        ),
+        StandardColorTypedOptions(color),
         size = 288f by 0f,
         align = Align(pad = 12f by 12f, line = Align.Line.Start),
         polyUI = polyUI,
@@ -159,6 +130,118 @@ fun ColorPicker(color: State<PolyColor.Mutable>, faves: MutableList<PolyColor>?,
     return p
 }
 
+private fun StandardColorTypedOptions(color: State<PolyColor.Mutable>) = Group(
+    Dropdown(
+        "polyui.color.hex",
+        "polyui.color.rgb",
+        padding = 10f,
+    ).onChange { index: Int ->
+        when (index) {
+            0 -> parent[1] = HexOptions(color)
+            1 -> parent[1] = RGBOptions(color)
+        }
+    },
+    HexOptions(color),
+    Image(
+        "info.svg".image(),
+        size = 18f by 18f,
+    ).padded(0f, 7f),
+    alignment = Align(padEdges = Vec2.ZERO, padBetween = Vec2(12f, 12f))
+).named("StandardColorTypedOptions")
+
+private fun ChromaSliderUnit(color: State<PolyColor.Mutable>) = Group(
+    Slider(initialValue = ((color.value as PolyColor.Chroma).speedNanos / 1_000_000_000L).toFloat(), max = 60f)
+)
+
+
+private fun HexOptions(color: State<PolyColor.Mutable>): Group {
+    var dodge = false
+    return Group(
+        BoxedTextInput(
+            placeholder = "#FFFFFF",
+            initialValue = color.value.toHex(alpha = false),
+            center = true,
+            size = 78f by 32f,
+        ).onChange(color) {
+            if (dodge) {
+                dodge = false
+            } else this.getTextFromBoxedTextInput().text = color.value.toHex(alpha = false)
+        }.onChange { text: String ->
+            dodge = true
+            if (text.isEmpty()) return@onChange false
+            if (text.startsWith('-')) return@onChange true
+            if (text.length > 8) return@onChange true
+            if (text == "#") return@onChange false
+            try {
+                color.value.recolor(text.toColor(color.value.alpha))
+                color.notify()
+                false
+            } catch (_: Exception) {
+                shake(); true
+            }
+        },
+        BoxedNumericInput(
+            initialValue = color.value.alpha * 100f,
+            post = " % ",
+            center = true,
+            arrows = false,
+            size = Vec2(73f, 32f)
+        ).onChange { it: Float ->
+            color.value.alpha = it / 100f
+            color.notify()
+            false
+        }.onChange(color) {
+            this.getTextFromBoxedTextInput().text = (color.value.alpha * 100f).toInt().toString()
+        },
+        alignment = Align(padEdges = Vec2.ZERO, padBetween = Vec2(12f, 12f))
+    )
+}
+
+private fun RGBOptions(color: State<PolyColor.Mutable>): Group {
+    return Group(
+        DraggingNumericTextInput(
+            initialValue = color.value.r.toFloat(),
+            pre = "R: ",
+            size = Vec2(50f, 32f),
+            integral = true,
+            max = 255f,
+        ).onChange { it: Int ->
+            color.value.r = it
+            color.notify()
+            false
+        }.onChange(color) {
+            (this[1] as TextInput).text = color.value.r.toString()
+        },
+        DraggingNumericTextInput(
+            initialValue = color.value.g.toFloat(),
+            pre = "G: ",
+            size = Vec2(50f, 32f),
+            integral = true,
+            max = 255f,
+        ).onChange { it: Int ->
+            color.value.g = it
+            color.notify()
+            false
+        }.onChange(color) {
+            (this[1] as TextInput).text = color.value.g.toString()
+        },
+        DraggingNumericTextInput(
+            initialValue = color.value.b.toFloat(),
+            pre = "B: ",
+            size = Vec2(50f, 32f),
+            integral = true,
+            max = 255f,
+        ).onChange { it: Int ->
+            color.value.b = it
+            color.notify()
+            false
+        }.onChange(color) {
+            (this[1] as TextInput).text = color.value.b.toString()
+        },
+        alignment = Align(padEdges = Vec2.ZERO, padBetween = Vec2(12f, 12f))
+    )
+}
+
 
 //fun ColorPicker2(color: State<PolyColor.Mutable>, polyUI: PolyUI?, openNow: Boolean = true, position: SpawnPos = SpawnPos.AtMouse): Block {
 //    Block(size = 288f by 0f, focusable = true, alignment = Align(pad = Vec2(12f, 12f))).children {
@@ -169,7 +252,7 @@ fun ColorPicker(color: State<PolyColor.Mutable>, faves: MutableList<PolyColor>?,
 //
 //}
 
-private fun assign(p: Block, col: PolyColor) {
+private fun assign(p: Block, col: PolyColor.Mutable) {
     val box = p[1]
     val boxBlob = box[0]
     val hf = boxBlob.width / 2f
@@ -188,7 +271,11 @@ private fun assign(p: Block, col: PolyColor) {
 private class ColorPickingBox(
     val theColor: State<PolyColor.Mutable>,
 ) : Block(
-    Block(size = 12f by 12f, color = PolyColor.TRANSPARENT).draggable().onDrag {
+    Block(size = 12f by 12f, color = PolyColor.TRANSPARENT).draggable().onChange(theColor) {
+        val hf = width / 2f
+        x = (theColor.value.saturation * parent.width) + parent.x - hf
+        y = ((1f - theColor.value.brightness) * parent.height) + parent.y - hf
+    }.onDrag {
         val hf = width / 2f
         x = x.coerceIn(parent.x - hf, parent.x + parent.width - hf)
         y = y.coerceIn(parent.y - hf, parent.y + parent.height - hf)
@@ -212,6 +299,7 @@ private class ColorPickingBox(
     )
 
     override fun render() {
+        if (theColor.value is PolyColor.Chroma) theColor.notify()
         grad1.color2.recolor(theColor.value)
         val col = theColor.value
         val os = col.saturation

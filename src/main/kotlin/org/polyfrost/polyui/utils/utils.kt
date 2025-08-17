@@ -35,6 +35,13 @@ import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.min
 
+/**
+ * Return the number of digits in this integer.
+ * For example: `123.digits` returns `3`, `0.digits` returns `1`, and `21.digits` returns `2`.
+ */
+val Int.digits: Int
+    get() = if (this == 0) 1 else kotlin.math.log10(this.toDouble()).toInt() + 1
+
 @kotlin.internal.InlineOnly
 inline fun Double.toRadians() = (this % 360.0) * (PI / 180.0)
 

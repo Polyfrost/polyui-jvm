@@ -40,6 +40,7 @@ import org.polyfrost.polyui.operations.Move
 import org.polyfrost.polyui.operations.Resize
 import org.polyfrost.polyui.operations.Rotate
 import org.polyfrost.polyui.unit.*
+import org.polyfrost.polyui.utils.digits
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.mapToArray
 import org.polyfrost.polyui.utils.toString
@@ -189,7 +190,7 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, siz
         alignment = Align(main = Align.Content.SpaceBetween, pad = Vec2(8f, 8f), wrap = Align.Wrap.NEVER),
     ).withHoverStates().withBorder()
     val dropdown = Block(
-        alignment = Align(mode = Align.Mode.Vertical, padBetween = Vec2(optPadding, 6f), line = if(size.isPositive) Align.Line.Start else Align.Line.Center),
+        alignment = Align(mode = Align.Mode.Vertical, padBetween = Vec2(optPadding, 6f), line = if (size.isPositive) Align.Line.Start else Align.Line.Center),
         children = entries.mapToArray { (img, text) ->
             Group(
                 if (img != null) Image(img) else null,
@@ -532,15 +533,20 @@ fun DraggingNumericTextInput(
             (parent[1] as TextInput).text += suffix
         }
     }
+    val maxDigits = max.toInt().digits
+    val out = Block(
+        alignment = Align(cross = Align.Content.Center, main = Align.Content.SpaceBetween, padBetween = Vec2.ZERO),
+        size = size
+    ).withBorder().namedId("DraggingNumericTextInput")
 
 
-    return Block(
+    out.addChild(
         pre,
         TextInput(
             text = if (initialValue == 0f) "" else if (suffix != null) "${initialValue.toString(dps = 2)}$suffix" else initialValue.toString(dps = 2),
             placeholder = if (suffix != null) "0$suffix" else "0",
             fontSize = fontSize
-        ).numeric(min = min, max = max, integral = integral, ignoreSuffix = suffix).apply {
+        ).numeric(min = min, max = max, integral = integral, ignoreSuffix = suffix, acceptor = out).apply {
             if (suffix != null) {
                 onFocusGained {
                     this.text = this.text.removeSuffix(suffix)
@@ -549,10 +555,17 @@ fun DraggingNumericTextInput(
                     this.text += suffix
                 }
             }
+            onChange { it: String ->
+                if (integral && it.length > maxDigits) {
+                    shake()
+                    return@onChange true
+                }
+                if (it.isNotEmpty()) parent.position()
+                false
+            }
         },
-        alignment = Align(cross = Align.Content.Center),
-        size = size
-    ).withBorder().namedId("DraggingNumericTextInput")
+    )
+    return out
 }
 
 /**
