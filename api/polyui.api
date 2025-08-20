@@ -1649,9 +1649,11 @@ public final class org/polyfrost/polyui/input/KeyBinder {
 	public final fun add (Lorg/polyfrost/polyui/input/KeyBinder$Bind;)V
 	public final fun add ([Lorg/polyfrost/polyui/input/KeyBinder$Bind;)V
 	public final fun cancelRecord (Ljava/lang/String;)V
+	public final fun getDuplicatesIfAny (Lorg/polyfrost/polyui/input/KeyBinder$Bind;)Ljava/util/List;
 	public final fun getHasTimeSensitiveListeners ()Z
-	public final fun record (JLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun record$default (Lorg/polyfrost/polyui/input/KeyBinder;JLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun record (Lorg/polyfrost/polyui/input/KeyBinder$Bind;)V
+	public final fun record (ZJLkotlin/jvm/functions/Function1;)Lorg/polyfrost/polyui/input/KeyBinder$Bind;
+	public static synthetic fun record$default (Lorg/polyfrost/polyui/input/KeyBinder;ZJLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/polyfrost/polyui/input/KeyBinder$Bind;
 	public final fun release ()V
 	public final fun remove (Lorg/polyfrost/polyui/input/KeyBinder$Bind;)V
 	public final fun remove ([Lorg/polyfrost/polyui/input/KeyBinder$Bind;)V
@@ -1681,8 +1683,8 @@ public class org/polyfrost/polyui/input/KeyBinder$Bind {
 	public final fun getMouse ()[I
 	public final fun getUnmappedKeys ()[I
 	public final fun hashCode ()I
-	protected final fun isModsOnly ()Z
-	protected final fun isSingleKey ()Z
+	public final fun isBound ()Z
+	public final fun isModsOnly ()Z
 	public final fun keysToString ()Ljava/lang/String;
 	protected final fun matches ([ILorg/polyfrost/polyui/utils/IntArraySet;)Z
 	protected final fun matches ([Ljava/lang/Object;Ljava/util/ArrayList;)Z
@@ -2422,6 +2424,8 @@ public final class org/polyfrost/polyui/utils/ListUtils {
 	public static final fun addIfAbsent (Ljava/util/List;Ljava/lang/Object;)V
 	public static final fun addOrReplace (Ljava/util/List;Ljava/lang/Object;)Ljava/lang/Object;
 	public static final fun cut (Ljava/util/List;II)Ljava/util/List;
+	public static final fun nullIfEmpty ([I)[I
+	public static final fun nullIfEmpty ([Ljava/lang/Object;)[Ljava/lang/Object;
 }
 
 public class org/polyfrost/polyui/utils/PolyUIBuilder {

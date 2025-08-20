@@ -28,6 +28,7 @@ import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.utils.IntArraySet
 import org.polyfrost.polyui.utils.addOrReplace
 import org.polyfrost.polyui.utils.fastEach
+import org.polyfrost.polyui.utils.nullIfEmpty
 
 /**
  * # KeyBinder
@@ -51,9 +52,7 @@ class KeyBinder(private val settings: Settings) {
     private val downUnmappedKeys = IntArraySet(5)
     private val downKeys = ArrayList<Keys>(5)
 
-    private var recordingTime = 0L
-    private var recordingFunc: ((Boolean) -> Boolean)? = null
-    private var callback: ((Bind?) -> Unit)? = null
+    private var recordingBind: Bind? = null
 
     /**
      * accept a keystroke event. This will call all keybindings that match the event.
@@ -124,27 +123,10 @@ class KeyBinder(private val settings: Settings) {
         return ret
     }
 
-    private fun completeRecording(mods: Byte) {
-        if (recordingFunc == null) return
-        val b = Bind(
-            if (downUnmappedKeys.size == 0) null else downUnmappedKeys.toIntArray(),
-            if (downKeys.size == 0) null else downKeys.toTypedArray(),
-            if (downMouseButtons.size == 0) null else downMouseButtons.toIntArray(),
-            Modifiers(mods),
-            recordingTime,
-            recordingFunc ?: throw ConcurrentModificationException("unlucky"),
-        )
-        if (b in listeners) {
-            cancelRecord("Duplicate keybind: $b")
-        } else {
-            if (settings.debug) PolyUI.LOGGER.info("Bind created: $b")
-            callback?.invoke(b)
-            recordingTime = 0L
-            callback = null
-            recordingFunc = null
-            release()
-        }
-    }
+    /**
+     * Return a list of duplicates of the given keybind.
+     */
+    fun getDuplicatesIfAny(bind: Bind) = listeners.filter { it == bind }
 
     /**
      * Add a keybind to this PolyUI instance, that will be run when the given keys are pressed.
@@ -188,7 +170,7 @@ class KeyBinder(private val settings: Settings) {
     }
 
     /**
-     * Begin recording for a keybind. The resulting keybind, which will be passed to the [callback], is **not registered automatically.**
+     * Begin recording for a keybind. The resulting keybind, is **not registered automatically.**
      *
      * recording may be cancelled for the following reasons:
      * - the ESC key is pressed
@@ -197,41 +179,61 @@ class KeyBinder(private val settings: Settings) {
      * - the keybind was attempted to be set to just left-click (which is not allowed)
      *
      * @param holdDurationNanos the duration that the keys have to be pressed in the resultant keybind
-     * @param callback the function that will be called when recording is completed. **the parameter will be `null` if it failed or was cancelled**.
      * @param function the function that will be run when the keybind is pressed. **The parameter will be `true` if the keybind is pressed, and `false` if it is released.**
      * @throws IllegalStateException if the keybind is already present
      * @since 0.24.0
      */
-    fun record(holdDurationNanos: Long = 0L, callback: (Bind?) -> Unit, function: (Boolean) -> Boolean) {
+    fun record(register: Boolean, holdDurationNanos: Long = 0L, function: (Boolean) -> Boolean): Bind {
+        // stupid complier
+        val out = Bind(null as IntArray?, null as Array<Keys>?, null as IntArray?, Modifiers(0), durationNanos = holdDurationNanos, action = function)
+        record(out)
+        if (register) add(out)
+        return out
+    }
+
+    /**
+     * Begin recording for a keybind. This will **overwrite** the keys in the given [bind] with the currently pressed keys when the recording is completed.
+     * In the event that the recording is cancelled, the [bind] will not be modified.
+     */
+    fun record(bind: Bind) {
         if (settings.debug) PolyUI.LOGGER.info("Recording keybind began")
-        if (recordingFunc != null) cancelRecord("New recording started")
+        if (recordingBind != null) cancelRecord("New recording started")
+        bind.resetState()
         release()
-        this.callback = callback
-        recordingTime = holdDurationNanos
-        recordingFunc = function
+        recordingBind = bind
     }
 
     @ApiStatus.Internal
     fun cancelRecord(reason: String) {
-        if (recordingFunc != null) PolyUI.LOGGER.warn("Keybind recording cancelled: $reason")
-        recordingTime = 0L
-        callback?.invoke(null)
-        callback = null
-        recordingFunc = null
+        if (recordingBind != null) PolyUI.LOGGER.warn("Keybind recording cancelled: $reason")
+        recordingBind = null
+        release()
+    }
+
+    private fun completeRecording(mods: Byte) {
+        val bind = recordingBind ?: return
+        bind.unmappedKeys = if (downUnmappedKeys.isEmpty()) null else downUnmappedKeys.toIntArray()
+        bind.keys = if (downKeys.isEmpty()) null else downKeys.toTypedArray()
+        bind.mouse = if (downMouseButtons.isEmpty()) null else downMouseButtons.toIntArray()
+        bind.mods = Modifiers(mods)
+        bind.resetState()
+        if (settings.debug) PolyUI.LOGGER.info("Bind created: $bind")
+        recordingBind = null
         release()
     }
 
     /**
-     * Synthetically drop all pressed keys
+     * Synthetically drop all pressed keys, and will reset the state of all keybinds. (including generating "up" polls/aka `action(false)` for all binds that were pressed)
      */
     @ApiStatus.Internal
     fun release() {
         downKeys.clear()
         downMouseButtons.clear()
         downUnmappedKeys.clear()
+        listeners.fastEach { it.resetState() }
     }
 
-    open class Bind(val unmappedKeys: IntArray? = null, val keys: Array<Keys>? = null, val mouse: IntArray? = null, @get:JvmName("getMods") val mods: Modifiers = Modifiers(0), val durationNanos: Long = 0L, @Transient val action: (Boolean) -> Boolean) {
+    open class Bind(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: IntArray? = null, @get:JvmName("getMods") mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, @Transient val action: (Boolean) -> Boolean) {
         constructor(chars: CharArray? = null, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: (Boolean) -> Boolean) : this(
             chars?.map {
                 it.lowercaseChar().code
@@ -266,24 +268,26 @@ class KeyBinder(private val settings: Settings) {
 
         constructor(mods: Modifiers = Modifiers(0), action: (Boolean) -> Boolean) : this(unmappedKeys = null, key = null, mouse = null, mods = mods, durationNanos = 0L, action = action)
 
+        var unmappedKeys = unmappedKeys.nullIfEmpty()
+            internal set
+        var keys = keys?.nullIfEmpty()
+            internal set
+        var mouse = mouse?.nullIfEmpty()
+            internal set
+        @get:JvmName("getMods")
+        var mods = mods
+            internal set
+        var durationNanos = durationNanos
+            internal set
+
         @Transient
         private var time = 0L
 
         @Transient
         private var ran = false
 
-        protected val isModsOnly get() = unmappedKeys == null && keys == null && mouse == null
-
-        protected val isSingleKey: Boolean
-
-        init {
-            var i = 0
-            unmappedKeys?.let { i += it.size }
-            keys?.let { i += it.size }
-            mouse?.let { i += it.size }
-            i += mods.size
-            isSingleKey = i == 1
-        }
+        val isModsOnly get() = unmappedKeys == null && keys == null && mouse == null
+        val isBound get() = unmappedKeys != null || keys != null || mouse != null || !mods.isEmpty
 
         internal fun update(c: IntArraySet, k: ArrayList<Keys>, m: IntArraySet, mods: Byte, deltaTimeNanos: Long, down: Boolean): Boolean {
             if (!test(c, k, m, mods, deltaTimeNanos, down)) {
@@ -305,6 +309,16 @@ class KeyBinder(private val settings: Settings) {
                 return action(true)
             }
             return false
+        }
+
+        /**
+         * Reset the state of this keybind, meaning that it will call [action] with `false` if it was previously ran (i.e. is actively being held down),
+         * and reset its internal state so that it can be used again. To be used in conjunction with [KeyBinder.release].
+         */
+        internal fun resetState() {
+            if (ran) action(false)
+            time = 0L
+            ran = false
         }
 
         protected open fun test(c: IntArraySet, k: ArrayList<Keys>, m: IntArraySet, mods: Byte, deltaTimeNanos: Long, down: Boolean): Boolean {

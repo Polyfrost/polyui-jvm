@@ -178,6 +178,20 @@ inline fun <L, E, reified R> L.mapToArray(transform: (E) -> R): Array<R> where L
 }
 
 /**
+ * Returns this array, or `null` if it is empty.
+ */
+fun <T> Array<T>?.nullIfEmpty(): Array<T>? {
+    return if (this == null || this.isEmpty()) null else this
+}
+
+/**
+ * Returns this array, or `null` if it is empty.
+ */
+fun IntArray?.nullIfEmpty(): IntArray? {
+    return if (this == null || this.isEmpty()) null else this
+}
+
+/**
  * Add the given [element] to this list if it is not in it already.
  *
  * Used when the performance hit of a [Set] is not worth it, such as if this operation is rare.

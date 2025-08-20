@@ -43,10 +43,7 @@ import org.polyfrost.polyui.data.Font
 import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.event.State
-import org.polyfrost.polyui.input.KeyBinder
-import org.polyfrost.polyui.input.KeyModifiers
-import org.polyfrost.polyui.input.Keys
-import org.polyfrost.polyui.input.Modifiers
+import org.polyfrost.polyui.input.*
 import org.polyfrost.polyui.operations.ShakeOp
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.SpawnPos
@@ -104,7 +101,7 @@ class Debugger(private val polyUI: PolyUI) {
         true
     }
 
-    private val inspectBind = KeyBinder.Bind(chars = null, mouse = intArrayOf(0), mods = Modifiers(KeyModifiers.SHIFT), durationNanos = 0.4.seconds) {
+    private val inspectBind = KeyBinder.Bind(mouse = Mouse.LEFT_MOUSE, mods = Modifiers(KeyModifiers.SHIFT), durationNanos = 0.4.seconds) {
         if (it) openDebugWindow(polyUI.inputManager.rayCheckUnsafe(polyUI.master, polyUI.mouseX, polyUI.mouseY))
         true
     }
