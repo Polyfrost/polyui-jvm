@@ -37,8 +37,9 @@ open class Image(
     var backgroundColor: PolyColor? = null,
     alignment: Align = AlignDefault,
     radii: FloatArray? = null,
+    focusable: Boolean = false,
     vararg children: Component?
-) : Block(children = children, at, size, alignment, Vec2.ZERO, false, null, radii) {
+) : Block(children = children, at, size, alignment, Vec2.ZERO, focusable, null, radii) {
     constructor(image: String) : this(PolyImage(image))
 
     var image: PolyImage = image
