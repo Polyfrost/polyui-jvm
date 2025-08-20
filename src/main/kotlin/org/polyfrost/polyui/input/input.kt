@@ -387,6 +387,7 @@ value class Modifiers(val value: Byte) {
      * @since 1.11.8
      */
     fun containedBy(other: Modifiers): Boolean {
+        if (isEmpty) return true
         if (lCtrl && rCtrl) return other.hasControl
         else if (lCtrl) return other.lCtrl
         else if (rCtrl) return other.rCtrl
@@ -403,7 +404,7 @@ value class Modifiers(val value: Byte) {
         else if (lMeta) return other.lMeta
         else if (rMeta) return other.rMeta
 
-        return other.isEmpty
+        return false
     }
 
     override fun toString() = "$name ($value)"

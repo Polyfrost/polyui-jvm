@@ -26,7 +26,6 @@ import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.Settings
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.utils.IntArraySet
-import org.polyfrost.polyui.utils.addOrReplace
 import org.polyfrost.polyui.utils.fastEach
 import org.polyfrost.polyui.utils.nullIfEmpty
 
@@ -53,6 +52,7 @@ class KeyBinder(private val settings: Settings) {
     private val downKeys = ArrayList<Keys>(5)
 
     private var recordingBind: Bind? = null
+    private var recordingCallback: ((Bind?) -> Unit)? = null
 
     /**
      * accept a keystroke event. This will call all keybindings that match the event.
@@ -144,10 +144,7 @@ class KeyBinder(private val settings: Settings) {
      */
     fun add(bind: Bind) {
         if (bind.durationNanos > 0L) hasTimeSensitiveListeners = true
-        val old = listeners.addOrReplace(bind)
-        if (old != null && old !== bind) {
-            PolyUI.LOGGER.warn("Keybind replaced: $bind")
-        }
+        listeners.add(bind)
     }
 
     fun remove(bind: Bind) {
@@ -170,7 +167,7 @@ class KeyBinder(private val settings: Settings) {
     }
 
     /**
-     * Begin recording for a keybind. The resulting keybind, is **not registered automatically.**
+     * Begin recording for a keybind. The resulting keybind, will be registered if [register] is true.
      *
      * recording may be cancelled for the following reasons:
      * - the ESC key is pressed
@@ -180,13 +177,15 @@ class KeyBinder(private val settings: Settings) {
      *
      * @param holdDurationNanos the duration that the keys have to be pressed in the resultant keybind
      * @param function the function that will be run when the keybind is pressed. **The parameter will be `true` if the keybind is pressed, and `false` if it is released.**
+     * @param callback a callback which is executed when the recording is finished. If the recording was successful,
+     * the same bind as in the return of this method is supplied as the parameter. Else, for example if it was canceled, `null` is used.
      * @throws IllegalStateException if the keybind is already present
      * @since 0.24.0
      */
-    fun record(register: Boolean, holdDurationNanos: Long = 0L, function: (Boolean) -> Boolean): Bind {
+    fun record(register: Boolean, holdDurationNanos: Long = 0L, callback: ((Bind?) -> Unit)?, function: (Boolean) -> Boolean): Bind {
         // stupid complier
         val out = Bind(null as IntArray?, null as Array<Keys>?, null as IntArray?, Modifiers(0), durationNanos = holdDurationNanos, action = function)
-        record(out)
+        record(out, callback)
         if (register) add(out)
         return out
     }
@@ -194,18 +193,24 @@ class KeyBinder(private val settings: Settings) {
     /**
      * Begin recording for a keybind. This will **overwrite** the keys in the given [bind] with the currently pressed keys when the recording is completed.
      * In the event that the recording is cancelled, the [bind] will not be modified.
+     * @param callback a callback which is executed when the recording is finished. If the recording was successful,
+     * the same bind as in the return of this method is supplied as the parameter. Else, for example if it was canceled, `null` is used.
+     * @since 1.12.4
      */
-    fun record(bind: Bind) {
+    fun record(bind: Bind, callback: ((Bind?) -> Unit)?) {
         if (settings.debug) PolyUI.LOGGER.info("Recording keybind began")
         if (recordingBind != null) cancelRecord("New recording started")
         bind.resetState()
         release()
         recordingBind = bind
+        recordingCallback = callback
     }
 
     @ApiStatus.Internal
     fun cancelRecord(reason: String) {
         if (recordingBind != null) PolyUI.LOGGER.warn("Keybind recording cancelled: $reason")
+        recordingCallback?.invoke(null)
+        recordingCallback = null
         recordingBind = null
         release()
     }
@@ -218,6 +223,8 @@ class KeyBinder(private val settings: Settings) {
         bind.mods = Modifiers(mods)
         bind.resetState()
         if (settings.debug) PolyUI.LOGGER.info("Bind created: $bind")
+        recordingCallback?.invoke(bind)
+        recordingCallback = null
         recordingBind = null
         release()
     }
@@ -274,6 +281,7 @@ class KeyBinder(private val settings: Settings) {
             internal set
         var mouse = mouse?.nullIfEmpty()
             internal set
+
         @get:JvmName("getMods")
         var mods = mods
             internal set
@@ -286,8 +294,8 @@ class KeyBinder(private val settings: Settings) {
         @Transient
         private var ran = false
 
-        val isModsOnly get() = unmappedKeys == null && keys == null && mouse == null
-        val isBound get() = unmappedKeys != null || keys != null || mouse != null || !mods.isEmpty
+        val size get() = (unmappedKeys?.size ?: 0) + (keys?.size ?: 0) + (mouse?.size ?: 0) + mods.size
+        val isBound get() = size > 0
 
         internal fun update(c: IntArraySet, k: ArrayList<Keys>, m: IntArraySet, mods: Byte, deltaTimeNanos: Long, down: Boolean): Boolean {
             if (!test(c, k, m, mods, deltaTimeNanos, down)) {
@@ -338,6 +346,7 @@ class KeyBinder(private val settings: Settings) {
         }
 
         fun keysToString(): String {
+            if (!isBound) return ""
             val sb = StringBuilder()
             val s = mods.prettyName
             sb.append(s)
@@ -362,8 +371,7 @@ class KeyBinder(private val settings: Settings) {
                     sb.append(" + ")
                 }
             }
-            sb.setLength(sb.length - 3)
-            return sb.toString()
+            return sb.substring(sb.length - 3)
         }
 
         final override fun equals(other: Any?): Boolean {

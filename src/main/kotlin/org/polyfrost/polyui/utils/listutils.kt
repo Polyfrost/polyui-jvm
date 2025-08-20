@@ -3,7 +3,6 @@
 
 package org.polyfrost.polyui.utils
 
-import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
 
 /**
@@ -199,27 +198,6 @@ fun IntArray?.nullIfEmpty(): IntArray? {
  */
 fun <E> MutableList<E>.addIfAbsent(element: E) {
     if (!contains(element)) this.add(element)
-}
-
-/**
- * Replace this given element if it already exists in this list using [Any.equals], or append it to the
- * end if it does not.
- * This method is very strange and has one specific use case, which is for cases where
- * *referential equality* is needed as well as *structural equality*. See more [here](https://kotlinlang.org/docs/equality.html).
- * @since 1.2.0
- * @see addIfAbsent
- */
-@ApiStatus.Internal
-fun <E> MutableList<E>.addOrReplace(element: E): E? {
-    val i = indexOf(element)
-    return if (i != -1) {
-        val old = this[i]
-        this[i] = element
-        old
-    } else {
-        this.add(element)
-        null
-    }
 }
 
 /**
