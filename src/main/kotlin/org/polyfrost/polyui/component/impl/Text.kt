@@ -175,7 +175,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
     var uFontSize = fontSize
         set(value) {
             if (field == value) return
-            field = value
+            field = value.roundTo(PolyUI.ROUNDING)
             fontSize = if (initialized) value * (polyUI.size.y / polyUI.iSize.y) else value
             if (_font != null) spacing = (font.lineSpacing - 1f) * value
         }
@@ -187,12 +187,16 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
     var fontSize = fontSize
         set(value) {
             if (field == value) return
-            field = value
+            field = value.roundTo(PolyUI.ROUNDING)
             if (initialized) updateTextBounds()
         }
 
     protected var spacing = 0f
-        private set
+        private set(value) {
+            if (field == value) return
+            field = value.roundTo(PolyUI.ROUNDING)
+            if (initialized) updateTextBounds()
+        }
 
     override fun render() {
         var y = this.y

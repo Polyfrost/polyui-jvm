@@ -5,6 +5,7 @@ public final class org/polyfrost/polyui/PolyUI {
 	public static final field INPUT_NONE B
 	public static final field INPUT_PRESSED B
 	public static final field LOGGER Lorg/apache/logging/log4j/Logger;
+	public static final field ROUNDING F
 	public static final field SUCCESS B
 	public static final field WARNING B
 	public static final field defaultFonts Lorg/polyfrost/polyui/data/FontFamily;
@@ -1685,7 +1686,8 @@ public class org/polyfrost/polyui/input/KeyBinder$Bind {
 	public final fun getUnmappedKeys ()[I
 	public final fun hashCode ()I
 	public final fun isBound ()Z
-	public final fun keysToString ()Ljava/lang/String;
+	public final fun keysToString (Ljava/lang/String;)Ljava/lang/String;
+	public static synthetic fun keysToString$default (Lorg/polyfrost/polyui/input/KeyBinder$Bind;Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/String;
 	protected final fun matches ([ILorg/polyfrost/polyui/utils/IntArraySet;)Z
 	protected final fun matches ([Ljava/lang/Object;Ljava/util/ArrayList;)Z
 	protected fun test (Lorg/polyfrost/polyui/utils/IntArraySet;Ljava/util/ArrayList;Lorg/polyfrost/polyui/utils/IntArraySet;BJZ)Z
@@ -2240,6 +2242,7 @@ public final class org/polyfrost/polyui/unit/Vec2 {
 	public static final fun plus (JJ)J
 	public static final fun rem (JJ)J
 	public static final fun times (JJ)J
+	public static final fun timesWithRounding (JFFF)J
 	public fun toString ()Ljava/lang/String;
 	public static fun toString-impl (J)Ljava/lang/String;
 	public final synthetic fun unbox-impl ()J

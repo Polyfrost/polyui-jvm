@@ -32,6 +32,7 @@ import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.annotations.Locking
 import org.polyfrost.polyui.utils.fastEach
+import org.polyfrost.polyui.utils.roundTo
 
 /**
  * Extensions to [Component] which allow it to listen to scroll events and scroll itself.
@@ -46,10 +47,16 @@ abstract class Scrollable(
     focusable: Boolean
 ) : Inputtable(at, size, alignment, focusable) {
     @ApiStatus.Internal
-    protected var visWidth = visibleSize.x
+    protected var visWidth = visibleSize.x.roundTo(PolyUI.ROUNDING)
+        set(value) {
+            field = value.roundTo(PolyUI.ROUNDING)
+        }
 
     @ApiStatus.Internal
-    protected var visHeight = visibleSize.y
+    protected var visHeight = visibleSize.y.roundTo(PolyUI.ROUNDING)
+        set(value) {
+            field = value.roundTo(PolyUI.ROUNDING)
+        }
 
     @Suppress("INAPPLICABLE_JVM_NAME")
     @get:JvmName("getVisibleSize")
@@ -236,9 +243,9 @@ abstract class Scrollable(
 
     override fun rescale0(scaleX: Float, scaleY: Float, withChildren: Boolean) {
         super.rescale0(scaleX, scaleY, withChildren)
-        screenAt *= Vec2(scaleX, scaleY)
-        xScroll?.let { it.from *= scaleX; it.to *= scaleX }
-        yScroll?.let { it.from *= scaleY; it.to *= scaleY }
+        screenAt = screenAt.timesWithRounding(scaleX, scaleY, PolyUI.ROUNDING)
+        xScroll?.let { it.from = (it.from * scaleX).roundTo(PolyUI.ROUNDING); it.to = (it.to * scaleX).roundTo(PolyUI.ROUNDING) }
+        yScroll?.let { it.from = (it.from * scaleX).roundTo(PolyUI.ROUNDING); it.to = (it.to * scaleX).roundTo(PolyUI.ROUNDING) }
         visWidth *= scaleX
         visHeight *= scaleY
     }

@@ -345,8 +345,8 @@ class KeyBinder(private val settings: Settings) {
             return sb.toString()
         }
 
-        fun keysToString(): String {
-            if (!isBound) return ""
+        fun keysToString(ifNotBound: String = ""): String {
+            if (!isBound) return ifNotBound
             val sb = StringBuilder()
             val s = mods.prettyName
             sb.append(s)

@@ -37,6 +37,7 @@ import org.polyfrost.polyui.utils.annotations.Locking
 import org.polyfrost.polyui.utils.annotations.SideEffects
 import org.polyfrost.polyui.utils.fastAny
 import org.polyfrost.polyui.utils.fastEach
+import org.polyfrost.polyui.utils.roundTo
 import kotlin.experimental.and
 import kotlin.experimental.or
 import kotlin.math.min
@@ -93,13 +94,20 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
             if (initialized) recalculate()
         }
 
-    private var _x = at.x
-    private var _y = at.y
+    private var _x = at.x.roundTo(PolyUI.ROUNDING)
+        set(value) {
+            field = value.roundTo(PolyUI.ROUNDING)
+        }
+    private var _y = at.y.roundTo(PolyUI.ROUNDING)
+        set(value) {
+            field = value.roundTo(PolyUI.ROUNDING)
+        }
 
     @SideEffects("x", "_x", "atValid", "this.children::x", `when` = "value != x")
     var x: Float
         get() = _x
-        set(value) {
+        set(v) {
+            val value = v.roundTo(PolyUI.ROUNDING)
             if (value == _x) return
             val d = value - _x
             _x = value
@@ -115,7 +123,8 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
     @SideEffects("y", "_y", "atValid", "this.children::y", `when` = "value != y")
     var y: Float
         get() = _y
-        set(value) {
+        set(v) {
+            val value = v.roundTo(PolyUI.ROUNDING)
             if (value == _y) return
             val d = value - _y
             _y = value
@@ -133,8 +142,8 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
     var at: Vec2
         get() = Vec2(x, y)
         set(value) {
-            x = value.x
-            y = value.y
+            x = value.x.roundTo(PolyUI.ROUNDING)
+            y = value.y.roundTo(PolyUI.ROUNDING)
         }
 
     /**
@@ -157,7 +166,10 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         }
     }
 
-    open var width = size.x
+    open var width = size.x.roundTo(PolyUI.ROUNDING)
+        set(value) {
+            field = value.roundTo(PolyUI.ROUNDING)
+        }
 //        set(value) {
 //            if(value == field) return
 //            field = value
@@ -168,7 +180,10 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
 //            }
 //        }
 
-    open var height = size.y
+    open var height = size.y.roundTo(PolyUI.ROUNDING)
+        set(value) {
+            field = value.roundTo(PolyUI.ROUNDING)
+        }
 //        set(value) {
 //            if(value == field) return
 //            field = value
@@ -184,8 +199,8 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
     var size: Vec2
         get() = Vec2(width, height)
         set(value) {
-            width = value.x
-            height = value.y
+            width = value.x.roundTo(PolyUI.ROUNDING)
+            height = value.y.roundTo(PolyUI.ROUNDING)
         }
 
     /**

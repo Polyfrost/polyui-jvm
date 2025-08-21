@@ -21,6 +21,7 @@
 
 package org.polyfrost.polyui.component.impl
 
+import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
@@ -28,6 +29,7 @@ import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.areElementsEqual
+import org.polyfrost.polyui.utils.roundTo
 
 open class Block(
     vararg children: Component?,
@@ -81,8 +83,14 @@ open class Block(
         when {
             radii == null -> {}
             radii.areElementsEqual() -> {
+                val v = (radii[0] * scaleX).roundTo(PolyUI.ROUNDING)
                 for (i in radii.indices) {
-                    radii[i] *= scaleX
+                    radii[i] = v
+                }
+            }
+            else -> {
+                for (i in radii.indices) {
+                    radii[i] = (radii[i] * scaleX).roundTo(PolyUI.ROUNDING)
                 }
             }
         }

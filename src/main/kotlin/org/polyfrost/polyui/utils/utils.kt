@@ -34,6 +34,7 @@ import kotlin.jvm.internal.Ref
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.min
+import kotlin.math.round
 
 /**
  * Return the number of digits in this integer.
@@ -272,6 +273,17 @@ inline fun <T> T.ref(): Ref.ObjectRef<T> {
     val ref = Ref.ObjectRef<T>()
     ref.element = this
     return ref
+}
+
+/**
+ * Round this float to the nearest multiple of [multiple].
+ * @since 1.12.6
+ */
+@kotlin.internal.InlineOnly
+inline fun Float.roundTo(multiple: Float): Float {
+    // will get optimized out quickly.
+    if (multiple <= 0f) return this
+    return round(this / multiple) * multiple
 }
 
 /**

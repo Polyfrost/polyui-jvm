@@ -21,6 +21,8 @@
 
 package org.polyfrost.polyui.unit
 
+import org.polyfrost.polyui.utils.roundTo
+
 /**
  * Class that represents a 2D vector.
  *
@@ -82,6 +84,12 @@ value class Vec2(val value: Long) {
         val x = x.compareTo(size.x)
         return if (x != 0) x else y.compareTo(size.y)
     }
+
+    @JvmName("timesWithRounding")
+    fun timesWithRounding(x: Float, y: Float, rounding: Float) = Vec2(
+        (this.x * x).roundTo(rounding),
+        (this.y * y).roundTo(rounding)
+    )
 
     @JvmName("times")
     operator fun times(other: Vec2) = Vec2(x * other.x, y * other.y)
