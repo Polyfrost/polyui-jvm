@@ -194,6 +194,7 @@ class InputManager(
      * @see Modifiers
      */
     fun removeModifier(modifier: Byte) {
+        keyBinder?.modifierRemoved(mods)
         mods = (mods.toInt() and modifier.toInt().inv()).toByte()
         keyBinder?.update(0L, mods, false)
     }

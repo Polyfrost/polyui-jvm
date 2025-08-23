@@ -282,25 +282,27 @@ value class Modifiers(val value: Byte) {
         get() {
             if (isEmpty) return ""
             val sb = StringBuilder()
-            if (hasShift) sb.append("Shift + ")
+            if (lShift && rShift) sb.append("Shift + ")
             else {
                 if (lShift) sb.append("Left Shift + ")
                 if (rShift) sb.append("Right Shift + ")
             }
-            if (value.toInt() and 0b00001100 != 0) sb.append("Control + ")
+            if (lCtrl && rCtrl) sb.append("Control + ")
             else {
                 if (lCtrl) sb.append("Left Control + ")
                 if (rCtrl) sb.append("Right Control + ")
             }
-            if (hasAlt) sb.append("Alt + ")
+            if (lAlt && rAlt) sb.append("Alt + ")
             else {
                 if (lAlt) sb.append("Left Alt + ")
                 if (rAlt) sb.append("Right Alt + ")
             }
-            if (hasMeta) sb.append("Meta + ")
-            else {
-                if (lMeta) sb.append("Left Meta + ")
-                if (rMeta) sb.append("Right Meta + ")
+            if (!PolyUI.isOnMac) {
+                if (hasMeta) sb.append("Meta + ")
+                else {
+                    if (lMeta) sb.append("Left Meta + ")
+                    if (rMeta) sb.append("Right Meta + ")
+                }
             }
             return sb.substring(0, sb.length - 3)
         }

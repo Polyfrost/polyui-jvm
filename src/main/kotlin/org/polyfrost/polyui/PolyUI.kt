@@ -550,7 +550,7 @@ class PolyUI(
          * be rounded to the closest multiple of this value.
          * @since 1.12.6
          */
-        const val ROUNDING = 0.1f
+        const val ROUNDING = 0f
 
         const val INPUT_NONE: Byte = 0
         const val INPUT_HOVERED: Byte = 1

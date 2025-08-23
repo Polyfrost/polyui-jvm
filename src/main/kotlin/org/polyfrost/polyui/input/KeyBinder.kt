@@ -96,6 +96,11 @@ class KeyBinder(private val settings: Settings) {
         else -> false
     }
 
+    @ApiStatus.Internal
+    fun modifierRemoved(oldMods: Byte) {
+        if (recordingBind != null) completeRecording(oldMods)
+    }
+
     /**
      * accept an unmapped keystroke event. This will call all keybindings that match the event.
      *
@@ -197,10 +202,11 @@ class KeyBinder(private val settings: Settings) {
      * the same bind as in the return of this method is supplied as the parameter. Else, for example if it was canceled, `null` is used.
      * @since 1.12.4
      */
-    fun record(bind: Bind, callback: ((Bind?) -> Unit)?) {
+    fun record(bind: Bind, callback: ((Bind?) -> Unit)? = null) {
         if (settings.debug) PolyUI.LOGGER.info("Recording keybind began")
         if (recordingBind != null) cancelRecord("New recording started")
         bind.resetState()
+        bind.muted = true
         release()
         recordingBind = bind
         recordingCallback = callback
@@ -208,9 +214,11 @@ class KeyBinder(private val settings: Settings) {
 
     @ApiStatus.Internal
     fun cancelRecord(reason: String) {
-        if (recordingBind != null) PolyUI.LOGGER.warn("Keybind recording cancelled: $reason")
+        if (recordingBind == null) return
+        PolyUI.LOGGER.warn("Keybind recording cancelled: $reason")
         recordingCallback?.invoke(null)
         recordingCallback = null
+        recordingBind?.muted = false
         recordingBind = null
         release()
     }
@@ -222,6 +230,7 @@ class KeyBinder(private val settings: Settings) {
         bind.mouse = if (downMouseButtons.isEmpty()) null else downMouseButtons.toIntArray()
         bind.mods = Modifiers(mods)
         bind.resetState()
+        bind.muted = false
         if (settings.debug) PolyUI.LOGGER.info("Bind created: $bind")
         recordingCallback?.invoke(bind)
         recordingCallback = null
@@ -289,6 +298,9 @@ class KeyBinder(private val settings: Settings) {
             internal set
 
         @Transient
+        var muted = false
+
+        @Transient
         private var time = 0L
 
         @Transient
@@ -298,6 +310,7 @@ class KeyBinder(private val settings: Settings) {
         val isBound get() = size > 0
 
         internal fun update(c: IntArraySet, k: ArrayList<Keys>, m: IntArraySet, mods: Byte, deltaTimeNanos: Long, down: Boolean): Boolean {
+            if (muted) return false
             if (!test(c, k, m, mods, deltaTimeNanos, down)) {
                 time = 0L
                 if (ran) {
@@ -371,7 +384,7 @@ class KeyBinder(private val settings: Settings) {
                     sb.append(" + ")
                 }
             }
-            return sb.substring(sb.length - 3)
+            return sb.substring(0, sb.length - 3)
         }
 
         final override fun equals(other: Any?): Boolean {
