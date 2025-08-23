@@ -343,6 +343,7 @@ class KeyBinder(private val settings: Settings) {
         }
 
         protected open fun test(c: IntArraySet, k: ArrayList<Keys>, m: IntArraySet, mods: Byte, deltaTimeNanos: Long, down: Boolean): Boolean {
+            if (!isBound) return false
             if (durationNanos == 0L && deltaTimeNanos > 0L) return false
             if (!unmappedKeys.matches(c)) return false
             if (!keys.matches(k)) return false
