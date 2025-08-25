@@ -113,10 +113,10 @@ open class DarkTheme : Colors {
 
     override val text = Colors.Text(
         primary = Colors.Palette(
-            rgba(213, 219, 255), // Normal - #D5DBFF
-            rgba(213, 219, 255, 0.85f), // Elevated/hovered - #D5DBFFDA
-            rgba(225, 229, 255), // Pressed - #E1E5FF
-            rgba(225, 229, 255, 0.5f), // Disabled - #E1E5FF80
+            rgba(223, 229, 255), // Normal - #D5DBFF
+            rgba(223, 229, 255, 0.85f), // Elevated/hovered - #D5DBFFDA
+            rgba(235, 239, 255), // Pressed - #E1E5FF
+            rgba(235, 239, 255, 0.5f), // Disabled - #E1E5FF80
         ),
         secondary = Colors.Palette(
             rgba(120, 119, 141), // Normal - #78778D

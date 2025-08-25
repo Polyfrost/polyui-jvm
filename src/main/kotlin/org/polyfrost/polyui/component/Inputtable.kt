@@ -117,6 +117,7 @@ abstract class Inputtable(
     override fun setup(polyUI: PolyUI): Boolean {
         if (initialized) return false
         this.polyUI = polyUI
+        if (!designedSize.isPositive) designedSize = polyUI.iSize
 
         removeHandlers(Event.Lifetime.Init)?.accept(this, Event.Lifetime.Init)
         position()

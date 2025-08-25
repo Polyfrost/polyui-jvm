@@ -41,7 +41,6 @@ import org.polyfrost.polyui.operations.Fade
 import org.polyfrost.polyui.operations.Recolor
 import org.polyfrost.polyui.operations.ShakeOp
 import org.polyfrost.polyui.operations.Skew
-import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.set
 
@@ -299,32 +298,6 @@ fun <T : Inputtable> T.addRethemingListeners(): T {
         if (oldFonts !== polyUI.fonts) {
             oldFonts?.let { refont(it, polyUI.fonts) }
             oldFonts = polyUI.fonts
-        }
-        false
-    }
-    return this
-}
-
-/**
- * Use this method on your component if you plan on it being removed from the component tree and re-added later, to guard against the rescaling system
- * not updating the component's size (and optionally its [children][withChildren]) as it was not referenced anywhere when the size was changed.
- *
- * Why is this behavior not default? Because it is quite an unlikely scenario that a component will be removed and re-added,
- * and having this run unnecessarily introduces a performance overhead.
- *
- * @since 1.9.6
- * @see addRethemingListeners
- */
-fun <T : Inputtable> T.addRescalingListeners(withChildren: Boolean = true): T {
-    var oldInstanceSize = Vec2.ZERO
-    onInit {
-        oldInstanceSize = polyUI.size
-    }
-    on(Event.Lifetime.Added) {
-        if (!oldInstanceSize.isPositive) return@on false
-        if (oldInstanceSize != polyUI.size) {
-            rescale0(polyUI.size.x / oldInstanceSize.x, polyUI.size.y / oldInstanceSize.y, withChildren)
-            oldInstanceSize = polyUI.size
         }
         false
     }

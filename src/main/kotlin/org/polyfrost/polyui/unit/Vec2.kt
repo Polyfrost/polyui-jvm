@@ -28,6 +28,9 @@ import org.polyfrost.polyui.utils.roundTo
  *
  * *(revised 1.5)* Vec2's are now purely syntactical sugar which are inlined and have no runtime overhead. Their representation in internal data structures
  * has been replaced with floats instead.
+ *
+ * *Note:* Due to the way this works, `NaN` and `+Inf`, `-Inf`, `0.0` and `-0.0` are not distinguished in this class. This may cause some edges cases with equality,
+ * hash codes, and certain operations. These are not expected to ever appear in PolyUI, and so is not a problem in PolyUI.
  * @see Vec4
  * @since 1.1.0
  */
@@ -41,7 +44,7 @@ value class Vec2(val value: Long) {
     inline val x: Float get() = java.lang.Float.intBitsToFloat(value.toInt())
 
     @kotlin.internal.InlineOnly
-    inline val y: Float get() = java.lang.Float.intBitsToFloat(value.shr(32).toInt())
+    inline val y: Float get() = java.lang.Float.intBitsToFloat(value.ushr(32).toInt())
 
     // checks if the value is negative by checking the sign bits in one go
     @kotlin.internal.InlineOnly

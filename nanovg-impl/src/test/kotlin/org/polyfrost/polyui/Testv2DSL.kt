@@ -47,6 +47,11 @@ fun main() {
         renderer = NVGRenderer
         colors = theme
         backgroundColor = theme.page.bg.normal
+        val bind = KeyBinder.Bind('P') {
+            println("you pressed the bind! $it")
+            true
+        }
+        keyBinder?.add(bind)
         image("polyfrost.png")
         text("text.dark") {
             fontSize = 20f
@@ -148,6 +153,7 @@ fun main() {
                 block(60f by 30f)
             }
         }
+        Button(text = "rec").onClick { keyBinder?.record(bind); false }.add()
         boxedNumericInput.add()
         Image("https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png".image(), size = Vec2(280f, 210f)).add()
     }.open(window)

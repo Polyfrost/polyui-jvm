@@ -46,6 +46,12 @@ val Int.digits: Int
 @kotlin.internal.InlineOnly
 inline fun Double.toRadians() = (this % 360.0) * (PI / 180.0)
 
+fun Float.rescaleXToPolyUIInstance(polyUI: PolyUI, originalSize: Float = polyUI.iSize.x) = this * (polyUI.size.x / originalSize)
+
+fun Float.rescaleYToPolyUIInstance(polyUI: PolyUI, originalSize: Float = polyUI.iSize.y) = this * (polyUI.size.y / originalSize)
+
+fun Vec2.rescaleToPolyUIInstance(polyUI: PolyUI, originalSize: Vec2 = polyUI.iSize) = Vec2(x * (polyUI.size.x / originalSize.x), y * (polyUI.size.y / originalSize.y))
+
 /**
  * Calculate the greatest common denominator of two integers.
  * @since 0.18.4

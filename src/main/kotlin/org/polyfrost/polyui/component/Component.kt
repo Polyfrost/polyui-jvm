@@ -211,6 +211,16 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
     val sizeValid get() = width > 0f && height > 0f
 
     /**
+     * Tracker for the PolyUI instance size so that, if the component is removed and re-added, it will be rescaled accordingly if needed.
+     *
+     * **Hot-Tip**: You can also use this to specify in a way a size at which this component was designed for, for example, if you designed this to
+     * work on a 1920x1080 screen, set this to `Vec2(1920f, 1080f)` and then the rescaling system will automatically scale it to the current PolyUI instance size.
+     *
+     * @since 1.13.0
+     */
+    var designedSize: Vec2 = Vec2.ZERO
+
+    /**
      * Use this function to calculate the size of this component. DO NOT include children in this calculation!
      *
      * This function is only called if no size is supplied to this component at initialization.
@@ -389,6 +399,9 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
     open fun setup(polyUI: PolyUI): Boolean {
         if (initialized) return false
         this.polyUI = polyUI
+        if (!designedSize.isPositive) {
+            designedSize = polyUI.iSize
+        }
         position()
         children?.fastEach { it.setup(polyUI) }
         return true
@@ -431,19 +444,29 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         if (withChildren) children?.fastEach {
             it.rescale0(scaleX, scaleY, true)
         }
+        designedSize *= Vec2(scaleX, scaleY)
     }
 
 
     /**
      * rescale this component to be up to and scaling that has happened to this PolyUI instance.
+     *
+     * This will then set the [designedSize] to the current size of the PolyUI instance, to prevent further scaling.
      * @since 1.9.3
      */
     @ApiStatus.Internal
     @Locking
     fun rescaleToPolyUIInstance() {
-        val totalSx = polyUI.size.x / polyUI.iSize.x
-        val totalSy = polyUI.size.y / polyUI.iSize.y
-        if (totalSx != 1f || totalSy != 1f) rescale(totalSx, totalSy)
+        if (!designedSize.isPositive) {
+            designedSize = polyUI.size
+            return
+        }
+        if (polyUI.size == designedSize) return
+        val totalSx = polyUI.size.x / designedSize.x
+        val totalSy = polyUI.size.y / designedSize.y
+        if (totalSx != 1f || totalSy != 1f) rescale0(totalSx, totalSy, false)
+        children?.fastEach { it.rescaleToPolyUIInstance() }
+        designedSize = polyUI.size
     }
 
     fun clipChildren() {
@@ -551,7 +574,8 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         if (children.fastAny { it === child }) throw IllegalStateException("attempted to add the same component twice")
         if (index !in children.indices) children.add(child) else children.add(index, child)
         if (initialized) {
-            if (child.setup(polyUI)) child.rescaleToPolyUIInstance()
+            child.setup(polyUI)
+            child.rescaleToPolyUIInstance()
             if (!child.createdWithSetPosition) {
                 if (recalculate) recalculate()
                 else {
@@ -634,7 +658,8 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
             return
         }
         new._parent = this
-        if (new.setup(polyUI)) new.rescaleToPolyUIInstance()
+        new.setup(polyUI)
+        new.rescaleToPolyUIInstance()
 
         polyUI.inputManager.drop(this as? Inputtable)
         val addedAsAnimation: Boolean

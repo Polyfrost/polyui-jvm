@@ -48,6 +48,7 @@ class InputManager(
     private val settings: Settings,
 ) {
     constructor(settings: Settings) : this(null, KeyBinder(settings), settings)
+
     var mouseOver: Inputtable? = null
         private set(value) {
             if (field === value) return
@@ -452,7 +453,8 @@ class InputManager(
         }
         if (!focusable.initialized) {
             val polyUI = master?.polyUI ?: throw IllegalArgumentException("Cannot focus uninitialized component")
-            if (focusable.setup(polyUI)) focusable.rescaleToPolyUIInstance()
+            focusable.setup(polyUI)
+            focusable.rescaleToPolyUIInstance()
         }
         require(focusable.focusable) { "Cannot focus un-focusable component" }
         focused = focusable

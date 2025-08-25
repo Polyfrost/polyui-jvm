@@ -77,7 +77,8 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
 
     // asm: initially it is a dummy object to save need for a field
     // it is immediately overwritten by setup()
-    private var _text = text
+    @ApiStatus.Internal
+    var _text = text
         set(value) {
             if (field == value) return
             field = value
@@ -176,7 +177,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         set(value) {
             if (field == value) return
             field = value.roundTo(PolyUI.ROUNDING)
-            fontSize = if (initialized) value * (polyUI.size.y / polyUI.iSize.y) else value
+            fontSize = if (initialized) value.rescaleYToPolyUIInstance(polyUI) else value
             if (_font != null) spacing = (font.lineSpacing - 1f) * value
         }
 
