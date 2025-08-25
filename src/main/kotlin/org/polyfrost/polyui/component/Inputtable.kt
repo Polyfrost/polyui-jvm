@@ -151,10 +151,10 @@ abstract class Inputtable(
         val eh = eventHandlers ?: return false
         val handlers = eh[event::class.java] ?: eh[event] ?: return false
         var res = false
-        res = handlers.accept(this, event) || res
         children?.fastEach { child ->
             if (child is Inputtable) res = child.acceptAll(event) || res
         }
+        res = handlers.accept(this, event) || res
         return res
     }
 
