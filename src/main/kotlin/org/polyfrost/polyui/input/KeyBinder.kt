@@ -249,7 +249,7 @@ class KeyBinder(private val settings: Settings) {
         listeners.fastEach { it.resetState() }
     }
 
-    open class Bind(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: IntArray? = null, @get:JvmName("getMods") mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, @Transient val action: (Boolean) -> Boolean) {
+    open class Bind(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: IntArray? = null, @get:JvmName("getMods") mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, @Transient @set:ApiStatus.Internal var action: (Boolean) -> Boolean) {
         constructor(chars: CharArray? = null, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: (Boolean) -> Boolean) : this(
             chars?.map {
                 it.lowercaseChar().code
@@ -311,7 +311,8 @@ class KeyBinder(private val settings: Settings) {
 
         internal fun update(c: IntArraySet, k: ArrayList<Keys>, m: IntArraySet, mods: Byte, deltaTimeNanos: Long, down: Boolean): Boolean {
             if (muted) return false
-            if (!test(c, k, m, mods, deltaTimeNanos, down)) {
+            if (durationNanos == 0L && deltaTimeNanos > 0L) return false // asm: we are not time-sensitive, so ignore
+            if (!test(c, k, m, mods, down)) {
                 time = 0L
                 if (ran) {
                     ran = false
@@ -342,9 +343,8 @@ class KeyBinder(private val settings: Settings) {
             ran = false
         }
 
-        protected open fun test(c: IntArraySet, k: ArrayList<Keys>, m: IntArraySet, mods: Byte, deltaTimeNanos: Long, down: Boolean): Boolean {
+        protected open fun test(c: IntArraySet, k: ArrayList<Keys>, m: IntArraySet, mods: Byte, down: Boolean): Boolean {
             if (!isBound) return false
-            if (durationNanos == 0L && deltaTimeNanos > 0L) return false
             if (!unmappedKeys.matches(c)) return false
             if (!keys.matches(k)) return false
             if (!mouse.matches(m)) return false
