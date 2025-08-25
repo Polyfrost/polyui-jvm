@@ -281,15 +281,28 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, siz
  * Note that slider change events cannot be cancelled.
  */
 @JvmName("Slider")
-fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValue: Float = min, ptrSize: Float = 24f, length: Float = (max - min) * 2f, integral: Boolean = false, instant: Boolean = false): Drawable {
+fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValue: Float = min, ptrSize: Float = 24f, length: Float = (max - min) * 2f, steps: Int = 0, integral: Boolean = false, instant: Boolean = false): Drawable {
     require(initialValue in min..max) { "initial value $initialValue is out of range for slider of $min..$max" }
     val barHeight = ptrSize / 2.8f
     val size = Vec2(length + ptrSize, ptrSize)
-    val nsteps = 10
+    val nsteps = steps + 1
 
-    val slide: Inputtable.() -> Float = {
+    val slide: Inputtable.() -> Float = slider@{
         val bar = this.parent[0]
         val half = this.width / 2f
+        bar.apply {
+            if (nsteps != 1) {
+                val stepSize = this.width / nsteps
+                val snapAmount = stepSize / 2f - 4f
+                for (i in 0 until nsteps) {
+                    val stepX = x + i * stepSize
+                    if (this@slider.x + half in (stepX - snapAmount)..(stepX + snapAmount)) {
+                        this@slider.x = stepX - half
+                        break
+                    }
+                }
+            }
+        }
         this.x = this.x.coerceIn(bar.x - half, bar.x + bar.width - half)
         bar[0].width = x - bar.x + half
         val progress = ((this.x + half - bar.x) / bar.width).coerceIn(0f, 1f)
@@ -297,6 +310,7 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
         if (integral) value.toInt().toFloat()
         else value
     }
+    val animation = Animations.Default.create(0.15.seconds, 1f, 0f)
 
     return Group(
         Block(
@@ -304,7 +318,21 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
                 size = Vec2(1f, barHeight),
             ).ignoreLayout().radius(barHeight / 2f).setPalette { brand.fg },
             size = Vec2(length, barHeight),
-        ).radius(barHeight / 2f),
+        ).radius(barHeight / 2f).apply {
+            addOperation {
+                val value = animation.value
+                if (nsteps != 1) {
+                    val stepSize = width / nsteps
+                    val curHeight = (height + 10f) * value
+                    val centerY = y + height / 2f
+                    val yPos = centerY - curHeight / 2f
+                    for (i in 1 until nsteps) {
+                        val stepX = x + i * stepSize
+                        renderer.rect(stepX, yPos, 4f, curHeight, color, 2f)
+                    }
+                }
+            }
+        },
         Block(
             size = ptrSize.vec,
         ).radius(ptrSize / 2f).setPalette { text.primary }.withHoverStates().draggable(withY = false).ignoreLayout().onDrag {
@@ -320,7 +348,6 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
                 p.accept(Event.Change.Number(value))
             }
         }.events {
-            val animation = Animations.Default.create(0.15.seconds, 1f, 0f)
             val op = object : ComponentOp.Animatable<Block>(self, animation) {
                 override fun apply(value: Float) {}
 
@@ -331,17 +358,6 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
                         val current = maxSize * value
                         val offset = (this.width - current) / 2f
                         renderer.rect(x + offset, y + offset, current, current, polyUI.colors.brand.fg.normal, maxRadius * value)
-                    }
-                    if (nsteps != 0) {
-                        (self.parent[0] as Drawable).apply {
-                            val stepSize = this.width / nsteps
-                            val current = (barHeight + 8f) * value
-                            val yPos = this.y + (this.height - current) / 2f
-                            for (i in 0 until nsteps) {
-                                val stepX = x + i * stepSize
-                                renderer.rect(stepX, yPos, 4f, value * current, color, 2f)
-                            }
-                        }
                     }
                 }
 
