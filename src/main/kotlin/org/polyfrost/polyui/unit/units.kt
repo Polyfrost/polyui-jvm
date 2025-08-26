@@ -63,6 +63,8 @@ inline fun Float.fix() = this.toInt().toFloat()
  */
 @kotlin.internal.InlineOnly
 inline fun Float.fix(dps: Int): Float {
+    if (dps < 0) return this
+    if (dps == 0) return this.toInt().toFloat()
     val fix = (10 * dps).toFloat()
     return (this * fix).toInt() / fix
 }

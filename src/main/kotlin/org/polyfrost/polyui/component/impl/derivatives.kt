@@ -429,23 +429,26 @@ fun BoxedTextInput(
     if (image != null) Image(image).padded(6f, 0f, 0f, 0f) else null,
     if (pre != null) Text(pre).padded(6f, 0f, 0f, 0f) else null,
     Group(
-        TextInput(placeholder = placeholder, text = initialValue, fontSize = fontSize, visibleSize = if (!center && size.isPositive) Vec2(size.x, fontSize) else Vec2.ZERO).run {
+        TextInput(placeholder = placeholder, text = initialValue, fontSize = fontSize).run {
             on(Event.Change.Text) {
-                parent.position()
+                if (center) parent.position()
                 (parent.parent as? Inputtable)?.accept(it) == true
             }
         },
-        alignment = Align(main = if (center) Align.Content.Center else Align.Content.Start, cross = Align.Content.Center, pad = Vec2(6f, 10f)),
-    ).afterInit {
-        if (!center) {
-            val input = this[0]
-            input.visibleSize = input.visibleSize.coerceAtMost(this.visibleSize - Vec2(alignment.padEdges.x * 2f, 0f))
-        }
-    },
-    if (post != null) Block(Text(post).secondary(), alignment = Align(pad = 6f by 10f), radii = floatArrayOf(0f, 8f, 0f, 8f)).afterInit { color = polyUI.colors.page.bg.normal } else null,
-    alignment = Align(padEdges = Vec2.ZERO, main = Align.Content.SpaceBetween, wrap = Align.Wrap.NEVER),
+        alignment = Align(main = if (center) Align.Content.Center else Align.Content.Start, cross = Align.Content.Center, pad = Vec2.ZERO),
+    ).padded(6f, 0f, if (post == null) 6f else 0f, 0f),
+    if (post != null) Block(Text(post).secondary(), alignment = Align(pad = 6f by 10f), radii = floatArrayOf(0f, 8f, 0f, 8f)).afterInit { color = polyUI.colors.page.bg.normal }.padded(6f, 0f, 0f, 0f) else null,
+    alignment = Align(pad = Vec2(0f, if (post == null) 6f else 0f), main = Align.Content.SpaceBetween, wrap = Align.Wrap.NEVER),
     size = size,
-).withBorder().namedId("BoxedTextInput")
+).afterInit {
+    val children = children!!
+    val group = if (post != null) children[children.size - 2] as Group else children.last() as Group
+    group.visibleSize = if (post != null) Vec2(children.last().x - group.x - 6f, fontSize) else Vec2(this.width - group.x - 6f, fontSize)
+    if (!center) {
+        val input = this[0]
+        input.visibleSize = input.visibleSize.coerceAtMost(this.visibleSize)
+    }
+}.withBorder().namedId("BoxedTextInput")
 
 @JvmName("BoxedNumericInput")
 fun BoxedNumericInput(
@@ -516,6 +519,7 @@ fun BoxedNumericInput(
  * @since 1.10.5
  */
 @Contract("null, null, _, _, _, _, _, _ -> fail")
+@JvmName("DraggingNumericTextInput")
 fun DraggingNumericTextInput(
     icon: PolyImage? = null,
     pre: String? = null,
@@ -551,7 +555,7 @@ fun DraggingNumericTextInput(
     }
     val maxDigits = max.toInt().digits
     val out = Block(
-        alignment = Align(cross = Align.Content.Center, main = Align.Content.SpaceBetween, padBetween = Vec2.ZERO),
+        alignment = Align(cross = Align.Content.Center, main = Align.Content.SpaceBetween, wrap = Align.Wrap.NEVER),
         size = size
     ).withBorder().namedId("DraggingNumericTextInput")
 
@@ -560,7 +564,7 @@ fun DraggingNumericTextInput(
         pre,
         TextInput(
             text = if (initialValue == 0f) "" else if (suffix != null) "${initialValue.toString(dps = 2)}$suffix" else initialValue.toString(dps = 2),
-            placeholder = if (suffix != null) "0$suffix" else "0",
+            placeholder = if (suffix != null) "${max.toString(dps = 0)}$suffix" else "0",
             fontSize = fontSize
         ).numeric(min = min, max = max, integral = integral, ignoreSuffix = suffix, acceptor = out).apply {
             if (suffix != null) {

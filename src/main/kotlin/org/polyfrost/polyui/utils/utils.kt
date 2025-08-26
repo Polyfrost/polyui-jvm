@@ -50,6 +50,7 @@ fun Float.rescaleXToPolyUIInstance(polyUI: PolyUI, originalSize: Float = polyUI.
 
 fun Float.rescaleYToPolyUIInstance(polyUI: PolyUI, originalSize: Float = polyUI.iSize.y) = this * (polyUI.size.y / originalSize)
 
+@JvmName("rescaleToPolyUIInstance")
 fun Vec2.rescaleToPolyUIInstance(polyUI: PolyUI, originalSize: Vec2 = polyUI.iSize) = Vec2(x * (polyUI.size.x / originalSize.x), y * (polyUI.size.y / originalSize.y))
 
 /**

@@ -23,7 +23,6 @@ package org.polyfrost.polyui.data
 
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.data.PolyImage.Type
 import org.polyfrost.polyui.unit.Vec2
 
 /**
@@ -77,7 +76,7 @@ open class PolyImage @JvmOverloads constructor(
 
     /**
      * Styles for [Google Material icons](https://github.com/google/material-design-icons)
-     * @see getMaterialIcon
+     * @see PolyImage.Companion.getMaterialIcon
      */
     @Suppress("unused")
     enum class MaterialStyle(val style: String) {
@@ -123,6 +122,7 @@ open class PolyImage @JvmOverloads constructor(
 
         @ApiStatus.Internal
         @JvmStatic
+        @JvmName("setImageSize")
         fun setImageSize(image: PolyImage, size: Vec2) {
             image.size = size
         }

@@ -218,6 +218,8 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
      *
      * @since 1.13.0
      */
+    @get:JvmName("getDesignedSize")
+    @set:JvmName("setDesignedSize")
     var designedSize: Vec2 = Vec2.ZERO
 
     /**
@@ -535,6 +537,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
      */
     @Locking(`when` = "this.children != null")
     @Synchronized
+    @JvmOverloads
     open fun recalculate(move: Boolean = true) {
         if (children == null) return
         val oldW = width

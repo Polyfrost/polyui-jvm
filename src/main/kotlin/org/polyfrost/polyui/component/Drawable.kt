@@ -70,6 +70,9 @@ abstract class Drawable(
         }
     }
 
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @get:JvmName("getVisibleSize")
+    @set:JvmName("setVisibleSize")
     override var visibleSize: Vec2
         get() = super.visibleSize * Vec2(scaleX, scaleY)
         set(value) {
