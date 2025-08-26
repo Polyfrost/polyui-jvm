@@ -122,12 +122,29 @@ fun Drawable.getTargetScale(): Vec2 {
  *
  * @see Move
  * @see getTargetSize
+ * @see getOriginPosition
  * @since 1.6.02
  */
 fun Component.getTargetPosition(): Vec2 {
     val operations = this.operations ?: return this.at
     operations.fastEach {
         if (it is Move<*>) return it.target
+    }
+    return this.at
+}
+
+/**
+ * Return the position that this component **was moving from**, or its current position if it isn't moving.
+ *
+ * @see Move
+ * @see getTargetSize
+ * @see getTargetPosition
+ * @since 1.13.4
+ */
+fun Component.getOriginPosition(): Vec2 {
+    val operations = this.operations ?: return this.at
+    operations.fastEach {
+        if (it is Move<*>) return it.origin
     }
     return this.at
 }

@@ -97,6 +97,8 @@ value class Vec2(val value: Long) {
     @JvmName("times")
     operator fun times(other: Vec2) = Vec2(x * other.x, y * other.y)
 
+    operator fun times(other: Float) = Vec2(x * other, y * other)
+
     @JvmName("div")
     operator fun div(other: Vec2) = Vec2(x / other.x, y / other.y)
 

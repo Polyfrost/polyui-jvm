@@ -27,6 +27,7 @@ import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animation
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.animate.SetAnimation
+import org.polyfrost.polyui.component.extensions.getTargetPosition
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.operations.ComponentOp
 import org.polyfrost.polyui.operations.Fade
@@ -666,6 +667,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
 
         polyUI.inputManager.drop(this as? Inputtable)
         val addedAsAnimation: Boolean
+        val oldAt = old.getTargetPosition()
         if (old is Drawable && animation != SetAnimation.None) {
             addedAsAnimation = true
             // curve is used two times at once so just double its duration
@@ -707,17 +709,14 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
 
         children.add(index, new)
         if (new is Inputtable) new.acceptAll(Event.Lifetime.Added)
-        val (oldScreenX, oldScreenY) = old.screenAt
-        val (oldX, oldY) = old.at
         // asm: temporarily remove the old component so that it does not interfere with the recalculate
         if (addedAsAnimation) children.remove(old)
         recalculate(false)
         if (addedAsAnimation) children.add(old)
-        new.x = oldX - (oldX - oldScreenX)
-        new.y = oldY - (oldY - oldScreenY)
+        new.at = oldAt
         clipChildren()
 
-        if (new is Drawable) {
+        if (new is Drawable && animation != SetAnimation.None) {
             when (animation) {
                 SetAnimation.Fade -> {
                     new.alpha = 0f

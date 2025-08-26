@@ -69,6 +69,9 @@ class Move<S : Component>(
     @get:JvmName("getTarget")
     val target get() = Vec2(ox + tx, oy + ty)
 
+    @get:JvmName("getOrigin")
+    val origin get() = Vec2(ox, oy)
+
     override fun apply(value: Float) {
         if (tx != 0f) self.x = ox + (tx * value)
         if (ty != 0f) self.y = oy + (ty * value)
