@@ -35,6 +35,7 @@ import org.polyfrost.polyui.utils.rescaleToPolyUIInstance
  * @param free if this is true, the component will be able to be dragged outside its parent.
  * This is achieved by briefly removing this from its parent and adding it to the master.
  */
+@JvmName("draggable")
 fun <S : Inputtable> S.draggable(withX: Boolean = true, withY: Boolean = true, free: Boolean = false, onlyInRegion: Vec2 = Vec2.ZERO): S {
     var px = 0f
     var py = 0f

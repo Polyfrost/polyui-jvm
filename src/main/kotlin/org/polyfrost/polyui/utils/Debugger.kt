@@ -217,7 +217,7 @@ class Debugger(private val polyUI: PolyUI) {
         if (set == 0 || set == eval.length) return false
         if (target is Drawable && eval == "color = picker()") {
             target.color = target.color.asMutable()
-            ColorPicker(State(target.color.asMutable()), null, null, polyUI)
+            ColorPicker(State(target.color.asMutable()), polyUI)
             return true
         }
         val sn = "set${eval.substring(0, set).trim().capitalize()}"

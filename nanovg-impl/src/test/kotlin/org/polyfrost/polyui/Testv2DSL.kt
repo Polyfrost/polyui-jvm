@@ -28,6 +28,7 @@ import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.data.FontFamily
 import org.polyfrost.polyui.dsl.polyUI
 import org.polyfrost.polyui.event.State
+import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.renderer.impl.GLFWWindow
 import org.polyfrost.polyui.renderer.impl.NVGRenderer
 import org.polyfrost.polyui.unit.Align
@@ -60,7 +61,7 @@ fun main() {
         Checkbox(size = 16f).add()
         Checkbox(size = 40f).add()
         val slider = Slider(length = 200f, min = 50f, max = 120f, instant = true, initialValue = 67f)
-        val boxedNumericInput = BoxedNumericInput(min = 50f, max = 120f, size = 40f by 32f, post = "Hi", initialValue = 67f).onChange { value: Float ->
+        val boxedNumericInput = BoxedNumericInput(min = 50f, max = 120f, size = 80f by 32f, post = "Hi", initialValue = 67f, arrows = false).onChange { value: Float ->
             slider.setSliderValue(value, 50f, 120f)
             false
         }
@@ -75,7 +76,7 @@ fun main() {
             }
             Button("face-wink.svg".image(), "button.text").onClick {
                 color = color.asMutable()
-                ColorPicker(State(color.asMutable()), mutableListOf(), mutableListOf(), polyUI, attachedDrawable = this)
+                ColorPicker(State(color.asMutable()), polyUI, attachedDrawable = this)
                 false
             }.add()
             Switch(size = 28f, state = true).add()
@@ -141,7 +142,8 @@ fun main() {
                         "they all say that it gets better, it gets better but what if i dont :(", visibleSize = 420f by 0f
             )
             text("i am some text that has been limited, so at some point i will stop showing up and i will just be cut off, which is a pretty handy feature.", limited = true, visibleSize = 400f by 12f)
-            textInput(visibleSize = 150f by 12f)
+            BoxedTextInput(post = "px").add()
+            Button(text = "rec").onClick { keyBinder?.record(bind); false }.add()
             group(size = Vec2(300f, 80f), alignment = Align(padEdges = Vec2(4f, 4f), main = Align.Content.SpaceEvenly, cross = Align.Content.SpaceEvenly)) {
                 block(60f by 30f)
                 block(40f by 30f)
@@ -153,7 +155,7 @@ fun main() {
                 block(60f by 30f)
             }
         }
-        Button(text = "rec").onClick { keyBinder?.record(bind); false }.add()
+        DraggingNumericTextInput(pre = "Width", suffix = "px").add()
         boxedNumericInput.add()
         Image("https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png".image(), size = Vec2(280f, 210f)).add()
     }.open(window)
