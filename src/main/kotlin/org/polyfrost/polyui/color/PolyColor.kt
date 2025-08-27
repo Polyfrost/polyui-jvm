@@ -204,7 +204,13 @@ abstract class PolyColor {
         protected var dirty = false
     }
 
-    class Chroma(hue: Float, saturation: Float, brightness: Float, alpha: Float, var speedNanos: Long) : Mutable(hue, saturation, brightness, alpha), Dynamic {
+    class Chroma(hue: Float, saturation: Float, brightness: Float, alpha: Float, speedNanos: Long) : Mutable(hue, saturation, brightness, alpha), Dynamic {
+        var speedNanos = speedNanos
+            set(value) {
+                require(value > 0L) { "speedNanos must be greater than 0!" }
+                field = value
+            }
+
         @Transient
         private var time = (this.hue * speedNanos.toFloat()).toLong()
 

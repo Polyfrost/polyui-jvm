@@ -31,6 +31,7 @@ import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.Clock
 import org.polyfrost.polyui.utils.fastEach
+import org.polyfrost.polyui.utils.toString
 import kotlin.math.abs
 
 
@@ -105,10 +106,10 @@ fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, integral: Bool
         val txt = if(ignoreSuffix != null) text.removeSuffix(ignoreSuffix) else text
         val value = txt.toFloatOrNull()
         if (value == null || value < min) {
-            text = "${if (integral) min.toInt() else min}"
+            text = "${if (integral) min.toInt() else min.toString(dps = 2)}"
             shake()
         } else if (value > max) {
-            text = "${if (integral) max.toInt() else max}"
+            text = "${if (integral) max.toInt() else max.toString(dps = 2)}"
             shake()
         }
         false

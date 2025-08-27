@@ -564,7 +564,7 @@ fun DraggingNumericTextInput(
         pre,
         TextInput(
             text = if (initialValue == 0f) "" else if (suffix != null) "${initialValue.toString(dps = 2)}$suffix" else initialValue.toString(dps = 2),
-            placeholder = if (suffix != null) "${max.toString(dps = 0)}$suffix" else "0",
+            placeholder = if (suffix != null) "${max.toString(dps = 2)}$suffix" else max.toString(dps = 2),
             fontSize = fontSize
         ).numeric(min = min, max = max, integral = integral, ignoreSuffix = suffix, acceptor = out).apply {
             if (suffix != null) {
@@ -580,8 +580,10 @@ fun DraggingNumericTextInput(
                     shake()
                     return@onChange true
                 }
-                if (it.isNotEmpty()) parent.position()
                 false
+            }
+            afterInit {
+                visibleSize = this.size
             }
         },
     )
@@ -601,4 +603,4 @@ fun PopupMenu(vararg children: Component?, size: Vec2 = Vec2.ZERO, align: Align 
     size = size,
     alignment = align,
     children = children,
-).withBorder().spawnAtMouse(polyUI, openNow, spawnPos)
+).withBorder().spawnAtMouse(polyUI, openNow, spawnPos).setPalette { page.bg }

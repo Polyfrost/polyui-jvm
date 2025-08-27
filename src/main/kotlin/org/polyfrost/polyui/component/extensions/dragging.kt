@@ -24,8 +24,10 @@ package org.polyfrost.polyui.component.extensions
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.Inputtable
 import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.fastEach
 import org.polyfrost.polyui.utils.fastEachIndexed
+import org.polyfrost.polyui.utils.rescaleToPolyUIInstance
 
 /**
  * Make this component draggable by the user with their mouse.
@@ -33,12 +35,22 @@ import org.polyfrost.polyui.utils.fastEachIndexed
  * @param free if this is true, the component will be able to be dragged outside its parent.
  * This is achieved by briefly removing this from its parent and adding it to the master.
  */
-fun <S : Inputtable> S.draggable(withX: Boolean = true, withY: Boolean = true, free: Boolean = false): S {
+fun <S : Inputtable> S.draggable(withX: Boolean = true, withY: Boolean = true, free: Boolean = false, onlyInRegion: Vec2 = Vec2.ZERO): S {
     var px = 0f
     var py = 0f
+    var rejected = false
     on(Event.Mouse.Drag.Started) {
-        px = polyUI.inputManager.mouseX - x
-        py = polyUI.inputManager.mouseY - y
+        val mx = polyUI.mouseX
+        val my = polyUI.mouseY
+        val region = onlyInRegion.rescaleToPolyUIInstance(polyUI)
+        if (region != Vec2.ZERO) {
+            if (mx < x || mx > x + region.x || my < y || my > y + region.y) {
+                rejected = true
+                return@on false
+            }
+        }
+        px = mx - x
+        py = my - y
         if (free && _parent !== polyUI.master) {
             parent.children!!.remove(this)
             polyUI.master.children!!.add(this)
@@ -46,21 +58,24 @@ fun <S : Inputtable> S.draggable(withX: Boolean = true, withY: Boolean = true, f
         false
     }
     on(Event.Mouse.Drag) {
-        val mx = polyUI.inputManager.mouseX
-        val my = polyUI.inputManager.mouseY
+        if (rejected) return@on false
+        val mx = polyUI.mouseX
+        val my = polyUI.mouseY
         if (this is Drawable) needsRedraw = true
         if (withX) x = mx - px
         if (withY) y = my - py
         false
     }
-    if (free) {
-        on(Event.Mouse.Drag.Ended) {
-            if (_parent !== polyUI.master) {
-                polyUI.master.children!!.remove(this)
-                parent.children!!.add(this)
-            }
-            false
+    on(Event.Mouse.Drag.Ended) {
+        if (rejected) {
+            rejected = false
+            return@on false
         }
+        if (free && _parent !== polyUI.master) {
+            polyUI.master.children!!.remove(this)
+            parent.children!!.add(this)
+        }
+        false
     }
     return this
 }

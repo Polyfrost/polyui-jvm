@@ -35,8 +35,9 @@ import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.event.State
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.image
+import org.polyfrost.polyui.utils.toString
 
-fun ColorPicker(color: State<PolyColor.Mutable>, faves: MutableList<PolyColor>?, recents: MutableList<PolyColor>?, polyUI: PolyUI?, openNow: Boolean = true, position: SpawnPos = SpawnPos.AtMouse, attachedDrawable: Drawable? = null): Block {
+fun ColorPicker(color: State<PolyColor.Mutable>, polyUI: PolyUI?, openNow: Boolean = true, position: SpawnPos = SpawnPos.AtMouse, attachedDrawable: Drawable? = null): Block {
     attachedDrawable?.onChange(color, instanceOnly = true) {
         this.color = it
     }
@@ -49,16 +50,16 @@ fun ColorPicker(color: State<PolyColor.Mutable>, faves: MutableList<PolyColor>?,
                         if (theColor is PolyColor.Chroma) {
                             color.value = PolyColor.Mutable(theColor.hue, theColor.saturation, theColor.brightness, theColor.alpha)
                         }
-                        val it = parent.siblings
-                        it[it.lastIndex] = StandardColorTypedOptions(color)
+                        val index = parent.siblings.lastIndex
+                        parent.parent[index] = StandardColorTypedOptions(color)
                     }
 
                     1 -> {
                         if (theColor !is PolyColor.Chroma) {
                             color.value = PolyColor.Chroma(theColor.hue, theColor.saturation, theColor.brightness, theColor.alpha, 2.seconds)
                         }
-                        val it = parent.siblings
-                        it[it.lastIndex] = ChromaSliderUnit(color)
+                        val index = parent.siblings.lastIndex
+                        parent.parent[index] = ChromaSliderUnit(color)
                     }
 
                 }
@@ -118,12 +119,12 @@ fun ColorPicker(color: State<PolyColor.Mutable>, faves: MutableList<PolyColor>?,
             picker.accept(it)
         },
         StandardColorTypedOptions(color),
-        size = 288f by 0f,
+        size = 288f by 312f,
         align = Align(pad = 12f by 12f, line = Align.Line.Start),
         polyUI = polyUI,
         openNow = openNow,
         spawnPos = position,
-    ).namedId("ColorPicker")
+    ).namedId("ColorPicker").draggable(onlyInRegion = Vec2(264f, 50f))
 
     if (openNow) assign(p, color.value)
     else p.afterInit { assign(p, color.value) }
@@ -135,6 +136,7 @@ private fun StandardColorTypedOptions(color: State<PolyColor.Mutable>) = Group(
         "polyui.color.hex",
         "polyui.color.rgb",
         padding = 10f,
+        size = 58f by 32f,
     ).onChange { index: Int ->
         when (index) {
             0 -> parent[1] = HexOptions(color)
@@ -149,10 +151,21 @@ private fun StandardColorTypedOptions(color: State<PolyColor.Mutable>) = Group(
     alignment = Align(padEdges = Vec2.ZERO, padBetween = Vec2(12f, 12f))
 ).named("StandardColorTypedOptions")
 
-private fun ChromaSliderUnit(color: State<PolyColor.Mutable>) = Group(
-    Slider(initialValue = ((color.value as PolyColor.Chroma).speedNanos / 1_000_000_000L).toFloat(), max = 60f)
-)
-
+private fun ChromaSliderUnit(color: State<PolyColor.Mutable>): Group {
+    val time = ((color.value as PolyColor.Chroma).speedNanos / 1_000_000_000L).toFloat()
+    return Group(
+        Text("polyui.color.chroma.speed").setPalette { text.secondary },
+        Slider(initialValue = time, max = 5f, length = 180f, ptrSize = 18f, instant = true, min = 0.1f).onChange { value: Float ->
+            (color.value as? PolyColor.Chroma)?.let {
+                it.speedNanos = (value * 1_000_000_000L).toLong()
+                (parent[2] as Text).text = "${value.toString(dps = 1)} seconds"
+            }
+            false
+        },
+        Text("${time.toString(dps = 1)} seconds").setPalette { text.secondary }.padded(0f, 1f, 0f, 0f),
+        alignment = Align(padBetween = Vec2(4f, 4f), padEdges = Vec2.ZERO)
+    )
+}
 
 private fun HexOptions(color: State<PolyColor.Mutable>): Group {
     var dodge = false
@@ -238,7 +251,7 @@ private fun RGBOptions(color: State<PolyColor.Mutable>): Group {
         }.onChange(color) {
             (this[1] as TextInput).text = color.value.b.toString()
         },
-        alignment = Align(padEdges = Vec2.ZERO, padBetween = Vec2(12f, 12f))
+        alignment = Align(padEdges = Vec2.ZERO, padBetween = Vec2(10f, 12f))
     )
 }
 

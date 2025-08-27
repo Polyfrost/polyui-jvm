@@ -2,5 +2,6 @@ polyui.textinput.placeholder=Write something...
 polyui.color.solid=Solid color
 polyui.color.gradient=Gradient color
 polyui.color.chroma=Chroma color
+polyui.color.chroma.speed=Chroma speed
 polyui.color.hex=HEX
 polyui.color.rgb=RGB
