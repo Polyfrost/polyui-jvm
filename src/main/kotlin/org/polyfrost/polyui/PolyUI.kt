@@ -274,7 +274,7 @@ class PolyUI(
 
     init {
         LOGGER.info("PolyUI initializing...")
-        if (master.children.isNullOrEmpty()) LOGGER.warn("PolyUI initialized with no children!")
+        if (this.settings.debug && master.children.isNullOrEmpty()) LOGGER.warn("PolyUI initialized with no children!")
         master.name += " [Master]"
         master.setup(this)
         master.clipChildren()

@@ -63,10 +63,12 @@ object FlexLayoutController : LayoutController {
         val crs = if (main == 0) 1 else 0
 
         // asm: if we have already been positioned, we need to scale the padding
-        val mainPadEdges = align.padEdges[main].let { if (component.positioned) it * (polyUI.size[main] / polyUI.iSize[main]) else it }
-        val crossPadEdges = align.padEdges[crs].let { if (component.positioned) it * (polyUI.size[crs] / polyUI.iSize[crs]) else it }
-        val mainPadBetween = align.padBetween[main].let { if (component.positioned) it * (polyUI.size[main] / polyUI.iSize[main]) else it }
-        val crossPadBetween = align.padBetween[crs].let { if (component.positioned) it * (polyUI.size[crs] / polyUI.iSize[crs]) else it }
+        val scaleMain = if (component.positioned) polyUI.size[main] / polyUI.iSize[main] else 1f
+        val scaleCrs = if (component.positioned) polyUI.size[crs] / polyUI.iSize[crs] else 1f
+        val mainPadEdges = align.padEdges[main] * scaleMain
+        val crossPadEdges = align.padEdges[crs] * scaleCrs
+        val mainPadBetween = align.padBetween[main] * scaleMain
+        val crossPadBetween = align.padBetween[crs] * scaleCrs
         // figure out how many 'useful' children we have.
         var sizeWithoutIgnored = 0
         children.fastEach { if (!it.layoutIgnored) sizeWithoutIgnored++ }

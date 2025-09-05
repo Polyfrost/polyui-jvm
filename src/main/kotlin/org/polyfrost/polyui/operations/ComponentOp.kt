@@ -97,10 +97,10 @@ fun interface ComponentOp {
          * @since 1.0.5
          */
         @ApiStatus.Experimental
-        open fun finishNow() {
+        open fun finishNow(): Boolean {
             animation?.finishNow()
             apply(1f)
-            unapply(1f)
+            return unapply()
         }
 
         open fun reset() {

@@ -166,7 +166,7 @@ inline fun String.translated(vararg args: Any?) = Translator.Text.Formatted(Tran
 inline fun String.translated(): Translator.Text = Translator.Text.Simple(this)
 
 @kotlin.internal.InlineOnly
-inline fun Translator.Text.dont(): Translator.Text.Dont = if (this is Translator.Text.Dont) this else Translator.Text.Dont(this)
+inline fun Translator.Text.dont(): Translator.Text.Dont = this as? Translator.Text.Dont ?: Translator.Text.Dont(this.string)
 
 /**
  * Return `null` if this collection is empty, otherwise return this collection.

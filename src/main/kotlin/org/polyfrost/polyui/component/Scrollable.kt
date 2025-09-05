@@ -118,6 +118,10 @@ abstract class Scrollable(
     @set:JvmName("setScreenAt")
     final override var screenAt: Vec2 = Vec2.ZERO
         get() = if (scrolling) field else this.at
+        set(value) {
+            if (!scrolling) return
+            field = value
+        }
 
     override fun setup(polyUI: PolyUI): Boolean {
         if (!super.setup(polyUI)) return false

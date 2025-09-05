@@ -223,7 +223,7 @@ class Translator(private val settings: Settings, private val translationDir: Str
          * Use this class to prevent the translation from occurring.
          * @since 1.1.63
          */
-        class Dont(text: Text) : Text by text {
+        class Dont(override var string: String) : Text {
             override fun toString() = string
         }
     }

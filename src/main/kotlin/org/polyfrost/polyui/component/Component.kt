@@ -38,6 +38,7 @@ import org.polyfrost.polyui.utils.annotations.Locking
 import org.polyfrost.polyui.utils.annotations.SideEffects
 import org.polyfrost.polyui.utils.fastAny
 import org.polyfrost.polyui.utils.fastEach
+import org.polyfrost.polyui.utils.fastRemoveIfReversed
 import org.polyfrost.polyui.utils.roundTo
 import kotlin.experimental.and
 import kotlin.experimental.or
@@ -143,8 +144,8 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
     var at: Vec2
         get() = Vec2(x, y)
         set(value) {
-            x = value.x.roundTo(PolyUI.ROUNDING)
-            y = value.y.roundTo(PolyUI.ROUNDING)
+            x = value.x
+            y = value.y
         }
 
     /**
@@ -665,8 +666,10 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         new.setup(polyUI)
         new.rescaleToPolyUIInstance()
 
-        polyUI.inputManager.drop(this as? Inputtable)
+        polyUI.inputManager.drop(old as? Inputtable)
         val addedAsAnimation: Boolean
+        old.tryFinishAllOperations()
+        old.at = old.screenAt
         val oldAt = old.getTargetPosition()
         if (old is Drawable && animation != SetAnimation.None) {
             addedAsAnimation = true
@@ -714,7 +717,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         recalculate(false)
         if (addedAsAnimation) children.add(old)
         new.at = oldAt
-        clipChildren()
+        new.clipChildren()
 
         if (new is Drawable && animation != SetAnimation.None) {
             when (animation) {
@@ -741,7 +744,6 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
             }.add()
 
         }
-        if (this is Scrollable) this.tryMakeScrolling()
     }
 
     /**
@@ -792,6 +794,10 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
             if (size == 1) operations = null
             else remove(componentOp).also { if (!it) PolyUI.LOGGER.warn("Tried to remove a operation $componentOp from $this, but it wasn't present on this component!") }
         }
+    }
+
+    fun tryFinishAllOperations() {
+        operations?.fastRemoveIfReversed { if(it is ComponentOp.Animatable<*>) it.finishNow() else false }
     }
 
     /**
