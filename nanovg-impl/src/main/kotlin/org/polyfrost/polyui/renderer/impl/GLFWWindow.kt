@@ -239,8 +239,8 @@ class GLFWWindow @JvmOverloads constructor(
                 GLFW_KEY_P -> Keys.P
                 GLFW_KEY_I -> Keys.I
                 GLFW_KEY_R -> Keys.R
-                GLFW_KEY_MINUS -> Keys.EQUALS
-                GLFW_KEY_EQUAL -> Keys.MINUS
+                GLFW_KEY_MINUS -> Keys.MINUS
+                GLFW_KEY_EQUAL -> Keys.EQUALS
 
                 else -> Keys.UNKNOWN
             }
