@@ -103,5 +103,5 @@ abstract class Window(open var width: Int, open var height: Int, open var pixelR
      * Return the name of a key that is not mapped by PolyUI.
      * @see org.polyfrost.polyui.input.Keys
      */
-    abstract fun getKeyName(key: Int): String
+    abstract fun getKeyName(keyCode: Int, scanCode: Int): String
 }

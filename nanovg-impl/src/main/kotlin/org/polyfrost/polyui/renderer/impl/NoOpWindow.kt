@@ -22,8 +22,8 @@
 package org.polyfrost.polyui.renderer.impl
 
 import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.renderer.Window
 import org.polyfrost.polyui.data.Cursor
+import org.polyfrost.polyui.renderer.Window
 
 class NoOpWindow(title: String, width: Int, height: Int) : Window(width, height) {
     override fun open(polyUI: PolyUI): Window {
@@ -44,7 +44,7 @@ class NoOpWindow(title: String, width: Int, height: Int) : Window(width, height)
     override fun setCursor(cursor: Cursor) {
     }
 
-    override fun getKeyName(key: Int) = "unknown"
+    override fun getKeyName(keyCode: Int, scanCode: Int) = "unknown"
 
     override fun supportsRenderPausing() = false
 

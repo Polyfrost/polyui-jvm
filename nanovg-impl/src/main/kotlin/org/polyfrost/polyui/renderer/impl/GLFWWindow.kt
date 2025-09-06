@@ -242,17 +242,15 @@ class GLFWWindow @JvmOverloads constructor(
                 GLFW_KEY_MINUS -> Keys.EQUALS
                 GLFW_KEY_EQUAL -> Keys.MINUS
 
-                else -> {
-                    if (action == GLFW_PRESS) polyUI.inputManager.keyDown(keyCode, scanCode)
-                    else polyUI.inputManager.keyUp(keyCode, scanCode)
-                    return@glfwSetKeyCallback
-                }
+                else -> Keys.UNKNOWN
             }
-            if (action == GLFW_PRESS) {
-                polyUI.inputManager.keyDown(key)
-            } else {
-                polyUI.inputManager.keyUp(key)
+            if (key != Keys.UNKNOWN) {
+                if (action == GLFW_PRESS) polyUI.inputManager.keyDown(key)
+                else polyUI.inputManager.keyUp(key)
             }
+
+            if (action == GLFW_PRESS) polyUI.inputManager.keyDown(keyCode, scanCode)
+            else polyUI.inputManager.keyUp(keyCode, scanCode)
         }
 
         glfwSetMouseButtonCallback(handle) { _, button, action, _ ->
@@ -407,7 +405,7 @@ class GLFWWindow @JvmOverloads constructor(
 //        glfwPostEmptyEvent()
     }
 
-    override fun getKeyName(key: Int) = glfwGetKeyName(key, glfwGetKeyScancode(key)) ?: "Unknown"
+    override fun getKeyName(keyCode: Int, scanCode: Int) = glfwGetKeyName(keyCode, scanCode) ?: "Unknown"
 
     fun fullscreen() {
         glfwGetVideoMode(glfwGetPrimaryMonitor())?.let {

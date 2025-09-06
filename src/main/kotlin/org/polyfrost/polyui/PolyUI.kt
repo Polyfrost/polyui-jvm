@@ -476,7 +476,7 @@ class PolyUI(
     /**
      * Return the key name for the given key code, or "Unknown" if the key is not mapped / no window is present.
      */
-    fun getKeyName(key: Int) = window?.getKeyName(key) ?: "Unknown"
+    fun getKeyName(keyCode: Int, scanCode: Int) = window?.getKeyName(keyCode, scanCode) ?: "Unknown"
 
     /**
      * Time the [block] and return how long it took, as well as logging with the [msg] if [debug][org.polyfrost.polyui.Settings.debug] is active.

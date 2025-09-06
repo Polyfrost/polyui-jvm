@@ -78,13 +78,6 @@ open class KeybindHelper<T : KeybindHelper<T>> {
         return self()
     }
 
-    fun chars(vararg chars: Char): T {
-        for (char in chars) {
-            this.unmappedKeys.add(char.code)
-        }
-        return self()
-    }
-
     fun keys(vararg keys: Int): T {
         for (key in keys) {
             this.unmappedKeys.add(key)
