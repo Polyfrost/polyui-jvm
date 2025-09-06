@@ -175,81 +175,83 @@ class GLFWWindow @JvmOverloads constructor(
             polyUI.inputManager.mouseMoved(x.toFloat(), y.toFloat())
         }
 
-        glfwSetKeyCallback(handle) { _, keyCode, _, action, mods ->
+        glfwSetKeyCallback(handle) { _, keyCode, scanCode, action, _ ->
             if (action == GLFW_REPEAT) return@glfwSetKeyCallback
-            if (keyCode < 255 && mods > 1 && action == GLFW_PRESS) {
-                // accept modded chars, as glfwSetCharModsCallback is deprecated and doesn't work with control
-                polyUI.inputManager.keyTyped((keyCode + 32).toChar())
-            }
             // p.s. I have performance tested this; and it is very fast (doesn't even show up on profiler). kotlin is good at int ranges lol
-            if (keyCode in 255..348) {
-                if (keyCode < 340) {
-                    val key = when (keyCode) {
-                        GLFW_KEY_F1 -> Keys.F1
-                        GLFW_KEY_F2 -> Keys.F2
-                        GLFW_KEY_F3 -> Keys.F3
-                        GLFW_KEY_F4 -> Keys.F4
-                        GLFW_KEY_F5 -> Keys.F5
-                        GLFW_KEY_F6 -> Keys.F6
-                        GLFW_KEY_F7 -> Keys.F7
-                        GLFW_KEY_F8 -> Keys.F8
-                        GLFW_KEY_F9 -> Keys.F9
-                        GLFW_KEY_F10 -> Keys.F10
-                        GLFW_KEY_F11 -> Keys.F11
-                        GLFW_KEY_F12 -> Keys.F12
+            if (keyCode in GLFW_KEY_LEFT_SHIFT..GLFW_KEY_RIGHT_SUPER) {
+                val key = when (keyCode) {
+                    GLFW_KEY_LEFT_SHIFT -> KeyModifiers.LSHIFT
+                    GLFW_KEY_LEFT_CONTROL -> if (PolyUI.isOnMac) KeyModifiers.LMETA else KeyModifiers.LPRIMARY
+                    GLFW_KEY_LEFT_ALT -> KeyModifiers.LSECONDARY
+                    GLFW_KEY_LEFT_SUPER -> if (PolyUI.isOnMac) KeyModifiers.LPRIMARY else KeyModifiers.LSECONDARY
+                    GLFW_KEY_RIGHT_SHIFT -> KeyModifiers.RSHIFT
+                    GLFW_KEY_RIGHT_CONTROL -> if (PolyUI.isOnMac) KeyModifiers.RMETA else KeyModifiers.RPRIMARY
+                    GLFW_KEY_RIGHT_ALT -> KeyModifiers.RSECONDARY
+                    GLFW_KEY_RIGHT_SUPER -> if (PolyUI.isOnMac) KeyModifiers.RPRIMARY else KeyModifiers.RSECONDARY
+                    else -> throw IllegalStateException("Unexpected key code: $keyCode")
+                }
 
-                        GLFW_KEY_ESCAPE -> Keys.ESCAPE
-
-                        GLFW_KEY_ENTER -> Keys.ENTER
-                        GLFW_KEY_TAB -> Keys.TAB
-                        GLFW_KEY_BACKSPACE -> Keys.BACKSPACE
-                        GLFW_KEY_INSERT -> Keys.INSERT
-                        GLFW_KEY_DELETE -> Keys.DELETE
-                        GLFW_KEY_PAGE_UP -> Keys.PAGE_UP
-                        GLFW_KEY_PAGE_DOWN -> Keys.PAGE_DOWN
-                        GLFW_KEY_HOME -> Keys.HOME
-                        GLFW_KEY_END -> Keys.END
-
-                        GLFW_KEY_RIGHT -> Keys.RIGHT
-                        GLFW_KEY_LEFT -> Keys.LEFT
-                        GLFW_KEY_DOWN -> Keys.DOWN
-                        GLFW_KEY_UP -> Keys.UP
-
-                        else -> Keys.UNKNOWN
-                    }
-
-                    if (action == GLFW_PRESS) {
-                        polyUI.inputManager.keyDown(key)
-                    } else {
-                        polyUI.inputManager.keyUp(key)
-                    }
+                if (action == GLFW_PRESS) {
+                    polyUI.inputManager.addModifier(key.value)
                 } else {
-                    val key = when (keyCode) {
-                        GLFW_KEY_LEFT_SHIFT -> KeyModifiers.LSHIFT
-                        GLFW_KEY_LEFT_CONTROL -> KeyModifiers.LCONTROL
-                        GLFW_KEY_LEFT_ALT -> KeyModifiers.LALT
-                        GLFW_KEY_LEFT_SUPER -> KeyModifiers.LMETA
-                        GLFW_KEY_RIGHT_SHIFT -> KeyModifiers.RSHIFT
-                        GLFW_KEY_RIGHT_CONTROL -> KeyModifiers.RCONTROL
-                        GLFW_KEY_RIGHT_ALT -> KeyModifiers.RALT
-                        GLFW_KEY_RIGHT_SUPER -> KeyModifiers.RMETA
-                        else -> KeyModifiers.UNKNOWN
-                    }
-
-                    if (action == GLFW_PRESS) {
-                        polyUI.inputManager.addModifier(key.value)
-                    } else {
-                        polyUI.inputManager.removeModifier(key.value)
-                    }
+                    polyUI.inputManager.removeModifier(key.value)
                 }
                 return@glfwSetKeyCallback
             }
+            if (keyCode > 340) return@glfwSetKeyCallback // unknown key
+            val key = when (keyCode) {
+                GLFW_KEY_F1 -> Keys.F1
+                GLFW_KEY_F2 -> Keys.F2
+                GLFW_KEY_F3 -> Keys.F3
+                GLFW_KEY_F4 -> Keys.F4
+                GLFW_KEY_F5 -> Keys.F5
+                GLFW_KEY_F6 -> Keys.F6
+                GLFW_KEY_F7 -> Keys.F7
+                GLFW_KEY_F8 -> Keys.F8
+                GLFW_KEY_F9 -> Keys.F9
+                GLFW_KEY_F10 -> Keys.F10
+                GLFW_KEY_F11 -> Keys.F11
+                GLFW_KEY_F12 -> Keys.F12
 
-            val code = if (keyCode in 0..255) keyCode.toChar().lowercaseChar().toInt() else keyCode
+                GLFW_KEY_ESCAPE -> Keys.ESCAPE
+
+                GLFW_KEY_ENTER -> Keys.ENTER
+                GLFW_KEY_TAB -> Keys.TAB
+                GLFW_KEY_BACKSPACE -> Keys.BACKSPACE
+                GLFW_KEY_INSERT -> Keys.INSERT
+                GLFW_KEY_DELETE -> Keys.DELETE
+                GLFW_KEY_PAGE_UP -> Keys.PAGE_UP
+                GLFW_KEY_PAGE_DOWN -> Keys.PAGE_DOWN
+                GLFW_KEY_HOME -> Keys.HOME
+                GLFW_KEY_END -> Keys.END
+
+                GLFW_KEY_RIGHT -> Keys.RIGHT
+                GLFW_KEY_LEFT -> Keys.LEFT
+                GLFW_KEY_DOWN -> Keys.DOWN
+                GLFW_KEY_UP -> Keys.UP
+
+                GLFW_KEY_C -> Keys.C
+                GLFW_KEY_V -> Keys.V
+                GLFW_KEY_X -> Keys.X
+                GLFW_KEY_Z -> Keys.Z
+                GLFW_KEY_A -> Keys.A
+                GLFW_KEY_S -> Keys.S
+                GLFW_KEY_P -> Keys.P
+                GLFW_KEY_I -> Keys.I
+                GLFW_KEY_R -> Keys.R
+                GLFW_KEY_MINUS -> Keys.EQUALS
+                GLFW_KEY_EQUAL -> Keys.MINUS
+
+                else -> {
+                    if (action == GLFW_PRESS) polyUI.inputManager.keyDown(keyCode, scanCode)
+                    else polyUI.inputManager.keyUp(keyCode, scanCode)
+                    return@glfwSetKeyCallback
+                }
+            }
             if (action == GLFW_PRESS) {
-                polyUI.inputManager.keyDown(code)
+                polyUI.inputManager.keyDown(key)
             } else {
-                polyUI.inputManager.keyUp(code)
+                polyUI.inputManager.keyUp(key)
             }
         }
 
@@ -260,7 +262,7 @@ class GLFWWindow @JvmOverloads constructor(
         }
 
         glfwSetCharCallback(handle) { _, codepoint ->
-            polyUI.inputManager.keyTyped(codepoint.toChar())
+            polyUI.inputManager.keyTyped(codepoint)
         }
 
         var ran = false

@@ -22,9 +22,9 @@
 package org.polyfrost.polyui.renderer.impl
 
 import org.polyfrost.polyui.PolyUI
+import org.polyfrost.polyui.data.Cursor
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.renderer.Window
-import org.polyfrost.polyui.data.Cursor
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
@@ -116,18 +116,18 @@ class AWTWindow(val title: String, width: Int, height: Int) : Window(width, heig
 
         frame.addKeyListener(object : KeyListener {
             override fun keyTyped(e: KeyEvent) {
-                polyUI.inputManager.keyTyped(e.keyChar)
+                polyUI.inputManager.keyTyped(e.keyCode)
             }
 
             override fun keyPressed(e: KeyEvent) {
                 if (e.keyCode == VK_UNDEFINED) return
                 when (e.keyCode) {
                     VK_SHIFT -> polyUI.inputManager.addModifier(KeyModifiers.LSHIFT.value)
-                    VK_CONTROL -> polyUI.inputManager.addModifier(KeyModifiers.LCONTROL.value)
-                    VK_ALT -> polyUI.inputManager.addModifier(KeyModifiers.LALT.value)
-                    VK_META -> polyUI.inputManager.addModifier(KeyModifiers.LMETA.value)
+                    VK_CONTROL -> polyUI.inputManager.addModifier(KeyModifiers.LPRIMARY.value)
+                    VK_ALT -> polyUI.inputManager.addModifier(KeyModifiers.LSECONDARY.value)
+                    VK_META -> polyUI.inputManager.addModifier(KeyModifiers.LSECONDARY.value)
                     else -> {
-                        polyUI.inputManager.keyDown(e.keyCode)
+                        polyUI.inputManager.keyDown(e.keyCode, 0)
                     }
                 }
             }
@@ -136,11 +136,11 @@ class AWTWindow(val title: String, width: Int, height: Int) : Window(width, heig
                 if (e.keyCode == VK_UNDEFINED) return
                 when (e.keyCode) {
                     VK_SHIFT -> polyUI.inputManager.removeModifier(KeyModifiers.LSHIFT.value)
-                    VK_CONTROL -> polyUI.inputManager.removeModifier(KeyModifiers.LCONTROL.value)
-                    VK_ALT -> polyUI.inputManager.removeModifier(KeyModifiers.LALT.value)
-                    VK_META -> polyUI.inputManager.removeModifier(KeyModifiers.LMETA.value)
+                    VK_CONTROL -> polyUI.inputManager.removeModifier(KeyModifiers.LPRIMARY.value)
+                    VK_ALT -> polyUI.inputManager.removeModifier(KeyModifiers.LSECONDARY.value)
+                    VK_META -> polyUI.inputManager.removeModifier(KeyModifiers.LSECONDARY.value)
                     else -> {
-                        polyUI.inputManager.keyUp(e.keyCode)
+                        polyUI.inputManager.keyUp(e.keyCode, 0)
                     }
                 }
             }
