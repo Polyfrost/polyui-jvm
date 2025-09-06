@@ -162,42 +162,14 @@ open class TextInput(
 
             is Event.Focused.KeyTyped -> {
                 if (caret > text.length) caret = text.length
-                if (event.mods.value < 2 /* mods == 0 || hasShift() */) {
-                    if (caret != select) {
-                        text = text.replace(selection, "")
-                        caret = if (select > caret) caret else select
-                        clearSelection()
-                    }
-                    val tl = text.length
-                    text = text.substring(0, caret) + event.key + text.substring(caret)
-                    if (text.length != tl) caret++
-                } else if (event.mods.hasControl) {
-                    when (event.key) {
-                        'v', 'V' -> {
-                            val tl = text.length
-                            text = text.substring(0, caret) + (polyUI.clipboard ?: "") + text.substring(caret)
-                            if (text.length != tl) caret += polyUI.clipboard?.length ?: 0
-                            clearSelection()
-                        }
-
-                        'c', 'C' -> {
-                            if (caret != select) {
-                                polyUI.clipboard = selection
-                            }
-                        }
-
-                        'x', 'X' -> {
-                            text = text.replace(selection, "")
-                            polyUI.clipboard = selection
-                            clearSelection()
-                        }
-
-                        'a', 'A' -> {
-                            caret = text.lastIndex + 1
-                            select = 0
-                        }
-                    }
+                if (caret != select) {
+                    text = text.replace(selection, "")
+                    caret = if (select > caret) caret else select
+                    clearSelection()
                 }
+                val tl = text.length
+                text = text.substring(0, caret) + event.codepoint.codepointToString() + text.substring(caret)
+                if (text.length != tl) caret++
                 caretPos()
                 selections()
             }
@@ -209,6 +181,36 @@ open class TextInput(
                         else {
                             text += "\n"
                             caret++
+                        }
+                    }
+
+                    Keys.C -> {
+                        if (event.mods.hasPrimary && select != caret) {
+                            polyUI.clipboard = selection
+                        }
+                    }
+
+                    Keys.X -> {
+                        if (event.mods.hasPrimary) {
+                            text = text.replace(selection, "")
+                            polyUI.clipboard = selection
+                            clearSelection()
+                        }
+                    }
+
+                    Keys.V -> {
+                        if (event.mods.hasPrimary) {
+                            val tl = text.length
+                            text = text.substring(0, caret) + (polyUI.clipboard ?: "") + text.substring(caret)
+                            if (text.length != tl) caret += polyUI.clipboard?.length ?: 0
+                            clearSelection()
+                        }
+                    }
+
+                    Keys.A -> {
+                        if (event.mods.hasPrimary) {
+                            caret = text.lastIndex + 1
+                            select = 0
                         }
                     }
 
@@ -227,7 +229,7 @@ open class TextInput(
                             text = text.substring(0, f) + text.substring(t)
                             if (tl != text.length) caret = f
                             clearSelection()
-                        } else if (!event.mods.hasControl) {
+                        } else if (!event.mods.hasPrimary) {
                             val tl = text.length
                             text = text.dropAt(caret, 1)
                             if (caret != 0 && tl != text.length) caret--
@@ -249,7 +251,7 @@ open class TextInput(
 
                     Keys.LEFT -> {
                         selecting = event.mods.hasShift
-                        if (event.mods.hasControl) {
+                        if (event.mods.hasPrimary) {
                             toLastSpace()
                         } else {
                             back()
@@ -258,7 +260,7 @@ open class TextInput(
 
                     Keys.RIGHT -> {
                         selecting = event.mods.hasShift
-                        if (event.mods.hasControl) {
+                        if (event.mods.hasPrimary) {
                             toNextSpace()
                         } else {
                             forward()

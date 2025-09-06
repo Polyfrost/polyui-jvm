@@ -29,6 +29,7 @@ import org.polyfrost.polyui.data.FontFamily
 import org.polyfrost.polyui.dsl.polyUI
 import org.polyfrost.polyui.event.State
 import org.polyfrost.polyui.input.KeyBinder
+import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.renderer.impl.GLFWWindow
 import org.polyfrost.polyui.renderer.impl.NVGRenderer
 import org.polyfrost.polyui.unit.Align
@@ -37,6 +38,7 @@ import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.unit.fix
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.open
+import kotlin.random.Random
 
 fun main() {
     val window = GLFWWindow("PolyUI Test v2 (DSL)", 800, 500)
@@ -48,7 +50,7 @@ fun main() {
         renderer = NVGRenderer
         colors = theme
         backgroundColor = theme.page.bg.normal
-        val bind = KeyBinder.Bind('P') {
+        val bind = KeyBinder.Bind(key = Keys.P) {
             println("you pressed the bind! $it")
             true
         }
@@ -118,7 +120,9 @@ fun main() {
                         ).withHoverStates()
                     }, visibleSize = 350f by 120f
                 ).makeRearrangeableGrid()
-                boxParent[idx] = theBox
+                val anim = if(Random.nextBoolean()) SetAnimation.SlideRight else SetAnimation.SlideLeft
+                boxParent.set(boxParent[idx], theBox, anim)
+//                boxParent[idx] = theBox
             }.add()
             group {
                 val radiobutton = Radiobutton("hello", "goodbye", "yes", "no").add().onChange { index: Int ->
@@ -143,7 +147,7 @@ fun main() {
             )
             text("i am some text that has been limited, so at some point i will stop showing up and i will just be cut off, which is a pretty handy feature.", limited = true, visibleSize = 400f by 12f)
             BoxedTextInput(post = "px").add()
-            Button(text = "rec").onClick { keyBinder?.record(bind); false }.add()
+            Button(text = "rec").onClick { keyBinder?.record(bind) { (this[0] as Text).text = bind.keysToString() }; false }.add()
             group(size = Vec2(300f, 80f), alignment = Align(padEdges = Vec2(4f, 4f), main = Align.Content.SpaceEvenly, cross = Align.Content.SpaceEvenly)) {
                 block(60f by 30f)
                 block(40f by 30f)

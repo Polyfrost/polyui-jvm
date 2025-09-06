@@ -228,7 +228,7 @@ class KeyBinder(private val settings: Settings) {
         bind.unmappedKeys = if (downUnmappedKeys.isEmpty()) null else downUnmappedKeys.toIntArray()
         bind.keys = if (downKeys.isEmpty()) null else downKeys.toTypedArray()
         bind.mouse = if (downMouseButtons.isEmpty()) null else downMouseButtons.toIntArray()
-        bind.mods = Modifiers(mods)
+        bind.mods = Modifiers(mods, lenient = !(bind.unmappedKeys == null && bind.keys == null && bind.mouse == null))
         bind.resetState()
         bind.muted = false
         if (settings.debug) PolyUI.LOGGER.info("Bind created: $bind")
@@ -250,14 +250,6 @@ class KeyBinder(private val settings: Settings) {
     }
 
     open class Bind(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: IntArray? = null, @get:JvmName("getMods") mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, @Transient @set:ApiStatus.Internal var action: (Boolean) -> Boolean) {
-        constructor(chars: CharArray? = null, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: (Boolean) -> Boolean) : this(
-            chars?.map {
-                it.lowercaseChar().code
-            }?.toIntArray(),
-            keys, mouse, mods, durationNanos, action,
-        )
-
-        constructor(char: Char, keys: Array<Keys>? = null, mouse: IntArray? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: (Boolean) -> Boolean) : this(intArrayOf(char.lowercaseChar().code), keys, mouse, mods, durationNanos, action)
         constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Array<Mouse>? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: (Boolean) -> Boolean) : this(
             unmappedKeys, keys,
             mouse?.map {
@@ -362,13 +354,15 @@ class KeyBinder(private val settings: Settings) {
         fun keysToString(ifNotBound: String = ""): String {
             if (!isBound) return ifNotBound
             val sb = StringBuilder()
-            val s = mods.prettyName
+            val s = mods.fullName
             sb.append(s)
+            var hasp = false
             if (unmappedKeys != null) {
                 if (s.isNotEmpty()) sb.append(" + ")
                 for (c in unmappedKeys) {
                     sb.append(c.toChar())
                     sb.append(" + ")
+                    hasp = true
                 }
             }
             if (keys != null) {
@@ -376,6 +370,7 @@ class KeyBinder(private val settings: Settings) {
                 for (k in keys) {
                     sb.append(Keys.toStringPretty(k))
                     sb.append(" + ")
+                    hasp = true
                 }
             }
             if (mouse != null) {
@@ -383,9 +378,10 @@ class KeyBinder(private val settings: Settings) {
                 for (m in mouse) {
                     sb.append(Mouse.toStringPretty(Mouse.fromValue(m)))
                     sb.append(" + ")
+                    hasp = true
                 }
             }
-            return sb.substring(0, sb.length - 3)
+            return if (hasp) sb.substring(0, sb.length - 3) else sb.toString()
         }
 
         final override fun equals(other: Any?): Boolean {

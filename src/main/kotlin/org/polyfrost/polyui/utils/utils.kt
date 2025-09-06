@@ -30,7 +30,6 @@ import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.renderer.Window
 import org.polyfrost.polyui.unit.Vec2
 import kotlin.enums.EnumEntries
-import kotlin.jvm.internal.Ref
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.min
@@ -68,6 +67,8 @@ fun Int.gcd(b: Int): Int {
     }
     return a
 }
+
+fun Int.codepointToString(): String = if (Character.isBmpCodePoint(this)) this.toChar().toString() else String(Character.toChars(this))
 
 /**
  * Get an enum constant by its name, or `null` if [name] is `null`; or does not match any of this enum's constants.
@@ -169,13 +170,6 @@ inline fun String.translated(): Translator.Text = Translator.Text.Simple(this)
 inline fun Translator.Text.dont(): Translator.Text.Dont = this as? Translator.Text.Dont ?: Translator.Text.Dont(this.string)
 
 /**
- * Return `null` if this collection is empty, otherwise return this collection.
- * @since 1.7.02
- */
-@kotlin.internal.InlineOnly
-inline fun <E> Collection<E>.nullIfEmpty() = if (this.isEmpty()) null else this
-
-/**
  * Moves the given element from the [from] index to the [to] index.
  *
  * **Note**: this method makes absolutely no attempt to verify if the given
@@ -273,16 +267,6 @@ inline fun <T> MutableList<T>.ensureSize(size: Int, initializer: (Int) -> T): Mu
 }
 
 /**
- * Box the given value into a [Ref.ObjectRef].
- */
-@kotlin.internal.InlineOnly
-inline fun <T> T.ref(): Ref.ObjectRef<T> {
-    val ref = Ref.ObjectRef<T>()
-    ref.element = this
-    return ref
-}
-
-/**
  * Round this float to the nearest multiple of [multiple].
  * @since 1.12.6
  */
@@ -292,12 +276,6 @@ inline fun Float.roundTo(multiple: Float): Float {
     if (multiple <= 0f) return this
     return round(this / multiple) * multiple
 }
-
-/**
- * Return the value of this [Ref.ObjectRef].
- */
-@kotlin.internal.InlineOnly
-inline fun <T> Ref.ObjectRef<T>.deref(): T = this.element
 
 /**
  * Returns the value of the given [key] in the map, and if [shouldRemove] is `true` the value is also removed from the map.

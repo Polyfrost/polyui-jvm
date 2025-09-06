@@ -21,13 +21,15 @@
 
 package org.polyfrost.polyui.input
 
+import org.polyfrost.polyui.utils.IntArraySet
 import org.polyfrost.polyui.utils.nullIfEmpty
+import java.util.function.Consumer
 
 /**
  * Java-style builder for creating a [KeyBinder.Bind] instance.
  * @since 1.7.02
  */
-open class KeybindHelper {
+open class KeybindHelper<T : KeybindHelper<T>> {
     protected var duration = 0L
         private set
     protected var keys = ArrayList<Keys>(2)
@@ -36,73 +38,82 @@ open class KeybindHelper {
     @get:JvmName("getMods")
     protected var mods = Modifiers(0)
         private set
-    protected var unmappedKeys = ArrayList<Int>(2)
+    protected var unmappedKeys = IntArraySet(2)
         private set
-    protected var mouse = ArrayList<Int>(2)
+    protected var mouse = IntArraySet(2)
         private set
     protected var func: ((Boolean) -> Boolean)? = null
         private set
+    
+    @Suppress("UNCHECKED_CAST", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+    @kotlin.internal.InlineOnly
+    protected inline fun self(): T = this as T
 
     open fun build(): KeyBinder.Bind {
         val func = func ?: throw IllegalStateException("Function must be set")
         return KeyBinder.Bind(
             unmappedKeys.nullIfEmpty()?.toIntArray(),
-            keys.nullIfEmpty()?.toTypedArray(),
+            keys.ifEmpty { null }?.toTypedArray(),
             mouse.nullIfEmpty()?.toIntArray(),
             mods, duration, func
         )
     }
 
-    fun keys(vararg keys: Keys): KeybindHelper {
+    fun keys(vararg keys: Keys): T {
         this.keys.addAll(keys)
-        return this
+        return self()
     }
 
-    fun mods(mods: Byte): KeybindHelper {
+    fun mods(mods: Byte): T {
         this.mods = Modifiers(mods)
-        return this
+        return self()
     }
 
-    fun mods(vararg mods: KeyModifiers): KeybindHelper {
+    fun mods(vararg mods: KeyModifiers): T {
         var b = 0
         for (mod in mods) {
             b = b or mod.value.toInt()
         }
         this.mods = Modifiers(b.toByte())
-        return this
+        return self()
     }
 
-    fun chars(vararg chars: Char): KeybindHelper {
-        for(char in chars) {
+    fun chars(vararg chars: Char): T {
+        for (char in chars) {
             this.unmappedKeys.add(char.code)
         }
-        return this
+        return self()
     }
 
-    fun keys(vararg keys: Int): KeybindHelper {
+    fun keys(vararg keys: Int): T {
         for (key in keys) {
             this.unmappedKeys.add(key)
         }
-        return this
+        return self()
     }
 
     @OverloadResolutionByLambdaReturnType
     @JvmName("doesZ")
-    fun does(func: (Boolean) -> Boolean): KeybindHelper {
+    fun does(func: (Boolean) -> Boolean): T {
         this.func = func
-        return this
+        return self()
     }
 
     @OverloadResolutionByLambdaReturnType
-    fun does(func: (Boolean) -> Unit): KeybindHelper {
+    fun does(func: (Boolean) -> Unit): T {
         this.func = { func(it); true }
-        return this
+        return self()
+    }
+
+    fun does(func: Consumer<Boolean>): T {
+        this.func = { func.accept(it); true }
+        return self()
     }
 
 
-    fun duration(duration: Long): KeybindHelper {
+    fun duration(duration: Long): T {
         this.duration = duration
-        return this
+        return self()
     }
 
 

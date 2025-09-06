@@ -66,7 +66,7 @@ fun interface ComponentOp {
      *
      * It is applied before and after rendering, for example a [Move], [Resize], or [Rotate] operation, or a transition.
      */
-    abstract class Animatable<S : Component>(protected val self: S, protected val animation: Animation? = null, var onFinish: (S.() -> Unit)? = null) :
+    abstract class Animatable<S : Component>(protected val self: S, protected val animation: Animation? = null, protected var onFinish: (S.() -> Unit)? = null) :
         ComponentOp {
 
         override fun apply() {

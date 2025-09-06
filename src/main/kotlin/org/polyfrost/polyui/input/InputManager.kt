@@ -119,8 +119,8 @@ class InputManager(
     }
 
     /** This method should be called when a printable key is typed. This key should be **mapped to the user's keyboard layout!** */
-    fun keyTyped(key: Char) {
-        focused?.accept(Event.Focused.KeyTyped(key, keyModifiers))
+    fun keyTyped(codepoint: Int) {
+        focused?.accept(Event.Focused.KeyTyped(codepoint))
     }
 
     /** This method should be called when a non-printable, but representable key is pressed. */
@@ -146,9 +146,9 @@ class InputManager(
      *
      * This is used solely for keybinding, and so the key can be any value, as long as it is consistent, and unique to that key.
      */
-    fun keyDown(code: Int) {
-        if (keyBinder?.accept(code, true, mods) == true) return
-        focused?.accept(Event.Focused.UnmappedInput(code, true, keyModifiers))
+    fun keyDown(keyCode: Int, scanCode: Int) {
+        if (keyBinder?.accept(keyCode, true, mods) == true) return
+        focused?.accept(Event.Focused.UnmappedInput(keyCode, scanCode, true, keyModifiers))
     }
 
     /**
@@ -156,9 +156,9 @@ class InputManager(
      *
      * This is used solely for keybinding, and so the key can be any value, as long as it is consistent, and unique to that key.
      */
-    fun keyUp(code: Int) {
-        if (keyBinder?.accept(code, false, mods) == true) return
-        focused?.accept(Event.Focused.UnmappedInput(code, false, keyModifiers))
+    fun keyUp(keyCode: Int, scanCode: Int) {
+        if (keyBinder?.accept(keyCode, false, mods) == true) return
+        focused?.accept(Event.Focused.UnmappedInput(keyCode, scanCode, false, keyModifiers))
     }
 
     /**

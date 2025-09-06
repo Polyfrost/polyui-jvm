@@ -50,6 +50,18 @@ enum class Keys(val keyName: String, val value: Short) {
     F11("F11", 11),
     F12("F12", 12),
 
+    C("C", 'C'.toShort()),
+    V("V", 'V'.toShort()),
+    X("X", 'X'.toShort()),
+    Z("Z", 'Z'.toShort()),
+    A("A", 'A'.toShort()),
+    S("S", 'S'.toShort()),
+    P("P", 'P'.toShort()),
+    I("I", 'I'.toShort()),
+    R("R", 'R'.toShort()),
+    MINUS("-", '-'.toShort()),
+    EQUALS("=", '='.toShort()),
+
     ESCAPE("Escape", 20),
 
     ENTER("Enter", 21),
@@ -108,7 +120,7 @@ enum class Keys(val keyName: String, val value: Short) {
         /**
          * return a string representation of this key combo.
          *
-         * For example, [LSHIFT][KeyModifiers.LSHIFT] + [LCONTROL][KeyModifiers.LCONTROL] + [INSERT][Keys.INSERT] would return `"LSHIFT+LCONTROL+INSERT"`
+         * For example, [LSHIFT][KeyModifiers.LSHIFT] + [LCONTROL][KeyModifiers.LPRIMARY] + [INSERT][Keys.INSERT] would return `"LSHIFT+LCONTROL+INSERT"`
          * */
         @JvmStatic
         @JvmName("toString")
@@ -121,7 +133,7 @@ enum class Keys(val keyName: String, val value: Short) {
         /**
          * return a string representation of this key combo.
          *
-         * For example, [LSHIFT][KeyModifiers.LSHIFT] + [LCONTROL][KeyModifiers.LCONTROL] + `a` would return `"LSHIFT+LCONTROL+a"`
+         * For example, [LSHIFT][KeyModifiers.LSHIFT] + [LCONTROL][KeyModifiers.LPRIMARY] + `a` would return `"LSHIFT+LCONTROL+a"`
          */
         @JvmStatic
         @JvmName("toString")
@@ -134,27 +146,14 @@ enum class Keys(val keyName: String, val value: Short) {
         /**
          * return a pretty string representation of this key combo.
          *
-         * For example, [LSHIFT][KeyModifiers.LSHIFT] + [LCONTROL][KeyModifiers.LCONTROL] + [INSERT][Keys.INSERT] would return `"Left Shift + Left Control + Insert"`
+         * For example, [LSHIFT][KeyModifiers.LSHIFT] + [LCONTROL][KeyModifiers.LPRIMARY] + [INSERT][Keys.INSERT] would return `"Left Shift + Left Control + Insert"`
          */
         @JvmStatic
         @JvmName("toStringPretty")
         fun toStringPretty(key: Keys, modifiers: Modifiers = Modifiers(0)) = if (modifiers.isEmpty) {
             key.keyName
         } else {
-            "${modifiers.prettyName} + ${key.keyName}"
-        }
-
-        /**
-         * return a pretty string representation of this key combo.
-         *
-         * For example, [LSHIFT][KeyModifiers.LSHIFT] + [LCONTROL][KeyModifiers.LCONTROL] + `a` would return `"Left Shift + Left Control + a"`
-         */
-        @JvmStatic
-        @JvmName("toStringPretty")
-        fun toStringPretty(key: Char, modifiers: Modifiers = Modifiers(0)) = if (modifiers.isEmpty) {
-            key.toString()
-        } else {
-            "${modifiers.prettyName} + $key"
+            "${modifiers.fullName} + ${key.keyName}"
         }
     }
 }
@@ -194,7 +193,7 @@ enum class Mouse(val keyName: String, val value: Short) {
         fun toStringPretty(button: Mouse, modifiers: Modifiers = Modifiers(0)) = if (modifiers.isEmpty) {
             button.keyName
         } else {
-            "${modifiers.prettyName} + ${button.keyName}"
+            "${modifiers.fullName} + ${button.keyName}"
         }
     }
 }
@@ -203,26 +202,31 @@ enum class Mouse(val keyName: String, val value: Short) {
  * PolyUI's mapping for modifier keys, in binary form so logical OR can be used to check for multiple modifiers.
  * @see Modifiers
  */
-enum class KeyModifiers(val value: Byte) {
-    LSHIFT(0b00000001),
-    RSHIFT(0b00000010),
-    SHIFT(0b00000011),
+enum class KeyModifiers(val value: Byte, val keyName: String, val fullName: String) {
+    LSHIFT(0b00000001, shift(), "Left Shift"),
+    RSHIFT(0b00000010, shift(), "Right Shift"),
+    SHIFT(0b00000011, shift(), "Shift"),
 
-    LCONTROL(0b00000100),
-    RCONTROL(0b00001000),
-    CONTROL(0b00001100),
+    LPRIMARY(0b00000100, primary(), "Left " + primaryFull()),
+    RPRIMARY(0b00001000, primary(), "Right " + primaryFull()),
+    PRIMARY(0b00001100, primary(), primaryFull()),
 
-    LALT(0b00010000),
-    RALT(0b00100000),
-    ALT(0b00110000),
+    LSECONDARY(0b00010000, secondary(), "Left " + secondary()),
+    RSECONDARY(0b00100000, secondary(), "Right " + secondary()),
+    SECONDARY(0b00110000, secondary(), secondaryFull()),
 
-    LMETA(0b01000000),
-    RMETA(-0b010000000),
-    META(-0b01000000),
-
-    /** you will never receive this value. */
-    UNKNOWN(0),
+    LMETA(0b01000000, meta(), "Left " + metaFull()),
+    RMETA(-0b010000000, meta(), "Right " + metaFull()),
+    META(-0b01000000, meta(), metaFull()), ;
 }
+
+private fun shift(): String = if (PolyUI.isOnMac) "⇧" else "⇧Shift"
+private fun primary(): String = if (PolyUI.isOnMac) "⌘" else "Ctrl"
+private fun primaryFull(): String = if (PolyUI.isOnMac) "⌘Cmd" else "Control"
+private fun secondary(): String = if (PolyUI.isOnMac) "⌥" else "Alt"
+private fun secondaryFull(): String = if (PolyUI.isOnMac) "⌥Opt" else "Alt"
+private fun meta() = if (PolyUI.isOnMac) "^" else if (PolyUI.isOnWindows) "\u229E" else "Meta"
+private fun metaFull() = if (PolyUI.isOnMac) "^Ctrl" else if (PolyUI.isOnWindows) "\u229EWin" else "Meta"
 
 /**
  * PolyUI's mapping for modifier keys, in binary form so logical OR can be used to check for multiple modifiers.
@@ -232,6 +236,15 @@ enum class KeyModifiers(val value: Byte) {
 @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 value class Modifiers(val value: Byte) {
     constructor(vararg modifiers: KeyModifiers) : this(modifiers.fold(0.toByte()) { acc, key -> acc or key.value })
+    constructor(value: Byte, lenient: Boolean) : this(if (lenient) {
+        // asm: when lenient, LSHIFT and RSHIFT become SHIFT, LPRIMARY and RPRIMARY become PRIMARY, LSECONDARY and RSECONDARY become SECONDARY, LMETA and RMETA become META
+        var v = 0.toByte()
+        if (value.toInt() and 0b00000011 != 0) v = v or 0b00000011
+        if (value.toInt() and 0b00001100 != 0) v = v or 0b00001100
+        if (value.toInt() and 0b00110000 != 0) v = v or 0b00110000
+        if (value.toInt() and 0b11000000 != 0) v = v or 0b11000000.toByte()
+        v
+    } else value)
 
     @kotlin.internal.InlineOnly
     inline val lShift get() = value.toInt() and 0b00000001 != 0
@@ -240,16 +253,16 @@ value class Modifiers(val value: Byte) {
     inline val rShift get() = value.toInt() and 0b00000010 != 0
 
     @kotlin.internal.InlineOnly
-    inline val lCtrl get() = value.toInt() and 0b00000100 != 0 || (PolyUI.isOnMac && lMeta)
+    inline val lPrimary get() = value.toInt() and 0b00000100 != 0
 
     @kotlin.internal.InlineOnly
-    inline val rCtrl get() = value.toInt() and 0b00001000 != 0 || (PolyUI.isOnMac && rMeta)
+    inline val rPrimary get() = value.toInt() and 0b00001000 != 0
 
     @kotlin.internal.InlineOnly
-    inline val lAlt get() = value.toInt() and 0b00010000 != 0
+    inline val lSecondary get() = value.toInt() and 0b00010000 != 0
 
     @kotlin.internal.InlineOnly
-    inline val rAlt get() = value.toInt() and 0b00100000 != 0
+    inline val rSecondary get() = value.toInt() and 0b00100000 != 0
 
     @kotlin.internal.InlineOnly
     inline val lMeta get() = value.toInt() and 0b01000000 != 0
@@ -264,7 +277,7 @@ value class Modifiers(val value: Byte) {
     inline val hasShift get() = value.toInt() and 0b00000011 != 0
 
     @kotlin.internal.InlineOnly
-    inline val hasControl get() = value.toInt() and 0b00001100 != 0 || (PolyUI.isOnMac && hasMeta)
+    inline val hasPrimary get() = value.toInt() and 0b00001100 != 0
 
     @kotlin.internal.InlineOnly
     inline val hasAlt get() = value.toInt() and 0b00110000 != 0
@@ -278,61 +291,11 @@ value class Modifiers(val value: Byte) {
     @kotlin.internal.InlineOnly
     inline val size get() = value.countOneBits()
 
-    val prettyName: String
-        get() {
-            if (isEmpty) return ""
-            val sb = StringBuilder()
-            if (lShift && rShift) sb.append("Shift + ")
-            else {
-                if (lShift) sb.append("Left Shift + ")
-                if (rShift) sb.append("Right Shift + ")
-            }
-            if (lCtrl && rCtrl) sb.append("Control + ")
-            else {
-                if (lCtrl) sb.append("Left Control + ")
-                if (rCtrl) sb.append("Right Control + ")
-            }
-            if (lAlt && rAlt) sb.append("Alt + ")
-            else {
-                if (lAlt) sb.append("Left Alt + ")
-                if (rAlt) sb.append("Right Alt + ")
-            }
-            if (!PolyUI.isOnMac) {
-                if (hasMeta) sb.append("Meta + ")
-                else {
-                    if (lMeta) sb.append("Left Meta + ")
-                    if (rMeta) sb.append("Right Meta + ")
-                }
-            }
-            return sb.substring(0, sb.length - 3)
-        }
-
     val name: String
-        get() {
-            if (isEmpty) return ""
-            val sb = StringBuilder()
-            if (hasShift) sb.append("SHIFT+")
-            else {
-                if (lShift) sb.append("LSHIFT+")
-                if (rShift) sb.append("RSHIFT+")
-            }
-            if (value.toInt() and 0b00001100 != 0) sb.append("CTRL+")
-            else {
-                if (lCtrl) sb.append("LCTRL+")
-                if (rCtrl) sb.append("RCTRL+")
-            }
-            if (hasAlt) sb.append("ALT+")
-            else {
-                if (lAlt) sb.append("LALT+")
-                if (rAlt) sb.append("RALT+")
-            }
-            if (hasMeta) sb.append("META+")
-            else {
-                if (lMeta) sb.append("LMETA+")
-                if (rMeta) sb.append("RMETA+")
-            }
-            return sb.substring(0, sb.length - 1)
-        }
+        get() = this.toKeyModifiers().joinToString(" + ") { it.keyName }
+
+    val fullName: String
+        get() = this.toKeyModifiers().joinToString(" + ") { it.fullName }
 
     /**
      * *precise* equals, meaning that LSHIFT and RSHIFT are considered different, as well as LCONTROL and RCONTROL, etc.
@@ -353,18 +316,13 @@ value class Modifiers(val value: Byte) {
      * @see equal
      */
     @kotlin.internal.InlineOnly
-    inline fun equalLenient(other: Modifiers) = this.hasAlt == other.hasAlt && this.hasControl == other.hasControl && this.hasShift == other.hasShift
+    inline fun equalLenient(other: Modifiers) = this.hasAlt == other.hasAlt && this.hasPrimary == other.hasPrimary && this.hasShift == other.hasShift
 
     /**
      * *precise* equals, meaning that LSHIFT and RSHIFT are considered different, as well as LCONTROL and RCONTROL, etc.
      *
      */
     fun equal(other: Byte): Boolean {
-        if (PolyUI.isOnMac && this.hasControl) {
-            // macOS: consider control as meta key (command)
-            val i = other.toInt()
-            return value.toInt() == i and 0b00111111 or (i shr 4)
-        }
         return other == value
     }
 
@@ -374,11 +332,6 @@ value class Modifiers(val value: Byte) {
      * For the inverse, see [containedBy].
      */
     fun contains(other: Byte): Boolean {
-        if (PolyUI.isOnMac && this.hasControl) {
-            // macOS: consider control as meta key (command)
-            val i = other.toInt()
-            return value.toInt() and 0b00111111 or (i shr 4) == i
-        }
         return value == other || (value.toInt() and other.toInt() == value.toInt())
     }
 
@@ -390,23 +343,48 @@ value class Modifiers(val value: Byte) {
      */
     fun containedBy(other: Modifiers): Boolean {
         if (isEmpty) return true
-        if (lCtrl && rCtrl) return other.hasControl
-        else if (lCtrl) return other.lCtrl
-        else if (rCtrl) return other.rCtrl
+        if (lPrimary && rPrimary) return other.hasPrimary
+        else if (lPrimary) return other.lPrimary
+        else if (rPrimary) return other.rPrimary
 
         if (lShift && rShift) return other.hasShift
         else if (lShift) return other.lShift
         else if (rShift) return other.rShift
 
-        if (lAlt && rAlt) return other.hasAlt
-        else if (lAlt) return other.lAlt
-        else if (rAlt) return other.rAlt
+        if (lSecondary && rSecondary) return other.hasAlt
+        else if (lSecondary) return other.lSecondary
+        else if (rSecondary) return other.rSecondary
 
         if (lMeta && rMeta) return other.hasMeta
         else if (lMeta) return other.lMeta
         else if (rMeta) return other.rMeta
 
         return false
+    }
+
+    fun toKeyModifiers(): Array<KeyModifiers> {
+        val out = ArrayList<KeyModifiers>(size)
+        if (lShift && rShift) out.add(KeyModifiers.SHIFT)
+        else {
+            if (lShift) out.add(KeyModifiers.LSHIFT)
+            if (rShift) out.add(KeyModifiers.RSHIFT)
+        }
+        if (lPrimary && rPrimary) out.add(KeyModifiers.PRIMARY)
+        else {
+            if (lPrimary) out.add(KeyModifiers.LPRIMARY)
+            if (rPrimary) out.add(KeyModifiers.RPRIMARY)
+        }
+        if (lSecondary && rSecondary) out.add(KeyModifiers.SECONDARY)
+        else {
+            if (lSecondary) out.add(KeyModifiers.LSECONDARY)
+            if (rSecondary) out.add(KeyModifiers.RSECONDARY)
+        }
+        if (lMeta && rMeta) out.add(KeyModifiers.META)
+        else {
+            if (lMeta) out.add(KeyModifiers.LMETA)
+            if (rMeta) out.add(KeyModifiers.RMETA)
+        }
+        return out.toTypedArray()
     }
 
     override fun toString() = "$name ($value)"

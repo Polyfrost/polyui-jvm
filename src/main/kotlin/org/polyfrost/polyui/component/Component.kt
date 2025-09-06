@@ -669,6 +669,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         polyUI.inputManager.drop(old as? Inputtable)
         val addedAsAnimation: Boolean
         old.tryFinishAllOperations()
+        old.removeOperationsOfType(Scissor::class.java)
         old.at = old.screenAt
         val oldAt = old.getTargetPosition()
         if (old is Drawable && animation != SetAnimation.None) {
@@ -798,6 +799,10 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
 
     fun tryFinishAllOperations() {
         operations?.fastRemoveIfReversed { if(it is ComponentOp.Animatable<*>) it.finishNow() else false }
+    }
+
+    fun removeOperationsOfType(cls: Class<out ComponentOp>) {
+        operations?.fastRemoveIfReversed { cls.isInstance(it) }
     }
 
     /**

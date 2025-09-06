@@ -190,6 +190,10 @@ fun IntArray?.nullIfEmpty(): IntArray? {
     return if (this == null || this.isEmpty()) null else this
 }
 
+fun IntArraySet?.nullIfEmpty(): IntArraySet? {
+    return if (this == null || this.isEmpty()) null else this
+}
+
 /**
  * Add the given [element] to this list if it is not in it already.
  *

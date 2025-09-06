@@ -22,10 +22,9 @@
 package org.polyfrost.polyui.event
 
 import org.jetbrains.annotations.ApiStatus
-import org.polyfrost.polyui.event.Event.*
-import org.polyfrost.polyui.event.Event.Lifetime.*
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Modifiers
+import org.polyfrost.polyui.utils.codepointToString
 import java.nio.file.Path
 import org.polyfrost.polyui.input.Mouse as MouseUtils
 
@@ -301,11 +300,11 @@ interface Event {
          * @see [Keys]
          * @see [Modifiers]
          */
-        class KeyTyped internal constructor(val key: Char, @get:JvmName("getMods") val mods: Modifiers) : Focused {
-            override fun toString() = "KeyTyped(${Keys.toStringPretty(key, mods)})"
+        @JvmInline
+        value class KeyTyped internal constructor(val codepoint: Int) : Focused {
+            override fun toString() = "KeyTyped(${codepoint.codepointToString()}})"
 
-            operator fun component1() = key
-            operator fun component2() = mods
+            operator fun component1() = codepoint
         }
 
         /**
@@ -332,8 +331,8 @@ interface Event {
             operator fun component2() = mods
         }
 
-        class UnmappedInput internal constructor(val code: Int, val down: Boolean, @get:JvmName("getMods") val mods: Modifiers) : Focused {
-            override fun toString(): String = "UnmappedInput(key=$code ('${code.toChar()}'), down=$down, mods=$mods)"
+        class UnmappedInput internal constructor(val keyCode: Int, val scanCode: Int, val down: Boolean, @get:JvmName("getMods") val mods: Modifiers) : Focused {
+            override fun toString(): String = "UnmappedInput(key=$keyCode ('${keyCode.toChar()}'), scanCode=$scanCode, down=$down, mods=$mods)"
         }
 
         /**
@@ -350,7 +349,7 @@ interface Event {
 
         companion object {
             @JvmStatic
-            val KeyTyped = KeyTyped(0.toChar(), Modifiers(0))
+            val KeyTyped = KeyTyped(0)
 
             @JvmStatic
             val KeyPressed = KeyPressed(Keys.UNKNOWN, Modifiers(0))
@@ -359,7 +358,7 @@ interface Event {
             val KeyReleased = KeyReleased(Keys.UNKNOWN, Modifiers(0))
 
             @JvmStatic
-            val UnmappedInput = UnmappedInput(0, false, Modifiers(0))
+            val UnmappedInput = UnmappedInput(0, 0, false, Modifiers(0))
 
             @JvmStatic
             val FileDrop = FileDrop(arrayOf())

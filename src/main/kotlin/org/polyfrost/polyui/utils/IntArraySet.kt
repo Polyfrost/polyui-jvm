@@ -43,7 +43,7 @@ class IntArraySet(initialCapacity: Int) {
         for (i in 0..<size) {
             if (array[i] == value) {
                 val removed = array[i]
-                System.arraycopy(array, i + 1, array, i, size - i - 1)
+                array.copyInto(array, i, i + 1, size)
                 size--
                 array[size] = 0 // Clear the last element
                 return removed

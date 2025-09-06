@@ -106,6 +106,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
                     }
                 }
             }
+            needsRedraw = true
 
         }
 

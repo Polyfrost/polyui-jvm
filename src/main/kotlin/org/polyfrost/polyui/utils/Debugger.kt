@@ -96,7 +96,7 @@ class Debugger(private val polyUI: PolyUI) {
 //        if (polyUI.drew) LOGGER.info(perf)
     }
 
-    private val printBind = KeyBinder.Bind('P', mods = Modifiers(KeyModifiers.CONTROL)) {
+    private val printBind = KeyBinder.Bind(key = Keys.P, mods = Modifiers(KeyModifiers.PRIMARY)) {
         if (it) LOGGER.info(debugString())
         true
     }
@@ -298,7 +298,7 @@ class Debugger(private val polyUI: PolyUI) {
         }
         if (polyUI.settings.enableDebugKeybind) {
             polyUI.keyBinder?.add(
-                KeyBinder.Bind('I', mods = Modifiers(KeyModifiers.CONTROL, KeyModifiers.SHIFT)) {
+                KeyBinder.Bind(key = Keys.I, mods = Modifiers(KeyModifiers.PRIMARY, KeyModifiers.SHIFT)) {
                     if (!it) return@Bind false
                     polyUI.settings.debug = !polyUI.settings.debug
                     polyUI.master.needsRedraw = true
@@ -339,7 +339,7 @@ class Debugger(private val polyUI: PolyUI) {
             )
             master.debugDraw()
             val mods = inputManager.keyModifiers
-            if (mods.hasControl) {
+            if (mods.hasPrimary) {
                 val obj = inputManager.mouseOver
                 if (obj != null) {
                     val os = obj.toString()
@@ -539,10 +539,10 @@ ${d.alignment}
             spawnPos = SpawnPos.BelowMouse
         ).events {
             Event.Focused.Companion.KeyTyped then {
-                if (it.key == 'c' && it.mods.hasControl) {
-                    LOGGER.info("copied ID ${d.name} to clipboard")
-                    polyUI.clipboard = d.name
-                }
+//                if (it.codepoint == 'c' && it.mods.hasControl) {
+//                    LOGGER.info("copied ID ${d.name} to clipboard")
+//                    polyUI.clipboard = d.name
+//                }
             }
         }
     }
