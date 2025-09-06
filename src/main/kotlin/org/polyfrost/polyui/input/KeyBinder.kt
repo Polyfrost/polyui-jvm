@@ -26,9 +26,7 @@ import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.Settings
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.utils.IntArraySet
-import org.polyfrost.polyui.utils.codepointToString
 import org.polyfrost.polyui.utils.fastEach
-import org.polyfrost.polyui.utils.nullIfEmpty
 
 /**
  * # KeyBinder
@@ -40,7 +38,7 @@ import org.polyfrost.polyui.utils.nullIfEmpty
  * @see removeAll
  */
 class KeyBinder(private val settings: Settings) {
-    private val listeners = ArrayList<Bind>()
+    private val listeners = ArrayList<PolyBind>()
 
     /**
      * Property which enables an optimization where the KeyBinder will only update after every frame if there are time-sensitive listeners.
@@ -52,8 +50,8 @@ class KeyBinder(private val settings: Settings) {
     private val downUnmappedKeys = IntArraySet(5)
     private val downKeys = ArrayList<Keys>(5)
 
-    private var recordingBind: Bind? = null
-    private var recordingCallback: ((Bind?) -> Unit)? = null
+    private var recordingBind: PolyBind? = null
+    private var recordingCallback: ((PolyBind?) -> Unit)? = null
 
     /**
      * accept a keystroke event. This will call all keybindings that match the event.
@@ -132,13 +130,13 @@ class KeyBinder(private val settings: Settings) {
     /**
      * Return a list of duplicates of the given keybind.
      */
-    fun getDuplicatesIfAny(bind: Bind) = listeners.filter { it == bind }
+    fun getDuplicatesIfAny(bind: PolyBind) = listeners.filter { it == bind }
 
     /**
      * Add a keybind to this PolyUI instance, that will be run when the given keys are pressed.
      * @since 1.1.7
      */
-    fun add(vararg binds: Bind) {
+    fun add(vararg binds: PolyBind) {
         for (bind in binds) {
             add(bind)
         }
@@ -148,12 +146,12 @@ class KeyBinder(private val settings: Settings) {
      * Add a keybind to this PolyUI instance, that will be run when the given keys are pressed.
      * @since 0.21.0
      */
-    fun add(bind: Bind) {
+    fun add(bind: PolyBind) {
         if (bind.durationNanos > 0L) hasTimeSensitiveListeners = true
         listeners.add(bind)
     }
 
-    fun remove(bind: Bind) {
+    fun remove(bind: PolyBind) {
         listeners.remove(bind)
         if (hasTimeSensitiveListeners) {
             hasTimeSensitiveListeners = false
@@ -166,7 +164,7 @@ class KeyBinder(private val settings: Settings) {
         }
     }
 
-    fun remove(vararg binds: Bind) {
+    fun remove(vararg binds: PolyBind) {
         for (bind in binds) {
             remove(bind)
         }
@@ -188,9 +186,9 @@ class KeyBinder(private val settings: Settings) {
      * @throws IllegalStateException if the keybind is already present
      * @since 0.24.0
      */
-    fun record(register: Boolean, holdDurationNanos: Long = 0L, callback: ((Bind?) -> Unit)?, function: (Boolean) -> Boolean): Bind {
+    fun record(register: Boolean, holdDurationNanos: Long = 0L, callback: ((PolyBind?) -> Unit)?, function: (Boolean) -> Boolean): PolyBind {
         // stupid complier
-        val out = Bind(null as IntArray?, null as Array<Keys>?, null as IntArray?, Modifiers(0), durationNanos = holdDurationNanos, action = function)
+        val out = PolyBind(null as IntArray?, null as Array<Keys>?, null as IntArray?, Modifiers(0), durationNanos = holdDurationNanos, action = function)
         record(out, callback)
         if (register) add(out)
         return out
@@ -203,7 +201,7 @@ class KeyBinder(private val settings: Settings) {
      * the same bind as in the return of this method is supplied as the parameter. Else, for example if it was canceled, `null` is used.
      * @since 1.12.4
      */
-    fun record(bind: Bind, callback: ((Bind?) -> Unit)? = null) {
+    fun record(bind: PolyBind, callback: ((PolyBind?) -> Unit)? = null) {
         if (settings.debug) PolyUI.LOGGER.info("Recording keybind began")
         if (recordingBind != null) cancelRecord("New recording started")
         bind.resetState()
@@ -248,176 +246,5 @@ class KeyBinder(private val settings: Settings) {
         downMouseButtons.clear()
         downUnmappedKeys.clear()
         listeners.fastEach { it.resetState() }
-    }
-
-    open class Bind(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: IntArray? = null, @get:JvmName("getMods") mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, @Transient @set:ApiStatus.Internal var action: (Boolean) -> Boolean) {
-        constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Array<Mouse>? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: (Boolean) -> Boolean) : this(
-            unmappedKeys, keys,
-            mouse?.map {
-                it.value.toInt()
-            }?.toIntArray(),
-            mods, durationNanos, action,
-        )
-
-        constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Mouse? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: (Boolean) -> Boolean) : this(
-            unmappedKeys, keys,
-            mouse?.value?.let {
-                intArrayOf(it.toInt())
-            },
-            mods, durationNanos, action,
-        )
-
-        constructor(unmappedKeys: IntArray? = null, key: Keys? = null, mouse: Array<Mouse>? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: (Boolean) -> Boolean) : this(
-            unmappedKeys,
-            key?.let {
-                arrayOf(it)
-            },
-            mouse, mods, durationNanos, action,
-        )
-
-        constructor(mods: Modifiers = Modifiers(0), action: (Boolean) -> Boolean) : this(unmappedKeys = null, key = null, mouse = null, mods = mods, durationNanos = 0L, action = action)
-
-        var unmappedKeys = unmappedKeys.nullIfEmpty()
-            internal set
-        var keys = keys?.nullIfEmpty()
-            internal set
-        var mouse = mouse?.nullIfEmpty()
-            internal set
-
-        @get:JvmName("getMods")
-        var mods = mods
-            internal set
-        var durationNanos = durationNanos
-            internal set
-
-        @Transient
-        var muted = false
-
-        @Transient
-        private var time = 0L
-
-        @Transient
-        private var ran = false
-
-        val size get() = (unmappedKeys?.size ?: 0) + (keys?.size ?: 0) + (mouse?.size ?: 0) + mods.size
-        val isBound get() = size > 0
-
-        internal fun update(c: IntArraySet, k: ArrayList<Keys>, m: IntArraySet, mods: Byte, deltaTimeNanos: Long, down: Boolean): Boolean {
-            if (muted) return false
-            if (durationNanos == 0L && deltaTimeNanos > 0L) return false // asm: we are not time-sensitive, so ignore
-            if (!test(c, k, m, mods, down)) {
-                time = 0L
-                if (ran) {
-                    ran = false
-                    return action(false)
-                }
-                return false
-            }
-            if (durationNanos != 0L) {
-                time += deltaTimeNanos
-                if (time >= durationNanos && !ran) {
-                    ran = true
-                    return action(true)
-                }
-            } else if (down && !ran) {
-                ran = true
-                return action(true)
-            }
-            return false
-        }
-
-        /**
-         * Reset the state of this keybind, meaning that it will call [action] with `false` if it was previously ran (i.e. is actively being held down),
-         * and reset its internal state so that it can be used again. To be used in conjunction with [KeyBinder.release].
-         */
-        internal fun resetState() {
-            if (ran) action(false)
-            time = 0L
-            ran = false
-        }
-
-        protected open fun test(c: IntArraySet, k: ArrayList<Keys>, m: IntArraySet, mods: Byte, down: Boolean): Boolean {
-            if (!isBound) return false
-            if (!unmappedKeys.matches(c)) return false
-            if (!keys.matches(k)) return false
-            if (!mouse.matches(m)) return false
-            return this.mods.containedBy(Modifiers(mods))
-        }
-
-        final override fun toString(): String {
-            val sb = StringBuilder()
-            sb.append("KeyBind(")
-            sb.append(keysToString())
-            sb.append(')')
-            return sb.toString()
-        }
-
-        fun keysToString(ifNotBound: String = "", getKeyName: ((Int) -> String) = { it.codepointToString() }): String {
-            if (!isBound) return ifNotBound
-            val sb = StringBuilder()
-            val s = mods.fullName
-            sb.append(s)
-            var hasp = false
-            if (unmappedKeys != null) {
-                if (s.isNotEmpty()) sb.append(" + ")
-                for (c in unmappedKeys) {
-                    sb.append(getKeyName(c))
-                    sb.append(" + ")
-                    hasp = true
-                }
-            }
-            if (keys != null) {
-                if (s.isNotEmpty()) sb.append(" + ")
-                for (k in keys) {
-                    sb.append(Keys.toStringPretty(k))
-                    sb.append(" + ")
-                    hasp = true
-                }
-            }
-            if (mouse != null) {
-                if (s.isNotEmpty()) sb.append(" + ")
-                for (m in mouse) {
-                    sb.append(Mouse.toStringPretty(Mouse.fromValue(m)))
-                    sb.append(" + ")
-                    hasp = true
-                }
-            }
-            return if (hasp) sb.substring(0, sb.length - 3) else sb.toString()
-        }
-
-        final override fun equals(other: Any?): Boolean {
-            if (other !is Bind) return false
-            if (other.unmappedKeys?.contentEquals(unmappedKeys) == false) return false
-            if (other.keys?.contentEquals(keys) == false) return false
-            if (other.mouse?.contentEquals(mouse) == false) return false
-            if (other.mods != mods) return false
-            if (other.durationNanos != durationNanos) return false
-            return true
-        }
-
-        final override fun hashCode(): Int {
-            var result = unmappedKeys?.contentHashCode() ?: 0
-            result = 31 * result + (keys?.contentHashCode() ?: 0)
-            result = 31 * result + (mouse?.contentHashCode() ?: 0)
-            result = 31 * result + mods.hashCode()
-            result = 31 * result + durationNanos.hashCode()
-            return result
-        }
-
-        protected fun <T> Array<T>?.matches(other: ArrayList<T>): Boolean {
-            if (this == null) return true
-            for (i in this) {
-                if (i !in other) return false
-            }
-            return true
-        }
-
-        protected fun IntArray?.matches(other: IntArraySet): Boolean {
-            if (this == null) return true
-            for (i in this) {
-                if (i !in other) return false
-            }
-            return true
-        }
     }
 }

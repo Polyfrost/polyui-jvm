@@ -96,12 +96,12 @@ class Debugger(private val polyUI: PolyUI) {
 //        if (polyUI.drew) LOGGER.info(perf)
     }
 
-    private val printBind = KeyBinder.Bind(key = Keys.P, mods = Modifiers(KeyModifiers.PRIMARY)) {
+    private val printBind = PolyBind(key = Keys.P, mods = Modifiers(KeyModifiers.PRIMARY)) {
         if (it) LOGGER.info(debugString())
         true
     }
 
-    private val inspectBind = KeyBinder.Bind(mouse = Mouse.LEFT_MOUSE, mods = Modifiers(KeyModifiers.SHIFT), durationNanos = 0.4.seconds) {
+    private val inspectBind = PolyBind(mouse = Mouse.LEFT_MOUSE, mods = Modifiers(KeyModifiers.SHIFT), durationNanos = 0.4.seconds) {
         if (it) openDebugWindow(polyUI.inputManager.rayCheckUnsafe(polyUI.master, polyUI.mouseX, polyUI.mouseY))
         true
     }
@@ -134,9 +134,9 @@ class Debugger(private val polyUI: PolyUI) {
         ).disable()
     }
 
-    private val evalBind = KeyBinder.Bind(key = Keys.TAB, mods = Modifiers(KeyModifiers.SHIFT)) {
-        if (!it) return@Bind false
-        val forEval = polyUI.inputManager.rayCheckUnsafe(polyUI.master, polyUI.mouseX, polyUI.mouseY) ?: return@Bind false
+    private val evalBind = PolyBind(key = Keys.TAB, mods = Modifiers(KeyModifiers.SHIFT)) {
+        if (!it) return@PolyBind false
+        val forEval = polyUI.inputManager.rayCheckUnsafe(polyUI.master, polyUI.mouseX, polyUI.mouseY) ?: return@PolyBind false
         this.forEval = forEval
         val evalWindow = evalWindow
         (evalWindow[0] as TextInput).placeholder = "evaluate ${forEval.name}..."
@@ -298,8 +298,8 @@ class Debugger(private val polyUI: PolyUI) {
         }
         if (polyUI.settings.enableDebugKeybind) {
             polyUI.keyBinder?.add(
-                KeyBinder.Bind(key = Keys.I, mods = Modifiers(KeyModifiers.PRIMARY, KeyModifiers.SHIFT)) {
-                    if (!it) return@Bind false
+                PolyBind(key = Keys.I, mods = Modifiers(KeyModifiers.PRIMARY, KeyModifiers.SHIFT)) {
+                    if (!it) return@PolyBind false
                     polyUI.settings.debug = !polyUI.settings.debug
                     polyUI.master.needsRedraw = true
                     val s = if (polyUI.settings.debug) {

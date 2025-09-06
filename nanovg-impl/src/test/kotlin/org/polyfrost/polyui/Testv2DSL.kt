@@ -29,8 +29,8 @@ import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.data.FontFamily
 import org.polyfrost.polyui.dsl.polyUI
 import org.polyfrost.polyui.event.State
-import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.Keys
+import org.polyfrost.polyui.input.PolyBind
 import org.polyfrost.polyui.renderer.impl.GLFWWindow
 import org.polyfrost.polyui.renderer.impl.NVGRenderer
 import org.polyfrost.polyui.unit.Align
@@ -51,7 +51,7 @@ fun main() {
         renderer = NVGRenderer
         colors = theme
         backgroundColor = theme.page.bg.normal
-        val bind = KeyBinder.Bind(key = Keys.P) {
+        val bind = PolyBind(key = Keys.P) {
             println("you pressed the bind! $it")
             true
         }
@@ -148,7 +148,7 @@ fun main() {
             )
             text("i am some text that has been limited, so at some point i will stop showing up and i will just be cut off, which is a pretty handy feature.", limited = true, visibleSize = 400f by 12f)
             BoxedTextInput(post = "px").add()
-            Button(text = "rec").onClick { keyBinder?.record(bind) { (this[0] as Text).text = bind.keysToString { window.getKeyName(it) } }; false }.add()
+            Button(text = "rec").onClick { keyBinder?.record(bind) { (this[0] as Text).text = bind.keysToString { window.getKeyName(it, -1) } }; false }.add()
             group(size = Vec2(300f, 80f), alignment = Align(padEdges = Vec2(4f, 4f), main = Align.Content.SpaceEvenly, cross = Align.Content.SpaceEvenly)) {
                 block(60f by 30f)
                 block(40f by 30f)

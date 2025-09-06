@@ -280,7 +280,7 @@ class PolyUI(
         master.clipChildren()
 
         this.keyBinder?.add(
-            KeyBinder.Bind(key = Keys.R, mods = Modifiers(KeyModifiers.PRIMARY)) {
+            PolyBind(key = Keys.R, mods = Modifiers(KeyModifiers.PRIMARY)) {
                 if (it) {
                     LOGGER.info("Reloading PolyUI")
                     resize(this.size.x, this.size.y, true)
@@ -290,7 +290,7 @@ class PolyUI(
         )
         // testing stuff that was actually pretty useful and cool so it's still here (yay!)
         this.keyBinder?.add(
-            KeyBinder.Bind(key = Keys.MINUS, mods = Modifiers(KeyModifiers.PRIMARY)) {
+            PolyBind(key = Keys.MINUS, mods = Modifiers(KeyModifiers.PRIMARY)) {
                 if (it) {
                     master.children?.fastEach {
                         it.rescale(1.05f, 1.05f)
@@ -300,7 +300,7 @@ class PolyUI(
                 }
                 true
             },
-            KeyBinder.Bind(key = Keys.EQUALS, mods = Modifiers(KeyModifiers.PRIMARY)) {
+            PolyBind(key = Keys.EQUALS, mods = Modifiers(KeyModifiers.PRIMARY)) {
                 if (it) {
                     master.children?.fastEach {
                         it.rescale(0.95f, 0.95f)

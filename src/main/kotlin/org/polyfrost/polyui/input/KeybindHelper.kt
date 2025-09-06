@@ -26,7 +26,7 @@ import org.polyfrost.polyui.utils.nullIfEmpty
 import java.util.function.Consumer
 
 /**
- * Java-style builder for creating a [KeyBinder.Bind] instance.
+ * Java-style builder for creating a [PolyBind] instance.
  * @since 1.7.02
  */
 open class KeybindHelper<T : KeybindHelper<T>> {
@@ -49,9 +49,9 @@ open class KeybindHelper<T : KeybindHelper<T>> {
     @kotlin.internal.InlineOnly
     protected inline fun self(): T = this as T
 
-    open fun build(): KeyBinder.Bind {
+    open fun build(): PolyBind {
         val func = func ?: throw IllegalStateException("Function must be set")
-        return KeyBinder.Bind(
+        return PolyBind(
             unmappedKeys.nullIfEmpty()?.toIntArray(),
             keys.ifEmpty { null }?.toTypedArray(),
             mouse.nullIfEmpty()?.toIntArray(),
