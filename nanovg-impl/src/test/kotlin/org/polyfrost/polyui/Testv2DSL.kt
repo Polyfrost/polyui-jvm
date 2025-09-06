@@ -21,6 +21,7 @@
 
 package org.polyfrost.polyui
 
+import org.polyfrost.polyui.animate.SetAnimation
 import org.polyfrost.polyui.color.DarkTheme
 import org.polyfrost.polyui.color.asMutable
 import org.polyfrost.polyui.component.extensions.*
@@ -120,7 +121,7 @@ fun main() {
                         ).withHoverStates()
                     }, visibleSize = 350f by 120f
                 ).makeRearrangeableGrid()
-                val anim = if(Random.nextBoolean()) SetAnimation.SlideRight else SetAnimation.SlideLeft
+                val anim = if (Random.nextBoolean()) SetAnimation.SlideRight else SetAnimation.SlideLeft
                 boxParent.set(boxParent[idx], theBox, anim)
 //                boxParent[idx] = theBox
             }.add()
@@ -147,7 +148,7 @@ fun main() {
             )
             text("i am some text that has been limited, so at some point i will stop showing up and i will just be cut off, which is a pretty handy feature.", limited = true, visibleSize = 400f by 12f)
             BoxedTextInput(post = "px").add()
-            Button(text = "rec").onClick { keyBinder?.record(bind) { (this[0] as Text).text = bind.keysToString() }; false }.add()
+            Button(text = "rec").onClick { keyBinder?.record(bind) { (this[0] as Text).text = bind.keysToString { window.getKeyName(it) } }; false }.add()
             group(size = Vec2(300f, 80f), alignment = Align(padEdges = Vec2(4f, 4f), main = Align.Content.SpaceEvenly, cross = Align.Content.SpaceEvenly)) {
                 block(60f by 30f)
                 block(40f by 30f)

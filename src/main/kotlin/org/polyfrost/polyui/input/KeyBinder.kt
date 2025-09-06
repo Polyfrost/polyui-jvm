@@ -26,6 +26,7 @@ import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.Settings
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.utils.IntArraySet
+import org.polyfrost.polyui.utils.codepointToString
 import org.polyfrost.polyui.utils.fastEach
 import org.polyfrost.polyui.utils.nullIfEmpty
 
@@ -351,7 +352,7 @@ class KeyBinder(private val settings: Settings) {
             return sb.toString()
         }
 
-        fun keysToString(ifNotBound: String = ""): String {
+        fun keysToString(ifNotBound: String = "", getKeyName: ((Int) -> String) = { it.codepointToString() }): String {
             if (!isBound) return ifNotBound
             val sb = StringBuilder()
             val s = mods.fullName
@@ -360,7 +361,7 @@ class KeyBinder(private val settings: Settings) {
             if (unmappedKeys != null) {
                 if (s.isNotEmpty()) sb.append(" + ")
                 for (c in unmappedKeys) {
-                    sb.append(c.toChar())
+                    sb.append(getKeyName(c))
                     sb.append(" + ")
                     hasp = true
                 }
