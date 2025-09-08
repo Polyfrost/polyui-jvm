@@ -713,11 +713,8 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
 
         children.add(index, new)
         if (new is Inputtable) new.acceptAll(Event.Lifetime.Added)
-        // asm: temporarily remove the old component so that it does not interfere with the recalculate
-        if (addedAsAnimation) children.remove(old)
-        recalculate(false)
-        if (addedAsAnimation) children.add(old)
         new.at = oldAt
+        if (new is Scrollable) new.resetScroll()
         new.clipChildren()
 
         if (new is Drawable && animation != SetAnimation.None) {

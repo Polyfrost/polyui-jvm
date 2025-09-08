@@ -295,13 +295,17 @@ interface Event {
         object Lost : Focused
 
         /**
-         * called when a key is typed (and modifiers) is pressed.
+         * called when a key is typed.
          *
          * @see [Keys]
-         * @see [Modifiers]
          */
         @JvmInline
         value class KeyTyped internal constructor(val codepoint: Int) : Focused {
+            val character get() = codepoint.codepointToString()
+
+            @Deprecated("Use character instead", ReplaceWith("character"))
+            val char get() = codepoint.toChar()
+
             override fun toString() = "KeyTyped(${codepoint.codepointToString()}})"
 
             operator fun component1() = codepoint

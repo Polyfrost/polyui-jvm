@@ -68,6 +68,8 @@ fun Int.gcd(b: Int): Int {
     return a
 }
 
+fun Int.isBmpCodePoint() = Character.isBmpCodePoint(this)
+
 fun Int.codepointToString(): String = if (Character.isBmpCodePoint(this)) this.toChar().toString() else String(Character.toChars(this))
 
 /**

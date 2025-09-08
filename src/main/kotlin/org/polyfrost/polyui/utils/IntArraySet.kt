@@ -14,7 +14,9 @@ class IntArraySet(initialCapacity: Int) {
         require(initialCapacity > 0) { "Initial capacity must be greater than 0" }
     }
 
-    private var array: IntArray = IntArray(initialCapacity)
+    @PublishedApi
+    internal var array: IntArray = IntArray(initialCapacity)
+        private set
     var size = 0
         private set
 
@@ -56,9 +58,11 @@ class IntArraySet(initialCapacity: Int) {
         array = array.copyOf(newSize)
     }
 
-    fun toIntArray(): IntArray {
-        val res = IntArray(size)
-        array.copyInto(res, endIndex = size)
-        return res
+    inline fun forEach(action: (Int) -> Unit) {
+        for (i in 0..<size) {
+            action(array[i])
+        }
     }
+
+    fun toIntArray() = array.copyInto(IntArray(size), 0, 0, endIndex = size)
 }

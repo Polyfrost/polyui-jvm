@@ -93,7 +93,7 @@ class Debugger(private val polyUI: PolyUI) {
         frames = 0
         nframes = 0
         polyUI.master.needsRedraw = true
-//        if (polyUI.drew) LOGGER.info(perf)
+        if (polyUI.settings.printPerfInfo && polyUI.drew) LOGGER.info(perf)
     }
 
     private val printBind = PolyBind(key = Keys.P, mods = Modifiers(KeyModifiers.PRIMARY)) {

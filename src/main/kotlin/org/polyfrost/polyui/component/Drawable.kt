@@ -216,7 +216,6 @@ abstract class Drawable(
      * @since 0.20.0
      */
     var alpha = 1f
-        get() = field.coerceIn(0f, (_parent as? Drawable)?.alpha ?: 1f)
 
     /** **a**t **c**ache **x** for transformations. */
     private var acx = 0f

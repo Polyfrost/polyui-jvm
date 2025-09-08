@@ -220,7 +220,7 @@ enum class KeyModifiers(val value: Byte, val keyName: String, val fullName: Stri
     META(-0b01000000, meta(), metaFull()), ;
 }
 
-private fun shift(): String = if (PolyUI.isOnMac) "⇧" else "⇧Shift"
+private fun shift(): String = if (PolyUI.isOnMac) "⇧" else "Shift"
 private fun primary(): String = if (PolyUI.isOnMac) "⌘" else "Ctrl"
 private fun primaryFull(): String = if (PolyUI.isOnMac) "⌘Cmd" else "Control"
 private fun secondary(): String = if (PolyUI.isOnMac) "⌥" else "Alt"

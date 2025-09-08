@@ -38,6 +38,11 @@ class Settings {
     @set:JvmName("enableDebugMode")
     var debug = System.getProperty("polyui.debug", "false").toBoolean()
 
+    /**
+     * Print performance information (FPS, frame times) to the console every second.
+     */
+    var printPerfInfo = false
+
     /** enable the debug keybind in the window (Ctrl+Shift+I)
      * @see debug*/
     @get:JvmName("hasDebugKeybind")
