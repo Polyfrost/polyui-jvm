@@ -177,10 +177,15 @@ fun <S : Drawable> S.setState(state: Byte): S {
     return this
 }
 
-fun <S : Drawable> S.setPalette(palette: Colors.Palette, animation: Boolean = false): S {
+fun <S : Drawable> S.setPalette(palette: Colors.Palette, animate: Boolean = false, dispatch: Boolean = true): S {
     if (this._palette == palette) return this
+    if (dispatch && this.hasListenersFor(Event.Change.Palette::class.java)) {
+        val e = Event.Change.Palette(palette)
+        e.cancelled = e.cancelled || accept(e)
+        if (e.cancelled) return this
+    }
     this._palette = palette
-    if (animation) {
+    if (animate) {
         Recolor(this, palette.get(inputState), Animations.Default.create(0.5.seconds)).add()
     } else {
         (_color as? PolyColor.Mut)?.recolor(palette.get(inputState)) ?: run { _color = palette.get(inputState) }
@@ -311,13 +316,21 @@ fun <T : Inputtable> T.addRethemingListeners(): T {
  */
 fun Component.retheme(old: Colors, new: Colors, animate: Boolean = false): Component {
     onAll<Drawable> {
-        val new = new.getNewPalette(it._palette, old) ?: run {
+        val palette = new.getNewPalette(it._palette, old) ?: run {
             // asm: no valid palette was found, so we check for a color change. if still nothing found, just don't do anything
             it.color = new.getNewColor(it.color, old) ?: it.color
             it._palette
         }
         // asm: dont animate on components that are not currently shown (as otherwise they would do the animation later which looks weird)
-        if (new != null) it.setPalette(new, animate && it.renders)
+        if (palette != null) {
+            it.setPalette(palette, animate && it.renders)
+            if (it is Block) {
+                val oldBorder = it.borderColor
+                if (oldBorder != null) {
+                    it.borderColor = new.getNewColor(oldBorder, old) ?: oldBorder
+                }
+            }
+        }
     }
     return this
 }

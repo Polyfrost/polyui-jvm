@@ -22,6 +22,8 @@
 package org.polyfrost.polyui.event
 
 import org.jetbrains.annotations.ApiStatus
+import org.polyfrost.polyui.color.Color
+import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.utils.codepointToString
@@ -264,6 +266,11 @@ interface Event {
             override fun toString() = state.toString()
         }
 
+        class Palette @ApiStatus.Internal constructor(val palette: Colors.Palette) : Change() {
+            operator fun component1() = palette
+            override fun toString() = palette.toString()
+        }
+
         companion object {
             @JvmStatic
             val Text = Text("")
@@ -273,6 +280,9 @@ interface Event {
 
             @JvmStatic
             val State = State(false)
+
+            @JvmStatic
+            val Palette = Palette(Colors.Palette(Color.TRANSPARENT, Color.TRANSPARENT, Color.TRANSPARENT, Color.TRANSPARENT))
         }
     }
 

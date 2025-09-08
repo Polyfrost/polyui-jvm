@@ -126,7 +126,7 @@ abstract class Drawable(
     var palette: Colors.Palette
         get() = _palette ?: throw UninitializedPropertyAccessException("Palette is not initialized")
         set(value) {
-            setPalette(value, false)
+            setPalette(value, animate = false, dispatch = false)
         }
 
     @SideEffects("_parent.needsRedraw", `when` = "field != value")

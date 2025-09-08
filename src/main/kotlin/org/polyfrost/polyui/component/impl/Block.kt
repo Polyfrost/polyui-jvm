@@ -39,7 +39,7 @@ open class Block(
     visibleSize: Vec2 = Vec2.ZERO,
     focusable: Boolean = false,
     color: PolyColor? = null,
-    radii: FloatArray? = floatArrayOf(8f),
+    radii: FloatArray? = floatArrayOf(8f.let { if (size.y > 0f) it.coerceAtMost(size.y / 2f) else it }),
 ) : Drawable(children = children, at, alignment, size, visibleSize, focusable = focusable) {
     var borderColor: PolyColor? = null
     var borderWidth: Float = 2f
@@ -88,6 +88,7 @@ open class Block(
                     radii[i] = v
                 }
             }
+
             else -> {
                 for (i in radii.indices) {
                     radii[i] = (radii[i] * scaleX).roundTo(PolyUI.ROUNDING)
