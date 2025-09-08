@@ -77,7 +77,7 @@ fun Button(leftImage: PolyImage? = null, text: String? = null, rightImage: PolyI
 fun Switch(at: Vec2 = Vec2.ZERO, size: Float, padding: Float = 3f, state: Boolean = false, lateralStretch: Float = 1.8f): Block {
     val circleSize = size - (padding + padding)
     return Block(
-        Block(size = Vec2(circleSize, circleSize)).radius(circleSize / 2f).setPalette { text.primary },
+        Block(size = Vec2(circleSize, circleSize)).radius(circleSize / 2f).setPalette { text.primary }.denyPaletteChanges(),
         at = at,
         size = Vec2(size * lateralStretch, size),
         alignment = Align(main = Align.Content.Start, pad = Vec2(padding, 0f)),
