@@ -234,12 +234,12 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         }
     }
 
-    override fun rescale0(scaleX: Float, scaleY: Float, withChildren: Boolean) {
-        super.rescale0(scaleX, scaleY, withChildren)
+    override fun rescale0(scaleX: Float, scaleY: Float, min: Float, withChildren: Boolean) {
+        super.rescale0(scaleX, scaleY, min, withChildren)
 //        fontSize = (height - (spacing * (lines.size - 1))) / lines.size
-        fontSize *= scaleY
+        fontSize *= min
         // asm: fontSize would normally call this method, but if it isn't as it doesn't change, we need to do it manually
-        if (initialized && scaleY == 1f) updateTextBounds(renderer)
+        if (initialized && min == 1f) updateTextBounds(renderer)
     }
 
     @Suppress("deprecation_error")

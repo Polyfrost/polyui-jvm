@@ -216,6 +216,7 @@ abstract class Drawable(
      * @since 0.20.0
      */
     var alpha = 1f
+        get() = field.coerceIn(0f, (_parent as? Drawable)?.alpha ?: 1f)
 
     /** **a**t **c**ache **x** for transformations. */
     private var acx = 0f
@@ -342,8 +343,8 @@ abstract class Drawable(
         return rx in tx..(tx + tw) && ry in ty..(ty + th)
     }
 
-    override fun rescale0(scaleX: Float, scaleY: Float, withChildren: Boolean) {
-        super.rescale0(scaleX, scaleY, withChildren)
+    override fun rescale0(scaleX: Float, scaleY: Float, min: Float, withChildren: Boolean) {
+        super.rescale0(scaleX, scaleY, min, withChildren)
         framebuffer?.let {
             val renderer = renderer as FramebufferController
             renderer.delete(it)

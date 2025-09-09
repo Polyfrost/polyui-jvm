@@ -549,9 +549,10 @@ ${d.alignment}
 
     private fun decodeFlags(component: Component): String {
         val sb = StringBuilder(4)
-        if (component.createdWithSetPosition) sb.append('P')
-        if (component.createdWithSetSize) sb.append('S')
-        if (component.rawResize) sb.append('R')
+        if (component.createdWithSetPosition) sb.append("Sp")
+        if (component.createdWithSetSize) sb.append("Ss")
+        if (component.rawRescalePosition) sb.append("Rp")
+        if (component.rawRescaleSize) sb.append("Rs")
         if (component.layoutIgnored) sb.append('I')
         if (sb.isEmpty()) sb.append("none")
         return sb.toString()

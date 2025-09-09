@@ -285,11 +285,12 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
     /**
      * Flags that store various states of this component regarding the [org.polyfrost.polyui.layout.LayoutController] and resizing.
      * Currently, the following is stored here:
-     * - bit 0: [rawResize]
+     * - bit 0: [rawRescalePosition]
      * - bit 1: [createdWithSetSize]
      * - bit 2: [createdWithSetPosition]
      * - bit 3: [layoutIgnored]
      * - bit 4: [positioned]
+     * - bit 5: [rawRescalePosition]
      *
      * this means there are still 4 bits that can be used for simple boolean-type properties.
      * this is protected so you can use it yourself, but more bits may be used internally in the future.
@@ -306,11 +307,25 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
      *
      * @since 0.19.0
      */
-    @get:JvmName("isRawResize")
-    var rawResize: Boolean
+    @get:JvmName("isRawRescaleSize")
+    var rawRescaleSize: Boolean
         get() = layoutFlags.toInt() and 0b00000001 == 0b00000001
         set(value) {
             layoutFlags = if (value) layoutFlags or 0b00000001 else layoutFlags and 0b11111110.toByte()
+        }
+
+    /**
+     * This property controls weather this component POSITION resizes "raw", meaning it will **not** respect the aspect ratio.
+     *
+     * By default, it is `false`, so when resized, the smallest increase is used for both x and y. This means that it will stay at the same aspect ratio.
+     *
+     * @since 0.19.0
+     */
+    @get:JvmName("isRawRescalePosition")
+    var rawRescalePosition: Boolean
+        get() = layoutFlags.toInt() and 0b00100000 == 0b00100000
+        set(value) {
+            layoutFlags = if (value) layoutFlags or 0b00100000 else layoutFlags and 0b11011111.toByte()
         }
 
     /**
@@ -422,16 +437,11 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
      */
     @Locking
     fun rescale(scaleX: Float, scaleY: Float) {
-        if (rawResize) {
-            rescale0(scaleX, scaleY, true)
-        } else {
-            val s = min(scaleX, scaleY)
-            rescale0(s, s, true)
-        }
+        rescale0(scaleX, scaleY, min(scaleX, scaleY), true)
     }
 
     /**
-     * raw rescale method that **does not check [rawResize] and uses the given scale factors directly**.
+     * raw rescale method that **does not check [rawRescalePosition] and uses the given scale factors directly**.
      *
      * ### You should be using [rescale] instead in 99% of cases.
      * @param withChildren if `true`, this method will also rescale its children.
@@ -440,15 +450,26 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
     @Locking
     @MustBeInvokedByOverriders
     @Synchronized
-    open fun rescale0(scaleX: Float, scaleY: Float, withChildren: Boolean) {
-        _x *= scaleX
-        _y *= scaleY
-        width *= scaleX
-        height *= scaleY
-        if (withChildren) children?.fastEach {
-            it.rescale0(scaleX, scaleY, true)
+    protected open fun rescale0(scaleX: Float, scaleY: Float, min: Float, withChildren: Boolean) {
+        if (rawRescalePosition) {
+            _x *= scaleX
+            _y *= scaleY
+        } else {
+            _x *= min
+            _y *= min
         }
-        designedSize *= Vec2(scaleX, scaleY)
+        if (rawRescaleSize) {
+            width *= scaleX
+            height *= scaleY
+            designedSize *= Vec2(scaleX, scaleY)
+        } else {
+            width *= min
+            height *= min
+            designedSize *= min
+        }
+        if (withChildren) children?.fastEach {
+            it.rescale0(scaleX, scaleY, min, true)
+        }
     }
 
 
@@ -468,7 +489,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         if (polyUI.size == designedSize) return
         val totalSx = polyUI.size.x / designedSize.x
         val totalSy = polyUI.size.y / designedSize.y
-        if (totalSx != 1f || totalSy != 1f) rescale0(totalSx, totalSy, false)
+        if (totalSx != 1f || totalSy != 1f) rescale0(totalSx, totalSy, min(totalSx, totalSy), false)
         children?.fastEach { it.rescaleToPolyUIInstance() }
         designedSize = polyUI.size
     }
@@ -795,7 +816,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
     }
 
     fun tryFinishAllOperations() {
-        operations?.fastRemoveIfReversed { if(it is ComponentOp.Animatable<*>) it.finishNow() else false }
+        operations?.fastRemoveIfReversed { if (it is ComponentOp.Animatable<*>) it.finishNow() else false }
     }
 
     fun removeOperationsOfType(cls: Class<out ComponentOp>) {

@@ -21,7 +21,6 @@
 
 package org.polyfrost.polyui.component.impl
 
-import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
@@ -29,7 +28,6 @@ import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.areElementsEqual
-import org.polyfrost.polyui.utils.roundTo
 
 open class Block(
     vararg children: Component?,
@@ -77,22 +75,18 @@ open class Block(
         }
     }
 
-    override fun rescale0(scaleX: Float, scaleY: Float, withChildren: Boolean) {
-        super.rescale0(scaleX, scaleY, withChildren)
-        val radii = this.radii
-        when {
-            radii == null -> {}
-            radii.areElementsEqual() -> {
-                val v = (radii[0] * scaleX).roundTo(PolyUI.ROUNDING)
-                for (i in radii.indices) {
-                    radii[i] = v
-                }
+    override fun rescale0(scaleX: Float, scaleY: Float, min: Float, withChildren: Boolean) {
+        super.rescale0(scaleX, scaleY, min, withChildren)
+        val radii = radii ?: return
+        val scaleX = if (rawRescaleSize) scaleX else min
+        val scaleY = if (rawRescaleSize) scaleY else min
+        if (radii.size < 4) {
+            for (i in radii.indices) {
+                radii[i] *= min
             }
-
-            else -> {
-                for (i in radii.indices) {
-                    radii[i] = (radii[i] * scaleX).roundTo(PolyUI.ROUNDING)
-                }
+        } else {
+            for (i in radii.indices) {
+                radii[i] = radii[i] * if (i % 2 == 0) scaleX else scaleY
             }
         }
     }
