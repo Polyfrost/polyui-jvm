@@ -101,7 +101,7 @@ open class LightTheme : Colors {
 
     override val component = Colors.Component(
         bg = Colors.Palette(
-            rgba(222, 228, 252),
+            rgba(208, 215, 243),
             rgba(213, 219, 243),
             rgba(238, 241, 255),
             rgba(222, 228, 252, 0.5f),
