@@ -576,6 +576,35 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         }
     }
 
+    /**
+     * Ensure that this component's [size] is large enough to contain all its children. If [move] is `true`, it will also move this component to keep it centered.
+     *
+     * This will **NOT** reposition any children, shrink this component, or do anything else. It will only increase the size of this component if needed.
+     *
+     * Respects the [createdWithSetSize] property, and if any child is [layoutIgnored], it will be skipped.
+     * @since 1.14.7
+     */
+    open fun recalculateBounds(move: Boolean = false) {
+        if (createdWithSetSize) return
+        var maxX = 0f
+        var maxY = 0f
+        children?.fastEach {
+            if (it.layoutIgnored) return@fastEach
+            val right = it.x + it.width
+            val bottom = it.y + it.height
+            if (right > maxX) maxX = right
+            if (bottom > maxY) maxY = bottom
+        }
+        if (maxX > width) {
+            if (move) x -= (maxX - width) / 2f
+            width = maxX
+        }
+        if (maxY > height) {
+            if (move) y -= (maxY - height) / 2f
+            height = maxY
+        }
+    }
+
     open operator fun get(index: Int) = children?.get(index) ?: throw IndexOutOfBoundsException("index: $index, length: ${children?.size ?: 0}")
 
     operator fun get(id: String): Component {
@@ -688,13 +717,11 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         new.rescaleToPolyUIInstance()
 
         polyUI.inputManager.drop(old as? Inputtable)
-        val addedAsAnimation: Boolean
         old.tryFinishAllOperations()
         old.removeOperationsOfType(Scissor::class.java)
         old.at = old.screenAt
         val oldAt = old.getTargetPosition()
         if (old is Drawable && animation != SetAnimation.None) {
-            addedAsAnimation = true
             // curve is used two times at once so just double its duration
             curve?.durationNanos *= 2L
             var scissor: Scissor? = null
@@ -726,7 +753,6 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
                 else -> throw AssertionError("Impossible")
             }.add()
         } else {
-            addedAsAnimation = false
             children.remove(old)
             if (old is Inputtable) old.acceptAll(Event.Lifetime.Removed)
             old._parent = null
@@ -737,6 +763,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         new.at = oldAt
         if (new is Scrollable) new.resetScroll()
         new.clipChildren()
+        this.recalculateBounds()
 
         if (new is Drawable && animation != SetAnimation.None) {
             when (animation) {

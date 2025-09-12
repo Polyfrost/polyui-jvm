@@ -301,6 +301,7 @@ abstract class Drawable(
                 y = 0f
             }
         }
+        val alpha = alpha
         if (alpha != 1f) renderer.globalAlpha(alpha)
     }
 

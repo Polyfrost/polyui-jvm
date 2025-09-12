@@ -206,6 +206,11 @@ abstract class Scrollable(
         return res
     }
 
+    override fun recalculateBounds(move: Boolean) {
+        super.recalculateBounds(move)
+        tryMakeScrolling()
+    }
+
     @Locking(`when` = "this.shouldScroll && this.hasVisibleSize && this.visibleSize > this.size")
     fun tryMakeScrolling() {
         if (!positioned) return
