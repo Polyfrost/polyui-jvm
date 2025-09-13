@@ -210,14 +210,6 @@ class Settings {
     var loadTranslationsOnInit = true
 
     /**
-     * This property will mean that, if `force` is true in the `resize` method, the initial size will be set to the size given.
-     * @since 1.1.63
-     */
-    @get:JvmName("forceSetsInitialSize")
-    @set:JvmName("enableForceSettingInitialSize")
-    var forceSetsInitialSize = false
-
-    /**
      * Enable a smooth animation when the colors are changed.
      * @see PolyUI.colors
      * @since 1.8.3

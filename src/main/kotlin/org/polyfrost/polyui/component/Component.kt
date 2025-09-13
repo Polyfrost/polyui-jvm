@@ -431,44 +431,31 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
      */
     open fun draw() {}
 
-
     /**
      * Method that is called when the physical size of the total window area changes.
      */
     @Locking
-    fun rescale(scaleX: Float, scaleY: Float) {
-        rescale0(scaleX, scaleY, min(scaleX, scaleY), true)
-    }
-
-    /**
-     * raw rescale method that **does not check [rawRescalePosition] and uses the given scale factors directly**.
-     *
-     * ### You should be using [rescale] instead in 99% of cases.
-     * @param withChildren if `true`, this method will also rescale its children.
-     */
-    @ApiStatus.Internal
-    @Locking
     @MustBeInvokedByOverriders
     @Synchronized
-    protected open fun rescale0(scaleX: Float, scaleY: Float, min: Float, withChildren: Boolean) {
+    open fun rescale(scaleX: Float, scaleY: Float, uniform: Float = min(scaleX, scaleY), withChildren: Boolean = true) {
         if (rawRescalePosition) {
             _x *= scaleX
             _y *= scaleY
         } else {
-            _x *= min
-            _y *= min
+            _x *= uniform
+            _y *= uniform
         }
         if (rawRescaleSize) {
             width *= scaleX
             height *= scaleY
             designedSize *= Vec2(scaleX, scaleY)
         } else {
-            width *= min
-            height *= min
-            designedSize *= min
+            width *= uniform
+            height *= uniform
+            designedSize *= uniform
         }
         if (withChildren) children?.fastEach {
-            it.rescale0(scaleX, scaleY, min, true)
+            it.rescale(scaleX, scaleY, uniform, true)
         }
     }
 
@@ -489,7 +476,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         if (polyUI.size == designedSize) return
         val totalSx = polyUI.size.x / designedSize.x
         val totalSy = polyUI.size.y / designedSize.y
-        if (totalSx != 1f || totalSy != 1f) rescale0(totalSx, totalSy, min(totalSx, totalSy), false)
+        if (totalSx != 1f || totalSy != 1f) rescale(totalSx, totalSy, min(totalSx, totalSy), false)
         children?.fastEach { it.rescaleToPolyUIInstance() }
         designedSize = polyUI.size
     }

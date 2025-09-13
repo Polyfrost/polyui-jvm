@@ -75,16 +75,16 @@ open class Block(
         }
     }
 
-    override fun rescale0(scaleX: Float, scaleY: Float, min: Float, withChildren: Boolean) {
-        super.rescale0(scaleX, scaleY, min, withChildren)
+    override fun rescale(scaleX: Float, scaleY: Float, uniform: Float, withChildren: Boolean) {
+        super.rescale(scaleX, scaleY, uniform, withChildren)
         val radii = radii ?: return
-        val scaleX = if (rawRescaleSize) scaleX else min
-        val scaleY = if (rawRescaleSize) scaleY else min
         if (radii.size < 4) {
             for (i in radii.indices) {
-                radii[i] *= min
+                radii[i] *= uniform
             }
         } else {
+            val scaleX = if (rawRescaleSize) scaleX else uniform
+            val scaleY = if (rawRescaleSize) scaleY else uniform
             for (i in radii.indices) {
                 radii[i] = radii[i] * if (i % 2 == 0) scaleX else scaleY
             }

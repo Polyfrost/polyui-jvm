@@ -250,17 +250,19 @@ abstract class Scrollable(
         }
     }
 
-    override fun rescale0(scaleX: Float, scaleY: Float, min: Float, withChildren: Boolean) {
-        super.rescale0(scaleX, scaleY, min, withChildren)
-        if (rawRescaleSize) {
-            visWidth *= scaleX
-            visHeight *= scaleY
-        } else {
-            visWidth *= min
-            visHeight *= min
+    override fun rescale(scaleX: Float, scaleY: Float, uniform: Float, withChildren: Boolean) {
+        super.rescale(scaleX, scaleY, uniform, withChildren)
+        if (hasVisibleSize) {
+            if (rawRescaleSize) {
+                visWidth *= scaleX
+                visHeight *= scaleY
+            } else {
+                visWidth *= uniform
+                visHeight *= uniform
+            }
         }
-        val scaleX = if (rawRescalePosition) scaleX else min
-        val scaleY = if (rawRescalePosition) scaleY else min
+        val scaleX = if (rawRescalePosition) scaleX else uniform
+        val scaleY = if (rawRescalePosition) scaleY else uniform
         screenAt = screenAt.timesWithRounding(scaleX, scaleY, PolyUI.ROUNDING)
         xScroll?.let { it.from = (it.from * scaleX).roundTo(PolyUI.ROUNDING); it.to = (it.to * scaleX).roundTo(PolyUI.ROUNDING) }
         yScroll?.let { it.from = (it.from * scaleY).roundTo(PolyUI.ROUNDING); it.to = (it.to * scaleY).roundTo(PolyUI.ROUNDING) }

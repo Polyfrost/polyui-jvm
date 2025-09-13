@@ -241,18 +241,27 @@ class PolyUI(
     inline val size get() = master.size
 
     /**
+     * internal resizing tracker of the **absolute, unscaled size of the instance.**
+     * @since 1.14.8
+     */
+    var nonUniformScaledSize = size
+        private set
+    /**
+     * internal resizing tracker of the **aspect ratio preserved** size of the instance.
+     * @since 1.14.8
+     */
+    var uniformScaledSize = size
+        private set
+
+    /**
      * this property stores the initial size of this PolyUI instance.
      * It is used to make sure that new objects experience the same resizing as others.
-     * @see Settings.forceSetsInitialSize
      * @see resize
      * @since 1.0.5
      */
     @get:JvmName("getInitialSize")
-    var iSize = master.size
-        private set(value) {
-            if (settings.debug && field != value) LOGGER.info("initial size: $value")
-            field = value
-        }
+    val iSize = master.size
+
     private val executors: ArrayList<Clock.Executor> = ArrayList(4)
 
     /**
@@ -390,11 +399,13 @@ class PolyUI(
         }
 
         if (settings.debug) LOGGER.info("resize: ${newWidth}x$newHeight")
-        if (force && settings.forceSetsInitialSize) iSize = Vec2(newWidth, newHeight)
 
-        val sx = newWidth / size.x
-        val sy = newHeight / size.y
-        master.rescale(sx, sy)
+        val sx = newWidth / nonUniformScaledSize.x
+        val sy = newHeight / nonUniformScaledSize.y
+        val uniform = min(newWidth / uniformScaledSize.x, newHeight / uniformScaledSize.y)
+        master.rescale(sx, sy, uniform)
+        uniformScaledSize *= uniform
+        nonUniformScaledSize *= Vec2(sx, sy)
         master.needsRedraw = true
     }
 
@@ -411,7 +422,10 @@ class PolyUI(
             window?.preRender(renderer)
             master.draw()
             debugger.takeReadings()
-            if (settings.debug) debugger.render()
+            if (settings.debug) {
+                debugger.render()
+//                renderer.hollowRect(0f, 0f, scalePreservedSize.x, scalePreservedSize.y, colors.page.border10, 1f, 0f)
+            }
             window?.postRender(renderer)
             renderer.endFrame()
             drew = true

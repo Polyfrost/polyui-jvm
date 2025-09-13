@@ -217,6 +217,9 @@ abstract class Drawable(
      */
     var alpha = 1f
         get() = field.coerceIn(0f, (_parent as? Drawable)?.alpha ?: 1f)
+        set(value) {
+            field = value.coerceIn(0f, 1f)
+        }
 
     /** **a**t **c**ache **x** for transformations. */
     private var acx = 0f
@@ -319,6 +322,7 @@ abstract class Drawable(
             it.unapply()
         }
         popScroll(renderer)
+        renderer.resetGlobalAlpha()
         renderer.pop()
         if (acx != 0f) {
             x = acx
@@ -344,8 +348,8 @@ abstract class Drawable(
         return rx in tx..(tx + tw) && ry in ty..(ty + th)
     }
 
-    override fun rescale0(scaleX: Float, scaleY: Float, min: Float, withChildren: Boolean) {
-        super.rescale0(scaleX, scaleY, min, withChildren)
+    override fun rescale(scaleX: Float, scaleY: Float, uniform: Float, withChildren: Boolean) {
+        super.rescale(scaleX, scaleY, uniform, withChildren)
         framebuffer?.let {
             val renderer = renderer as FramebufferController
             renderer.delete(it)
