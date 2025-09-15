@@ -35,14 +35,16 @@ import java.nio.ByteOrder
 import java.util.IdentityHashMap
 import javax.imageio.ImageIO
 
-class AWTRenderer : Renderer {
-    lateinit var g2d: Graphics2D
+class AWTRenderer(frame: Frame) : Renderer {
+    var g2d: Graphics2D = frame.bufferStrategy.drawGraphics as Graphics2D
     var prev: AffineTransform? = null
     val colors = HashMap<Color, java.awt.Color>()
-    val strokes = IdentityHashMap<Float, Stroke>()
+    val strokes = HashMap<Float, Stroke>()
     val images = IdentityHashMap<PolyImage, Image>()
     var prevC: Composite? = null
     val fonts = IdentityHashMap<Font, java.awt.Font>()
+
+    init { begin(frame) }
 
     fun begin(frame: Frame) {
         if (frame.bufferStrategy == null) frame.createBufferStrategy(2)
@@ -88,11 +90,12 @@ class AWTRenderer : Renderer {
     }
 
     override fun pushScissor(x: Float, y: Float, width: Float, height: Float) {
+        g2d.clip = null
         g2d.clipRect(x.toInt(), y.toInt(), width.toInt(), height.toInt())
     }
 
     override fun pushScissorIntersecting(x: Float, y: Float, width: Float, height: Float) {
-        pushScissor(x, y, width, height)
+        g2d.clipRect(x.toInt(), y.toInt(), width.toInt(), height.toInt())
     }
 
     override fun popScissor() {
@@ -139,9 +142,11 @@ class AWTRenderer : Renderer {
                 val a = ByteArray(buf.remaining())
                 buf.get(a)
                 img.raster.setDataElements(0, 0, w, h, a)
+                if (!image.size.isPositive) PolyImage.setImageSize(image, Vec2(svg.width(), svg.height()))
                 return@getOrPut img
             }
             val img = ImageIO.read(image.stream())
+            if (!image.size.isPositive) PolyImage.setImageSize(image, Vec2(img.width.toFloat(), img.height.toFloat()))
             img
         }
     }

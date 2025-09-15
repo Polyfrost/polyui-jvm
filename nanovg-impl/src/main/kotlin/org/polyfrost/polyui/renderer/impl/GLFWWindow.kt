@@ -120,7 +120,7 @@ class GLFWWindow @JvmOverloads constructor(
 
         if (gl2) {
             glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2)
-            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0)
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1)
         } else {
             glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3)
             glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2)
@@ -382,7 +382,7 @@ class GLFWWindow @JvmOverloads constructor(
         glfwSetWindowIcon(handle, GLFWImage.malloc(1).put(0, GLFWImage.malloc().set(w[0], h[0], data)))
     }
 
-    override fun supportsRenderPausing() = true
+    override fun supportsRenderPausing() = false
 
     override fun getClipboard() = glfwGetClipboardString(handle)
 

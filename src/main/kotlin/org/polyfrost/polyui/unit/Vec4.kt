@@ -17,6 +17,9 @@ abstract class Vec4 : Comparable<Vec4>, Cloneable {
     open val isNegative: Boolean
         get() = x < 0f || y < 0f || w < 0f || h < 0f
 
+    open val isZero: Boolean
+        get() = x == 0f && y == 0f && w == 0f && h == 0f
+
     open val magnitude2 get() = x * x + y * y + w * w + h * h
 
     val magnitude get() = sqrt(magnitude2)
@@ -63,6 +66,9 @@ abstract class Vec4 : Comparable<Vec4>, Cloneable {
         override val h get() = wh.y
         override fun clone() = Impl(xy, wh)
 
+        override val isZero: Boolean
+            get() = xy.isZero && wh.isZero
+
         override val isNegative: Boolean
             get() = xy.isNegative && wh.isNegative
 
@@ -77,6 +83,9 @@ abstract class Vec4 : Comparable<Vec4>, Cloneable {
 
         override val isNegative: Boolean
             get() = x < 0f
+
+        override val isZero: Boolean
+            get() = x == 0f
 
         override val magnitude2 get() = (x * x) * 4f
 

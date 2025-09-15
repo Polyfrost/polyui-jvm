@@ -24,6 +24,7 @@ package org.polyfrost.polyui.data
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.unit.Vec4
 
 /**
  * Image representation in PolyUI. The image is lazily-loaded from the [resourcePath].
@@ -34,6 +35,13 @@ open class PolyImage @JvmOverloads constructor(
     resourcePath: String,
     val type: Type = from(resourcePath),
 ) : Resource(resourcePath) {
+
+    /**
+     *
+     */
+    @ApiStatus.Internal
+    @Transient
+    var uv: Vec4 = Vec4.of(0f, 0f, 1f, 1f)
 
     @get:JvmName("getSize")
     var size: Vec2 = Vec2.ZERO

@@ -32,7 +32,9 @@ import org.polyfrost.polyui.event.State
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.PolyBind
 import org.polyfrost.polyui.renderer.impl.GLFWWindow
-import org.polyfrost.polyui.renderer.impl.NVGRenderer
+import org.polyfrost.polyui.renderer.impl.GLRenderer
+import org.polyfrost.polyui.renderer.impl.NoOpRenderer
+import org.polyfrost.polyui.renderer.impl.NoOpWindow
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
@@ -42,13 +44,18 @@ import org.polyfrost.polyui.utils.open
 import kotlin.random.Random
 
 fun main() {
-    val window = GLFWWindow("PolyUI Test v2 (DSL)", 800, 500)
+    val noop = false
+    val window = if (noop) NoOpWindow(800, 500) else GLFWWindow("PolyUI Test v2 (DSL)", 800, 500, gl2 = true)
     val theme = DarkTheme()
-//    PolyUI.registeredFonts["comic"] = FontFamily("ComicNeue", "polyui/fonts/comic/")
+    PolyUI.registeredFonts["comic"] = FontFamily("ComicNeue", "polyui/fonts/comic/")
 
     polyUI {
         size = 800f by 500f
-        renderer = NVGRenderer
+        renderer = if (noop) NoOpRenderer else GLRenderer
+        if (true) {
+            settings.debug = true
+            settings.printPerfInfo = true
+        }
         colors = theme
         backgroundColor = theme.page.bg.normal
         val bind = PolyBind(key = Keys.P) {

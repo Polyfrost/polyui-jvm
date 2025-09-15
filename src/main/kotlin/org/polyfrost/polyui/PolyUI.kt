@@ -246,6 +246,7 @@ class PolyUI(
      */
     var nonUniformScaledSize = size
         private set
+
     /**
      * internal resizing tracker of the **aspect ratio preserved** size of the instance.
      * @since 1.14.8
@@ -407,6 +408,9 @@ class PolyUI(
         uniformScaledSize *= uniform
         nonUniformScaledSize *= Vec2(sx, sy)
         master.needsRedraw = true
+        //the problem with the old implementation is that, if the master drawable has rawRescaleSize true, then, if the instance is resized in one direction,
+        // as the master object is the exact size of the drawable (thats what rawRescaleSize does) then the min(sx, sy) will return 1f, hence causing the shrinking.
+        // to get around this, the polyui instance will now track its own raw and uniform sizes, and use those instead.
     }
 
     /**
@@ -424,7 +428,7 @@ class PolyUI(
             debugger.takeReadings()
             if (settings.debug) {
                 debugger.render()
-//                renderer.hollowRect(0f, 0f, scalePreservedSize.x, scalePreservedSize.y, colors.page.border10, 1f, 0f)
+//                renderer.hollowRect(0f, 0f, uniformScaledSize.x, uniformScaledSize.y, Color.WHITE, 1f, 0f)
             }
             window?.postRender(renderer)
             renderer.endFrame()

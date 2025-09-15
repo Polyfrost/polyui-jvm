@@ -24,6 +24,7 @@ package org.polyfrost.polyui.renderer.impl
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.data.Cursor
 import org.polyfrost.polyui.input.KeyModifiers
+import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.renderer.Window
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
@@ -49,6 +50,7 @@ class AWTWindow(val title: String, width: Int, height: Int) : Window(width, heig
 
     override fun open(polyUI: PolyUI): Window {
         polyUI.window = this
+        frame.isVisible = true
         frame.title = title
         var offset = frame.insets.top
         frame.setSize(width, height + offset)
@@ -116,7 +118,7 @@ class AWTWindow(val title: String, width: Int, height: Int) : Window(width, heig
 
         frame.addKeyListener(object : KeyListener {
             override fun keyTyped(e: KeyEvent) {
-                polyUI.inputManager.keyTyped(e.keyCode)
+                polyUI.inputManager.keyTyped(e.extendedKeyCode)
             }
 
             override fun keyPressed(e: KeyEvent) {
@@ -126,6 +128,7 @@ class AWTWindow(val title: String, width: Int, height: Int) : Window(width, heig
                     VK_CONTROL -> polyUI.inputManager.addModifier(KeyModifiers.LPRIMARY.value)
                     VK_ALT -> polyUI.inputManager.addModifier(KeyModifiers.LSECONDARY.value)
                     VK_META -> polyUI.inputManager.addModifier(KeyModifiers.LSECONDARY.value)
+                    VK_BACK_SPACE -> polyUI.inputManager.keyDown(Keys.BACKSPACE)
                     else -> {
                         polyUI.inputManager.keyDown(e.keyCode, 0)
                     }
@@ -147,7 +150,7 @@ class AWTWindow(val title: String, width: Int, height: Int) : Window(width, heig
         })
 
         var t: Long = System.currentTimeMillis()
-        val fpsCap = 1.0 / 60.0
+        val fpsCap = polyUI.settings.maxFPS.toDouble()
         while (frame.isVisible) {
             if (res) {
                 offset = frame.insets.top
@@ -156,7 +159,7 @@ class AWTWindow(val title: String, width: Int, height: Int) : Window(width, heig
                 res = false
                 polyUI.master.needsRedraw = true
             }
-            polyUI.render()
+            val timeout = polyUI.render()
             if (polyUI.drew) frame.bufferStrategy.show()
             if (fpsCap != 0.0) {
                 val e = System.currentTimeMillis() - t
@@ -165,6 +168,7 @@ class AWTWindow(val title: String, width: Int, height: Int) : Window(width, heig
                 }
                 t = System.currentTimeMillis()
             }
+            // if (timeout > 0) Thread.sleep(timeout) // Avoid busy looping
         }
         polyUI.cleanup()
         frame.dispose()
