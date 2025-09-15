@@ -4,6 +4,7 @@ import org.lwjgl.BufferUtils
 import org.lwjgl.nanovg.NanoSVG.*
 import org.lwjgl.opengl.ARBDrawInstanced.glDrawArraysInstancedARB
 import org.lwjgl.opengl.ARBInstancedArrays.glVertexAttribDivisorARB
+import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL21C.*
 import org.lwjgl.stb.STBImage.*
 import org.lwjgl.stb.STBTTFontinfo
@@ -94,24 +95,23 @@ object GLRenderer : Renderer {
         
         // Signed distance function for rounded box
         float roundedBoxSDF(vec2 p, vec2 b, vec4 r) {
-            vec2 q = abs(p) - b;
-        
-            // Compute masks for quadrant selection
-            float px = step(0.0, p.x); // 0 if p.x<0, 1 if p.x>=0
-            float py = step(0.0, p.y); // 0 if p.y<0, 1 if p.y>=0
-        
-            // Select radius based on quadrant using mix
-            float r0 = mix(r.w, r.x, py); // left side: bottom/ top
-            float r1 = mix(r.z, r.y, py); // right side: bottom/ top
-            float rx = mix(r0, r1, px);
-        
-            q += vec2(rx);
-            return length(max(q, 0.0)) - rx;
+            // px = 1.0 if p.x > 0, else 0.0
+            float px = step(0.0, p.x);
+            float py = step(0.0, p.y);
+            
+            // Select radius per quadrant
+            float rLeft  = mix(r.w, r.x, py); // bottom-left / top-left
+            float rRight = mix(r.z, r.y, py); // bottom-right / top-right
+            float radius = mix(rLeft, rRight, px);
+
+            vec2 d = abs(p) - b + vec2(radius);
+            vec2 dClamped = max(d, vec2(0.0));
+            return length(dClamped) - radius + min(max(d.x, d.y), 0.0);
         }
         
         float hollowRoundedBoxSDF(vec2 p, vec2 b, vec4 r, float thickness) {
             float dist = roundedBoxSDF(p, b, r);
-            return max(dist, -(dist + thickness));
+            return abs(dist) - thickness * 0.5;
         }
         
         void main() {
@@ -119,29 +119,17 @@ object GLRenderer : Renderer {
             vec2 halfSize = 0.5 * vRect.zw;
             vec2 p = vPos - center;
         
-            float d;
-            if (vThickness > 0.0) {
-                // Hollow outline: signed distance around the band
-                d = hollowRoundedBoxSDF(p, halfSize, vRadii, vThickness);
-            } else {
-                // Filled rounded rect
-                d = roundedBoxSDF(p, halfSize, vRadii);
-            }
+            float d = (vThickness > 0.0) ? hollowRoundedBoxSDF(p, halfSize, vRadii, vThickness) : roundedBoxSDF(p, halfSize, vRadii);
         
             vec4 col = vColor;
             if (vUV.x >= 0.0) {     // textured if UV.x >= 0
                 vec4 texColor = texture2D(uTex, vUV);
-                if (vThickness == -1.0) {
-                    col = vec4(col.rgb, col.a * texColor.a);
-                } else {
-                    col *= texColor;
-                }
+                col = (vThickness == -1.0) ? vec4(col.rgb, col.a * texColor.a) : col * texColor;
             }
         
             // Proper antialiasing based on distance field
             float f = fwidth(d);
             float alpha = 1.0 - smoothstep(-f, f, d);
-            // if (alpha <= 0.0) discard;
         
             gl_FragColor = vec4(col.rgb, col.a * alpha);
         }
@@ -235,16 +223,16 @@ object GLRenderer : Renderer {
         return program
     }
 
-    private fun createProgram(vertexSource: String, fragmentSource: String) =
-        linkProgram(compileShader(GL_VERTEX_SHADER, vertexSource), compileShader(GL_FRAGMENT_SHADER, fragmentSource))
-
     override fun init() {
-        program = createProgram(VERT, FRAG)
-
-//         check if instancing extension is available
-        if (glGetString(GL_EXTENSIONS)?.contains("GL_ARB_instanced_arrays") != true) {
-            throw RuntimeException("GL_ARB_instanced_arrays not supported")
+        // check if instancing extension is available
+        if (!GL.getCapabilities().GL_ARB_instanced_arrays) {
+            throw RuntimeException("GL_ARB_instanced_arrays not supported and is required")
         }
+        if (!GL.getCapabilities().GL_ARB_draw_instanced) {
+            throw RuntimeException("GL_ARB_draw_instanced not supported and is required")
+        }
+
+        program = linkProgram(compileShader(GL_VERTEX_SHADER, VERT), compileShader(GL_FRAGMENT_SHADER, FRAG))
 
         val quadData = floatArrayOf(
             0f, 0f,

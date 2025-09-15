@@ -155,7 +155,9 @@ fun main() {
             )
             text("i am some text that has been limited, so at some point i will stop showing up and i will just be cut off, which is a pretty handy feature.", limited = true, visibleSize = 400f by 12f)
             BoxedTextInput(post = "px").add()
-            Button(text = "rec").onClick { keyBinder?.record(bind) { (this[0] as Text).text = bind.keysToString { window.getKeyName(it, -1) } }; false }.add()
+            Button(text = "rec").onClick { keyBinder?.record(bind) { (this[0] as Text).text = bind.keysToString { window.getKeyName(it, -1) } }; false }.add().also {
+                it.radii(0f, 12f, 6f, 2f)
+            }
             group(size = Vec2(300f, 80f), alignment = Align(padEdges = Vec2(4f, 4f), main = Align.Content.SpaceEvenly, cross = Align.Content.SpaceEvenly)) {
                 block(60f by 30f)
                 block(40f by 30f)
