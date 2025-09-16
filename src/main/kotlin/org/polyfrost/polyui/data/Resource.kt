@@ -38,6 +38,16 @@ import java.util.concurrent.ForkJoinTask
  * @see loadAsync
  */
 open class Resource(val resourcePath: String, @Transient @get:JvmName("shouldLoadSync") val loadSync: Boolean = "http" !in resourcePath) {
+
+    /**
+     * If you are a rendering implementation, you can use this field to track whether this resource has been initialized (i.e. uploaded to the GPU, decoded, etc.).
+     * Set it with [reportInit].
+     */
+    @ApiStatus.Internal
+    @Transient
+    var initialized = false
+        private set
+
     @Volatile
     @Transient
     private var initializing = false
@@ -171,6 +181,7 @@ open class Resource(val resourcePath: String, @Transient @get:JvmName("shouldLoa
      */
     @ApiStatus.Internal
     fun reportInit() {
+        initialized = true
         val callbacks = callbacks ?: return
         callbacks.forEach { it() }
         callbacks.clear()

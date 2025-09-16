@@ -31,14 +31,11 @@ import org.polyfrost.polyui.unit.Vec4
  * @param resourcePath the path to the [resource][org.polyfrost.polyui.utils.getResourceStream]
  * @param type the [image type][Type]. This is automatically inferred from the file extension normally, but you can manually select it.
  */
-open class PolyImage @JvmOverloads constructor(
+open class PolyImage private constructor(
     resourcePath: String,
-    val type: Type = from(resourcePath),
+    val type: Type = getTypeFromFilename(resourcePath),
 ) : Resource(resourcePath) {
 
-    /**
-     *
-     */
     @ApiStatus.Internal
     @Transient
     var uv: Vec4 = Vec4.of(0f, 0f, 1f, 1f)
@@ -96,8 +93,16 @@ open class PolyImage @JvmOverloads constructor(
     }
 
     companion object {
+        private val loaded = HashMap<String, PolyImage>()
+
         @JvmStatic
-        fun from(fileName: String): Type {
+        @JvmOverloads
+        fun of(resourcePath: String, type: Type = getTypeFromFilename(resourcePath)): PolyImage {
+            return loaded.getOrPut(resourcePath) { PolyImage(resourcePath, type) }
+        }
+
+        @JvmStatic
+        fun getTypeFromFilename(fileName: String): Type {
             return when (fileName.substringAfterLast('.')) {
                 "bmp", "png", "jpg", "jpeg", "jpe", "jif", "jfif", "jfi" -> Type.Raster
                 "svg" -> Type.Vector

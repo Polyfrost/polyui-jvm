@@ -133,7 +133,8 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         inline get() = _font ?: throw UninitializedPropertyAccessException("font must be initialized (see _font)")
         set(value) {
             _font = value
-            spacing = (value.lineSpacing - 1f) * fontSize
+            // todo add renderer support for getting font metrics
+            spacing = 0.2f * fontSize
         }
 
     /**
@@ -179,7 +180,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
             if (field == value) return
             field = value.roundTo(PolyUI.ROUNDING)
             fontSize = if (initialized) value.rescaleYToPolyUIInstance(polyUI) else value
-            if (_font != null) spacing = (font.lineSpacing - 1f) * value
+            if (_font != null) spacing = 0.2f * value
         }
 
     /**

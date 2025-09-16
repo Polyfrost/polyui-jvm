@@ -168,7 +168,7 @@ open class FontFamily(
                 fload(fb, italic, weight)
             }
         } else {
-            Font(address, family = this, italic = italic, weight = weight)
+            Font.of(address, family = this, italic = italic, weight = weight)
         }
     }
 

@@ -42,7 +42,7 @@ fun main() {
     val renderer = NVGRenderer
     val polyUI = PolyUI(
         Image("polyfrost.png"),
-        Text("text.dark", font = Font("https://raw.githubusercontent.com/coreyhu/Urbanist/main/fonts/ttf/Urbanist-BlackItalic.ttf"), fontSize = 20f),
+        Text("text.dark", font = Font.of("https://raw.githubusercontent.com/coreyhu/Urbanist/main/fonts/ttf/Urbanist-BlackItalic.ttf"), fontSize = 20f),
         Group(
             Button("moon.svg".image()),
             Button("face-wink.svg".image(), "button.text").events {

@@ -160,7 +160,7 @@ inline fun <T> T.stdout(arg: Any? = null): T {
 }
 
 @kotlin.internal.InlineOnly
-inline fun String.image() = PolyImage(this)
+inline fun String.image() = PolyImage.of(this)
 
 @kotlin.internal.InlineOnly
 inline fun String.translated(vararg args: Any?) = Translator.Text.Formatted(Translator.Text.Simple(this), *args)

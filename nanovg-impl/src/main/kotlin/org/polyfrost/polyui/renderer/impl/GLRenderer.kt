@@ -1,5 +1,6 @@
 package org.polyfrost.polyui.renderer.impl
 
+import org.apache.logging.log4j.LogManager
 import org.lwjgl.BufferUtils
 import org.lwjgl.nanovg.NanoSVG.*
 import org.lwjgl.opengl.ARBDrawInstanced.glDrawArraysInstancedARB
@@ -13,6 +14,7 @@ import org.lwjgl.stb.STBTTPackRange
 import org.lwjgl.stb.STBTTPackedchar
 import org.lwjgl.stb.STBTruetype.*
 import org.lwjgl.system.MemoryUtil
+import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.Color
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.data.Font
@@ -24,17 +26,19 @@ import org.polyfrost.polyui.utils.toDirectByteBuffer
 import org.polyfrost.polyui.utils.toDirectByteBufferNT
 import java.nio.ByteBuffer
 import kotlin.math.cos
+import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.tan
 
 object GLRenderer : Renderer {
+    private val LOGGER = LogManager.getLogger("PolyUI/GLRenderer")
+
     private const val MAX_UI_DEPTH = 8
     private const val FONT_MAX_BITMAP_W = 1024
     private const val FONT_MAX_BITMAP_H = 512
     private const val ATLAS_SIZE = 2048
-    /** rendering size of the font glyphs. note still effected by [ATLAS_UPSCALE_FACTOR] */
-    private const val FONT_RENDER_SIZE = 24f
-    private const val ATLAS_UPSCALE_FACTOR = 2f
+    private const val FONT_RENDER_SIZE = 48f // 48f scales nicely to 16f, 12f, 32f, etc.
+    private const val ATLAS_SVG_UPSCALE_FACTOR = 4f
     private const val STRIDE = 4 + 4 + 4 + 4 + 4 + 1 // bounds, radii, color0, color1, UV, thick
     private const val MAX_BATCH = 1024
 
@@ -70,7 +74,7 @@ object GLRenderer : Renderer {
     // Current batch state
     private var count = 0
     private var curTex = 0
-    private var curScissor = -1
+    private var curScissor = 0
     private var transform = floatArrayOf(
         1f, 0f, 0f,
         0f, 1f, 0f,
@@ -498,14 +502,14 @@ object GLRenderer : Renderer {
 
     override fun pushScissor(x: Float, y: Float, width: Float, height: Float) {
         flush()
-        val nx = (x * pixelRatio).toInt()
-        val ny = (viewportHeight - (y + height) * pixelRatio).toInt()
-        val nw = (width * pixelRatio).toInt()
-        val nh = (height * pixelRatio).toInt()
-        scissorStack[++curScissor] = nx
-        scissorStack[++curScissor] = ny
-        scissorStack[++curScissor] = nw
-        scissorStack[++curScissor] = nh
+        val nx = (x * pixelRatio).roundToInt()
+        val ny = (viewportHeight - (y + height) * pixelRatio).roundToInt()
+        val nw = (width * pixelRatio).roundToInt()
+        val nh = (height * pixelRatio).roundToInt()
+        scissorStack[curScissor++] = nx
+        scissorStack[curScissor++] = ny
+        scissorStack[curScissor++] = nw
+        scissorStack[curScissor++] = nh
         glEnable(GL_SCISSOR_TEST)
         glScissor(nx, ny, nw, nh)
     }
@@ -520,38 +524,37 @@ object GLRenderer : Renderer {
         val py = scissorStack[curScissor - 3]
         val pw = scissorStack[curScissor - 2]
         val ph = scissorStack[curScissor - 1]
-        val nx = (x * pixelRatio).toInt()
-        val ny = (viewportHeight - (y + height) * pixelRatio).toInt()
-        val nw = (width * pixelRatio).toInt()
-        val nh = (height * pixelRatio).toInt()
+        val nx = (x * pixelRatio).roundToInt()
+        val ny = (viewportHeight - (y + height) * pixelRatio).roundToInt()
 
         val ix = maxOf(nx, px)
         val iy = maxOf(ny, py)
-        val ir = minOf(nx + nw, px + pw)
-        val ib = minOf(ny + nh, py + ph)
-        val iw = maxOf(0, ir - ix)
-        val ih = maxOf(0, ib - iy)
+        val iw = maxOf(0, minOf(nx + (width * pixelRatio).roundToInt(), px + pw) - ix)
+        val ih = maxOf(0, minOf(ny + (height * pixelRatio).roundToInt(), py + ph) - iy)
+
+        scissorStack[curScissor++] = ix
+        scissorStack[curScissor++] = iy
+        scissorStack[curScissor++] = iw
+        scissorStack[curScissor++] = ih
 
         glEnable(GL_SCISSOR_TEST)
         glScissor(ix, iy, iw, ih)
     }
 
     override fun popScissor() {
-        if (curScissor < 4) {
-            curScissor = -1
-            flush()
+        flush()
+        if (curScissor <= 4) {
+            curScissor = 0
             glDisable(GL_SCISSOR_TEST)
             return
         }
-        flush()
         curScissor -= 4
-        val x = scissorStack[curScissor]
-        val y = scissorStack[curScissor + 1]
-        val width = scissorStack[curScissor + 2]
-        val height = scissorStack[curScissor + 3]
+        val x = scissorStack[curScissor - 4]
+        val y = scissorStack[curScissor - 3]
+        val width = scissorStack[curScissor - 2]
+        val height = scissorStack[curScissor - 1]
         glEnable(GL_SCISSOR_TEST)
         glScissor(x, y, width, height)
-
     }
 
     override fun globalAlpha(alpha: Float) {
@@ -568,8 +571,8 @@ object GLRenderer : Renderer {
     }
 
     override fun pop() {
-        glUseProgram(program)
         if (popFlushNeeded) {
+            glUseProgram(program)
             glUniformMatrix3fv(uTransform, false, transform)
             flush()
             popFlushNeeded = false
@@ -578,6 +581,7 @@ object GLRenderer : Renderer {
         if (transformStack.isEmpty()) {
             loadIdentity()
         } else transform = transformStack.removeLast()
+        glUseProgram(program)
         glUniformMatrix3fv(uTransform, false, transform)
         glUseProgram(0)
     }
@@ -651,10 +655,10 @@ object GLRenderer : Renderer {
     }
 
     override fun initImage(image: PolyImage, size: Vec2) {
+        if (image.initialized) return
         val w = IntArray(1)
         val h = IntArray(1)
         val d = initImage(image, w, h)
-        if (image.type == PolyImage.Type.Raster) stbi_image_free(d)
 
         if (slotX + w[0] >= ATLAS_SIZE) {
             slotX = 0
@@ -680,6 +684,7 @@ object GLRenderer : Renderer {
 
         slotX += w[0]
         if (h[0] > atlasRowHeight) atlasRowHeight = h[0]
+        image.reportInit()
     }
 
     private fun initImage(image: PolyImage, w: IntArray, h: IntArray): ByteBuffer {
@@ -691,23 +696,27 @@ object GLRenderer : Renderer {
             val svg = nsvgParse(image.load().toDirectByteBufferNT(), PIXELS, 96f)
                 ?: throw IllegalStateException("Could not parse SVG image ${image.resourcePath}")
             if (!image.size.isPositive) PolyImage.setImageSize(image, Vec2(svg.width(), svg.height()))
-            w[0] = (svg.width() * ATLAS_UPSCALE_FACTOR).toInt()
-            h[0] = (svg.height() * ATLAS_UPSCALE_FACTOR).toInt()
+            w[0] = (svg.width() * ATLAS_SVG_UPSCALE_FACTOR).toInt()
+            h[0] = (svg.height() * ATLAS_SVG_UPSCALE_FACTOR).toInt()
             val dst = BufferUtils.createByteBuffer(w[0] * h[0] * 4)
-            nsvgRasterize(nSvgRaster, svg, 0f, 0f, ATLAS_UPSCALE_FACTOR, dst, w[0], h[0], w[0] * 4)
+            nsvgRasterize(nSvgRaster, svg, 0f, 0f, ATLAS_SVG_UPSCALE_FACTOR, dst, w[0], h[0], w[0] * 4)
             nsvgDelete(svg)
             return dst
         } else {
             val data = image.load().toDirectByteBuffer()
             val d = stbi_load_from_memory(data, w, h, IntArray(1), 4) ?: throw IllegalStateException("Failed to load image ${image.resourcePath}: ${stbi_failure_reason()}")
             if (!image.size.isPositive) PolyImage.setImageSize(image, Vec2(w[0].toFloat(), h[0].toFloat()))
+            stbi_image_free(d)
             return d
         }
     }
 
     private fun getFontAtlas(font: Font): FontAtlas {
         return fonts.getOrPut(font) {
-            val data = font.load().toDirectByteBuffer()
+            val data = font.load {
+                LOGGER.error("Failed to load font: $font", it)
+                return@getOrPut fonts[PolyUI.defaultFonts.regular] ?: throw IllegalStateException("Default font couldn't be loaded")
+            }.toDirectByteBuffer()
             FontAtlas(data, FONT_RENDER_SIZE)
         }
     }
@@ -721,7 +730,7 @@ object GLRenderer : Renderer {
     }
 
     override fun cleanup() {
-        dumpAtlas()
+//        dumpAtlas()
         if (program != 0) glDeleteProgram(program)
         if (vbo != 0) glDeleteBuffers(vbo)
         if (instancedVbo != 0) glDeleteBuffers(instancedVbo)
@@ -757,7 +766,7 @@ object GLRenderer : Renderer {
             val gap = IntArray(1)
             stbtt_GetFontVMetrics(stbFont, asc, des, gap)
             stbFont.free()
-            val pixelHeight = (asc[0] - des[0]) * scale * ATLAS_UPSCALE_FACTOR
+            val pixelHeight = (asc[0] - des[0]) * scale
             ascent = asc[0] * scale
             descent = des[0] * scale
             lineGap = gap[0] * scale
@@ -813,11 +822,11 @@ object GLRenderer : Renderer {
                     (sy + g.y0()) / ATLAS_SIZE.toFloat(),
                     (g.x1() - g.x0()) / ATLAS_SIZE.toFloat(),
                     (g.y1() - g.y0()) / ATLAS_SIZE.toFloat(),
-                    g.xoff() / ATLAS_UPSCALE_FACTOR,
-                    g.yoff() / ATLAS_UPSCALE_FACTOR,
-                    (g.x1() - g.x0()).toFloat() / ATLAS_UPSCALE_FACTOR,
-                    (g.y1() - g.y0()).toFloat() / ATLAS_UPSCALE_FACTOR,
-                    g.xadvance() / ATLAS_UPSCALE_FACTOR
+                    g.xoff(),
+                    g.yoff(),
+                    (g.x1() - g.x0()).toFloat(),
+                    (g.y1() - g.y0()).toFloat(),
+                    g.xadvance()
                 )
                 glyphs[c] = glyph
             }

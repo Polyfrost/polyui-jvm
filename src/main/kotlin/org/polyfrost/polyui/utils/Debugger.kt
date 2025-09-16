@@ -246,8 +246,8 @@ class Debugger(private val polyUI: PolyUI) {
                 Double::class.java -> arg.toDoubleOrNull()
                 Byte::class.java -> arg.toByteOrNull()
                 Boolean::class.java -> arg.toBoolean()
-                Font::class.java -> Font(arg)
-                PolyImage::class.java -> PolyImage(arg)
+                Font::class.java -> Font.of(arg)
+                PolyImage::class.java -> PolyImage.of(arg)
                 PolyColor::class.java -> {
                     val split = arg.split(',').mapToArray { it.trim().toInt() }
                     if (split.size < 3) null

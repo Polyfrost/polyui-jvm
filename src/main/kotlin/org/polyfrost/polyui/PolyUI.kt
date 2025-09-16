@@ -534,14 +534,14 @@ class PolyUI(
         val defaultFonts = FontFamily("Poppins", "polyui/fonts/poppins/")
 
         @JvmField
-        val monospaceFont = Font("polyui/fonts/JetBrainsMono-Regular.ttf")
+        val monospaceFont = Font.of("polyui/fonts/JetBrainsMono-Regular.ttf")
 
         /**
          * The fallback default image bundled with PolyUI
          * @since 0.11.0
          */
         @JvmField
-        val defaultImage = PolyImage("polyui/err.png")
+        val defaultImage = PolyImage.of("polyui/err.png")
 
         /**
          * Time the [block] and return how long it took, as well as logging with the [msg] if [log] is `true`.

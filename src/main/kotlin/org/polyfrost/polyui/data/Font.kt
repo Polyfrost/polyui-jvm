@@ -32,23 +32,16 @@ import org.polyfrost.polyui.utils.names
  * metadata for usage with PolyUI.
  *
  * @param resourcePath The resource of the font, can be a URL (see [here][org.polyfrost.polyui.utils.getResourceStream], you should use this or an equivalent method)
- * @param letterSpacing The letter spacing of the font, in pixels (e.g. 1 pixel = 1 empty pixel between each letter).
- * @param lineSpacing The line spacing of the font, in proportion to the font size (e.g. 2 means 1 empty line between each line, 1.5 = half a line between...)
  * @param family a reference to the family that encloses this font. Only set if this font was retrieved from a method like [FontFamily.get] or similar.
  */
-class Font @JvmOverloads constructor(
+class Font private constructor(
     resourcePath: String,
-    @Transient
-    val letterSpacing: Float = 0f,
-    @Transient
-    val lineSpacing: Float = 1.2f,
     val family: FontFamily? = null,
     @Transient
-    val italic: Boolean = resourcePath.contains("italic", ignoreCase = true),
+    val italic: Boolean,
     @Transient
-    val weight: Weight = Weight.entries.getByName(resourcePath.findLastAnyOf(Weight.entries.names(), ignoreCase = true)?.second) ?: Weight.Regular,
+    val weight: Weight
 ) : Resource(resourcePath) {
-    private constructor() : this("")
 
     val name get() = resourcePath.substringAfterLast('/').substringBeforeLast('.')
 
@@ -89,6 +82,17 @@ class Font @JvmOverloads constructor(
     }
 
     companion object {
+        private val loaded = HashMap<String, Font>()
+
+        @JvmStatic
+        fun of(
+            resourcePath: String,
+            family: FontFamily? = null,
+            italic: Boolean = resourcePath.contains("italic", ignoreCase = true),
+            weight: Weight = Weight.entries.getByName(resourcePath.findLastAnyOf(Weight.entries.names(), ignoreCase = true)?.second) ?: Weight.Regular,
+        ): Font {
+            return loaded.getOrPut(resourcePath) { Font(resourcePath, family, italic, weight) }
+        }
 
         /**
          * Get a Weight instance given the integer weight,

@@ -47,8 +47,9 @@ import org.polyfrost.polyui.utils.toString
 import kotlin.experimental.or
 import kotlin.math.PI
 
-private val SEARCH = PolyImage("polyui/search.svg")
-private val CHEVRON_DOWN = PolyImage("polyui/chevron-down.svg")
+private val SEARCH = PolyImage.of("polyui/search.svg")
+private val CHEVRON_DOWN = PolyImage.of("polyui/chevron-down.svg")
+private val CHECK = PolyImage.of("polyui/check.svg")
 
 /**
  * Simple button component, with text and up to 2 images.
@@ -408,7 +409,7 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, initialValu
 @JvmName("Checkbox")
 fun Checkbox(at: Vec2 = Vec2.ZERO, size: Float, state: Boolean = false) = Block(
     Image(
-        image = PolyImage("polyui/check.svg"),
+        image = CHECK,
     ).fade(state),
     at = at,
     size = Vec2(size, size),

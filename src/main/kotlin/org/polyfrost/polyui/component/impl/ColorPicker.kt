@@ -79,7 +79,7 @@ fun ColorPicker(color: State<PolyColor.Mutable>, polyUI: PolyUI?, openNow: Boole
             picker.accept(it)
         },
         Image(
-            PolyImage("polyui/color/hue.png"),
+            PolyImage.of("polyui/color/hue.png"),
             size = 16f by 200f,
             children = arrayOf(
                 Block(size = 12f by 12f, color = PolyColor.TRANSPARENT).draggable(withX = false).onDrag {
@@ -99,7 +99,7 @@ fun ColorPicker(color: State<PolyColor.Mutable>, polyUI: PolyUI?, openNow: Boole
             picker.accept(it)
         },
         Image(
-            PolyImage("polyui/color/alpha.png"),
+            PolyImage.of("polyui/color/alpha.png"),
             size = 16f by 200f,
             children = arrayOf(
                 Block(size = 12f by 12f, color = PolyColor.TRANSPARENT).draggable(withX = false).onDrag {

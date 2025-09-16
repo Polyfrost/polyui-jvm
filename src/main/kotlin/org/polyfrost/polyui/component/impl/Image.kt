@@ -40,19 +40,19 @@ open class Image(
     focusable: Boolean = false,
     vararg children: Component?
 ) : Block(children = children, at, size, alignment, Vec2.ZERO, focusable, null, radii) {
-    constructor(image: String) : this(PolyImage(image))
+    constructor(image: String) : this(PolyImage.of(image))
 
     var image: PolyImage = image
         set(value) {
             field = value
             if (initialized) renderer.initImage(value, size)
-            else image.onInit { needsRedraw = true }
+            else if (!image.loadSync) image.onInit { needsRedraw = true }
         }
 
     init {
         // asm: in the case that the image is a remote resource and so is not yet loaded,
         // we setup this callback so that the UI will update once the image is ready
-        image.onInit { needsRedraw = true }
+        if(!image.loadSync) image.onInit { needsRedraw = true }
     }
 
     override fun render() {
