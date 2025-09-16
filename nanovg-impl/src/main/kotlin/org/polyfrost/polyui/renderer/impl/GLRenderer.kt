@@ -4,7 +4,7 @@ import org.lwjgl.BufferUtils
 import org.lwjgl.nanovg.NanoSVG.*
 import org.lwjgl.opengl.ARBDrawInstanced.glDrawArraysInstancedARB
 import org.lwjgl.opengl.ARBInstancedArrays.glVertexAttribDivisorARB
-import org.lwjgl.opengl.GL
+import org.lwjgl.opengl.GL.getCapabilities
 import org.lwjgl.opengl.GL21C.*
 import org.lwjgl.stb.STBImage.*
 import org.lwjgl.stb.STBTTFontinfo
@@ -14,6 +14,7 @@ import org.lwjgl.stb.STBTTPackedchar
 import org.lwjgl.stb.STBTruetype.*
 import org.lwjgl.system.MemoryUtil
 import org.polyfrost.polyui.color.Color
+import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.data.Font
 import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.renderer.Renderer
@@ -27,19 +28,19 @@ import kotlin.math.sin
 import kotlin.math.tan
 
 object GLRenderer : Renderer {
-    private const val SCISSOR_MAX_DEPTH = 8
+    private const val MAX_UI_DEPTH = 8
     private const val FONT_MAX_BITMAP_SIZE = 512
     private const val ATLAS_SIZE = 1536
     private const val ATLAS_SIZE_F = ATLAS_SIZE.toFloat()
     private const val ATLAS_UPSCALE_FACTOR = 2f
-    private const val STRIDE = 4 + 4 + 4 + 4 + 1 // bounds, radii, rgba, UV, thick
+    private const val STRIDE = 4 + 4 + 4 + 4 + 4 + 1 // bounds, radii, color0, color1, UV, thick
     private const val MAX_BATCH = 768
     private val PIXELS: ByteBuffer = MemoryUtil.memAlloc(3).put(112).put(120).put(0).flip() as ByteBuffer
 
 
     private val buffer = BufferUtils.createFloatBuffer(MAX_BATCH * STRIDE)
-    private val scissorStack = IntArray(SCISSOR_MAX_DEPTH * 4)
-    private val transformStack = ArrayList<FloatArray>(SCISSOR_MAX_DEPTH)
+    private val scissorStack = IntArray(MAX_UI_DEPTH * 4)
+    private val transformStack = ArrayList<FloatArray>(MAX_UI_DEPTH)
     private val fonts = HashMap<Font, HashMap<Float, FontAtlas>>()
 
     // GL objects
@@ -55,7 +56,8 @@ object GLRenderer : Renderer {
     private var aLocal = 0
     private var iRect = 0
     private var iRadii = 0
-    private var iColor = 0
+    private var iColor0 = 0
+    private var iColor1 = 0
     private var iUVRect = 0
     private var iThickness = 0
 
@@ -87,11 +89,13 @@ object GLRenderer : Renderer {
         uniform sampler2D uTex;
         
         varying vec2 vUV;
+        varying vec2 vUV2;      // used for gradients
         varying vec2 vPos;      // pixel coords in rect space
         varying vec4 vRect;     // rect x, y, w, h
         varying vec4 vRadii;    // per-corner radii
-        varying vec4 vColor;    // RGBA
-        varying float vThickness; // -1 for text, >0 for hollow rect
+        varying vec4 vColor0;    // RGBA
+        varying vec4 vColor1;    // RGBA (for gradients)
+        varying float vThickness; // -1 for text, -2 for linear gradient, -3 for radial, -4 for box,  >0 for hollow rect
         
         // Signed distance function for rounded box
         float roundedBoxSDF(vec2 p, vec2 b, vec4 r) {
@@ -121,10 +125,27 @@ object GLRenderer : Renderer {
         
             float d = (vThickness > 0.0) ? hollowRoundedBoxSDF(p, halfSize, vRadii, vThickness) : roundedBoxSDF(p, halfSize, vRadii);
         
-            vec4 col = vColor;
-            if (vUV.x >= 0.0) {     // textured if UV.x >= 0
+            vec4 col = vColor0;
+            if (vUV.x >= 0.0 && vThickness >= -1.0) {     // textured if UV.x >= 0
                 vec4 texColor = texture2D(uTex, vUV);
                 col = (vThickness == -1.0) ? vec4(col.rgb, col.a * texColor.a) : col * texColor;
+            }
+            else if (vThickness == -2.0) { // linear gradient, vUV.xy and vUV2.xy as start and end
+                vec2 dir = normalize(vUV2 - vUV);
+                float t = dot((p + halfSize) - vUV, dir) / length(vUV2 - vUV);
+                t = clamp(t, 0.0, 1.0);
+                col = mix(vColor0, vColor1, t);
+            }
+            else if (vThickness == -3.0) { // radial gradient, vUV as center and vUV2.x as radius
+                float dist = length(p + halfSize - vUV);
+                float t = (dist - vUV2.x) / (vUV2.y - vUV2.x);
+                t = clamp(t, 0.0, 1.0);
+                col = mix(vColor0, vColor1, t);
+            }
+            else if (vThickness == -4.0) { // box gradient, vUV.x as radius and vUV.y as feather
+                float dist = roundedBoxSDF(p, halfSize - vec2(vUV.x), vec4(vUV.x));
+                float t = clamp(dist / vUV.y, 0.0, 1.0);
+                col = mix(vColor0, vColor1, t);
             }
         
             // Proper antialiasing based on distance field
@@ -141,7 +162,8 @@ object GLRenderer : Renderer {
         attribute vec2 aLocal;
         attribute vec4 iRect;
         attribute vec4 iRadii;
-        attribute vec4 iColor;
+        attribute vec4 iColor0;
+        attribute vec4 iColor1;
         attribute vec4 iUVRect;
         attribute float iThickness;
         
@@ -155,14 +177,16 @@ object GLRenderer : Renderer {
         varying vec2 vPos;
         varying vec4 vRect;
         varying vec4 vRadii;
-        varying vec4 vColor;
+        varying vec4 vColor0;
+        varying vec4 vColor1;
         varying vec2 vUV;
+        varying vec2 vUV2;
         varying float vThickness;
         
         void main() {
             // Position inside rect
             vec2 pos = iRect.xy + aLocal * iRect.zw;
-            vec2 uv  = iUVRect.xy + aLocal * iUVRect.zw;
+            vec2 uv  = (iThickness > -2.0) ? iUVRect.xy + aLocal * iUVRect.zw : iUVRect.xy; // for gradients, just pass through the first two param to frag
         
             vec3 transformed = uTransform * vec3(pos, 1.0);
         
@@ -171,11 +195,14 @@ object GLRenderer : Renderer {
         
             gl_Position = vec4(ndc, 0.0, 1.0);
         
-            vPos   = pos;
-            vRect  = iRect;
-            vRadii = iRadii;
-            vColor = iColor;
-            vUV    = uv;
+            vPos    = pos;
+            vRect   = iRect;
+            vRadii  = iRadii;
+            vColor0 = iColor0;
+            vColor1 = iColor1;
+            vUV     = uv;
+            // pass through for gradients.
+            vUV2    = iUVRect.zw;
             vThickness = iThickness;
         }
     """.trimIndent()
@@ -225,10 +252,10 @@ object GLRenderer : Renderer {
 
     override fun init() {
         // check if instancing extension is available
-        if (!GL.getCapabilities().GL_ARB_instanced_arrays) {
+        if (!getCapabilities().GL_ARB_instanced_arrays) {
             throw RuntimeException("GL_ARB_instanced_arrays not supported and is required")
         }
-        if (!GL.getCapabilities().GL_ARB_draw_instanced) {
+        if (!getCapabilities().GL_ARB_draw_instanced) {
             throw RuntimeException("GL_ARB_draw_instanced not supported and is required")
         }
 
@@ -253,7 +280,8 @@ object GLRenderer : Renderer {
         aLocal = glGetAttribLocation(program, "aLocal")
         iRect = glGetAttribLocation(program, "iRect")
         iRadii = glGetAttribLocation(program, "iRadii")
-        iColor = glGetAttribLocation(program, "iColor")
+        iColor0 = glGetAttribLocation(program, "iColor0")
+        iColor1 = glGetAttribLocation(program, "iColor1")
         iUVRect = glGetAttribLocation(program, "iUVRect")
         iThickness = glGetAttribLocation(program, "iThickness")
 
@@ -306,7 +334,8 @@ object GLRenderer : Renderer {
         var offset = 0L
         offset = enableAttrib(iRect, 4, offset)
         offset = enableAttrib(iRadii, 4, offset)
-        offset = enableAttrib(iColor, 4, offset)
+        offset = enableAttrib(iColor0, 4, offset)
+        offset = enableAttrib(iColor1, 4, offset)
         offset = enableAttrib(iUVRect, 4, offset)
         enableAttrib(iThickness, 1, offset)
 
@@ -336,8 +365,52 @@ object GLRenderer : Renderer {
         bottomLeftRadius: Float,
         bottomRightRadius: Float
     ) {
-        // thickness of 0f for filled rect (see frag shader)
-        hollowRect(x, y, width, height, color, 0f, topLeftRadius, topRightRadius, bottomLeftRadius, bottomRightRadius)
+        val buffer = buffer
+        if (count >= MAX_BATCH) flush()
+        buffer.put(x).put(y).put(width).put(height)
+        buffer.put(topLeftRadius).put(topRightRadius).put(bottomRightRadius).put(bottomLeftRadius)
+        buffer.put(color.r / 255f).put(color.g / 255f).put(color.b / 255f).put(color.alpha.coerceAtMost(alphaCap))
+        if (color is PolyColor.Gradient) {
+            buffer.put(color.color2.r / 255f).put(color.color2.g / 255f).put(color.color2.b / 255f).put(color.color2.alpha.coerceAtMost(alphaCap))
+            val type = color.type
+            when (type) {
+                is PolyColor.Gradient.Type.LeftToRight -> {
+                    buffer.put(0f).put(height / 2f).put(width).put(height / 2f)
+                    buffer.put(-2f)
+                }
+
+                is PolyColor.Gradient.Type.TopToBottom -> {
+                    buffer.put(width / 2f).put(0f).put(width / 2f).put(height)
+                    buffer.put(-2f)
+                }
+
+                is PolyColor.Gradient.Type.BottomLeftToTopRight -> {
+                    buffer.put(0f).put(height).put(width).put(0f)
+                    buffer.put(-2f)
+                }
+
+                is PolyColor.Gradient.Type.TopLeftToBottomRight -> {
+                    buffer.put(0f).put(0f).put(width).put(height)
+                    buffer.put(-2f)
+                }
+
+                is PolyColor.Gradient.Type.Radial -> {
+                    buffer.put(if(type.centerX == -1f) width / 2f else type.centerX).put(if(type.centerY == -1f) height / 2f else type.centerY).put(type.innerRadius).put(type.outerRadius)
+                    buffer.put(-3f)
+                }
+
+                is PolyColor.Gradient.Type.Box -> {
+                    buffer.put(type.radius).put(type.feather).put(0f).put(0f)
+                    buffer.put(-4f)
+                }
+            }
+        } else {
+            buffer.put(0f).put(0f).put(0f).put(0f)
+            buffer.put(-1f).put(-1f).put(1f).put(1f) // -1f UVs to indicate no texture
+            buffer.put(0f)
+        }
+
+        count += 1
     }
 
     override fun hollowRect(x: Float, y: Float, width: Float, height: Float, color: Color, lineWidth: Float, topLeftRadius: Float, topRightRadius: Float, bottomLeftRadius: Float, bottomRightRadius: Float) {
@@ -345,9 +418,10 @@ object GLRenderer : Renderer {
         buffer.put(x).put(y).put(width).put(height)
         buffer.put(topLeftRadius).put(topRightRadius).put(bottomRightRadius).put(bottomLeftRadius)
         buffer.put(color.r / 255f).put(color.g / 255f).put(color.b / 255f).put(color.alpha.coerceAtMost(alphaCap))
-        buffer.put(-1f).put(-1f).put(1f).put(1f) // -1f to indicate no texture
+        buffer.put(0f).put(0f).put(0f).put(0f)
+        buffer.put(-1f).put(-1f).put(1f).put(1f) // -1f UVs to indicate no texture
         buffer.put(lineWidth)
-        count++
+        count += 1
     }
 
     // image: supply texture ID and uv transform if needed
@@ -365,9 +439,10 @@ object GLRenderer : Renderer {
             .put((colorMask shr 8 and 0xFF) / 255f)
             .put((colorMask and 0xFF) / 255f)
             .put(1f)
+        buffer.put(0f).put(0f).put(0f).put(0f) // color1 unused
         buffer.put(image.uv.x).put(image.uv.y).put(image.uv.w).put(image.uv.h)
         buffer.put(0f) // thickness = 0 for filled rect
-        count++
+        count += 1
     }
 
     override fun text(font: Font, x: Float, y: Float, text: String, color: Color, fontSize: Float) {
@@ -382,6 +457,7 @@ object GLRenderer : Renderer {
         val g = (color.g / 255f)
         val b = (color.b / 255f)
         val a = (color.alpha.coerceAtMost(alphaCap))
+        val buffer = buffer
         for (c in text) {
             if (count >= MAX_BATCH) {
                 flush()
@@ -390,10 +466,11 @@ object GLRenderer : Renderer {
             buffer.put(penX + glyph.xOff).put(penY + glyph.yOff).put(glyph.width).put(glyph.height)
             buffer.put(0f).put(0f).put(0f).put(0f) // zero radii
             buffer.put(r).put(g).put(b).put(a)
+            buffer.put(0f).put(0f).put(0f).put(0f) // color1 unused
             buffer.put(glyph.u).put(glyph.v).put(glyph.uw).put(glyph.vh)
             buffer.put(-1f) // thickness = -1 for text
             penX += glyph.xAdvance
-            count++
+            count += 1
         }
     }
 
@@ -413,7 +490,7 @@ object GLRenderer : Renderer {
     override fun pushScissor(x: Float, y: Float, width: Float, height: Float) {
         flush()
         val nx = (x * pixelRatio).toInt()
-        val ny = (viewportHeight - ((y + height) * pixelRatio)).toInt()
+        val ny = (viewportHeight - (y + height) * pixelRatio).toInt()
         val nw = (width * pixelRatio).toInt()
         val nh = (height * pixelRatio).toInt()
         scissorStack[++curScissor] = nx
@@ -434,13 +511,20 @@ object GLRenderer : Renderer {
         val py = scissorStack[curScissor - 3]
         val pw = scissorStack[curScissor - 2]
         val ph = scissorStack[curScissor - 1]
+        val nx = (x * pixelRatio).toInt()
+        val ny = (viewportHeight - (y + height) * pixelRatio).toInt()
+        val nw = (width * pixelRatio).toInt()
+        val nh = (height * pixelRatio).toInt()
 
-        val nx = maxOf((x * pixelRatio).toInt(), px)
-        val ny = maxOf((viewportHeight - ((y + height) * pixelRatio)).toInt(), py)
-        val right = minOf(((x + width) * pixelRatio).toInt(), px + pw)
-        val bottom = minOf(((y + height) * pixelRatio).toInt(), py + ph)
+        val ix = maxOf(nx, px)
+        val iy = maxOf(ny, py)
+        val ir = minOf(nx + nw, px + pw)
+        val ib = minOf(ny + nh, py + ph)
+        val iw = maxOf(0, ir - ix)
+        val ih = maxOf(0, ib - iy)
+
         glEnable(GL_SCISSOR_TEST)
-        glScissor(nx, ny, maxOf(0, right - nx), maxOf(0, bottom - ny))
+        glScissor(ix, iy, iw, ih)
     }
 
     override fun popScissor() {

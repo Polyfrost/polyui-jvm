@@ -23,7 +23,9 @@ package org.polyfrost.polyui
 
 import org.polyfrost.polyui.animate.SetAnimation
 import org.polyfrost.polyui.color.DarkTheme
+import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.color.asMutable
+import org.polyfrost.polyui.color.rgba
 import org.polyfrost.polyui.component.extensions.*
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.data.FontFamily
@@ -159,11 +161,11 @@ fun main() {
                 it.radii(0f, 12f, 6f, 2f)
             }
             group(size = Vec2(300f, 80f), alignment = Align(padEdges = Vec2(4f, 4f), main = Align.Content.SpaceEvenly, cross = Align.Content.SpaceEvenly)) {
-                block(60f by 30f)
-                block(40f by 30f)
-                block(40f by 30f)
-                block(60f by 30f)
-                block(60f by 30f)
+                block(60f by 30f, color = PolyColor.Gradient(rgba(255, 255, 255), rgba(0, 0, 0), PolyColor.Gradient.Type.LeftToRight))
+                block(40f by 30f, color = PolyColor.Gradient(rgba(255, 255, 255), rgba(0, 0, 0), PolyColor.Gradient.Type.TopLeftToBottomRight))
+                block(40f by 30f, color = PolyColor.Gradient(rgba(255, 255, 255), rgba(0, 0, 0), PolyColor.Gradient.Type.TopToBottom))
+                block(60f by 30f, color = PolyColor.Gradient(rgba(255, 255, 255), rgba(0, 0, 0), PolyColor.Gradient.Type.BottomLeftToTopRight))
+                block(60f by 30f, color = PolyColor.Gradient(rgba(255, 255, 255), rgba(0, 0, 0), PolyColor.Gradient.Type.Box(12f, 20f)))
                 block(40f by 30f)
                 block(40f by 30f)
                 block(60f by 30f)

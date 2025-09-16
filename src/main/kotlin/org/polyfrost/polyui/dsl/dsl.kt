@@ -79,11 +79,11 @@ open class DrawableDSL<T : Drawable>(@PublishedApi internal val _this: T) {
     }
 
     @JvmName("block")
-    inline fun block(size: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, init: (DrawableDSL<Block>.(Block) -> Unit) = {}): Block {
+    inline fun block(size: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, color: PolyColor? = null, init: (DrawableDSL<Block>.(Block) -> Unit) = {}): Block {
         contract {
             callsInPlace(init, InvocationKind.EXACTLY_ONCE)
         }
-        val o = Block(size = size, alignment = alignment)
+        val o = Block(size = size, alignment = alignment, color = color)
         init(DrawableDSL(o), o)
         _this.addChild(o)
         return o
