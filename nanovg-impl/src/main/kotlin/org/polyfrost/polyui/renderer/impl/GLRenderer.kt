@@ -322,6 +322,8 @@ object GLRenderer : Renderer {
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glBindBuffer(GL_ARRAY_BUFFER, instancedVbo)
+        // 'orphan' the buffer - give a hint to the driver that we don't need the old data so we don't stall waiting for it
+        glBufferData(GL_ARRAY_BUFFER, MAX_BATCH * STRIDE * 4L, GL_STREAM_DRAW)
         glBufferSubData(GL_ARRAY_BUFFER, 0, buffer)
 
         glUseProgram(program)

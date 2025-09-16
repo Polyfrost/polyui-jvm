@@ -162,7 +162,7 @@ class Debugger(private val polyUI: PolyUI) {
                 false
             }
         }
-        if (eval.startsWith("fonts", true)) {
+        if (eval.startsWith("fonts ", true)) {
             val newFonts = PolyUI.registeredFonts.get(eval.substringAfterLast('=').trim().lowercase())
             return if (newFonts != null) {
                 polyUI.fonts = newFonts
