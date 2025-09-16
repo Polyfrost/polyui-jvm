@@ -32,12 +32,15 @@ object GLRenderer : Renderer {
     private const val FONT_MAX_BITMAP_W = 1024
     private const val FONT_MAX_BITMAP_H = 512
     private const val ATLAS_SIZE = 2048
-    private const val ATLAS_SIZE_F = ATLAS_SIZE.toFloat()
+    /** rendering size of the font glyphs. note still effected by [ATLAS_UPSCALE_FACTOR] */
     private const val FONT_RENDER_SIZE = 24f
     private const val ATLAS_UPSCALE_FACTOR = 2f
     private const val STRIDE = 4 + 4 + 4 + 4 + 4 + 1 // bounds, radii, color0, color1, UV, thick
-    private const val MAX_BATCH = 768
+    private const val MAX_BATCH = 1024
+
     private val PIXELS: ByteBuffer = MemoryUtil.memAlloc(3).put(112).put(120).put(0).flip() as ByteBuffer
+    private val EMPTY_ROW = floatArrayOf(0f, 0f, 0f, 0f)
+    private val NO_UV = floatArrayOf(-1f, -1f, 1f, 1f)
 
 
     private val buffer = BufferUtils.createFloatBuffer(MAX_BATCH * STRIDE)
@@ -407,8 +410,8 @@ object GLRenderer : Renderer {
                 }
             }
         } else {
-            buffer.put(0f).put(0f).put(0f).put(0f)
-            buffer.put(-1f).put(-1f).put(1f).put(1f) // -1f UVs to indicate no texture
+            buffer.put(EMPTY_ROW) // color1 unused
+            buffer.put(NO_UV) // -1f UVs to indicate no texture
             buffer.put(0f)
         }
 
@@ -420,8 +423,8 @@ object GLRenderer : Renderer {
         buffer.put(x).put(y).put(width).put(height)
         buffer.put(topLeftRadius).put(topRightRadius).put(bottomRightRadius).put(bottomLeftRadius)
         buffer.put(color.r / 255f).put(color.g / 255f).put(color.b / 255f).put(color.alpha.coerceAtMost(alphaCap))
-        buffer.put(0f).put(0f).put(0f).put(0f)
-        buffer.put(-1f).put(-1f).put(1f).put(1f) // -1f UVs to indicate no texture
+        buffer.put(EMPTY_ROW) // color1 unused
+        buffer.put(NO_UV) // -1f UVs to indicate no texture
         buffer.put(lineWidth)
         count += 1
     }
@@ -441,7 +444,7 @@ object GLRenderer : Renderer {
             .put((colorMask shr 8 and 0xFF) / 255f)
             .put((colorMask and 0xFF) / 255f)
             .put(1f)
-        buffer.put(0f).put(0f).put(0f).put(0f) // color1 unused
+        buffer.put(EMPTY_ROW) // color1 unused
         buffer.put(image.uv.x).put(image.uv.y).put(image.uv.w).put(image.uv.h)
         buffer.put(0f) // thickness = 0 for filled rect
         count += 1
@@ -468,9 +471,9 @@ object GLRenderer : Renderer {
             }
             val glyph = fAtlas.glyphs[c] ?: continue
             buffer.put(penX + glyph.xOff * scaleFactor).put(penY + glyph.yOff * scaleFactor).put(glyph.width * scaleFactor).put(glyph.height * scaleFactor)
-            buffer.put(0f).put(0f).put(0f).put(0f) // zero radii
+            buffer.put(EMPTY_ROW) // zero radii
             buffer.put(r).put(g).put(b).put(a)
-            buffer.put(0f).put(0f).put(0f).put(0f) // color1 unused
+            buffer.put(EMPTY_ROW) // color1 unused
             buffer.put(glyph.u).put(glyph.v).put(glyph.uw).put(glyph.vh)
             buffer.put(-1f) // thickness = -1 for text
             penX += glyph.xAdvance * scaleFactor
@@ -804,10 +807,10 @@ object GLRenderer : Renderer {
                 val g = packed.get(i)
 
                 val glyph = Glyph(
-                    (sx + g.x0()) / ATLAS_SIZE_F,
-                    (sy + g.y0()) / ATLAS_SIZE_F,
-                    (g.x1() - g.x0()) / ATLAS_SIZE_F,
-                    (g.y1() - g.y0()) / ATLAS_SIZE_F,
+                    (sx + g.x0()) / ATLAS_SIZE.toFloat(),
+                    (sy + g.y0()) / ATLAS_SIZE.toFloat(),
+                    (g.x1() - g.x0()) / ATLAS_SIZE.toFloat(),
+                    (g.y1() - g.y0()) / ATLAS_SIZE.toFloat(),
                     g.xoff() / ATLAS_UPSCALE_FACTOR,
                     g.yoff() / ATLAS_UPSCALE_FACTOR,
                     (g.x1() - g.x0()).toFloat() / ATLAS_UPSCALE_FACTOR,
