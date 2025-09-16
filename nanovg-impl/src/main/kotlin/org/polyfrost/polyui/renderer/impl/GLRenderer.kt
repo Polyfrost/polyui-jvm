@@ -29,9 +29,11 @@ import kotlin.math.tan
 
 object GLRenderer : Renderer {
     private const val MAX_UI_DEPTH = 8
-    private const val FONT_MAX_BITMAP_SIZE = 512
-    private const val ATLAS_SIZE = 1536
+    private const val FONT_MAX_BITMAP_W = 1024
+    private const val FONT_MAX_BITMAP_H = 512
+    private const val ATLAS_SIZE = 2048
     private const val ATLAS_SIZE_F = ATLAS_SIZE.toFloat()
+    private const val FONT_RENDER_SIZE = 24f
     private const val ATLAS_UPSCALE_FACTOR = 2f
     private const val STRIDE = 4 + 4 + 4 + 4 + 4 + 1 // bounds, radii, color0, color1, UV, thick
     private const val MAX_BATCH = 768
@@ -41,7 +43,7 @@ object GLRenderer : Renderer {
     private val buffer = BufferUtils.createFloatBuffer(MAX_BATCH * STRIDE)
     private val scissorStack = IntArray(MAX_UI_DEPTH * 4)
     private val transformStack = ArrayList<FloatArray>(MAX_UI_DEPTH)
-    private val fonts = HashMap<Font, HashMap<Float, FontAtlas>>()
+    private val fonts = HashMap<Font, FontAtlas>()
 
     // GL objects
     private var instancedVbo = 0
@@ -75,7 +77,7 @@ object GLRenderer : Renderer {
     private var viewportHeight = 0f
     private var pixelRatio = 1f
     private var alphaCap = 1f
-    private var flushNeeded = false
+    private var popFlushNeeded = false
 
     private var slotX = 0
     private var slotY = 0
@@ -85,9 +87,9 @@ object GLRenderer : Renderer {
 
     private val FRAG = """
         #version 120
-        
+
         uniform sampler2D uTex;
-        
+
         varying vec2 vUV;
         varying vec2 vUV2;      // used for gradients
         varying vec2 vPos;      // pixel coords in rect space
@@ -96,13 +98,13 @@ object GLRenderer : Renderer {
         varying vec4 vColor0;    // RGBA
         varying vec4 vColor1;    // RGBA (for gradients)
         varying float vThickness; // -1 for text, -2 for linear gradient, -3 for radial, -4 for box,  >0 for hollow rect
-        
+
         // Signed distance function for rounded box
         float roundedBoxSDF(vec2 p, vec2 b, vec4 r) {
             // px = 1.0 if p.x > 0, else 0.0
             float px = step(0.0, p.x);
             float py = step(0.0, p.y);
-            
+
             // Select radius per quadrant
             float rLeft  = mix(r.w, r.x, py); // bottom-left / top-left
             float rRight = mix(r.z, r.y, py); // bottom-right / top-right
@@ -112,19 +114,19 @@ object GLRenderer : Renderer {
             vec2 dClamped = max(d, vec2(0.0));
             return length(dClamped) - radius + min(max(d.x, d.y), 0.0);
         }
-        
+
         float hollowRoundedBoxSDF(vec2 p, vec2 b, vec4 r, float thickness) {
             float dist = roundedBoxSDF(p, b, r);
             return abs(dist) - thickness * 0.5;
         }
-        
+
         void main() {
             vec2 center = vRect.xy + 0.5 * vRect.zw;
             vec2 halfSize = 0.5 * vRect.zw;
             vec2 p = vPos - center;
-        
+
             float d = (vThickness > 0.0) ? hollowRoundedBoxSDF(p, halfSize, vRadii, vThickness) : roundedBoxSDF(p, halfSize, vRadii);
-        
+
             vec4 col = vColor0;
             if (vUV.x >= 0.0 && vThickness >= -1.0) {     // textured if UV.x >= 0
                 vec4 texColor = texture2D(uTex, vUV);
@@ -147,18 +149,18 @@ object GLRenderer : Renderer {
                 float t = clamp(dist / vUV.y, 0.0, 1.0);
                 col = mix(vColor0, vColor1, t);
             }
-        
+
             // Proper antialiasing based on distance field
             float f = fwidth(d);
             float alpha = 1.0 - smoothstep(-f, f, d);
-        
+
             gl_FragColor = vec4(col.rgb, col.a * alpha);
         }
     """.trimIndent()
 
     private val VERT = """
         #version 120
-        
+
         attribute vec2 aLocal;
         attribute vec4 iRect;
         attribute vec4 iRadii;
@@ -166,14 +168,14 @@ object GLRenderer : Renderer {
         attribute vec4 iColor1;
         attribute vec4 iUVRect;
         attribute float iThickness;
-        
+
         uniform mat3 uTransform = mat3(
             1.0, 0.0, 0.0,
             0.0, 1.0, 0.0,
             0.0, 0.0, 1.0
         );
         uniform vec2 uWindow;
-        
+
         varying vec2 vPos;
         varying vec4 vRect;
         varying vec4 vRadii;
@@ -182,19 +184,19 @@ object GLRenderer : Renderer {
         varying vec2 vUV;
         varying vec2 vUV2;
         varying float vThickness;
-        
+
         void main() {
             // Position inside rect
             vec2 pos = iRect.xy + aLocal * iRect.zw;
             vec2 uv  = (iThickness > -2.0) ? iUVRect.xy + aLocal * iUVRect.zw : iUVRect.xy; // for gradients, just pass through the first two param to frag
-        
+
             vec3 transformed = uTransform * vec3(pos, 1.0);
-        
+
             vec2 ndc = (transformed.xy / uWindow) * 2.0 - 1.0;
             ndc.y = -ndc.y;
-        
+
             gl_Position = vec4(ndc, 0.0, 1.0);
-        
+
             vPos    = pos;
             vRect   = iRect;
             vRadii  = iRadii;
@@ -273,7 +275,6 @@ object GLRenderer : Renderer {
         instancedVbo = glGenBuffers()
         glBindBuffer(GL_ARRAY_BUFFER, instancedVbo)
         glBufferData(GL_ARRAY_BUFFER, MAX_BATCH * STRIDE * 4L, GL_STREAM_DRAW)
-        glBufferSubData(GL_ARRAY_BUFFER, 0, buffer)
 
         uWindow = glGetUniformLocation(program, "uWindow")
         uTransform = glGetUniformLocation(program, "uTransform")
@@ -303,8 +304,6 @@ object GLRenderer : Renderer {
         glUseProgram(program)
         glUniform2f(uWindow, width, height)
         glUseProgram(0)
-        glEnable(GL_BLEND)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         viewportWidth = width * pixelRatio
         viewportHeight = height * pixelRatio
         this.pixelRatio = pixelRatio
@@ -317,6 +316,8 @@ object GLRenderer : Renderer {
     private fun flush() {
         if (count == 0) return
         buffer.flip()
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glBindBuffer(GL_ARRAY_BUFFER, instancedVbo)
         glBufferSubData(GL_ARRAY_BUFFER, 0, buffer)
 
@@ -345,6 +346,7 @@ object GLRenderer : Renderer {
         count = 0
         buffer.clear()
         glUseProgram(0)
+        glDisable(GL_BLEND)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         glBindTexture(GL_TEXTURE_2D, 0)
     }
@@ -395,7 +397,7 @@ object GLRenderer : Renderer {
                 }
 
                 is PolyColor.Gradient.Type.Radial -> {
-                    buffer.put(if(type.centerX == -1f) width / 2f else type.centerX).put(if(type.centerY == -1f) height / 2f else type.centerY).put(type.innerRadius).put(type.outerRadius)
+                    buffer.put(if (type.centerX == -1f) width / 2f else type.centerX).put(if (type.centerY == -1f) height / 2f else type.centerY).put(type.innerRadius).put(type.outerRadius)
                     buffer.put(-3f)
                 }
 
@@ -446,36 +448,38 @@ object GLRenderer : Renderer {
     }
 
     override fun text(font: Font, x: Float, y: Float, text: String, color: Color, fontSize: Float) {
-        val fAtlas = getFontAtlas(font, fontSize)
+        val fAtlas = getFontAtlas(font)
         if (count >= MAX_BATCH) flush()
         if (count > 0 && curTex != atlas) flush()
         curTex = atlas
 
         var penX = x
-        val penY = y + fAtlas.ascent + fAtlas.descent
+        val scaleFactor = fontSize / fAtlas.renderedSize
+        val penY = y + (fAtlas.ascent + fAtlas.descent) * scaleFactor
         val r = (color.r / 255f)
         val g = (color.g / 255f)
         val b = (color.b / 255f)
         val a = (color.alpha.coerceAtMost(alphaCap))
         val buffer = buffer
+
         for (c in text) {
             if (count >= MAX_BATCH) {
                 flush()
             }
             val glyph = fAtlas.glyphs[c] ?: continue
-            buffer.put(penX + glyph.xOff).put(penY + glyph.yOff).put(glyph.width).put(glyph.height)
+            buffer.put(penX + glyph.xOff * scaleFactor).put(penY + glyph.yOff * scaleFactor).put(glyph.width * scaleFactor).put(glyph.height * scaleFactor)
             buffer.put(0f).put(0f).put(0f).put(0f) // zero radii
             buffer.put(r).put(g).put(b).put(a)
             buffer.put(0f).put(0f).put(0f).put(0f) // color1 unused
             buffer.put(glyph.u).put(glyph.v).put(glyph.uw).put(glyph.vh)
             buffer.put(-1f) // thickness = -1 for text
-            penX += glyph.xAdvance
+            penX += glyph.xAdvance * scaleFactor
             count += 1
         }
     }
 
     override fun textBounds(font: Font, text: String, fontSize: Float): Vec2 {
-        return getFontAtlas(font, fontSize).measure(text)
+        return getFontAtlas(font).measure(text, fontSize)
     }
 
     override fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float) {
@@ -560,10 +564,10 @@ object GLRenderer : Renderer {
 
     override fun pop() {
         glUseProgram(program)
-        if (flushNeeded) {
+        if (popFlushNeeded) {
             glUniformMatrix3fv(uTransform, false, transform)
             flush()
-            flushNeeded = false
+            popFlushNeeded = false
         }
         if (transform.isIdentity()) return
         if (transformStack.isEmpty()) {
@@ -577,14 +581,14 @@ object GLRenderer : Renderer {
         flush()
         transform[6] += transform[0] * x + transform[3] * y
         transform[7] += transform[1] * x + transform[4] * y
-        flushNeeded = true
+        popFlushNeeded = true
     }
 
     override fun scale(sx: Float, sy: Float, px: Float, py: Float) {
         flush()
         transform[0] *= sx; transform[1] *= sx
         transform[3] *= sy; transform[4] *= sy
-        flushNeeded = true
+        popFlushNeeded = true
     }
 
     override fun rotate(angleRadians: Double, px: Float, py: Float) {
@@ -599,7 +603,7 @@ object GLRenderer : Renderer {
         transform[1] = a01 * c + a11 * s
         transform[3] = a00 * -s + a10 * c
         transform[4] = a01 * -s + a11 * c
-        flushNeeded = true
+        popFlushNeeded = true
     }
 
     override fun skewX(angleRadians: Double, px: Float, py: Float) {
@@ -611,7 +615,7 @@ object GLRenderer : Renderer {
         val a11 = transform[4]
         transform[0] = a00 + a10 * t
         transform[1] = a01 + a11 * t
-        flushNeeded = true
+        popFlushNeeded = true
 
     }
 
@@ -624,7 +628,7 @@ object GLRenderer : Renderer {
         val a11 = transform[4]
         transform[3] = a10 + a00 * t
         transform[4] = a11 + a01 * t
-        flushNeeded = true
+        popFlushNeeded = true
     }
 
     private fun FloatArray.isIdentity(): Boolean {
@@ -696,14 +700,14 @@ object GLRenderer : Renderer {
         }
     }
 
-    private fun getFontAtlas(font: Font, fontSize: Float): FontAtlas {
-        return fonts.getOrPut(font) { HashMap() }.getOrPut(fontSize) {
+    private fun getFontAtlas(font: Font): FontAtlas {
+        return fonts.getOrPut(font) {
             val data = font.load().toDirectByteBuffer()
-            FontAtlas(data, fontSize)
+            FontAtlas(data, FONT_RENDER_SIZE)
         }
     }
 
-    fun debugWriteAtlas(texId: Int = atlas) {
+    fun dumpAtlas(texId: Int = atlas) {
         val buf = BufferUtils.createByteBuffer(ATLAS_SIZE * ATLAS_SIZE * 4)
         glBindTexture(GL_TEXTURE_2D, texId)
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf)
@@ -712,6 +716,7 @@ object GLRenderer : Renderer {
     }
 
     override fun cleanup() {
+        dumpAtlas()
         if (program != 0) glDeleteProgram(program)
         if (vbo != 0) glDeleteBuffers(vbo)
         if (instancedVbo != 0) glDeleteBuffers(instancedVbo)
@@ -730,7 +735,7 @@ object GLRenderer : Renderer {
         cleanup()
     }
 
-    private class FontAtlas(data: ByteBuffer, val fontSize: Float) {
+    private class FontAtlas(data: ByteBuffer, val renderedSize: Float) {
         val glyphs = HashMap<Char, Glyph>()
         val ascent: Float
         val descent: Float
@@ -741,7 +746,7 @@ object GLRenderer : Renderer {
             if (!stbtt_InitFont(stbFont, data)) {
                 throw IllegalStateException("Failed to initialize font")
             }
-            val scale = stbtt_ScaleForMappingEmToPixels(stbFont, fontSize)
+            val scale = stbtt_ScaleForMappingEmToPixels(stbFont, renderedSize)
             val asc = IntArray(1)
             val des = IntArray(1)
             val gap = IntArray(1)
@@ -753,15 +758,15 @@ object GLRenderer : Renderer {
             lineGap = gap[0] * scale
 
             val range = STBTTPackRange.malloc()
-            range.font_size(fontSize)
+            range.font_size(renderedSize)
             range.first_unicode_codepoint_in_range(32)
             range.num_chars(95)
             val packed = STBTTPackedchar.malloc(range.num_chars())
             range.chardata_for_range(packed)
 
-            val bitMap = BufferUtils.createByteBuffer(FONT_MAX_BITMAP_SIZE * FONT_MAX_BITMAP_SIZE)
+            val bitMap = BufferUtils.createByteBuffer(FONT_MAX_BITMAP_W * FONT_MAX_BITMAP_H)
             val pack = STBTTPackContext.malloc()
-            if (!stbtt_PackBegin(pack, bitMap, FONT_MAX_BITMAP_SIZE, FONT_MAX_BITMAP_SIZE, 0, 1, 0L)) {
+            if (!stbtt_PackBegin(pack, bitMap, FONT_MAX_BITMAP_W, FONT_MAX_BITMAP_H, 0, 1, 0L)) {
                 throw IllegalStateException("Failed to initialize font packer")
             }
 
@@ -816,18 +821,19 @@ object GLRenderer : Renderer {
 
             glBindTexture(GL_TEXTURE_2D, atlas)
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
-            glTexSubImage2D(GL_TEXTURE_2D, 0, sx, sy, FONT_MAX_BITMAP_SIZE, FONT_MAX_BITMAP_SIZE, GL_ALPHA, GL_UNSIGNED_BYTE, bitMap)
+            glTexSubImage2D(GL_TEXTURE_2D, 0, sx, sy, FONT_MAX_BITMAP_W, FONT_MAX_BITMAP_H, GL_ALPHA, GL_UNSIGNED_BYTE, bitMap)
             glBindTexture(GL_TEXTURE_2D, 0)
             slotX += totalSizeX
             atlasRowHeight = maxOf(atlasRowHeight, totalSizeY)
         }
 
-        fun measure(text: String): Vec2 {
+        fun measure(text: String, fontSize: Float): Vec2 {
             var width = 0f
 //            var height = 0f
+            val scaleFactor = fontSize / this.renderedSize
             for (c in text) {
                 val g = glyphs[c] ?: continue
-                width += g.xAdvance
+                width += g.xAdvance * scaleFactor
 //                height = maxOf(height, g.height + g.offsetY)
             }
             return Vec2.of(width, fontSize)
