@@ -220,6 +220,7 @@ class Debugger(private val polyUI: PolyUI) {
             ColorPicker(State(target.color.asMutable()), polyUI)
             return true
         }
+        @Suppress("DEPRECATION")
         val sn = "set${eval.substring(0, set).trim().capitalize()}"
         val arg = eval.substring(set + 1).trim().removeSurrounding('"')
         val methods = target::class.java.allMethods(sn)

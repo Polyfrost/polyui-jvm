@@ -3,17 +3,13 @@ package org.polyfrost.polyui.renderer.impl
 import org.apache.logging.log4j.LogManager
 import org.lwjgl.BufferUtils
 import org.lwjgl.nanovg.NanoSVG.*
-import org.lwjgl.opengl.ARBDrawInstanced.glDrawArraysInstancedARB
-import org.lwjgl.opengl.ARBInstancedArrays.glVertexAttribDivisorARB
-import org.lwjgl.opengl.GL.getCapabilities
-import org.lwjgl.opengl.GL21C.*
+import org.lwjgl.opengl.GL20C.*
 import org.lwjgl.stb.STBImage.*
 import org.lwjgl.stb.STBTTFontinfo
 import org.lwjgl.stb.STBTTPackContext
 import org.lwjgl.stb.STBTTPackRange
 import org.lwjgl.stb.STBTTPackedchar
 import org.lwjgl.stb.STBTruetype.*
-import org.lwjgl.system.MemoryUtil
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.Color
 import org.polyfrost.polyui.color.PolyColor
@@ -42,7 +38,7 @@ object GLRenderer : Renderer {
     private const val STRIDE = 4 + 4 + 4 + 4 + 4 + 1 // bounds, radii, color0, color1, UV, thick
     private const val MAX_BATCH = 1024
 
-    private val PIXELS: ByteBuffer = MemoryUtil.memAlloc(3).put(112).put(120).put(0).flip() as ByteBuffer
+    private val PIXELS: ByteBuffer = BufferUtils.createByteBuffer(3).put(112).put(120).put(0).flip() as ByteBuffer
     private val EMPTY_ROW = floatArrayOf(0f, 0f, 0f, 0f)
     private val NO_UV = floatArrayOf(-1f, -1f, 1f, 1f)
 
@@ -93,18 +89,27 @@ object GLRenderer : Renderer {
     private var atlasRowHeight = 0
 
     private val FRAG = """
-        #version 120
+        #version $$$ // replaced by compileShader
+        #if __VERSION__ >= 130
+            #define VARYING in
+            #define TEXTURE texture
+            out vec4 fragColor;
+        #else
+            #define VARYING varying
+            #define TEXTURE texture2D
+            #define fragColor gl_FragColor
+        #endif
 
         uniform sampler2D uTex;
 
-        varying vec2 vUV;
-        varying vec2 vUV2;      // used for gradients
-        varying vec2 vPos;      // pixel coords in rect space
-        varying vec4 vRect;     // rect x, y, w, h
-        varying vec4 vRadii;    // per-corner radii
-        varying vec4 vColor0;    // RGBA
-        varying vec4 vColor1;    // RGBA (for gradients)
-        varying float vThickness; // -1 for text, -2 for linear gradient, -3 for radial, -4 for box,  >0 for hollow rect
+        VARYING vec2 vUV;
+        VARYING vec2 vUV2;      // used for gradients
+        VARYING vec2 vPos;      // pixel coords in rect space
+        VARYING vec4 vRect;     // rect x, y, w, h
+        VARYING vec4 vRadii;    // per-corner radii
+        VARYING vec4 vColor0;    // RGBA
+        VARYING vec4 vColor1;    // RGBA (for gradients)
+        VARYING float vThickness; // -1 for text, -2 for linear gradient, -3 for radial, -4 for box,  >0 for hollow rect
 
         // Signed distance function for rounded box
         float roundedBoxSDF(vec2 p, vec2 b, vec4 r) {
@@ -136,8 +141,9 @@ object GLRenderer : Renderer {
 
             vec4 col = vColor0;
             if (vUV.x >= 0.0 && vThickness >= -1.0) {     // textured if UV.x >= 0
-                vec4 texColor = texture2D(uTex, vUV);
-                col = (vThickness == -1.0) ? vec4(col.rgb, col.a * texColor.a) : col * texColor;
+                vec4 texColor = TEXTURE(uTex, vUV);
+                // text check: use red channel as alpha
+                col = (vThickness == -1.0) ? vec4(col.rgb, col.a * texColor.r) : col * texColor;
             }
             else if (vThickness == -2.0) { // linear gradient, vUV as start and vUV2 as end
                 vec2 dir = normalize(vUV2 - vUV);
@@ -161,20 +167,27 @@ object GLRenderer : Renderer {
             float f = fwidth(d);
             float alpha = 1.0 - smoothstep(-f, f, d);
 
-            gl_FragColor = vec4(col.rgb, col.a * alpha);
+            fragColor = vec4(col.rgb, col.a * alpha);
         }
     """.trimIndent()
 
     private val VERT = """
-        #version 120
+        #version $$$ // replaced by compileShader
+        #if __VERSION__ >= 130
+            #define ATTRIBUTE in
+            #define VARYING out
+        #else
+            #define ATTRIBUTE attribute
+            #define VARYING varying
+        #endif
 
-        attribute vec2 aLocal;
-        attribute vec4 iRect;
-        attribute vec4 iRadii;
-        attribute vec4 iColor0;
-        attribute vec4 iColor1;
-        attribute vec4 iUVRect;
-        attribute float iThickness;
+        ATTRIBUTE vec2 aLocal;
+        ATTRIBUTE vec4 iRect;
+        ATTRIBUTE vec4 iRadii;
+        ATTRIBUTE vec4 iColor0;
+        ATTRIBUTE vec4 iColor1;
+        ATTRIBUTE vec4 iUVRect;
+        ATTRIBUTE float iThickness;
 
         uniform mat3 uTransform = mat3(
             1.0, 0.0, 0.0,
@@ -183,14 +196,14 @@ object GLRenderer : Renderer {
         );
         uniform vec2 uWindow;
 
-        varying vec2 vPos;
-        varying vec4 vRect;
-        varying vec4 vRadii;
-        varying vec4 vColor0;
-        varying vec4 vColor1;
-        varying vec2 vUV;
-        varying vec2 vUV2;
-        varying float vThickness;
+        VARYING vec2 vPos;
+        VARYING vec4 vRect;
+        VARYING vec4 vRadii;
+        VARYING vec4 vColor0;
+        VARYING vec4 vColor1;
+        VARYING vec2 vUV;
+        VARYING vec2 vUV2;
+        VARYING float vThickness;
 
         void main() {
             // Position inside rect
@@ -220,7 +233,7 @@ object GLRenderer : Renderer {
         val shader = glCreateShader(type)
         if (shader == 0) throw RuntimeException("Failed to create shader")
 
-        glShaderSource(shader, source)
+        glShaderSource(shader, source.replaceFirst("$$$", if (caps().OpenGL30) "150" else "120"))
         glCompileShader(shader)
 
         val status = glGetShaderi(shader, GL_COMPILE_STATUS)
@@ -259,13 +272,17 @@ object GLRenderer : Renderer {
         return program
     }
 
+    private fun caps() = org.lwjgl.opengl.GL.getCapabilities()
+
     override fun init() {
         // check if instancing extension is available
-        if (!getCapabilities().GL_ARB_instanced_arrays) {
-            throw RuntimeException("GL_ARB_instanced_arrays not supported and is required")
-        }
-        if (!getCapabilities().GL_ARB_draw_instanced) {
-            throw RuntimeException("GL_ARB_draw_instanced not supported and is required")
+        require(caps().OpenGL20) { "At least OpenGL 2.0 is required" }
+        require(caps().OpenGL33 || caps().GL_ARB_instanced_arrays) { "GL_ARB_instanced_arrays is not supported and is required" }
+        require(caps().OpenGL31 || caps().GL_ARB_draw_instanced) { "GL_ARB_draw_instanced is not supported and is required" }
+
+        if (caps().OpenGL30) {
+            // ...ok i guess this is needed
+            org.lwjgl.opengl.GL30C.glBindVertexArray(org.lwjgl.opengl.GL30C.glGenVertexArrays())
         }
 
         program = linkProgram(compileShader(GL_VERTEX_SHADER, VERT), compileShader(GL_FRAGMENT_SHADER, FRAG))
@@ -296,7 +313,7 @@ object GLRenderer : Renderer {
 
         atlas = glGenTextures()
         glBindTexture(GL_TEXTURE_2D, atlas)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ATLAS_SIZE, ATLAS_SIZE, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0L)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ATLAS_SIZE, ATLAS_SIZE, 0, GL_RGBA, GL_UNSIGNED_BYTE, null as ByteBuffer?)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
@@ -350,7 +367,8 @@ object GLRenderer : Renderer {
         enableAttrib(iThickness, 1, offset)
 
         // Draw all instances
-        glDrawArraysInstancedARB(GL_TRIANGLE_FAN, 0, 4, count)
+        if (caps().OpenGL31) org.lwjgl.opengl.GL31C.glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, count)
+        else org.lwjgl.opengl.ARBDrawInstanced.glDrawArraysInstancedARB(GL_TRIANGLE_FAN, 0, 4, count)
 
         count = 0
         buffer.clear()
@@ -363,7 +381,9 @@ object GLRenderer : Renderer {
     private fun enableAttrib(loc: Int, size: Int, offset: Long): Long {
         glEnableVertexAttribArray(loc)
         glVertexAttribPointer(loc, size, GL_FLOAT, false, STRIDE * 4, offset)
-        glVertexAttribDivisorARB(loc, 1)
+        // i don't know why core disables the extension functions... but ok!
+        if (caps().OpenGL33) org.lwjgl.opengl.GL33C.glVertexAttribDivisor(loc, 1)
+        else org.lwjgl.opengl.ARBInstancedArrays.glVertexAttribDivisorARB(loc, 1)
         return offset + size * 4L
     }
 
@@ -736,7 +756,6 @@ object GLRenderer : Renderer {
         if (instancedVbo != 0) glDeleteBuffers(instancedVbo)
         if (atlas != 0) glDeleteTextures(atlas)
         if (nSvgRaster != 0L) nsvgDeleteRasterizer(nSvgRaster)
-        MemoryUtil.memFree(PIXELS)
         transformStack.clear()
         fonts.clear()
         buffer.clear()
@@ -835,7 +854,8 @@ object GLRenderer : Renderer {
 
             glBindTexture(GL_TEXTURE_2D, atlas)
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
-            glTexSubImage2D(GL_TEXTURE_2D, 0, sx, sy, FONT_MAX_BITMAP_W, FONT_MAX_BITMAP_H, GL_ALPHA, GL_UNSIGNED_BYTE, bitMap)
+            // can't write to the alpha channel in GL3 core! lol hahaahahah
+            glTexSubImage2D(GL_TEXTURE_2D, 0, sx, sy, FONT_MAX_BITMAP_W, FONT_MAX_BITMAP_H, GL_RED, GL_UNSIGNED_BYTE, bitMap)
             glBindTexture(GL_TEXTURE_2D, 0)
             slotX += totalSizeX
             atlasRowHeight = maxOf(atlasRowHeight, totalSizeY)
