@@ -56,7 +56,7 @@ object GLRenderer : Renderer {
     private var instancedVbo = 0
     private var atlas = 0
     private var program = 0
-    private var vbo = 0
+    private var quadVbo = 0
     private var nSvgRaster = 0L
 
 
@@ -139,7 +139,7 @@ object GLRenderer : Renderer {
                 vec4 texColor = texture2D(uTex, vUV);
                 col = (vThickness == -1.0) ? vec4(col.rgb, col.a * texColor.a) : col * texColor;
             }
-            else if (vThickness == -2.0) { // linear gradient, vUV.xy and vUV2.xy as start and end
+            else if (vThickness == -2.0) { // linear gradient, vUV as start and vUV2 as end
                 vec2 dir = normalize(vUV2 - vUV);
                 float t = dot((p + halfSize) - vUV, dir) / length(vUV2 - vUV);
                 t = clamp(t, 0.0, 1.0);
@@ -276,8 +276,8 @@ object GLRenderer : Renderer {
             1f, 1f,
             0f, 1f
         )
-        vbo = glGenBuffers()
-        glBindBuffer(GL_ARRAY_BUFFER, vbo)
+        quadVbo = glGenBuffers()
+        glBindBuffer(GL_ARRAY_BUFFER, quadVbo)
         glBufferData(GL_ARRAY_BUFFER, quadData, GL_STATIC_DRAW)
         instancedVbo = glGenBuffers()
         glBindBuffer(GL_ARRAY_BUFFER, instancedVbo)
@@ -334,7 +334,7 @@ object GLRenderer : Renderer {
         glBindTexture(GL_TEXTURE_2D, curTex)
 
         // Quad attrib
-        glBindBuffer(GL_ARRAY_BUFFER, vbo)
+        glBindBuffer(GL_ARRAY_BUFFER, quadVbo)
         glEnableVertexAttribArray(aLocal)
         glVertexAttribPointer(aLocal, 2, GL_FLOAT, false, 0, 0L)
 
@@ -732,7 +732,7 @@ object GLRenderer : Renderer {
     override fun cleanup() {
 //        dumpAtlas()
         if (program != 0) glDeleteProgram(program)
-        if (vbo != 0) glDeleteBuffers(vbo)
+        if (quadVbo != 0) glDeleteBuffers(quadVbo)
         if (instancedVbo != 0) glDeleteBuffers(instancedVbo)
         if (atlas != 0) glDeleteTextures(atlas)
         if (nSvgRaster != 0L) nsvgDeleteRasterizer(nSvgRaster)
