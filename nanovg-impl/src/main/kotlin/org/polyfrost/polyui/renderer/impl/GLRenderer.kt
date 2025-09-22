@@ -29,7 +29,7 @@ import kotlin.math.tan
 object GLRenderer : Renderer {
     private val LOGGER = LogManager.getLogger("PolyUI/GLRenderer")
 
-    private const val MAX_UI_DEPTH = 8
+    private const val MAX_UI_DEPTH = 16
     private const val FONT_MAX_BITMAP_W = 1024
     private const val FONT_MAX_BITMAP_H = 512
     private const val ATLAS_SIZE = 2048
@@ -52,6 +52,7 @@ object GLRenderer : Renderer {
     private var instancedVbo = 0
     private var atlas = 0
     private var program = 0
+    private var vao = 0 // GL3+ only
     private var quadVbo = 0
     private var nSvgRaster = 0L
 
@@ -76,8 +77,7 @@ object GLRenderer : Renderer {
         0f, 1f, 0f,
         0f, 0f, 1f
     )
-    private var viewportWidth = 0f
-    private var viewportHeight = 0f
+    private val VIEWPORT = IntArray(4)
     private var pixelRatio = 1f
     private var alphaCap = 1f
     private var popFlushNeeded = false
@@ -165,9 +165,9 @@ object GLRenderer : Renderer {
 
             // Proper antialiasing based on distance field
             float f = fwidth(d);
-            float alpha = 1.0 - smoothstep(-f, f, d);
+            float alpha = col.a * (1.0 - smoothstep(-f, f, d));
 
-            fragColor = vec4(col.rgb, col.a * alpha);
+            fragColor = vec4(col.rgb * alpha, alpha);
         }
     """.trimIndent()
 
@@ -282,10 +282,13 @@ object GLRenderer : Renderer {
 
         if (caps().OpenGL30) {
             // ...ok i guess this is needed
-            org.lwjgl.opengl.GL30C.glBindVertexArray(org.lwjgl.opengl.GL30C.glGenVertexArrays())
+            vao = org.lwjgl.opengl.GL30C.glGenVertexArrays()
+            org.lwjgl.opengl.GL30C.glBindVertexArray(vao)
         }
 
         program = linkProgram(compileShader(GL_VERTEX_SHADER, VERT), compileShader(GL_FRAGMENT_SHADER, FRAG))
+
+        if (caps().OpenGL30) org.lwjgl.opengl.GL30C.glBindVertexArray(0)
 
         val quadData = floatArrayOf(
             0f, 0f,
@@ -323,30 +326,36 @@ object GLRenderer : Renderer {
     }
 
     override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {
+        curScissor = 0
+        alphaCap = 1f
         count = 0
         buffer.clear()
+        loadIdentity()
         glUseProgram(program)
         glUniform2f(uWindow, width, height)
+        glUniformMatrix3fv(uTransform, false, transform)
         glUseProgram(0)
-        viewportWidth = width * pixelRatio
-        viewportHeight = height * pixelRatio
+        glDisable(GL_SCISSOR_TEST)
+        glGetIntegerv(GL_VIEWPORT, VIEWPORT)
         this.pixelRatio = pixelRatio
     }
 
     override fun endFrame() {
         flush()
+        glDisable(GL_SCISSOR_TEST)
     }
 
     private fun flush() {
         if (count == 0) return
         buffer.flip()
         glEnable(GL_BLEND)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA)
         glBindBuffer(GL_ARRAY_BUFFER, instancedVbo)
         // 'orphan' the buffer - give a hint to the driver that we don't need the old data so we don't stall waiting for it
         glBufferData(GL_ARRAY_BUFFER, MAX_BATCH * STRIDE * 4L, GL_STREAM_DRAW)
         glBufferSubData(GL_ARRAY_BUFFER, 0, buffer)
 
+        if (caps().OpenGL30) org.lwjgl.opengl.GL30C.glBindVertexArray(vao)
         glUseProgram(program)
         glBindTexture(GL_TEXTURE_2D, curTex)
 
@@ -376,6 +385,7 @@ object GLRenderer : Renderer {
         glDisable(GL_BLEND)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         glBindTexture(GL_TEXTURE_2D, 0)
+        if (caps().OpenGL30) org.lwjgl.opengl.GL30C.glBindVertexArray(0)
     }
 
     private fun enableAttrib(loc: Int, size: Int, offset: Long): Long {
@@ -387,7 +397,6 @@ object GLRenderer : Renderer {
         return offset + size * 4L
     }
 
-    // Example rect wrapper for your Renderer interface
     override fun rect(
         x: Float, y: Float, width: Float, height: Float,
         color: Color,
@@ -403,8 +412,7 @@ object GLRenderer : Renderer {
         buffer.put(color.r / 255f).put(color.g / 255f).put(color.b / 255f).put(color.alpha.coerceAtMost(alphaCap))
         if (color is PolyColor.Gradient) {
             buffer.put(color.color2.r / 255f).put(color.color2.g / 255f).put(color.color2.b / 255f).put(color.color2.alpha.coerceAtMost(alphaCap))
-            val type = color.type
-            when (type) {
+            when (val type = color.type) {
                 is PolyColor.Gradient.Type.LeftToRight -> {
                     buffer.put(0f).put(height / 2f).put(width).put(height / 2f)
                     buffer.put(-2f)
@@ -455,7 +463,6 @@ object GLRenderer : Renderer {
         count += 1
     }
 
-    // image: supply texture ID and uv transform if needed
     override fun image(
         image: PolyImage, x: Float, y: Float, width: Float, height: Float,
         colorMask: Int, topLeftRadius: Float, topRightRadius: Float, bottomLeftRadius: Float, bottomRightRadius: Float
@@ -523,7 +530,7 @@ object GLRenderer : Renderer {
     override fun pushScissor(x: Float, y: Float, width: Float, height: Float) {
         flush()
         val nx = (x * pixelRatio).roundToInt()
-        val ny = (viewportHeight - (y + height) * pixelRatio).roundToInt()
+        val ny = ((VIEWPORT[3] + VIEWPORT[1]) - (y + height) * pixelRatio).roundToInt()
         val nw = (width * pixelRatio).roundToInt()
         val nh = (height * pixelRatio).roundToInt()
         scissorStack[curScissor++] = nx
@@ -545,7 +552,7 @@ object GLRenderer : Renderer {
         val pw = scissorStack[curScissor - 2]
         val ph = scissorStack[curScissor - 1]
         val nx = (x * pixelRatio).roundToInt()
-        val ny = (viewportHeight - (y + height) * pixelRatio).roundToInt()
+        val ny = ((VIEWPORT[3] + VIEWPORT[1]) - (y + height) * pixelRatio).roundToInt()
 
         val ix = maxOf(nx, px)
         val iy = maxOf(ny, py)
@@ -594,6 +601,7 @@ object GLRenderer : Renderer {
         if (popFlushNeeded) {
             glUseProgram(program)
             glUniformMatrix3fv(uTransform, false, transform)
+            glUseProgram(0)
             flush()
             popFlushNeeded = false
         }
@@ -701,6 +709,7 @@ object GLRenderer : Renderer {
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
         glTexSubImage2D(GL_TEXTURE_2D, 0, slotX, slotY, w[0], h[0], GL_RGBA, GL_UNSIGNED_BYTE, d)
         glBindTexture(GL_TEXTURE_2D, 0)
+        if (image.type == PolyImage.Type.Raster) stbi_image_free(d)
 
         slotX += w[0]
         if (h[0] > atlasRowHeight) atlasRowHeight = h[0]
@@ -726,7 +735,6 @@ object GLRenderer : Renderer {
             val data = image.load().toDirectByteBuffer()
             val d = stbi_load_from_memory(data, w, h, IntArray(1), 4) ?: throw IllegalStateException("Failed to load image ${image.resourcePath}: ${stbi_failure_reason()}")
             if (!image.size.isPositive) PolyImage.setImageSize(image, Vec2(w[0].toFloat(), h[0].toFloat()))
-            stbi_image_free(d)
             return d
         }
     }
@@ -741,12 +749,12 @@ object GLRenderer : Renderer {
         }
     }
 
-    fun dumpAtlas(texId: Int = atlas) {
+    fun dumpTexture(texId: Int = atlas) {
         val buf = BufferUtils.createByteBuffer(ATLAS_SIZE * ATLAS_SIZE * 4)
         glBindTexture(GL_TEXTURE_2D, texId)
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf)
         glBindTexture(GL_TEXTURE_2D, 0)
-        org.lwjgl.stb.STBImageWrite.stbi_write_png("debug_atlas$texId.png", ATLAS_SIZE, ATLAS_SIZE, 4, buf, ATLAS_SIZE * 4)
+        org.lwjgl.stb.STBImageWrite.stbi_write_png("debug_texture$texId.png", ATLAS_SIZE, ATLAS_SIZE, 4, buf, ATLAS_SIZE * 4)
     }
 
     override fun cleanup() {
