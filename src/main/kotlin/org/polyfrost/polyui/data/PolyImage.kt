@@ -23,6 +23,8 @@ package org.polyfrost.polyui.data
 
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
+import org.polyfrost.polyui.data.image.FlagKey
+import org.polyfrost.polyui.data.image.ImageFlag
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.Vec4
 
@@ -36,6 +38,9 @@ open class PolyImage protected constructor(
     val type: Type = getTypeFromFilename(resourcePath),
 ) : Resource(resourcePath) {
 
+    @Transient
+    private val _flags = mutableMapOf<FlagKey<*>, ImageFlag<*>>()
+
     @ApiStatus.Internal
     @Transient
     var uv: Vec4 = Vec4.of(0f, 0f, 1f, 1f)
@@ -47,6 +52,23 @@ open class PolyImage protected constructor(
             require(!field.isPositive) { "Size already set to $field (new: $value)" }
             field = value
         }
+
+    val flags: Collection<ImageFlag<*>>
+        get() = _flags.values
+
+    operator fun <T> get(key: FlagKey<T>): T? {
+        @Suppress("UNCHECKED_CAST")
+        return _flags[key]?.value as T?
+    }
+
+    operator fun <T> set(key: FlagKey<T>, value: T): PolyImage {
+        _flags[key] = ImageFlag(key, value)
+        return this
+    }
+
+    operator fun contains(key: FlagKey<*>): Boolean {
+        return _flags.containsKey(key)
+    }
 
     override fun toString() = "$type Image($resourcePath, ${if (size.isPositive) size.toString() else "??x??"})"
 
