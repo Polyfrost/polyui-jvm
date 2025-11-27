@@ -1,7 +1,9 @@
 package org.polyfrost.polyui.event
 
 import org.jetbrains.annotations.MustBeInvokedByOverriders
+import org.polyfrost.polyui.event.State.Companion.map
 import org.polyfrost.polyui.utils.fastEach
+import java.lang.ref.WeakReference
 
 /**
  * Simple and efficient state class that can be used to hold a value and notify listeners when the value changes.
@@ -83,5 +85,37 @@ open class State<T>(value: T) {
             extraListeners?.remove(listener)
         }
         return this
+    }
+
+    companion object {
+        /**
+         * Map this state to another state using the given [map] function.
+         * The function will be called whenever the value of this state changes, and the resulting state will be set on the new state.
+         *
+         * **Note that this is one-way and changes to the resulting state will not affect this state.**
+         * @since 1.15.3
+         */
+        @JvmStatic
+        fun <T, U> State<T>.map(map: (T) -> U): State<U> {
+            val out = State(map(value))
+            // weak reference is used as this would otherwise be a memory leak
+            val ref = WeakReference(out)
+            var listener: ((T) -> Boolean)? = null
+            listener = {
+                ref.get()?.let { out ->
+                    val old = out.value
+                    out.value = map(it)
+                    // asm: return true to cancel if the value didn't change
+                    old == out.value
+                } ?: run {
+                    this.removeListener(listener!!)
+                    false
+                }
+            }
+            this.listen(listener)
+
+            return out
+        }
+
     }
 }

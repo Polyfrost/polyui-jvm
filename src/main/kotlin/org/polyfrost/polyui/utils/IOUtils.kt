@@ -38,7 +38,7 @@ import java.nio.ByteOrder
  * @throws FileNotFoundException if the URL is invalid and/or the resource is not found
  * @see getResourceStreamNullable
  */
-fun getResourceStream(resourcePath: String, caller: Class<*> = PolyUI::class.java) =
+fun getResourceStream(resourcePath: String, caller: Class<*>? = PolyUI::class.java) =
     getResourceStreamNullable(resourcePath, caller)
         ?: throw FileNotFoundException(
             "Resource $resourcePath not found " +
@@ -52,7 +52,8 @@ fun getResourceStream(resourcePath: String, caller: Class<*> = PolyUI::class.jav
  * @throws java.io.IOException if an IO error occurs.
  * @see getResourceStream
  */
-fun getResourceStreamNullable(resourcePath: String, caller: Class<*> = PolyUI::class.java): InputStream? {
+fun getResourceStreamNullable(resourcePath: String, caller: Class<*>? = PolyUI::class.java): InputStream? {
+    val caller = caller ?: PolyUI::class.java // improve safety with java interop
     return if (":/" !in resourcePath) {
         caller.getResourceAsStream(resourcePath)
             ?: caller.getResourceAsStream("/$resourcePath")
