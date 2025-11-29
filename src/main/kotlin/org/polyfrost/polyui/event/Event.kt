@@ -34,7 +34,7 @@ import org.polyfrost.polyui.input.Mouse as MouseUtils
  * Events are how PolyUI communicates between components and to the user.
  *
  * Everything from [mouse clicks][Mouse.Clicked], [key presses][Focused.KeyPressed],
- * [text input changes][Change.Text], [initialization][Lifetime.Init]
+ * [initialization][Lifetime.Init]
  * and [destruction][Lifetime.Removed] of components are communicated through events.
  *
  *
@@ -251,35 +251,12 @@ interface Event {
             cancelled = true
         }
 
-        class Text @ApiStatus.Internal constructor(val text: String) : Change() {
-            operator fun component1() = text
-            override fun toString() = text
-        }
-
-        class Number @ApiStatus.Internal constructor(val amount: kotlin.Number) : Change() {
-            operator fun component1() = amount
-            override fun toString() = amount.toString()
-        }
-
-        class State @ApiStatus.Internal constructor(val state: Boolean) : Change() {
-            operator fun component1() = state
-            override fun toString() = state.toString()
-        }
-
         class Palette @ApiStatus.Internal constructor(val palette: Colors.Palette) : Change() {
             operator fun component1() = palette
             override fun toString() = palette.toString()
         }
 
         companion object {
-            @JvmStatic
-            val Text = Text("")
-
-            @JvmStatic
-            val Number = Number(0)
-
-            @JvmStatic
-            val State = State(false)
 
             @JvmStatic
             val Palette = Palette(Colors.Palette(Color.TRANSPARENT, Color.TRANSPARENT, Color.TRANSPARENT, Color.TRANSPARENT))
@@ -316,7 +293,7 @@ interface Event {
             @Deprecated("Use character instead", ReplaceWith("character"))
             val char get() = codepoint.toChar()
 
-            override fun toString() = "KeyTyped(${codepoint.codepointToString()}})"
+            override fun toString() = "KeyTyped(${codepoint.codepointToString()})"
 
             operator fun component1() = codepoint
         }

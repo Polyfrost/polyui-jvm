@@ -37,6 +37,7 @@ import org.polyfrost.polyui.data.Cursor
 import org.polyfrost.polyui.data.Font
 import org.polyfrost.polyui.data.FontFamily
 import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.event.State
 import org.polyfrost.polyui.operations.Fade
 import org.polyfrost.polyui.operations.Recolor
 import org.polyfrost.polyui.operations.ShakeOp
@@ -146,20 +147,15 @@ fun <S : Component> S.shake(): S {
  * - it will emit a [Event.Change.State] event. you can use the [onToggle] function to easily listen to this event.
  * @since 1.5.0
  */
-fun <S : Drawable> S.toggleable(default: Boolean): S {
+fun <S : Drawable> S.toggleable(state: State<Boolean>): S {
     withHoverStates()
-    var state = default
     onClick {
-        state = !state
-        if (hasListenersFor(Event.Change.State::class.java)) {
-            val ev = Event.Change.State(state)
-            accept(ev)
-            if (ev.cancelled) return@onClick false
-        }
-        palette = if (state) polyUI.colors.brand.fg else polyUI.colors.component.bg
-        false
+        state.set(!state.value)
     }
-    if (state) setPalette { brand.fg }
+    state.listen {
+        palette = if (!state.value) polyUI.colors.brand.fg else polyUI.colors.component.bg
+    }
+    if (state.value) setPalette { brand.fg }
     return this
 }
 

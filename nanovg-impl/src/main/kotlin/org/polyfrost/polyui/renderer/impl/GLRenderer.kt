@@ -289,8 +289,6 @@ object GLRenderer : Renderer {
 
         program = linkProgram(compileShader(GL_VERTEX_SHADER, VERT), compileShader(GL_FRAGMENT_SHADER, FRAG))
 
-        if (caps().OpenGL30) org.lwjgl.opengl.GL30C.glBindVertexArray(0)
-
         val quadData = floatArrayOf(
             0f, 0f,
             1f, 0f,
@@ -313,6 +311,17 @@ object GLRenderer : Renderer {
         iColor1 = glGetAttribLocation(program, "iColor1")
         iUVRect = glGetAttribLocation(program, "iUVRect")
         iThickness = glGetAttribLocation(program, "iThickness")
+
+        if (caps().OpenGL30) {
+            var offset = 0L
+            offset = enableAttrib(iRect, 4, offset)
+            offset = enableAttrib(iRadii, 4, offset)
+            offset = enableAttrib(iColor0, 4, offset)
+            offset = enableAttrib(iColor1, 4, offset)
+            offset = enableAttrib(iUVRect, 4, offset)
+            enableAttrib(iThickness, 1, offset)
+            org.lwjgl.opengl.GL30C.glBindVertexArray(0)
+        }
 
 
         atlas = glGenTextures()
@@ -378,13 +387,16 @@ object GLRenderer : Renderer {
         // Instance attribs
         glBindBuffer(GL_ARRAY_BUFFER, instancedVbo)
 
-        var offset = 0L
-        offset = enableAttrib(iRect, 4, offset)
-        offset = enableAttrib(iRadii, 4, offset)
-        offset = enableAttrib(iColor0, 4, offset)
-        offset = enableAttrib(iColor1, 4, offset)
-        offset = enableAttrib(iUVRect, 4, offset)
-        enableAttrib(iThickness, 1, offset)
+        // asm: on VAO the state is stored, so we only need to set it up once
+        if (!caps().OpenGL30) {
+            var offset = 0L
+            offset = enableAttrib(iRect, 4, offset)
+            offset = enableAttrib(iRadii, 4, offset)
+            offset = enableAttrib(iColor0, 4, offset)
+            offset = enableAttrib(iColor1, 4, offset)
+            offset = enableAttrib(iUVRect, 4, offset)
+            enableAttrib(iThickness, 1, offset)
+        }
 
         // Draw all instances
         if (caps().OpenGL31) org.lwjgl.opengl.GL31C.glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, count)

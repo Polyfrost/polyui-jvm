@@ -25,7 +25,6 @@ import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_PRESSED
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.color.asMutable
-import org.polyfrost.polyui.color.toColor
 import org.polyfrost.polyui.color.toHex
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.Inputtable
@@ -41,9 +40,10 @@ fun ColorPicker(color: State<PolyColor.Mutable>, polyUI: PolyUI?, openNow: Boole
     attachedDrawable?.onChange(color, instanceOnly = true) {
         this.color = it
     }
+    val dropdownState = State(if (color.value is PolyColor.Chroma) 1 else 0)
     val p = PopupMenu(
         Group(
-            Dropdown("polyui.color.solid", "polyui.color.chroma", size = 200f by 32f).onChange { index: Int ->
+            Dropdown("polyui.color.solid", "polyui.color.chroma", size = 200f by 32f, state = dropdownState).onChange(dropdownState) { index: Int ->
                 val theColor = color.value
                 when (index) {
                     0 -> {
@@ -131,31 +131,36 @@ fun ColorPicker(color: State<PolyColor.Mutable>, polyUI: PolyUI?, openNow: Boole
     return p
 }
 
-private fun StandardColorTypedOptions(color: State<PolyColor.Mutable>) = Group(
-    Dropdown(
-        "polyui.color.hex",
-        "polyui.color.rgb",
-        padding = 10f,
-        size = 58f by 32f,
-    ).onChange { index: Int ->
-        when (index) {
-            0 -> parent[1] = HexOptions(color)
-            1 -> parent[1] = RGBOptions(color)
-        }
-    },
-    HexOptions(color),
-    Image(
-        "info.svg".image(),
-        size = 18f by 18f,
-    ).padded(0f, 7f),
-    alignment = Align(padEdges = Vec2.ZERO, padBetween = Vec2(12f, 12f))
-).named("StandardColorTypedOptions")
+private fun StandardColorTypedOptions(color: State<PolyColor.Mutable>): Group {
+    val state = State(0)
+    return Group(
+        Dropdown(
+            "polyui.color.hex",
+            "polyui.color.rgb",
+            padding = 10f,
+            size = 58f by 32f,
+            state = state,
+        ).onChange(state) { index: Int ->
+            when (index) {
+                0 -> parent[1] = HexOptions(color)
+                1 -> parent[1] = RGBOptions(color)
+            }
+        },
+        HexOptions(color),
+        Image(
+            "info.svg".image(),
+            size = 18f by 18f,
+        ).padded(0f, 7f),
+        alignment = Align(padEdges = Vec2.ZERO, padBetween = Vec2(12f, 12f))
+    ).named("StandardColorTypedOptions")
+}
 
 private fun ChromaSliderUnit(color: State<PolyColor.Mutable>): Group {
     val time = ((color.value as PolyColor.Chroma).speedNanos / 1_000_000_000L).toFloat()
+    val state = State(time)
     return Group(
         Text("polyui.color.chroma.speed").setPalette { text.secondary },
-        Slider(initialValue = time, max = 5f, length = 180f, ptrSize = 18f, instant = true, min = 0.1f).onChange { value: Float ->
+        Slider(state = state, max = 5f, length = 180f, ptrSize = 18f, instant = true, min = 0.1f).onChange(state) { value: Float ->
             (color.value as? PolyColor.Chroma)?.let {
                 it.speedNanos = (value * 1_000_000_000L).toLong()
                 (parent[2] as Text).text = "${value.toString(dps = 1)} seconds"
@@ -179,33 +184,27 @@ private fun HexOptions(color: State<PolyColor.Mutable>): Group {
             if (dodge) {
                 dodge = false
             } else this.getTextFromBoxedTextInput().text = color.value.toHex(alpha = false)
-        }.onChange { text: String ->
-            dodge = true
-            if (text.isEmpty()) return@onChange false
-            if (text.startsWith('-')) return@onChange true
-            if (text.length > 8) return@onChange true
-            if (text == "#") return@onChange false
-            try {
-                color.value.recolor(text.toColor(color.value.alpha))
-                color.notify()
-                false
-            } catch (_: Exception) {
-                shake(); true
-            }
+//        }.onChange { text: String ->
+//            dodge = true
+//            if (text.isEmpty()) return@onChange false
+//            if (text.startsWith('-')) return@onChange true
+//            if (text.length > 8) return@onChange true
+//            if (text == "#") return@onChange false
+//            try {
+//                color.value.recolor(text.toColor(color.value.alpha))
+//                color.notify()
+//                false
+//            } catch (_: Exception) {
+//                shake(); true
+//            }
         },
         BoxedNumericInput(
-            initialValue = color.value.alpha * 100f,
+            state = color.derive { (it.alpha * 100f) }.listen { color.value.alpha = it / 100f; false },
             post = " % ",
             center = true,
             arrows = false,
             size = Vec2(73f, 32f)
-        ).onChange { it: Float ->
-            color.value.alpha = it / 100f
-            color.notify()
-            false
-        }.onChange(color) {
-            this.getTextFromBoxedTextInput().text = (color.value.alpha * 100f).toInt().toString()
-        },
+        ),
         alignment = Align(padEdges = Vec2.ZERO, padBetween = Vec2(12f, 12f))
     )
 }
@@ -213,44 +212,26 @@ private fun HexOptions(color: State<PolyColor.Mutable>): Group {
 private fun RGBOptions(color: State<PolyColor.Mutable>): Group {
     return Group(
         DraggingNumericTextInput(
-            initialValue = color.value.r.toFloat(),
+            state = color.derive { it.r.toFloat() }.listen { color.value.r = it.toInt(); false },
             pre = "R: ",
             size = Vec2(50f, 32f),
             integral = true,
             max = 255f,
-        ).onChange { it: Int ->
-            color.value.r = it
-            color.notify()
-            false
-        }.onChange(color) {
-            (this[1] as TextInput).text = color.value.r.toString()
-        },
+        ),
         DraggingNumericTextInput(
-            initialValue = color.value.g.toFloat(),
+            state = color.derive { it.g.toFloat() }.listen { color.value.g = it.toInt(); false },
             pre = "G: ",
             size = Vec2(50f, 32f),
             integral = true,
             max = 255f,
-        ).onChange { it: Int ->
-            color.value.g = it
-            color.notify()
-            false
-        }.onChange(color) {
-            (this[1] as TextInput).text = color.value.g.toString()
-        },
+        ),
         DraggingNumericTextInput(
-            initialValue = color.value.b.toFloat(),
+            state = color.derive { it.b.toFloat() }.listen { color.value.b = it.toInt(); false },
             pre = "B: ",
             size = Vec2(50f, 32f),
             integral = true,
             max = 255f,
-        ).onChange { it: Int ->
-            color.value.b = it
-            color.notify()
-            false
-        }.onChange(color) {
-            (this[1] as TextInput).text = color.value.b.toString()
-        },
+        ),
         alignment = Align(padEdges = Vec2.ZERO, padBetween = Vec2(10f, 12f))
     )
 }

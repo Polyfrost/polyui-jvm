@@ -612,6 +612,10 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
     fun addChild(child: Component, index: Int = -1, recalculate: Boolean = true) {
         if (children == null) children = ArrayList()
         val children = this.children ?: throw ConcurrentModificationException("well, this sucks")
+        if (child._parent != null && child._parent !== this) {
+            PolyUI.LOGGER.warn("adding component $child to $this, but it wasn't removed from its previous parent ${child._parent}!")
+            child.parent.removeChild(child, recalculate = false)
+        }
         child.parent = this
         if (children.fastAny { it === child }) throw IllegalStateException("attempted to add the same component twice")
         if (index !in children.indices) children.add(child) else children.add(index, child)
