@@ -206,7 +206,7 @@ fun <T, S : Inputtable> S.onChange(state: State<T>, instanceOnly: Boolean = fals
  *
  * @since 1.7.2
  */
-fun <S : Inputtable> S.setSliderValue(value: Float, min: Float = 0f, max: Float = 100f, dispatch: Boolean = true): S {
+fun <S : Inputtable> S.setSliderValue(value: Float, min: Float = 0f, max: Float = 100f): S {
     val v = value.coerceIn(min, max)
     val bar = this[0]
     val ptr = this[1]

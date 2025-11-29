@@ -81,10 +81,11 @@ fun <S : Inputtable> S.addHoverInfo(vararg drawables: Drawable?, size: Vec2 = Ve
  *
  * @since 1.5.0
  */
-fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, integral: Boolean = false, ignoreSuffix: String? = null): State<Float> {
-    val state = State(min)
-    var dodge = false
+fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, initial: Float = min, integral: Boolean = false, ignoreSuffix: String? = null): State<Float> {
+    val state = State(initial)
+    var lock = false
     theText.listen {
+        if (lock) return@listen false
         val value = if (ignoreSuffix != null) it.removeSuffix(ignoreSuffix) else it
         if (value.isEmpty()) return@listen false
         // don't fail when the user types a minus sign (and minus values are allowed)
@@ -102,15 +103,16 @@ fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, integral: Bool
             // fail when not a number
             shake(); return@listen true
         }
-        dodge = true
-        state.set(v)
+        lock = true
+        val ret = state.set(v)
+        lock = false
+        ret
     }
     state.listen {
-        if (dodge) {
-            dodge = false
-            return@listen false
-        }
+        if (lock) return@listen false
+        lock = true
         text = "${if (integral) it.toInt() else it.toString(dps = 2)}${ignoreSuffix ?: ""}"
+        lock = false
         false
     }
 

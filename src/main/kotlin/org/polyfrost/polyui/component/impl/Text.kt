@@ -78,7 +78,11 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
     // asm: using Any object as before setup we will put the Translator.Text in here to be overwritten by the String state after translation.
     @PublishedApi
     @ApiStatus.Internal
-    internal var _theText: Any = if (text is Translator.Text.Dont) State(text.toString()) else text
+    internal var _theText: Any = if (text is Translator.Text.Dont)
+        State(text.toString()).listen {
+            if (initialized) updateTextBounds(renderer, it)
+        }
+    else text
         private set
 
 
@@ -236,7 +240,7 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         palette = polyUI.colors.text.primary
         // asm: replace the text with the translated text, if available
         val theText = _theText
-        if(theText !is State<*>) {
+        if (theText !is State<*>) {
             this._theText = State(
                 when (theText) {
                     is Translator.Text.Formatted -> {

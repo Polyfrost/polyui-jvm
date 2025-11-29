@@ -37,7 +37,7 @@ open class State<T>(value: T) {
      * @return `true` if the change was cancelled by a listener, `false` otherwise.
      */
     fun set(value: T): Boolean {
-        if (this.v !== value) {
+        if (this.v != value) {
             if (instanceChangeOnlyListener?.invoke(value) == true) return true
             if (notifyInternal(value)) return true
             v = value
@@ -100,33 +100,22 @@ open class State<T>(value: T) {
     }
 
     /**
-     * Attach this state to be a derived state of another [state] using the given [map] function.
+     * Create a new derived state from this state using the given [map] function.
      */
-    fun <U> makeDerivativeOf(state: State<U>, map: (U) -> T): State<T> {
-        this.set(map(state.value))
-        val weak = WeakReference(this)
-        var listener: ((U) -> Boolean)? = null
+    fun <U> derive(map: (T) -> U): State<U> {
+        val out = State(map(v))
+        val ref = WeakReference(out)
+
+        var listener: ((T) -> Boolean)? = null
+
         listener = {
-            weak.get()?.set(map(state.value)) ?: run {
-                state.removeListener(listener!!)
+            ref.get()?.set(map(it)) ?: run {
+                this.removeListener(listener!!)
                 false
             }
         }
-        state.listen(listener)
-        return this
-    }
-
-    /**
-     * Attach this state to be a derived state of another [state] using the given [map] function.
-     * If this state changes, the [unmap] function will be used to update the original state.
-     */
-    fun <U> makeDerivativeOf(state: State<U>, map: (U) -> T, unmap: (T) -> U): State<T> {
-        // asm: no need to wrap the "unmap" in a weak reference, as if this is a derivative state,
-        // then it should be alive for as long as the original state is alive (so if the original state is unreferenced, we should be too)
-        this.makeDerivativeOf(state, map).listen {
-            state.set(unmap(it))
-        }
-        return this
+        this.listen(listener)
+        return out
     }
 
     /**
@@ -136,15 +125,25 @@ open class State<T>(value: T) {
         this.set(other.value)
         val weak = WeakReference(this)
         var listener: ((T) -> Boolean)? = null
-        listener = {
-            weak.get()?.set(other.value) ?: run {
+        var lock = false
+
+        listener = listener@{
+            if (lock) return@listener false
+            lock = true
+            val ret = weak.get()?.set(it) ?: run {
                 other.removeListener(listener!!)
                 false
             }
+            lock = false
+            ret
         }
         other.listen(listener)
         this.listen {
-            other.set(this.value)
+            if (lock) return@listen false
+            lock = true
+            val ret = other.set(this.value)
+            lock = false
+            ret
         }
         return this
     }

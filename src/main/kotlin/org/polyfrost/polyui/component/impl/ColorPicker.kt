@@ -199,18 +199,12 @@ private fun HexOptions(color: State<PolyColor.Mutable>): Group {
 //            }
         },
         BoxedNumericInput(
-            state = State(color.value.alpha),
+            state = color.derive { (it.alpha * 100f) }.listen { color.value.alpha = it / 100f; false },
             post = " % ",
             center = true,
             arrows = false,
             size = Vec2(73f, 32f)
-        )//.onChange { it: Float ->
-//            color.value.alpha = it / 100f
-//            color.notify()
-//            false
-        .onChange(color) {
-            this.getTextFromBoxedTextInput().text = (color.value.alpha * 100f).toInt().toString()
-        },
+        ),
         alignment = Align(padEdges = Vec2.ZERO, padBetween = Vec2(12f, 12f))
     )
 }
@@ -218,44 +212,26 @@ private fun HexOptions(color: State<PolyColor.Mutable>): Group {
 private fun RGBOptions(color: State<PolyColor.Mutable>): Group {
     return Group(
         DraggingNumericTextInput(
-            initialValue = color.value.r.toFloat(),
+            state = color.derive { it.r.toFloat() }.listen { color.value.r = it.toInt(); false },
             pre = "R: ",
             size = Vec2(50f, 32f),
             integral = true,
             max = 255f,
-        )//.onChange { it: Int ->
-//            color.value.r = it
-//            color.notify()
-//            false
-        .onChange(color) {
-            (this[1] as TextInput).text = color.value.r.toString()
-        },
+        ),
         DraggingNumericTextInput(
-            initialValue = color.value.g.toFloat(),
+            state = color.derive { it.g.toFloat() }.listen { color.value.g = it.toInt(); false },
             pre = "G: ",
             size = Vec2(50f, 32f),
             integral = true,
             max = 255f,
-        )//.onChange { it: Int ->
-//            color.value.g = it
-//            color.notify()
-//            false
-        .onChange(color) {
-            (this[1] as TextInput).text = color.value.g.toString()
-        },
+        ),
         DraggingNumericTextInput(
-            initialValue = color.value.b.toFloat(),
+            state = color.derive { it.b.toFloat() }.listen { color.value.b = it.toInt(); false },
             pre = "B: ",
             size = Vec2(50f, 32f),
             integral = true,
             max = 255f,
-        )//.onChange { it: Int ->
-//            color.value.b = it
-//            color.notify()
-//            false
-        .onChange(color) {
-            (this[1] as TextInput).text = color.value.b.toString()
-        },
+        ),
         alignment = Align(padEdges = Vec2.ZERO, padBetween = Vec2(10f, 12f))
     )
 }
