@@ -33,7 +33,7 @@ object FlexLayoutController : LayoutController {
     override fun layout(component: Component) {
         val children = component.children
         val polyUI = component.polyUI
-        val iKnowHowBigIAm = component.createdWithSetSize
+        val thisHasSetSize = component.createdWithSetSize
         // step 1: query if we know our size. if we don't try calculateSize(), if not we are going to calculate it based on our children.
         if (!component.sizeValid) {
             val out = component.calculateSize()
@@ -63,6 +63,8 @@ object FlexLayoutController : LayoutController {
         val crs = if (main == 0) 1 else 0
 
         // asm: if we have already been positioned, we need to scale the padding
+        // this is because when we have been positioned already, all our children (and ourselves)
+        // will be smaller, so we need to adjust the padding to match the scaling that has happened.
         val scaleMain = if (component.positioned) polyUI.size[main] / polyUI.iSize[main] else 1f
         val scaleCrs = if (component.positioned) polyUI.size[crs] / polyUI.iSize[crs] else 1f
         val mainPadEdges = align.padEdges[main] * scaleMain
@@ -75,12 +77,12 @@ object FlexLayoutController : LayoutController {
 
         if (sizeWithoutIgnored == 1) {
             // we only have 1 child, so as a fast path, we can set our size
-            val child = children.first()
+            val child = children.first { !it.layoutIgnored }
             child._parent = component
             val ipad = child.padding
             if (!child.sizeValid) {
                 // our child might not know how big it is, but as we know how big we are, we can suggest a size with confidence.
-                val suggestedSize = if (iKnowHowBigIAm) {
+                val suggestedSize = if (thisHasSetSize) {
                     val mySize = component.visibleSize
                     Vec2(
                         mySize[main] - (ipad[main] + ipad[main + 2] + mainPadEdges * 2f),
@@ -121,11 +123,13 @@ object FlexLayoutController : LayoutController {
         }
 
         // OK, we have atleast 2 children, so we need to do a proper layout.
-        val rows = ArrayList<WrappingRow>(when(align.wrap) {
-            Align.Wrap.NEVER -> 1
-            Align.Wrap.ALWAYS -> sizeWithoutIgnored
-            Align.Wrap.AUTO -> 5
-        })
+        val rows = ArrayList<WrappingRow>(
+            when (align.wrap) {
+                Align.Wrap.NEVER -> 1
+                Align.Wrap.ALWAYS -> sizeWithoutIgnored
+                Align.Wrap.AUTO -> 5
+            }
+        )
 
         // step 1: lets calculate the maximum size of the main axis, our wrap capacity.
         val wrapCap = component.visibleSize[main].let { mySize ->
@@ -199,7 +203,7 @@ object FlexLayoutController : LayoutController {
         val gap = when (align.cross) {
             Align.Content.SpaceBetween -> {
                 val totalCross = maxCross - (rows.size - 1) * crossPadBetween
-                (mySize[crs] - totalCross) / (rows.size - 1)
+                (mySize[crs] - totalCross) / ((rows.size - 1).coerceAtLeast(1))
             }
 
             Align.Content.SpaceEvenly -> {
@@ -236,7 +240,7 @@ object FlexLayoutController : LayoutController {
     }
 
     private fun handleInvalidSize(child: Component, suggestedSize: Vec2, polyUI: PolyUI) {
-        if (suggestedSize != Vec2.ZERO) {
+        if (suggestedSize.isPositive) {
             if (child is Scrollable && child.hasVisibleSize) child.visibleSize = suggestedSize
             child.size = suggestedSize
         }
@@ -261,8 +265,8 @@ object FlexLayoutController : LayoutController {
             Align.Content.SpaceBetween, Align.Content.SpaceEvenly -> mSpace
         }
         val gap = when (align.main) {
-            Align.Content.SpaceBetween -> (maxMain - rowMain) / (row.size - 1)
-            Align.Content.SpaceEvenly -> (maxMain - rowMain) / (row.size + 1)
+            Align.Content.SpaceBetween -> if (row.size <= 1) 0f else ((maxMain - rowMain) / (row.size - 1)).coerceAtLeast(0f)
+            Align.Content.SpaceEvenly -> ((maxMain - rowMain) / (row.size + 1)).coerceAtLeast(0f)
             else -> 0f
         }
         var current = minMain + when (align.main) {

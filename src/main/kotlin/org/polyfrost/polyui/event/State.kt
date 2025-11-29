@@ -17,13 +17,12 @@ import java.lang.ref.WeakReference
  * @since 1.12.0
  */
 open class State<T>(value: T) {
-    var value: T = value
+    private var v: T = value
+
+    var value: T
+        get() = v
         set(value) {
-            if (field !== value) {
-                if (instanceChangeOnlyListener?.invoke(value) == true) return
-                if (notifyInternal(value)) return
-                field = value
-            }
+            set(value)
         }
 
     private var firstListener: ((T) -> Boolean)? = null
@@ -31,7 +30,20 @@ open class State<T>(value: T) {
     private var extraListeners: ArrayList<(T) -> Boolean>? = null
     private var instanceChangeOnlyListener: ((T) -> Boolean)? = null
 
-    fun notify() = notifyInternal(value)
+    fun notify() = notifyInternal(v)
+
+    /**
+     * Set the value of this state, notifying listeners if the instance has changed.
+     * @return `true` if the change was cancelled by a listener, `false` otherwise.
+     */
+    fun set(value: T): Boolean {
+        if (this.v !== value) {
+            if (instanceChangeOnlyListener?.invoke(value) == true) return true
+            if (notifyInternal(value)) return true
+            v = value
+        }
+        return false
+    }
 
     @MustBeInvokedByOverriders
     protected open fun notifyInternal(value: T): Boolean {
@@ -87,6 +99,56 @@ open class State<T>(value: T) {
         return this
     }
 
+    /**
+     * Attach this state to be a derived state of another [state] using the given [map] function.
+     */
+    fun <U> makeDerivativeOf(state: State<U>, map: (U) -> T): State<T> {
+        this.set(map(state.value))
+        val weak = WeakReference(this)
+        var listener: ((U) -> Boolean)? = null
+        listener = {
+            weak.get()?.set(map(state.value)) ?: run {
+                state.removeListener(listener!!)
+                false
+            }
+        }
+        state.listen(listener)
+        return this
+    }
+
+    /**
+     * Attach this state to be a derived state of another [state] using the given [map] function.
+     * If this state changes, the [unmap] function will be used to update the original state.
+     */
+    fun <U> makeDerivativeOf(state: State<U>, map: (U) -> T, unmap: (T) -> U): State<T> {
+        // asm: no need to wrap the "unmap" in a weak reference, as if this is a derivative state,
+        // then it should be alive for as long as the original state is alive (so if the original state is unreferenced, we should be too)
+        this.makeDerivativeOf(state, map).listen {
+            state.set(unmap(it))
+        }
+        return this
+    }
+
+    /**
+     * Make this state a direct copy of another [other] state, keeping both in sync.
+     */
+    fun copyFrom(other: State<T>): State<T> {
+        this.set(other.value)
+        val weak = WeakReference(this)
+        var listener: ((T) -> Boolean)? = null
+        listener = {
+            weak.get()?.set(other.value) ?: run {
+                other.removeListener(listener!!)
+                false
+            }
+        }
+        other.listen(listener)
+        this.listen {
+            other.set(this.value)
+        }
+        return this
+    }
+
     companion object {
         /**
          * Map this state to another state using the given [map] function.
@@ -97,17 +159,12 @@ open class State<T>(value: T) {
          */
         @JvmStatic
         fun <T, U> State<T>.map(map: (T) -> U): State<U> {
-            val out = State(map(value))
+            val out = State(map(v))
             // weak reference is used as this would otherwise be a memory leak
             val ref = WeakReference(out)
             var listener: ((T) -> Boolean)? = null
             listener = {
-                ref.get()?.let { out ->
-                    val old = out.value
-                    out.value = map(it)
-                    // asm: return true to cancel if the value didn't change
-                    old == out.value
-                } ?: run {
+                ref.get()?.set(map(it)) ?: run {
                     this.removeListener(listener!!)
                     false
                 }

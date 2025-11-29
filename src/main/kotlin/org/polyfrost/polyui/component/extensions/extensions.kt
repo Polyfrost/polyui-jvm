@@ -28,6 +28,7 @@ import org.polyfrost.polyui.component.Scrollable
 import org.polyfrost.polyui.component.impl.PopupMenu
 import org.polyfrost.polyui.component.impl.TextInput
 import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.event.State
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.Clock
 import org.polyfrost.polyui.utils.fastEach
@@ -80,28 +81,39 @@ fun <S : Inputtable> S.addHoverInfo(vararg drawables: Drawable?, size: Vec2 = Ve
  *
  * @since 1.5.0
  */
-fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, integral: Boolean = false, acceptor: Inputtable = this, ignoreSuffix: String? = null): S {
-    onChange { v: String ->
-        val value = if (ignoreSuffix != null) v.removeSuffix(ignoreSuffix) else v
-        if (value.isEmpty()) return@onChange false
+fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, integral: Boolean = false, ignoreSuffix: String? = null): State<Float> {
+    val state = State(min)
+    var dodge = false
+    theText.listen {
+        val value = if (ignoreSuffix != null) it.removeSuffix(ignoreSuffix) else it
+        if (value.isEmpty()) return@listen false
         // don't fail when the user types a minus sign (and minus values are allowed)
         if (value == "-") {
-            if (min < 0f) return@onChange false
-            else return@onChange true
+            if (min < 0f) return@listen false
+            else return@listen true
         }
 
-        if (integral && value.contains('.')) return@onChange true
+        if (integral && value.contains('.')) return@listen true
         // silently cancel if they try and type multiple zeroes
-        if (value == "-00") return@onChange true
-        if (value == "00") return@onChange true
+        if (value == "-00") return@listen true
+        if (value == "00") return@listen true
         val v = value.toFloatOrNull()?.coerceIn(min, max)
         if(v == null) {
             // fail when not a number
-            shake(); return@onChange true
+            shake(); return@listen true
         }
-        acceptor.accept(Event.Change.Number(if (integral) v.toInt() else v))
+        dodge = true
+        state.set(v)
+    }
+    state.listen {
+        if (dodge) {
+            dodge = false
+            return@listen false
+        }
+        text = "${if (integral) it.toInt() else it.toString(dps = 2)}${ignoreSuffix ?: ""}"
         false
     }
+
     on(Event.Focused.Lost) {
         val txt = if(ignoreSuffix != null) text.removeSuffix(ignoreSuffix) else text
         val value = txt.toFloatOrNull()
@@ -114,7 +126,7 @@ fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, integral: Bool
         }
         false
     }
-    return this
+    return state
 }
 
 

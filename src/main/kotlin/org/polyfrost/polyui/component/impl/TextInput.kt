@@ -168,7 +168,8 @@ open class TextInput(
                     clearSelection()
                 }
                 val tl = text.length
-                text = text.substring(0, caret) + event.codepoint.codepointToString() + text.substring(caret)
+                if(caret == text.length) text += event.codepoint.codepointToString()
+                else text = text.substring(0, caret) + event.codepoint.codepointToString() + text.substring(caret)
                 if (text.length != tl) caret++
                 caretPos()
                 selections()
