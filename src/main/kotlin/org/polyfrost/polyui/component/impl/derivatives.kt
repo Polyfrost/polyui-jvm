@@ -271,7 +271,7 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, siz
  * Note that slider change events cannot be cancelled.
  */
 @JvmName("Slider")
-fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, state: State<out Number> = State(min), ptrSize: Float = 24f, length: Float = (max - min) * 2f, steps: Int = 0, integral: Boolean = false, instant: Boolean = false): Drawable {
+fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, state: State<out Number> = State(min), ptrSize: Float = 24f, length: Float = (max - min) * 2f, steps: Int = 0, instant: Boolean = false): Drawable {
     require(state.value.toFloat() in min..max) { "Initial slider state value ${state.value} is out of bounds ($min to $max)" }
     val barHeight = ptrSize / 2.8f
     val size = Vec2(length + ptrSize, ptrSize)
@@ -296,9 +296,7 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, state: Stat
         this.x = this.x.coerceIn(bar.x - half, bar.x + bar.width - half)
         bar[0].width = x - bar.x + half
         val progress = ((this.x + half - bar.x) / bar.width).coerceIn(0f, 1f)
-        val value = min + (max - min) * progress
-        if (integral) value.toInt().toFloat()
-        else value
+        min + (max - min) * progress
     }
     val animation = Animations.Default.create(0.15.seconds, 1f, 0f)
 
@@ -459,7 +457,7 @@ fun BoxedNumericInput(
 ) = BoxedTextInput(
     image, pre,
     placeholder = max.toString(dps = 2),
-    value = if (state.isIntegral()) state.value.toInt().toString() else state.value.toFloat().toString(dps = 2),
+    value = state.value.toFloat().toString(dps = 2),
     fontSize, center, post, size
 ).also {
     require(state.value.toFloat() in min..max) { "initial value ${state.value} is out of range for numeric text input of $min..$max" }
