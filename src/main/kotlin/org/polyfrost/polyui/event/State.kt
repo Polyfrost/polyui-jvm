@@ -207,34 +207,4 @@ open class State<T>(value: T) {
         }
         return out
     }
-
-    /**
-     * Make this state a direct copy of another [other] state, keeping both in sync.
-     */
-    fun copyFrom(other: State<T>): State<T> {
-        this.set(other.value)
-        val weak = WeakReference(this)
-        var listener: ((T) -> Boolean)? = null
-        var lock = false
-
-        listener = listener@{
-            if (lock) return@listener false
-            lock = true
-            val ret = weak.get()?.set(it) ?: run {
-                other.removeListener(listener!!)
-                false
-            }
-            lock = false
-            ret
-        }
-        other.listen(listener)
-        this.listen {
-            if (lock) return@listen false
-            lock = true
-            val ret = other.set(this.value)
-            lock = false
-            ret
-        }
-        return this
-    }
 }

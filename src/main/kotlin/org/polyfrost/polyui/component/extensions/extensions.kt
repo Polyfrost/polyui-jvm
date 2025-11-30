@@ -30,9 +30,7 @@ import org.polyfrost.polyui.component.impl.TextInput
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.event.State
 import org.polyfrost.polyui.unit.*
-import org.polyfrost.polyui.utils.Clock
-import org.polyfrost.polyui.utils.fastEach
-import org.polyfrost.polyui.utils.toString
+import org.polyfrost.polyui.utils.*
 import kotlin.math.abs
 
 
@@ -75,15 +73,13 @@ fun <S : Inputtable> S.addHoverInfo(vararg drawables: Drawable?, size: Vec2 = Ve
 }
 
 /**
- * Make this [TextInput] only accept numbers between [min] and [max]. It will then dispatch a [Event.Change.Number] event.
- *
- * If [integral] is true, it will only accept integers.
+ * Make this [TextInput] only accept numbers between [min] and [max].
  *
  * @since 1.5.0
  */
-fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, initial: Float = min, integral: Boolean = false, ignoreSuffix: String? = null): State<Float> {
-    val state = State(initial)
+fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, state: State<out Number>, ignoreSuffix: String? = null) {
     var lock = false
+    val integral = state.isIntegral()
     theText.listen {
         if (lock) return@listen false
         val value = if (ignoreSuffix != null) it.removeSuffix(ignoreSuffix) else it
@@ -104,14 +100,14 @@ fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, initial: Float
             shake(); return@listen true
         }
         lock = true
-        val ret = state.set(v)
+        val ret = state.setNumber(v)
         lock = false
         ret
     }
     state.listen {
         if (lock) return@listen false
         lock = true
-        text = "${if (integral) it.toInt() else it.toString(dps = 2)}${ignoreSuffix ?: ""}"
+        text = "${if (integral) it.toInt() else it.toFloat().toString(dps = 2)}${ignoreSuffix ?: ""}"
         lock = false
         false
     }
@@ -128,7 +124,6 @@ fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, initial: Float
         }
         false
     }
-    return state
 }
 
 

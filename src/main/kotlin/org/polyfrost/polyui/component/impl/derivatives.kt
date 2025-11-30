@@ -41,10 +41,7 @@ import org.polyfrost.polyui.operations.Move
 import org.polyfrost.polyui.operations.Resize
 import org.polyfrost.polyui.operations.Rotate
 import org.polyfrost.polyui.unit.*
-import org.polyfrost.polyui.utils.digits
-import org.polyfrost.polyui.utils.image
-import org.polyfrost.polyui.utils.mapToArray
-import org.polyfrost.polyui.utils.toString
+import org.polyfrost.polyui.utils.*
 import kotlin.experimental.or
 import kotlin.math.PI
 import kotlin.math.sign
@@ -274,8 +271,8 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, siz
  * Note that slider change events cannot be cancelled.
  */
 @JvmName("Slider")
-fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, state: State<Float> = State(min), ptrSize: Float = 24f, length: Float = (max - min) * 2f, steps: Int = 0, integral: Boolean = false, instant: Boolean = false): Drawable {
-    state.value = state.value.coerceIn(min, max)
+fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, state: State<out Number> = State(min), ptrSize: Float = 24f, length: Float = (max - min) * 2f, steps: Int = 0, integral: Boolean = false, instant: Boolean = false): Drawable {
+    require(state.value.toFloat() in min..max) { "Initial slider state value ${state.value} is out of bounds ($min to $max)" }
     val barHeight = ptrSize / 2.8f
     val size = Vec2(length + ptrSize, ptrSize)
     val nsteps = steps + 1
@@ -329,9 +326,9 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, state: Stat
         Block(
             size = ptrSize.vec,
         ).radius(ptrSize / 2f).setPalette { text.primary }.withHoverStates().draggable(withY = false).ignoreLayout().onDrag {
-            if (instant) state.set(slide())
+            if (instant) state.setNumber(slide())
         }.onDragEnd {
-            state.set(slide())
+            state.setNumber(slide())
         }.events {
             val op = object : ComponentOp.Animatable<Block>(self, animation) {
                 override fun apply(value: Float) {}
@@ -370,7 +367,7 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, state: Stat
                 this.polyUI.inputManager.recalculate()
                 inputState = INPUT_PRESSED
                 accept(it)
-                state.set(slide())
+                state.setNumber(slide())
             }
             Event.Mouse.Companion.Released then {
                 animation.from = animation.to
@@ -384,11 +381,11 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, state: Stat
         alignment = Align(Align.Content.Center, pad = Vec2.ZERO),
     ).afterInit {
         @Suppress("DEPRECATION")
-        setSliderValue(state.value, min, max)
+        setSliderValue(state.value.toFloat(), min, max)
     }.apply {
         state.weaklyListen(this) {
             @Suppress("DEPRECATION")
-            setSliderValue(it, min, max); false
+            setSliderValue(it.toFloat(), min, max); false
         }
     }.namedId("Slider")
 }
@@ -423,7 +420,7 @@ fun BoxedTextInput(
     if (image != null) Image(image).padded(6f, 0f, 0f, 0f) else null,
     if (pre != null) Text(pre).padded(6f, 0f, 0f, 0f) else null,
     Group(
-        when(value) {
+        when (value) {
             is String -> TextInput(placeholder = placeholder, text = value, fontSize = fontSize)
             is State<*> -> TextInput(placeholder = placeholder, text = value as State<String>, fontSize = fontSize)
             else -> throw IllegalArgumentException("initialValue must be a String or a State<String>")
@@ -452,9 +449,8 @@ fun BoxedNumericInput(
     pre: String? = null,
     min: Float = 0f,
     max: Float = 100f,
-    state: State<Float> = State(min),
+    state: State<out Number> = State(min),
     step: Float = 1f,
-    integral: Boolean = false,
     fontSize: Float = 12f,
     center: Boolean = false,
     post: String? = null,
@@ -462,27 +458,26 @@ fun BoxedNumericInput(
     size: Vec2 = Vec2.ZERO,
 ) = BoxedTextInput(
     image, pre,
-    placeholder = "${if (integral) max.toInt() else max.toString(dps = 2)}",
-    value = "${if (integral) state.value.toInt() else state.value.toString(dps = 2)}",
+    placeholder = max.toString(dps = 2),
+    value = if (state.isIntegral()) state.value.toInt().toString() else state.value.toFloat().toString(dps = 2),
     fontSize, center, post, size
 ).also {
-    require(state.value in min..max) { "initial value ${state.value} is out of range for numeric text input of $min..$max" }
+    require(state.value.toFloat() in min..max) { "initial value ${state.value} is out of range for numeric text input of $min..$max" }
     val text = it.getTextFromBoxedTextInput()
-    val theState = text.numeric(min, max, state.value, integral)
-    state.copyFrom(theState)
+    text.numeric(min, max, state)
     if (arrows) {
         it.children?.let { children ->
             val arrowsUnit = Group(
                 Image("polyui/chevron-down.svg".image(), size = Vec2(14f, 14f)).onClick { _ ->
-                    theState.set((theState.value + step).coerceIn(min, max))
+                    state.setNumber((state.value.toFloat() + step).coerceIn(min, max))
                 }.withHoverStates().also { it.rotation = PI },
                 Image("polyui/chevron-down.svg".image(), size = Vec2(14f, 14f)).onClick { _ ->
-                    theState.set((theState.value - step).coerceIn(min, max))
+                    state.setNumber((state.value.toFloat() - step).coerceIn(min, max))
                 }.withHoverStates(),
                 alignment = Align(main = Align.Content.Center, mode = Align.Mode.Vertical, pad = Vec2(1f, 0f)),
                 size = Vec2(0f, 32f)
             ).onScroll { (_, y) ->
-                theState.set((theState.value + sign(y) * step).coerceIn(min, max))
+                state.setNumber((state.value.toFloat() + sign(y) * step).coerceIn(min, max))
             }
             val last = children.last()
             if (last is Block) {
@@ -514,14 +509,13 @@ fun DraggingNumericTextInput(
     pre: String? = null,
     min: Float = 0f,
     max: Float = 100f,
-    state: State<Float> = State(min),
+    state: State<out Number> = State(min),
     step: Float = 1f,
-    integral: Boolean = false,
     fontSize: Float = 12f,
     suffix: String? = null,
     size: Vec2 = Vec2.ZERO
 ): Block {
-    require(state.value in min..max) { "initial value ${state.value} is out of range for numeric text input of $min..$max" }
+    require(state.value.toFloat() in min..max) { "initial value ${state.value} is out of range for numeric text input of $min..$max" }
 
     val pre = if (icon != null) Image(icon) else if (pre != null) Text(pre, fontSize = fontSize) else throw IllegalArgumentException("Either icon or pre text must be provided for DraggingNumericTextInput")
     var prevX = 0f
@@ -541,7 +535,7 @@ fun DraggingNumericTextInput(
     if (suffix != null) pre.onDragEnd {
         (parent[1] as TextInput).text += suffix
     }
-    val maxDigits = max.toInt().digits
+    val maxDigits = if (state.isIntegral()) max.toInt().digits else Int.MAX_VALUE
     val out = Block(
         alignment = Align(cross = Align.Content.Center, main = Align.Content.SpaceBetween, wrap = Align.Wrap.NEVER),
         size = size
@@ -551,12 +545,11 @@ fun DraggingNumericTextInput(
     out.addChild(
         pre,
         TextInput(
-            text = if (state.value == 0f) "" else if (suffix != null) "${state.value.toString(dps = 2)}$suffix" else state.value.toString(dps = 2),
+            text = if (state.value == 0f) "" else if (suffix != null) "${state.value.toFloat().toString(dps = 2)}$suffix" else state.value.toFloat().toString(dps = 2),
             placeholder = if (suffix != null) "${max.toString(dps = 2)}$suffix" else max.toString(dps = 2),
             fontSize = fontSize
         ).apply {
-            val theState = this.numeric(min = min, max = max, integral = integral, ignoreSuffix = suffix)
-            state.copyFrom(theState)
+            this.numeric(min = min, max = max, state = state, ignoreSuffix = suffix)
             if (suffix != null) {
                 onFocusGained {
                     this.text = this.text.removeSuffix(suffix)
@@ -566,7 +559,7 @@ fun DraggingNumericTextInput(
                 }
             }
             theText.listen {
-                if (integral && it.length > maxDigits) {
+                if (it.length > maxDigits) {
                     shake(); return@listen true
                 }
                 false

@@ -26,6 +26,7 @@ package org.polyfrost.polyui.utils
 
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.data.PolyImage
+import org.polyfrost.polyui.event.State
 import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.renderer.Window
 import org.polyfrost.polyui.unit.Vec2
@@ -71,6 +72,22 @@ fun Int.gcd(b: Int): Int {
 fun Int.isBmpCodePoint() = Character.isBmpCodePoint(this)
 
 fun Int.codepointToString(): String = if (Character.isBmpCodePoint(this)) this.toChar().toString() else String(Character.toChars(this))
+
+fun State<out Number>.isIntegral() = value is Byte || value is Short || value is Int || value is Long
+
+fun State<out Number>.setNumber(value: Float): Boolean {
+    @Suppress("UNCHECKED_CAST")
+    this as State<Number>
+    return when (this.value) {
+        is Byte -> this.set(value.toInt())
+        is Short -> this.set(value.toInt().toShort())
+        is Int -> this.set(value.toInt())
+        is Long -> this.set(value.toLong())
+        is Float -> this.set(value)
+        is Double -> this.set(value.toDouble())
+        else -> throw IllegalStateException("Unsupported number type: ${this.value.javaClass.name}?")
+    }
+}
 
 /**
  * Get an enum constant by its name, or `null` if [name] is `null`; or does not match any of this enum's constants.

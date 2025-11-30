@@ -204,24 +204,21 @@ private fun HexOptions(color: State<PolyColor.Mutable>): Group {
 private fun RGBOptions(color: State<PolyColor.Mutable>): Group {
     return Group(
         DraggingNumericTextInput(
-            state = color.derive({ it.r.toFloat() }, setter = { r = it.toInt() }),
+            state = color.derive(PolyColor::r),
             pre = "R: ",
             size = Vec2(50f, 32f),
-            integral = true,
             max = 255f,
         ),
         DraggingNumericTextInput(
-            state = color.derive({ it.g.toFloat() }, setter = { g = it.toInt() }),
+            state = color.derive(PolyColor::g),
             pre = "G: ",
             size = Vec2(50f, 32f),
-            integral = true,
             max = 255f,
         ),
         DraggingNumericTextInput(
-            state = color.derive({ it.b.toFloat() }, setter = { b = it.toInt() }),
+            state = color.derive(PolyColor::b),
             pre = "B: ",
             size = Vec2(50f, 32f),
-            integral = true,
             max = 255f,
         ),
         alignment = Align(padEdges = Vec2.ZERO, padBetween = Vec2(10f, 12f))
