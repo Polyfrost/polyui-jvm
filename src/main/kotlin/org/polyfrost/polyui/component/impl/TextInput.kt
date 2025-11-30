@@ -28,6 +28,7 @@ import org.polyfrost.polyui.component.extensions.ensureLargerThan
 import org.polyfrost.polyui.data.Cursor
 import org.polyfrost.polyui.data.Font
 import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.event.State
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.input.Translator
@@ -38,8 +39,8 @@ import org.polyfrost.polyui.unit.Vec4
 import org.polyfrost.polyui.utils.*
 import kotlin.math.max
 
-open class TextInput(
-    text: String = "",
+open class TextInput private constructor(
+    text: Any,
     placeholder: String = "polyui.textinput.placeholder",
     font: Font? = null,
     fontSize: Float = 12f,
@@ -47,7 +48,29 @@ open class TextInput(
     alignment: Align = AlignDefault,
     visibleSize: Vec2 = Vec2.ZERO,
     vararg children: Component?,
-) : Text(text.translated().dont(), font, fontSize, at, alignment, visibleSize, true, false, *children) {
+) : Text(text, font, fontSize, at, alignment, visibleSize, true, false, *children) {
+
+    constructor(
+        text: State<String>,
+        placeholder: String = "polyui.textinput.placeholder",
+        font: Font? = null,
+        fontSize: Float = 12f,
+        at: Vec2 = Vec2.ZERO,
+        alignment: Align = AlignDefault,
+        visibleSize: Vec2 = Vec2.ZERO,
+        vararg children: Component?
+    ) : this(text as Any, placeholder, font, fontSize, at, alignment, visibleSize, *children)
+
+    constructor(
+        text: String = "",
+        placeholder: String = "polyui.textinput.placeholder",
+        font: Font? = null,
+        fontSize: Float = 12f,
+        at: Vec2 = Vec2.ZERO,
+        alignment: Align = AlignDefault,
+        visibleSize: Vec2 = Vec2.ZERO,
+        vararg children: Component?
+    ) : this(text.translated().dont() as Any, placeholder, font, fontSize, at, alignment, visibleSize, *children)
 
     private val selectBoxes = ArrayList<Vec4>(2)
 
@@ -57,7 +80,7 @@ open class TextInput(
 
     private var cposy = 0f
 
-    private var caret = text.length
+    private var caret = if (text is String) text.length else if (text is State<*>) (text.value as String).length else 0
         set(value) {
             field = value
             if (!selecting) select = value
@@ -168,7 +191,8 @@ open class TextInput(
                     clearSelection()
                 }
                 val tl = text.length
-                text = text.substring(0, caret) + event.codepoint.codepointToString() + text.substring(caret)
+                if (caret == text.length) text += event.codepoint.codepointToString()
+                else text = text.substring(0, caret) + event.codepoint.codepointToString() + text.substring(caret)
                 if (text.length != tl) caret++
                 caretPos()
                 selections()

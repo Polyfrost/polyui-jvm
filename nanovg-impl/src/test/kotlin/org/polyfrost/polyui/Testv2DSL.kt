@@ -40,7 +40,6 @@ import org.polyfrost.polyui.renderer.impl.NoOpWindow
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
-import org.polyfrost.polyui.unit.fix
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.open
 import kotlin.random.Random
@@ -72,14 +71,9 @@ fun main() {
         Checkbox(size = 25f).add()
         Checkbox(size = 16f).add()
         Checkbox(size = 40f).add()
-        val slider = Slider(length = 200f, min = 50f, max = 120f, instant = true, initialValue = 67f)
-        val boxedNumericInput = BoxedNumericInput(min = 50f, max = 120f, size = 80f by 32f, post = "Hi", initialValue = 67f, arrows = false).onChange { value: Float ->
-            slider.setSliderValue(value, 50f, 120f)
-            false
-        }
-        slider.onChange { value: Float ->
-            boxedNumericInput.getTextFromBoxedTextInput().text = value.fix(2).toString()
-        }
+        val state = State(67f)
+        val slider = Slider(length = 200f, min = 50f, max = 120f, instant = true, state = state)
+        val boxedNumericInput = BoxedNumericInput(min = 50f, max = 120f, size = 80f by 32f, post = "Hi", state = state, arrows = false)
 
         group {
             Button("moon.svg".image()).add().onClick {
@@ -91,7 +85,7 @@ fun main() {
                 ColorPicker(State(color.asMutable()), polyUI, attachedDrawable = this)
                 false
             }.add()
-            Switch(size = 28f, state = true).add()
+            Switch(size = 28f, state = State(true)).add()
             Checkbox(size = 28f).add()
         }
         Dropdown("monkey blur", "phosphor blur", "moulberry blur").add()
@@ -135,12 +129,11 @@ fun main() {
 //                boxParent[idx] = theBox
             }.add()
             group {
-                val radiobutton = Radiobutton("hello", "goodbye", "yes", "no").add().onChange { index: Int ->
-                    println("radiobutton changed to $index")
-                }
+                val state = State(0)
+                Radiobutton("hello", "goodbye", "yes", "no", state = state).add()
                 slider.add()
                 text("blink three times when u feel it kicking in")
-                Button(text = "select 3").onClick { radiobutton.setRadiobuttonEntry(2); true }.add()
+                Button(text = "select 3").onClick { state.value = 2; true }.add()
             }
         }
         group(alignment = Align(mode = Align.Mode.Vertical)) {

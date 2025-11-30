@@ -30,7 +30,7 @@ import org.polyfrost.polyui.component.impl.Text.Mode.SCROLLING_SINGLE_LINE
 import org.polyfrost.polyui.component.impl.Text.Mode.UNLIMITED
 import org.polyfrost.polyui.component.impl.Text.Mode.WRAP
 import org.polyfrost.polyui.data.Font
-import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.event.State
 import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.unit.Align
@@ -40,10 +40,16 @@ import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.utils.*
 import kotlin.math.roundToInt
 
-open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Component?) :
+open class Text protected constructor(text: Any, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Component?) :
     Drawable(children = children, at, alignment, visibleSize = visibleSize, focusable = focusable) {
     constructor(text: String, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Component?) :
-            this(Translator.Text.Simple(text), font, fontSize, at, alignment, visibleSize, focusable, limited, children = children)
+            this(if ('.' in text) Translator.Text.Simple(text) else State(text), font, fontSize, at, alignment, visibleSize, focusable, limited, children = children)
+
+    constructor(state: State<String>, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Component?) :
+            this(state as Any, font, fontSize, at, alignment, visibleSize, focusable, limited, children = children)
+
+    constructor(text: Translator.Text, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Component?) :
+            this(text as Any, font, fontSize, at, alignment, visibleSize, focusable, limited, children = children)
 
     init {
         require(fontSize > 0f) { "Font size must be greater than 0" }
@@ -75,39 +81,48 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
      */
     var underline = false
 
-    // asm: initially it is a dummy object to save need for a field
-    // it is immediately overwritten by setup()
+    // asm: using Any object as before setup we will put the Translator.Text in here to be overwritten by the String state after translation.
+    @PublishedApi
     @ApiStatus.Internal
-    var _text = text
-        set(value) {
-            if (field == value) return
-            field = value
-            if (initialized) updateTextBounds()
-        }
+    internal var _theText: Any
+        private set
 
-    open var text: String
-        get() = _text.string
-        set(value) {
-            if (_text.string == value) return
-            val old = _text.string
-            _text.string = value
-            if (initialized) {
-                // asm: in order for cancel to work, we need to update the text bounds first
-                // this means that in the event we do cancel, we can restore the old text
-                updateTextBounds()
-                if (hasListenersFor(Event.Change.Text::class.java)) {
-                    val ev = Event.Change.Text(value)
-                    accept(ev)
-                    if (ev.cancelled) {
-                        // fuck. never mind!
-                        _text.string = old
-                        updateTextBounds()
-                        return
-                    }
+    init {
+        when(text) {
+            is State<*> -> {
+                require(text.value is String) { "State passed to Text must be of type State<String>" }
+                @Suppress("UNCHECKED_CAST")
+                _theText = (text as State<String>).weaklyListen(this) {
+                    if (initialized) updateTextBounds(renderer, it)
                 }
             }
-            needsRedraw = true
+            is Translator.Text.Dont -> {
+                _theText = State(text.toString()).listen {
+                    if (initialized) updateTextBounds(renderer, it)
+                }
+            }
+            else -> {
+                // asm: for translated text we will replace this in setup()
+                _theText = text
+            }
+        }
+    }
 
+
+    @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+    @kotlin.internal.InlineOnly
+    inline val theText: State<String>
+        @Suppress("UNCHECKED_CAST")
+        // hello. if you are failing here, it is because you tried to use Text.theText before setup() on a translated text.
+        // there is no guard against this for performance reasons. To get around it, do what you were trying to do in an onInit method;
+        // pass a State<String> to the Text constructor with your already translated and formatted text; or just don't use a translated string.
+        get() = _theText as State<String>
+
+
+    var text: String
+        get() = theText.value
+        set(value) {
+            theText.value = value
         }
 
     /**
@@ -248,14 +263,23 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         if (initialized) return false
         palette = polyUI.colors.text.primary
         // asm: replace the text with the translated text, if available
-        if (_text !is Translator.Text.Dont) {
-            _text = if (_text is Translator.Text.Formatted) {
-                polyUI.translator.translate(_text.string, *(_text as Translator.Text.Formatted).args)
-            } else {
-                polyUI.translator.translate(_text.string)
+        val theText = _theText
+        if (theText !is State<*>) {
+            this._theText = State(
+                when (theText) {
+                    is Translator.Text.Formatted -> {
+                        polyUI.translator.translate(theText.string, *theText.args).string.replace("\\n", "\n")
+                    }
+
+                    is Translator.Text.Simple -> {
+                        polyUI.translator.translate(theText.string).string.replace("\\n", "\n")
+                    }
+
+                    else -> theText.toString()
+                }
+            ).listen {
+                updateTextBounds(renderer, it)
             }
-            // asm: in translation files \\n is used for new line for some reason
-            text = text.replace("\\n", "\n")
         }
         if (_font == null) font = polyUI.fonts.regular
         updateTextBounds(polyUI.renderer)
@@ -263,7 +287,8 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
         return true
     }
 
-    open fun updateTextBounds(renderer: Renderer = this.renderer) {
+    open fun updateTextBounds(renderer: Renderer = this.renderer, text: String = this.text) {
+        needsRedraw = true
         lines.clear()
         val suggestedSize = if (!this.initialized) this.size else Vec2.ZERO
         if (text.isEmpty()) {

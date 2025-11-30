@@ -1,9 +1,9 @@
 package org.polyfrost.polyui.event
 
 import org.jetbrains.annotations.MustBeInvokedByOverriders
-import org.polyfrost.polyui.event.State.Companion.map
 import org.polyfrost.polyui.utils.fastEach
 import java.lang.ref.WeakReference
+import kotlin.reflect.KMutableProperty1
 
 /**
  * Simple and efficient state class that can be used to hold a value and notify listeners when the value changes.
@@ -17,13 +17,12 @@ import java.lang.ref.WeakReference
  * @since 1.12.0
  */
 open class State<T>(value: T) {
-    var value: T = value
+    private var v: T = value
+
+    var value: T
+        get() = v
         set(value) {
-            if (field !== value) {
-                if (instanceChangeOnlyListener?.invoke(value) == true) return
-                if (notifyInternal(value)) return
-                field = value
-            }
+            set(value)
         }
 
     private var firstListener: ((T) -> Boolean)? = null
@@ -31,7 +30,20 @@ open class State<T>(value: T) {
     private var extraListeners: ArrayList<(T) -> Boolean>? = null
     private var instanceChangeOnlyListener: ((T) -> Boolean)? = null
 
-    fun notify() = notifyInternal(value)
+    fun notify() = notifyInternal(v)
+
+    /**
+     * Set the value of this state, notifying listeners if the instance has changed.
+     * @return `true` if the change was cancelled by a listener, `false` otherwise.
+     */
+    fun set(value: T): Boolean {
+        if (this.v !== value) {
+            if (instanceChangeOnlyListener?.invoke(value) == true) return true
+            if (notifyInternal(value)) return true
+            v = value
+        }
+        return false
+    }
 
     @MustBeInvokedByOverriders
     protected open fun notifyInternal(value: T): Boolean {
@@ -76,6 +88,34 @@ open class State<T>(value: T) {
     @OverloadResolutionByLambdaReturnType
     fun listen(listener: (T) -> Unit) = listen { listener(it); false }
 
+    /**
+     * Listen to changes weakly, so that the listener will be automatically removed when the [receiver] is garbage collected.
+     * Return `true` from the listener to cancel the change.
+     */
+    @OverloadResolutionByLambdaReturnType
+    @JvmName("weaklyListenZ")
+    fun <P> weaklyListen(receiver: P, listener: P.(T) -> Boolean): State<T> {
+        val ref = WeakReference(receiver)
+        var listener: ((T) -> Boolean)? = null
+        listener = {
+            ref.get()?.listener(it) ?: run {
+                this.removeListener(listener!!)
+                false
+            }
+        }
+        this.listen(listener)
+        return this
+    }
+
+    /**
+     * Listen to changes weakly, so that the listener will be automatically removed when the [receiver] is garbage collected.
+     * **In order for this to work**, you must NOT use the [receiver] variable in the lambda, as this will strongly capture it.
+     * You must use the implicit `this@weaklyListen` receiver instead, which will be the [receiver] parameter, just weakly referenced.
+     */
+    @OverloadResolutionByLambdaReturnType
+    fun <P> weaklyListen(receiver: P, listener: P.(T) -> Unit): State<T> =
+        weaklyListen(receiver) { listener(it); false }
+
     fun removeListener(listener: (T) -> Boolean): State<T> {
         if (firstListener === listener) {
             firstListener = null
@@ -87,35 +127,114 @@ open class State<T>(value: T) {
         return this
     }
 
-    companion object {
-        /**
-         * Map this state to another state using the given [map] function.
-         * The function will be called whenever the value of this state changes, and the resulting state will be set on the new state.
-         *
-         * **Note that this is one-way and changes to the resulting state will not affect this state.**
-         * @since 1.15.3
-         */
-        @JvmStatic
-        fun <T, U> State<T>.map(map: (T) -> U): State<U> {
-            val out = State(map(value))
-            // weak reference is used as this would otherwise be a memory leak
-            val ref = WeakReference(out)
-            var listener: ((T) -> Boolean)? = null
-            listener = {
-                ref.get()?.let { out ->
-                    val old = out.value
-                    out.value = map(it)
-                    // asm: return true to cancel if the value didn't change
-                    old == out.value
-                } ?: run {
-                    this.removeListener(listener!!)
-                    false
-                }
-            }
-            this.listen(listener)
+    /**
+     * Create a new state derived from another state using the given [map] function.
+     * The function will be called whenever the value of this state changes, and the resulting state will be set on the new state.
+     *
+     * **Note that this is one-way and changes to the resulting state will not affect this state.**
+     * @since 1.15.3
+     */
+    fun <U> derive(map: (T) -> U): State<U> {
+        val out = State(map(v))
 
-            return out
+        this.weaklyListen(out) { value ->
+            this@weaklyListen.set(map(value))
         }
 
+        return out
+    }
+
+    /**
+     * Simplified setter version of [derive] for states which contain object with mutable properties.
+     */
+    fun <U> derive(property: KMutableProperty1<T, U>) = derive(property::get, property::set)
+
+    /**
+     * see [derive]
+     */
+    fun <U> map(map: (T) -> U): State<U> = derive(map)
+
+    /**
+     * Create a new state derived from another state using the given [map] and [unmap] functions.
+     * The [map] function will be called whenever the value of this state changes, and the resulting state will be set on the new state.
+     * The [unmap] function will be called whenever the value of the resulting state changes, and the resulting value will be set on this state.
+     *
+     * @since 1.15.3
+     */
+    fun <U> derive(map: (T) -> U, unmap: (U) -> T): State<U> {
+        val out = State(map(v))
+
+        var lock = false
+        this.weaklyListen(out) {
+            if (lock) return@weaklyListen false
+            lock = true
+            val ret = this@weaklyListen.set(map(it))
+            lock = false
+            ret
+        }
+        out.weaklyListen(this) {
+            if (lock) return@weaklyListen false
+            lock = true
+            val ret = this@weaklyListen.set(unmap(it))
+            lock = false
+            ret
+        }
+        return out
+    }
+
+    /**
+     * [derive] function that is designed for states that are objects with mutable properties.
+     * The [map] function extracts the property value from the object, and the [setter] function sets the property value on the object, before calling [notify] to inform listeners of the change.
+     */
+    fun <U> derive(map: (T) -> U, setter: T.(U) -> Unit): State<U> {
+        val out = State(map(v))
+
+        var lock = false
+        this.weaklyListen(out) {
+            if (lock) return@weaklyListen false
+            lock = true
+            val ret = this@weaklyListen.set(map(it))
+            lock = false
+            ret
+        }
+        out.weaklyListen(this) {
+            if (lock) return@weaklyListen false
+            lock = true
+            setter(this@weaklyListen.value, it)
+            val ret = this@weaklyListen.notify()
+            lock = false
+            ret
+        }
+        return out
+    }
+
+    /**
+     * Make this state a direct copy of another [other] state, keeping both in sync.
+     */
+    fun copyFrom(other: State<T>): State<T> {
+        this.set(other.value)
+        val weak = WeakReference(this)
+        var listener: ((T) -> Boolean)? = null
+        var lock = false
+
+        listener = listener@{
+            if (lock) return@listener false
+            lock = true
+            val ret = weak.get()?.set(it) ?: run {
+                other.removeListener(listener!!)
+                false
+            }
+            lock = false
+            ret
+        }
+        other.listen(listener)
+        this.listen {
+            if (lock) return@listen false
+            lock = true
+            val ret = other.set(this.value)
+            lock = false
+            ret
+        }
+        return this
     }
 }
