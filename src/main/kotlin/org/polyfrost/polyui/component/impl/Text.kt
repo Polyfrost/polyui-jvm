@@ -43,7 +43,7 @@ import kotlin.math.roundToInt
 open class Text protected constructor(text: Any, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Component?) :
     Drawable(children = children, at, alignment, visibleSize = visibleSize, focusable = focusable) {
     constructor(text: String, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Component?) :
-            this(Translator.Text.Simple(text) as Any, font, fontSize, at, alignment, visibleSize, focusable, limited, children = children)
+            this(if ('.' in text) Translator.Text.Simple(text) else State(text), font, fontSize, at, alignment, visibleSize, focusable, limited, children = children)
 
     constructor(state: State<String>, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Component?) :
             this(state as Any, font, fontSize, at, alignment, visibleSize, focusable, limited, children = children)
@@ -113,8 +113,9 @@ open class Text protected constructor(text: Any, font: Font? = null, fontSize: F
     @kotlin.internal.InlineOnly
     inline val theText: State<String>
         @Suppress("UNCHECKED_CAST")
-        // hello. if you are failing here, it is because you tried to use Text.theText before setup().
-        // there is no guard against this for performance reasons. To get around it, do what you were trying to do in an onInit method.
+        // hello. if you are failing here, it is because you tried to use Text.theText before setup() on a translated text.
+        // there is no guard against this for performance reasons. To get around it, do what you were trying to do in an onInit method;
+        // pass a State<String> to the Text constructor with your already translated and formatted text; or just don't use a translated string.
         get() = _theText as State<String>
 
 

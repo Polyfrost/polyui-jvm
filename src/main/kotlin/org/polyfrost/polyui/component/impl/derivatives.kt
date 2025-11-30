@@ -20,7 +20,7 @@
  */
 
 @file:JvmName("Derivatives")
-@file:Suppress("FunctionName", "REDUNDANT_COMPANION_REFERENCE")
+@file:Suppress("FunctionName", "RedundantCompanionReference")
 
 package org.polyfrost.polyui.component.impl
 
@@ -90,7 +90,7 @@ fun Switch(at: Vec2 = Vec2.ZERO, size: Float, padding: Float = 3f, state: State<
             circle.x = 2f * this.x + this.width - circle.width - circle.x
         }
     }.apply {
-        state.listen {
+        state.weaklyListen(this) {
             val circle = this[0]
             val target = 2f * this.x + this.width - circle.width - circle.getTargetPosition().x
             Move(circle, x = target, add = false, animation = Animations.Default.create(0.2.seconds)).add()
@@ -149,7 +149,7 @@ fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2 = Vec2.ZERO,
         it.size = target.size
         it.relegate()
     }.apply {
-        state.listen {
+        state.weaklyListen(this) {
             val children = this.children ?: throw IllegalStateException("Radiobutton has no children (??)")
             if (it < 0 || it >= children.size - 1) throw IndexOutOfBoundsException("Radiobutton state index $it is out of bounds for ${children.size - 1} options")
             val selector = children[0]
@@ -196,8 +196,8 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, siz
             }
         },
     ).addRethemingListeners().namedId("DropdownMenu")
-    state.listen {
-        val entry = dropdown[it]
+    state.weaklyListen(dropdown) {
+        val entry = this[it]
         val textComp = (if (entry.children!!.size == 2) entry[1] else entry[0]) as Text
         title.text = textComp.text
     }
@@ -386,7 +386,7 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, state: Stat
         @Suppress("DEPRECATION")
         setSliderValue(state.value, min, max)
     }.apply {
-        state.listen {
+        state.weaklyListen(this) {
             @Suppress("DEPRECATION")
             setSliderValue(it, min, max); false
         }
@@ -402,7 +402,7 @@ fun Checkbox(at: Vec2 = Vec2.ZERO, size: Float, state: State<Boolean> = State(fa
     size = Vec2(size, size),
     alignment = Align(pad = ((size - size / 1.25f) / 2f).vec),
 ).namedId("Checkbox").toggleable(state).radius(size / 4f).apply {
-    state.listen {
+    state.weaklyListen(this) {
         this[0].fade(it)
         false
     }
