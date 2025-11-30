@@ -40,10 +40,16 @@ import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.utils.*
 import kotlin.math.roundToInt
 
-open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Component?) :
+open class Text protected constructor(text: Any, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Component?) :
     Drawable(children = children, at, alignment, visibleSize = visibleSize, focusable = focusable) {
     constructor(text: String, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Component?) :
-            this(Translator.Text.Simple(text), font, fontSize, at, alignment, visibleSize, focusable, limited, children = children)
+            this(Translator.Text.Simple(text) as Any, font, fontSize, at, alignment, visibleSize, focusable, limited, children = children)
+
+    constructor(state: State<String>, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Component?) :
+            this(state as Any, font, fontSize, at, alignment, visibleSize, focusable, limited, children = children)
+
+    constructor(text: Translator.Text, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Component?) :
+            this(text as Any, font, fontSize, at, alignment, visibleSize, focusable, limited, children = children)
 
     init {
         require(fontSize > 0f) { "Font size must be greater than 0" }
@@ -78,12 +84,29 @@ open class Text(text: Translator.Text, font: Font? = null, fontSize: Float = 12f
     // asm: using Any object as before setup we will put the Translator.Text in here to be overwritten by the String state after translation.
     @PublishedApi
     @ApiStatus.Internal
-    internal var _theText: Any = if (text is Translator.Text.Dont)
-        State(text.toString()).listen {
-            if (initialized) updateTextBounds(renderer, it)
-        }
-    else text
+    internal var _theText: Any
         private set
+
+    init {
+        when(text) {
+            is State<*> -> {
+                require(text.value is String) { "State passed to Text must be of type State<String>" }
+                @Suppress("UNCHECKED_CAST")
+                _theText = (text as State<String>).weaklyListen(this) {
+                    if (initialized) updateTextBounds(renderer, it)
+                }
+            }
+            is Translator.Text.Dont -> {
+                _theText = State(text.toString()).listen {
+                    if (initialized) updateTextBounds(renderer, it)
+                }
+            }
+            else -> {
+                // asm: for translated text we will replace this in setup()
+                _theText = text
+            }
+        }
+    }
 
 
     @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")

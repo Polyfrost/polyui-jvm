@@ -377,6 +377,13 @@ object GLRenderer : Renderer {
 
         if (caps().OpenGL30) org.lwjgl.opengl.GL30C.glBindVertexArray(vao)
         glUseProgram(program)
+
+        // upload transform if needed
+        if (popFlushNeeded) {
+            glUniformMatrix3fv(uTransform, false, transform)
+            popFlushNeeded = false
+        }
+
         glBindTexture(GL_TEXTURE_2D, curTex)
 
         // Quad attrib
@@ -644,20 +651,13 @@ object GLRenderer : Renderer {
     }
 
     override fun pop() {
-        if (popFlushNeeded) {
-            glUseProgram(program)
-            glUniformMatrix3fv(uTransform, false, transform)
-            glUseProgram(0)
-            flush()
-            popFlushNeeded = false
-        }
         if (transform.isIdentity()) return
+        // asm: flush out any pending draws before changing transform state back to previous
+        flush()
         if (transformStack.isEmpty()) {
             loadIdentity()
         } else transform = transformStack.removeLast()
-        glUseProgram(program)
-        glUniformMatrix3fv(uTransform, false, transform)
-        glUseProgram(0)
+        popFlushNeeded = true
     }
 
     override fun translate(x: Float, y: Float) {
@@ -942,6 +942,7 @@ object GLRenderer : Renderer {
             return Vec2.of(width, fontSize)
         }
 
+        @Suppress("DEPRECATION")
         @kotlin.internal.InlineOnly
         inline fun get(char: Char) = glyphs[(char.toInt() - 32) /* .coerceIn(0, glyphs.size - 1) */]
 

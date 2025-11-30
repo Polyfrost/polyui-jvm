@@ -20,7 +20,7 @@
  */
 
 @file:JvmName("Derivatives")
-@file:Suppress("FunctionName")
+@file:Suppress("FunctionName", "REDUNDANT_COMPANION_REFERENCE")
 
 package org.polyfrost.polyui.component.impl
 
@@ -73,8 +73,6 @@ fun Button(leftImage: PolyImage? = null, text: String? = null, rightImage: PolyI
 
 /**
  * Simple switch component.
- *
- * Use the [onToggle] method to detect changes in state, the parameter `it` in the method will be `true` if the switch is on, and `false` if it is off.
  */
 @JvmName("Switch")
 fun Switch(at: Vec2 = Vec2.ZERO, size: Float, padding: Float = 3f, state: State<Boolean> = State(false), lateralStretch: Float = 1.8f): Block {
@@ -105,11 +103,6 @@ fun Switch(at: Vec2 = Vec2.ZERO, size: Float, padding: Float = 3f, state: State<
  * For images, use `Image` for each entry.
  *
  * For both strings and images, use `Image to "string"`.
- *
- * Changes can be detected using the [onChange] method with an [Event.Change.Number] event.
- * the best usage is:
- * ```
- * radiobutton.onChange {
  */
 @JvmName("Radiobutton")
 fun Radiobutton(vararg entries: String, at: Vec2 = Vec2.ZERO, state: State<Int> = State(0), fontSize: Float = 12f, optionLateralPadding: Float = 6f, optionVerticalPadding: Float = 6f) = Radiobutton(entries = entries.mapToArray { null to it }, at, state, fontSize, optionLateralPadding, optionVerticalPadding)
@@ -390,9 +383,11 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, state: Stat
         size = size,
         alignment = Align(Align.Content.Center, pad = Vec2.ZERO),
     ).afterInit {
+        @Suppress("DEPRECATION")
         setSliderValue(state.value, min, max)
     }.apply {
         state.listen {
+            @Suppress("DEPRECATION")
             setSliderValue(it, min, max); false
         }
     }.namedId("Slider")
@@ -414,11 +409,12 @@ fun Checkbox(at: Vec2 = Vec2.ZERO, size: Float, state: State<Boolean> = State(fa
 }
 
 @JvmName("BoxedTextInput")
+@Suppress("UNCHECKED_CAST")
 fun BoxedTextInput(
     image: PolyImage? = null,
     pre: String? = null,
     placeholder: String = "polyui.textinput.placeholder",
-    initialValue: String = "",
+    value: Any = "",
     fontSize: Float = 12f,
     center: Boolean = false,
     post: String? = null,
@@ -427,7 +423,11 @@ fun BoxedTextInput(
     if (image != null) Image(image).padded(6f, 0f, 0f, 0f) else null,
     if (pre != null) Text(pre).padded(6f, 0f, 0f, 0f) else null,
     Group(
-        TextInput(placeholder = placeholder, text = initialValue, fontSize = fontSize),
+        when(value) {
+            is String -> TextInput(placeholder = placeholder, text = value, fontSize = fontSize)
+            is State<*> -> TextInput(placeholder = placeholder, text = value as State<String>, fontSize = fontSize)
+            else -> throw IllegalArgumentException("initialValue must be a String or a State<String>")
+        },
         alignment = Align(main = if (center) Align.Content.Center else Align.Content.Start, cross = Align.Content.Center, pad = Vec2.ZERO),
     ).padded(6f, 0f, if (post == null) 6f else 0f, 0f),
     if (post != null) Block(Text(post).secondary(), alignment = Align(pad = 6f by 10f), radii = floatArrayOf(0f, 8f, 0f, 8f)).afterInit { color = polyUI.colors.page.bg.normal }.padded(6f, 0f, 0f, 0f) else null,
@@ -463,7 +463,7 @@ fun BoxedNumericInput(
 ) = BoxedTextInput(
     image, pre,
     placeholder = "${if (integral) max.toInt() else max.toString(dps = 2)}",
-    initialValue = "${if (integral) state.value.toInt() else state.value.toString(dps = 2)}",
+    value = "${if (integral) state.value.toInt() else state.value.toString(dps = 2)}",
     fontSize, center, post, size
 ).also {
     require(state.value in min..max) { "initial value ${state.value} is out of range for numeric text input of $min..$max" }

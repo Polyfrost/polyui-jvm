@@ -129,10 +129,11 @@ fun main() {
 //                boxParent[idx] = theBox
             }.add()
             group {
-                val radiobutton = Radiobutton("hello", "goodbye", "yes", "no").add()
+                val state = State(0)
+                Radiobutton("hello", "goodbye", "yes", "no", state = state).add()
                 slider.add()
                 text("blink three times when u feel it kicking in")
-                Button(text = "select 3").onClick { radiobutton.setRadiobuttonEntry(2); true }.add()
+                Button(text = "select 3").onClick { state.value = 2; true }.add()
             }
         }
         group(alignment = Align(mode = Align.Mode.Vertical)) {
