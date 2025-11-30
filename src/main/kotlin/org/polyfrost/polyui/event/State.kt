@@ -3,6 +3,7 @@ package org.polyfrost.polyui.event
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.polyfrost.polyui.utils.fastEach
 import java.lang.ref.WeakReference
+import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KMutableProperty1
 
 /**
@@ -206,5 +207,15 @@ open class State<T>(value: T) {
             ret
         }
         return out
+    }
+
+    companion object {
+        fun <T> of(property: KMutableProperty0<T>): State<T> {
+            val state = State(property.get())
+            state.weaklyListen(state) {
+                property.set(it)
+            }
+            return state
+        }
     }
 }
