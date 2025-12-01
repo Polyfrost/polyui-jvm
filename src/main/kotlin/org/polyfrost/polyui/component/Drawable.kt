@@ -221,11 +221,11 @@ abstract class Drawable(
             field = value.coerceIn(0f, 1f)
         }
 
-    /** **a**t **c**ache **x** for transformations. */
-    private var acx = 0f
-
-    /** **a**t **c**ache **y** for transformations. */
-    private var acy = 0f
+    /**
+     * at cache for transformations. Used when [org.polyfrost.polyui.renderer.Renderer.transformsWithPoint] is false.
+     * @since 0.17.3
+     */
+    private var atCache = Vec2.ZERO
 
     @Locking
     @Synchronized
@@ -298,8 +298,7 @@ abstract class Drawable(
                 if (sky) renderer.skewY(skewY, 0f, 0f)
                 renderer.translate(-(width / 2f), -(height / 2f))
                 if (s) renderer.scale(scaleX, scaleY, 0f, 0f)
-                acx = x
-                acy = y
+                atCache = at
                 x = 0f
                 y = 0f
             }
@@ -324,10 +323,8 @@ abstract class Drawable(
         popScroll(renderer)
         renderer.resetGlobalAlpha()
         renderer.pop()
-        if (acx != 0f) {
-            x = acx
-            y = acy
-            acx = 0f
+        if (!atCache.isZero) {
+            at = atCache
         }
     }
 
