@@ -42,12 +42,18 @@ object GLRenderer : Renderer {
     private val PIXELS: ByteBuffer = BufferUtils.createByteBuffer(3).put(112).put(120).put(0).flip() as ByteBuffer
     private val EMPTY_ROW = floatArrayOf(0f, 0f, 0f, 0f)
     private val NO_UV = floatArrayOf(-1f, -1f, 1f, 1f)
+    private val IDENTITY = floatArrayOf(
+        1f, 0f, 0f,
+        0f, 1f, 0f,
+        0f, 0f, 1f
+    )
 
 
     private val buffer = BufferUtils.createFloatBuffer(MAX_BATCH * STRIDE)
     private val scissorStack = IntArray(MAX_UI_DEPTH * 4)
-    private val transformStack = ArrayList<FloatArray>(MAX_UI_DEPTH)
+    private val transformStack = Array(MAX_UI_DEPTH) { FloatArray(9) }
     private val fonts = HashMap<Font, FontAtlas>()
+    private val init get() = program != 0
 
     // GL objects
     private var instancedVbo = 0
@@ -73,6 +79,7 @@ object GLRenderer : Renderer {
     private var count = 0
     private var curTex = 0
     private var curScissor = 0
+    private var transformDepth = 0
     private var transform = floatArrayOf(
         1f, 0f, 0f,
         0f, 1f, 0f,
@@ -123,14 +130,19 @@ object GLRenderer : Renderer {
             float rRight = mix(r.z, r.y, py); // bottom-right / top-right
             float radius = mix(rLeft, rRight, px);
 
-            vec2 d = abs(p) - b + vec2(radius);
-            vec2 dClamped = max(d, vec2(0.0));
-            return length(dClamped) - radius + min(max(d.x, d.y), 0.0);
+            vec2 q = abs(p) - (b - vec2(radius));
+            return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
         }
 
         float hollowRoundedBoxSDF(vec2 p, vec2 b, vec4 r, float thickness) {
-            float dist = roundedBoxSDF(p, b, r);
-            return abs(dist) - thickness * 0.5;
+            float outer = roundedBoxSDF(p, b + vec2(0.3), r);
+            float inner = roundedBoxSDF(p, b - vec2(thickness), max(r - vec4(thickness), 0.0)); 
+            return max(outer, -inner);
+        }
+
+        float roundBoxSDF(vec2 p, vec2 halfSize, float radius) {
+            vec2 q = abs(p) - (halfSize - vec2(radius));
+            return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
         }
 
         void main() {
@@ -147,20 +159,20 @@ object GLRenderer : Renderer {
                 col = (vThickness == -1.0) ? vec4(col.rgb, col.a * texColor.r) : col * texColor;
             }
             else if (vThickness == -2.0) { // linear gradient, vUV as start and vUV2 as end
-                vec2 dir = normalize(vUV2 - vUV);
-                float t = dot((p + halfSize) - vUV, dir) / length(vUV2 - vUV);
-                t = clamp(t, 0.0, 1.0);
+                vec2 dir = vUV2 - vUV;
+                float len = length(dir);
+                dir = dir / len;
+                float t = clamp(dot((p + halfSize) - vUV, dir) / len, 0.0, 1.0);
                 col = mix(vColor0, vColor1, t);
             }
             else if (vThickness == -3.0) { // radial gradient, vUV as center and vUV2.x as radius
                 float dist = length(p + halfSize - vUV);
-                float t = (dist - vUV2.x) / (vUV2.y - vUV2.x);
-                t = clamp(t, 0.0, 1.0);
+                float t = clamp((dist - vUV2.x) / (vUV2.y - vUV2.x), 0.0, 1.0);
                 col = mix(vColor0, vColor1, t);
             }
             else if (vThickness == -4.0) { // box gradient, vUV.x as radius and vUV.y as feather
-                float dist = roundedBoxSDF(p, halfSize - vec2(vUV.x), vec4(vUV.x));
-                float t = clamp(dist / vUV.y, 0.0, 1.0);
+                float dist = roundBoxSDF(p, halfSize, vUV.x);
+                float t = clamp((dist + vUV.y * 0.5) / vUV.y, 0.0, 1.0);
                 col = mix(vColor0, vColor1, t);
             }
 
@@ -276,6 +288,7 @@ object GLRenderer : Renderer {
     private fun caps() = org.lwjgl.opengl.GL.getCapabilities()
 
     override fun init() {
+        if (init) return
         // check if instancing extension is available
         require(caps().OpenGL20) { "At least OpenGL 2.0 is required" }
         require(caps().OpenGL33 || caps().GL_ARB_instanced_arrays) { "GL_ARB_instanced_arrays is not supported and is required" }
@@ -350,7 +363,8 @@ object GLRenderer : Renderer {
         alphaCap = 1f
         count = 0
         buffer.clear()
-        loadIdentity()
+        transform.set(IDENTITY)
+        transformDepth = 0
         glUseProgram(program)
         glUniform2f(uWindow, width, height)
         glUniformMatrix3fv(uTransform, false, transform)
@@ -552,7 +566,7 @@ object GLRenderer : Renderer {
             buffer.put(EMPTY_ROW) // zero radii
             buffer.put(r).put(g).put(b).put(a)
             buffer.put(EMPTY_ROW) // color1 unused
-            buffer.put(glyph.u).put(glyph.v).put(glyph.uw).put(glyph.vh)
+            buffer.put(glyph, 0, 4) // UVs
             buffer.put(-1f) // thickness = -1 for text
             penX += glyph.xAdvance * scaleFactor
             count += 1
@@ -647,16 +661,18 @@ object GLRenderer : Renderer {
 
     override fun push() {
         if (transform.isIdentity()) return
-        transformStack.add(transform.copyOf())
+        transformStack[transformDepth++].set(transform)
     }
 
     override fun pop() {
         if (transform.isIdentity()) return
         // asm: flush out any pending draws before changing transform state back to previous
         flush()
-        if (transformStack.isEmpty()) {
-            loadIdentity()
-        } else transform = transformStack.removeLast()
+        if (transformDepth == 0) {
+            transform.set(IDENTITY)
+        } else {
+            transform.setThenClear(transformStack[--transformDepth])
+        }
         popFlushNeeded = true
     }
 
@@ -714,18 +730,22 @@ object GLRenderer : Renderer {
         popFlushNeeded = true
     }
 
+    @JvmStatic
     private fun FloatArray.isIdentity(): Boolean {
         return this[0] == 1f && this[1] == 0f && this[2] == 0f &&
                 this[3] == 0f && this[4] == 1f && this[5] == 0f &&
                 this[6] == 0f && this[7] == 0f && this[8] == 1f
     }
 
-    private fun loadIdentity() {
-        val transform = transform
-        transform[0] = 1f; transform[1] = 0f; transform[2] = 0f
-        transform[3] = 0f; transform[4] = 1f; transform[5] = 0f
-        transform[6] = 0f; transform[7] = 0f; transform[8] = 1f
-        this.transform = transform
+    @JvmStatic
+    private fun FloatArray.set(other: FloatArray) {
+        System.arraycopy(other, 0, this, 0, 9)
+    }
+
+    @JvmStatic
+    private fun FloatArray.setThenClear(other: FloatArray) {
+        System.arraycopy(other, 0, this, 0, 9)
+        System.arraycopy(IDENTITY, 0, other, 0, 9)
     }
 
     override fun initImage(image: PolyImage, size: Vec2) {
@@ -757,8 +777,8 @@ object GLRenderer : Renderer {
         glBindTexture(GL_TEXTURE_2D, 0)
         if (image.type == PolyImage.Type.Raster) stbi_image_free(d)
 
-        slotX += w[0]
-        if (h[0] > atlasRowHeight) atlasRowHeight = h[0]
+        slotX += w[0] + 1
+        if (h[0] + 1 > atlasRowHeight) atlasRowHeight = h[0] + 1
         image.reportInit()
     }
 
@@ -819,7 +839,6 @@ object GLRenderer : Renderer {
         if (instancedVbo != 0) glDeleteBuffers(instancedVbo)
         if (atlas != 0) glDeleteTextures(atlas)
         if (nSvgRaster != 0L) nsvgDeleteRasterizer(nSvgRaster)
-        transformStack.clear()
         fonts.clear()
         buffer.clear()
     }
