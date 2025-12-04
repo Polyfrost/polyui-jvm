@@ -34,7 +34,6 @@ object GLRenderer : Renderer {
     private const val FONT_MAX_BITMAP_W = 1024
     private const val FONT_MAX_BITMAP_H = 512
     private const val ATLAS_SIZE = 2048
-    private const val FONT_RENDER_SIZE = 48f // 48f scales nicely to 16f, 12f, 32f, etc.
     private const val ATLAS_SVG_UPSCALE_FACTOR = 4f
     private const val STRIDE = 4 + 4 + 4 + 4 + 4 + 1 // bounds, radii, color0, color1, UV, thick
     private const val MAX_BATCH = 1024
@@ -52,7 +51,7 @@ object GLRenderer : Renderer {
     private val buffer = BufferUtils.createFloatBuffer(MAX_BATCH * STRIDE)
     private val scissorStack = IntArray(MAX_UI_DEPTH * 4)
     private val transformStack = Array(MAX_UI_DEPTH) { FloatArray(9) }
-    private val fonts = HashMap<Font, FontAtlas>()
+    private val fonts = HashMap<Int, FontAtlas>()
     private val init get() = program != 0
 
     // GL objects
@@ -80,11 +79,7 @@ object GLRenderer : Renderer {
     private var curTex = 0
     private var curScissor = 0
     private var transformDepth = 0
-    private var transform = floatArrayOf(
-        1f, 0f, 0f,
-        0f, 1f, 0f,
-        0f, 0f, 1f
-    )
+    private var transform = FloatArray(9).set(IDENTITY)
     private val VIEWPORT = IntArray(4)
     private var pixelRatio = 1f
     private var alphaCap = 1f
@@ -174,6 +169,10 @@ object GLRenderer : Renderer {
                 float dist = roundBoxSDF(p, halfSize, vUV.x);
                 float t = clamp((dist + vUV.y * 0.5) / vUV.y, 0.0, 1.0);
                 col = mix(vColor0, vColor1, t);
+            }
+            else if (vThickness == -5.0) { // drop shadow, vUV.x as spread and vUV.y as blur
+                float dShadow = roundBoxSDF(p, halfSize + vec2(UV.x), 0f);
+                color = vec4(vColor0.rgb, vColor0.a * (1.0 - smoothstep(-vUV.y, vUV.y, dShadow));
             }
 
             // Proper antialiasing based on distance field
@@ -542,7 +541,7 @@ object GLRenderer : Renderer {
     }
 
     override fun text(font: Font, x: Float, y: Float, text: String, color: Color, fontSize: Float) {
-        val fAtlas = getFontAtlas(font)
+        val fAtlas = getFontAtlas(font, fontSize)
         if (count >= MAX_BATCH) flush()
         if (count > 0 && curTex != atlas) flush()
         curTex = atlas
@@ -557,9 +556,7 @@ object GLRenderer : Renderer {
         val buffer = buffer
 
         for (c in text) {
-            if (count >= MAX_BATCH) {
-                flush()
-            }
+            if (count >= MAX_BATCH) flush()
             val glyph = fAtlas.get(c)
             buffer.put(penX + glyph.xOff * scaleFactor).put(penY + glyph.yOff * scaleFactor)
                 .put(glyph.width * scaleFactor).put(glyph.height * scaleFactor)
@@ -574,7 +571,7 @@ object GLRenderer : Renderer {
     }
 
     override fun textBounds(font: Font, text: String, fontSize: Float): Vec2 {
-        return getFontAtlas(font).measure(text, fontSize)
+        return getFontAtlas(font, fontSize).measure(text, fontSize)
     }
 
     override fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float) {
@@ -591,7 +588,14 @@ object GLRenderer : Renderer {
         spread: Float,
         radius: Float
     ) {
-        // rect(x, y, width, height, )
+        if (count >= MAX_BATCH) flush()
+        buffer.put(x).put(y).put(width).put(height)
+        buffer.put(EMPTY_ROW) // zero radii
+        buffer.put(0f).put(0f).put(0f).put(alphaCap) // black, alpha to alphaCap
+        buffer.put(EMPTY_ROW) // color1 unused
+        buffer.put(spread).put(blur).put(0f).put(0f)
+        buffer.put(-5f) // thickness = -5 for drop shadow
+        count += 1
     }
 
     override fun pushScissor(x: Float, y: Float, width: Float, height: Float) {
@@ -738,8 +742,9 @@ object GLRenderer : Renderer {
     }
 
     @JvmStatic
-    private fun FloatArray.set(other: FloatArray) {
+    private fun FloatArray.set(other: FloatArray): FloatArray {
         System.arraycopy(other, 0, this, 0, 9)
+        return this
     }
 
     @JvmStatic
@@ -806,24 +811,28 @@ object GLRenderer : Renderer {
         }
     }
 
-    private fun getFontAtlas(font: Font): FontAtlas {
-        return fonts.getOrPut(font) {
+    private fun getFontAtlas(font: Font, fontSize: Float): FontAtlas {
+        val p = when (fontSize) {
+            in 0f..48f -> 48f
+            else -> 96f
+        }
+        return fonts.getOrPut(font.resourcePath.hashCode() + p.toInt()) {
             val data = font.load {
                 LOGGER.error("Failed to load font: $font", it)
-                return@getOrPut fonts[PolyUI.defaultFonts.regular]
+                return@getOrPut fonts[PolyUI.defaultFonts.regular.resourcePath.hashCode() + p.toInt()]
                     ?: throw IllegalStateException("Default font couldn't be loaded")
             }.toDirectByteBuffer()
-            FontAtlas(data, FONT_RENDER_SIZE)
+            FontAtlas(data, p)
         }
     }
 
-    fun dumpTexture(texId: Int = atlas) {
+    fun dumpAtlas() {
         val buf = BufferUtils.createByteBuffer(ATLAS_SIZE * ATLAS_SIZE * 4)
-        glBindTexture(GL_TEXTURE_2D, texId)
+        glBindTexture(GL_TEXTURE_2D, atlas)
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf)
         glBindTexture(GL_TEXTURE_2D, 0)
         org.lwjgl.stb.STBImageWrite.stbi_write_png(
-            "debug_texture$texId.png",
+            "debug_atlas.png",
             ATLAS_SIZE,
             ATLAS_SIZE,
             4,
