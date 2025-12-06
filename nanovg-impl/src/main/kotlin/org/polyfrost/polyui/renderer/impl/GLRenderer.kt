@@ -141,8 +141,8 @@ object GLRenderer : Renderer {
         }
 
         void main() {
-            vec2 center = vRect.xy + 0.5 * vRect.zw;
             vec2 halfSize = 0.5 * vRect.zw;
+            vec2 center = vRect.xy + halfSize;
             vec2 p = vPos - center;
 
             float d = (vThickness > 0.0) ? hollowRoundedBoxSDF(p, halfSize, vRadii, vThickness) : roundedBoxSDF(p, halfSize, vRadii);
@@ -156,8 +156,7 @@ object GLRenderer : Renderer {
             else if (vThickness == -2.0) { // linear gradient, vUV as start and vUV2 as end
                 vec2 dir = vUV2 - vUV;
                 float len = length(dir);
-                dir = dir / len;
-                float t = clamp(dot((p + halfSize) - vUV, dir) / len, 0.0, 1.0);
+                float t = clamp(dot((p + halfSize) - vUV, dir / len) / len, 0.0, 1.0);
                 col = mix(vColor0, vColor1, t);
             }
             else if (vThickness == -3.0) { // radial gradient, vUV as center and vUV2.x as radius
@@ -171,8 +170,8 @@ object GLRenderer : Renderer {
                 col = mix(vColor0, vColor1, t);
             }
             else if (vThickness == -5.0) { // drop shadow, vUV.x as spread and vUV.y as blur
-                float dShadow = roundBoxSDF(p, halfSize + vec2(UV.x), 0f);
-                color = vec4(vColor0.rgb, vColor0.a * (1.0 - smoothstep(-vUV.y, vUV.y, dShadow));
+                float dShadow = roundBoxSDF(p, halfSize + vec2(vUV.x), vRadii.x);
+                col = vec4(vColor0.rgb, vColor0.a * (1.0 - smoothstep(-vUV.y, vUV.y, dShadow)));
             }
 
             // Proper antialiasing based on distance field
@@ -252,7 +251,7 @@ object GLRenderer : Renderer {
         if (status == GL_FALSE) {
             val log = glGetShaderInfoLog(shader)
             glDeleteShader(shader)
-            throw RuntimeException("Shader compile failed!\n$log")
+            throw RuntimeException("${if (type == GL_FRAGMENT_SHADER) "Fragment" else "Vertex"} shader compile failed!\n$log")
         }
         return shader
     }
@@ -1003,3 +1002,58 @@ object GLRenderer : Renderer {
     @kotlin.internal.InlineOnly
     inline val FloatArray.xAdvance get() = this[8]
 }
+
+/*
+ *     @OptIn(ExperimentalStdlibApi::class)
+ *     private fun dumpBuffer() {
+ *         buffer.rewind()
+ *         val sb = StringBuilder()
+ *         sb.append("Count: ").append(count)
+ *         sb.append("\n X      Y       W     H   R   c1       c2      UV    T\n")
+ *         var i = 0
+ *         while (i < count) {
+ *             sb.append('(').append(buffer.get().toString(dps = 2)).append(", ").append(buffer.get().toString(dps = 2)).append(')')
+ *             sb.append('\t')
+ *             sb.append(buffer.get().toString(dps = 2)).append('x').append(buffer.get().toString(dps = 2))
+ *             sb.append('\t')
+ *             var a = buffer.get()
+ *             var b = buffer.get()
+ *             var c = buffer.get()
+ *             var d = buffer.get()
+ *             if (a == b && b == c && c == d) {
+ *                 sb.append(a.toString(dps = 2))
+ *             } else sb.append(a.toString(dps = 2)).append(',').append(b.toString(dps = 2)).append(',').append(c.toString(dps = 2)).append(',').append(d.toString(dps = 2))
+ *             sb.append('\t')
+ *             a = buffer.get() * 255f
+ *             b = buffer.get() * 255f
+ *             c = buffer.get() * 255f
+ *             d = buffer.get() * 255f
+ *             val col = ((a.toInt() and 0xFF) or ((b.toInt() and 0xFF) shl 8) or ((c.toInt() and 0xFF) shl 16) or ((d.toInt() and 0xFF) shl 24))
+ *             sb.append(col.toHexString())
+ *             sb.append('\t')
+ *
+ *             a = buffer.get() * 255f
+ *             b = buffer.get() * 255f
+ *             c = buffer.get() * 255f
+ *             d = buffer.get() * 255f
+ *             val col2 = ((a.toInt() and 0xFF) or ((b.toInt() and 0xFF) shl 8) or ((c.toInt() and 0xFF) shl 16) or ((d.toInt() and 0xFF) shl 24))
+ *             sb.append(col2.toHexString())
+ *             sb.append('\t')
+ *
+ *             a = buffer.get()
+ *             b = buffer.get()
+ *             c = buffer.get()
+ *             d = buffer.get()
+ *             if (a == b && b == c && c == d) {
+ *                 sb.append(a.toString(dps = 2))
+ *             } else sb.append(a.toString(dps = 2)).append(',').append(b.toString(dps = 2)).append(',').append(c.toString(dps = 2)).append(',').append(d.toString(dps = 2))
+ *             sb.append('\t')
+ *
+ *             sb.append(buffer.get().toString(dps = 2))
+ *             sb.append('\n')
+ *             i++
+ *         }
+ *         println(sb.toString())
+ *         buffer.rewind()
+ *     }
+ */
