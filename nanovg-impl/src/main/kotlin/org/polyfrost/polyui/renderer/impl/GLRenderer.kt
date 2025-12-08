@@ -21,10 +21,7 @@ import org.polyfrost.polyui.unit.Vec4
 import org.polyfrost.polyui.utils.toDirectByteBuffer
 import org.polyfrost.polyui.utils.toDirectByteBufferNT
 import java.nio.ByteBuffer
-import kotlin.math.cos
-import kotlin.math.roundToInt
-import kotlin.math.sin
-import kotlin.math.tan
+import kotlin.math.*
 
 @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 object GLRenderer : Renderer {
@@ -76,8 +73,7 @@ object GLRenderer : Renderer {
 
     // Current batch state
     private var count = 0
-    private var curTex = 0
-    private var curScissor = 0
+    private var scissorDepth = 0
     private var transformDepth = 0
     private var transform = FloatArray(9).set(IDENTITY)
     private val VIEWPORT = IntArray(4)
@@ -85,10 +81,9 @@ object GLRenderer : Renderer {
     private var alphaCap = 1f
     private var popFlushNeeded = false
 
+    // atlas data
     private var slotX = 0
     private var slotY = 0
-
-    /** current max height of the currently active row in the atlas. */
     private var atlasRowHeight = 0
 
     private val FRAG = """
@@ -125,18 +120,18 @@ object GLRenderer : Renderer {
             float rRight = mix(r.z, r.y, py); // bottom-right / top-right
             float radius = mix(rLeft, rRight, px);
 
-            vec2 q = abs(p) - (b - vec2(radius));
+            vec2 q = abs(p) - (b - radius);
             return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
         }
 
         float hollowRoundedBoxSDF(vec2 p, vec2 b, vec4 r, float thickness) {
-            float outer = roundedBoxSDF(p, b + vec2(0.3), r);
-            float inner = roundedBoxSDF(p, b - vec2(thickness), max(r - vec4(thickness), 0.0)); 
+            float outer = roundedBoxSDF(p, b + 0.3, r + 0.3);
+            float inner = roundedBoxSDF(p, b - thickness, max(r - thickness, 0.0)); 
             return max(outer, -inner);
         }
 
         float roundBoxSDF(vec2 p, vec2 halfSize, float radius) {
-            vec2 q = abs(p) - (halfSize - vec2(radius));
+            vec2 q = abs(p) - (halfSize - radius);
             return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
         }
 
@@ -170,7 +165,7 @@ object GLRenderer : Renderer {
                 col = mix(vColor0, vColor1, t);
             }
             else if (vThickness == -5.0) { // drop shadow, vUV.x as spread and vUV.y as blur
-                float dShadow = roundBoxSDF(p, halfSize + vec2(vUV.x), vRadii.x);
+                float dShadow = roundBoxSDF(p, halfSize + vUV.x, vRadii.x);
                 col = vec4(vColor0.rgb, vColor0.a * (1.0 - smoothstep(-vUV.y, vUV.y, dShadow)));
             }
 
@@ -357,16 +352,19 @@ object GLRenderer : Renderer {
     }
 
     override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {
-        curScissor = 0
+        scissorDepth = 0
         alphaCap = 1f
         count = 0
         buffer.clear()
         transform.set(IDENTITY)
+        popFlushNeeded = false
         transformDepth = 0
         glUseProgram(program)
+        if (caps().OpenGL30) org.lwjgl.opengl.GL30C.glBindVertexArray(vao)
         glUniform2f(uWindow, width, height)
         glUniformMatrix3fv(uTransform, false, transform)
-        glUseProgram(0)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA)
         glDisable(GL_SCISSOR_TEST)
         glGetIntegerv(GL_VIEWPORT, VIEWPORT)
         this.pixelRatio = pixelRatio
@@ -375,20 +373,17 @@ object GLRenderer : Renderer {
     override fun endFrame() {
         flush()
         glDisable(GL_SCISSOR_TEST)
+        glDisable(GL_BLEND)
+        glUseProgram(0)
     }
 
     private fun flush() {
         if (count == 0) return
         buffer.flip()
-        glEnable(GL_BLEND)
-        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA)
         glBindBuffer(GL_ARRAY_BUFFER, instancedVbo)
         // 'orphan' the buffer - give a hint to the driver that we don't need the old data so we don't stall waiting for it
         glBufferData(GL_ARRAY_BUFFER, MAX_BATCH * STRIDE * 4L, GL_STREAM_DRAW)
         glBufferSubData(GL_ARRAY_BUFFER, 0, buffer)
-
-        if (caps().OpenGL30) org.lwjgl.opengl.GL30C.glBindVertexArray(vao)
-        glUseProgram(program)
 
         // upload transform if needed
         if (popFlushNeeded) {
@@ -396,7 +391,7 @@ object GLRenderer : Renderer {
             popFlushNeeded = false
         }
 
-        glBindTexture(GL_TEXTURE_2D, curTex)
+        glBindTexture(GL_TEXTURE_2D, atlas)
 
         // Quad attrib
         glBindBuffer(GL_ARRAY_BUFFER, quadVbo)
@@ -423,11 +418,8 @@ object GLRenderer : Renderer {
 
         count = 0
         buffer.clear()
-        glUseProgram(0)
-        glDisable(GL_BLEND)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         glBindTexture(GL_TEXTURE_2D, 0)
-        if (caps().OpenGL30) org.lwjgl.opengl.GL30C.glBindVertexArray(0)
     }
 
     private fun enableAttrib(loc: Int, size: Int, offset: Long): Long {
@@ -524,8 +516,6 @@ object GLRenderer : Renderer {
         colorMask: Int, topLeftRadius: Float, topRightRadius: Float, bottomLeftRadius: Float, bottomRightRadius: Float
     ) {
         if (count >= MAX_BATCH) flush()
-        if (count > 0 && curTex != atlas) flush()
-        curTex = atlas
 
         buffer.put(x).put(y).put(width).put(height)
         buffer.put(topLeftRadius).put(topRightRadius).put(bottomRightRadius).put(bottomLeftRadius)
@@ -541,9 +531,9 @@ object GLRenderer : Renderer {
 
     override fun text(font: Font, x: Float, y: Float, text: String, color: Color, fontSize: Float) {
         val fAtlas = getFontAtlas(font, fontSize)
+        val s = transformScale()
+        val fAtlasForRendering = if (s == 1f) fAtlas else getFontAtlas(font, fontSize * s)
         if (count >= MAX_BATCH) flush()
-        if (count > 0 && curTex != atlas) flush()
-        curTex = atlas
 
         var penX = x
         val scaleFactor = fontSize / fAtlas.renderedSize
@@ -562,7 +552,7 @@ object GLRenderer : Renderer {
             buffer.put(EMPTY_ROW) // zero radii
             buffer.put(r).put(g).put(b).put(a)
             buffer.put(EMPTY_ROW) // color1 unused
-            buffer.put(glyph, 0, 4) // UVs
+            buffer.put(if(s == 1f) glyph else fAtlasForRendering.get(c), 0, 4) // UVs
             buffer.put(-1f) // thickness = -1 for text
             penX += glyph.xAdvance * scaleFactor
             count += 1
@@ -603,24 +593,24 @@ object GLRenderer : Renderer {
         val ny = ((VIEWPORT[3] + VIEWPORT[1]) - (y + height) * pixelRatio).roundToInt()
         val nw = (width * pixelRatio).roundToInt()
         val nh = (height * pixelRatio).roundToInt()
-        scissorStack[curScissor++] = nx
-        scissorStack[curScissor++] = ny
-        scissorStack[curScissor++] = nw
-        scissorStack[curScissor++] = nh
+        scissorStack[scissorDepth++] = nx
+        scissorStack[scissorDepth++] = ny
+        scissorStack[scissorDepth++] = nw
+        scissorStack[scissorDepth++] = nh
         glEnable(GL_SCISSOR_TEST)
         glScissor(nx, ny, nw, nh)
     }
 
     override fun pushScissorIntersecting(x: Float, y: Float, width: Float, height: Float) {
-        if (curScissor < 4) {
+        if (scissorDepth < 4) {
             pushScissor(x, y, width, height)
             return
         }
         flush()
-        val px = scissorStack[curScissor - 4]
-        val py = scissorStack[curScissor - 3]
-        val pw = scissorStack[curScissor - 2]
-        val ph = scissorStack[curScissor - 1]
+        val px = scissorStack[scissorDepth - 4]
+        val py = scissorStack[scissorDepth - 3]
+        val pw = scissorStack[scissorDepth - 2]
+        val ph = scissorStack[scissorDepth - 1]
         val nx = (x * pixelRatio).roundToInt()
         val ny = ((VIEWPORT[3] + VIEWPORT[1]) - (y + height) * pixelRatio).roundToInt()
 
@@ -629,10 +619,10 @@ object GLRenderer : Renderer {
         val iw = maxOf(0, minOf(nx + (width * pixelRatio).roundToInt(), px + pw) - ix)
         val ih = maxOf(0, minOf(ny + (height * pixelRatio).roundToInt(), py + ph) - iy)
 
-        scissorStack[curScissor++] = ix
-        scissorStack[curScissor++] = iy
-        scissorStack[curScissor++] = iw
-        scissorStack[curScissor++] = ih
+        scissorStack[scissorDepth++] = ix
+        scissorStack[scissorDepth++] = iy
+        scissorStack[scissorDepth++] = iw
+        scissorStack[scissorDepth++] = ih
 
         glEnable(GL_SCISSOR_TEST)
         glScissor(ix, iy, iw, ih)
@@ -640,16 +630,16 @@ object GLRenderer : Renderer {
 
     override fun popScissor() {
         flush()
-        if (curScissor <= 4) {
-            curScissor = 0
+        if (scissorDepth <= 4) {
+            scissorDepth = 0
             glDisable(GL_SCISSOR_TEST)
             return
         }
-        curScissor -= 4
-        val x = scissorStack[curScissor - 4]
-        val y = scissorStack[curScissor - 3]
-        val width = scissorStack[curScissor - 2]
-        val height = scissorStack[curScissor - 1]
+        scissorDepth -= 4
+        val x = scissorStack[scissorDepth - 4]
+        val y = scissorStack[scissorDepth - 3]
+        val width = scissorStack[scissorDepth - 2]
+        val height = scissorStack[scissorDepth - 1]
         glEnable(GL_SCISSOR_TEST)
         glScissor(x, y, width, height)
     }
@@ -677,6 +667,12 @@ object GLRenderer : Renderer {
             transform.setThenClear(transformStack[--transformDepth])
         }
         popFlushNeeded = true
+    }
+
+    private fun transformScale(): Float {
+        val sx = sqrt(transform[0] * transform[0] + transform[3] * transform[3])
+        val sy = sqrt(transform[1] * transform[1] + transform[4] * transform[4])
+        return (sx + sy) * 0.5f
     }
 
     override fun translate(x: Float, y: Float) {

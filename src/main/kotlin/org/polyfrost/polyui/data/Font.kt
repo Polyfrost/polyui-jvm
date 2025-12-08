@@ -85,6 +85,7 @@ class Font private constructor(
         private val loaded = HashMap<String, Font>()
 
         @JvmStatic
+        @JvmOverloads
         fun of(
             resourcePath: String,
             family: FontFamily? = null,
