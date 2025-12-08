@@ -116,9 +116,9 @@ object GLRenderer : Renderer {
             float py = step(0.0, p.y);
 
             // Select radius per quadrant
-            float rLeft  = mix(r.w, r.x, py); // bottom-left / top-left
-            float rRight = mix(r.z, r.y, py); // bottom-right / top-right
-            float radius = mix(rLeft, rRight, px);
+            float rLeft  = mix(r.x, r.w, py); // top-left / bottom-left
+            float rRight = mix(r.y, r.z, py); // top-right / bottom-right
+            float radius = mix(rLeft, rRight, px); // left vs right
 
             vec2 q = abs(p) - (b - radius);
             return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
@@ -998,58 +998,3 @@ object GLRenderer : Renderer {
     @kotlin.internal.InlineOnly
     inline val FloatArray.xAdvance get() = this[8]
 }
-
-/*
- *     @OptIn(ExperimentalStdlibApi::class)
- *     private fun dumpBuffer() {
- *         buffer.rewind()
- *         val sb = StringBuilder()
- *         sb.append("Count: ").append(count)
- *         sb.append("\n X      Y       W     H   R   c1       c2      UV    T\n")
- *         var i = 0
- *         while (i < count) {
- *             sb.append('(').append(buffer.get().toString(dps = 2)).append(", ").append(buffer.get().toString(dps = 2)).append(')')
- *             sb.append('\t')
- *             sb.append(buffer.get().toString(dps = 2)).append('x').append(buffer.get().toString(dps = 2))
- *             sb.append('\t')
- *             var a = buffer.get()
- *             var b = buffer.get()
- *             var c = buffer.get()
- *             var d = buffer.get()
- *             if (a == b && b == c && c == d) {
- *                 sb.append(a.toString(dps = 2))
- *             } else sb.append(a.toString(dps = 2)).append(',').append(b.toString(dps = 2)).append(',').append(c.toString(dps = 2)).append(',').append(d.toString(dps = 2))
- *             sb.append('\t')
- *             a = buffer.get() * 255f
- *             b = buffer.get() * 255f
- *             c = buffer.get() * 255f
- *             d = buffer.get() * 255f
- *             val col = ((a.toInt() and 0xFF) or ((b.toInt() and 0xFF) shl 8) or ((c.toInt() and 0xFF) shl 16) or ((d.toInt() and 0xFF) shl 24))
- *             sb.append(col.toHexString())
- *             sb.append('\t')
- *
- *             a = buffer.get() * 255f
- *             b = buffer.get() * 255f
- *             c = buffer.get() * 255f
- *             d = buffer.get() * 255f
- *             val col2 = ((a.toInt() and 0xFF) or ((b.toInt() and 0xFF) shl 8) or ((c.toInt() and 0xFF) shl 16) or ((d.toInt() and 0xFF) shl 24))
- *             sb.append(col2.toHexString())
- *             sb.append('\t')
- *
- *             a = buffer.get()
- *             b = buffer.get()
- *             c = buffer.get()
- *             d = buffer.get()
- *             if (a == b && b == c && c == d) {
- *                 sb.append(a.toString(dps = 2))
- *             } else sb.append(a.toString(dps = 2)).append(',').append(b.toString(dps = 2)).append(',').append(c.toString(dps = 2)).append(',').append(d.toString(dps = 2))
- *             sb.append('\t')
- *
- *             sb.append(buffer.get().toString(dps = 2))
- *             sb.append('\n')
- *             i++
- *         }
- *         println(sb.toString())
- *         buffer.rewind()
- *     }
- */
