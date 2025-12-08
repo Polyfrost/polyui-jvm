@@ -322,7 +322,7 @@ open class Text protected constructor(text: Any, font: Font? = null, fontSize: F
             i++
         }
         h -= spacing
-        width = w
+        width = if (maxWidth == 0f) w else w.coerceAtMost(maxWidth)
         height = h
         // asm: we have a visible size, so we must have been externally set up
         // (i.e, given a size by the layout manager from a parent) and so
