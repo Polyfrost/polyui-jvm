@@ -4,9 +4,24 @@ import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.utils.IntArraySet
 import org.polyfrost.polyui.utils.codepointToString
 import org.polyfrost.polyui.utils.nullIfEmpty
+import java.util.concurrent.atomic.AtomicBoolean
 
-open class PolyBind(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: IntArray? = null, @get:JvmName("getMods") mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, @Transient @set:ApiStatus.Internal var action: (Boolean) -> Boolean) {
-    constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Array<Mouse>? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: (Boolean) -> Boolean) : this(
+open class PolyBind(
+    unmappedKeys: IntArray? = null,
+    keys: Array<Keys>? = null,
+    mouse: IntArray? = null,
+    @get:JvmName("getMods") mods: Modifiers = Modifiers(0),
+    durationNanos: Long = 0L,
+    @Transient @set:ApiStatus.Internal var action: (Boolean) -> Boolean,
+) {
+    constructor(
+        unmappedKeys: IntArray? = null,
+        keys: Array<Keys>? = null,
+        mouse: Array<Mouse>? = null,
+        mods: Modifiers = Modifiers(0),
+        durationNanos: Long = 0L,
+        action: (Boolean) -> Boolean
+    ) : this(
         unmappedKeys, keys,
         mouse?.map {
             it.value.toInt()
@@ -14,7 +29,14 @@ open class PolyBind(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, m
         mods, durationNanos, action,
     )
 
-    constructor(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, mouse: Mouse? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: (Boolean) -> Boolean) : this(
+    constructor(
+        unmappedKeys: IntArray? = null,
+        keys: Array<Keys>? = null,
+        mouse: Mouse? = null,
+        mods: Modifiers = Modifiers(0),
+        durationNanos: Long = 0L,
+        action: (Boolean) -> Boolean
+    ) : this(
         unmappedKeys, keys,
         mouse?.value?.let {
             intArrayOf(it.toInt())
@@ -22,7 +44,14 @@ open class PolyBind(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, m
         mods, durationNanos, action,
     )
 
-    constructor(unmappedKeys: IntArray? = null, key: Keys? = null, mouse: Array<Mouse>? = null, mods: Modifiers = Modifiers(0), durationNanos: Long = 0L, action: (Boolean) -> Boolean) : this(
+    constructor(
+        unmappedKeys: IntArray? = null,
+        key: Keys? = null,
+        mouse: Array<Mouse>? = null,
+        mods: Modifiers = Modifiers(0),
+        durationNanos: Long = 0L,
+        action: (Boolean) -> Boolean
+    ) : this(
         unmappedKeys,
         key?.let {
             arrayOf(it)
@@ -30,7 +59,14 @@ open class PolyBind(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, m
         mouse, mods, durationNanos, action,
     )
 
-    constructor(mods: Modifiers = Modifiers(0), action: (Boolean) -> Boolean) : this(unmappedKeys = null, key = null, mouse = null, mods = mods, durationNanos = 0L, action = action)
+    constructor(mods: Modifiers = Modifiers(0), action: (Boolean) -> Boolean) : this(
+        unmappedKeys = null,
+        key = null,
+        mouse = null,
+        mods = mods,
+        durationNanos = 0L,
+        action = action
+    )
 
     var unmappedKeys = unmappedKeys.nullIfEmpty()
         internal set
@@ -54,17 +90,27 @@ open class PolyBind(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, m
     @Transient
     private var ran = false
 
+    private val _isPressed: AtomicBoolean = AtomicBoolean()
+    val isPressed: Boolean get() = _isPressed.get()
+
     val size get() = (unmappedKeys?.size ?: 0) + (keys?.size ?: 0) + (mouse?.size ?: 0) + mods.size
     val isBound get() = size > 0
 
-    internal fun update(c: IntArraySet, k: ArrayList<Keys>, m: IntArraySet, mods: Byte, deltaTimeNanos: Long, down: Boolean): Boolean {
+    internal fun update(
+        c: IntArraySet,
+        k: ArrayList<Keys>,
+        m: IntArraySet,
+        mods: Byte,
+        deltaTimeNanos: Long,
+        down: Boolean
+    ): Boolean {
         if (muted) return false
         if (durationNanos == 0L && deltaTimeNanos > 0L) return false // asm: we are not time-sensitive, so ignore
         if (!test(c, k, m, mods, down)) {
             time = 0L
             if (ran) {
                 ran = false
-                return action(false)
+                return action0(false)
             }
             return false
         }
@@ -72,11 +118,11 @@ open class PolyBind(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, m
             time += deltaTimeNanos
             if (time >= durationNanos && !ran) {
                 ran = true
-                return action(true)
+                return action0(true)
             }
         } else if (down && !ran) {
             ran = true
-            return action(true)
+            return action0(true)
         }
         return false
     }
@@ -86,7 +132,7 @@ open class PolyBind(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, m
      * and reset its internal state so that it can be used again. To be used in conjunction with [KeyBinder.release].
      */
     internal fun resetState() {
-        if (ran) action(false)
+        if (ran) action0(false)
         time = 0L
         ran = false
     }
@@ -97,6 +143,11 @@ open class PolyBind(unmappedKeys: IntArray? = null, keys: Array<Keys>? = null, m
         if (!keys.matches(k)) return false
         if (!mouse.matches(m)) return false
         return this.mods.containedBy(Modifiers(mods))
+    }
+
+    private fun action0(state: Boolean): Boolean {
+        this._isPressed.set(state)
+        return action(state)
     }
 
     final override fun toString(): String {
