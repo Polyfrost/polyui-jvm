@@ -21,7 +21,10 @@ import org.polyfrost.polyui.unit.Vec4
 import org.polyfrost.polyui.utils.toDirectByteBuffer
 import org.polyfrost.polyui.utils.toDirectByteBufferNT
 import java.nio.ByteBuffer
-import kotlin.math.*
+import kotlin.math.cos
+import kotlin.math.roundToInt
+import kotlin.math.sin
+import kotlin.math.tan
 
 @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 object GLRenderer : Renderer {
@@ -32,7 +35,7 @@ object GLRenderer : Renderer {
     private const val FONT_MAX_BITMAP_H = 512
     private const val ATLAS_SIZE = 2048
     private const val ATLAS_SVG_UPSCALE_FACTOR = 4f
-    private const val STRIDE = 4 + 4 + 4 + 4 + 4 + 1 // bounds, radii, color0, color1, UV, thick
+    private const val STRIDE = 4 + 4 + 1 + 1 + 4 + 1 // bounds, radii, color0, color1, UV, thick
     private const val MAX_BATCH = 1024
 
     private val PIXELS: ByteBuffer = BufferUtils.createByteBuffer(3).put(112).put(120).put(0).flip() as ByteBuffer
@@ -78,7 +81,7 @@ object GLRenderer : Renderer {
     private var transform = FloatArray(9).set(IDENTITY)
     private val VIEWPORT = IntArray(4)
     private var pixelRatio = 1f
-    private var alphaCap = 1f
+    private var alphaCap = 255
     private var popFlushNeeded = false
 
     // atlas data
@@ -179,19 +182,22 @@ object GLRenderer : Renderer {
 
     private val VERT = """
         #version $$$ // replaced by compileShader
+        #extension GL_EXT_gpu_shader4 : enable
         #if __VERSION__ >= 130
             #define ATTRIBUTE in
             #define VARYING out
+            #define U_INT uint
         #else
             #define ATTRIBUTE attribute
             #define VARYING varying
+            #define U_INT unsigned int
         #endif
 
         ATTRIBUTE vec2 aLocal;
         ATTRIBUTE vec4 iRect;
         ATTRIBUTE vec4 iRadii;
-        ATTRIBUTE vec4 iColor0;
-        ATTRIBUTE vec4 iColor1;
+        ATTRIBUTE U_INT iColor0;
+        ATTRIBUTE U_INT iColor1;
         ATTRIBUTE vec4 iUVRect;
         ATTRIBUTE float iThickness;
 
@@ -210,6 +216,15 @@ object GLRenderer : Renderer {
         VARYING vec2 vUV;
         VARYING vec2 vUV2;
         VARYING float vThickness;
+        
+        vec4 unpackColor(U_INT c) {
+            float a = float((c >> 24) & 0xFFu) / 255.0;
+            float r = float((c >> 16) & 0xFFu) / 255.0;
+            float g = float((c >>  8) & 0xFFu) / 255.0;
+            float b = float((c      ) & 0xFFu) / 255.0;
+
+            return vec4(r, g, b, a);
+        }
 
         void main() {
             // Position inside rect
@@ -226,8 +241,8 @@ object GLRenderer : Renderer {
             vPos    = pos;
             vRect   = iRect;
             vRadii  = iRadii;
-            vColor0 = iColor0;
-            vColor1 = iColor1;
+            vColor0 = unpackColor(iColor0);
+            vColor1 = unpackColor(iColor1);
             vUV     = uv;
             // pass through for gradients.
             vUV2    = iUVRect.zw;
@@ -284,6 +299,7 @@ object GLRenderer : Renderer {
         if (init) return
         // check if instancing extension is available
         require(caps().OpenGL20) { "At least OpenGL 2.0 is required" }
+        require(caps().OpenGL30 || caps().GL_EXT_gpu_shader4) { "GL_EXT_gpu_shader4 is not supported and is required" }
         require(caps().OpenGL33 || caps().GL_ARB_instanced_arrays) { "GL_ARB_instanced_arrays is not supported and is required" }
         require(caps().OpenGL31 || caps().GL_ARB_draw_instanced) { "GL_ARB_draw_instanced is not supported and is required" }
 
@@ -322,8 +338,8 @@ object GLRenderer : Renderer {
             var offset = 0L
             offset = enableAttrib(iRect, 4, offset)
             offset = enableAttrib(iRadii, 4, offset)
-            offset = enableAttrib(iColor0, 4, offset)
-            offset = enableAttrib(iColor1, 4, offset)
+            offset = enableAttrib(iColor0, 1, offset, GL_UNSIGNED_INT)
+            offset = enableAttrib(iColor1, 1, offset, GL_UNSIGNED_INT)
             offset = enableAttrib(iUVRect, 4, offset)
             enableAttrib(iThickness, 1, offset)
             org.lwjgl.opengl.GL30C.glBindVertexArray(0)
@@ -353,7 +369,7 @@ object GLRenderer : Renderer {
 
     override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {
         scissorDepth = 0
-        alphaCap = 1f
+        alphaCap = 255
         count = 0
         buffer.clear()
         transform.set(IDENTITY)
@@ -375,6 +391,13 @@ object GLRenderer : Renderer {
         glDisable(GL_SCISSOR_TEST)
         glDisable(GL_BLEND)
         glUseProgram(0)
+    }
+
+    @kotlin.internal.InlineOnly
+    private inline fun Int.capAlpha(): Int {
+        val a = (this ushr 24) and 0xFF
+        val capped = if (a > alphaCap) alphaCap else a
+        return (capped shl 24) or (this and 0x00FFFFFF)
     }
 
     private fun flush() {
@@ -406,8 +429,8 @@ object GLRenderer : Renderer {
             var offset = 0L
             offset = enableAttrib(iRect, 4, offset)
             offset = enableAttrib(iRadii, 4, offset)
-            offset = enableAttrib(iColor0, 4, offset)
-            offset = enableAttrib(iColor1, 4, offset)
+            offset = enableAttrib(iColor0, 1, offset, GL_UNSIGNED_INT)
+            offset = enableAttrib(iColor1, 1, offset, GL_UNSIGNED_INT)
             offset = enableAttrib(iUVRect, 4, offset)
             enableAttrib(iThickness, 1, offset)
         }
@@ -422,9 +445,9 @@ object GLRenderer : Renderer {
         glBindTexture(GL_TEXTURE_2D, 0)
     }
 
-    private fun enableAttrib(loc: Int, size: Int, offset: Long): Long {
+    private fun enableAttrib(loc: Int, size: Int, offset: Long, type: Int = GL_FLOAT): Long {
         glEnableVertexAttribArray(loc)
-        glVertexAttribPointer(loc, size, GL_FLOAT, false, STRIDE * 4, offset)
+        glVertexAttribPointer(loc, size, type, false, STRIDE * 4, offset)
         // i don't know why core disables the extension functions... but ok!
         if (caps().OpenGL33) org.lwjgl.opengl.GL33C.glVertexAttribDivisor(loc, 1)
         else org.lwjgl.opengl.ARBInstancedArrays.glVertexAttribDivisorARB(loc, 1)
@@ -443,10 +466,9 @@ object GLRenderer : Renderer {
         if (count >= MAX_BATCH) flush()
         buffer.put(x).put(y).put(width).put(height)
         buffer.put(topLeftRadius).put(topRightRadius).put(bottomRightRadius).put(bottomLeftRadius)
-        buffer.put(color.r / 255f).put(color.g / 255f).put(color.b / 255f).put(color.alpha.coerceAtMost(alphaCap))
+        buffer.put(java.lang.Float.intBitsToFloat(color.argb.capAlpha()))
         if (color is PolyColor.Gradient) {
-            buffer.put(color.color2.r / 255f).put(color.color2.g / 255f).put(color.color2.b / 255f)
-                .put(color.color2.alpha.coerceAtMost(alphaCap))
+            buffer.put(java.lang.Float.intBitsToFloat(color.color2.argb.capAlpha()))
             when (val type = color.type) {
                 is PolyColor.Gradient.Type.LeftToRight -> {
                     buffer.put(0f).put(height / 2f).put(width).put(height / 2f)
@@ -481,7 +503,7 @@ object GLRenderer : Renderer {
                 }
             }
         } else {
-            buffer.put(EMPTY_ROW) // color1 unused
+            buffer.put(0f) // color1 unused
             buffer.put(NO_UV) // -1f UVs to indicate no texture
             buffer.put(0f)
         }
@@ -504,8 +526,8 @@ object GLRenderer : Renderer {
         if (count >= MAX_BATCH) flush()
         buffer.put(x).put(y).put(width).put(height)
         buffer.put(topLeftRadius).put(topRightRadius).put(bottomRightRadius).put(bottomLeftRadius)
-        buffer.put(color.r / 255f).put(color.g / 255f).put(color.b / 255f).put(color.alpha.coerceAtMost(alphaCap))
-        buffer.put(EMPTY_ROW) // color1 unused
+        buffer.put(java.lang.Float.intBitsToFloat(color.argb.capAlpha()))
+        buffer.put(0f) // color1 unused
         buffer.put(NO_UV) // -1f UVs to indicate no texture
         buffer.put(lineWidth)
         count += 1
@@ -519,11 +541,8 @@ object GLRenderer : Renderer {
 
         buffer.put(x).put(y).put(width).put(height)
         buffer.put(topLeftRadius).put(topRightRadius).put(bottomRightRadius).put(bottomLeftRadius)
-        buffer.put((colorMask shr 16 and 0xFF) / 255f)
-            .put((colorMask shr 8 and 0xFF) / 255f)
-            .put((colorMask and 0xFF) / 255f)
-            .put(((colorMask shr 24 and 0xFF) / 255f).coerceAtMost(alphaCap))
-        buffer.put(EMPTY_ROW) // color1 unused
+        buffer.put(java.lang.Float.intBitsToFloat(colorMask.capAlpha()))
+        buffer.put(0f) // color1 unused
         buffer.put(image.uv.x).put(image.uv.y).put(image.uv.w).put(image.uv.h)
         buffer.put(0f) // thickness = 0 for filled rect
         count += 1
@@ -531,17 +550,12 @@ object GLRenderer : Renderer {
 
     override fun text(font: Font, x: Float, y: Float, text: String, color: Color, fontSize: Float) {
         val fAtlas = getFontAtlas(font, fontSize)
-        val s = transformScale()
-        val fAtlasForRendering = if (s == 1f) fAtlas else getFontAtlas(font, fontSize * s)
         if (count >= MAX_BATCH) flush()
 
         var penX = x
         val scaleFactor = fontSize / fAtlas.renderedSize
         val penY = y + (fAtlas.ascent + fAtlas.descent) * scaleFactor
-        val r = (color.r / 255f)
-        val g = (color.g / 255f)
-        val b = (color.b / 255f)
-        val a = (color.alpha.coerceAtMost(alphaCap))
+        val col = java.lang.Float.intBitsToFloat(color.argb.capAlpha())
         val buffer = buffer
 
         for (c in text) {
@@ -550,9 +564,9 @@ object GLRenderer : Renderer {
             buffer.put(penX + glyph.xOff * scaleFactor).put(penY + glyph.yOff * scaleFactor)
                 .put(glyph.width * scaleFactor).put(glyph.height * scaleFactor)
             buffer.put(EMPTY_ROW) // zero radii
-            buffer.put(r).put(g).put(b).put(a)
-            buffer.put(EMPTY_ROW) // color1 unused
-            buffer.put(if(s == 1f) glyph else fAtlasForRendering.get(c), 0, 4) // UVs
+            buffer.put(col)
+            buffer.put(0f) // color1 unused
+            buffer.put(glyph, 0, 4) // UVs
             buffer.put(-1f) // thickness = -1 for text
             penX += glyph.xAdvance * scaleFactor
             count += 1
@@ -580,8 +594,8 @@ object GLRenderer : Renderer {
         if (count >= MAX_BATCH) flush()
         buffer.put(x).put(y).put(width).put(height)
         buffer.put(EMPTY_ROW) // zero radii
-        buffer.put(0f).put(0f).put(0f).put(alphaCap) // black, alpha to alphaCap
-        buffer.put(EMPTY_ROW) // color1 unused
+        buffer.put(java.lang.Float.intBitsToFloat(alphaCap shl 24)) // black, alpha to alphaCap
+        buffer.put(0f) // color1 unused
         buffer.put(spread).put(blur).put(0f).put(0f)
         buffer.put(-5f) // thickness = -5 for drop shadow
         count += 1
@@ -645,7 +659,7 @@ object GLRenderer : Renderer {
     }
 
     override fun globalAlpha(alpha: Float) {
-        alphaCap = alpha
+        alphaCap = (alpha * 255f).toInt()
     }
 
     override fun resetGlobalAlpha() = globalAlpha(1f)
@@ -667,12 +681,6 @@ object GLRenderer : Renderer {
             transform.setThenClear(transformStack[--transformDepth])
         }
         popFlushNeeded = true
-    }
-
-    private fun transformScale(): Float {
-        val sx = sqrt(transform[0] * transform[0] + transform[3] * transform[3])
-        val sy = sqrt(transform[1] * transform[1] + transform[4] * transform[4])
-        return (sx + sy) * 0.5f
     }
 
     override fun translate(x: Float, y: Float) {
