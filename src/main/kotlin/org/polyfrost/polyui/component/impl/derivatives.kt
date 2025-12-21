@@ -489,7 +489,8 @@ fun Slider(
             size = ptrSize.vec,
         ).radius(ptrSize / 2f).setPalette { text.primary }.withHoverStates().draggable(withY = false).ignoreLayout()
             .onDrag {
-                if (instant) state.setNumber(slide())
+                if (instant) state.setNumber(slide()) else slide()
+                this.x = this.x.coerceIn(parent.x, parent.x + length)
             }.onDragEnd {
                 state.setNumber(slide())
             }.events {
@@ -559,7 +560,8 @@ fun Slider(
     }.apply {
         state.weaklyListen(this) {
             @Suppress("DEPRECATION")
-            setSliderValue(it.toFloat(), min, max); false
+            setSliderValue(it.toFloat(), min, max)
+            false
         }
     }.namedId("Slider")
 }

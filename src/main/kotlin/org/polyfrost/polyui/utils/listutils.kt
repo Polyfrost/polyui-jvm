@@ -120,6 +120,14 @@ inline fun <L, E> L.fastRemoveIfReversed(predicate: (E) -> Boolean) where L : Mu
             this.removeAt(i.coerceAtMost(size - 1))
         }
     }
+    //var i = size - 1
+    //try {
+    //    while (i > 0) {
+    //        //func(this[i--])
+    //    }
+    //} catch (_: IndexOutOfBoundsException) {
+    //    PolyUI.LOGGER.error("FAST_WARN_CONCURRENT_MODIFICATION_REV")
+    //}
 }
 
 /**
