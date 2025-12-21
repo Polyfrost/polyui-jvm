@@ -24,6 +24,8 @@ package org.polyfrost.polyui
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.color.hsba
 import org.polyfrost.polyui.component.extensions.events
+import org.polyfrost.polyui.component.extensions.onClick
+import org.polyfrost.polyui.component.extensions.shake
 import org.polyfrost.polyui.component.extensions.withHoverStates
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.data.Font
@@ -31,9 +33,12 @@ import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.operations.Recolor
 import org.polyfrost.polyui.renderer.impl.GLFWWindow
 import org.polyfrost.polyui.renderer.impl.NVGRenderer
+import org.polyfrost.polyui.theme.OtherTheme
+import org.polyfrost.polyui.theme.PolyGlassTheme
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.unit.ms
+import org.polyfrost.polyui.utils.fastEach
 import org.polyfrost.polyui.utils.image
 import kotlin.random.Random
 
@@ -44,7 +49,15 @@ fun main() {
         Image("polyfrost.png"),
         Text("text.dark", font = Font.of("https://raw.githubusercontent.com/coreyhu/Urbanist/main/fonts/ttf/Urbanist-BlackItalic.ttf"), fontSize = 20f),
         Group(
-            Button("moon.svg".image()),
+            Button("moon.svg".image()).onClick {
+
+                shake()
+                polyUI.apply {
+                    val newTheme = if (theme == PolyGlassTheme.DARK) OtherTheme.LIGHT else PolyGlassTheme.DARK
+                    theme = newTheme
+                }
+                true
+            },
             Button("face-wink.svg".image(), "button.text").events {
                 Event.Mouse.Clicked(0, amountClicks = 2) then {
                     Recolor(
@@ -55,7 +68,7 @@ fun main() {
                 }
             },
             Switch(size = 28f),
-            Checkbox(size = 28f),
+            Checkbox(size = 20f),
         ),
         Dropdown("tomato", "orange", "banana", "lime"),
         Block(
@@ -96,7 +109,19 @@ fun main() {
         ),
         size = 800f by 500f,
         renderer = renderer,
+        theme = PolyGlassTheme.DARK,
+        //backgroundColor = PolyGlassTheme.DARK.colors.page.bg.normal
     )
+
+    val list = ArrayList(List(100_000) { it })
+    PolyUI.timed(true, "fast each") {
+        var sum = 0
+        list.fastEach { sum += it }
+    }
+    PolyUI.timed(true, "for each") {
+        var sum = 0
+        list.forEach { sum += it }
+    }
 
     if (!PolyUI.isOnMac) window.setIcon("polyui/icon.png")
     window.open(polyUI)

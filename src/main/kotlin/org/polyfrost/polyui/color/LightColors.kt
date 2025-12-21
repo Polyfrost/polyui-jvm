@@ -27,7 +27,7 @@ package org.polyfrost.polyui.color
  * @see Colors
  * @since 0.17.0
  */
-open class LightTheme : Colors {
+open class LightColors : Colors {
     override val name: String get() = "light"
     override val page = Colors.Page(
         bg = Colors.Palette(

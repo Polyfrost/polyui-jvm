@@ -155,7 +155,7 @@ class Debugger(private val polyUI: PolyUI) {
         if (eval.startsWith("colors", true)) {
             val newColors = PolyUI.registeredThemes.get(eval.substringAfterLast('=').trim().lowercase())
             return if (newColors != null) {
-                polyUI.colors = newColors
+                //polyUI.colors = newColors
                 true
             } else {
                 LOGGER.warn("unknown color theme: $eval")

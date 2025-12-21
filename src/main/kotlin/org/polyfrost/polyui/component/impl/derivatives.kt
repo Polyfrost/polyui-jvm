@@ -31,17 +31,62 @@ import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.Inputtable
-import org.polyfrost.polyui.component.extensions.*
+import org.polyfrost.polyui.component.extensions.addRethemingListeners
+import org.polyfrost.polyui.component.extensions.afterInit
+import org.polyfrost.polyui.component.extensions.afterParentInit
+import org.polyfrost.polyui.component.extensions.denyPaletteChanges
+import org.polyfrost.polyui.component.extensions.disable
+import org.polyfrost.polyui.component.extensions.draggable
+import org.polyfrost.polyui.component.extensions.events
+import org.polyfrost.polyui.component.extensions.fade
+import org.polyfrost.polyui.component.extensions.getTargetPosition
+import org.polyfrost.polyui.component.extensions.getTextFromBoxedTextInput
+import org.polyfrost.polyui.component.extensions.ignoreLayout
+import org.polyfrost.polyui.component.extensions.namedId
+import org.polyfrost.polyui.component.extensions.numeric
+import org.polyfrost.polyui.component.extensions.onClick
+import org.polyfrost.polyui.component.extensions.onDrag
+import org.polyfrost.polyui.component.extensions.onDragEnd
+import org.polyfrost.polyui.component.extensions.onFocusGained
+import org.polyfrost.polyui.component.extensions.onFocusLost
+import org.polyfrost.polyui.component.extensions.onScroll
+import org.polyfrost.polyui.component.extensions.onThemeChange
+import org.polyfrost.polyui.component.extensions.padded
+import org.polyfrost.polyui.component.extensions.radius
+import org.polyfrost.polyui.component.extensions.relegate
+import org.polyfrost.polyui.component.extensions.secondary
+import org.polyfrost.polyui.component.extensions.setPalette
+import org.polyfrost.polyui.component.extensions.setSliderValue
+import org.polyfrost.polyui.component.extensions.shake
+import org.polyfrost.polyui.component.extensions.siblings
+import org.polyfrost.polyui.component.extensions.spawnAtMouse
+import org.polyfrost.polyui.component.extensions.toggleable
+import org.polyfrost.polyui.component.extensions.withBorder
+import org.polyfrost.polyui.component.extensions.withHoverStates
+import org.polyfrost.polyui.component.extensions.withThemeBorder
 import org.polyfrost.polyui.data.Font
 import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.event.State
+import org.polyfrost.polyui.operations.AlterRadius
 import org.polyfrost.polyui.operations.ComponentOp
 import org.polyfrost.polyui.operations.Move
 import org.polyfrost.polyui.operations.Resize
 import org.polyfrost.polyui.operations.Rotate
-import org.polyfrost.polyui.unit.*
-import org.polyfrost.polyui.utils.*
+import org.polyfrost.polyui.unit.Align
+import org.polyfrost.polyui.unit.AlignDefault
+import org.polyfrost.polyui.unit.SpawnPos
+import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.unit.by
+import org.polyfrost.polyui.unit.milliseconds
+import org.polyfrost.polyui.unit.seconds
+import org.polyfrost.polyui.unit.vec
+import org.polyfrost.polyui.utils.digits
+import org.polyfrost.polyui.utils.image
+import org.polyfrost.polyui.utils.isIntegral
+import org.polyfrost.polyui.utils.mapToArray
+import org.polyfrost.polyui.utils.setNumber
+import org.polyfrost.polyui.utils.toString
 import kotlin.experimental.or
 import kotlin.math.PI
 import kotlin.math.sign
@@ -56,7 +101,17 @@ private val CHECK = PolyImage.of("polyui/check.svg")
  * To use this button, you can use the [onClick] method to detect presses.
  */
 @JvmName("Button")
-fun Button(leftImage: PolyImage? = null, text: String? = null, rightImage: PolyImage? = null, fontSize: Float = 12f, font: Font? = null, radii: FloatArray = floatArrayOf(8f), padding: Vec2 = Vec2(12f, 6f), at: Vec2 = Vec2.ZERO, size: Vec2 = Vec2.ZERO): Block {
+fun Button(
+    leftImage: PolyImage? = null,
+    text: String? = null,
+    rightImage: PolyImage? = null,
+    fontSize: Float = 12f,
+    font: Font? = null,
+    radii: FloatArray = floatArrayOf(8f),
+    padding: Vec2 = Vec2(12f, 6f),
+    at: Vec2 = Vec2.ZERO,
+    size: Vec2 = Vec2.ZERO
+): Block {
     return Block(
         if (leftImage != null) Image(leftImage) else null,
         if (text != null) Text(text, fontSize = fontSize, font = font) else null,
@@ -65,34 +120,63 @@ fun Button(leftImage: PolyImage? = null, text: String? = null, rightImage: PolyI
         at = at,
         size = size,
         radii = radii,
-    ).withHoverStates().namedId("Button")
+    ).withHoverStates().onThemeChange { theme, animation ->
+        AlterRadius(this, theme.buttonProperties.radius(size.x, size.y), animation).add()
+    }.namedId("Button")
 }
 
 /**
  * Simple switch component.
  */
 @JvmName("Switch")
-fun Switch(at: Vec2 = Vec2.ZERO, size: Float, padding: Float = 3f, state: State<Boolean> = State(false), lateralStretch: Float = 1.8f): Block {
+fun Switch(
+    at: Vec2 = Vec2.ZERO,
+    size: Float,
+    padding: Float = 3f,
+    state: State<Boolean> = State(false),
+    lateralStretch: Float = 1.8f
+): Block {
     val circleSize = size - (padding + padding)
     return Block(
-        Block(size = Vec2(circleSize, circleSize)).radius(circleSize / 2f).setPalette { text.primary }.denyPaletteChanges().disable(),
+        Block(size = Vec2(circleSize, circleSize))
+            .setPalette { text.primary }
+            .denyPaletteChanges()
+            .onThemeChange { theme, animation ->
+                AlterRadius(
+                    this,
+                    floatArrayOf(theme.switchProperties.notchRadius(circleSize)),
+                    animation
+                ).add()
+                setPalette { theme.switchProperties.notchPalette(this) }
+            }
+            .disable(),
         at = at,
         size = Vec2(size * lateralStretch, size),
         alignment = Align(main = Align.Content.Start, pad = Vec2(padding, 0f)),
-    ).radius(size / 2f).toggleable(state).namedId("Switch").apply {
-        if (state.value) afterParentInit {
-            val circle = this[0]
-            // #created-with-set-position = true
-            circle.layoutFlags = circle.layoutFlags or 0b00000100
-            circle.x = 2f * this.x + this.width - circle.width - circle.x
+    ).radius(size / 2f)
+        .onThemeChange { theme, animation ->
+            AlterRadius(
+                this,
+                floatArrayOf(theme.switchProperties.radius(circleSize)),
+                animation
+            ).add()
         }
-    }.apply {
-        state.weaklyListen(this) {
-            val circle = this[0]
-            val target = 2f * this.x + this.width - circle.width - circle.getTargetPosition().x
-            Move(circle, x = target, add = false, animation = Animations.Default.create(0.2.seconds)).add()
+        .toggleable(state)
+        .namedId("Switch")
+        .apply {
+            if (state.value) afterParentInit {
+                val circle = this[0]
+                // #created-with-set-position = true
+                circle.layoutFlags = circle.layoutFlags or 0b00000100
+                circle.x = 2f * this.x + this.width - circle.width - circle.x
+            }
+        }.apply {
+            state.weaklyListen(this) {
+                val circle = this[0]
+                val target = 2f * this.x + this.width - circle.width - circle.getTargetPosition().x
+                Move(circle, x = target, add = false, animation = Animations.EaseInOutCubic.create(0.2.seconds)).add()
+            }
         }
-    }
 }
 
 /**
@@ -102,7 +186,21 @@ fun Switch(at: Vec2 = Vec2.ZERO, size: Float, padding: Float = 3f, state: State<
  * For both strings and images, use `Image to "string"`.
  */
 @JvmName("Radiobutton")
-fun Radiobutton(vararg entries: String, at: Vec2 = Vec2.ZERO, state: State<Int> = State(0), fontSize: Float = 12f, optionLateralPadding: Float = 6f, optionVerticalPadding: Float = 6f) = Radiobutton(entries = entries.mapToArray { null to it }, at, state, fontSize, optionLateralPadding, optionVerticalPadding)
+fun Radiobutton(
+    vararg entries: String,
+    at: Vec2 = Vec2.ZERO,
+    state: State<Int> = State(0),
+    fontSize: Float = 12f,
+    optionLateralPadding: Float = 6f,
+    optionVerticalPadding: Float = 6f
+) = Radiobutton(
+    entries = entries.mapToArray { null to it },
+    at,
+    state,
+    fontSize,
+    optionLateralPadding,
+    optionVerticalPadding
+)
 
 /**
  * For strings, use `"string"` for each entry.
@@ -110,7 +208,21 @@ fun Radiobutton(vararg entries: String, at: Vec2 = Vec2.ZERO, state: State<Int> 
  * For both strings and images, use `Image to "string"`.
  */
 @JvmName("Radiobutton")
-fun Radiobutton(vararg entries: PolyImage, at: Vec2 = Vec2.ZERO, state: State<Int> = State(0), fontSize: Float = 12f, optionLateralPadding: Float = 6f, optionVerticalPadding: Float = 6f) = Radiobutton(entries = entries.mapToArray { it to null }, at, state, fontSize, optionLateralPadding, optionVerticalPadding)
+fun Radiobutton(
+    vararg entries: PolyImage,
+    at: Vec2 = Vec2.ZERO,
+    state: State<Int> = State(0),
+    fontSize: Float = 12f,
+    optionLateralPadding: Float = 6f,
+    optionVerticalPadding: Float = 6f
+) = Radiobutton(
+    entries = entries.mapToArray { it to null },
+    at,
+    state,
+    fontSize,
+    optionLateralPadding,
+    optionVerticalPadding
+)
 
 /**
  * For just strings, use `"string"` for each entry.
@@ -120,7 +232,14 @@ fun Radiobutton(vararg entries: PolyImage, at: Vec2 = Vec2.ZERO, state: State<In
  * `null to null` is not supported, and will throw an exception.
  */
 @JvmName("Radiobutton")
-fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2 = Vec2.ZERO, state: State<Int> = State(0), fontSize: Float = 12f, optionLateralPadding: Float = 6f, optionVerticalPadding: Float = 6f): Block {
+fun Radiobutton(
+    vararg entries: Pair<PolyImage?, String?>,
+    at: Vec2 = Vec2.ZERO,
+    state: State<Int> = State(0),
+    fontSize: Float = 12f,
+    optionLateralPadding: Float = 6f,
+    optionVerticalPadding: Float = 6f
+): Block {
     val optAlign = Align(Align.Content.Center, pad = Vec2(optionLateralPadding, optionVerticalPadding))
     val buttons = entries.mapToArray { (img, text) ->
         require(img != null || text != null) { "image and text cannot both be null on Radiobutton" }
@@ -152,7 +271,13 @@ fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2 = Vec2.ZERO,
             val selector = children[0]
             val target = children[it + 1]
             Move(selector, target.x, target.y, add = false, animation = Animations.Default.create(0.15.seconds)).add()
-            Resize(selector, target.width, target.height, add = false, animation = Animations.Default.create(0.15.seconds)).add()
+            Resize(
+                selector,
+                target.width,
+                target.height,
+                add = false,
+                animation = Animations.Default.create(0.15.seconds)
+            ).add()
         }
     }.namedId("Radiobutton")
 }
@@ -165,12 +290,26 @@ fun Radiobutton(vararg entries: Pair<PolyImage?, String?>, at: Vec2 = Vec2.ZERO,
  * For images, use `Image to "string"` for each entry.
  */
 @JvmName("Dropdown")
-fun Dropdown(vararg entries: String, at: Vec2 = Vec2.ZERO, size: Vec2 = Vec2.ZERO, fontSize: Float = 12f, state: State<Int> = State(0), padding: Float = 12f): Block {
+fun Dropdown(
+    vararg entries: String,
+    at: Vec2 = Vec2.ZERO,
+    size: Vec2 = Vec2.ZERO,
+    fontSize: Float = 12f,
+    state: State<Int> = State(0),
+    padding: Float = 12f
+): Block {
     return Dropdown(entries = entries.mapToArray { null to it }, at, size, fontSize, state, padding)
 }
 
 @JvmName("Dropdown")
-fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, size: Vec2 = Vec2.ZERO, fontSize: Float = 12f, state: State<Int> = State(0), optPadding: Float = 12f): Block {
+fun Dropdown(
+    vararg entries: Pair<PolyImage?, String>,
+    at: Vec2 = Vec2.ZERO,
+    size: Vec2 = Vec2.ZERO,
+    fontSize: Float = 12f,
+    state: State<Int> = State(0),
+    optPadding: Float = 12f
+): Block {
     var heightTracker = 0f
     var titleText: String? = null
     val title = TextInput("", fontSize = fontSize, visibleSize = Vec2(0f, fontSize))
@@ -183,7 +322,11 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, siz
         alignment = Align(main = Align.Content.SpaceBetween, pad = Vec2(8f, 8f), wrap = Align.Wrap.NEVER),
     ).withHoverStates().withBorder()
     val dropdown = Block(
-        alignment = Align(mode = Align.Mode.Vertical, padBetween = Vec2(optPadding, 6f), line = if (size.isPositive) Align.Line.Start else Align.Line.Center),
+        alignment = Align(
+            mode = Align.Mode.Vertical,
+            padBetween = Vec2(optPadding, 6f),
+            line = if (size.isPositive) Align.Line.Start else Align.Line.Center
+        ),
         children = entries.mapToArray { (img, text) ->
             Group(
                 if (img != null) Image(img) else null,
@@ -209,11 +352,23 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, siz
             dropdown.y = this.y + this.height
             if (dropdown.height != 0f) heightTracker = dropdown.height
             dropdown.height = 0.01f
-            Resize(dropdown, height = heightTracker, add = false, withVisible = false, animation = Animations.Default.create(0.15.seconds)).add()
+            Resize(
+                dropdown,
+                height = heightTracker,
+                add = false,
+                withVisible = false,
+                animation = Animations.Default.create(0.15.seconds)
+            ).add()
             Rotate(icon, PI, add = false, animation = Animations.Default.create(0.15.seconds)).add()
         }
         Event.Focused.Lost then {
-            Resize(dropdown, height = 0f, add = false, withVisible = false, animation = Animations.Default.create(0.15.seconds)) {
+            Resize(
+                dropdown,
+                height = 0f,
+                add = false,
+                withVisible = false,
+                animation = Animations.Default.create(0.15.seconds)
+            ) {
                 dropdown.parent.removeChild(dropdown, recalculate = false)
             }.add()
             if (titleText != null) {
@@ -271,7 +426,16 @@ fun Dropdown(vararg entries: Pair<PolyImage?, String>, at: Vec2 = Vec2.ZERO, siz
  * Note that slider change events cannot be cancelled.
  */
 @JvmName("Slider")
-fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, state: State<out Number> = State(min), ptrSize: Float = 24f, length: Float = (max - min) * 2f, steps: Int = 0, instant: Boolean = false): Drawable {
+fun Slider(
+    at: Vec2 = Vec2.ZERO,
+    min: Float = 0f,
+    max: Float = 100f,
+    state: State<out Number> = State(min),
+    ptrSize: Float = 24f,
+    length: Float = (max - min) * 2f,
+    steps: Int = 0,
+    instant: Boolean = false
+): Drawable {
     require(state.value.toFloat() in min..max) { "Initial slider state value ${state.value} is out of bounds ($min to $max)" }
     val barHeight = ptrSize / 2.8f
     val size = Vec2(length + ptrSize, ptrSize)
@@ -323,57 +487,69 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, state: Stat
         },
         Block(
             size = ptrSize.vec,
-        ).radius(ptrSize / 2f).setPalette { text.primary }.withHoverStates().draggable(withY = false).ignoreLayout().onDrag {
-            if (instant) state.setNumber(slide())
-        }.onDragEnd {
-            state.setNumber(slide())
-        }.events {
-            val op = object : ComponentOp.Animatable<Block>(self, animation) {
-                override fun apply(value: Float) {}
+        ).radius(ptrSize / 2f).setPalette { text.primary }.withHoverStates().draggable(withY = false).ignoreLayout()
+            .onDrag {
+                if (instant) state.setNumber(slide())
+            }.onDragEnd {
+                state.setNumber(slide())
+            }.events {
+                val op = object : ComponentOp.Animatable<Block>(self, animation) {
+                    override fun apply(value: Float) {}
 
-                override fun unapply(value: Float) {
-                    self.apply {
-                        val maxSize = this.width - 6f
-                        val maxRadius = if (!polyUI.settings.roundedCorners) 0f else (this.radii?.get(0)?.minus(2f))?.coerceAtLeast(0f) ?: 0f
-                        val current = maxSize * value
-                        val offset = (this.width - current) / 2f
-                        renderer.rect(x + offset, y + offset, current, current, polyUI.colors.brand.fg.normal, maxRadius * value)
+                    override fun unapply(value: Float) {
+                        self.apply {
+                            val maxSize = this.width - 6f
+                            val maxRadius =
+                                if (!polyUI.settings.roundedCorners) 0f else (this.radii?.get(0)
+                                    ?.minus(2f))?.coerceAtLeast(
+                                        0f
+                                    ) ?: 0f
+                            val current = maxSize * value
+                            val offset = (this.width - current) / 2f
+                            renderer.rect(
+                                x + offset,
+                                y + offset,
+                                current,
+                                current,
+                                polyUI.colors.text.primary.normal,
+                                maxRadius * value
+                            )
+                        }
+                    }
+
+                    override fun unapply(): Boolean {
+                        unapply(this.animation!!.value)
+                        return false
                     }
                 }
-
-                override fun unapply(): Boolean {
-                    unapply(this.animation!!.value)
-                    return false
+                op.add()
+                Event.Mouse.Exited then {
+                    op.reverse()
+                    animation.to = 0f
                 }
-            }
-            op.add()
-            Event.Mouse.Exited then {
-                op.reverse()
-                animation.to = 0f
-            }
-            Event.Mouse.Entered then {
-                op.reverse()
-                animation.to = 1f
-            }
-            Event.Mouse.Companion.Pressed then {
-                animation.from = animation.value
-                animation.to = 0.8f
-                animation.reset()
-                // asm: don't move the slider if the mouse is inside the blob (they are doing a slide operation, not a click to set)
-                if (isInside(it.x, it.y)) return@then
-                x = it.x - width / 2f
-                this.polyUI.inputManager.recalculate()
-                inputState = INPUT_PRESSED
-                accept(it)
-                state.setNumber(slide())
-            }
-            Event.Mouse.Companion.Released then {
-                animation.from = animation.to
-                animation.to = 1f
-                animation.reset()
-                false
-            }
-        },
+                Event.Mouse.Entered then {
+                    op.reverse()
+                    animation.to = 1f
+                }
+                Event.Mouse.Companion.Pressed then {
+                    animation.from = animation.value.coerceIn(0f, 1f)
+                    animation.to = 0.8f
+                    animation.reset()
+                    // asm: don't move the slider if the mouse is inside the blob (they are doing a slide operation, not a click to set)
+                    if (isInside(it.x, it.y)) return@then
+                    x = it.x - width / 2f
+                    this.polyUI.inputManager.recalculate()
+                    inputState = INPUT_PRESSED
+                    accept(it)
+                    state.setNumber(slide())
+                }
+                Event.Mouse.Companion.Released then {
+                    animation.from = animation.to
+                    animation.to = 1f
+                    animation.reset()
+                    false
+                }
+            },
         at = at,
         size = size,
         alignment = Align(Align.Content.Center, pad = Vec2.ZERO),
@@ -396,7 +572,11 @@ fun Checkbox(at: Vec2 = Vec2.ZERO, size: Float, state: State<Boolean> = State(fa
     at = at,
     size = Vec2(size, size),
     alignment = Align(pad = ((size - size / 1.25f) / 2f).vec),
-).namedId("Checkbox").toggleable(state).radius(size / 4f).apply {
+).namedId("Checkbox").toggleable(state)
+    .withThemeBorder { checkboxProperties }
+    .onThemeChange { theme, animation ->
+        AlterRadius(this, floatArrayOf(theme.checkboxProperties.radius(size)), animation).add()
+    }.apply {
     state.weaklyListen(this) {
         this[0].fade(it)
         false
@@ -423,15 +603,30 @@ fun BoxedTextInput(
             is State<*> -> TextInput(placeholder = placeholder, text = value as State<String>, fontSize = fontSize)
             else -> throw IllegalArgumentException("initialValue must be a String or a State<String>")
         },
-        alignment = Align(main = if (center) Align.Content.Center else Align.Content.Start, cross = Align.Content.Center, pad = Vec2.ZERO),
+        alignment = Align(
+            main = if (center) Align.Content.Center else Align.Content.Start,
+            cross = Align.Content.Center,
+            pad = Vec2.ZERO
+        ),
     ).padded(6f, 0f, if (post == null) 6f else 0f, 0f),
-    if (post != null) Block(Text(post).secondary(), alignment = Align(pad = 6f by 10f), radii = floatArrayOf(0f, 8f, 0f, 8f)).afterInit { color = polyUI.colors.page.bg.normal }.padded(6f, 0f, 0f, 0f) else null,
-    alignment = Align(pad = Vec2(0f, if (post == null) 6f else 0f), main = Align.Content.SpaceBetween, wrap = Align.Wrap.NEVER),
+    if (post != null) Block(
+        Text(post).secondary(),
+        alignment = Align(pad = 6f by 10f),
+        radii = floatArrayOf(0f, 8f, 0f, 8f)
+    ).afterInit { color = polyUI.colors.page.bg.normal }.padded(6f, 0f, 0f, 0f) else null,
+    alignment = Align(
+        pad = Vec2(0f, if (post == null) 6f else 0f),
+        main = Align.Content.SpaceBetween,
+        wrap = Align.Wrap.NEVER
+    ),
     size = size,
 ).afterInit {
     val children = children!!
     val group = if (post != null) children[children.size - 2] as Group else children.last() as Group
-    group.visibleSize = if (post != null) Vec2(children.last().x - group.x - 6f, fontSize) else Vec2(this.width - group.x - 6f, fontSize)
+    group.visibleSize = if (post != null) Vec2(children.last().x - group.x - 6f, fontSize) else Vec2(
+        this.width - group.x - 6f,
+        fontSize
+    )
     if (!center) {
         val input = this[0]
         input.visibleSize = input.visibleSize.coerceAtMost(this.visibleSize)
@@ -515,7 +710,10 @@ fun DraggingNumericTextInput(
 ): Block {
     require(state.value.toFloat() in min..max) { "initial value ${state.value} is out of range for numeric text input of $min..$max" }
 
-    val pre = if (icon != null) Image(icon) else if (pre != null) Text(pre, fontSize = fontSize) else throw IllegalArgumentException("Either icon or pre text must be provided for DraggingNumericTextInput")
+    val pre = if (icon != null) Image(icon) else if (pre != null) Text(
+        pre,
+        fontSize = fontSize
+    ) else throw IllegalArgumentException("Either icon or pre text must be provided for DraggingNumericTextInput")
     var prevX = 0f
     pre.onDrag {
         if (polyUI.mouseX == prevX) return@onDrag
@@ -525,7 +723,9 @@ fun DraggingNumericTextInput(
             input.text = if (isNegative) "0" else step.toString(dps = 2)
         } else {
             val txt = if (suffix != null) input.text.removeSuffix(suffix) else input.text
-            input.text = txt.toFloatOrNull()?.let { if (isNegative) (it - step).coerceAtLeast(min) else (it + step).coerceAtMost(max) }.toString(dps = 2)
+            input.text = txt.toFloatOrNull()
+                ?.let { if (isNegative) (it - step).coerceAtLeast(min) else (it + step).coerceAtMost(max) }
+                .toString(dps = 2)
             needsRedraw = true
         }
         prevX = polyUI.mouseX
@@ -543,7 +743,9 @@ fun DraggingNumericTextInput(
     out.addChild(
         pre,
         TextInput(
-            text = if (state.value == 0f) "" else if (suffix != null) "${state.value.toFloat().toString(dps = 2)}$suffix" else state.value.toFloat().toString(dps = 2),
+            text = if (state.value == 0f) "" else if (suffix != null) "${
+                state.value.toFloat().toString(dps = 2)
+            }$suffix" else state.value.toFloat().toString(dps = 2),
             placeholder = if (suffix != null) "${max.toString(dps = 2)}$suffix" else max.toString(dps = 2),
             fontSize = fontSize
         ).apply {
@@ -578,7 +780,14 @@ fun DraggingNumericTextInput(
  */
 @Contract("_, _, _, null, true, _ -> fail")
 @JvmName("PopupMenu")
-fun PopupMenu(vararg children: Component?, size: Vec2 = Vec2.ZERO, align: Align = AlignDefault, polyUI: PolyUI?, openNow: Boolean = true, spawnPos: SpawnPos = SpawnPos.AtMouse) = Block(
+fun PopupMenu(
+    vararg children: Component?,
+    size: Vec2 = Vec2.ZERO,
+    align: Align = AlignDefault,
+    polyUI: PolyUI?,
+    openNow: Boolean = true,
+    spawnPos: SpawnPos = SpawnPos.AtMouse
+) = Block(
     focusable = true,
     size = size,
     alignment = align,

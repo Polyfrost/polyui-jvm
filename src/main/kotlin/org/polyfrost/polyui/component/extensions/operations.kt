@@ -25,6 +25,7 @@ import org.polyfrost.polyui.animate.Animation
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.component.impl.Block
 import org.polyfrost.polyui.operations.*
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.fastEach
@@ -47,6 +48,7 @@ fun Drawable.animateBy(
     skewX: Double = 0.0,
     skewY: Double = 0.0,
     color: PolyColor? = null,
+    radii: FloatArray? = null,
     animation: Animation? = null,
 ) {
     if (!at.isZero) Move(this, at, true, animation).add()
@@ -54,6 +56,7 @@ fun Drawable.animateBy(
     if (rotation != 0.0) Rotate(this, rotation, true, animation).add()
     if (skewX != 0.0 || skewY != 0.0) Skew(this, skewX, skewY, true, animation).add()
     if (scaleX != 0f || scaleY != 0f) Scale(this, scaleX, scaleY, true, animation).add()
+    if (radii != null && this is Block) AlterRadius(this, radii, animation).add()
     if (color != null) Recolor(this, color, animation).add()
 }
 

@@ -22,7 +22,6 @@
 package org.polyfrost.polyui
 
 import org.polyfrost.polyui.animate.SetAnimation
-import org.polyfrost.polyui.color.DarkTheme
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.color.asMutable
 import org.polyfrost.polyui.color.rgba
@@ -37,6 +36,8 @@ import org.polyfrost.polyui.renderer.impl.GLFWWindow
 import org.polyfrost.polyui.renderer.impl.GLRenderer
 import org.polyfrost.polyui.renderer.impl.NoOpRenderer
 import org.polyfrost.polyui.renderer.impl.NoOpWindow
+import org.polyfrost.polyui.theme.OtherTheme
+import org.polyfrost.polyui.theme.PolyGlassTheme
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
@@ -47,7 +48,7 @@ import kotlin.random.Random
 fun main() {
     val noop = false
     val window = if (noop) NoOpWindow(800, 500) else GLFWWindow("PolyUI Test v2 (DSL)", 800, 500, gl2 = false)
-    val theme = DarkTheme()
+    val theme = PolyGlassTheme.DARK
     PolyUI.registeredFonts["comic"] = FontFamily("ComicNeue", "polyui/fonts/comic/")
 
     polyUI {
@@ -57,8 +58,8 @@ fun main() {
             settings.debug = true
             settings.printPerfInfo = true
         }
-        colors = theme
-        backgroundColor = theme.page.bg.normal
+        this.theme = theme
+        backgroundColor = theme.colors.page.bg.normal
         val bind = PolyBind(key = Keys.P) {
             println("you pressed the bind! $it")
             true
@@ -78,6 +79,10 @@ fun main() {
         group {
             Button("moon.svg".image()).add().onClick {
                 shake()
+                this@polyUI.configure {
+                    val newTheme = if (theme == PolyGlassTheme.LIGHT) OtherTheme.LIGHT else PolyGlassTheme.LIGHT
+                    retheme(theme, newTheme, true)
+                }
                 false
             }
             Button("face-wink.svg".image(), "button.text").onClick {

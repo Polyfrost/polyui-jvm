@@ -26,6 +26,7 @@ import org.polyfrost.polyui.color.Color
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Modifiers
+import org.polyfrost.polyui.theme.Theme
 import org.polyfrost.polyui.utils.codepointToString
 import java.nio.file.Path
 import org.polyfrost.polyui.input.Mouse as MouseUtils
@@ -256,6 +257,11 @@ interface Event {
             override fun toString() = palette.toString()
         }
 
+        class Theme @ApiStatus.Internal constructor(val theme: org.polyfrost.polyui.theme.Theme) : Change() {
+            operator fun component1() = theme
+            override fun toString(): String = theme.toString()
+        }
+
         companion object {
 
             @JvmStatic
@@ -355,4 +361,10 @@ interface Event {
             val FileDrop = FileDrop(arrayOf())
         }
     }
+
+    data class UpdateTheme(
+        val oldTheme: Theme,
+        val newTheme: Theme,
+        val animate: Boolean
+    ) : Event
 }

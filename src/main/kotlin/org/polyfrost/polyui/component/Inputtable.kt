@@ -148,13 +148,14 @@ abstract class Inputtable(
      */
     fun acceptAll(event: Event): Boolean {
         if (!isEnabled) return false
-        val eh = eventHandlers ?: return false
-        val handlers = eh[event::class.java] ?: eh[event] ?: return false
+        val handlers = eventHandlers?.let {
+            it[event::class.java] ?: it[event]
+        }
         var res = false
         children?.fastEach { child ->
             if (child is Inputtable) res = child.acceptAll(event) || res
         }
-        res = handlers.accept(this, event) || res
+        res = handlers?.accept(this, event) == true || res
         return res
     }
 

@@ -37,6 +37,8 @@ import org.polyfrost.polyui.component.extensions.getOperationValueOrElse
 import org.polyfrost.polyui.component.extensions.getTargetPosition
 import org.polyfrost.polyui.component.extensions.getTargetScale
 import org.polyfrost.polyui.component.extensions.getTargetSize
+import org.polyfrost.polyui.component.extensions.radii
+import org.polyfrost.polyui.component.impl.Block
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.Vec4
@@ -51,7 +53,13 @@ class Move<S : Component>(
     animation: Animation? = null,
     onFinish: (S.() -> Unit)? = null,
 ) : ComponentOp.Animatable<S>(drawable, animation, onFinish) {
-    constructor(drawable: S, to: Vec2, add: Boolean = true, animation: Animation? = null, onFinish: (S.() -> Unit)? = null) :
+    constructor(
+        drawable: S,
+        to: Vec2,
+        add: Boolean = true,
+        animation: Animation? = null,
+        onFinish: (S.() -> Unit)? = null
+    ) :
             this(drawable, to.x, to.y, add, animation, onFinish)
 
     private val ox: Float
@@ -107,7 +115,8 @@ class Rotate<S : Drawable>(
     animation: Animation? = null,
     onFinish: (S.() -> Unit)? = null,
 ) : ComponentOp.Animatable<S>(drawable, animation, onFinish) {
-    private val ir: Double = drawable.getOperationValueOrElse<Rotate<*>, Double>(drawable.rotation) { it.targetRotation }
+    private val ir: Double =
+        drawable.getOperationValueOrElse<Rotate<*>, Double>(drawable.rotation) { it.targetRotation }
 
 
     private val tr = if (add) angleRad else angleRad - ir
@@ -120,6 +129,73 @@ class Rotate<S : Drawable>(
     override fun verify() = tr != 0.0
 }
 
+class AlterRadius<S : Block>(
+    drawable: S,
+    radii: FloatArray,
+    animation: Animation? = null,
+    onFinish: (S.() -> Unit)? = null,
+) : ComponentOp.Animatable<S>(drawable, animation, {
+    drawable.radii(radii)
+    onFinish?.invoke(drawable)
+}) {
+
+    private val topLeft: Float
+    private val topRight: Float
+    private val bottomLeft: Float
+    private val bottomRight: Float
+
+    private val deltaTopLeft: Float
+    private val deltaTopRight: Float
+    private val deltaBottomLeft: Float
+    private val deltaBottomRight: Float
+
+    init {
+        val boxRadii = drawable.radii
+        if (boxRadii == null) {
+            this.topLeft = 0f
+            this.topRight = 0f
+            this.bottomLeft = 0f
+            this.bottomRight = 0f
+        } else if (boxRadii.size < 4) {
+            this.topLeft = boxRadii[0]
+            this.topRight = boxRadii[0]
+            this.bottomLeft = boxRadii[0]
+            this.bottomRight = boxRadii[0]
+        } else {
+            this.topLeft = boxRadii[0]
+            this.topRight = boxRadii[1]
+            this.bottomLeft = boxRadii[2]
+            this.bottomRight = boxRadii[3]
+        }
+
+        if (radii.size < 4) {
+            this.deltaTopLeft = radii[0] - this.topLeft
+            this.deltaTopRight = radii[0] - this.topRight
+            this.deltaBottomLeft = radii[0] - this.bottomLeft
+            this.deltaBottomRight = radii[0] - this.bottomRight
+        } else {
+            this.deltaTopLeft = radii[0]
+            this.deltaTopRight = radii[1]
+            this.deltaBottomLeft = radii[2]
+            this.deltaBottomRight = radii[3]
+        }
+    }
+
+    override fun apply(value: Float) {
+        self.radii(
+            this.topLeft + this.deltaTopLeft * value,
+            this.topRight + this.deltaTopRight * value,
+            this.bottomLeft + this.deltaBottomLeft * value,
+            this.bottomRight + this.deltaBottomRight * value,
+        )
+        self.needsRedraw = true
+        self.clipChildren()
+    }
+
+    override fun verify() =
+        this.deltaTopLeft != 0f && this.deltaTopRight != 0f && this.deltaBottomLeft != 0f && this.deltaBottomRight != 0f
+}
+
 class Resize<S : Component>(
     drawable: S,
     width: Float = drawable.width,
@@ -129,7 +205,14 @@ class Resize<S : Component>(
     animation: Animation? = null,
     onFinish: (S.() -> Unit)? = null,
 ) : ComponentOp.Animatable<S>(drawable, animation, onFinish) {
-    constructor(drawable: S, size: Vec2, add: Boolean = true, withVisible: Boolean = true, animation: Animation? = null, onFinish: (S.() -> Unit)? = null) :
+    constructor(
+        drawable: S,
+        size: Vec2,
+        add: Boolean = true,
+        withVisible: Boolean = true,
+        animation: Animation? = null,
+        onFinish: (S.() -> Unit)? = null
+    ) :
             this(drawable, size.x, size.y, add, withVisible, animation, onFinish)
 
     private val ow: Float
@@ -334,6 +417,7 @@ class Recolor<S : Drawable>(
 class Scissor(private val rectangle: Vec4, private val renderer: Renderer) : ComponentOp {
     constructor(x: Float, y: Float, width: Float, height: Float, renderer: Renderer) :
             this(Vec4.of(x, y, width, height), renderer)
+
     override fun apply() {
         val (x, y, w, h) = rectangle
         renderer.pushScissor(x, y, w, h)

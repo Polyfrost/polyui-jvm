@@ -42,6 +42,7 @@ import org.polyfrost.polyui.operations.Fade
 import org.polyfrost.polyui.operations.Recolor
 import org.polyfrost.polyui.operations.ShakeOp
 import org.polyfrost.polyui.operations.Skew
+import org.polyfrost.polyui.theme.Theme
 import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.set
 
@@ -94,6 +95,15 @@ fun <S : Block> S.withBorder(width: Float = 1f, color: (Colors.() -> PolyColor) 
     onInit {
         this.borderColor = polyUI.colors.color()
         this.borderWidth = width
+    }
+    return this
+}
+
+fun <S : Block> S.withThemeBorder(property: Theme.() -> Theme.BorderProperties) = apply {
+    onThemeChange { theme, animation ->
+        val property = theme.property()
+        this.borderColor = property.borderColor(theme.colors)
+        this.borderWidth = property.borderSize
     }
     return this
 }
@@ -234,10 +244,17 @@ fun <S : Block> S.radii(radii: FloatArray): S {
     return this
 }
 
-fun <S : Block> S.radii(topLeftRadius: Float, topRightRadius: Float, bottomLeftRadius: Float, bottomRightRadius: Float): S {
+fun <S : Block> S.radii(
+    topLeftRadius: Float,
+    topRightRadius: Float,
+    bottomLeftRadius: Float,
+    bottomRightRadius: Float
+): S {
     val radii = this.radii
     when {
-        radii == null || radii.size < 4 -> this.radii = floatArrayOf(topLeftRadius, topRightRadius, bottomLeftRadius, bottomRightRadius)
+        radii == null || radii.size < 4 -> this.radii =
+            floatArrayOf(topLeftRadius, topRightRadius, bottomLeftRadius, bottomRightRadius)
+
         else -> {
             radii[0] = topLeftRadius
             radii[1] = topRightRadius
@@ -303,6 +320,16 @@ fun <T : Inputtable> T.addRethemingListeners(): T {
         false
     }
     return this
+}
+
+fun Drawable.retheme(old: Theme, new: Theme, animate: Boolean = false): Component = apply {
+    this.retheme(old.colors, new.colors, animate)
+    val animation = if (animate) Animations.Default.create(0.5.seconds) else null
+    this.onAll<Drawable> { it.updateTheme(new, animation) }
+}
+
+fun <S : Drawable> S.onThemeChange(block: S.(Theme, Animation?) -> Unit): S = apply {
+    this.addThemeChangeListener { theme, animation -> this.block(theme, animation) }
 }
 
 /**

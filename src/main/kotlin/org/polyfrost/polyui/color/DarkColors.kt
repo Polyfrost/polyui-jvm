@@ -27,7 +27,7 @@ package org.polyfrost.polyui.color
  * @see Colors
  * @since 0.17.0
  */
-open class DarkTheme : Colors {
+open class DarkColors : Colors {
     override val name: String
         get() = "dark"
     override val page = Colors.Page(

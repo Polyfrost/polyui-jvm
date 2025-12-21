@@ -23,13 +23,13 @@ package org.polyfrost.polyui.utils
 
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.Settings
-import org.polyfrost.polyui.color.Colors
-import org.polyfrost.polyui.color.DarkTheme
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.input.InputManager
 import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.renderer.Renderer
+import org.polyfrost.polyui.theme.PolyGlassTheme
+import org.polyfrost.polyui.theme.Theme
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
 
@@ -46,7 +46,7 @@ open class PolyUIBuilder {
         private set
     protected var alignment = Align(line = Align.Line.Start, pad = Vec2.ZERO)
         private set
-    var colors: Colors = DarkTheme()
+    var theme: Theme = PolyGlassTheme.DARK
         private set
     protected var backgroundColor: PolyColor? = null
         private set
@@ -78,8 +78,8 @@ open class PolyUIBuilder {
         return this
     }
 
-    fun colors(colors: Colors): PolyUIBuilder {
-        this.colors = colors
+    fun theme(theme: Theme): PolyUIBuilder {
+        this.theme = theme
         return this
     }
 
@@ -117,7 +117,7 @@ open class PolyUIBuilder {
     open fun make(vararg components: Component): PolyUI {
         val renderer = renderer
         require(renderer != null) { "Renderer must be set" }
-        return PolyUI(*components, renderer = renderer, settings = settings, inputManager = manager, translator = translator, backgroundColor = backgroundColor, masterAlignment = alignment, colors = colors, size = size)
+        return PolyUI(*components, renderer = renderer, settings = settings, inputManager = manager, translator = translator, backgroundColor = backgroundColor, masterAlignment = alignment, theme = theme, size = size)
     }
 
     companion object {

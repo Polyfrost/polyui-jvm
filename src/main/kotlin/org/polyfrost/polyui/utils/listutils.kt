@@ -17,13 +17,14 @@ import org.polyfrost.polyui.PolyUI
  */
 @kotlin.internal.InlineOnly
 inline fun <L, E> L.fastEach(func: (E) -> Unit) where L : List<E>, L : RandomAccess {
-    for (i in indices) {
-        // i can already hear the JIT crying in de-optimization: trap hit: unstable_if
-        if (i > this.size - 1) {
-            PolyUI.LOGGER.error("FAST_WARN_CONCURRENT_MODIFICATION")
-            return
+    var i = 0
+    val n: Int = size
+    try {
+        while (i < n) {
+            func(this[i++])
         }
-        func(this[i])
+    } catch (_: IndexOutOfBoundsException) {
+        PolyUI.LOGGER.error("FAST_WARN_CONCURRENT_MODIFICATION")
     }
 }
 
@@ -39,12 +40,14 @@ inline fun <L, E> L.fastEach(func: (E) -> Unit) where L : List<E>, L : RandomAcc
  */
 @kotlin.internal.InlineOnly
 inline fun <L, E> L.fastEachIndexed(func: (Int, E) -> Unit) where L : List<E>, L : RandomAccess {
-    for (i in indices) {
-        if (i > this.size - 1) {
-            PolyUI.LOGGER.error("FAST_WARN_CONCURRENT_MODIFICATION_IDX")
-            return
+    var i = 0
+    val n: Int = size
+    try {
+        while (i < n) {
+            func(i, this[i++])
         }
-        func(i, this[i])
+    } catch (_: IndexOutOfBoundsException) {
+        PolyUI.LOGGER.error("FAST_WARN_CONCURRENT_MODIFICATION_IDX")
     }
 }
 
@@ -60,12 +63,13 @@ inline fun <L, E> L.fastEachIndexed(func: (Int, E) -> Unit) where L : List<E>, L
  */
 @kotlin.internal.InlineOnly
 inline fun <L, E> L.fastEachReversed(func: (E) -> Unit) where L : List<E>, L : RandomAccess {
-    for (i in indices.reversed()) {
-        if (i > this.size - 1) {
-            PolyUI.LOGGER.error("FAST_WARN_CONCURRENT_MODIFICATION_REV")
-            return
+    var i = size - 1
+    try {
+        while (i > 0) {
+            func(this[i--])
         }
-        func(this[i])
+    } catch (_: IndexOutOfBoundsException) {
+        PolyUI.LOGGER.error("FAST_WARN_CONCURRENT_MODIFICATION_REV")
     }
 }
 
@@ -80,7 +84,10 @@ inline fun <L, E> L.fastEachReversed(func: (E) -> Unit) where L : List<E>, L : R
  * @see fastEach
  * @see fastRemoveIfReversed
  */
-@Deprecated("This method is less efficient than its reverse counterpart, which should be used where possible.", ReplaceWith("fastRemoveIfReversed"))
+@Deprecated(
+    "This method is less efficient than its reverse counterpart, which should be used where possible.",
+    ReplaceWith("fastRemoveIfReversed")
+)
 @kotlin.internal.InlineOnly
 inline fun <L, E> L.fastRemoveIf(predicate: (E) -> Boolean) where L : MutableList<E>, L : RandomAccess {
     var i = 0

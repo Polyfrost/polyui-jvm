@@ -37,19 +37,73 @@ import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
-import org.polyfrost.polyui.utils.*
+import org.polyfrost.polyui.utils.Line
+import org.polyfrost.polyui.utils.cut
+import org.polyfrost.polyui.utils.fastEach
+import org.polyfrost.polyui.utils.fastEachIndexed
+import org.polyfrost.polyui.utils.rescaleYToPolyUIInstance
+import org.polyfrost.polyui.utils.roundTo
+import org.polyfrost.polyui.utils.truncate
+import org.polyfrost.polyui.utils.wrap
 import kotlin.math.roundToInt
 
-open class Text protected constructor(text: Any, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Component?) :
-    Drawable(children = children, at, alignment, visibleSize = visibleSize, focusable = focusable) {
-    constructor(text: String, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Component?) :
-            this(if ('.' in text) Translator.Text.Simple(text) else State(text), font, fontSize, at, alignment, visibleSize, focusable, limited, children = children)
+open class Text protected constructor(
+    text: Any,
+    font: Font? = null,
+    fontSize: Float = 12f,
+    at: Vec2 = Vec2.ZERO,
+    alignment: Align = AlignDefault,
+    visibleSize: Vec2 = Vec2.ZERO,
+    focusable: Boolean = false,
+    limited: Boolean = false,
+    vararg children: Component?
+) : Drawable(children = children, at, alignment, visibleSize = visibleSize, focusable = focusable) {
 
-    constructor(state: State<String>, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Component?) :
-            this(state as Any, font, fontSize, at, alignment, visibleSize, focusable, limited, children = children)
+    constructor(
+        text: String,
+        font: Font? = null,
+        fontSize: Float = 12f,
+        at: Vec2 = Vec2.ZERO,
+        alignment: Align = AlignDefault,
+        visibleSize: Vec2 = Vec2.ZERO,
+        focusable: Boolean = false,
+        limited: Boolean = false,
+        vararg children: Component?
+    ) : this(
+        if ('.' in text) Translator.Text.Simple(text) else State(text),
+        font,
+        fontSize,
+        at,
+        alignment,
+        visibleSize,
+        focusable,
+        limited,
+        children = children
+    )
 
-    constructor(text: Translator.Text, font: Font? = null, fontSize: Float = 12f, at: Vec2 = Vec2.ZERO, alignment: Align = AlignDefault, visibleSize: Vec2 = Vec2.ZERO, focusable: Boolean = false, limited: Boolean = false, vararg children: Component?) :
-            this(text as Any, font, fontSize, at, alignment, visibleSize, focusable, limited, children = children)
+    constructor(
+        state: State<String>,
+        font: Font? = null,
+        fontSize: Float = 12f,
+        at: Vec2 = Vec2.ZERO,
+        alignment: Align = AlignDefault,
+        visibleSize: Vec2 = Vec2.ZERO,
+        focusable: Boolean = false,
+        limited: Boolean = false,
+        vararg children: Component?
+    ) : this(state as Any, font, fontSize, at, alignment, visibleSize, focusable, limited, children = children)
+
+    constructor(
+        text: Translator.Text,
+        font: Font? = null,
+        fontSize: Float = 12f,
+        at: Vec2 = Vec2.ZERO,
+        alignment: Align = AlignDefault,
+        visibleSize: Vec2 = Vec2.ZERO,
+        focusable: Boolean = false,
+        limited: Boolean = false,
+        vararg children: Component?
+    ) : this(text as Any, font, fontSize, at, alignment, visibleSize, focusable, limited, children = children)
 
     init {
         require(fontSize > 0f) { "Font size must be greater than 0" }
@@ -88,7 +142,7 @@ open class Text protected constructor(text: Any, font: Font? = null, fontSize: F
         private set
 
     init {
-        when(text) {
+        when (text) {
             is State<*> -> {
                 require(text.value is String) { "State passed to Text must be of type State<String>" }
                 @Suppress("UNCHECKED_CAST")
@@ -96,11 +150,13 @@ open class Text protected constructor(text: Any, font: Font? = null, fontSize: F
                     if (initialized) updateTextBounds(renderer, it)
                 }
             }
+
             is Translator.Text.Dont -> {
                 _theText = State(text.toString()).listen {
                     if (initialized) updateTextBounds(renderer, it)
                 }
             }
+
             else -> {
                 // asm: for translated text we will replace this in setup()
                 _theText = text
@@ -361,8 +417,7 @@ open class Text protected constructor(text: Any, font: Font? = null, fontSize: F
         // due to how we use the scrolling mechanic, this method is not needed.
     }
 
-    override fun debugString() =
-        """
+    override fun debugString() = """
 lines: ${lines.size}, mode=${getModeName(mode)}
 underline=$underline;  strike=$strikethrough;  italic=$italic
 font: ${font.resourcePath.substringAfterLast('/')}; size: $fontSize;  weight: $fontWeight

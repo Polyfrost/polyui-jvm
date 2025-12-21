@@ -23,8 +23,8 @@ package org.polyfrost.polyui
 
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.polyui.color.Colors
-import org.polyfrost.polyui.color.DarkTheme
-import org.polyfrost.polyui.color.LightTheme
+import org.polyfrost.polyui.color.DarkColors
+import org.polyfrost.polyui.color.LightColors
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Inputtable
@@ -43,6 +43,8 @@ import org.polyfrost.polyui.layout.LayoutController
 import org.polyfrost.polyui.renderer.FramebufferController
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.Window
+import org.polyfrost.polyui.theme.PolyGlassTheme
+import org.polyfrost.polyui.theme.Theme
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.*
@@ -90,7 +92,7 @@ class PolyUI(
     translator: Translator? = null,
     backgroundColor: PolyColor? = null,
     masterAlignment: Align = Align(line = Align.Line.Start, pad = Vec2.ZERO),
-    colors: Colors = DarkTheme(),
+    theme: Theme = PolyGlassTheme.DARK,
     size: Vec2 = Vec2.ZERO,
 ) {
     @JvmOverloads
@@ -102,9 +104,9 @@ class PolyUI(
         translator: Translator? = null,
         backgroundColor: PolyColor? = null,
         masterAlignment: Align = Align(line = Align.Line.Start, pad = Vec2.ZERO),
-        colors: Colors = DarkTheme(),
+        theme: Theme = PolyGlassTheme.DARK,
         width: Float, height: Float
-    ) : this(components = components, renderer, settings, inputManager, translator, backgroundColor, masterAlignment, colors, Vec2(width, height))
+    ) : this(components = components, renderer, settings, inputManager, translator, backgroundColor, masterAlignment, theme, Vec2(width, height))
 
     init {
         renderer.init()
@@ -118,10 +120,13 @@ class PolyUI(
      * **Note that changing this value** can be an expensive operation while the UI is running, as it has to update all the components.
      * @since 0.17.0
      */
-    var colors = colors
+    val colors
+        get() = theme.colors
+
+    var theme = theme
         set(value) {
             if (field === value) return
-            timed("Changing colors from $field to $value") {
+            timed("Changing theme from $field to $value") {
                 master.retheme(field, value, settings.smoothThemeChanges)
                 master.needsRedraw = true
                 field = value
@@ -194,7 +199,8 @@ class PolyUI(
      * This is the root layout of the UI. It is the parent of all other layouts.
      */
     val master = if (backgroundColor == null) Group(size = size, children = components, alignment = masterAlignment)
-    else Block(size = size, children = components, alignment = masterAlignment, color = backgroundColor).radius(0f).also { it.palette = colors.page.bg }
+    else Block(size = size, children = components, alignment = masterAlignment, color = backgroundColor).radius(0f)
+        .also { it.palette = colors.page.bg }
 
 
     val inputManager = inputManager?.with(master) ?: InputManager(master, KeyBinder(this.settings), this.settings)
@@ -562,8 +568,8 @@ class PolyUI(
         }
 
         val registeredThemes = HashMap<String, Colors>(8).also {
-            it["dark"] = DarkTheme()
-            it["light"] = LightTheme()
+            it["dark"] = DarkColors()
+            it["light"] = LightColors()
         }
 
         /**

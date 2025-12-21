@@ -92,12 +92,25 @@ class KeyFrames<T : Drawable>(self: T, animation: Animation) : ComponentOp.Anima
         if (value >= n.start) {
             i++
             val nn = next ?: return
+            val radii = if (
+                nn.bottomLeftRadius != null &&
+                nn.bottomRightRadius != null &&
+                nn.topLeftRadius != null &&
+                nn.topRightRadius != null
+            ) floatArrayOf(
+                nn.topLeftRadius ?: 0f,
+                nn.topRightRadius ?: 0f,
+                nn.bottomLeftRadius ?: 0f,
+                nn.bottomRightRadius ?: 0f
+            ) else if (nn.radius != null) floatArrayOf(nn.radius ?: 0f) else null
+
             self.animateBy(
                 nn.position, nn.size,
                 nn.rotation,
                 nn.scaleX, nn.scaleY,
                 nn.skewX, nn.skewY,
                 nn.color,
+                radii,
                 // todo test animation stuff
                 animation,
             )
@@ -108,6 +121,7 @@ class KeyFrames<T : Drawable>(self: T, animation: Animation) : ComponentOp.Anima
 @KeyFrameDSL
 class KeyFrame(val start: Float, prev: KeyFrame?) {
     var rotation: Double = prev?.rotation ?: 0.0
+
     @get:JvmName("getPosition")
     @set:JvmName("setPosition")
     var position: Vec2 = prev?.position ?: Vec2.ZERO
@@ -115,12 +129,19 @@ class KeyFrame(val start: Float, prev: KeyFrame?) {
     var scaleY: Float = prev?.scaleY ?: 1f
     var skewX: Double = prev?.skewX ?: 0.0
     var skewY: Double = prev?.skewY ?: 0.0
+
     @get:JvmName("getSize")
     @set:JvmName("setSize")
     var size: Vec2 = prev?.size ?: Vec2.ZERO
     var color: Color? = prev?.color
+    var radius: Float? = prev?.radius
+    var topLeftRadius: Float? = prev?.topLeftRadius
+    var topRightRadius: Float? = prev?.topRightRadius
+    var bottomLeftRadius: Float? = prev?.bottomLeftRadius
+    var bottomRightRadius: Float? = prev?.bottomRightRadius
 
-    override fun toString() = "KeyFrame(toRotate $rotation, skews $skewX+$skewY, scales $scaleX+$scaleY, to $position, toSize $size, toColor $color)"
+    override fun toString() =
+        "KeyFrame(toRotate $rotation, skews $skewX+$skewY, scales $scaleX+$scaleY, to $position, toSize $size, toColor $color)"
 }
 
 /** marker class for preventing illegal nesting. */

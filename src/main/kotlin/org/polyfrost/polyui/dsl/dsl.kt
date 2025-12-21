@@ -26,8 +26,6 @@ package org.polyfrost.polyui.dsl
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.Settings
-import org.polyfrost.polyui.color.Colors
-import org.polyfrost.polyui.color.DarkTheme
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
@@ -36,6 +34,8 @@ import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.input.InputManager
 import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.renderer.Renderer
+import org.polyfrost.polyui.theme.PolyGlassTheme
+import org.polyfrost.polyui.theme.Theme
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.SpawnPos
@@ -160,7 +160,7 @@ open class DrawableDSL<T : Drawable>(@PublishedApi internal val _this: T) {
         var translator: Translator? = null
         var backgroundColor: PolyColor? = null
         var alignment: Align = Align(line = Align.Line.Start, pad = Vec2.ZERO)
-        var colors: Colors? = null
+        var theme: Theme? = null
 
         var renderer: Renderer
             get() = _renderer ?: error("Renderer not set")
@@ -171,7 +171,7 @@ open class DrawableDSL<T : Drawable>(@PublishedApi internal val _this: T) {
         fun build() = PolyUI(
             components = _this.children?.toTypedArray() ?: arrayOf(),
             renderer, settings, inputManager, translator, backgroundColor,
-            alignment, colors ?: DarkTheme(), size
+            alignment, theme ?: PolyGlassTheme.DARK, size
         ).also { _this.children?.clear() }
     }
 }

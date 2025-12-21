@@ -25,13 +25,16 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.PolyUI.Companion.INPUT_NONE
+import org.polyfrost.polyui.animate.Animation
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.extensions.countChildren
+import org.polyfrost.polyui.component.extensions.retheme
 import org.polyfrost.polyui.component.extensions.setPalette
 import org.polyfrost.polyui.data.Framebuffer
 import org.polyfrost.polyui.operations.Recolor
 import org.polyfrost.polyui.renderer.FramebufferController
+import org.polyfrost.polyui.theme.Theme
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
@@ -39,8 +42,11 @@ import org.polyfrost.polyui.utils.annotations.Locking
 import org.polyfrost.polyui.utils.annotations.SideEffects
 import org.polyfrost.polyui.utils.fastEach
 import org.polyfrost.polyui.utils.fastRemoveIfReversed
+import java.util.ArrayList
+import kotlin.collections.filterNotNullTo
 import kotlin.math.PI
 import kotlin.math.cos
+import kotlin.also
 import kotlin.math.sin
 
 /**
@@ -221,6 +227,20 @@ abstract class Drawable(
             field = value.coerceIn(0f, 1f)
         }
 
+    @ApiStatus.Internal
+    @get:JvmName("getThemeOrNull")
+    @set:JvmName("setThemeInternal")
+    var _theme: Theme? = null
+
+    var theme: Theme
+        get() = _theme ?: throw UninitializedPropertyAccessException("Theme is not initialized")
+        set(value) {
+            _theme = value
+            needsRedraw = true
+        }
+
+    private var themeChangeListeners: MutableList<(Theme, Animation?) -> Unit> = ArrayList()
+
     /**
      * at cache for transformations. Used when [org.polyfrost.polyui.renderer.Renderer.transformsWithPoint] is false.
      * @since 0.17.3
@@ -376,6 +396,7 @@ abstract class Drawable(
         if (_color == null) {
             if (_palette == null) palette = polyUI.colors.component.bg
         }
+        _theme = polyUI.theme
         if (!super.setup(polyUI)) return false
         if (polyUI.canUseFramebuffers) {
             if (countChildren() > polyUI.settings.minDrawablesForFramebuffer || (this === polyUI.master && polyUI.settings.isMasterFrameBuffer)) {
@@ -384,6 +405,7 @@ abstract class Drawable(
                 if (polyUI.settings.debug) PolyUI.LOGGER.info("Drawable ${this.name} created with $framebuffer")
             }
         }
+        retheme(theme, theme, false)
         return true
     }
 
@@ -397,6 +419,15 @@ abstract class Drawable(
         super.position()
         scaleX = oldSX
         scaleY = oldSY
+    }
+
+    fun addThemeChangeListener(block: (Theme, Animation?) -> Unit) {
+        this.themeChangeListeners.add(block)
+    }
+
+    fun updateTheme(theme: Theme, animation: Animation? = null) {
+        this.themeChangeListeners.forEach { it(theme, animation) }
+        this.theme = theme
     }
 
     /**
