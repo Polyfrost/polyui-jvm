@@ -172,8 +172,8 @@ fun <S : Drawable> S.setState(state: Byte): S {
     return this
 }
 
-fun <S : Drawable> S.setPalette(palette: Colors.Palette, animate: Boolean = false): S {
-    if (this._palette == palette || this.ignoreThemeChanges) return this
+fun <S : Drawable> S.setPalette(palette: Colors.Palette, animate: Boolean = false, check: Boolean = true): S {
+    if (this._palette == palette || (this.ignoreThemeChanges && check)) return this
     this._palette = palette
     if (animate) {
         Recolor(this, palette.get(inputState), Animations.Default.create(0.5.seconds)).add()

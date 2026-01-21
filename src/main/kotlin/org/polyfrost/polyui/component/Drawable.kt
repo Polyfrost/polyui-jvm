@@ -126,7 +126,7 @@ abstract class Drawable(
     var palette: Colors.Palette
         get() = _palette ?: throw UninitializedPropertyAccessException("Palette is not initialized")
         set(value) {
-            setPalette(value, animate = false)
+            setPalette(value, animate = false, check = false)
         }
 
     /**
