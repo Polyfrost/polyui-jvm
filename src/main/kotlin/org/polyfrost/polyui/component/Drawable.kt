@@ -126,8 +126,15 @@ abstract class Drawable(
     var palette: Colors.Palette
         get() = _palette ?: throw UninitializedPropertyAccessException("Palette is not initialized")
         set(value) {
-            setPalette(value, animate = false, dispatch = false)
+            setPalette(value, animate = false)
         }
+
+    /**
+     * If `true`, any calls to [setPalette] will be ignored. Use this if you have an element that has its own theming,
+     * and you don't want it to change if the user changes the theme.
+     * @since 2.0.8
+     */
+    var ignoreThemeChanges = palette != null
 
     @SideEffects("_parent.needsRedraw", `when` = "field != value")
     @get:JvmName("needsRedraw")

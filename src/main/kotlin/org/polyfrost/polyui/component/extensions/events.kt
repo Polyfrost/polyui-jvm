@@ -24,7 +24,6 @@ package org.polyfrost.polyui.component.extensions
 import org.jetbrains.annotations.Contract
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animations
-import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.Inputtable
@@ -174,25 +173,9 @@ fun <T, S : Inputtable> S.onChange(state: State<T>, instanceOnly: Boolean = fals
     return this
 }
 
-/**
- * Add a listener for changes to the palette of this drawable.
- * @since 1.0.6
- */
-@JvmName("onPaletteChange")
-@OverloadResolutionByLambdaReturnType
-fun <S : Drawable> S.onChange(func: S.(Colors.Palette) -> Boolean): S {
-    on(Event.Change.Palette) {
-        val res = func.invoke(this, it.palette)
-        it.cancelled = res
-        res
-    }
-    return this
-}
 
-private val DENY: Any.(Any) -> Boolean = { true }
-
-fun <S : Drawable> S.denyPaletteChanges(): S {
-    this.on(Event.Change.Palette, DENY)
+fun <S : Drawable> S.denyPaletteChanges(state: Boolean = true): S {
+    this.ignoreThemeChanges = state
     return this
 }
 

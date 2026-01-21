@@ -21,9 +21,6 @@
 
 package org.polyfrost.polyui.event
 
-import org.jetbrains.annotations.ApiStatus
-import org.polyfrost.polyui.color.Color
-import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Modifiers
 import org.polyfrost.polyui.utils.codepointToString
@@ -227,40 +224,6 @@ interface Event {
         object Enabled : Lifetime
 
         object Disabled : Lifetime
-    }
-
-    /**
-     * Events related to specific things that occur in some components, for example
-     * when a switch is toggled, a slider is moved or a text is changed.
-     *
-     * These events can be cancelled, meaning that the change in state will not occur.
-     * @since 1.0.3
-     */
-    abstract class Change : Event {
-        /**
-         * Weather the event has been cancelled.
-         * @since 1.0.3
-         */
-        var cancelled: Boolean = false
-
-        /**
-         * Cancel this event.
-         * @since 1.0.3
-         */
-        fun cancel() {
-            cancelled = true
-        }
-
-        class Palette @ApiStatus.Internal constructor(val palette: Colors.Palette) : Change() {
-            operator fun component1() = palette
-            override fun toString() = palette.toString()
-        }
-
-        companion object {
-
-            @JvmStatic
-            val Palette = Palette(Colors.Palette(Color.TRANSPARENT, Color.TRANSPARENT, Color.TRANSPARENT, Color.TRANSPARENT))
-        }
     }
 
     /**

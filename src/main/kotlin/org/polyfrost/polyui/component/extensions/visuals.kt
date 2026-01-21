@@ -144,7 +144,6 @@ fun <S : Component> S.shake(): S {
 /**
  * Make this drawable toggleable, meaning that, when clicked:
  * - it will change its palette to the brand foreground color if it is toggled on, and to the component background color if it is toggled off.
- * - it will emit a [Event.Change.State] event. you can use the [onToggle] function to easily listen to this event.
  * @since 1.5.0
  */
 fun <S : Drawable> S.toggleable(state: State<Boolean>): S {
@@ -173,13 +172,8 @@ fun <S : Drawable> S.setState(state: Byte): S {
     return this
 }
 
-fun <S : Drawable> S.setPalette(palette: Colors.Palette, animate: Boolean = false, dispatch: Boolean = true): S {
-    if (this._palette == palette) return this
-    if (dispatch && this.hasListenersFor(Event.Change.Palette::class.java)) {
-        val e = Event.Change.Palette(palette)
-        e.cancelled = e.cancelled || accept(e)
-        if (e.cancelled) return this
-    }
+fun <S : Drawable> S.setPalette(palette: Colors.Palette, animate: Boolean = false): S {
+    if (this._palette == palette || this.ignoreThemeChanges) return this
     this._palette = palette
     if (animate) {
         Recolor(this, palette.get(inputState), Animations.Default.create(0.5.seconds)).add()

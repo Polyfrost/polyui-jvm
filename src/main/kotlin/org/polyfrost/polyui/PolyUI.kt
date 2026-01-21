@@ -425,13 +425,13 @@ class PolyUI(
             renderer.beginFrame(master.width, master.height, pixelRatio)
             window?.preRender(renderer)
             master.draw()
-            debugger.takeReadings()
             if (settings.debug) {
                 debugger.render()
 //                renderer.hollowRect(0f, 0f, uniformScaledSize.x, uniformScaledSize.y, Color.WHITE, 1f, 0f)
             }
             window?.postRender(renderer)
             renderer.endFrame()
+            debugger.takeReadings()
             drew = true
         } else {
             drew = false

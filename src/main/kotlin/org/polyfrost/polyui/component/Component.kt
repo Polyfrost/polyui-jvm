@@ -538,6 +538,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         polyUI.layoutController.layout(this)
         // #positioned = true
         layoutFlags = layoutFlags or 0b00010000
+        clipChildren()
     }
 
     /**

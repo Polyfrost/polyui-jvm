@@ -338,10 +338,14 @@ object GLRenderer : Renderer {
             var offset = 0L
             offset = enableAttrib(iRect, 4, offset)
             offset = enableAttrib(iRadii, 4, offset)
-            offset = enableAttrib(iColor0, 1, offset, GL_UNSIGNED_INT)
-            offset = enableAttrib(iColor1, 1, offset, GL_UNSIGNED_INT)
+            offset = enableAttribui(iColor0, 1, offset)
+            offset = enableAttribui(iColor1, 1, offset)
             offset = enableAttrib(iUVRect, 4, offset)
             enableAttrib(iThickness, 1, offset)
+
+            glBindBuffer(GL_ARRAY_BUFFER, quadVbo)
+            glEnableVertexAttribArray(aLocal)
+            glVertexAttribPointer(aLocal, 2, GL_FLOAT, false, 0, 0L)
             org.lwjgl.opengl.GL30C.glBindVertexArray(0)
         }
 
@@ -416,21 +420,21 @@ object GLRenderer : Renderer {
 
         glBindTexture(GL_TEXTURE_2D, atlas)
 
-        // Quad attrib
-        glBindBuffer(GL_ARRAY_BUFFER, quadVbo)
-        glEnableVertexAttribArray(aLocal)
-        glVertexAttribPointer(aLocal, 2, GL_FLOAT, false, 0, 0L)
-
-        // Instance attribs
-        glBindBuffer(GL_ARRAY_BUFFER, instancedVbo)
-
         // asm: on VAO the state is stored, so we only need to set it up once
         if (!caps().OpenGL30) {
+            // Quad attrib
+            glBindBuffer(GL_ARRAY_BUFFER, quadVbo)
+            glEnableVertexAttribArray(aLocal)
+            glVertexAttribPointer(aLocal, 2, GL_FLOAT, false, 0, 0L)
+
+            // Instance attribs
+            glBindBuffer(GL_ARRAY_BUFFER, instancedVbo)
+
             var offset = 0L
             offset = enableAttrib(iRect, 4, offset)
             offset = enableAttrib(iRadii, 4, offset)
-            offset = enableAttrib(iColor0, 1, offset, GL_UNSIGNED_INT)
-            offset = enableAttrib(iColor1, 1, offset, GL_UNSIGNED_INT)
+            offset = enableAttribui(iColor0, 1, offset)
+            offset = enableAttribui(iColor1, 1, offset)
             offset = enableAttrib(iUVRect, 4, offset)
             enableAttrib(iThickness, 1, offset)
         }
@@ -445,10 +449,19 @@ object GLRenderer : Renderer {
         glBindTexture(GL_TEXTURE_2D, 0)
     }
 
-    private fun enableAttrib(loc: Int, size: Int, offset: Long, type: Int = GL_FLOAT): Long {
+    private fun enableAttrib(loc: Int, size: Int, offset: Long): Long {
         glEnableVertexAttribArray(loc)
-        glVertexAttribPointer(loc, size, type, false, STRIDE * 4, offset)
+        glVertexAttribPointer(loc, size, GL_FLOAT, false, STRIDE * 4, offset)
         // i don't know why core disables the extension functions... but ok!
+        if (caps().OpenGL33) org.lwjgl.opengl.GL33C.glVertexAttribDivisor(loc, 1)
+        else org.lwjgl.opengl.ARBInstancedArrays.glVertexAttribDivisorARB(loc, 1)
+        return offset + size * 4L
+    }
+
+    private fun enableAttribui(loc: Int, size: Int, offset: Long): Long {
+        glEnableVertexAttribArray(loc)
+        if (caps().OpenGL30) org.lwjgl.opengl.GL30C.glVertexAttribIPointer(loc, size, GL_UNSIGNED_INT, STRIDE * 4, offset)
+        else org.lwjgl.opengl.EXTGPUShader4.glVertexAttribIPointerEXT(loc, size, GL_UNSIGNED_INT, STRIDE * 4, offset)
         if (caps().OpenGL33) org.lwjgl.opengl.GL33C.glVertexAttribDivisor(loc, 1)
         else org.lwjgl.opengl.ARBInstancedArrays.glVertexAttribDivisorARB(loc, 1)
         return offset + size * 4L

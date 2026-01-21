@@ -176,7 +176,6 @@ class GLFWWindow @JvmOverloads constructor(
         }
 
         glfwSetKeyCallback(handle) { _, keyCode, scanCode, action, _ ->
-            if (action == GLFW_REPEAT) return@glfwSetKeyCallback
             // p.s. I have performance tested this; and it is very fast (doesn't even show up on profiler). kotlin is good at int ranges lol
             if (keyCode in GLFW_KEY_LEFT_SHIFT..GLFW_KEY_RIGHT_SUPER) {
                 val key = when (keyCode) {
@@ -191,7 +190,7 @@ class GLFWWindow @JvmOverloads constructor(
                     else -> throw IllegalStateException("Unexpected key code: $keyCode")
                 }
 
-                if (action == GLFW_PRESS) {
+                if (action != GLFW_RELEASE) {
                     polyUI.inputManager.addModifier(key.value)
                 } else {
                     polyUI.inputManager.removeModifier(key.value)
@@ -245,11 +244,11 @@ class GLFWWindow @JvmOverloads constructor(
                 else -> Keys.UNKNOWN
             }
             if (key != Keys.UNKNOWN) {
-                if (action == GLFW_PRESS) polyUI.inputManager.keyDown(key)
+                if (action != GLFW_RELEASE) polyUI.inputManager.keyDown(key)
                 else polyUI.inputManager.keyUp(key)
             }
 
-            if (action == GLFW_PRESS) polyUI.inputManager.keyDown(keyCode, scanCode)
+            if (action != GLFW_RELEASE) polyUI.inputManager.keyDown(keyCode, scanCode)
             else polyUI.inputManager.keyUp(keyCode, scanCode)
         }
 
@@ -288,6 +287,16 @@ class GLFWWindow @JvmOverloads constructor(
             if (focused) {
                 polyUI.master.needsRedraw = true
             }
+        }
+
+        glfwSetWindowRefreshCallback(handle) {
+            val size = polyUI.size
+            val height = (size.y * pixelRatio).toInt()
+            glViewport(0, offset + (this.height - height), (size.x * pixelRatio).toInt(), height)
+            glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
+            glClearColor(0f, 0f, 0f, 0f)
+            polyUI.render()
+            if (polyUI.drew) glfwSwapBuffers(handle)
         }
     }
 
@@ -382,7 +391,7 @@ class GLFWWindow @JvmOverloads constructor(
         glfwSetWindowIcon(handle, GLFWImage.malloc(1).put(0, GLFWImage.malloc().set(w[0], h[0], data)))
     }
 
-    override fun supportsRenderPausing() = false
+    override fun supportsRenderPausing() = true
 
     override fun getClipboard() = glfwGetClipboardString(handle)
 
@@ -402,7 +411,7 @@ class GLFWWindow @JvmOverloads constructor(
     }
 
     override fun breakPause() {
-//        glfwPostEmptyEvent()
+        glfwPostEmptyEvent()
     }
 
     override fun getKeyName(keyCode: Int, scanCode: Int) = glfwGetKeyName(keyCode, scanCode) ?: "Unknown"

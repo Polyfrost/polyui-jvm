@@ -86,6 +86,29 @@ open class State<T>(value: T) {
         return this
     }
 
+    /**
+     * Add a validation function to this state, which is **called first before any other listeners.**
+     *
+     * Unlike [listen], `true` means "good" or "pass" so if `true` is returned, the value will be changed successfully.
+     */
+    fun validate(v: (T) -> Boolean): State<T> {
+        val valid: (T) -> Boolean = { !v(it) }
+        val first = firstListener
+        if (first == null) {
+            firstListener = valid
+            return this
+        }
+        firstListener = valid
+        val second = secondListener
+        secondListener = first
+        if (second != null) {
+            val multi = extraListeners
+            if (multi == null) this.extraListeners = ArrayList<(T) -> Boolean>(5).also { it.add(second) }
+            else multi.add(0, second)
+        }
+        return this
+    }
+
     @OverloadResolutionByLambdaReturnType
     fun listen(listener: (T) -> Unit) = listen { listener(it); false }
 
@@ -217,5 +240,11 @@ open class State<T>(value: T) {
             }
             return state
         }
+
+        fun <T : Number> State<T>.limit(min: Long, max: Long) = this.validate { it.toLong() in min..max }
+
+        fun <T : Number> State<T>.limit(min: Double, max: Double) = this.validate { it.toDouble() in min..max }
+
+        fun <T : CharSequence> State<T>.validate(regex: Regex) = this.validate { regex.matches(it) }
     }
 }

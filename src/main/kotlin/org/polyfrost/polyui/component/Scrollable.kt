@@ -125,7 +125,6 @@ abstract class Scrollable(
 
     override fun setup(polyUI: PolyUI): Boolean {
         if (!super.setup(polyUI)) return false
-        screenAt = at
         tryMakeScrolling()
         return true
     }
@@ -220,8 +219,8 @@ abstract class Scrollable(
         if (width > visWidth) {
             if (xScroll == null) {
                 scrolling = true
-                screenAt = at
                 xScroll = Easing.Expo(Easing.Type.Out, 0.2.seconds, x, x)
+                screenAt = at
             }
         } else if (xScroll != null) {
             this.x = screenAt.x
@@ -230,8 +229,8 @@ abstract class Scrollable(
         if (height > visHeight) {
             if (yScroll == null) {
                 scrolling = true
-                screenAt = at
                 yScroll = Easing.Expo(Easing.Type.Out, 0.2.seconds, y, y)
+                screenAt = at
             }
         } else if (yScroll != null) {
             this.y = screenAt.y
