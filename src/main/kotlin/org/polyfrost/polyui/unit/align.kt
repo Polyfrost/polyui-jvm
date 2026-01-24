@@ -21,6 +21,8 @@
 
 package org.polyfrost.polyui.unit
 
+import org.jetbrains.annotations.ApiStatus
+
 /**
  * @param main the main axis, for example the X axis in a [Mode.Horizontal] autolayout.
  * @param line the cross axis, for example the Y axis in a [Mode.Horizontal] autolayout.
@@ -39,6 +41,22 @@ data class Align(val main: Content = Content.Start, val cross: Content = Content
      */
     @JvmOverloads
     constructor(main: Content = Content.Start, cross: Content = Content.Start, line: Line = Line.Center, mode: Mode = Mode.Horizontal, pad: Vec2 = Vec2(6f, 6f), wrap: Wrap = Wrap.AUTO) : this(main, cross, line, mode, pad, pad, wrap)
+
+    /**
+     * `true` if [padEdges] is equal to [padBetween].
+     * @since 2.0.9
+     */
+    val uniformPadding get() = padEdges == padBetween
+
+    /**
+     * Return the uniform padding.
+     *
+     * ### **Throws [IllegalStateException] if [padEdges] is not equal to [padBetween].**
+     * see [uniformPadding].
+     * @since 2.0.9
+     */
+    @get:ApiStatus.Internal
+    val pad get() = if (uniformPadding) padEdges else throw IllegalStateException("pad property is only available if padEdges is equal to padBetween")
 
     enum class Content {
         /** Items are packed in order they are added from the start of the row. */

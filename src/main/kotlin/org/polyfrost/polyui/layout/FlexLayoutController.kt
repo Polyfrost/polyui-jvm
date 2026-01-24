@@ -65,8 +65,8 @@ object FlexLayoutController : LayoutController {
         // asm: if we have already been positioned, we need to scale the padding
         // this is because when we have been positioned already, all our children (and ourselves)
         // will be smaller, so we need to adjust the padding to match the scaling that has happened.
-        val scaleMain = if (component.positioned) polyUI.size[main] / polyUI.iSize[main] else 1f
-        val scaleCrs = if (component.positioned) polyUI.size[crs] / polyUI.iSize[crs] else 1f
+        val scaleMain = if (component.positioned) polyUI.visibleSize[main] / polyUI.iSize[main] else 1f
+        val scaleCrs = if (component.positioned) polyUI.visibleSize[crs] / polyUI.iSize[crs] else 1f
         val mainPadEdges = align.padEdges[main] * scaleMain
         val crossPadEdges = align.padEdges[crs] * scaleCrs
         val mainPadBetween = align.padBetween[main] * scaleMain
@@ -133,9 +133,10 @@ object FlexLayoutController : LayoutController {
 
         // step 1: lets calculate the maximum size of the main axis, our wrap capacity.
         val wrapCap = component.visibleSize[main].let { mySize ->
+            if (component === polyUI.master) return@let mySize
             // asm: we do the layout at full (original) size so we need to undo it for this calculation
-            val invScalingFactor = if (component.positioned) 1f else polyUI.iSize[main] / polyUI.size[main]
-            val screenSize = polyUI.master.size[main] * invScalingFactor
+            val invScalingFactor = if (component.positioned) 1f else polyUI.iSize[main] / polyUI.visibleSize[main]
+            val screenSize = polyUI.visibleSize[main] * invScalingFactor
             // use our own size if we have it.
             if (mySize != 0f) mySize.coerceAtMost(screenSize)
             else {
@@ -196,7 +197,7 @@ object FlexLayoutController : LayoutController {
         maxCross -= crossPadBetween
 
         // we now know how big we are, so lets assign our size (if we can)
-        assignAndCheckSize(component, main, crs, maxMain, maxCross)
+        assignAndCheckSize(component, main, crs, maxMain.coerceAtLeast(component.visibleSize[main]), maxCross.coerceAtLeast(component.visibleSize[crs]))
         val mySize = component.visibleSize
 
         // lets calculate where to place our rows on the cross axis.
@@ -241,7 +242,7 @@ object FlexLayoutController : LayoutController {
 
     private fun handleInvalidSize(child: Component, suggestedSize: Vec2, polyUI: PolyUI) {
         if (suggestedSize.isPositive) {
-            if (child is Scrollable && child.hasVisibleSize) child.visibleSize = suggestedSize
+//            if (child is Scrollable && child.hasVisibleSize) child.visibleSize = suggestedSize
             child.size = suggestedSize
         }
         child.setup(polyUI)

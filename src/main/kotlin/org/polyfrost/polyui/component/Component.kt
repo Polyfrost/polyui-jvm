@@ -298,7 +298,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
      * @since 1.4.4
      */
     @ApiStatus.Internal
-    var layoutFlags: Byte = ((if (!sizeValid) 0b00000000 else 0b00000010) or (if (x == 0f && y == 0f) 0b00000000 else 0b00000100)).toByte()
+    var layoutFlags: Byte = ((if (!sizeValid || visibleSize.isPositive) 0b00000000 else 0b00000010) or (if (x == 0f && y == 0f) 0b00000000 else 0b00000100)).toByte()
 
     /**
      * This property controls weather this component resizes "raw", meaning it will **not** respect the aspect ratio.
@@ -470,15 +470,15 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
     @Locking
     fun rescaleToPolyUIInstance() {
         if (!designedSize.isPositive) {
-            designedSize = polyUI.size
+            designedSize = polyUI.visibleSize
             return
         }
-        if (polyUI.size == designedSize) return
-        val totalSx = polyUI.size.x / designedSize.x
-        val totalSy = polyUI.size.y / designedSize.y
+        if (polyUI.visibleSize == designedSize) return
+        val totalSx = polyUI.visibleSize.x / designedSize.x
+        val totalSy = polyUI.visibleSize.y / designedSize.y
         if (totalSx != 1f || totalSy != 1f) rescale(totalSx, totalSy, min(totalSx, totalSy), false)
         children?.fastEach { it.rescaleToPolyUIInstance() }
-        designedSize = polyUI.size
+        designedSize = polyUI.visibleSize
     }
 
     fun clipChildren() {
@@ -624,7 +624,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
             child.setup(polyUI)
             child.rescaleToPolyUIInstance()
             if (!child.createdWithSetPosition) {
-                if (recalculate) recalculate()
+                if (recalculate) recalculate(move = false)
                 else {
                     child.x += x
                     child.y += y

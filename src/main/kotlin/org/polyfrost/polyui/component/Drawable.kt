@@ -60,11 +60,13 @@ abstract class Drawable(
 ) : Cloneable, Scrollable(at, size, visibleSize, alignment, focusable) {
     init {
         if (children.isNotEmpty()) {
-            this.children = children.filterNotNullTo(ArrayList<Component>(children.size)).also { list ->
-                list.fastEach {
-                    it.parent = this
-                }
+            val out = ArrayList<Component>(children.size)
+            for (child in children) {
+                if (child == null) continue
+                child.parent = this
+                out.add(child)
             }
+            if (out.isNotEmpty()) this.children = out
         } else {
             this.children = null
         }

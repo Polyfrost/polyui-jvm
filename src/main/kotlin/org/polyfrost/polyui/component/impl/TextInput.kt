@@ -493,7 +493,7 @@ open class TextInput private constructor(
         // asm: make sure that we create ourselves large enough to fit the placeholder text
         val bounds = renderer.textBounds(font, _placeholder.string, fontSize)
         ensureLargerThan(bounds)
-        if (hasVisibleSize) visibleSize = visibleSize.coerceAtLeast(bounds)
+        visibleSize = visibleSize.coerceAtLeast(bounds)
         return ret
     }
 

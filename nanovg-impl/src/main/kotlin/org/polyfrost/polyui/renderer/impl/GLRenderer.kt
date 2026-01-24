@@ -279,11 +279,11 @@ object GLRenderer : Renderer {
             throw RuntimeException("Program link failed:\n" + glGetProgramInfoLog(program))
         }
 
-        glValidateProgram(program)
-        val valid = glGetProgrami(program, GL_VALIDATE_STATUS)
-        if (valid == GL_FALSE) {
-            throw RuntimeException("Program validation failed:\n" + glGetProgramInfoLog(program))
-        }
+//        glValidateProgram(program)
+//        val valid = glGetProgrami(program, GL_VALIDATE_STATUS)
+//        if (valid == GL_FALSE) {
+//            throw RuntimeException("Program validation failed:\n" + glGetProgramInfoLog(program))
+//        }
 
         glDetachShader(program, vertexShader)
         glDetachShader(program, fragmentShader)
@@ -574,7 +574,7 @@ object GLRenderer : Renderer {
         for (c in text) {
             if (count >= MAX_BATCH) flush()
             val glyph = fAtlas.get(c)
-            buffer.put(penX + glyph.xOff * scaleFactor).put(penY + glyph.yOff * scaleFactor)
+            buffer.put(penX + glyph.xOff * scaleFactor).put(penY + glyph.yOff * scaleFactor + 2f)
                 .put(glyph.width * scaleFactor).put(glyph.height * scaleFactor)
             buffer.put(EMPTY_ROW) // zero radii
             buffer.put(col)

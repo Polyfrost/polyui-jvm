@@ -491,6 +491,10 @@ fun BoxedNumericInput(
             }
         }
     }
+    it.afterInit {
+        val text = getTextFromBoxedTextInput()
+        text.visibleSize = text.parent.visibleSize
+    }
 }.namedId("BoxedNumericInput")
 
 /**
@@ -561,9 +565,6 @@ fun DraggingNumericTextInput(
                     shake(); return@listen true
                 }
                 false
-            }
-            afterInit {
-                visibleSize = this.size
             }
         },
     )

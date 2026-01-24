@@ -111,7 +111,6 @@ fun main() {
             }.add()
             Button("plus.svg".image()).onClick {
                 theBox.addChild(Block(size = 32f + (Math.random().toFloat() * 100f) by 32f).withHoverStates())
-                theBox.recalculate()
             }.add()
             Button(text = "reset the box").onClick {
                 val boxParent = theBox.parent
@@ -167,5 +166,5 @@ fun main() {
         DraggingNumericTextInput(pre = "Width", suffix = "px").add()
         boxedNumericInput.add()
         Image("https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png".image(), size = Vec2(280f, 210f)).add()
-    }.open(window)
+    }.also { it.master.rawRescaleSize = true }.open(window)
 }

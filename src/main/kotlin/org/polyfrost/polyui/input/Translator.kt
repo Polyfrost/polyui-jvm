@@ -133,14 +133,14 @@ class Translator(private val settings: Settings, private val translationDir: Str
                     val sep = it.indexOf('=')
                     // assertThat: contains('=') && !startsWith('=') && !endsWith('=')
                     require(sep > 0 && sep != it.length - 1) { "Invalid key-value pair in $resource: $it" }
-                    val key = it.substring(0, sep)
+                    val key = it.substring(0, sep).trim()
                     val value = it.substring(sep + 1)
                     val v = map[key]
                     if (v != null) {
                         PolyUI.LOGGER.warn("Duplicate key: '$key', overwriting with $resource -> $value")
                         v.string = value
                     } else {
-                        require('.' in key) { "Invalid key $key: keys must contain at least one dot" }
+                        require('.' in key && ' ' !in key) { "Invalid key $key: keys must contain at least one dot, and no spaces" }
                         map[key] = Text.Simple(value)
                     }
                 } ?: PolyUI.LOGGER.warn("\t\t> Table not found!")
@@ -265,7 +265,7 @@ class Translator(private val settings: Settings, private val translationDir: Str
      */
     fun translate(key: String): Text {
         if (key.isEmpty()) return Text.Simple("").dont()
-        if ('.' !in key) return Text.Simple(key).dont()
+        if ('.' !in key || ' ' in key) return Text.Simple(key).dont()
         val text = map[key] ?: run {
             val new = translate0(key)
             if (new != null) return new

@@ -193,8 +193,8 @@ class PolyUI(
     /**
      * This is the root layout of the UI. It is the parent of all other layouts.
      */
-    val master = if (backgroundColor == null) Group(size = size, children = components, alignment = masterAlignment)
-    else Block(size = size, children = components, alignment = masterAlignment, color = backgroundColor).radius(0f).also { it.palette = colors.page.bg }
+    val master = if (backgroundColor == null) Group(visibleSize = size, children = components, alignment = masterAlignment)
+    else Block(visibleSize = size, children = components, alignment = masterAlignment, color = backgroundColor).radius(0f).also { it.palette = colors.page.bg }
 
 
     val inputManager = inputManager?.with(master) ?: InputManager(master, KeyBinder(this.settings), this.settings)
@@ -240,6 +240,9 @@ class PolyUI(
     @get:JvmName("getSize")
     inline val size get() = master.size
 
+    @get:JvmName("getVisibleSize")
+    inline val visibleSize get() = master.visibleSize
+
     /**
      * internal resizing tracker of the **absolute, unscaled size of the instance.**
      * @since 1.14.8
@@ -261,7 +264,7 @@ class PolyUI(
      * @since 1.0.5
      */
     @get:JvmName("getInitialSize")
-    val iSize = master.size
+    val iSize = master.visibleSize
 
     private val executors: ArrayList<Clock.Executor> = ArrayList(4)
 
@@ -321,7 +324,7 @@ class PolyUI(
                 true
             }
         )
-        if (this.settings.debug) LOGGER.info(debugger.debugString())
+        if (this.settings.printOnStart) LOGGER.info(debugger.debugString())
         if (this.settings.cleanupOnShutdown) {
             Runtime.getRuntime().addShutdownHook(
                 Thread {
@@ -407,6 +410,7 @@ class PolyUI(
         master.rescale(sx, sy, uniform)
         uniformScaledSize *= uniform
         nonUniformScaledSize *= Vec2(sx, sy)
+        master.clipChildren()
         master.needsRedraw = true
         //the problem with the old implementation is that, if the master drawable has rawRescaleSize true, then, if the instance is resized in one direction,
         // as the master object is the exact size of the drawable (thats what rawRescaleSize does) then the min(sx, sy) will return 1f, hence causing the shrinking.

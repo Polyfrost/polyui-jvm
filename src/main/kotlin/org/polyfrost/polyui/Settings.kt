@@ -43,6 +43,12 @@ class Settings {
      */
     var printPerfInfo = false
 
+    /**
+     * If `true`, the entire PolyUI instance will be printed on startup.
+     * @since can be disabled since 2.0.9
+     */
+    var printOnStart = false
+
     /** enable the debug keybind in the window (Ctrl+Shift+I)
      * @see debug*/
     @get:JvmName("hasDebugKeybind")

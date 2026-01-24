@@ -5,7 +5,6 @@ plugins {
     `java-library`
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.licenser)
-    alias(libs.plugins.kotlinter)
     alias(libs.plugins.kotlin.abi)
 //    alias(libs.plugins.git.hooks)
 //    alias(libs.plugins.dokka)
@@ -27,7 +26,6 @@ allprojects {
     apply(plugin = "java-library")
     apply(plugin = rootProject.libs.plugins.kotlin.jvm.get().pluginId)
     apply(plugin = rootProject.libs.plugins.licenser.get().pluginId)
-    apply(plugin = rootProject.libs.plugins.kotlinter.get().pluginId)
 //    apply(plugin = rootProject.libs.plugins.dokka.get().pluginId)
     apply(plugin = "maven-publish")
 
@@ -61,10 +59,6 @@ allprojects {
             )
         }
         jvmToolchain(jvmToolchainVersion)
-    }
-
-    kotlinter {
-        reporters = arrayOf("checkstyle", "plain")
     }
 
     license {

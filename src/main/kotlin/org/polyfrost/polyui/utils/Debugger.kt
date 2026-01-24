@@ -333,7 +333,7 @@ class Debugger(private val polyUI: PolyUI) {
         polyUI.apply {
             renderer.text(
                 monospaceFont,
-                0f, size.y - 11f,
+                0f, master.visibleSize.y - 11f,
                 text = perf,
                 color = colors.text.primary.normal,
                 fontSize = 10f,

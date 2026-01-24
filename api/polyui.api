@@ -55,6 +55,7 @@ public final class org/polyfrost/polyui/PolyUI {
 	public final fun getSize ()J
 	public final fun getTranslator ()Lorg/polyfrost/polyui/input/Translator;
 	public final fun getUniformScaledSize-2K4fKj8 ()J
+	public final fun getVisibleSize ()J
 	public final fun getWindow ()Lorg/polyfrost/polyui/renderer/Window;
 	public final fun removeExecutor (Lorg/polyfrost/polyui/utils/Clock$Executor;)Z
 	public final fun render ()J
@@ -106,6 +107,7 @@ public final class org/polyfrost/polyui/Settings {
 	public final fun getMaximumSize ()J
 	public final fun getMinDrawablesForFramebuffer ()I
 	public final fun getMinimumSize ()J
+	public final fun getPrintOnStart ()Z
 	public final fun getPrintPerfInfo ()Z
 	public final fun getResourcePolicy ()Lorg/polyfrost/polyui/Settings$ResourcePolicy;
 	public final fun getScrollMultiplier ()J
@@ -127,6 +129,7 @@ public final class org/polyfrost/polyui/Settings {
 	public final fun setMaximumSize (J)V
 	public final fun setMinDrawablesForFramebuffer (I)V
 	public final fun setMinimumSize (J)V
+	public final fun setPrintOnStart (Z)V
 	public final fun setPrintPerfInfo (Z)V
 	public final fun setResourcePolicy (Lorg/polyfrost/polyui/Settings$ResourcePolicy;)V
 	public final fun setScrollMultiplier (J)V
@@ -971,8 +974,8 @@ public final class org/polyfrost/polyui/component/extensions/VisualsKt {
 	public static final fun setDestructivePalette (Lorg/polyfrost/polyui/component/Drawable;)Lorg/polyfrost/polyui/component/Drawable;
 	public static final fun setFont (Lorg/polyfrost/polyui/component/impl/Text;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/polyui/component/impl/Text;
 	public static final fun setPalette (Lorg/polyfrost/polyui/component/Drawable;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/polyui/component/Drawable;
-	public static final fun setPalette (Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/color/Colors$Palette;Z)Lorg/polyfrost/polyui/component/Drawable;
-	public static synthetic fun setPalette$default (Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/color/Colors$Palette;ZILjava/lang/Object;)Lorg/polyfrost/polyui/component/Drawable;
+	public static final fun setPalette (Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/color/Colors$Palette;ZZ)Lorg/polyfrost/polyui/component/Drawable;
+	public static synthetic fun setPalette$default (Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/color/Colors$Palette;ZZILjava/lang/Object;)Lorg/polyfrost/polyui/component/Drawable;
 	public static final fun setState (Lorg/polyfrost/polyui/component/Drawable;B)Lorg/polyfrost/polyui/component/Drawable;
 	public static final fun shake (Lorg/polyfrost/polyui/component/Component;)Lorg/polyfrost/polyui/component/Component;
 	public static final fun toggleable (Lorg/polyfrost/polyui/component/Drawable;Lorg/polyfrost/polyui/event/State;)Lorg/polyfrost/polyui/component/Drawable;
@@ -2153,6 +2156,7 @@ public abstract class org/polyfrost/polyui/renderer/Window {
 	public fun getHeight ()I
 	public abstract fun getKeyName (II)Ljava/lang/String;
 	public fun getPixelRatio ()F
+	public final fun getSize-2K4fKj8 ()J
 	public fun getWidth ()I
 	public abstract fun open (Lorg/polyfrost/polyui/PolyUI;)Lorg/polyfrost/polyui/renderer/Window;
 	public fun postRender (Lorg/polyfrost/polyui/renderer/Renderer;)V
@@ -2242,6 +2246,8 @@ public final class org/polyfrost/polyui/unit/Align {
 	public final fun getLine ()Lorg/polyfrost/polyui/unit/Align$Line;
 	public final fun getMain ()Lorg/polyfrost/polyui/unit/Align$Content;
 	public final fun getMode ()Lorg/polyfrost/polyui/unit/Align$Mode;
+	public final fun getPad-2K4fKj8 ()J
+	public final fun getUniformPadding ()Z
 	public final fun getWrap ()Lorg/polyfrost/polyui/unit/Align$Wrap;
 	public fun hashCode ()I
 	public final fun padBetween ()J
