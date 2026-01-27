@@ -259,6 +259,9 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
     @get:JvmName("getVisibleSize")
     open val visibleSize get() = size
 
+    val visibleWidth get() = visibleSize.x
+    val visibleHeight get() = visibleSize.y
+
     open fun fixVisibleSize() {
         val vs = visibleSize
         width = width.coerceAtLeast(vs.x)
@@ -572,7 +575,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
      * Respects the [createdWithSetSize] property, and if any child is [layoutIgnored], it will be skipped.
      * @since 1.14.7
      */
-    open fun recalculateBounds(move: Boolean = false) {
+    open fun recalculateBounds(move: Boolean = false, allowShrinkX: Boolean = true, allowShrinkY: Boolean = true) {
         if (createdWithSetSize) return
         var maxX = 0f
         var maxY = 0f
@@ -590,6 +593,18 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         if (maxY > height) {
             if (move) y -= (maxY - height) / 2f
             height = maxY
+        }
+        if (allowShrinkX) {
+            if (maxX < width) {
+                if (move) x += (width - maxX) / 2f
+                width = maxX
+            }
+        }
+        if (allowShrinkY) {
+            if (maxY < height) {
+                if (move) y += (height - maxY) / 2f
+                height = maxY
+            }
         }
     }
 
@@ -755,7 +770,7 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         new.at = oldAt
         if (new is Scrollable) new.resetScroll()
         new.clipChildren()
-        this.recalculateBounds()
+        this.recalculateBounds(move = false, allowShrinkX = false, allowShrinkY = false)
 
         if (new is Drawable && animation != SetAnimation.None) {
             when (animation) {

@@ -133,5 +133,13 @@ value class Vec2(val value: Long) {
         @JvmStatic
         @JvmName("of")
         fun of(x: Float, y: Float) = Vec2(x, y)
+
+        @JvmStatic
+        @JvmName("getX")
+        fun x(value: Vec2) = value.x
+
+        @JvmStatic
+        @JvmName("getY")
+        fun y(value: Vec2) = value.y
     }
 }

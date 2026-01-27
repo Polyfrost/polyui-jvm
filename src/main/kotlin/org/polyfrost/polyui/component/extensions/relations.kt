@@ -175,6 +175,7 @@ fun Component.getTextFromBoxedTextInput(): TextInput {
  * Perform a function on all matching components (itself and its children) of the given class.
  * @since 1.8.3
  */
+@Suppress("UNCHECKED_CAST")
 fun <T : Component> Component.onAll(cls: Class<T>, action: (T) -> Unit) {
     if (cls.isInstance(this)) action(this as T)
     val children = this.children ?: return

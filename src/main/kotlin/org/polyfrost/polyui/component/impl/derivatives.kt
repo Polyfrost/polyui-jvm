@@ -426,16 +426,9 @@ fun BoxedTextInput(
         alignment = Align(main = if (center) Align.Content.Center else Align.Content.Start, cross = Align.Content.Center, pad = Vec2.ZERO),
     ).padded(6f, 0f, if (post == null) 6f else 0f, 0f),
     if (post != null) Block(Text(post).secondary(), alignment = Align(pad = 6f by 10f), radii = floatArrayOf(0f, 8f, 0f, 8f)).afterInit { color = polyUI.colors.page.bg.normal }.padded(6f, 0f, 0f, 0f) else null,
-    alignment = Align(pad = Vec2(0f, if (post == null) 6f else 0f), main = Align.Content.SpaceBetween, wrap = Align.Wrap.NEVER),
+    alignment = Align(pad = Vec2(0f, if (post == null) 6f else 0f), main = Align.Content.SpaceBetween, cross = Align.Content.Center, line = Align.Line.Center, wrap = Align.Wrap.NEVER),
     size = size,
 ).afterInit {
-    val children = children!!
-    val group = if (post != null) children[children.size - 2] as Group else children.last() as Group
-    group.visibleSize = if (post != null) Vec2(children.last().x - group.x - 6f, fontSize) else Vec2(this.width - group.x - 6f, fontSize)
-    if (!center) {
-        val input = this[0]
-        input.visibleSize = input.visibleSize.coerceAtMost(this.visibleSize)
-    }
     if (center) this.getTextFromBoxedTextInput().theText.listen {
         this.getTextFromBoxedTextInput().parent.position()
     }

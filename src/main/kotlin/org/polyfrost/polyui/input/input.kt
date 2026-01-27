@@ -35,6 +35,7 @@ import kotlin.experimental.or
  *
  * @see Modifiers
  * */
+@Suppress("DEPRECATION")
 enum class Keys(val keyName: String, val value: Short) {
     UNKNOWN("Unknown", -1),
     F1("F1", 1),

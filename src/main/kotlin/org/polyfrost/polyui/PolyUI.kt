@@ -80,7 +80,7 @@ import kotlin.math.min
  *
  * **Interactions** are driven by [events][InputManager], which thanks to Kotlin's inlining are a zero-overhead way of distributing events, such as [mouse clicks][org.polyfrost.polyui.event.Event.Mouse.Clicked], or [key presses][org.polyfrost.polyui.event.Event.Focused.KeyPressed].
  *
- * PolyUI also supports a variety of [animations][org.polyfrost.polyui.animate.Animation] and transitions, which can be used to make your UI more dynamic, along with dynamically [adding][Drawable.addChild] and [removing][Drawable.removeChild] components.
+ * PolyUI also supports a variety of [animations][org.polyfrost.polyui.animate.Animation] and transitions, which can be used to make your UI more dynamic, along with dynamically [adding][Component.addChild] and [removing][Component.removeChild] components.
  */
 class PolyUI(
     vararg components: Component,
@@ -410,6 +410,7 @@ class PolyUI(
         master.rescale(sx, sy, uniform)
         uniformScaledSize *= uniform
         nonUniformScaledSize *= Vec2(sx, sy)
+        master.recalculateBounds()
         master.clipChildren()
         master.needsRedraw = true
         //the problem with the old implementation is that, if the master drawable has rawRescaleSize true, then, if the instance is resized in one direction,

@@ -205,8 +205,8 @@ abstract class Scrollable(
         return res
     }
 
-    override fun recalculateBounds(move: Boolean) {
-        super.recalculateBounds(move)
+    override fun recalculateBounds(move: Boolean, allowShrinkX: Boolean, allowShrinkY: Boolean) {
+        super.recalculateBounds(move, allowShrinkX && scrollingX, allowShrinkY && scrollingY)
         tryMakeScrolling()
     }
 

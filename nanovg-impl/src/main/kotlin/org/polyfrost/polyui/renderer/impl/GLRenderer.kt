@@ -567,14 +567,14 @@ object GLRenderer : Renderer {
 
         var penX = x
         val scaleFactor = fontSize / fAtlas.renderedSize
-        val penY = y + (fAtlas.ascent + fAtlas.descent) * scaleFactor
+        val penY = y + (fAtlas.ascent + fAtlas.descent) * scaleFactor + (fontSize / 6f)
         val col = java.lang.Float.intBitsToFloat(color.argb.capAlpha())
         val buffer = buffer
 
         for (c in text) {
             if (count >= MAX_BATCH) flush()
             val glyph = fAtlas.get(c)
-            buffer.put(penX + glyph.xOff * scaleFactor).put(penY + glyph.yOff * scaleFactor + 2f)
+            buffer.put(penX + glyph.xOff * scaleFactor).put(penY + glyph.yOff * scaleFactor)
                 .put(glyph.width * scaleFactor).put(glyph.height * scaleFactor)
             buffer.put(EMPTY_ROW) // zero radii
             buffer.put(col)
@@ -988,7 +988,7 @@ object GLRenderer : Renderer {
 
         @Suppress("DEPRECATION")
         @kotlin.internal.InlineOnly
-        inline fun get(char: Char) = glyphs[(char.toInt() - 32) /* .coerceIn(0, glyphs.size - 1) */]
+        inline fun get(char: Char) = if (char.toInt() in 32..95+32) glyphs[(char.toInt() - 32) /* .coerceIn(0, glyphs.size - 1) */] else glyphs[('?'.toInt() - 32)]
 
     }
 

@@ -174,7 +174,7 @@ private fun HexOptions(color: State<PolyColor.Mutable>): Group {
 
     return Group(
         BoxedTextInput(
-            placeholder = "#FFFFFF",
+            placeholder = "#CCCCCC",
             value = state,
             center = true,
             size = 78f by 32f,

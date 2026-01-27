@@ -80,29 +80,29 @@ fun <S : Inputtable> S.addHoverInfo(vararg drawables: Drawable?, size: Vec2 = Ve
 fun <S : TextInput> S.numeric(min: Float = 0f, max: Float = 100f, state: State<out Number>, ignoreSuffix: String? = null) {
     var lock = false
     val integral = state.isIntegral()
-    theText.listen {
-        if (lock) return@listen false
+    theText.validate listen@{
+        if (lock) return@listen true
         val value = if (ignoreSuffix != null) it.removeSuffix(ignoreSuffix) else it
-        if (value.isEmpty()) return@listen false
+        if (value.isEmpty()) return@listen true
         // don't fail when the user types a minus sign (and minus values are allowed)
         if (value == "-") {
-            if (min < 0f) return@listen false
-            else return@listen true
+            if (min < 0f) return@listen true
+            else return@listen false
         }
 
-        if (integral && value.contains('.')) return@listen true
+        if (integral && value.contains('.')) return@listen false
         // silently cancel if they try and type multiple zeroes
-        if (value == "-00") return@listen true
-        if (value == "00") return@listen true
+        if (value == "-00") return@listen false
+        if (value == "00") return@listen false
         val v = value.toFloatOrNull()?.coerceIn(min, max)
-        if(v == null) {
+        if (v == null) {
             // fail when not a number
-            shake(); return@listen true
+            shake(); return@listen false
         }
         lock = true
-        val ret = state.setNumber(v)
+        state.setNumber(v)
         lock = false
-        ret
+        true
     }
     state.listen {
         if (lock) return@listen false
