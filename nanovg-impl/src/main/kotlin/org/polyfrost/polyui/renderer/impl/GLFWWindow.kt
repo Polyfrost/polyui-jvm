@@ -64,6 +64,10 @@ class GLFWWindow @JvmOverloads constructor(
     decorated: Boolean = true,
 ) : Window(width, height) {
     private val LOGGER = LogManager.getLogger("PolyUI/GLFW")
+
+    private var held = false
+    private var stillHold = true
+
     override var height: Int
         get() = super.height
         set(value) {
@@ -246,6 +250,14 @@ class GLFWWindow @JvmOverloads constructor(
             if (key != Keys.UNKNOWN) {
                 if (action != GLFW_RELEASE) polyUI.inputManager.keyDown(key)
                 else polyUI.inputManager.keyUp(key)
+
+                if (polyUI.settings.debug && action == GLFW_PRESS) {
+                    if (key == Keys.F1) {
+                        held = !held
+                        LOGGER.info("Hold ${if (held) "enabled, press enter to advance 1 frame and F1 again to release hold." else "disabled"}")
+                    }
+                    stillHold = key != Keys.ENTER
+                }
             }
 
             if (action != GLFW_RELEASE) polyUI.inputManager.keyDown(keyCode, scanCode)
@@ -344,6 +356,12 @@ class GLFWWindow @JvmOverloads constructor(
         var time = glfwGetTime()
         fpsCap = polyUI.settings.maxFPS.toDouble()
         while (!glfwWindowShouldClose(handle)) {
+            if (held) {
+                glfwWaitEvents()
+                if (stillHold) continue
+                stillHold = true
+            }
+
             val size = polyUI.size
             val height = (size.y * pixelRatio).toInt()
             glViewport(0, offset + (this.height - height), (size.x * pixelRatio).toInt(), height)

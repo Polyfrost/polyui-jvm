@@ -48,7 +48,11 @@ object FlexLayoutController : LayoutController {
             // hope they know what they are doing!
             if (component.layoutIgnored) return
             if (children.isNullOrEmpty()) {
-                PolyUI.LOGGER.error("failed to initialize $component: was skipped as it has no size and no children")
+                if (component.visibleSize.isPositive) {
+                    component.size = component.visibleSize
+                } else {
+                    PolyUI.LOGGER.error("failed to initialize $component: was skipped as it has no size and no children")
+                }
                 return
             }
         } else if (children.isNullOrEmpty()) {
