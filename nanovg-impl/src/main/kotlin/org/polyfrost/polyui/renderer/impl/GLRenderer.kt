@@ -22,7 +22,6 @@ import org.polyfrost.polyui.utils.toDirectByteBuffer
 import org.polyfrost.polyui.utils.toDirectByteBufferNT
 import java.nio.ByteBuffer
 import kotlin.math.cos
-import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.tan
 
@@ -35,21 +34,24 @@ object GLRenderer : Renderer {
     private const val FONT_MAX_BITMAP_H = 512
     private const val ATLAS_SIZE = 2048
     private const val ATLAS_SVG_UPSCALE_FACTOR = 4f
-    private const val STRIDE = 4 + 4 + 1 + 1 + 4 + 1 // bounds, radii, color0, color1, UV, thick
+    private const val STRIDE = 4 + 4 + 1 + 1 + 4 + 1 + 4 // bounds, radii, color0, color1, UV, thick, clip
     private const val MAX_BATCH = 1024
 
+    @JvmStatic
     private val PIXELS: ByteBuffer = BufferUtils.createByteBuffer(3).put(112).put(120).put(0).flip() as ByteBuffer
-    private val EMPTY_ROW = floatArrayOf(0f, 0f, 0f, 0f)
+    @JvmStatic
     private val NO_UV = floatArrayOf(-1f, -1f, 1f, 1f)
+    @JvmStatic
     private val IDENTITY = floatArrayOf(
         1f, 0f, 0f,
         0f, 1f, 0f,
         0f, 0f, 1f
     )
 
-
+    @JvmStatic
     private val buffer = BufferUtils.createFloatBuffer(MAX_BATCH * STRIDE)
-    private val scissorStack = IntArray(MAX_UI_DEPTH * 4)
+    @JvmStatic
+    private val scissorStack = FloatArray(MAX_UI_DEPTH * 4)
     private val transformStack = Array(MAX_UI_DEPTH) { FloatArray(9) }
     private val fonts = HashMap<Int, FontAtlas>()
     private val init get() = program != 0
@@ -72,6 +74,7 @@ object GLRenderer : Renderer {
     private var iColor1 = 0
     private var iUVRect = 0
     private var iThickness = 0
+    private var iClipRect = 0
 
 
     // Current batch state
@@ -79,7 +82,6 @@ object GLRenderer : Renderer {
     private var scissorDepth = 0
     private var transformDepth = 0
     private var transform = FloatArray(9).set(IDENTITY)
-    private val VIEWPORT = IntArray(4)
     private var pixelRatio = 1f
     private var alphaCap = 255
     private var popFlushNeeded = false
@@ -103,11 +105,13 @@ object GLRenderer : Renderer {
 
         uniform sampler2D uTex;
 
-        VARYING vec2 vUV;
-        VARYING vec2 vUV2;      // used for gradients
-        VARYING vec2 vPos;      // pixel coords in rect space
-        VARYING vec4 vRect;     // rect x, y, w, h
-        VARYING vec4 vRadii;    // per-corner radii
+        VARYING vec2 vUV;        // UV sampler position
+        VARYING vec2 vUV2;       // used for gradients
+        VARYING vec2 vHalfSize;  // half the rectangle size
+        VARYING vec2 vP;         // rect x, y
+        VARYING vec2 vScreenPos; // screen position of the rectangle
+        VARYING vec4 vClipRect;  // clipping rectangle
+        VARYING vec4 vRadii;     // per-corner radii
         VARYING vec4 vColor0;    // RGBA
         VARYING vec4 vColor1;    // RGBA (for gradients)
         VARYING float vThickness; // -1 for text, -2 for linear gradient, -3 for radial, -4 for box,  >0 for hollow rect
@@ -137,13 +141,32 @@ object GLRenderer : Renderer {
             vec2 q = abs(p) - (halfSize - radius);
             return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
         }
+        
+        float boxSDF(vec2 p, vec2 halfSize) {
+            vec2 q = abs(p) - halfSize;
+            return max(q.x, q.y);
+        }
+        
+        float hollowBoxSDF(vec2 p, vec2 halfSize, float thickness) {
+            float outer = boxSDF(p, halfSize + 0.3);
+            float inner = boxSDF(p, halfSize - thickness); 
+            return max(outer, -inner);
+        }
 
         void main() {
-            vec2 halfSize = 0.5 * vRect.zw;
-            vec2 center = vRect.xy + halfSize;
-            vec2 p = vPos - center;
+            float clip =
+                step(vClipRect.x, vScreenPos.x) *
+                step(vClipRect.y, vScreenPos.y) *
+                step(vScreenPos.x, vClipRect.z) *
+                step(vScreenPos.y, vClipRect.w);
+            // if (clip == 0.0) discard;
 
-            float d = (vThickness > 0.0) ? hollowRoundedBoxSDF(p, halfSize, vRadii, vThickness) : roundedBoxSDF(p, halfSize, vRadii);
+            float d;
+            if (vRadii.y == -1.0) {
+                d = (vThickness > 0.0) ? hollowBoxSDF(vP, vHalfSize, vThickness) : boxSDF(vP, vHalfSize);
+            } else {
+                d = (vThickness > 0.0) ? hollowRoundedBoxSDF(vP, vHalfSize, vRadii, vThickness) : roundedBoxSDF(vP, vHalfSize, vRadii);
+            }
 
             vec4 col = vColor0;
             if (vUV.x >= 0.0 && vThickness >= -1.0) {     // textured if UV.x >= 0
@@ -153,28 +176,27 @@ object GLRenderer : Renderer {
             }
             else if (vThickness == -2.0) { // linear gradient, vUV as start and vUV2 as end
                 vec2 dir = vUV2 - vUV;
-                float len = length(dir);
-                float t = clamp(dot((p + halfSize) - vUV, dir / len) / len, 0.0, 1.0);
+                float invLen2 = 1.0 / dot(dir, dir);
+                float t = clamp(dot((vP + vHalfSize) - vUV, dir) * invLen2, 0.0, 1.0);
                 col = mix(vColor0, vColor1, t);
             }
             else if (vThickness == -3.0) { // radial gradient, vUV as center and vUV2.x as radius
-                float dist = length(p + halfSize - vUV);
+                float dist = length(vP + vHalfSize - vUV);
                 float t = clamp((dist - vUV2.x) / (vUV2.y - vUV2.x), 0.0, 1.0);
                 col = mix(vColor0, vColor1, t);
             }
             else if (vThickness == -4.0) { // box gradient, vUV.x as radius and vUV.y as feather
-                float dist = roundBoxSDF(p, halfSize, vUV.x);
+                float dist = roundBoxSDF(vP, vHalfSize, vUV.x);
                 float t = clamp((dist + vUV.y * 0.5) / vUV.y, 0.0, 1.0);
                 col = mix(vColor0, vColor1, t);
             }
             else if (vThickness == -5.0) { // drop shadow, vUV.x as spread and vUV.y as blur
-                float dShadow = roundBoxSDF(p, halfSize + vUV.x, vRadii.x);
+                float dShadow = roundBoxSDF(vP, vHalfSize + vUV.x, vRadii.x);
                 col = vec4(vColor0.rgb, vColor0.a * (1.0 - smoothstep(-vUV.y, vUV.y, dShadow)));
             }
 
             // Proper antialiasing based on distance field
-            float f = fwidth(d);
-            float alpha = col.a * (1.0 - smoothstep(-f, f, d));
+            float alpha = col.a * clip * clamp(0.5 - d, 0.0, 1.0);
 
             fragColor = vec4(col.rgb * alpha, alpha);
         }
@@ -200,6 +222,7 @@ object GLRenderer : Renderer {
         ATTRIBUTE U_INT iColor1;
         ATTRIBUTE vec4 iUVRect;
         ATTRIBUTE float iThickness;
+        ATTRIBUTE vec4 iClipRect;
 
         uniform mat3 uTransform = mat3(
             1.0, 0.0, 0.0,
@@ -208,8 +231,10 @@ object GLRenderer : Renderer {
         );
         uniform vec2 uWindow;
 
-        VARYING vec2 vPos;
-        VARYING vec4 vRect;
+        VARYING vec2 vP;
+        VARYING vec2 vHalfSize;
+        VARYING vec2 vScreenPos;
+        VARYING vec4 vClipRect;
         VARYING vec4 vRadii;
         VARYING vec4 vColor0;
         VARYING vec4 vColor1;
@@ -238,14 +263,15 @@ object GLRenderer : Renderer {
 
             gl_Position = vec4(ndc, 0.0, 1.0);
 
-            vPos    = pos;
-            vRect   = iRect;
-            vRadii  = iRadii;
-            vColor0 = unpackColor(iColor0);
-            vColor1 = unpackColor(iColor1);
-            vUV     = uv;
-            // pass through for gradients.
-            vUV2    = iUVRect.zw;
+            vHalfSize  = iRect.zw * 0.5;
+            vP         = pos - iRect.xy - vHalfSize; 
+            vScreenPos = transformed.xy;
+            vClipRect  = iClipRect;
+            vRadii     = iRadii;
+            vColor0    = unpackColor(iColor0);
+            vColor1    = unpackColor(iColor1);
+            vUV        = uv;
+            vUV2       = iUVRect.zw;   // pass through for gradients.
             vThickness = iThickness;
         }
     """.trimIndent()
@@ -333,6 +359,7 @@ object GLRenderer : Renderer {
         iColor1 = glGetAttribLocation(program, "iColor1")
         iUVRect = glGetAttribLocation(program, "iUVRect")
         iThickness = glGetAttribLocation(program, "iThickness")
+        iClipRect = glGetAttribLocation(program, "iClipRect")
 
         if (caps().OpenGL30) {
             var offset = 0L
@@ -341,12 +368,13 @@ object GLRenderer : Renderer {
             offset = enableAttribui(iColor0, 1, offset)
             offset = enableAttribui(iColor1, 1, offset)
             offset = enableAttrib(iUVRect, 4, offset)
-            enableAttrib(iThickness, 1, offset)
+            offset = enableAttrib(iThickness, 1, offset)
+            enableAttrib(iClipRect, 4, offset)
 
             glBindBuffer(GL_ARRAY_BUFFER, quadVbo)
             glEnableVertexAttribArray(aLocal)
             glVertexAttribPointer(aLocal, 2, GL_FLOAT, false, 0, 0L)
-            org.lwjgl.opengl.GL30C.glBindVertexArray(0)
+//            org.lwjgl.opengl.GL30C.glBindVertexArray(0)
         }
 
 
@@ -367,8 +395,8 @@ object GLRenderer : Renderer {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
-        glBindTexture(GL_TEXTURE_2D, 0)
-        glBindBuffer(GL_ARRAY_BUFFER, 0)
+//        glBindTexture(GL_TEXTURE_2D, 0)
+//        glBindBuffer(GL_ARRAY_BUFFER, 0)
     }
 
     override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {
@@ -385,16 +413,14 @@ object GLRenderer : Renderer {
         glUniformMatrix3fv(uTransform, false, transform)
         glEnable(GL_BLEND)
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA)
-        glDisable(GL_SCISSOR_TEST)
-        glGetIntegerv(GL_VIEWPORT, VIEWPORT)
         this.pixelRatio = pixelRatio
     }
 
     override fun endFrame() {
         flush()
-        glDisable(GL_SCISSOR_TEST)
-        glDisable(GL_BLEND)
-        glUseProgram(0)
+//        glDisable(GL_SCISSOR_TEST)
+//        glDisable(GL_BLEND)
+//        glUseProgram(0)
     }
 
     @kotlin.internal.InlineOnly
@@ -436,7 +462,8 @@ object GLRenderer : Renderer {
             offset = enableAttribui(iColor0, 1, offset)
             offset = enableAttribui(iColor1, 1, offset)
             offset = enableAttrib(iUVRect, 4, offset)
-            enableAttrib(iThickness, 1, offset)
+            offset = enableAttrib(iThickness, 1, offset)
+            enableAttrib(iClipRect, 4, offset)
         }
 
         // Draw all instances
@@ -445,8 +472,8 @@ object GLRenderer : Renderer {
 
         count = 0
         buffer.clear()
-        glBindBuffer(GL_ARRAY_BUFFER, 0)
-        glBindTexture(GL_TEXTURE_2D, 0)
+//        glBindBuffer(GL_ARRAY_BUFFER, 0)
+//        glBindTexture(GL_TEXTURE_2D, 0)
     }
 
     private fun enableAttrib(loc: Int, size: Int, offset: Long): Long {
@@ -477,6 +504,7 @@ object GLRenderer : Renderer {
     ) {
         val buffer = buffer
         if (count >= MAX_BATCH) flush()
+        val topRightRadius = if (topLeftRadius == 0f && topLeftRadius == topRightRadius && topLeftRadius == bottomLeftRadius && topLeftRadius == bottomRightRadius) -1f else topRightRadius
         buffer.put(x).put(y).put(width).put(height)
         buffer.put(topLeftRadius).put(topRightRadius).put(bottomRightRadius).put(bottomLeftRadius)
         buffer.put(java.lang.Float.intBitsToFloat(color.argb.capAlpha()))
@@ -520,7 +548,7 @@ object GLRenderer : Renderer {
             buffer.put(NO_UV) // -1f UVs to indicate no texture
             buffer.put(0f)
         }
-
+        buffer.put(scissorStack, (scissorDepth - 4).coerceAtLeast(0), 4)
         count += 1
     }
 
@@ -537,12 +565,15 @@ object GLRenderer : Renderer {
         bottomRightRadius: Float
     ) {
         if (count >= MAX_BATCH) flush()
+        val buffer = buffer
+        val topRightRadius = if (topLeftRadius == 0f && topLeftRadius == topRightRadius && topLeftRadius == bottomLeftRadius && topLeftRadius == bottomRightRadius) -1f else topRightRadius
         buffer.put(x).put(y).put(width).put(height)
         buffer.put(topLeftRadius).put(topRightRadius).put(bottomRightRadius).put(bottomLeftRadius)
         buffer.put(java.lang.Float.intBitsToFloat(color.argb.capAlpha()))
         buffer.put(0f) // color1 unused
         buffer.put(NO_UV) // -1f UVs to indicate no texture
         buffer.put(lineWidth)
+        buffer.put(scissorStack, (scissorDepth - 4).coerceAtLeast(0), 4)
         count += 1
     }
 
@@ -552,12 +583,15 @@ object GLRenderer : Renderer {
     ) {
         if (count >= MAX_BATCH) flush()
 
+        val buffer = buffer
+        val topRightRadius = if (topLeftRadius == 0f && topLeftRadius == topRightRadius && topLeftRadius == bottomLeftRadius && topLeftRadius == bottomRightRadius) -1f else topRightRadius
         buffer.put(x).put(y).put(width).put(height)
         buffer.put(topLeftRadius).put(topRightRadius).put(bottomRightRadius).put(bottomLeftRadius)
         buffer.put(java.lang.Float.intBitsToFloat(colorMask.capAlpha()))
         buffer.put(0f) // color1 unused
         buffer.put(image.uv.x).put(image.uv.y).put(image.uv.w).put(image.uv.h)
         buffer.put(0f) // thickness = 0 for filled rect
+        buffer.put(scissorStack, (scissorDepth - 4).coerceAtLeast(0), 4)
         count += 1
     }
 
@@ -574,13 +608,16 @@ object GLRenderer : Renderer {
         for (c in text) {
             if (count >= MAX_BATCH) flush()
             val glyph = fAtlas.get(c)
+            // opt: early exit when we are out of the scissor region
+            if (scissorDepth > 3 && penX > scissorStack[scissorDepth - 2]) break
             buffer.put(penX + glyph.xOff * scaleFactor).put(penY + glyph.yOff * scaleFactor)
                 .put(glyph.width * scaleFactor).put(glyph.height * scaleFactor)
-            buffer.put(EMPTY_ROW) // zero radii
+            buffer.put(0f).put(-1f).put(0f).put(0f) // zero radii (-1 optimization)
             buffer.put(col)
             buffer.put(0f) // color1 unused
             buffer.put(glyph, 0, 4) // UVs
             buffer.put(-1f) // thickness = -1 for text
+            buffer.put(scissorStack, (scissorDepth - 4).coerceAtLeast(0), 4)
             penX += glyph.xAdvance * scaleFactor
             count += 1
         }
@@ -605,27 +642,23 @@ object GLRenderer : Renderer {
         radius: Float
     ) {
         if (count >= MAX_BATCH) flush()
+
+        val buffer = buffer
         buffer.put(x).put(y).put(width).put(height)
-        buffer.put(EMPTY_ROW) // zero radii
+        buffer.put(0f).put(-1f).put(0f).put(0f) // zero radii
         buffer.put(java.lang.Float.intBitsToFloat(alphaCap shl 24)) // black, alpha to alphaCap
         buffer.put(0f) // color1 unused
         buffer.put(spread).put(blur).put(0f).put(0f)
         buffer.put(-5f) // thickness = -5 for drop shadow
+        buffer.put(scissorStack, (scissorDepth - 4).coerceAtLeast(0), 4)
         count += 1
     }
 
     override fun pushScissor(x: Float, y: Float, width: Float, height: Float) {
-        flush()
-        val nx = (x * pixelRatio).roundToInt()
-        val ny = ((VIEWPORT[3] + VIEWPORT[1]) - (y + height) * pixelRatio).roundToInt()
-        val nw = (width * pixelRatio).roundToInt()
-        val nh = (height * pixelRatio).roundToInt()
-        scissorStack[scissorDepth++] = nx
-        scissorStack[scissorDepth++] = ny
-        scissorStack[scissorDepth++] = nw
-        scissorStack[scissorDepth++] = nh
-        glEnable(GL_SCISSOR_TEST)
-        glScissor(nx, ny, nw, nh)
+        scissorStack[scissorDepth++] = x
+        scissorStack[scissorDepth++] = y
+        scissorStack[scissorDepth++] = x + width
+        scissorStack[scissorDepth++] = y + height
     }
 
     override fun pushScissorIntersecting(x: Float, y: Float, width: Float, height: Float) {
@@ -633,42 +666,28 @@ object GLRenderer : Renderer {
             pushScissor(x, y, width, height)
             return
         }
-        flush()
         val px = scissorStack[scissorDepth - 4]
         val py = scissorStack[scissorDepth - 3]
-        val pw = scissorStack[scissorDepth - 2]
-        val ph = scissorStack[scissorDepth - 1]
-        val nx = (x * pixelRatio).roundToInt()
-        val ny = ((VIEWPORT[3] + VIEWPORT[1]) - (y + height) * pixelRatio).roundToInt()
+        val pl = scissorStack[scissorDepth - 2]
+        val pr = scissorStack[scissorDepth - 1]
 
-        val ix = maxOf(nx, px)
-        val iy = maxOf(ny, py)
-        val iw = maxOf(0, minOf(nx + (width * pixelRatio).roundToInt(), px + pw) - ix)
-        val ih = maxOf(0, minOf(ny + (height * pixelRatio).roundToInt(), py + ph) - iy)
+        val ix = maxOf(x, px)
+        val iy = maxOf(y, py)
+        val il = minOf(x + width, pl)
+        val ir = minOf(y + height, pr)
 
         scissorStack[scissorDepth++] = ix
         scissorStack[scissorDepth++] = iy
-        scissorStack[scissorDepth++] = iw
-        scissorStack[scissorDepth++] = ih
-
-        glEnable(GL_SCISSOR_TEST)
-        glScissor(ix, iy, iw, ih)
+        scissorStack[scissorDepth++] = il
+        scissorStack[scissorDepth++] = ir
     }
 
     override fun popScissor() {
-        flush()
         if (scissorDepth <= 4) {
             scissorDepth = 0
-            glDisable(GL_SCISSOR_TEST)
             return
         }
         scissorDepth -= 4
-        val x = scissorStack[scissorDepth - 4]
-        val y = scissorStack[scissorDepth - 3]
-        val width = scissorStack[scissorDepth - 2]
-        val height = scissorStack[scissorDepth - 1]
-        glEnable(GL_SCISSOR_TEST)
-        glScissor(x, y, width, height)
     }
 
     override fun globalAlpha(alpha: Float) {
@@ -795,7 +814,7 @@ object GLRenderer : Renderer {
         glBindTexture(GL_TEXTURE_2D, atlas)
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
         glTexSubImage2D(GL_TEXTURE_2D, 0, slotX, slotY, w[0], h[0], GL_RGBA, GL_UNSIGNED_BYTE, d)
-        glBindTexture(GL_TEXTURE_2D, 0)
+//        glBindTexture(GL_TEXTURE_2D, 0)
         if (image.type == PolyImage.Type.Raster) stbi_image_free(d)
 
         slotX += w[0] + 1
@@ -846,7 +865,7 @@ object GLRenderer : Renderer {
         val buf = BufferUtils.createByteBuffer(ATLAS_SIZE * ATLAS_SIZE * 4)
         glBindTexture(GL_TEXTURE_2D, atlas)
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf)
-        glBindTexture(GL_TEXTURE_2D, 0)
+//        glBindTexture(GL_TEXTURE_2D, 0)
         org.lwjgl.stb.STBImageWrite.stbi_write_png(
             "debug_atlas.png",
             ATLAS_SIZE,
@@ -898,7 +917,7 @@ object GLRenderer : Renderer {
             lineGap = gap[0] * scale
 
             val range = STBTTPackRange.malloc()
-            range.font_size(renderedSize)
+            range.font_size(pixelHeight)
             range.first_unicode_codepoint_in_range(32)
             range.num_chars(95)
             val packed = STBTTPackedchar.malloc(range.num_chars())
@@ -916,21 +935,15 @@ object GLRenderer : Renderer {
             stbtt_PackEnd(pack)
             pack.free()
 
-            var minX = Short.MAX_VALUE
-            var minY = Short.MAX_VALUE
             var maxX = Short.MIN_VALUE
             var maxY = Short.MIN_VALUE
             for (i in 0..<range.num_chars()) {
                 val g = packed.get(i)
-                if (g.x0() < minX) minX = g.x0()
-                if (g.y0() < minY) minY = g.y0()
                 if (g.x1() > maxX) maxX = g.x1()
                 if (g.y1() > maxY) maxY = g.y1()
             }
-            val totalSizeX = maxX - minX
-            val totalSizeY = maxY - minY
 
-            if (slotX + totalSizeX > ATLAS_SIZE) {
+            if (slotX + maxX > ATLAS_SIZE) {
                 slotX = 0
                 slotY += atlasRowHeight
                 atlasRowHeight = 0
@@ -957,21 +970,25 @@ object GLRenderer : Renderer {
 
             glBindTexture(GL_TEXTURE_2D, atlas)
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
+            glPixelStorei(GL_UNPACK_ROW_LENGTH, FONT_MAX_BITMAP_W)
+
             // can't write to the alpha channel in GL3 core! lol hahaahahah
             glTexSubImage2D(
                 GL_TEXTURE_2D,
                 0,
                 sx,
                 sy,
-                FONT_MAX_BITMAP_W,
-                FONT_MAX_BITMAP_H,
+                maxX.toInt(),
+                maxY.toInt(),
                 GL_RED,
                 GL_UNSIGNED_BYTE,
                 bitMap
             )
             glBindTexture(GL_TEXTURE_2D, 0)
-            slotX += totalSizeX
-            atlasRowHeight = maxOf(atlasRowHeight, totalSizeY)
+            glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
+
+            slotX += maxX
+            atlasRowHeight = maxOf(atlasRowHeight, maxY.toInt())
         }
 
         fun measure(text: String, fontSize: Float): Vec2 {
