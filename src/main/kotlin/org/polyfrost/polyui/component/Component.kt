@@ -562,8 +562,8 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         }
         position()
         if (move && !createdWithSetSize) {
-            x -= (width - oldW) / 2f
-            y -= (height - oldH) / 2f
+            x -= ((width - oldW) / 2f) * alignment.anchor.mainSign()
+            y -= ((height - oldH) / 2f) * alignment.anchor.crossSign()
         }
     }
 
@@ -587,22 +587,22 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
             if (bottom > maxY) maxY = bottom
         }
         if (maxX > width) {
-            if (move) x -= (maxX - width) / 2f
+            if (move) x -= (maxX - width) / 2f * alignment.anchor.mainSign()
             width = maxX
         }
         if (maxY > height) {
-            if (move) y -= (maxY - height) / 2f
+            if (move) y -= (maxY - height) / 2f * alignment.anchor.crossSign()
             height = maxY
         }
         if (allowShrinkX) {
             if (maxX < width) {
-                if (move) x += (width - maxX) / 2f
+                if (move) x += (width - maxX) / 2f * alignment.anchor.mainSign()
                 width = maxX
             }
         }
         if (allowShrinkY) {
             if (maxY < height) {
-                if (move) y += (height - maxY) / 2f
+                if (move) y += (height - maxY) / 2f * alignment.anchor.crossSign()
                 height = maxY
             }
         }

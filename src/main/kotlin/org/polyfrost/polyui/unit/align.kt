@@ -33,7 +33,7 @@ import org.jetbrains.annotations.ApiStatus
  *
  * **Hot-Tip**: A wrap mode of [Wrap.ALWAYS] is usually equivalent to [Mode.Vertical] and [Wrap.NEVER], and is more efficient in terms of layout calculations.
  */
-data class Align(val main: Content = Content.Start, val cross: Content = Content.Start, val line: Line = Line.Center, val mode: Mode = Mode.Horizontal, @get:JvmName("padBetween") val padBetween: Vec2 = Vec2(6f, 6f), @get:JvmName("padEdges") val padEdges: Vec2 = Vec2(6f, 6f), val wrap: Wrap = Wrap.AUTO) {
+data class Align(val main: Content = Content.Start, val cross: Content = Content.Start, val line: Line = Line.Center, val mode: Mode = Mode.Horizontal, @get:JvmName("padBetween") val padBetween: Vec2 = Vec2(6f, 6f), @get:JvmName("padEdges") val padEdges: Vec2 = Vec2(6f, 6f), val wrap: Wrap = Wrap.AUTO, val anchor: Anchor = Anchor.TopLeft) {
     constructor(main: Content = Content.Start, cross: Content = Content.Start, line: Line = Line.Center, mode: Mode = Mode.Horizontal, px: Float, py: Float) : this(main, cross, line, mode, Vec2(px, py), Vec2(px, py))
 
     /**
@@ -98,6 +98,17 @@ data class Align(val main: Content = Content.Start, val cross: Content = Content
         NEVER,
         ALWAYS,
         AUTO
+    }
+
+    /**
+     * When this component is recalculated, instead of moving to keep the top left in the same place, optionally specify a different position for the component to be "anchored" to.
+     * @since 2.1.5
+     */
+    enum class Anchor(val oppositeMain: Boolean, val oppositeCross: Boolean) {
+        TopLeft(false, false), TopRight(true, false), BottomLeft(false, true), BottomRight(true, true);
+
+        fun mainSign() = if (oppositeMain) -1f else 1f
+        fun crossSign() = if (oppositeCross) -1f else 1f
     }
 }
 

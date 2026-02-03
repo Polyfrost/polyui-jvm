@@ -6,9 +6,6 @@ import org.lwjgl.nanovg.NanoSVG.*
 import org.lwjgl.opengl.GL20C.*
 import org.lwjgl.stb.STBImage.*
 import org.lwjgl.stb.STBTTFontinfo
-import org.lwjgl.stb.STBTTPackContext
-import org.lwjgl.stb.STBTTPackRange
-import org.lwjgl.stb.STBTTPackedchar
 import org.lwjgl.stb.STBTruetype.*
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.Color
@@ -17,7 +14,6 @@ import org.polyfrost.polyui.data.Font
 import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.unit.Vec4
 import org.polyfrost.polyui.utils.toDirectByteBuffer
 import org.polyfrost.polyui.utils.toDirectByteBufferNT
 import java.nio.ByteBuffer
@@ -30,8 +26,6 @@ object GLRenderer : Renderer {
     private val LOGGER = LogManager.getLogger("PolyUI/GLRenderer")
 
     private const val MAX_UI_DEPTH = 16
-    private const val FONT_MAX_BITMAP_W = 1024
-    private const val FONT_MAX_BITMAP_H = 512
     private const val ATLAS_SIZE = 2048
     private const val ATLAS_SVG_UPSCALE_FACTOR = 4f
     private const val STRIDE = 4 + 4 + 1 + 1 + 4 + 1 + 4 // bounds, radii, color0, color1, UV, thick, clip
@@ -39,8 +33,10 @@ object GLRenderer : Renderer {
 
     @JvmStatic
     private val PIXELS: ByteBuffer = BufferUtils.createByteBuffer(3).put(112).put(120).put(0).flip() as ByteBuffer
+
     @JvmStatic
     private val NO_UV = floatArrayOf(-1f, -1f, 1f, 1f)
+
     @JvmStatic
     private val IDENTITY = floatArrayOf(
         1f, 0f, 0f,
@@ -50,15 +46,16 @@ object GLRenderer : Renderer {
 
     @JvmStatic
     private val buffer = BufferUtils.createFloatBuffer(MAX_BATCH * STRIDE)
+
     @JvmStatic
     private val scissorStack = FloatArray(MAX_UI_DEPTH * 4)
     private val transformStack = Array(MAX_UI_DEPTH) { FloatArray(9) }
-    private val fonts = HashMap<Int, FontAtlas>()
+    private val fonts = HashMap<String, FontAtlas>()
     private val init get() = program != 0
+    private lateinit var atlas: GLAtlasManager
 
     // GL objects
     private var instancedVbo = 0
-    private var atlas = 0
     private var program = 0
     private var vao = 0 // GL3+ only
     private var quadVbo = 0
@@ -85,11 +82,6 @@ object GLRenderer : Renderer {
     private var pixelRatio = 1f
     private var alphaCap = 255
     private var popFlushNeeded = false
-
-    // atlas data
-    private var slotX = 0
-    private var slotY = 0
-    private var atlasRowHeight = 0
 
     private val FRAG = """
         #version $$$ // replaced by compileShader
@@ -172,7 +164,7 @@ object GLRenderer : Renderer {
             if (vUV.x >= 0.0 && vThickness >= -1.0) {     // textured if UV.x >= 0
                 vec4 texColor = TEXTURE(uTex, vUV);
                 // text check: use red channel as alpha
-                col = (vThickness == -1.0) ? vec4(col.rgb, col.a * texColor.r) : col * texColor;
+                col = (vThickness == -1.0) ? vec4(col.rgb, col.a * smoothstep(0.5 - 0.5 * fwidth(d), 0.5 + 0.5 * fwidth(d), texColor.r)) : col * texColor;
             }
             else if (vThickness == -2.0) { // linear gradient, vUV as start and vUV2 as end
                 vec2 dir = vUV2 - vUV;
@@ -378,24 +370,7 @@ object GLRenderer : Renderer {
         }
 
 
-        atlas = glGenTextures()
-        glBindTexture(GL_TEXTURE_2D, atlas)
-        glTexImage2D(
-            GL_TEXTURE_2D,
-            0,
-            GL_RGBA,
-            ATLAS_SIZE,
-            ATLAS_SIZE,
-            0,
-            GL_RGBA,
-            GL_UNSIGNED_BYTE,
-            null as ByteBuffer?
-        )
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
-//        glBindTexture(GL_TEXTURE_2D, 0)
+        atlas = GLAtlasManager(ATLAS_SIZE, ATLAS_SIZE)
 //        glBindBuffer(GL_ARRAY_BUFFER, 0)
     }
 
@@ -444,7 +419,7 @@ object GLRenderer : Renderer {
             popFlushNeeded = false
         }
 
-        glBindTexture(GL_TEXTURE_2D, atlas)
+        atlas.bind()
 
         // asm: on VAO the state is stored, so we only need to set it up once
         if (!caps().OpenGL30) {
@@ -472,8 +447,8 @@ object GLRenderer : Renderer {
 
         count = 0
         buffer.clear()
-//        glBindBuffer(GL_ARRAY_BUFFER, 0)
-//        glBindTexture(GL_TEXTURE_2D, 0)
+        atlas.unbind()
+        glBindBuffer(GL_ARRAY_BUFFER, 0)
     }
 
     private fun enableAttrib(loc: Int, size: Int, offset: Long): Long {
@@ -794,31 +769,9 @@ object GLRenderer : Renderer {
         val h = IntArray(1)
         val d = initImage(image, w, h)
 
-        if (slotX + w[0] >= ATLAS_SIZE) {
-            slotX = 0
-            slotY += atlasRowHeight
-            atlasRowHeight = 0
-            if (slotY + h[0] >= ATLAS_SIZE) {
-                throw IllegalStateException("Texture atlas full!")
-            }
-        }
-
         // Store UV rect for this image
-        image.uv = Vec4.of(
-            slotX / ATLAS_SIZE.toFloat(),
-            slotY / ATLAS_SIZE.toFloat(),
-            w[0] / ATLAS_SIZE.toFloat(),
-            h[0] / ATLAS_SIZE.toFloat()
-        )
-
-        glBindTexture(GL_TEXTURE_2D, atlas)
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
-        glTexSubImage2D(GL_TEXTURE_2D, 0, slotX, slotY, w[0], h[0], GL_RGBA, GL_UNSIGNED_BYTE, d)
-//        glBindTexture(GL_TEXTURE_2D, 0)
+        image.uv = atlas.insert(w[0], h[0], d)
         if (image.type == PolyImage.Type.Raster) stbi_image_free(d)
-
-        slotX += w[0] + 1
-        if (h[0] + 1 > atlasRowHeight) atlasRowHeight = h[0] + 1
         image.reportInit()
     }
 
@@ -847,25 +800,21 @@ object GLRenderer : Renderer {
     }
 
     private fun getFontAtlas(font: Font, fontSize: Float): FontAtlas {
-        val p = when (fontSize) {
-            in 0f..48f -> 48f
-            else -> 96f
-        }
-        return fonts.getOrPut(font.resourcePath.hashCode() + p.toInt()) {
+        return fonts.getOrPut(font.resourcePath) {
             val data = font.load {
                 LOGGER.error("Failed to load font: $font", it)
-                return@getOrPut fonts[PolyUI.defaultFonts.regular.resourcePath.hashCode() + p.toInt()]
+                return@getOrPut fonts[PolyUI.defaultFonts.regular.resourcePath]
                     ?: throw IllegalStateException("Default font couldn't be loaded")
             }.toDirectByteBuffer()
-            FontAtlas(data, p)
+            FontAtlas(data, 64f)
         }
     }
 
     fun dumpAtlas() {
         val buf = BufferUtils.createByteBuffer(ATLAS_SIZE * ATLAS_SIZE * 4)
-        glBindTexture(GL_TEXTURE_2D, atlas)
+        atlas.bind()
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf)
-//        glBindTexture(GL_TEXTURE_2D, 0)
+        atlas.unbind()
         org.lwjgl.stb.STBImageWrite.stbi_write_png(
             "debug_atlas.png",
             ATLAS_SIZE,
@@ -881,7 +830,7 @@ object GLRenderer : Renderer {
         if (program != 0) glDeleteProgram(program)
         if (quadVbo != 0) glDeleteBuffers(quadVbo)
         if (instancedVbo != 0) glDeleteBuffers(instancedVbo)
-        if (atlas != 0) glDeleteTextures(atlas)
+        atlas.cleanup()
         if (nSvgRaster != 0L) nsvgDeleteRasterizer(nSvgRaster)
         fonts.clear()
         buffer.clear()
@@ -910,85 +859,34 @@ object GLRenderer : Renderer {
             val des = IntArray(1)
             val gap = IntArray(1)
             stbtt_GetFontVMetrics(stbFont, asc, des, gap)
-            stbFont.free()
-            val pixelHeight = (asc[0] - des[0]) * scale
+
             ascent = asc[0] * scale
             descent = des[0] * scale
             lineGap = gap[0] * scale
 
-            val range = STBTTPackRange.malloc()
-            range.font_size(pixelHeight)
-            range.first_unicode_codepoint_in_range(32)
-            range.num_chars(95)
-            val packed = STBTTPackedchar.malloc(range.num_chars())
-            range.chardata_for_range(packed)
+            val w = IntArray(1)
+            val h = IntArray(1)
+            val xoff = IntArray(1)
+            val yoff = IntArray(1)
+            val xAdvance = IntArray(1)
+            glyphs = Array(95) {
+                stbtt_GetCodepointHMetrics(stbFont, 32 + it, xAdvance, null)
+                val sdf = stbtt_GetCodepointSDF(stbFont, scale, (32 + it), 8, 128.toByte(), 64f, w, h, xoff, yoff)
+                    ?: BufferUtils.createByteBuffer(w[0] * h[0] * 4)
 
-            val bitMap = BufferUtils.createByteBuffer(FONT_MAX_BITMAP_W * FONT_MAX_BITMAP_H)
-            val pack = STBTTPackContext.malloc()
-            if (!stbtt_PackBegin(pack, bitMap, FONT_MAX_BITMAP_W, FONT_MAX_BITMAP_H, 0, 1, 0L)) {
-                throw IllegalStateException("Failed to initialize font packer")
-            }
-
-            if (!stbtt_PackFontRange(pack, data, 0, pixelHeight, range.first_unicode_codepoint_in_range(), packed)) {
-                throw IllegalStateException("Failed to pack font range")
-            }
-            stbtt_PackEnd(pack)
-            pack.free()
-
-            var maxX = Short.MIN_VALUE
-            var maxY = Short.MIN_VALUE
-            for (i in 0..<range.num_chars()) {
-                val g = packed.get(i)
-                if (g.x1() > maxX) maxX = g.x1()
-                if (g.y1() > maxY) maxY = g.y1()
-            }
-
-            if (slotX + maxX > ATLAS_SIZE) {
-                slotX = 0
-                slotY += atlasRowHeight
-                atlasRowHeight = 0
-            }
-            val sx = slotX
-            val sy = slotY
-
-            glyphs = Array(range.num_chars()) {
-                val g = packed.get(it)
-                floatArrayOf(
-                    (sx + g.x0()) / ATLAS_SIZE.toFloat(),
-                    (sy + g.y0()) / ATLAS_SIZE.toFloat(),
-                    (g.x1() - g.x0()) / ATLAS_SIZE.toFloat(),
-                    (g.y1() - g.y0()) / ATLAS_SIZE.toFloat(),
-                    g.xoff(),
-                    g.yoff(),
-                    (g.x1() - g.x0()).toFloat(),
-                    (g.y1() - g.y0()).toFloat(),
-                    g.xadvance()
+                val (u, v, uw, uh) = atlas.insert(w[0], h[0], sdf, GL_RED)
+                val ret = floatArrayOf(
+                    u, v, uw, uh,
+                    xoff[0].toFloat(),
+                    yoff[0].toFloat(),
+                    w[0].toFloat(),
+                    h[0].toFloat(),
+                    xAdvance[0].toFloat() * scale
                 )
+                ret
             }
-            packed.free()
-            range.free()
 
-            glBindTexture(GL_TEXTURE_2D, atlas)
-            glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
-            glPixelStorei(GL_UNPACK_ROW_LENGTH, FONT_MAX_BITMAP_W)
-
-            // can't write to the alpha channel in GL3 core! lol hahaahahah
-            glTexSubImage2D(
-                GL_TEXTURE_2D,
-                0,
-                sx,
-                sy,
-                maxX.toInt(),
-                maxY.toInt(),
-                GL_RED,
-                GL_UNSIGNED_BYTE,
-                bitMap
-            )
-            glBindTexture(GL_TEXTURE_2D, 0)
-            glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
-
-            slotX += maxX
-            atlasRowHeight = maxOf(atlasRowHeight, maxY.toInt())
+            stbFont.free()
         }
 
         fun measure(text: String, fontSize: Float): Vec2 {
@@ -1005,7 +903,7 @@ object GLRenderer : Renderer {
 
         @Suppress("DEPRECATION")
         @kotlin.internal.InlineOnly
-        inline fun get(char: Char) = if (char.toInt() in 32..95+32) glyphs[(char.toInt() - 32) /* .coerceIn(0, glyphs.size - 1) */] else glyphs[('?'.toInt() - 32)]
+        inline fun get(char: Char) = if (char.toInt() in 32..95 + 32) glyphs[(char.toInt() - 32) /* .coerceIn(0, glyphs.size - 1) */] else glyphs[('?'.toInt() - 32)]
 
     }
 
