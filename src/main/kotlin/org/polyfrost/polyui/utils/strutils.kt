@@ -60,10 +60,29 @@ fun Float?.toString(dps: Int): String {
     val v = this.fix(dps)
     // remove trailing zeros
     val vi = v.toInt()
-    return if(v == vi.toFloat()) {
+    return if (v == vi.toFloat()) {
         // no decimal part
         vi.toString()
     } else v.toString()
+}
+
+@Suppress("DEPRECATION", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+@kotlin.internal.InlineOnly
+inline fun String.forEachCodepoint(func: (Int) -> Unit) {
+    val length = length
+    var i = 0
+    while (i < length) {
+        val c1 = this[i++]
+        val cp = if (c1.isHighSurrogate() && i < length && this[i].isLowSurrogate()) {
+            val c2 = this[i++]
+            Character.toCodePoint(c1, c2)
+        } else c1.toInt()
+
+        // skip VS16 following the codepoint
+        if (i < length && this[i] == '\uFE0F') i++
+
+        func(cp)
+    }
 }
 
 fun String.removeSurrounding(char: Char): String {

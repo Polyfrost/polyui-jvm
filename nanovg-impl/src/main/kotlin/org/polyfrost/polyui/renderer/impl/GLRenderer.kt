@@ -14,6 +14,7 @@ import org.polyfrost.polyui.data.Font
 import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.utils.forEachCodepoint
 import org.polyfrost.polyui.utils.roundTo
 import org.polyfrost.polyui.utils.toDirectByteBuffer
 import org.polyfrost.polyui.utils.toDirectByteBufferNT
@@ -587,12 +588,11 @@ object GLRenderer : Renderer {
         val penY = y + (fAtlas.ascent + fAtlas.descent) * scaleFactor + (fontSize / 6f)
         val col = java.lang.Float.intBitsToFloat(color.argb.capAlpha())
         val buffer = buffer
-
-        for (c in text) {
+        text.forEachCodepoint {
             if (count >= MAX_BATCH) flush()
-            val glyph = fAtlas.get(c)
+            val glyph = fAtlas.get(it)
             // opt: early exit when we are out of the scissor region
-            if (scissorDepth > 3 && penX > scissorStack[scissorDepth - 2]) break
+            if (scissorDepth > 3 && penX > scissorStack[scissorDepth - 2]) return
             buffer.put(penX + glyph.xOff * scaleFactor).put(penY + glyph.yOff * scaleFactor)
                 .put(glyph.width * scaleFactor).put(glyph.height * scaleFactor)
             buffer.put(0f).put(-1f).put(0f).put(0f) // zero radii (-1 optimization)
@@ -834,11 +834,13 @@ object GLRenderer : Renderer {
     }
 
     override fun cleanup() {
-//        dumpAtlas()
+        dumpAtlas()
         if (program != 0) glDeleteProgram(program)
         if (quadVbo != 0) glDeleteBuffers(quadVbo)
         if (instancedVbo != 0) glDeleteBuffers(instancedVbo)
         atlas.cleanup()
+        fonts.values.forEach(FontAtlas::cleanup)
+        fonts.clear()
         if (nSvgRaster != 0L) nsvgDeleteRasterizer(nSvgRaster)
         fonts.clear()
         buffer.clear()
@@ -851,18 +853,21 @@ object GLRenderer : Renderer {
         cleanup()
     }
 
-    private class FontAtlas(data: ByteBuffer, val renderedSize: Float) {
-        private val glyphs: Array<FloatArray>
+    private var isInLoop = false
+
+    private class FontAtlas(private val data: ByteBuffer, val renderedSize: Float) {
+        private val glyphs = HashMap<Int, FloatArray>()
         val ascent: Float
         val descent: Float
         val lineGap: Float
+        private val stbFont: STBTTFontinfo = STBTTFontinfo.malloc()
+        private val scale: Float
 
         init {
-            val stbFont = STBTTFontinfo.malloc()
             if (!stbtt_InitFont(stbFont, data)) {
                 throw IllegalStateException("Failed to initialize font")
             }
-            val scale = stbtt_ScaleForMappingEmToPixels(stbFont, renderedSize)
+            scale = stbtt_ScaleForMappingEmToPixels(stbFont, renderedSize)
             val asc = IntArray(1)
             val des = IntArray(1)
             val gap = IntArray(1)
@@ -871,47 +876,58 @@ object GLRenderer : Renderer {
             ascent = asc[0] * scale
             descent = des[0] * scale
             lineGap = gap[0] * scale
+        }
 
+        private fun makeGlyph(codepoint: Int): FloatArray {
             val w = IntArray(1)
             val h = IntArray(1)
             val xoff = IntArray(1)
             val yoff = IntArray(1)
             val xAdvance = IntArray(1)
-            glyphs = Array(95) {
-                stbtt_GetCodepointHMetrics(stbFont, 32 + it, xAdvance, null)
-                val sdf = stbtt_GetCodepointSDF(stbFont, scale, (32 + it), 8, 128.toByte(), 64f, w, h, xoff, yoff)
-                    ?: BufferUtils.createByteBuffer(w[0] * h[0] * 4)
 
-                val (u, v, uw, uh) = atlas.insert(w[0], h[0], sdf, GL_RED)
-                val ret = floatArrayOf(
-                    u, v, uw, uh,
-                    xoff[0].toFloat(),
-                    yoff[0].toFloat(),
-                    w[0].toFloat(),
-                    h[0].toFloat(),
-                    xAdvance[0].toFloat() * scale
-                )
-                ret
+            val idx = stbtt_FindGlyphIndex(stbFont, codepoint)
+            if (idx == 0 && !isInLoop) {
+                isInLoop = true
+                val o = getFontAtlas(Font.of("polyui/fonts/NotoEmoji-Regular.ttf"), 12f).get(codepoint)
+                isInLoop = false
+                glyphs[codepoint] = o
+                return o
             }
 
-            stbFont.free()
+            stbtt_GetGlyphHMetrics(stbFont, idx, xAdvance, null)
+            val sdf = stbtt_GetGlyphSDF(stbFont, scale, idx, 6, 128.toByte(), 64f, w, h, xoff, yoff)
+                ?: stbtt_GetGlyphBitmap(stbFont, scale, scale, idx, w, h, xoff, yoff)
+                ?: BufferUtils.createByteBuffer(w[0] * h[0] * 4)
+
+            val (u, v, uw, uh) = atlas.insert(w[0], h[0], sdf, GL_RED)
+            return floatArrayOf(
+                u, v, uw, uh,
+                xoff[0].toFloat(),
+                yoff[0].toFloat(),
+                w[0].toFloat(),
+                h[0].toFloat(),
+                xAdvance[0].toFloat() * scale
+            )
         }
 
         fun measure(text: String, fontSize: Float): Vec2 {
             var width = 0f
 //            var height = 0f
             val scaleFactor = fontSize.roundTo(FONT_SCALE_MAX_FIDELITY) / this.renderedSize
-            for (c in text) {
-                val g = get(c)
-                width += g.xAdvance * scaleFactor
-//                height = maxOf(height, g.height + g.offsetY)
+            text.forEachCodepoint {
+                width += get(it).xAdvance * scaleFactor
             }
             return Vec2.of(width, fontSize)
         }
 
         @Suppress("DEPRECATION")
         @kotlin.internal.InlineOnly
-        inline fun get(char: Char) = if (char.toInt() in 32..95 + 32) glyphs[(char.toInt() - 32) /* .coerceIn(0, glyphs.size - 1) */] else glyphs[('?'.toInt() - 32)]
+        inline fun get(codepoint: Int) = glyphs.getOrPut(codepoint) { makeGlyph(codepoint) }
+
+        fun cleanup() {
+            glyphs.clear()
+            stbFont.free()
+        }
 
     }
 
