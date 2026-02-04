@@ -79,6 +79,8 @@ object GLRenderer : Renderer {
 
 
     // Current batch state
+    private var width = 0f
+    private var height = 0f
     private var count = 0
     private var scissorDepth = 0
     private var transformDepth = 0
@@ -384,6 +386,8 @@ object GLRenderer : Renderer {
     }
 
     override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {
+        this.width = width
+        this.height = height
         scissorDepth = 0
         alphaCap = 255
         count = 0
@@ -668,6 +672,7 @@ object GLRenderer : Renderer {
     override fun popScissor() {
         if (scissorDepth <= 4) {
             scissorDepth = 0
+            pushScissor(0f, 0f, width, height)
             return
         }
         scissorDepth -= 4
