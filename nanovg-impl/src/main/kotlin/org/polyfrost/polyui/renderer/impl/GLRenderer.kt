@@ -14,10 +14,12 @@ import org.polyfrost.polyui.data.Font
 import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.utils.roundTo
 import org.polyfrost.polyui.utils.toDirectByteBuffer
 import org.polyfrost.polyui.utils.toDirectByteBufferNT
 import java.nio.ByteBuffer
 import kotlin.math.cos
+import kotlin.math.floor
 import kotlin.math.sin
 import kotlin.math.tan
 
@@ -30,6 +32,7 @@ object GLRenderer : Renderer {
     private const val ATLAS_SVG_UPSCALE_FACTOR = 4f
     private const val STRIDE = 4 + 4 + 1 + 1 + 4 + 1 + 4 // bounds, radii, color0, color1, UV, thick, clip
     private const val MAX_BATCH = 1024
+    private const val FONT_SCALE_MAX_FIDELITY = 0.25f
 
     @JvmStatic
     private val PIXELS: ByteBuffer = BufferUtils.createByteBuffer(3).put(112).put(120).put(0).flip() as ByteBuffer
@@ -164,7 +167,12 @@ object GLRenderer : Renderer {
             if (vUV.x >= 0.0 && vThickness >= -1.0) {     // textured if UV.x >= 0
                 vec4 texColor = TEXTURE(uTex, vUV);
                 // text check: use red channel as alpha
-                col = (vThickness == -1.0) ? vec4(col.rgb, col.a * smoothstep(0.5 - 0.5 * fwidth(d), 0.5 + 0.5 * fwidth(d), texColor.r)) : col * texColor;
+                if (vThickness == -1.0) {
+                    float w = fwidth(texColor.r);
+                    // bias increases as glyph gets smaller
+                    float bias = 0.5 - min(w * 0.6, 0.08);
+                    col.a *= smoothstep(bias - w, bias + w, texColor.r);
+                } else col = col * texColor;
             }
             else if (vThickness == -2.0) { // linear gradient, vUV as start and vUV2 as end
                 vec2 dir = vUV2 - vUV;
@@ -574,8 +582,8 @@ object GLRenderer : Renderer {
         val fAtlas = getFontAtlas(font, fontSize)
         if (count >= MAX_BATCH) flush()
 
-        var penX = x
-        val scaleFactor = fontSize / fAtlas.renderedSize
+        var penX = floor(x + 0.5f)
+        val scaleFactor = fontSize.roundTo(FONT_SCALE_MAX_FIDELITY) / fAtlas.renderedSize
         val penY = y + (fAtlas.ascent + fAtlas.descent) * scaleFactor + (fontSize / 6f)
         val col = java.lang.Float.intBitsToFloat(color.argb.capAlpha())
         val buffer = buffer
@@ -892,7 +900,7 @@ object GLRenderer : Renderer {
         fun measure(text: String, fontSize: Float): Vec2 {
             var width = 0f
 //            var height = 0f
-            val scaleFactor = fontSize / this.renderedSize
+            val scaleFactor = fontSize.roundTo(FONT_SCALE_MAX_FIDELITY) / this.renderedSize
             for (c in text) {
                 val g = get(c)
                 width += g.xAdvance * scaleFactor

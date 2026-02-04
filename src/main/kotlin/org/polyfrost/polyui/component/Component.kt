@@ -42,6 +42,7 @@ import org.polyfrost.polyui.utils.fastRemoveIfReversed
 import org.polyfrost.polyui.utils.roundTo
 import kotlin.experimental.and
 import kotlin.experimental.or
+import kotlin.math.max
 import kotlin.math.min
 
 /**
@@ -484,15 +485,22 @@ abstract class Component(at: Vec2, size: Vec2, alignment: Align = AlignDefault) 
         designedSize = polyUI.visibleSize
     }
 
-    fun clipChildren() {
+    fun clipChildren(tx: Float = screenAt.x, ty: Float = screenAt.y, tw: Float = visibleSize.x, th: Float = visibleSize.y) {
         val children = children ?: return
-        val (tx, ty) = screenAt
-        val (tw, th) = visibleSize
+        // intersect these params with the provided one and clip to that if its smaller
+        val (left, top) = screenAt
+        val ttx = max(tx, left)
+        val tty = max(ty, top)
+        val ttw = min(tx + tw, visibleSize.x + left) - ttx
+        val tth = min(ty + th, visibleSize.y + top) - tty
+
         children.fastEach {
-            val isOutside = !it.intersects(tx, ty, tw, th)
+            val isOutside = !it.intersects(ttx, tty, ttw, tth)
             it.clipped = isOutside
             // asm: don't bother checking children if this component is not visible
-            if (!isOutside) it.clipChildren()
+            if (!isOutside) {
+                it.clipChildren(ttx, tty, ttw, tth)
+            }
         }
     }
 
