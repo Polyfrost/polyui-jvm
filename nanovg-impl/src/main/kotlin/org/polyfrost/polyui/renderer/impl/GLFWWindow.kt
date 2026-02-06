@@ -33,6 +33,8 @@ import org.lwjgl.opengl.GL20C.*
 import org.lwjgl.stb.STBImage
 import org.lwjgl.system.*
 import org.lwjgl.system.macosx.ObjCRuntime
+import org.lwjgl.system.macosx.ObjCRuntime.objc_getClass
+import org.lwjgl.system.macosx.ObjCRuntime.sel_getUid
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.data.Cursor
 import org.polyfrost.polyui.input.KeyModifiers
@@ -44,6 +46,7 @@ import org.polyfrost.polyui.utils.simplifyRatio
 import org.polyfrost.polyui.utils.toByteArray
 import org.polyfrost.polyui.utils.toDirectByteBuffer
 import java.nio.file.Paths
+import kotlin.io.encoding.Base64
 import kotlin.math.max
 
 /**
@@ -103,8 +106,8 @@ class GLFWWindow @JvmOverloads constructor(
                 try {
                     // kotlin copy of org.lwjgl.glfw.EventLoop.isMainThread()
                     val msgSend = ObjCRuntime.getLibrary().getFunctionAddress("objc_msgSend")
-                    val currentThread = JNI.invokePPP(ObjCRuntime.objc_getClass("NSThread"), ObjCRuntime.sel_getUid("currentThread"), msgSend)
-                    val isMainThread = JNI.invokePPZ(currentThread, ObjCRuntime.sel_getUid("isMainThread"), msgSend)
+                    val currentThread = JNI.invokePPP(objc_getClass("NSThread"), sel_getUid("currentThread"), msgSend)
+                    val isMainThread = JNI.invokePPZ(currentThread, sel_getUid("isMainThread"), msgSend)
                     if (!isMainThread) {
                         LOGGER.warn("VM option -XstartOnMainThread is required on macOS. glfw_async has been set to avoid crashing.")
                         Configuration.GLFW_LIBRARY_NAME.set("glfw_async")
@@ -401,12 +404,31 @@ class GLFWWindow @JvmOverloads constructor(
      *
      * [SIGSEGV](https://en.wikipedia.org/wiki/Segmentation_fault) - if something else goes wrong in this method. Your JVM will crash blaming `[libglfw.so+0x211xx]` or something.
      */
-    fun setIcon(icon: String) {
+    fun setIcon(icon: String): GLFWWindow {
+        if (Platform.get() == Platform.MACOSX) {
+            MemoryStack.stackPush().use { stack ->
+                val msgSend = ObjCRuntime.getLibrary().getFunctionAddress("objc_msgSend")
+
+                val strObj = JNI.invokePPP(objc_getClass("NSString"), sel_getUid("alloc"), msgSend)
+                val datObj = JNI.invokePPP(objc_getClass("NSData"), sel_getUid("alloc"), msgSend)
+                val imgObj = JNI.invokePPP(objc_getClass("NSImage"), sel_getUid("alloc"), msgSend)
+
+                stack.nUTF8(Base64.encode(getResourceStream(icon).toByteArray()), true)
+                val str = JNI.invokePPPP(strObj, sel_getUid("initWithUTF8String:"), stack.pointerAddress, msgSend)
+                val dat = JNI.invokePPPP(datObj, sel_getUid("initWithBase64Encoding:"), str, msgSend)
+                val img = JNI.invokePPPP(imgObj, sel_getUid("initWithData:"), dat, msgSend)
+                val app = JNI.invokePPP(objc_getClass("NSApplication"), sel_getUid("sharedApplication"), msgSend)
+
+                JNI.invokePPPV(app, sel_getUid("setApplicationIconImage:"), img, msgSend)
+            }
+            return this
+        }
         val w = IntArray(1)
         val h = IntArray(1)
         val data = STBImage.stbi_load_from_memory(getResourceStream(icon).toByteArray().toDirectByteBuffer(), w, h, IntArray(1), 4)
             ?: throw Exception("error occurred while loading icon!")
         glfwSetWindowIcon(handle, GLFWImage.malloc(1).put(0, GLFWImage.malloc().set(w[0], h[0], data)))
+        return this
     }
 
     override fun supportsRenderPausing() = true

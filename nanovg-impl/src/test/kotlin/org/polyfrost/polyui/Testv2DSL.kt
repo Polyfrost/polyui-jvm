@@ -46,7 +46,7 @@ import kotlin.random.Random
 
 fun main() {
     val noop = false
-    val window = if (noop) NoOpWindow(800, 500) else GLFWWindow("PolyUI Test v2 (DSL)", 800, 500, gl2 = false)
+    val window = if (noop) NoOpWindow(800, 500) else GLFWWindow("PolyUI Test v2 (DSL)", 800, 500, gl2 = false).setIcon("polyui/icon.png")
     val theme = DarkTheme()
     PolyUI.registeredFonts["comic"] = FontFamily("ComicNeue", "polyui/fonts/comic/")
 

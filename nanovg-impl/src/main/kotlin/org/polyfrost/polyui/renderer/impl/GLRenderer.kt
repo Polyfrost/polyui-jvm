@@ -104,15 +104,13 @@ object GLRenderer : Renderer {
 
         uniform sampler2D uTex;
 
-        VARYING vec2 vUV;        // UV sampler position
-        VARYING vec2 vUV2;       // used for gradients
-        VARYING vec2 vHalfSize;  // half the rectangle size
-        VARYING vec2 vP;         // rect x, y
-        VARYING vec2 vScreenPos; // screen position of the rectangle
-        VARYING vec4 vClipRect;  // clipping rectangle
-        VARYING vec4 vRadii;     // per-corner radii
-        VARYING vec4 vColor0;    // RGBA
-        VARYING vec4 vColor1;    // RGBA (for gradients)
+        VARYING vec4 vUV;         // UV sampler position
+        VARYING vec4 vP_HalfSize; // rect x, y, 0.5x wh
+        VARYING vec2 vScreenPos;  // screen position of the rectangle
+        VARYING vec4 vClipRect;   // clipping rectangle
+        VARYING vec4 vRadii;      // per-corner radii
+        VARYING vec4 vColor0;     // RGBA
+        VARYING vec4 vColor1;     // RGBA (for gradients)
         VARYING float vThickness; // -1 for text, -2 for linear gradient, -3 for radial, -4 for box,  >0 for hollow rect
 
         // Signed distance function for rounded box
@@ -158,49 +156,48 @@ object GLRenderer : Renderer {
                 step(vClipRect.y, vScreenPos.y) *
                 step(vScreenPos.x, vClipRect.z) *
                 step(vScreenPos.y, vClipRect.w);
-            // if (clip == 0.0) discard;
-
-            float d;
-            if (vRadii.y == -1.0) {
-                d = (vThickness > 0.0) ? hollowBoxSDF(vP, vHalfSize, vThickness) : boxSDF(vP, vHalfSize);
-            } else {
-                d = (vThickness > 0.0) ? hollowRoundedBoxSDF(vP, vHalfSize, vRadii, vThickness) : roundedBoxSDF(vP, vHalfSize, vRadii);
-            }
+            if (clip == 0.0) discard;
 
             vec4 col = vColor0;
-            if (vUV.x >= 0.0 && vThickness >= -1.0) {     // textured if UV.x >= 0
-                vec4 texColor = TEXTURE(uTex, vUV);
-                // text check: use red channel as alpha
-                if (vThickness == -1.0) {
-                    float w = fwidth(texColor.r);
+            float d;
+            if (vThickness <= 0.0) {
+                if (vThickness == -1.0) { // text
+                    float sdf = TEXTURE(uTex, vUV.xy).r;
+                    float w = fwidth(sdf);
                     // bias increases as glyph gets smaller
                     float bias = 0.5 - min(w * 0.6, 0.08);
-                    col.a *= smoothstep(bias - w, bias + w, texColor.r);
-                } else col = col * texColor;
-            }
-            else if (vThickness == -2.0) { // linear gradient, vUV as start and vUV2 as end
-                vec2 dir = vUV2 - vUV;
-                float invLen2 = 1.0 / dot(dir, dir);
-                float t = clamp(dot((vP + vHalfSize) - vUV, dir) * invLen2, 0.0, 1.0);
-                col = mix(vColor0, vColor1, t);
-            }
-            else if (vThickness == -3.0) { // radial gradient, vUV as center and vUV2.x as radius
-                float dist = length(vP + vHalfSize - vUV);
-                float t = clamp((dist - vUV2.x) / (vUV2.y - vUV2.x), 0.0, 1.0);
-                col = mix(vColor0, vColor1, t);
-            }
-            else if (vThickness == -4.0) { // box gradient, vUV.x as radius and vUV.y as feather
-                float dist = roundBoxSDF(vP, vHalfSize, vUV.x);
-                float t = clamp((dist + vUV.y * 0.5) / vUV.y, 0.0, 1.0);
-                col = mix(vColor0, vColor1, t);
-            }
-            else if (vThickness == -5.0) { // drop shadow, vUV.x as spread and vUV.y as blur
-                float dShadow = roundBoxSDF(vP, vHalfSize + vUV.x, vRadii.x);
-                col = vec4(vColor0.rgb, vColor0.a * (1.0 - smoothstep(-vUV.y, vUV.y, dShadow)));
+                    col.a *= smoothstep(bias - w, bias + w, sdf);
+                }
+                else if (vThickness == -2.0) { // image
+                    col = col * TEXTURE(uTex, vUV.xy);
+                } 
+                else if (vThickness == -3.0) { // linear gradient, vUV.xy as start and vUV.zw as end
+                    vec2 dir = vUV.zw - vUV.xy;
+                    float invLen2 = 1.0 / dot(dir, dir);
+                    float t = clamp(dot((vP_HalfSize.xy + vP_HalfSize.zw) - vUV.xy, dir) * invLen2, 0.0, 1.0);
+                    col = mix(vColor0, vColor1, t);
+                }
+                else if (vThickness == -4.0) { // radial gradient, vUV as center and vUV.w as radius
+                    float dist = length(vP_HalfSize.xy + vP_HalfSize.zw - vUV.xy);
+                    float t = clamp((dist - vUV.w) / (vUV.w - vUV.z), 0.0, 1.0);
+                    col = mix(vColor0, vColor1, t);
+                }
+                else if (vThickness == -5.0) { // box gradient, vUV.x as radius and vUV.y as feather
+                    float dist = roundBoxSDF(vP_HalfSize.xy, vP_HalfSize.zw, vUV.x);
+                    float t = clamp((dist + vUV.y * 0.5) / vUV.y, 0.0, 1.0);
+                    col = mix(vColor0, vColor1, t);
+                }
+                else if (vThickness == -6.0) { // drop shadow, vUV.x as spread and vUV.y as blur
+                    float dShadow = roundBoxSDF(vP_HalfSize.xy, vP_HalfSize.zw + vUV.x, vRadii.x);
+                    col.a *= (1.0 - smoothstep(-vUV.y, vUV.y, dShadow));
+                }
+                d = (vRadii.y == -1.0) ? boxSDF(vP_HalfSize.xy, vP_HalfSize.zw) : roundedBoxSDF(vP_HalfSize.xy, vP_HalfSize.zw, vRadii);
+            } else {
+                d = (vRadii.y == -1.0) ? hollowBoxSDF(vP_HalfSize.xy, vP_HalfSize.zw, vThickness) : hollowRoundedBoxSDF(vP_HalfSize.xy, vP_HalfSize.zw, vRadii, vThickness);
             }
 
             // Proper antialiasing based on distance field
-            float alpha = col.a * clip * clamp(0.5 - d, 0.0, 1.0);
+            float alpha = col.a * clamp(0.5 - d, 0.0, 1.0);
 
             fragColor = vec4(col.rgb * alpha, alpha);
         }
@@ -235,15 +232,13 @@ object GLRenderer : Renderer {
         );
         uniform vec2 uWindow;
 
-        VARYING vec2 vP;
-        VARYING vec2 vHalfSize;
+        VARYING vec4 vP_HalfSize;
         VARYING vec2 vScreenPos;
         VARYING vec4 vClipRect;
         VARYING vec4 vRadii;
         VARYING vec4 vColor0;
         VARYING vec4 vColor1;
-        VARYING vec2 vUV;
-        VARYING vec2 vUV2;
+        VARYING vec4 vUV;
         VARYING float vThickness;
         
         vec4 unpackColor(U_INT c) {
@@ -257,26 +252,25 @@ object GLRenderer : Renderer {
 
         void main() {
             // Position inside rect
-            vec2 pos = iRect.xy + aLocal * iRect.zw;
-            vec2 uv  = (iThickness > -2.0) ? iUVRect.xy + aLocal * iUVRect.zw : iUVRect.xy; // for gradients, just pass through the first two param to frag
+            vec2 pos = aLocal * iRect.zw;
+            vec2 uv  = (iThickness > -3.0) ? iUVRect.xy + aLocal * iUVRect.zw : iUVRect.xy; // for gradients, just pass through the first two param to frag
+            vec2 halfSize = iRect.zw * 0.5;
 
-            vec3 transformed = uTransform * vec3(pos, 1.0);
+            vec3 transformed = uTransform * vec3(pos + iRect.xy, 1.0);
 
             vec2 ndc = (transformed.xy / uWindow) * 2.0 - 1.0;
             ndc.y = -ndc.y;
 
             gl_Position = vec4(ndc, 0.0, 1.0);
 
-            vHalfSize  = iRect.zw * 0.5;
-            vP         = pos - iRect.xy - vHalfSize; 
-            vScreenPos = transformed.xy;
-            vClipRect  = iClipRect;
-            vRadii     = iRadii;
-            vColor0    = unpackColor(iColor0);
-            vColor1    = unpackColor(iColor1);
-            vUV        = uv;
-            vUV2       = iUVRect.zw;   // pass through for gradients.
-            vThickness = iThickness;
+            vP_HalfSize = vec4(pos - halfSize, halfSize); 
+            vScreenPos  = transformed.xy;
+            vClipRect   = iClipRect;
+            vRadii      = iRadii;
+            vColor0     = unpackColor(iColor0);
+            vColor1     = unpackColor(iColor1);
+            vUV         = vec4(uv, iUVRect.zw);
+            vThickness  = iThickness;
         }
     """.trimIndent()
 
@@ -502,34 +496,34 @@ object GLRenderer : Renderer {
             when (val type = color.type) {
                 is PolyColor.Gradient.Type.LeftToRight -> {
                     buffer.put(0f).put(height / 2f).put(width).put(height / 2f)
-                    buffer.put(-2f)
+                    buffer.put(-3f)
                 }
 
                 is PolyColor.Gradient.Type.TopToBottom -> {
                     buffer.put(width / 2f).put(0f).put(width / 2f).put(height)
-                    buffer.put(-2f)
+                    buffer.put(-3f)
                 }
 
                 is PolyColor.Gradient.Type.BottomLeftToTopRight -> {
                     buffer.put(0f).put(height).put(width).put(0f)
-                    buffer.put(-2f)
+                    buffer.put(-3f)
                 }
 
                 is PolyColor.Gradient.Type.TopLeftToBottomRight -> {
                     buffer.put(0f).put(0f).put(width).put(height)
-                    buffer.put(-2f)
+                    buffer.put(-3f)
                 }
 
                 is PolyColor.Gradient.Type.Radial -> {
                     buffer.put(if (type.centerX == -1f) width / 2f else type.centerX)
                         .put(if (type.centerY == -1f) height / 2f else type.centerY).put(type.innerRadius)
                         .put(type.outerRadius)
-                    buffer.put(-3f)
+                    buffer.put(-4f)
                 }
 
                 is PolyColor.Gradient.Type.Box -> {
                     buffer.put(type.radius).put(type.feather).put(0f).put(0f)
-                    buffer.put(-4f)
+                    buffer.put(-5f)
                 }
             }
         } else {
@@ -579,7 +573,7 @@ object GLRenderer : Renderer {
         buffer.put(java.lang.Float.intBitsToFloat(colorMask.capAlpha()))
         buffer.put(0f) // color1 unused
         buffer.put(image.uv.x).put(image.uv.y).put(image.uv.w).put(image.uv.h)
-        buffer.put(0f) // thickness = 0 for filled rect
+        buffer.put(-2f) // thickness = -2 for textured rect
         buffer.put(scissorStack, (scissorDepth - 4).coerceAtLeast(0), 4)
         count += 1
     }
@@ -637,7 +631,7 @@ object GLRenderer : Renderer {
         buffer.put(java.lang.Float.intBitsToFloat(alphaCap shl 24)) // black, alpha to alphaCap
         buffer.put(0f) // color1 unused
         buffer.put(spread).put(blur).put(0f).put(0f)
-        buffer.put(-5f) // thickness = -5 for drop shadow
+        buffer.put(-6f) // thickness = -6 for drop shadow
         buffer.put(scissorStack, (scissorDepth - 4).coerceAtLeast(0), 4)
         count += 1
     }
@@ -842,7 +836,7 @@ object GLRenderer : Renderer {
     }
 
     override fun cleanup() {
-        dumpAtlas()
+//        dumpAtlas()
         if (program != 0) glDeleteProgram(program)
         if (quadVbo != 0) glDeleteBuffers(quadVbo)
         if (instancedVbo != 0) glDeleteBuffers(instancedVbo)
