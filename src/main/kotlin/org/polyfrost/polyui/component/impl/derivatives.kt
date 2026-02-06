@@ -323,7 +323,7 @@ fun Slider(at: Vec2 = Vec2.ZERO, min: Float = 0f, max: Float = 100f, state: Stat
         },
         Block(
             size = ptrSize.vec,
-        ).radius(ptrSize / 2f).setPalette { text.primary }.withHoverStates().draggable(withY = false).ignoreLayout().onDrag {
+        ).radius(ptrSize / 2f).setPalette { text.primary }.denyPaletteChanges().withHoverStates().draggable(withY = false).ignoreLayout().onDrag {
             if (instant) state.setNumber(slide())
         }.onDragEnd {
             state.setNumber(slide())

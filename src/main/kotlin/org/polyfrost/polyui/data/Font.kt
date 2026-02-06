@@ -95,6 +95,8 @@ class Font private constructor(
             return loaded.getOrPut(resourcePath) { Font(resourcePath, family, italic, weight) }
         }
 
+        val registered get() = loaded.values
+
         /**
          * Get a Weight instance given the integer weight,
          * as specified by the [Google Fonts CSS v2 API](https://fonts.google.com/knowledge/glossary/weight_axis).

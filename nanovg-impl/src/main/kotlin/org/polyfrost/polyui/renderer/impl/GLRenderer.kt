@@ -34,6 +34,7 @@ object GLRenderer : Renderer {
     private const val STRIDE = 4 + 4 + 1 + 1 + 4 + 1 + 4 // bounds, radii, color0, color1, UV, thick, clip
     private const val MAX_BATCH = 1024
     private const val FONT_SCALE_MAX_FIDELITY = 0.25f
+    private const val FONT_RENDERED_SIZE = 64f
 
     @JvmStatic
     private val PIXELS: ByteBuffer = BufferUtils.createByteBuffer(3).put(112).put(120).put(0).flip() as ByteBuffer
@@ -584,18 +585,18 @@ object GLRenderer : Renderer {
     }
 
     override fun text(font: Font, x: Float, y: Float, text: String, color: Color, fontSize: Float) {
-        val fAtlas = getFontAtlas(font, fontSize)
+        val fAtlas = getFontAtlas(font)
         if (count >= MAX_BATCH) flush()
 
         var penX = floor(x + 0.5f)
-        val scaleFactor = fontSize.roundTo(FONT_SCALE_MAX_FIDELITY) / fAtlas.renderedSize
+        val scaleFactor = fontSize.roundTo(FONT_SCALE_MAX_FIDELITY) / FONT_RENDERED_SIZE
         val penY = y + (fAtlas.ascent + fAtlas.descent) * scaleFactor + (fontSize / 6f)
         val col = java.lang.Float.intBitsToFloat(color.argb.capAlpha())
         val buffer = buffer
         text.forEachCodepoint {
             if (count >= MAX_BATCH) flush()
             val glyph = fAtlas.get(it)
-            // opt: early exit when we are out of the scissor region
+            // opt: early exit when we are out of the scissored region
             if (scissorDepth > 3 && penX > scissorStack[scissorDepth - 2]) return
             buffer.put(penX + glyph.xOff * scaleFactor).put(penY + glyph.yOff * scaleFactor)
                 .put(glyph.width * scaleFactor).put(glyph.height * scaleFactor)
@@ -611,7 +612,7 @@ object GLRenderer : Renderer {
     }
 
     override fun textBounds(font: Font, text: String, fontSize: Float): Vec2 {
-        return getFontAtlas(font, fontSize).measure(text, fontSize)
+        return getFontAtlas(font).measure(text, fontSize)
     }
 
     override fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float) {
@@ -682,7 +683,9 @@ object GLRenderer : Renderer {
         alphaCap = (alpha * 255f).toInt()
     }
 
-    override fun resetGlobalAlpha() = globalAlpha(1f)
+    override fun resetGlobalAlpha() {
+        alphaCap = 255
+    }
 
     override fun transformsWithPoint() = false
 
@@ -812,14 +815,14 @@ object GLRenderer : Renderer {
         }
     }
 
-    private fun getFontAtlas(font: Font, fontSize: Float): FontAtlas {
+    private fun getFontAtlas(font: Font): FontAtlas {
         return fonts.getOrPut(font.resourcePath) {
             val data = font.load {
                 LOGGER.error("Failed to load font: $font", it)
                 return@getOrPut fonts[PolyUI.defaultFonts.regular.resourcePath]
                     ?: throw IllegalStateException("Default font couldn't be loaded")
             }.toDirectByteBuffer()
-            FontAtlas(data, 64f)
+            FontAtlas(data)
         }
     }
 
@@ -858,9 +861,7 @@ object GLRenderer : Renderer {
         cleanup()
     }
 
-    private var isInLoop = false
-
-    private class FontAtlas(private val data: ByteBuffer, val renderedSize: Float) {
+    private class FontAtlas(private val data: ByteBuffer) {
         private val glyphs = HashMap<Int, FloatArray>()
         val ascent: Float
         val descent: Float
@@ -872,7 +873,7 @@ object GLRenderer : Renderer {
             if (!stbtt_InitFont(stbFont, data)) {
                 throw IllegalStateException("Failed to initialize font")
             }
-            scale = stbtt_ScaleForMappingEmToPixels(stbFont, renderedSize)
+            scale = stbtt_ScaleForMappingEmToPixels(stbFont, FONT_RENDERED_SIZE)
             val asc = IntArray(1)
             val des = IntArray(1)
             val gap = IntArray(1)
@@ -891,16 +892,14 @@ object GLRenderer : Renderer {
             val xAdvance = IntArray(1)
 
             val idx = stbtt_FindGlyphIndex(stbFont, codepoint)
-            if (idx == 0 && !isInLoop) {
-                isInLoop = true
-                val o = getFontAtlas(Font.of("polyui/fonts/NotoEmoji-Regular.ttf"), 12f).get(codepoint)
-                isInLoop = false
-                glyphs[codepoint] = o
-                return o
-            }
+//            if (idx == 0) {
+//                val o = getFontAtlas(Font.of("polyui/fonts/NotoEmoji-Regular.ttf"), 12f).get(codepoint)
+//                glyphs[codepoint] = o
+//                return o
+//            }
 
             stbtt_GetGlyphHMetrics(stbFont, idx, xAdvance, null)
-            val sdf = stbtt_GetGlyphSDF(stbFont, scale, idx, 6, 128.toByte(), 64f, w, h, xoff, yoff)
+            val sdf = stbtt_GetGlyphSDF(stbFont, scale, idx, 4, 128.toByte(), 64f, w, h, xoff, yoff)
                 ?: stbtt_GetGlyphBitmap(stbFont, scale, scale, idx, w, h, xoff, yoff)
                 ?: BufferUtils.createByteBuffer(w[0] * h[0] * 4)
 
@@ -918,7 +917,7 @@ object GLRenderer : Renderer {
         fun measure(text: String, fontSize: Float): Vec2 {
             var width = 0f
 //            var height = 0f
-            val scaleFactor = fontSize.roundTo(FONT_SCALE_MAX_FIDELITY) / this.renderedSize
+            val scaleFactor = fontSize.roundTo(FONT_SCALE_MAX_FIDELITY) / FONT_RENDERED_SIZE
             text.forEachCodepoint {
                 width += get(it).xAdvance * scaleFactor
             }
