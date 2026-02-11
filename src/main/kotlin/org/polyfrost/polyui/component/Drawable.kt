@@ -225,12 +225,9 @@ abstract class Drawable(
      * @since 0.20.0
      */
     var alpha = 1f
+        get() = field.coerceIn(0f, (_parent as? Drawable)?.alpha ?: 1f)
         set(value) {
-            val value = value.coerceIn(0f, 1f)
-            field = value
-            children?.fastEach {
-                if (it is Drawable) it.alpha = it.alpha.coerceIn(0f, value)
-            }
+            field = value.coerceIn(0f, 1f)
         }
 
     /**
