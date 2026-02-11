@@ -427,7 +427,7 @@ class PolyUI(
         debugger.nframes++
         delta = clock.delta
         if (master.needsRedraw) {
-            renderer.beginFrame(master.width, master.height, pixelRatio)
+            renderer.beginFrame(master.width, master.height, pixelRatio, window?.viewport)
             window?.preRender(renderer)
             master.draw()
             if (settings.debug) {

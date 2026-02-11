@@ -80,8 +80,7 @@ object GLRenderer : Renderer {
 
 
     // Current batch state
-    private var width = 0f
-    private var height = 0f
+    private var viewport: FloatArray = FloatArray(4)
     private var count = 0
     private var scissorDepth = 0
     private var transformDepth = 0
@@ -106,7 +105,6 @@ object GLRenderer : Renderer {
 
         VARYING vec4 vUV;         // UV sampler position
         VARYING vec4 vP_HalfSize; // rect x, y, 0.5x wh
-        VARYING vec2 vScreenPos;  // screen position of the rectangle
         VARYING vec4 vClipRect;   // clipping rectangle
         VARYING vec4 vRadii;      // per-corner radii
         VARYING vec4 vColor0;     // RGBA
@@ -115,23 +113,21 @@ object GLRenderer : Renderer {
 
         // Signed distance function for rounded box
         float roundedBoxSDF(vec2 p, vec2 b, vec4 r) {
-            // px = 1.0 if p.x > 0, else 0.0
-            float px = step(0.0, p.x);
-            float py = step(0.0, p.y);
-
-            // Select radius per quadrant
-            float rLeft  = mix(r.x, r.w, py); // top-left / bottom-left
-            float rRight = mix(r.y, r.z, py); // top-right / bottom-right
-            float radius = mix(rLeft, rRight, px); // left vs right
+            vec2 s = step(0.0, p);
+            float radius =
+                mix(
+                    mix(r.x, r.y, s.x),
+                    mix(r.w, r.z, s.x),
+                    s.y
+                );
 
             vec2 q = abs(p) - (b - radius);
             return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
         }
 
         float hollowRoundedBoxSDF(vec2 p, vec2 b, vec4 r, float thickness) {
-            float outer = roundedBoxSDF(p, b + 0.3, r + 0.3);
-            float inner = roundedBoxSDF(p, b - thickness, max(r - thickness, 0.0)); 
-            return max(outer, -inner);
+            float d = roundedBoxSDF(p, b, r);
+            return abs(d) - thickness;
         }
 
         float roundBoxSDF(vec2 p, vec2 halfSize, float radius) {
@@ -145,18 +141,17 @@ object GLRenderer : Renderer {
         }
         
         float hollowBoxSDF(vec2 p, vec2 halfSize, float thickness) {
-            float outer = boxSDF(p, halfSize + 0.3);
-            float inner = boxSDF(p, halfSize - thickness); 
-            return max(outer, -inner);
+            float d = boxSDF(p, halfSize); 
+            return abs(d) - thickness;
         }
 
         void main() {
             float clip =
-                step(vClipRect.x, vScreenPos.x) *
-                step(vClipRect.y, vScreenPos.y) *
-                step(vScreenPos.x, vClipRect.z) *
-                step(vScreenPos.y, vClipRect.w);
-            if (clip == 0.0) discard;
+                step(vClipRect.x, gl_FragCoord.x) *
+                step(vClipRect.y, gl_FragCoord.y) *
+                step(gl_FragCoord.x, vClipRect.z) *
+                step(gl_FragCoord.y, vClipRect.w);
+//            if (clip == 0.0) discard;
 
             vec4 col = vColor0;
             float d;
@@ -233,7 +228,6 @@ object GLRenderer : Renderer {
         uniform vec2 uWindow;
 
         VARYING vec4 vP_HalfSize;
-        VARYING vec2 vScreenPos;
         VARYING vec4 vClipRect;
         VARYING vec4 vRadii;
         VARYING vec4 vColor0;
@@ -264,7 +258,6 @@ object GLRenderer : Renderer {
             gl_Position = vec4(ndc, 0.0, 1.0);
 
             vP_HalfSize = vec4(pos - halfSize, halfSize); 
-            vScreenPos  = transformed.xy;
             vClipRect   = iClipRect;
             vRadii      = iRadii;
             vColor0     = unpackColor(iColor0);
@@ -380,9 +373,12 @@ object GLRenderer : Renderer {
 //        glBindBuffer(GL_ARRAY_BUFFER, 0)
     }
 
-    override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {
-        this.width = width
-        this.height = height
+    override fun beginFrame(width: Float, height: Float, pixelRatio: Float, viewport: FloatArray?) {
+        this.viewport = viewport ?: run {
+            this.viewport[2] = width
+            this.viewport[3] = height
+            this.viewport
+        }
         scissorDepth = 0
         alphaCap = 255
         count = 0
@@ -637,10 +633,11 @@ object GLRenderer : Renderer {
     }
 
     override fun pushScissor(x: Float, y: Float, width: Float, height: Float) {
-        scissorStack[scissorDepth++] = x
-        scissorStack[scissorDepth++] = y
-        scissorStack[scissorDepth++] = x + width
-        scissorStack[scissorDepth++] = y + height
+        val ny = ((viewport[3] + viewport[1]) - (y + height) * pixelRatio)
+        scissorStack[scissorDepth++] = x * pixelRatio
+        scissorStack[scissorDepth++] = ny
+        scissorStack[scissorDepth++] = (x + width) * pixelRatio
+        scissorStack[scissorDepth++] = ny + height * pixelRatio
     }
 
     override fun pushScissorIntersecting(x: Float, y: Float, width: Float, height: Float) {
@@ -652,11 +649,12 @@ object GLRenderer : Renderer {
         val py = scissorStack[scissorDepth - 3]
         val pl = scissorStack[scissorDepth - 2]
         val pr = scissorStack[scissorDepth - 1]
+        val ny = ((viewport[3] + viewport[1]) - (y + height) * pixelRatio)
 
-        val ix = maxOf(x, px)
-        val iy = maxOf(y, py)
-        val il = minOf(x + width, pl)
-        val ir = minOf(y + height, pr)
+        val ix = maxOf(x * pixelRatio, px)
+        val iy = maxOf(ny, py)
+        val il = minOf((x + width) * pixelRatio, pl)
+        val ir = minOf(ny + height * pixelRatio, pr)
 
         scissorStack[scissorDepth++] = ix
         scissorStack[scissorDepth++] = iy
@@ -667,7 +665,7 @@ object GLRenderer : Renderer {
     override fun popScissor() {
         if (scissorDepth <= 4) {
             scissorDepth = 0
-            pushScissor(0f, 0f, width, height)
+            pushScissor(0f, 0f, 1_000_000f, 1_000_000f)
             return
         }
         scissorDepth -= 4

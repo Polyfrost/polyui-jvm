@@ -38,7 +38,7 @@ import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.*
 import java.nio.ByteBuffer
-import java.util.IdentityHashMap
+import java.util.*
 import org.polyfrost.polyui.color.PolyColor as Color
 
 object NVGRenderer : Renderer {
@@ -86,7 +86,7 @@ object NVGRenderer : Renderer {
         }
     }
 
-    override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {
+    override fun beginFrame(width: Float, height: Float, pixelRatio: Float, viewport: FloatArray?) {
         if (drawing) throw IllegalStateException("Already drawing")
         queue.fastRemoveIfReversed { it(); true }
         nvgBeginFrame(vg, width, height, pixelRatio)

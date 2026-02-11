@@ -45,7 +45,7 @@ interface Renderer : AutoCloseable {
     /**
      * Begin a frame. this is called before all drawing calls.
      */
-    fun beginFrame(width: Float, height: Float, pixelRatio: Float)
+    fun beginFrame(width: Float, height: Float, pixelRatio: Float, viewport: FloatArray?)
 
     /**
      * End a frame. this is called after all drawing calls.

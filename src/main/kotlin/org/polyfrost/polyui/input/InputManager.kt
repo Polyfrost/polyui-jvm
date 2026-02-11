@@ -124,13 +124,13 @@ class InputManager(
     }
 
     /** This method should be called when a non-printable, but representable key is pressed. */
-    fun keyDown(key: Keys) {
+    fun keyDown(key: Keys, repeat: Boolean = false) {
         if (key == Keys.ESCAPE && focused != null) {
             focus(null)
             return
         }
         val event = Event.Focused.KeyPressed(key, keyModifiers)
-        if (keyBinder?.accept(event, mods) == true) return
+        if (!repeat && keyBinder?.accept(event, mods) == true) return
         focused?.accept(event)
     }
 

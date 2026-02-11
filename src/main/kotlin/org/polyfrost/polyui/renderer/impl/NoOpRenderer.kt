@@ -33,7 +33,7 @@ object NoOpRenderer : Renderer {
         PolyUI.LOGGER.warn("Using NoOpRenderer, nothing will be rendered!")
     }
 
-    override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {
+    override fun beginFrame(width: Float, height: Float, pixelRatio: Float, viewport: FloatArray?) {
     }
 
     override fun endFrame() {

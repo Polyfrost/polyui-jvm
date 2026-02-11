@@ -32,7 +32,7 @@ import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.util.IdentityHashMap
+import java.util.*
 import javax.imageio.ImageIO
 
 class AWTRenderer(frame: Frame) : Renderer {
@@ -57,7 +57,7 @@ class AWTRenderer(frame: Frame) : Renderer {
 
     override fun init() {}
 
-    override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {
+    override fun beginFrame(width: Float, height: Float, pixelRatio: Float, viewport: FloatArray?) {
         g2d.clearRect(0, 0, width.toInt(), height.toInt())
         g2d.composite = AlphaComposite.SrcOver
     }

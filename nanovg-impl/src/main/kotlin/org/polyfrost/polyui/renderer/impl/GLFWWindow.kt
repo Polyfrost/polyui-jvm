@@ -92,6 +92,8 @@ class GLFWWindow @JvmOverloads constructor(
             field = if (value == 0.0) 0.0 else 1.0 / value.toInt()
         }
 
+    override var viewport: FloatArray? = FloatArray(4)
+
     var title = title
         set(new) {
             field = new
@@ -251,7 +253,7 @@ class GLFWWindow @JvmOverloads constructor(
                 else -> Keys.UNKNOWN
             }
             if (key != Keys.UNKNOWN) {
-                if (action != GLFW_RELEASE) polyUI.inputManager.keyDown(key)
+                if (action != GLFW_RELEASE) polyUI.inputManager.keyDown(key, action == GLFW_REPEAT)
                 else polyUI.inputManager.keyUp(key)
 
                 if (polyUI.settings.debug && action == GLFW_PRESS) {
@@ -306,8 +308,12 @@ class GLFWWindow @JvmOverloads constructor(
 
         glfwSetWindowRefreshCallback(handle) {
             val size = polyUI.size
-            val height = (size.y * pixelRatio).toInt()
-            glViewport(0, offset + (this.height - height), (size.x * pixelRatio).toInt(), height)
+            val height = size.y * pixelRatio
+            val viewport = viewport!!
+            viewport[1] = offset + (this.height - height)
+            viewport[2] = size.x * pixelRatio
+            viewport[3] = height
+            glViewport(0, viewport[1].toInt(), viewport[2].toInt(), height.toInt())
             glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
             glClearColor(0f, 0f, 0f, 0f)
             polyUI.render()
@@ -366,8 +372,12 @@ class GLFWWindow @JvmOverloads constructor(
             }
 
             val size = polyUI.size
-            val height = (size.y * pixelRatio).toInt()
-            glViewport(0, offset + (this.height - height), (size.x * pixelRatio).toInt(), height)
+            val height = size.y * pixelRatio
+            val viewport = viewport!!
+            viewport[1] = offset + (this.height - height)
+            viewport[2] = size.x * pixelRatio
+            viewport[3] = height
+            glViewport(0, viewport[1].toInt(), viewport[2].toInt(), height.toInt())
             glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
             glClearColor(0f, 0f, 0f, 0f)
 
@@ -431,7 +441,7 @@ class GLFWWindow @JvmOverloads constructor(
         return this
     }
 
-    override fun supportsRenderPausing() = true
+    override fun supportsRenderPausing() = false
 
     override fun getClipboard() = glfwGetClipboardString(handle)
 

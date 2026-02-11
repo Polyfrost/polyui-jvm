@@ -33,10 +33,7 @@ import org.polyfrost.polyui.dsl.polyUI
 import org.polyfrost.polyui.event.State
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.PolyBind
-import org.polyfrost.polyui.renderer.impl.GLFWWindow
-import org.polyfrost.polyui.renderer.impl.GLRenderer
-import org.polyfrost.polyui.renderer.impl.NoOpRenderer
-import org.polyfrost.polyui.renderer.impl.NoOpWindow
+import org.polyfrost.polyui.renderer.impl.*
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
@@ -166,5 +163,24 @@ fun main() {
         DraggingNumericTextInput(pre = "Width", suffix = "px").add()
         boxedNumericInput.add()
         Image("https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png".image(), size = Vec2(280f, 210f)).add()
-    }.also { it.master.rawRescaleSize = true }.open(window)
+    }.also {
+        var p = false
+        it.master.rawRescaleSize = true
+        it.keyBinder?.add(PolyBind(key = Keys.F2) { down ->
+            if (!down) return@PolyBind false
+            val field = PolyUI::class.java.getDeclaredField("renderer")
+            field.isAccessible = true
+            p = !p
+            if (p) {
+                println("NVG")
+                NVGRenderer.init()
+                field.set(it, NVGRenderer)
+            } else {
+                println("GL")
+                field.set(it, GLRenderer)
+            }
+
+            true
+        })
+    }.open(window)
 }

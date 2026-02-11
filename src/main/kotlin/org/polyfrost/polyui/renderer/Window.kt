@@ -44,6 +44,8 @@ import org.polyfrost.polyui.unit.Vec2
 abstract class Window(open var width: Int, open var height: Int, open var pixelRatio: Float = 1f) {
 
     val size get() = Vec2(width.toFloat(), height.toFloat())
+
+    open var viewport: FloatArray? = null
     /**
      * open the window with the specified [PolyUI] instance, and then start the rendering loop. It may be blocking or non-blocking.
      * Every frame, call the [PolyUI.render] function to render the UI.
