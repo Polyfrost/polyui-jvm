@@ -151,7 +151,7 @@ object GLRenderer : Renderer {
                 step(vClipRect.y, gl_FragCoord.y) *
                 step(gl_FragCoord.x, vClipRect.z) *
                 step(gl_FragCoord.y, vClipRect.w);
-//            if (clip == 0.0) discard;
+            if (clip == 0.0) discard;
 
             vec4 col = vColor0;
             float d;
